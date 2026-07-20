@@ -19,7 +19,9 @@ type ActionEditorProps = {
 	actions: UI_RowAction[];
 	flowsById: Record<string, DATA_EVY_Flow>;
 	pagesById: Record<string, DATA_EVY_Page>;
+	rowsById: Record<string, DATA_EVY_Row>;
 	serviceResources: ServiceResource[];
+	defaultSheetRowId?: string;
 	onUpdate: (actions: UI_RowAction[]) => void;
 };
 
@@ -27,7 +29,9 @@ export function ActionEditor({
 	actions,
 	flowsById,
 	pagesById,
+	rowsById,
 	serviceResources,
+	defaultSheetRowId,
 	onUpdate,
 }: ActionEditorProps) {
 	const [editingIndex, setEditingIndex] = useState<number | null>(null);
@@ -96,6 +100,7 @@ export function ActionEditor({
 							index={index}
 							flowsById={flowsById}
 							pagesById={pagesById}
+							rowsById={rowsById}
 							serviceResources={serviceResources}
 							idCandidates={idCandidates}
 							onEdit={() => setEditingIndex(index)}
@@ -113,6 +118,7 @@ export function ActionEditor({
 				<ActionPopup
 					action={editing.action}
 					actionIndex={editing.index}
+					defaultSheetRowId={defaultSheetRowId}
 					onSave={handlePopupSave}
 					onCancel={handlePopupCancel}
 				/>
@@ -126,6 +132,7 @@ type ActionSummaryCardProps = {
 	index: number;
 	flowsById: Record<string, DATA_EVY_Flow>;
 	pagesById: Record<string, DATA_EVY_Page>;
+	rowsById: Record<string, DATA_EVY_Row>;
 	serviceResources: ServiceResource[];
 	idCandidates: IdCandidate[];
 	onEdit: () => void;
@@ -137,6 +144,7 @@ function ActionSummaryCard({
 	index,
 	flowsById,
 	pagesById,
+	rowsById,
 	serviceResources,
 	idCandidates,
 	onEdit,
@@ -165,21 +173,38 @@ function ActionSummaryCard({
 		() =>
 			trueBranch
 				? getIdDisplayText(
-						formatBranchDisplay(action.true, flowsById, pagesById),
+						formatBranchDisplay(
+							action.true,
+							flowsById,
+							pagesById,
+							rowsById,
+						),
 						idCandidates,
 					)
 				: null,
-		[trueBranch, action.true, flowsById, pagesById, idCandidates],
+		[trueBranch, action.true, flowsById, pagesById, rowsById, idCandidates],
 	);
 	const falseBranchDisplay = useMemo(
 		() =>
 			falseBranch
 				? getIdDisplayText(
-						formatBranchDisplay(action.false, flowsById, pagesById),
+						formatBranchDisplay(
+							action.false,
+							flowsById,
+							pagesById,
+							rowsById,
+						),
 						idCandidates,
 					)
 				: null,
-		[falseBranch, action.false, flowsById, pagesById, idCandidates],
+		[
+			falseBranch,
+			action.false,
+			flowsById,
+			pagesById,
+			rowsById,
+			idCandidates,
+		],
 	);
 
 	return (

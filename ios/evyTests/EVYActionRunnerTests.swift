@@ -376,29 +376,69 @@ final class EVYActionRunnerTests: XCTestCase {
     XCTAssertEqual(values["id"]?.toString(), createdRows.first?.id)
   }
 
-  func testShowActionPresentsChild() throws {
-    let row = try makeRowWithChild()
-    let childRef = row.child.map(EVYRowRef.inline)
-    var shownRef: EVYRowRef?
-    let action = rowAction(true: "{show()}")
-    EVYActionRunner.run(actions: [action], childRef: childRef, show: { shownRef = $0 }) { _ in }
-    XCTAssertEqual(shownRef?.id, "child-row")
+  func testShowActionInvokesShowWithParsedRowId() {
+    var shownRowId: String?
+    let action = rowAction(true: "{show(child-row)}")
+    EVYActionRunner.run(actions: [action], show: { rowId in shownRowId = rowId }) { _ in }
+    XCTAssertEqual(shownRowId, "child-row")
   }
 
-  func testShowActionWithoutChildIsNoOp() throws {
-    var shownRef: EVYRowRef?
-    let action = rowAction(true: "{show()}")
-    EVYActionRunner.run(actions: [action], childRef: nil, show: { shownRef = $0 }) { _ in }
-    XCTAssertNil(shownRef)
+  func testShowActionWithQuotedRowId() {
+    var shownRowId: String?
+    let action = rowAction(true: "{show(\"quoted-row\")}")
+    EVYActionRunner.run(actions: [action], show: { rowId in shownRowId = rowId }) { _ in }
+    XCTAssertEqual(shownRowId, "quoted-row")
   }
 
-  func testFalseBranchShowActionPresentsChild() throws {
-    let row = try makeRowWithChild()
-    let childRef = row.child.map(EVYRowRef.inline)
-    var shownRef: EVYRowRef?
-    let action = rowAction(condition: "{false}", true: "", false: "{show()}")
-    EVYActionRunner.run(actions: [action], childRef: childRef, show: { shownRef = $0 }) { _ in }
-    XCTAssertEqual(shownRef?.id, "child-row")
+  func testShowActionWithMissingArgumentPostsError() {
+    let action = rowAction(true: "{show()}")
+    let errors = capturedErrors {
+      EVYActionRunner.run(actions: [action], show: { _ in }) { _ in }
+    }
+    XCTAssertFalse(errors.isEmpty)
+  }
+
+  func testShowActionWithEmptyArgumentPostsError() {
+    let action = rowAction(true: "{show( )}")
+    let errors = capturedErrors {
+      EVYActionRunner.run(actions: [action], show: { _ in }) { _ in }
+    }
+    XCTAssertFalse(errors.isEmpty)
+  }
+
+  func testShowActionWithExtraArgumentPostsError() {
+    let action = rowAction(true: "{show(row-one, row-two)}")
+    let errors = capturedErrors {
+      EVYActionRunner.run(actions: [action], show: { _ in }) { _ in }
+    }
+    XCTAssertFalse(errors.isEmpty)
+  }
+
+  func testShowActionThrowingShowCallbackPostsError() {
+    let action = rowAction(true: "{show(missing-row)}")
+    let errors = capturedErrors {
+      EVYActionRunner.run(
+        actions: [action],
+        show: { _ in
+          throw EVYError.invalidData(context: "unresolved show target")
+        }
+      ) { _ in }
+    }
+    XCTAssertFalse(errors.isEmpty)
+  }
+
+  func testFalseBranchShowActionInvokesShowWithParsedRowId() {
+    var shownRowId: String?
+    let action = rowAction(condition: "{false}", true: "", false: "{show(sheet-row)}")
+    EVYActionRunner.run(actions: [action], show: { rowId in shownRowId = rowId }) { _ in }
+    XCTAssertEqual(shownRowId, "sheet-row")
+  }
+
+  func testShowRowIdParserRejectsInvalidBranches() {
+    XCTAssertNil(EVYActionParser.showRowId(from: "{show()}"))
+    XCTAssertNil(EVYActionParser.showRowId(from: "{show(a, b)}"))
+    XCTAssertNil(EVYActionParser.showRowId(from: "{navigate(flow,page)}"))
+    XCTAssertEqual(EVYActionParser.showRowId(from: "{show(target-id)}"), "target-id")
   }
 
   func testNavigateWithBraceFunction() {
@@ -665,31 +705,23 @@ final class EVYActionRunnerTests: XCTestCase {
     XCTAssertEqual(formattedRow.actions.first?.true, actionString)
   }
 
-  private func makeRowWithChild() throws -> UI_Row {
+  private func makeRowWithSheet() throws -> UI_Row {
     try decodeRow(
       content: """
         {
           "title": "",
-          "label": "Show child",
-          "child": {
-            "id": "child-row",
+          "label": "Show sheet",
+          "sheet": {
+            "id": "sheet-row",
             "type": "Text",
             "source": "",
             "destination": "",
-            "title": "Child",
+            "title": "Sheet",
             "text": "Body",
             "actions": [],
             "visible": "true"
           }
         }
-        """
-    )
-  }
-
-  private func makeRowWithoutChild() throws -> UI_Row {
-    try decodeRow(
-      content: """
-        { "title": "", "label": "No child" }
         """
     )
   }

@@ -15,57 +15,50 @@ const sheetTitleStyle: CSSProperties = {
 	border: "none",
 };
 
-export function ChildPage({
-	childRowId,
+export function SheetPage({
+	sheetRowId,
 	pageId,
 	parentRowId,
-	variant,
 }: {
-	childRowId: string;
+	sheetRowId: string;
 	pageId: string;
 	parentRowId: string;
-	variant: "full" | "sheet";
 }) {
 	const { dispatchRow } = useFlowsContext();
 	const { dispatchDropIndicator } = useDragContext();
 	const scrollableRef = useRef<HTMLDivElement | null>(null);
-	const row = useRowById(childRowId);
+	const row = useRowById(sheetRowId);
 	const parseText = useParseText();
 
 	usePageDropTarget({
 		scrollableRef,
 		pageId,
 		dispatchDropIndicator,
-		extraData: { destinationContainerRowId: parentRowId },
+		extraData: {
+			destinationContainerRowId: parentRowId,
+			destinationContainerType: "sheet",
+		},
 	});
 
-	const selectChild = useCallback(() => {
-		dispatchRow({ type: "SET_ACTIVE_ROW", rowId: childRowId });
-	}, [dispatchRow, childRowId]);
+	const selectSheetRow = useCallback(() => {
+		dispatchRow({ type: "SET_ACTIVE_ROW", rowId: sheetRowId });
+	}, [dispatchRow, sheetRowId]);
 
-	const childTitle = row?.config.title?.trim() ?? "";
-	const heading =
-		variant === "full"
-			? "Search result"
-			: childTitle
-				? parseText(childTitle)
-				: null;
+	const sheetTitle = row?.config.title?.trim() ?? "";
+	const heading = sheetTitle ? parseText(sheetTitle) : null;
 
 	let titleElement: ReactNode = null;
 	if (heading !== null) {
-		titleElement =
-			variant === "sheet" ? (
-				<button
-					type="button"
-					className="evy-cursor-pointer"
-					style={sheetTitleStyle}
-					onClick={selectChild}
-				>
-					{heading}
-				</button>
-			) : (
-				<h2 style={baseTitleStyle}>{heading}</h2>
-			);
+		titleElement = (
+			<button
+				type="button"
+				className="evy-cursor-pointer"
+				style={sheetTitleStyle}
+				onClick={selectSheetRow}
+			>
+				{heading}
+			</button>
+		);
 	}
 
 	const content = (
@@ -73,8 +66,8 @@ export function ChildPage({
 			{titleElement}
 			{row && (
 				<DraggableRowContainer
-					rowId={childRowId}
-					selectRow={selectChild}
+					rowId={sheetRowId}
+					selectRow={selectSheetRow}
 					showIndicators
 				>
 					{row.row}
@@ -84,14 +77,10 @@ export function ChildPage({
 	);
 
 	return (
-		<ChildPageFrame scrollableRef={scrollableRef} variant={variant}>
-			{variant === "sheet" ? (
-				<SheetRootRowIdContext.Provider value={childRowId}>
-					{content}
-				</SheetRootRowIdContext.Provider>
-			) : (
-				content
-			)}
+		<ChildPageFrame scrollableRef={scrollableRef} variant="sheet">
+			<SheetRootRowIdContext.Provider value={sheetRowId}>
+				{content}
+			</SheetRootRowIdContext.Provider>
 		</ChildPageFrame>
 	);
 }

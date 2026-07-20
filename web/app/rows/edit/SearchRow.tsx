@@ -1,3 +1,4 @@
+import { SearchChildSample } from "../../components/SearchChildSample";
 import type { RowConfig } from "../../types/row";
 import { defineRow } from "../defineRow";
 import InlineIcon from "../design-system/InlineIcon";
@@ -23,6 +24,10 @@ export default defineRow("SearchRow", {
 					placeholder={row.config.placeholder}
 				/>
 			</div>
+			<SearchChildSample
+				searchRowId={row.id}
+				childRowId={row.config.childRowId}
+			/>
 		</RowLayout>
 	),
 });

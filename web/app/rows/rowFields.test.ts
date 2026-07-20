@@ -69,6 +69,36 @@ describe("rowFields", () => {
 		});
 	});
 
+	test("exposes optional sheet on every row type", () => {
+		for (const type of ALL_ROW_TYPES) {
+			const sheetField = getRowContentFields(type).find(
+				(f) => f.kind === "sheet",
+			);
+			expect(sheetField).toEqual({
+				name: "sheetRowId",
+				kind: "sheet",
+				required: false,
+			});
+		}
+	});
+
+	test("exposes child only on Search", () => {
+		for (const type of ALL_ROW_TYPES) {
+			const childField = getRowContentFields(type).find(
+				(f) => f.kind === "child",
+			);
+			if (type === "Search") {
+				expect(childField).toEqual({
+					name: "childRowId",
+					kind: "child",
+					required: false,
+				});
+			} else {
+				expect(childField).toBeUndefined();
+			}
+		}
+	});
+
 	test("orders panel fields by configured rank before fallback ordering", () => {
 		function field(
 			name: string,

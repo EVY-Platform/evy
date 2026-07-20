@@ -57,6 +57,22 @@ struct EVYSearchResult: Equatable, Identifiable {
       return []
     }
   }
+
+  @MainActor
+  static func loadLocalResults(
+    source: String,
+    resultTemplate: UI_Row?,
+    scopeId: String?
+  ) -> [EVYSearchResult] {
+    let previous = EVY.activeCacheScopeId
+    EVY.activeCacheScopeId = scopeId
+    defer { EVY.activeCacheScopeId = previous }
+    return makeResults(
+      from: try? EVY.getDataFromText(source),
+      resultTemplate: resultTemplate,
+      scopeId: scopeId
+    )
+  }
 }
 
 @MainActor

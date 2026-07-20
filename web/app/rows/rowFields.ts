@@ -23,7 +23,13 @@ export const BINDING_FIELD_COPY: Record<
 	},
 };
 
-type RowFieldKind = "text" | "textList" | "child" | "children" | "enum";
+type RowFieldKind =
+	| "text"
+	| "textList"
+	| "child"
+	| "children"
+	| "sheet"
+	| "enum";
 
 // exported for tests
 export type RowField = {

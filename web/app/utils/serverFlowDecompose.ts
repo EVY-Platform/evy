@@ -16,6 +16,7 @@ import {
 	ROW_CHILD_FIELD,
 	ROW_CHILDREN_FIELD,
 	ROW_DECOMPOSE_SKIP_KEYS,
+	ROW_SHEET_FIELD,
 } from "./rowConstants";
 
 export type FlatFlowGraph = {
@@ -83,6 +84,9 @@ function decomposeServerRow(
 	}
 	if (row.child) {
 		data[ROW_CHILD_FIELD] = decomposeServerRow(row.child, rowRows, nowIso);
+	}
+	if (row.sheet) {
+		data[ROW_SHEET_FIELD] = decomposeServerRow(row.sheet, rowRows, nowIso);
 	}
 	if (Array.isArray(row.children) && row.children.length > 0) {
 		data[ROW_CHILDREN_FIELD] = row.children.map((child) =>

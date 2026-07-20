@@ -64,7 +64,7 @@ function makeTextRow(
 
 function makeContainerRow(
 	id: string,
-	childRowId?: string,
+	sheetRowId?: string,
 	childrenRowIds: string[] = [],
 ): DATA_EVY_Row {
 	return {
@@ -74,10 +74,48 @@ function makeContainerRow(
 		visible: "true",
 		data: {
 			title: "Container",
-			...(childRowId ? { child_row_id: childRowId } : {}),
+			...(sheetRowId ? { sheet_row_id: sheetRowId } : {}),
 			...(childrenRowIds.length
 				? { children_row_ids: childrenRowIds }
 				: {}),
+		},
+		createdAt: NOW,
+		updatedAt: NOW,
+	};
+}
+
+function makeSearchRow(
+	id: string,
+	extra: Record<string, unknown> = {},
+): DATA_EVY_Row {
+	return {
+		id,
+		name: id,
+		type: "Search",
+		visible: "true",
+		data: {
+			source: "{$api:place_search}",
+			destination: "{item.address}",
+			...extra,
+		},
+		createdAt: NOW,
+		updatedAt: NOW,
+	};
+}
+
+function makeButtonRow(
+	id: string,
+	extra: Record<string, unknown> = {},
+): DATA_EVY_Row {
+	return {
+		id,
+		name: id,
+		type: "Button",
+		visible: "true",
+		data: {
+			label: "Go",
+			actions: [],
+			...extra,
 		},
 		createdAt: NOW,
 		updatedAt: NOW,
@@ -465,7 +503,7 @@ describe("pageReducer", () => {
 		expect(next.rowsById.foot).toBeUndefined();
 	});
 
-	it("REMOVE_ROW removes nested footer child", () => {
+	it("REMOVE_ROW removes nested footer sheet", () => {
 		const inner = makeTextRow("inner");
 		const foot = makeContainerRow("foot", "inner");
 		const state = initialState({
@@ -486,7 +524,7 @@ describe("pageReducer", () => {
 			pageId: "page-1",
 			rowId: "inner",
 		});
-		expect(next.rowsById.foot?.data.child_row_id).toBeUndefined();
+		expect(next.rowsById.foot?.data.sheet_row_id).toBeUndefined();
 		expect(next.rowsById.inner).toBeUndefined();
 	});
 
@@ -624,7 +662,7 @@ describe("pageReducer", () => {
 		expect(next.pagesById["page-2"]?.footerRowId).toBe("row-1");
 	});
 
-	it("ADD_ROW inserts palette row as child of footer descendant (blank child page drop)", () => {
+	it("ADD_ROW inserts palette row as sheet of footer descendant (blank sheet page drop)", () => {
 		const footerParent = makeContainerRow("footer-parent");
 		const footerRoot = makeContainerRow("footer-root", "footer-parent");
 		const state = initialState({
@@ -646,10 +684,100 @@ describe("pageReducer", () => {
 			oldRowId: "TextRow",
 			destinationPageId: "page-1",
 			destinationIndex: 0,
-			destinationContainer: { rowId: "footer-parent", type: "children" },
+			destinationContainer: { rowId: "footer-parent", type: "sheet" },
 		});
-		expect(
-			next.rowsById["footer-parent"]?.data.children_row_ids as string[],
-		).toContain(newId);
+		expect(next.rowsById["footer-parent"]?.data.sheet_row_id).toBe(newId);
+		expect(next.rowsById["footer-parent"]?.data.actions).toEqual([
+			{ condition: "", true: `{show(${newId})}`, false: "" },
+		]);
+	});
+
+	it("ADD_ROW writes Search child independently of an existing sheet", () => {
+		const search = makeSearchRow("search", {
+			sheet_row_id: "existing-sheet",
+			actions: [
+				{
+					condition: "",
+					true: "{show(existing-sheet)}",
+					false: "",
+				},
+			],
+		});
+		const existingSheet = makeTextRow("existing-sheet");
+		const state = initialState({
+			rowsById: {
+				search,
+				"existing-sheet": existingSheet,
+				"row-1": makeTextRow("row-1"),
+				"row-2": makeTextRow("row-2"),
+			},
+			pagesById: {
+				"page-1": makePage("page-1", ["search"]),
+				"page-2": makePage("page-2", ["row-2"]),
+			},
+		});
+		const childId = crypto.randomUUID();
+		const next = pageReducer(state, {
+			type: "ADD_ROW",
+			newRowId: childId,
+			oldRowId: "TextRow",
+			destinationPageId: "page-1",
+			destinationIndex: 0,
+			destinationContainer: { rowId: "search", type: "child" },
+		});
+		expect(next.rowsById.search?.data.child_row_id).toBe(childId);
+		expect(next.rowsById.search?.data.sheet_row_id).toBe("existing-sheet");
+		expect(next.rowsById.search?.data.actions).toEqual([
+			{
+				condition: "",
+				true: "{show(existing-sheet)}",
+				false: "",
+			},
+		]);
+	});
+
+	it("ADD_ROW replaces a sheet and updates only the default show action", () => {
+		const button = makeButtonRow("button", {
+			sheet_row_id: "old-sheet",
+			actions: [
+				{ condition: "", true: "{show(old-sheet)}", false: "" },
+				{
+					condition: "other",
+					true: "{show(other-page-row)}",
+					false: "",
+				},
+			],
+		});
+		const oldSheet = makeTextRow("old-sheet");
+		const state = initialState({
+			rowsById: {
+				button,
+				"old-sheet": oldSheet,
+				"row-1": makeTextRow("row-1"),
+				"row-2": makeTextRow("row-2"),
+			},
+			pagesById: {
+				"page-1": makePage("page-1", ["button"]),
+				"page-2": makePage("page-2", ["row-2"]),
+			},
+		});
+		const newSheetId = crypto.randomUUID();
+		const next = pageReducer(state, {
+			type: "ADD_ROW",
+			newRowId: newSheetId,
+			oldRowId: "TextRow",
+			destinationPageId: "page-1",
+			destinationIndex: 0,
+			destinationContainer: { rowId: "button", type: "sheet" },
+		});
+		expect(next.rowsById.button?.data.sheet_row_id).toBe(newSheetId);
+		expect(next.rowsById.button?.data.actions).toEqual([
+			{ condition: "", true: `{show(${newSheetId})}`, false: "" },
+			{
+				condition: "other",
+				true: "{show(other-page-row)}",
+				false: "",
+			},
+		]);
 	});
 });

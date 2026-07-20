@@ -11,8 +11,7 @@ enum EVYActionRunner {
   static func run(
     actions: [UI_RowAction],
     datum: EVYJson? = nil,
-    childRef: EVYRowRef? = nil,
-    show: @escaping (EVYRowRef) -> Void = { _ in },
+    show: @escaping (String) throws -> Void = { _ in },
     prepare: (() -> Void)? = nil,
     action: @escaping (ActionOperation) -> Void
   ) {
@@ -31,12 +30,12 @@ enum EVYActionRunner {
       }
 
       if !executeTrueBranch {
-        runBranch(rowAction.`false`, datum: datum, childRef: childRef, show: show, action: action)
+        runBranch(rowAction.`false`, datum: datum, show: show, action: action)
         return
       }
 
       let succeeded = runBranch(
-        rowAction.`true`, datum: datum, childRef: childRef, show: show, action: action)
+        rowAction.`true`, datum: datum, show: show, action: action)
       if !succeeded {
         return
       }
@@ -47,15 +46,14 @@ enum EVYActionRunner {
   private static func runBranch(
     _ rawBranch: String,
     datum: EVYJson?,
-    childRef: EVYRowRef?,
-    show: @escaping (EVYRowRef) -> Void,
+    show: @escaping (String) throws -> Void,
     action: @escaping (ActionOperation) -> Void
   ) -> Bool {
     let trimmed = rawBranch.trimmingCharacters(in: .whitespacesAndNewlines)
     guard !trimmed.isEmpty else { return true }
     do {
       try execute(
-        branch: trimmed, datum: datum, childRef: childRef, action: action, show: show)
+        branch: trimmed, datum: datum, action: action, show: show)
       return true
     } catch {
       NotificationCenter.default.post(name: .evyErrorOccurred, object: error)
@@ -66,9 +64,8 @@ enum EVYActionRunner {
   private static func execute(
     branch: String,
     datum: EVYJson?,
-    childRef: EVYRowRef?,
     action: @escaping (ActionOperation) -> Void,
-    show: @escaping (EVYRowRef) -> Void
+    show: @escaping (String) throws -> Void
   ) throws {
     guard branch.hasPrefix("{"), branch.hasSuffix("}") else { return }
 
@@ -115,11 +112,11 @@ enum EVYActionRunner {
       case "close":
         action(.close)
       case "show":
-        guard let childRef else {
+        guard let rowId = EVYActionParser.showRowId(from: branch) else {
           throw EVYError.invalidData(
-            context: "show() requires the row to have a child to present")
+            context: "show requires exactly one non-empty row id, e.g. show(row-id)")
         }
-        show(childRef)
+        try show(rowId)
       case "highlight_required":
         let args = EVY.splitFunctionArguments(functionArgs)
         let alias = args.first ?? "field"

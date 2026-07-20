@@ -171,6 +171,11 @@ struct ContentView: View {
       let previousFlowId = oldRoutes.last?.flowId ?? HOME_FLOW_ID
       let newFlowId = newRoutes.last?.flowId ?? HOME_FLOW_ID
 
+      if newRoutes.isEmpty, let homeFirstPageId {
+        EVY.activeCacheScopeId = homeFirstPageId
+        EVYValueChange.post(key: nil)
+      }
+
       guard newFlowId != previousFlowId else {
         return
       }

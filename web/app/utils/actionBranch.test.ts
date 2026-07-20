@@ -10,15 +10,19 @@ import {
 } from "./actionBranch";
 
 describe("action branch helpers", () => {
-	it("parses show action", () => {
-		expect(parseBranch("{show()}")).toEqual({
+	it("parses show action with row id", () => {
+		expect(parseBranch("{show(row-abc)}")).toEqual({
 			functionName: "show",
-			args: [],
+			args: ["row-abc"],
 		});
 	});
 
-	it("serializes show action", () => {
-		expect(serializeBranch("show", [])).toBe("{show()}");
+	it("serializes show action with row id", () => {
+		expect(serializeBranch("show", ["row-abc"])).toBe("{show(row-abc)}");
+	});
+
+	it("does not serialize show without a row id", () => {
+		expect(serializeBranch("show", [])).toBe("");
 	});
 
 	it("parses create with namespace and resource", () => {

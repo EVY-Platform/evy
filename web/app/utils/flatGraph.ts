@@ -14,8 +14,13 @@ import type {
 	DATA_EVY_RowData,
 	UI_RowAction,
 } from "evy-types";
+import { parseBranch } from "./actionBranch";
 import { collectSubtreeRowIds, type FlowEntityMaps } from "./flowEntities";
-import { ROW_CHILD_FIELD, ROW_CHILDREN_FIELD } from "./rowConstants";
+import {
+	ROW_CHILD_FIELD,
+	ROW_CHILDREN_FIELD,
+	ROW_SHEET_FIELD,
+} from "./rowConstants";
 
 export type { FlowEntityMaps };
 export { collectSubtreeRowIds };
@@ -38,6 +43,11 @@ function touchPage(page: DATA_EVY_Page, updatedAt = now()): DATA_EVY_Page {
 
 function getChildRowId(row: DATA_EVY_Row): string | undefined {
 	const v = row.data[ROW_CHILD_FIELD];
+	return typeof v === "string" ? v : undefined;
+}
+
+function getSheetRowId(row: DATA_EVY_Row): string | undefined {
+	const v = row.data[ROW_SHEET_FIELD];
 	return typeof v === "string" ? v : undefined;
 }
 
@@ -74,6 +84,7 @@ function walkRows<T>(
 		id: string,
 		row: DATA_EVY_Row,
 		childId: string | undefined,
+		sheetId: string | undefined,
 		childrenIds: string[],
 	) => T | null | undefined,
 ): T | null {
@@ -85,11 +96,13 @@ function walkRows<T>(
 		if (!row) continue;
 
 		const childId = getChildRowId(row);
+		const sheetId = getSheetRowId(row);
 		const childrenIds = getChildrenRowIds(row);
-		const result = visit(id, row, childId, childrenIds);
+		const result = visit(id, row, childId, sheetId, childrenIds);
 		if (result != null) return result;
 
 		if (childId) stack.push(childId);
+		if (sheetId) stack.push(sheetId);
 		stack.push(...childrenIds);
 	}
 	return null;
@@ -99,27 +112,37 @@ function findRowContainer(
 	rowsById: FlowEntityMaps["rowsById"],
 	rootRowIds: string[],
 	targetRowId: string,
-): { containerRowId: string; type: "child" | "children" } | null {
-	return walkRows(rowsById, rootRowIds, (id, _row, childId, childrenIds) => {
-		if (childId === targetRowId) {
-			return { containerRowId: id, type: "child" as const };
-		}
-		if (childrenIds.includes(targetRowId)) {
-			return { containerRowId: id, type: "children" as const };
-		}
-		return null;
-	});
+): { containerRowId: string; type: "child" | "children" | "sheet" } | null {
+	return walkRows(
+		rowsById,
+		rootRowIds,
+		(id, _row, childId, sheetId, childrenIds) => {
+			if (childId === targetRowId) {
+				return { containerRowId: id, type: "child" as const };
+			}
+			if (sheetId === targetRowId) {
+				return { containerRowId: id, type: "sheet" as const };
+			}
+			if (childrenIds.includes(targetRowId)) {
+				return { containerRowId: id, type: "children" as const };
+			}
+			return null;
+		},
+	);
 }
 
 function findContainerById(
 	rowsById: FlowEntityMaps["rowsById"],
 	rootRowIds: string[],
 	containerId: string,
-): { containerRowId: string; type: "child" | "children" } | null {
-	return walkRows(rowsById, rootRowIds, (id, row, childId) => {
+): { containerRowId: string; type: "child" | "children" | "sheet" } | null {
+	return walkRows(rowsById, rootRowIds, (id, row, childId, sheetId) => {
 		if (id !== containerId) return null;
 		if (childId !== undefined) {
 			return { containerRowId: id, type: "child" as const };
+		}
+		if (sheetId !== undefined) {
+			return { containerRowId: id, type: "sheet" as const };
 		}
 		if (ROW_CHILDREN_FIELD in row.data) {
 			return { containerRowId: id, type: "children" as const };
@@ -155,6 +178,12 @@ export function findRowIdPath(
 		const childId = getChildRowId(row);
 		if (childId) {
 			const result = dfs(childId, [...path, id]);
+			if (result) return result;
+		}
+
+		const sheetId = getSheetRowId(row);
+		if (sheetId) {
+			const result = dfs(sheetId, [...path, id]);
 			if (result) return result;
 		}
 
@@ -210,7 +239,10 @@ export function insertIntoLocation(
 	pageId: string,
 	newRowId: string,
 	destinationIndex: number,
-	destinationContainer?: { rowId: string; type: "child" | "children" },
+	destinationContainer?: {
+		rowId: string;
+		type: "child" | "children" | "sheet";
+	},
 	ts = now(),
 ): FlowEntityMaps {
 	if (!destinationContainer) {
@@ -241,6 +273,8 @@ export function insertIntoLocation(
 	let updatedData: DATA_EVY_RowData;
 	if (destinationContainer.type === "child") {
 		updatedData = { ...container.data, [ROW_CHILD_FIELD]: newRowId };
+	} else if (destinationContainer.type === "sheet") {
+		updatedData = { ...container.data, [ROW_SHEET_FIELD]: newRowId };
 	} else {
 		const current = getChildrenRowIds(container);
 		updatedData = {
@@ -318,6 +352,10 @@ function removeFromLocation(
 		const { [ROW_CHILD_FIELD]: _c, ...dataWithoutChild } =
 			containerRow.data;
 		updatedData = dataWithoutChild as DATA_EVY_RowData;
+	} else if (container.type === "sheet") {
+		const { [ROW_SHEET_FIELD]: _s, ...dataWithoutSheet } =
+			containerRow.data;
+		updatedData = dataWithoutSheet as DATA_EVY_RowData;
 	} else {
 		updatedData = {
 			...containerRow.data,
@@ -428,7 +466,7 @@ export function moveRow(
 	originPageId: string,
 	destPageId: string,
 	destIndex: number,
-	destContainer?: { rowId: string; type: "child" | "children" },
+	destContainer?: { rowId: string; type: "child" | "children" | "sheet" },
 ): FlowEntityMaps {
 	const ts = now();
 	const afterRemove = removeFromLocation(maps, originPageId, rowId, ts);
@@ -628,7 +666,7 @@ export function findContainerOfRowInPage(
 	maps: FlowEntityMaps,
 	page: DATA_EVY_Page,
 	rowId: string,
-): { containerRowId: string; type: "child" | "children" } | null {
+): { containerRowId: string; type: "child" | "children" | "sheet" } | null {
 	// Search body rows
 	const bodyResult = findRowContainer(maps.rowsById, page.rowIds, rowId);
 	if (bodyResult) return bodyResult;
@@ -653,7 +691,7 @@ export function findContainerByIdInPage(
 	maps: FlowEntityMaps,
 	page: DATA_EVY_Page,
 	containerId: string,
-): { containerRowId: string; type: "child" | "children" } | null {
+): { containerRowId: string; type: "child" | "children" | "sheet" } | null {
 	return findContainerById(maps.rowsById, pageRootIds(page), containerId);
 }
 
@@ -704,26 +742,55 @@ export function findChildIndexInContainer(
 }
 
 /**
- * Add a `{show()}` action to a container row if it doesn't already have one.
- * Used when dropping a row into a child container.
+ * Add a `{show(rowId)}` action to a container row when it gains a sheet child.
+ * Updates an existing unconditional show that targeted a replaced sheet row.
  */
 export function ensureShowAction(
 	maps: FlowEntityMaps,
 	containerRowId: string,
+	sheetRowId: string,
+	replacedSheetRowId?: string,
 ): FlowEntityMaps {
 	const row = maps.rowsById[containerRowId];
 	if (!row) return maps;
 	const existingActions = Array.isArray(row.data.actions)
 		? (row.data.actions as UI_RowAction[])
 		: [];
-	if (existingActions.some((a) => a.true === "{show()}")) return maps;
-	const showAction: UI_RowAction = {
-		condition: "",
-		true: "{show()}",
-		false: "",
-	};
-	return updateRowActions(maps, containerRowId, [
-		...existingActions,
-		showAction,
-	]);
+	const showBranch = `{show(${sheetRowId})}`;
+
+	let updatedExisting = false;
+	const nextActions = existingActions.map((action) => {
+		if (action.condition?.trim()) {
+			return action;
+		}
+		const parsed = parseBranch(action.true);
+		if (parsed?.functionName !== "show") {
+			return action;
+		}
+		const targetId = parsed.args[0]?.trim();
+		if (replacedSheetRowId && targetId === replacedSheetRowId) {
+			updatedExisting = true;
+			return { ...action, true: showBranch };
+		}
+		return action;
+	});
+
+	const hasMatchingShow = nextActions.some((action) => {
+		if (action.condition?.trim()) return false;
+		const parsed = parseBranch(action.true);
+		return (
+			parsed?.functionName === "show" &&
+			parsed.args[0]?.trim() === sheetRowId
+		);
+	});
+
+	if (!updatedExisting && !hasMatchingShow) {
+		nextActions.push({
+			condition: "",
+			true: showBranch,
+			false: "",
+		});
+	}
+
+	return updateRowActions(maps, containerRowId, nextActions);
 }

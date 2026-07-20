@@ -280,9 +280,16 @@ export async function loadSduiRowDefinitions(): Promise<SduiRowDefinition[]> {
 
 const ROW_BINDING_FIELD_NAMES = new Set(["source", "destination", "secondary"]);
 
+/**
+ * Universal structural fields inherited from UI_RowBase into every builder
+ * row-field list. Keep this allowlist narrow — never dump all base metadata.
+ */
+export const INHERITED_STRUCTURAL_ROW_FIELDS = ["sheet"] as const;
+
 const SCHEMA_TO_UI_FIELD_NAME: Record<string, string> = {
 	child: "childRowId",
 	children: "childrenRowIds",
+	sheet: "sheetRowId",
 };
 
 export const ROW_FIELD_SPEC_KINDS = [
@@ -290,6 +297,7 @@ export const ROW_FIELD_SPEC_KINDS = [
 	"textList",
 	"child",
 	"children",
+	"sheet",
 	"binding",
 	"enum",
 ] as const;
@@ -354,7 +362,7 @@ function rowFieldSpecFromAttribute(
 			kind = "textList";
 			break;
 		case "Row":
-			kind = "child";
+			kind = schemaName === "sheet" ? "sheet" : "child";
 			break;
 		case "Row[]":
 			kind = "children";
@@ -368,6 +376,14 @@ function rowFieldSpecFromAttribute(
 		kind,
 		required: attribute.required,
 	};
+}
+
+export function inheritedStructuralRowFields(): RowFieldSpec[] {
+	return INHERITED_STRUCTURAL_ROW_FIELDS.map((schemaName) => ({
+		name: SCHEMA_TO_UI_FIELD_NAME[schemaName] ?? schemaName,
+		kind: "sheet" as const,
+		required: false,
+	}));
 }
 
 /**
@@ -407,9 +423,10 @@ export function rowSpecificAttributesTsSource(
 export function rowFieldsFromDefinitions(
 	definitions: SduiRowDefinition[],
 ): Record<string, RowFieldSpec[]> {
+	const inheritedFields = inheritedStructuralRowFields();
 	const rowFields: Record<string, RowFieldSpec[]> = {};
 	for (const definition of definitions) {
-		const fields: RowFieldSpec[] = [];
+		const fields: RowFieldSpec[] = [...inheritedFields];
 		for (const [schemaName, attribute] of Object.entries(
 			definition.attributes,
 		)) {

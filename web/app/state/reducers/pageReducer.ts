@@ -57,15 +57,24 @@ function buildFlatPaletteRow(
 	return { rootRowId: row.id, rowRecords: rowToFlatRecords(row) };
 }
 
-type ChildContainerSelection = { activeRowId: string; configStack: string[] };
+type ContainerDropSelection = {
+	activeRowId: string;
+	configStack: string[];
+};
 
-function resolveChildContainerSelection(
+function resolveContainerDropSelection(
 	state: AppState,
 	pageId: string,
 	destinationContainer: { type: string; rowId: string } | undefined,
 	targetRowId: string,
-): ChildContainerSelection | null {
-	if (destinationContainer?.type !== "child") return null;
+): ContainerDropSelection | null {
+	if (
+		!destinationContainer ||
+		(destinationContainer.type !== "child" &&
+			destinationContainer.type !== "sheet")
+	) {
+		return null;
+	}
 	const page = state.pagesById[pageId];
 	if (!page) return null;
 	const roots = pageRootIds(page);
@@ -81,38 +90,61 @@ function resolveChildContainerSelection(
 	};
 }
 
-function applyChildContainerDrop(
+function applyStructuralContainerDrop(
 	state: AppState,
 	nextMaps: FlowEntityMaps,
 	destinationPageId: string,
 	destinationContainer: { type: string; rowId: string } | undefined,
 	selectedRowId: string,
 ): AppState {
-	if (destinationContainer) {
-		const childSelection = resolveChildContainerSelection(
-			{ ...state, ...nextMaps },
-			destinationPageId,
-			destinationContainer,
+	if (!destinationContainer) {
+		return {
+			...state,
+			...nextMaps,
+			activeRowId: selectedRowId,
+			configStack: [],
+		};
+	}
+
+	const containerSelection = resolveContainerDropSelection(
+		{ ...state, ...nextMaps },
+		destinationPageId,
+		destinationContainer,
+		selectedRowId,
+	);
+
+	if (!containerSelection) {
+		return {
+			...state,
+			...nextMaps,
+			activeRowId: selectedRowId,
+			configStack: [],
+		};
+	}
+
+	if (destinationContainer.type === "sheet") {
+		const parentRow = state.rowsById[destinationContainer.rowId];
+		const replacedSheetRowId =
+			typeof parentRow?.data.sheet_row_id === "string"
+				? parentRow.data.sheet_row_id
+				: undefined;
+		const mapsWithShow = ensureShowAction(
+			nextMaps,
+			destinationContainer.rowId,
 			selectedRowId,
+			replacedSheetRowId,
 		);
-		if (childSelection) {
-			const mapsWithShow = ensureShowAction(
-				nextMaps,
-				destinationContainer.rowId,
-			);
-			return {
-				...state,
-				...mapsWithShow,
-				...childSelection,
-			};
-		}
+		return {
+			...state,
+			...mapsWithShow,
+			...containerSelection,
+		};
 	}
 
 	return {
 		...state,
 		...nextMaps,
-		activeRowId: selectedRowId,
-		configStack: [],
+		...containerSelection,
 	};
 }
 
@@ -181,7 +213,7 @@ export const pageReducer = (state: AppState, action: RowAction): AppState => {
 				action.destinationContainer,
 			);
 
-			return applyChildContainerDrop(
+			return applyStructuralContainerDrop(
 				state,
 				nextMaps,
 				action.destinationPageId,
@@ -233,7 +265,7 @@ export const pageReducer = (state: AppState, action: RowAction): AppState => {
 				action.destinationContainer,
 			);
 
-			return applyChildContainerDrop(
+			return applyStructuralContainerDrop(
 				state,
 				nextMaps,
 				action.destinationPageId,

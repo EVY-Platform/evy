@@ -338,7 +338,7 @@ These run on the iOS client when a row action branch executes. See [sdui.md](./s
 {create(service_id, resource_id, data?)}
 ```
 
-Creates a domain entity immediately. Inline `data` supports nested object values (e.g. `data: {type: pickup, time: selected_pickup_timeslot}`), quoted string literals (never resolved as data paths), bare `true`/`false` booleans, and `null`. For user confirmation, present a `{show()}` child sheet and run `create` from the sheet's confirm button.
+Creates a domain entity immediately. Inline `data` supports nested object values (e.g. `data: {type: pickup, time: selected_pickup_timeslot}`), quoted string literals (never resolved as data paths), bare `true`/`false` booleans, and `null`. For user confirmation, call `{show(a4b5c6d7-e8f9-4a0b-1c2d-3e4f5a6b7c8d)}` (or another sheet row ID) and run `create` from the sheet's confirm button.
 
 #### update
 
@@ -346,4 +346,12 @@ Creates a domain entity immediately. Inline `data` supports nested object values
 {update(service_id, resource_id, filter, changes)}
 ```
 
-Updates matching domain entities immediately. Filter and changes values resolve like inline `create` data; a filter value of `null` matches records where the property is absent or JSON `null`, and changes can call functions, e.g. `{archivedAt: now()}`. For user confirmation, present a `{show()}` child sheet and run `update` from the sheet's confirm button.
+Updates matching domain entities immediately. Filter and changes values resolve like inline `create` data; a filter value of `null` matches records where the property is absent or JSON `null`, and changes can call functions, e.g. `{archivedAt: now()}`. For user confirmation, call `{show(a4b5c6d7-e8f9-4a0b-1c2d-3e4f5a6b7c8d)}` (or another sheet row ID) and run `update` from the sheet's confirm button.
+
+#### show
+
+```
+{show(rowId)}
+```
+
+Presents the row with ID `rowId` in a sheet overlay. Requires exactly one non-empty ID; targets may live on any synced page. Unresolved IDs are errors. See [sdui.md](./sdui.md) for sheet layout and builder defaults.

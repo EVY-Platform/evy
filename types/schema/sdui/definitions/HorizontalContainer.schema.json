@@ -16,12 +16,6 @@
 				"title": {
 					"type": "string"
 				},
-				"source": {
-					"type": "string"
-				},
-				"child": {
-					"$ref": "../evy.schema.json#/$defs/UI_Row"
-				},
 				"children": {
 					"type": "array",
 					"items": {

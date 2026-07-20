@@ -73,6 +73,11 @@ export function collectSubtreeRowIds(
 		collectSubtreeRowIds(childRowId, rowsById, visited);
 	}
 
+	const sheetRowId = row.data.sheet_row_id;
+	if (typeof sheetRowId === "string") {
+		collectSubtreeRowIds(sheetRowId, rowsById, visited);
+	}
+
 	const childrenRowIds = row.data.children_row_ids;
 	if (Array.isArray(childrenRowIds)) {
 		for (const childId of childrenRowIds) {

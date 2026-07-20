@@ -158,8 +158,10 @@ function assembleRow(
 	const nextVisitedRowIds = new Set(visitedRowIds).add(rowId);
 	const data = { ...row.data } as Record<string, unknown>;
 	const childRowId = data.child_row_id;
+	const sheetRowId = data.sheet_row_id;
 	const childrenRowIds = data.children_row_ids;
 	delete data.child_row_id;
+	delete data.sheet_row_id;
 	delete data.children_row_ids;
 
 	const assembledRow: Record<string, unknown> = {
@@ -172,6 +174,13 @@ function assembleRow(
 	if (typeof childRowId === "string") {
 		assembledRow.child = assembleRow(
 			childRowId,
+			rowById,
+			nextVisitedRowIds,
+		);
+	}
+	if (typeof sheetRowId === "string") {
+		assembledRow.sheet = assembleRow(
+			sheetRowId,
 			rowById,
 			nextVisitedRowIds,
 		);
@@ -214,6 +223,7 @@ function withRowNameFallbacks(row: UI_Row): UI_Row {
 		...row,
 		name: (row.name ?? row.title) || row.type,
 		child: row.child ? withRowNameFallbacks(row.child) : row.child,
+		sheet: row.sheet ? withRowNameFallbacks(row.sheet) : row.sheet,
 		children: Array.isArray(row.children)
 			? row.children.map(withRowNameFallbacks)
 			: row.children,
@@ -226,6 +236,10 @@ function rowContainsTitle(row: UI_Row, title: string): boolean {
 	}
 
 	if (row.child && rowContainsTitle(row.child, title)) {
+		return true;
+	}
+
+	if (row.sheet && rowContainsTitle(row.sheet, title)) {
 		return true;
 	}
 
@@ -415,7 +429,7 @@ test.describe("Web E2E Integration Tests", () => {
 			actions: [],
 			title: "E2E First Child Row",
 			text: "First child text",
-			child: {
+			sheet: {
 				id: crypto.randomUUID(),
 				type: "Text",
 				source: "",
@@ -423,7 +437,7 @@ test.describe("Web E2E Integration Tests", () => {
 				actions: [],
 				title: "E2E Second Child Row",
 				text: "Second child text",
-				child: {
+				sheet: {
 					id: crypto.randomUUID(),
 					type: "Text",
 					source: "",
@@ -443,7 +457,7 @@ test.describe("Web E2E Integration Tests", () => {
 			title: "E2E Parent Row",
 			subtitle: "Parent subtitle",
 			icon: "",
-			child: firstChild,
+			sheet: firstChild,
 		};
 		await createFlowInApi({
 			id: crypto.randomUUID(),
@@ -465,12 +479,12 @@ test.describe("Web E2E Integration Tests", () => {
 			.getByText("E2E Parent Row", { exact: true })
 			.click();
 
-		let childPages = page.getByTestId("child-page");
+		let childPages = page.getByTestId("sheet-page");
 		await expect(childPages).toHaveCount(1);
 		await expect(
 			childPages.nth(0).getByText("E2E First Child Row", { exact: true }),
 		).toBeVisible();
-		await expect(page.getByTestId("blank-child-page")).not.toBeVisible();
+		await expect(page.getByTestId("blank-sheet-page")).not.toBeVisible();
 		await expect(page.locator(SELECTORS.phoneContainer)).toHaveCount(2);
 
 		await childPages
@@ -478,7 +492,7 @@ test.describe("Web E2E Integration Tests", () => {
 			.getByText("E2E First Child Row", { exact: true })
 			.click();
 
-		childPages = page.getByTestId("child-page");
+		childPages = page.getByTestId("sheet-page");
 		await expect(childPages).toHaveCount(2);
 		await expect(
 			childPages.nth(0).getByText("E2E First Child Row", { exact: true }),
@@ -488,7 +502,7 @@ test.describe("Web E2E Integration Tests", () => {
 				.nth(1)
 				.getByText("E2E Second Child Row", { exact: true }),
 		).toBeVisible();
-		await expect(page.getByTestId("blank-child-page")).not.toBeVisible();
+		await expect(page.getByTestId("blank-sheet-page")).not.toBeVisible();
 		await expect(page.locator(SELECTORS.phoneContainer)).toHaveCount(3);
 
 		await childPages
@@ -496,7 +510,7 @@ test.describe("Web E2E Integration Tests", () => {
 			.getByText("E2E Second Child Row", { exact: true })
 			.click();
 
-		childPages = page.getByTestId("child-page");
+		childPages = page.getByTestId("sheet-page");
 		await expect(childPages).toHaveCount(3);
 		await expect(
 			childPages.nth(0).getByText("E2E First Child Row", { exact: true }),
@@ -509,7 +523,7 @@ test.describe("Web E2E Integration Tests", () => {
 		await expect(
 			childPages.nth(2).getByText("E2E Third Child Row", { exact: true }),
 		).toBeVisible();
-		await expect(page.getByTestId("blank-child-page")).not.toBeVisible();
+		await expect(page.getByTestId("blank-sheet-page")).not.toBeVisible();
 		await expect(page.locator(SELECTORS.phoneContainer)).toHaveCount(4);
 
 		await childPages
@@ -517,9 +531,9 @@ test.describe("Web E2E Integration Tests", () => {
 			.getByText("E2E Third Child Row", { exact: true })
 			.click();
 
-		childPages = page.getByTestId("child-page");
+		childPages = page.getByTestId("sheet-page");
 		await expect(childPages).toHaveCount(3);
-		await expect(page.getByTestId("blank-child-page")).toBeVisible();
+		await expect(page.getByTestId("blank-sheet-page")).toBeVisible();
 		await expect(page.locator(SELECTORS.phoneContainer)).toHaveCount(5);
 		await expectFlowRowTitlePersisted(
 			uniqueFlowName,

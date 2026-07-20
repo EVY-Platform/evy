@@ -20,11 +20,10 @@ import {
 } from "./appLayoutStyles";
 import AppPage from "./components/AppPage";
 
-import { BlankChildPage } from "./components/BlankChildPage";
+import { BlankSheetPage } from "./components/BlankSheetPage";
 import { CanvasLoadingIndicator } from "./components/CanvasLoadingIndicator";
 import { CanvasPageFrame } from "./components/CanvasPageFrame";
 import { CanvasViewport } from "./components/CanvasViewport";
-import { ChildPage } from "./components/ChildPage";
 import {
 	CollapsibleSidePanel,
 	useHoverToggle,
@@ -32,16 +31,17 @@ import {
 import { ConfigurationPanel } from "./components/ConfigurationPanel";
 import { NavigationBreadcrumb } from "./components/NavigationBreadcrumb";
 import { RowsPanel } from "./components/RowsPanel";
+import { SheetPage } from "./components/SheetPage";
 import { useFlows } from "./hooks/useFlows";
 import { useRowById } from "./hooks/useRowById";
 import { LUCIDE_STROKE_WIDTH } from "./icons/iconSyntax";
 import { AppProvider } from "./state/AppProvider";
 import { useDragContext } from "./state/contexts/DragContext";
 import { useFlowsContext } from "./state/contexts/FlowsContext";
-import { buildActiveChildPages } from "./utils/childPageHelpers";
 import { handleDrop } from "./utils/dropHandler";
 import { serverFlowsToCollections } from "./utils/flowEntities";
 import { capturePageFramePosition } from "./utils/preActivationCapture";
+import { buildActiveSheetPages } from "./utils/sheetPageHelpers";
 
 const COLLAPSED_PANEL_ICON_STYLE = { color: "var(--color-evy-gray)" };
 const noop = () => {};
@@ -197,14 +197,14 @@ function AppContent() {
 			: activeRowId;
 
 	const activeLeafRow = useRowById(activeLeafRowId);
-	const isSearchParent = activeLeafRow?.config.type === "Search";
-	const childPages = useMemo(
-		() => buildActiveChildPages({ activeRowId, configStack, rowsById }),
+
+	const sheetPages = useMemo(
+		() => buildActiveSheetPages({ activeRowId, configStack, rowsById }),
 		[activeRowId, configStack, rowsById],
 	);
 
-	const shouldShowBlankChildPage = Boolean(
-		activeLeafRowId && !activeLeafRow?.config.childRowId,
+	const shouldShowBlankSheetPage = Boolean(
+		activeLeafRowId && !activeLeafRow?.config.sheetRowId,
 	);
 
 	return (
@@ -227,42 +227,30 @@ function AppContent() {
 								<AppPage pageId={activePage.id} />
 							</CanvasPageFrame>
 
-							{childPages.map(({ childRowId, parentRowId }) => {
-								const childVariant =
-									rowsById[parentRowId]?.type === "Search"
-										? "full"
-										: "sheet";
-								return (
-									<CanvasPageFrame
-										key={childRowId}
-										wrapperStyle={
-											secondaryPageWithPhoneStyle
-										}
-										className="evy-flex-shrink-0"
-										data-testid="child-page"
-									>
-										<ChildPage
-											childRowId={childRowId}
-											pageId={activePage.id}
-											parentRowId={parentRowId}
-											variant={childVariant}
-										/>
-									</CanvasPageFrame>
-								);
-							})}
+							{sheetPages.map(({ sheetRowId, parentRowId }) => (
+								<CanvasPageFrame
+									key={sheetRowId}
+									wrapperStyle={secondaryPageWithPhoneStyle}
+									className="evy-flex-shrink-0"
+									data-testid="sheet-page"
+								>
+									<SheetPage
+										sheetRowId={sheetRowId}
+										pageId={activePage.id}
+										parentRowId={parentRowId}
+									/>
+								</CanvasPageFrame>
+							))}
 
-							{shouldShowBlankChildPage && (
+							{shouldShowBlankSheetPage && (
 								<CanvasPageFrame
 									wrapperStyle={secondaryPageWithPhoneStyle}
 									className="evy-flex-shrink-0"
-									data-testid="blank-child-page"
+									data-testid="blank-sheet-page"
 								>
-									<BlankChildPage
+									<BlankSheetPage
 										pageId={activePage.id}
 										parentRowId={activeLeafRowId}
-										variant={
-											isSearchParent ? "full" : "sheet"
-										}
 									/>
 								</CanvasPageFrame>
 							)}

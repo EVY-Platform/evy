@@ -1,5 +1,4 @@
 import { ContainerChildren } from "../../components/ContainerChildren";
-import { ContainerChildTemplate } from "../../components/ContainerChildTemplate";
 import type { RowConfig } from "../../types/row";
 import { defineRow } from "../defineRow";
 import { RowLayout } from "../design-system/RowLayout";
@@ -16,17 +15,8 @@ export default defineRow(typeName, {
 	} satisfies RowConfig,
 	render: (row) => {
 		const title = row.config.title;
-		const source =
-			typeof row.config.source === "string"
-				? row.config.source
-				: undefined;
 		return (
 			<RowLayout title={title} fullWidthContent>
-				<ContainerChildTemplate
-					childRowId={row.config.childRowId}
-					source={source}
-					orientation="vertical"
-				/>
 				<ContainerChildren
 					childIds={row.config.childrenRowIds ?? []}
 					orientation="vertical"

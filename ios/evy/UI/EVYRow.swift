@@ -190,6 +190,14 @@ private struct EVYResolvedRow: View {
   }
 
   private var childRef: EVYRowRef? {
+    let rowType: EVYRowType?
+    switch ref {
+    case .id:
+      rowType = storedRow?.type
+    case .inline(let row):
+      rowType = row.type
+    }
+    guard rowType == .search else { return nil }
     switch ref {
     case .id:
       return storedRow?.childRowId.map(EVYRowRef.id)
@@ -272,8 +280,12 @@ private struct EVYResolvedRow: View {
     EVYActionRunner.run(
       actions: contentRow.actions,
       datum: datum,
-      childRef: childRef,
-      show: { ref in presentedSheetRef = ref },
+      show: { rowId in
+        guard EVYRowStore.row(id: rowId) != nil else {
+          throw EVYError.invalidData(context: "show could not resolve row id \(rowId)")
+        }
+        presentedSheetRef = .id(rowId)
+      },
       prepare: prepare,
       action: { operation in
         if case .close = operation, let sheetDismiss {
@@ -304,7 +316,7 @@ private struct EVYResolvedRow: View {
     case .calendar(let view, _):
       EVYCalendarRow(view: view)
     case .horizontalContainer(let view, _):
-      EVYHorizontalContainerRow(view: view, childRef: childRef, childRefs: childRefs)
+      EVYHorizontalContainerRow(view: view, childRefs: childRefs)
     case .dropdown(let view, _):
       EVYDropdownRow(view: view)
     case .heading(let view, _):
@@ -316,7 +328,7 @@ private struct EVYResolvedRow: View {
     case .input(let view, _):
       EVYInputRow(view: view, isInteractive: contentRow.actions.isEmpty)
     case .verticalContainer(let view, _):
-      EVYVerticalContainerRow(view: view, childRef: childRef, childRefs: childRefs)
+      EVYVerticalContainerRow(view: view, childRefs: childRefs)
     case .listItem(let view, _):
       EVYListItemRow(view: view)
     case .map(let view, _):
@@ -328,7 +340,7 @@ private struct EVYResolvedRow: View {
     case .selectPhoto(let view, _):
       EVYSelectPhotoRow(view: view)
     case .tabContainer(let view, _):
-      EVYTabContainerRow(view: view, childRef: childRef, childRefs: childRefs)
+      EVYTabContainerRow(view: view, childRefs: childRefs)
     case .timeslotPicker(let view, _):
       EVYTimeslotPickerRow(
         view: view,
@@ -354,7 +366,7 @@ private struct EVYResolvedRow: View {
   }
 }
 
-/// Sheet presented by `{show()}`: child row `title` is the main header (like a page title).
+/// Sheet presented by `{show(rowId)}`: child row `title` is the main header (like a page title).
 private struct EVYSheetOverlay: View {
   let sheetRef: EVYRowRef
   let onDismiss: () -> Void

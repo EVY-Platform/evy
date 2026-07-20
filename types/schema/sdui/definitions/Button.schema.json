@@ -22,9 +22,6 @@
 				"style": {
 					"type": "string",
 					"enum": ["primary", "danger"]
-				},
-				"child": {
-					"$ref": "../evy.schema.json#/$defs/UI_Row"
 				}
 			}
 		}

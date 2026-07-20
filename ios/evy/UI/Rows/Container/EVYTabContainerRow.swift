@@ -7,23 +7,24 @@
 
 import SwiftUI
 
+private struct EVYTabContainerTab: Identifiable, Equatable {
+  let id: String
+  let label: String
+  let childRef: EVYRowRef
+}
+
 struct EVYTabContainerRow: View {
 
   private let view: TabContainerRowViewData
-  private let childRef: EVYRowRef?
   private let childRefs: [EVYRowRef]
   @State private var selected: Int = 0
   @State private var tabs: [EVYTabContainerTab] = []
 
-  @Environment(\.evyScope) private var evyScope
-
   init(
     view: TabContainerRowViewData,
-    childRef: EVYRowRef?,
     childRefs: [EVYRowRef]
   ) {
     self.view = view
-    self.childRef = childRef
     self.childRefs = childRefs
   }
 
@@ -39,7 +40,7 @@ struct EVYTabContainerRow: View {
       .padding(.bottom, Constants.majorPadding)
 
       if selected < tabs.count {
-        tabContent(tabs[selected])
+        EVYRow(ref: tabs[selected].childRef)
           .id(tabs[selected].id)
       }
     }
@@ -47,32 +48,21 @@ struct EVYTabContainerRow: View {
     .onAppear {
       refreshTabs()
     }
-    .onChange(of: view.source) { _, _ in
-      refreshTabs()
-    }
     .onChange(of: view.segments) { _, _ in
       refreshTabs()
     }
   }
 
-  @ViewBuilder
-  private func tabContent(_ tab: EVYTabContainerTab) -> some View {
-    switch tab.content {
-    case .dynamic(let instance):
-      EVYRow(row: instance.displayRow, datum: instance.datum)
-    case .static(let ref):
-      EVYRow(ref: ref)
-    }
-  }
-
   private func refreshTabs() {
-    tabs = EVYTabContainerTabs.build(
-      source: view.source,
-      childRef: childRef,
-      staticSegments: view.segments,
-      staticChildRefs: childRefs,
-      scopeId: evyScope.cacheScopeId
-    )
+    let staticCount = min(view.segments.count, childRefs.count)
+    tabs = (0..<staticCount).map { index in
+      let ref = childRefs[index]
+      return EVYTabContainerTab(
+        id: "static-\(ref.id)",
+        label: view.segments[index],
+        childRef: ref
+      )
+    }
     if selected >= tabs.count {
       selected = max(0, tabs.count - 1)
     }
@@ -87,15 +77,6 @@ struct EVYTabContainerRow: View {
         "type": "TabContainer",
         "actions": [],
         "title": "Tab Container Preview",
-        "source": "{items}",
-        "child": {
-          "id": "tab-dynamic-template",
-          "type": "Text",
-          "actions": [],
-          "title": "{$datum.title}",
-          "subtitle": "",
-          "icon": ""
-        },
         "segments": ["Tab One", "Tab Two"],
         "children": [
           {

@@ -88,6 +88,30 @@ describe("normalizeServerRow", () => {
 	});
 });
 
+describe("normalizeServerRow sheet relationships", () => {
+	it("normalizes nested sheet separately from Search child", () => {
+		const n = normalizeServerRow(
+			makeServerRow({
+				type: "Search",
+				title: "Search",
+				child: makeServerRow({
+					id: ROW_B,
+					type: "Text",
+					title: "Result",
+				}),
+				sheet: makeServerRow({
+					id: ROW_A,
+					type: "Text",
+					title: "Sheet",
+				}),
+			}),
+		);
+
+		expect((n.child as ServerRow | undefined)?.id).toBe(ROW_B);
+		expect((n.sheet as ServerRow | undefined)?.id).toBe(ROW_A);
+	});
+});
+
 describe("buildRowForNewPageFromBase", () => {
 	it("does not create a default child for a new Search row", () => {
 		const newId = "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee";

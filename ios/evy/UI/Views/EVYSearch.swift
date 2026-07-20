@@ -36,8 +36,8 @@ struct EVYSearch: View {
       localResults = EVYState(
         textToWatch: source,
         setter: {
-          EVYSearchResult.makeResults(
-            from: try? EVY.getDataFromText(source),
+          EVYSearchResult.loadLocalResults(
+            source: source,
             resultTemplate: resultTemplate,
             scopeId: scopeId
           )

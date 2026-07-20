@@ -57,6 +57,13 @@
 			"when": 1782604800000,
 			"tag": "0007_decompose_sdui_flows",
 			"breakpoints": true
+		},
+		{
+			"idx": 8,
+			"version": "7",
+			"when": 1784505600000,
+			"tag": "0008_generic_row_sheets",
+			"breakpoints": true
 		}
 	]
 }

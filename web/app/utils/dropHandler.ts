@@ -194,6 +194,8 @@ export function handleDrop(
 	const pageDestinationContainerRowId = getDestinationContainerRowId(
 		destinationPageRecord,
 	);
+	const pageDestinationContainerType =
+		destinationPageRecord.data.destinationContainerType;
 
 	const destinationPage = maps.pagesById[destinationPageId];
 	invariant(destinationPage, "handleDrop: destinationPage is not defined");
@@ -203,9 +205,15 @@ export function handleDrop(
 		destinationPageId,
 	};
 	if (pageDestinationContainerRowId) {
+		const containerType =
+			pageDestinationContainerType === "child" ||
+			pageDestinationContainerType === "children" ||
+			pageDestinationContainerType === "sheet"
+				? pageDestinationContainerType
+				: "sheet";
 		dispatchOptions.destinationContainer = {
 			rowId: pageDestinationContainerRowId,
-			type: "child",
+			type: containerType,
 		};
 		dispatchOptions.destinationIndex = 0;
 
@@ -266,7 +274,8 @@ export function handleDrop(
 			isPlaceholderDrop &&
 			typeof placeholderContainerRowId === "string" &&
 			(placeholderContainerType === "child" ||
-				placeholderContainerType === "children")
+				placeholderContainerType === "children" ||
+				placeholderContainerType === "sheet")
 		) {
 			// Drop into an empty container placeholder - use explicit metadata.
 			dispatchOptions.destinationContainer = {
@@ -308,6 +317,8 @@ export function handleDrop(
 					destinationRow.data.rowId as string,
 				);
 			} else if (destinationContainer?.type === "child") {
+				dispatchOptions.destinationIndex = 0;
+			} else if (destinationContainer?.type === "sheet") {
 				dispatchOptions.destinationIndex = 0;
 			} else if (closestEdgeOfTarget && !destinationContainer) {
 				const destinationRowIndex = destinationPage.rowIds.indexOf(

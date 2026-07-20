@@ -100,6 +100,9 @@
 				"name": {
 					"type": "string",
 					"minLength": 1
+				},
+				"sheet": {
+					"$ref": "#/$defs/UI_Row"
 				}
 			}
 		},

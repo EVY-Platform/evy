@@ -10,6 +10,7 @@ export const ROW_METADATA_KEYS = new Set([
 
 export const ROW_CHILD_FIELD = "child_row_id" as const;
 export const ROW_CHILDREN_FIELD = "children_row_ids" as const;
+export const ROW_SHEET_FIELD = "sheet_row_id" as const;
 
 export const ROW_DECOMPOSE_SKIP_KEYS = new Set([
 	"id",
@@ -18,6 +19,7 @@ export const ROW_DECOMPOSE_SKIP_KEYS = new Set([
 	"visible",
 	"child",
 	"children",
+	"sheet",
 ]);
 
 export const ROW_ATTRIBUTE_STATIC_NAMES = ["title", "visible"] as const;

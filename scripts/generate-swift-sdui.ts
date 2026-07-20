@@ -1,5 +1,6 @@
 import { join } from "node:path";
 import {
+	INHERITED_STRUCTURAL_ROW_FIELDS,
 	rowSpecFromDefinitions,
 	type SduiRowDefinition,
 	type SduiRowSpec,
@@ -8,6 +9,9 @@ import {
 import { OUT_SWIFT } from "./types-generation-utils.js";
 
 type RowSpec = SduiRowSpec;
+
+const INHERITED_STRUCTURAL_UI_ROW_ENTRIES: [string, string][] =
+	INHERITED_STRUCTURAL_ROW_FIELDS.map((name) => [name, "UI_Row"]);
 
 type SchemaObject = Record<string, unknown>;
 
@@ -119,6 +123,9 @@ function buildShapeOverrides(): Map<string, string> {
 
 function collectRowAttributeEntries(rowSpec: RowSpec): [string, string][] {
 	const entries = new Map<string, string>();
+	for (const [key, specType] of INHERITED_STRUCTURAL_UI_ROW_ENTRIES) {
+		entries.set(key, specType);
+	}
 	for (const spec of Object.values(rowSpec)) {
 		for (const [key, field] of Object.entries(spec.content)) {
 			entries.set(key, field.type);
@@ -128,7 +135,15 @@ function collectRowAttributeEntries(rowSpec: RowSpec): [string, string][] {
 }
 
 function buildRowTypeAttributeKeys(rowSpec: RowSpec): Map<string, string[]> {
-	const baseKeys = ["id", "type", "actions", "visible", "title", "name"];
+	const baseKeys = [
+		"id",
+		"type",
+		"actions",
+		"visible",
+		"title",
+		"name",
+		...INHERITED_STRUCTURAL_ROW_FIELDS,
+	];
 	const map = new Map<string, string[]>();
 	for (const [rowType, spec] of Object.entries(rowSpec)) {
 		const keys = [
@@ -388,7 +403,12 @@ function emitRowViewDataStruct(
 	spec: { content: Record<string, SduiRowSpecField> },
 ): string {
 	const viewDataName = `${rowType}RowViewData`;
-	const entries = Object.entries(spec.content);
+	const inheritedStructuralKeys = new Set<string>(
+		INHERITED_STRUCTURAL_ROW_FIELDS,
+	);
+	const entries = Object.entries(spec.content).filter(
+		([key]) => !inheritedStructuralKeys.has(key),
+	);
 	const fieldLines = entries.map(
 		([key, field]) =>
 			`    public let ${swiftIdentifier(key)}: ${swiftTypeForSpecType(field.type, field.required)}`,
@@ -404,16 +424,21 @@ ${fieldLines.join("\n")}
 
 function emitRowAttributeProtocols(rowSpec: RowSpec): string {
 	const rowTypes = getRowTypesFromSpec(rowSpec);
+	const inheritedStructuralKeys = new Set<string>(
+		INHERITED_STRUCTURAL_ROW_FIELDS,
+	);
 	const blocks: string[] = [];
 	for (const rowType of rowTypes) {
 		const spec = rowSpec[rowType];
 		if (!spec) continue;
 		const protocolName = `${rowType}RowAttributes`;
 		const viewDataName = `${rowType}RowViewData`;
-		const propLines = Object.entries(spec.content).map(
-			([key, field]) =>
-				`    var ${swiftIdentifier(key)}: ${swiftTypeForSpecType(field.type, field.required)} { get }`,
-		);
+		const propLines = Object.entries(spec.content)
+			.filter(([key]) => !inheritedStructuralKeys.has(key))
+			.map(
+				([key, field]) =>
+					`    var ${swiftIdentifier(key)}: ${swiftTypeForSpecType(field.type, field.required)} { get }`,
+			);
 		blocks.push(
 			`public protocol ${protocolName} {\n${propLines.join("\n")}\n}\n\nextension ${viewDataName}: ${protocolName} {}`,
 		);

@@ -187,7 +187,8 @@ export function useDraggable({
 				canDrop: () => true,
 				getIsSticky: () =>
 					!!currentRow?.config.children?.length ||
-					!!currentRow?.config.child,
+					!!currentRow?.config.child ||
+					!!currentRow?.config.sheet,
 				getData: ({ input, element: targetElement }) =>
 					attachClosestEdge(
 						{ rowId },
@@ -213,6 +214,7 @@ export function useDraggable({
 	}, [
 		allowedEdges,
 		currentRow?.config.child,
+		currentRow?.config.sheet,
 		currentRow?.config.children?.length,
 		dispatchDropIndicator,
 		isDraggable,

@@ -1,6 +1,5 @@
 import { type CSSProperties, type MouseEvent, useState } from "react";
 import { ContainerChildren } from "../../components/ContainerChildren";
-import { ContainerChildTemplate } from "../../components/ContainerChildTemplate";
 import { useRowById } from "../../hooks/useRowById";
 import { useFlowsContext } from "../../state/contexts/FlowsContext";
 import type { RowConfig } from "../../types/row";
@@ -50,10 +49,6 @@ export default defineRow(typeName, {
 				? rawSegments
 				: [];
 		const childrenRowIds = row.config.childrenRowIds ?? [];
-		const source =
-			typeof row.config.source === "string"
-				? row.config.source
-				: undefined;
 
 		const selectSegment = (
 			event: MouseEvent<HTMLButtonElement>,
@@ -84,10 +79,6 @@ export default defineRow(typeName, {
 
 		return (
 			<RowLayout title={title} fullWidthContent>
-				<ContainerChildTemplate
-					childRowId={row.config.childRowId}
-					source={source}
-				/>
 				<div
 					className="evy-flex evy-mb-2 evy-px-2"
 					style={segmentGroupStyle}

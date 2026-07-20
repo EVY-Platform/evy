@@ -31,6 +31,11 @@ struct EVYStoredRow: Decodable, Equatable {
     return value
   }
 
+  var sheetRowId: String? {
+    guard case .string(let value) = data["sheet_row_id"] else { return nil }
+    return value
+  }
+
   var childrenRowIds: [String] {
     guard case .array(let items) = data["children_row_ids"] else { return [] }
     return items.compactMap { item in
@@ -40,10 +45,11 @@ struct EVYStoredRow: Decodable, Equatable {
   }
 
   /// Builds a single-row `UI_Row` from this record's content.
-  /// Child and children are intentionally NOT resolved — callers use
-  /// `childRowId` / `childrenRowIds` to render nested rows by id.
+  /// Relationship ids are intentionally NOT resolved — callers use
+  /// `sheetRowId`, `childRowId` (Search only), and `childrenRowIds` to render nested rows by id.
   func uiRow() -> UI_Row? {
     var object = data.mapValues(evyJsonToAny)
+    object.removeValue(forKey: "sheet_row_id")
     object.removeValue(forKey: "child_row_id")
     object.removeValue(forKey: "children_row_ids")
     object["id"] = id
@@ -88,7 +94,7 @@ enum EVYRowRef: Identifiable, Equatable {
     lhs.id == rhs.id
   }
 
-  /// Returns the content `UI_Row` for use as a template (e.g. VerticalContainer / Search).
+  /// Returns the content `UI_Row` for use as a template (e.g. Search result child).
   // used by tests
   @MainActor
   func templateRow(from store: EVYDataStore = EVY.publicStore) -> UI_Row? {

@@ -270,7 +270,12 @@ export function ConfigurationPanel() {
 				.filter((f) => isPanelScalarField(f.kind))
 				.sort(compareRowFieldsForPanel);
 			const childFields = fields
-				.filter((f) => f.kind === "child" || f.kind === "children")
+				.filter(
+					(f) =>
+						f.kind === "child" ||
+						f.kind === "children" ||
+						f.kind === "sheet",
+				)
 				.sort(compareRowFieldsForPanel);
 
 			const getAttributeCandidatesForQualifier =
@@ -316,19 +321,19 @@ export function ConfigurationPanel() {
 			const containerElements = childFields.flatMap((field) => {
 				const uniqueId = `${configRow.id}-${field.name}`;
 				let childInfos: ChildInfo[] = [];
-				if (
-					field.kind === "child" &&
-					typeof merged[field.name] === "string"
-				) {
-					const record = rowsById[merged[field.name] as string];
-					if (record) {
-						childInfos = [
-							{
-								id: merged[field.name] as string,
-								name: record.name,
-								type: record.type,
-							},
-						];
+				if (field.kind === "child" || field.kind === "sheet") {
+					const relationshipId = merged[field.name];
+					if (typeof relationshipId === "string") {
+						const record = rowsById[relationshipId];
+						if (record) {
+							childInfos = [
+								{
+									id: relationshipId,
+									name: record.name,
+									type: record.type,
+								},
+							];
+						}
 					}
 				} else if (
 					field.kind === "children" &&
@@ -345,7 +350,12 @@ export function ConfigurationPanel() {
 				}
 
 				if (childInfos.length === 0) return [];
-				const label = field.kind === "child" ? "Child" : "Children";
+				const label =
+					field.kind === "child"
+						? "Search result"
+						: field.kind === "sheet"
+							? "Sheet"
+							: "Children";
 
 				return [
 					<div key={uniqueId}>
@@ -518,7 +528,11 @@ export function ConfigurationPanel() {
 							actions={currentConfigRow.config.actions}
 							flowsById={flowsById}
 							pagesById={pagesById}
+							rowsById={rowsById}
 							serviceResources={serviceResources}
+							defaultSheetRowId={
+								currentConfigRow.config.sheetRowId
+							}
 							onUpdate={updateRowActions}
 						/>
 					</>

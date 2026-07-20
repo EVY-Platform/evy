@@ -311,9 +311,14 @@
 				"$ref": "../common/json.schema.json#/$defs/JSONValue"
 			},
 			"properties": {
-				"child_row_id": {
+				"sheet_row_id": {
 					"type": "string",
 					"format": "uuid"
+				},
+				"child_row_id": {
+					"type": "string",
+					"format": "uuid",
+					"description": "Search-only result template relationship at the SDUI layer."
 				},
 				"children_row_ids": {
 					"type": "array",

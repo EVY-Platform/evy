@@ -83,6 +83,22 @@ describe("collectSubtreeRowIds", () => {
 		expect([...ids]).toEqual(["r1"]);
 	});
 
+	it("collects child_row_id, sheet_row_id and children_row_ids recursively", () => {
+		const child = makeRow("child");
+		const sheet = makeRow("sheet");
+		const grandchild = makeRow("grandchild");
+		const container = makeRow("container", {
+			child_row_id: "child",
+			sheet_row_id: "sheet",
+			children_row_ids: ["grandchild"],
+		});
+		const maps = makeMaps([], [], [container, child, sheet, grandchild]);
+		const ids = collectSubtreeRowIds("container", maps.rowsById);
+		expect([...ids].sort()).toEqual(
+			["child", "container", "grandchild", "sheet"].sort(),
+		);
+	});
+
 	it("collects child_row_id and children_row_ids recursively", () => {
 		const child = makeRow("child");
 		const grandchild = makeRow("grandchild");
@@ -116,6 +132,14 @@ describe("findRowIdPath", () => {
 		const maps = makeMaps([], [], [row]);
 		const path = findRowIdPath(maps.rowsById, ["r1"], "r1");
 		expect(path).toEqual(["r1"]);
+	});
+
+	it("finds path through sheet_row_id", () => {
+		const leaf = makeRow("leaf");
+		const root = makeRow("root", { sheet_row_id: "leaf" });
+		const maps = makeMaps([], [], [root, leaf]);
+		const path = findRowIdPath(maps.rowsById, ["root"], "leaf");
+		expect(path).toEqual(["root", "leaf"]);
 	});
 
 	it("finds path through child_row_id", () => {
@@ -560,24 +584,44 @@ describe("pageRootIds", () => {
 // ---------------------------------------------------------------------------
 
 describe("ensureShowAction", () => {
-	it("adds {show()} action when missing", () => {
+	it("adds {show(sheetId)} action when missing", () => {
 		const row = makeRow("r1", { actions: [] });
 		const maps = makeMaps([], [], [row]);
-		const next = ensureShowAction(maps, "r1");
+		const next = ensureShowAction(maps, "r1", "sheet-1");
 		const actions = next.rowsById.r1?.data.actions as {
 			condition: string;
 			true: string;
 			false: string;
 		}[];
-		expect(actions.some((a) => a.true === "{show()}")).toBe(true);
+		expect(actions.some((a) => a.true === "{show(sheet-1)}")).toBe(true);
 	});
 
-	it("does not duplicate {show()} action", () => {
-		const showAction = { condition: "", true: "{show()}", false: "" };
+	it("does not duplicate {show(sheetId)} action", () => {
+		const showAction = {
+			condition: "",
+			true: "{show(sheet-1)}",
+			false: "",
+		};
 		const row = makeRow("r1", { actions: [showAction] });
 		const maps = makeMaps([], [], [row]);
-		const next = ensureShowAction(maps, "r1");
+		const next = ensureShowAction(maps, "r1", "sheet-1");
 		const actions = next.rowsById.r1?.data.actions as (typeof showAction)[];
-		expect(actions.filter((a) => a.true === "{show()}").length).toBe(1);
+		expect(actions.filter((a) => a.true === "{show(sheet-1)}").length).toBe(
+			1,
+		);
+	});
+
+	it("updates unconditional show when sheet is replaced", () => {
+		const showAction = {
+			condition: "",
+			true: "{show(old-sheet)}",
+			false: "",
+		};
+		const row = makeRow("r1", { actions: [showAction] });
+		const maps = makeMaps([], [], [row]);
+		const next = ensureShowAction(maps, "r1", "new-sheet", "old-sheet");
+		const actions = next.rowsById.r1?.data.actions as (typeof showAction)[];
+		expect(actions.some((a) => a.true === "{show(new-sheet)}")).toBe(true);
+		expect(actions.some((a) => a.true === "{show(old-sheet)}")).toBe(false);
 	});
 });

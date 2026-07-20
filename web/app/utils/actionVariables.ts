@@ -51,6 +51,8 @@ export function extractDraftVariables(
 
 			const childId = row.data.child_row_id;
 			if (typeof childId === "string") stack.push(childId);
+			const sheetId = row.data.sheet_row_id;
+			if (typeof sheetId === "string") stack.push(sheetId);
 			const childrenIds = row.data.children_row_ids;
 			if (Array.isArray(childrenIds)) {
 				for (const id of childrenIds) {

@@ -28,7 +28,13 @@ func routesAfterNavigating(
   to route: Route,
   homeFlowId: String
 ) -> [Route] {
-  guard route.flowId != homeFlowId else { return [] }
+  let currentlyOnHomeFlow =
+    currentRoutes.isEmpty || currentRoutes.last?.flowId == homeFlowId
+
+  // Navigating to the home flow from another flow pops back to the home root.
+  if route.flowId == homeFlowId && !currentlyOnHomeFlow {
+    return []
+  }
 
   var updatedRoutes = currentRoutes
   if let existingRouteIndex = updatedRoutes.lastIndex(of: route) {

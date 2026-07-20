@@ -23,6 +23,7 @@ import { ConditionGroupEditor } from "./actionPopup/ConditionGroupEditor";
 type ActionPopupProps = {
 	action: UI_RowAction;
 	actionIndex: number;
+	defaultSheetRowId?: string;
 	onSave: (action: UI_RowAction) => void;
 	onCancel: () => void;
 };
@@ -30,6 +31,7 @@ type ActionPopupProps = {
 export function ActionPopup({
 	action,
 	actionIndex,
+	defaultSheetRowId,
 	onSave,
 	onCancel,
 }: ActionPopupProps) {
@@ -128,6 +130,8 @@ export function ActionPopup({
 								pagesById={pagesById}
 								serviceResources={serviceResources}
 								idCandidates={idCandidates}
+								rowsById={rowsById}
+								defaultSheetRowId={defaultSheetRowId}
 								getAttributeCandidatesForQualifier={
 									getAttributeCandidatesForQualifier
 								}
@@ -147,6 +151,8 @@ export function ActionPopup({
 								pagesById={pagesById}
 								serviceResources={serviceResources}
 								idCandidates={idCandidates}
+								rowsById={rowsById}
+								defaultSheetRowId={defaultSheetRowId}
 								getAttributeCandidatesForQualifier={
 									getAttributeCandidatesForQualifier
 								}

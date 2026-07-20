@@ -1,11 +1,12 @@
 import type { DATA_EVY_Row } from "evy-types";
+import { ROW_SHEET_FIELD } from "./rowConstants";
 
-export type ActiveChildPage = {
-	childRowId: string;
+export type ActiveSheetPage = {
+	sheetRowId: string;
 	parentRowId: string;
 };
 
-export function buildActiveChildPages({
+export function buildActiveSheetPages({
 	activeRowId,
 	configStack,
 	rowsById,
@@ -13,23 +14,23 @@ export function buildActiveChildPages({
 	activeRowId: string | undefined;
 	configStack: string[];
 	rowsById: Record<string, DATA_EVY_Row>;
-}): ActiveChildPage[] {
+}): ActiveSheetPage[] {
 	if (!activeRowId) return [];
 
-	const childPages: ActiveChildPage[] = [];
+	const sheetPages: ActiveSheetPage[] = [];
 	let currentRowId = activeRowId;
 
 	for (const descendantId of configStack) {
 		const currentRow = rowsById[currentRowId];
 		if (!currentRow) break;
-		const childRowId = currentRow.data.child_row_id;
+		const sheetRowId = currentRow.data[ROW_SHEET_FIELD];
 		const childrenRowIds = Array.isArray(currentRow.data.children_row_ids)
 			? (currentRow.data.children_row_ids as string[])
 			: [];
 
-		if (childRowId === descendantId) {
-			childPages.push({
-				childRowId: descendantId,
+		if (sheetRowId === descendantId) {
+			sheetPages.push({
+				sheetRowId: descendantId,
 				parentRowId: currentRowId,
 			});
 			currentRowId = descendantId;
@@ -41,7 +42,6 @@ export function buildActiveChildPages({
 			continue;
 		}
 
-		// Fallback: treat as if it's a root-level row jump
 		if (rowsById[descendantId]) {
 			currentRowId = descendantId;
 		} else {
@@ -49,14 +49,13 @@ export function buildActiveChildPages({
 		}
 	}
 
-	// After walking the configStack, check if the final row has a singular child
 	const finalRow = rowsById[currentRowId];
 	if (finalRow) {
-		const childRowId = finalRow.data.child_row_id;
-		if (typeof childRowId === "string") {
-			childPages.push({ childRowId, parentRowId: currentRowId });
+		const sheetRowId = finalRow.data[ROW_SHEET_FIELD];
+		if (typeof sheetRowId === "string") {
+			sheetPages.push({ sheetRowId, parentRowId: currentRowId });
 		}
 	}
 
-	return childPages;
+	return sheetPages;
 }

@@ -38,6 +38,7 @@ function isDirectChildRow(
 	if (!row) return false;
 	return (
 		row.data.child_row_id === childId ||
+		row.data.sheet_row_id === childId ||
 		(Array.isArray(row.data.children_row_ids) &&
 			(row.data.children_row_ids as string[]).includes(childId))
 	);

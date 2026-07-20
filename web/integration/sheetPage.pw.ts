@@ -39,7 +39,7 @@ async function openTwoSegmentTabContainer(page: Page) {
 	]);
 }
 
-test.describe("Child Page Rendering", () => {
+test.describe("Sheet Page Rendering", () => {
 	test("should show blank child page when selecting a row without a child", async ({
 		page,
 	}) => {
@@ -65,14 +65,14 @@ test.describe("Child Page Rendering", () => {
 		await textRow.click();
 
 		// Should see the blank child page to the right
-		const blankChildPage = page.getByTestId("blank-child-page");
-		await expect(blankChildPage).toBeVisible();
+		const blankSheetPage = page.getByTestId("blank-sheet-page");
+		await expect(blankSheetPage).toBeVisible();
 		await expect(
-			blankChildPage.getByText("Drop a row to show in the sheet on tap"),
+			blankSheetPage.getByText("Drop a row to show in the sheet on tap"),
 		).toBeVisible();
 
 		// Should NOT have a child page (no child row exists)
-		await expect(page.getByTestId("child-page")).not.toBeVisible();
+		await expect(page.getByTestId("sheet-page")).not.toBeVisible();
 
 		// Should show exactly 2 phone frames: active page + blank child page
 		const phoneFrames = page.locator(SELECTORS.phoneContainer);
@@ -91,10 +91,10 @@ test.describe("Child Page Rendering", () => {
 						type: "Text" as const,
 						title: "Parent Row",
 						subtitle: "Parent subtitle",
-						child: {
+						sheet: {
 							type: "Text" as const,
-							title: "Child Row Title",
-							text: "Child text content",
+							title: "Sheet Row Title",
+							text: "Sheet text content",
 							actions: [],
 						},
 						actions: [],
@@ -108,20 +108,20 @@ test.describe("Child Page Rendering", () => {
 		await parentRow.click();
 
 		// Should see child page
-		const childPage = page.getByTestId("child-page");
-		await expect(childPage).toBeVisible();
+		const sheetPage = page.getByTestId("sheet-page");
+		await expect(sheetPage).toBeVisible();
 		await expect(
-			childPage.getByRole("button", {
-				name: "Child Row Title",
+			sheetPage.getByRole("button", {
+				name: "Sheet Row Title",
 			}),
 		).toBeVisible();
 		await expect(
-			childPage.getByText("Child Row Title", { exact: true }),
+			sheetPage.getByText("Sheet Row Title", { exact: true }),
 		).toHaveCount(1);
 
 		// Should NOT show the blank child page until the user clicks into the
 		// existing child row.
-		await expect(page.getByTestId("blank-child-page")).not.toBeVisible();
+		await expect(page.getByTestId("blank-sheet-page")).not.toBeVisible();
 
 		// Should show exactly 2 phone frames: active page + child page
 		const phoneFrames = page.locator(SELECTORS.phoneContainer);
@@ -141,17 +141,17 @@ test.describe("Child Page Rendering", () => {
 						type: "Text" as const,
 						title: "Parent Row",
 						subtitle: "Parent subtitle",
-						child: {
+						sheet: {
 							type: "Text" as const,
-							title: "First Child Row",
+							title: "First Sheet Row",
 							text: "First child text",
-							child: {
+							sheet: {
 								type: "Text" as const,
-								title: "Second Child Row",
+								title: "Second Sheet Row",
 								text: "Second child text",
-								child: {
+								sheet: {
 									type: "Text" as const,
-									title: "Third Child Row",
+									title: "Third Sheet Row",
 									text: "Third child text",
 									actions: [],
 								},
@@ -167,55 +167,55 @@ test.describe("Child Page Rendering", () => {
 
 		await page.getByText("Parent Row", { exact: true }).first().click();
 
-		let childPages = page.getByTestId("child-page");
-		await expect(childPages).toHaveCount(1);
+		let sheetPages = page.getByTestId("sheet-page");
+		await expect(sheetPages).toHaveCount(1);
 		await expect(
-			childPages.first().getByText("First Child Row", { exact: true }),
+			sheetPages.first().getByText("First Sheet Row", { exact: true }),
 		).toBeVisible();
 
-		await childPages
-			.filter({ hasText: "First Child Row" })
-			.getByText("First Child Row", { exact: true })
+		await sheetPages
+			.filter({ hasText: "First Sheet Row" })
+			.getByText("First Sheet Row", { exact: true })
 			.click();
 
-		childPages = page.getByTestId("child-page");
-		await expect(childPages).toHaveCount(2);
+		sheetPages = page.getByTestId("sheet-page");
+		await expect(sheetPages).toHaveCount(2);
 		await expect(
-			childPages.nth(0).getByText("First Child Row", { exact: true }),
+			sheetPages.nth(0).getByText("First Sheet Row", { exact: true }),
 		).toBeVisible();
 		await expect(
-			childPages.nth(1).getByText("Second Child Row", { exact: true }),
+			sheetPages.nth(1).getByText("Second Sheet Row", { exact: true }),
 		).toBeVisible();
-		await expect(page.getByTestId("blank-child-page")).not.toBeVisible();
+		await expect(page.getByTestId("blank-sheet-page")).not.toBeVisible();
 		await expect(page.locator(SELECTORS.phoneContainer)).toHaveCount(3);
 
-		await childPages
-			.filter({ hasText: "Second Child Row" })
-			.getByText("Second Child Row", { exact: true })
+		await sheetPages
+			.filter({ hasText: "Second Sheet Row" })
+			.getByText("Second Sheet Row", { exact: true })
 			.click();
 
-		childPages = page.getByTestId("child-page");
-		await expect(childPages).toHaveCount(3);
+		sheetPages = page.getByTestId("sheet-page");
+		await expect(sheetPages).toHaveCount(3);
 		await expect(
-			childPages.nth(0).getByText("First Child Row", { exact: true }),
+			sheetPages.nth(0).getByText("First Sheet Row", { exact: true }),
 		).toBeVisible();
 		await expect(
-			childPages.nth(1).getByText("Second Child Row", { exact: true }),
+			sheetPages.nth(1).getByText("Second Sheet Row", { exact: true }),
 		).toBeVisible();
 		await expect(
-			childPages.nth(2).getByText("Third Child Row", { exact: true }),
+			sheetPages.nth(2).getByText("Third Sheet Row", { exact: true }),
 		).toBeVisible();
-		await expect(page.getByTestId("blank-child-page")).not.toBeVisible();
+		await expect(page.getByTestId("blank-sheet-page")).not.toBeVisible();
 		await expect(page.locator(SELECTORS.phoneContainer)).toHaveCount(4);
 
-		await childPages
-			.filter({ hasText: "Third Child Row" })
-			.getByText("Third Child Row", { exact: true })
+		await sheetPages
+			.filter({ hasText: "Third Sheet Row" })
+			.getByText("Third Sheet Row", { exact: true })
 			.click();
 
-		childPages = page.getByTestId("child-page");
-		await expect(childPages).toHaveCount(3);
-		await expect(page.getByTestId("blank-child-page")).toBeVisible();
+		sheetPages = page.getByTestId("sheet-page");
+		await expect(sheetPages).toHaveCount(3);
+		await expect(page.getByTestId("blank-sheet-page")).toBeVisible();
 		await expect(page.locator(SELECTORS.phoneContainer)).toHaveCount(5);
 	});
 
@@ -246,9 +246,10 @@ test.describe("Child Page Rendering", () => {
 										type: "TextAction" as const,
 										title: "Children 1 Text Action",
 										action: "Change",
-										child: {
+										sheet: {
+											id: "search-sheet-row",
 											type: "Search" as const,
-											title: "Search Child Row",
+											title: "Search Sheet Row",
 											placeholder: "Search...",
 											value: "",
 											child: {
@@ -262,7 +263,7 @@ test.describe("Child Page Rendering", () => {
 										actions: [
 											{
 												condition: "",
-												true: "{show()}",
+												true: "{show(search-sheet-row)}",
 												false: "",
 											},
 										],
@@ -286,23 +287,28 @@ test.describe("Child Page Rendering", () => {
 			.getByRole("button", { name: /: TextAction$/ })
 			.click();
 
-		let childPages = page.getByTestId("child-page");
-		await expect(childPages).toHaveCount(1);
+		let sheetPages = page.getByTestId("sheet-page");
+		await expect(sheetPages).toHaveCount(1);
 		await expect(
-			childPages.nth(0).getByText("Search Child Row", { exact: true }),
+			sheetPages.nth(0).getByText("Search Sheet Row", { exact: true }),
 		).toBeVisible();
 
 		await configPanel.getByRole("button", { name: /: Search$/ }).click();
 
-		childPages = page.getByTestId("child-page");
-		await expect(childPages).toHaveCount(2);
+		sheetPages = page.getByTestId("sheet-page");
+		await expect(sheetPages).toHaveCount(1);
 		await expect(
-			childPages.nth(0).getByText("Search Child Row", { exact: true }),
+			sheetPages.nth(0).getByText("Search Sheet Row", { exact: true }),
 		).toBeVisible();
 		await expect(
-			childPages.nth(1).getByText("Search Text Child", { exact: true }),
+			sheetPages.nth(0).getByTestId("search-child-sample"),
 		).toBeVisible();
+		await expect(
+			sheetPages.nth(0).getByText("Search Text Child", { exact: true }),
+		).toBeVisible();
+		// Main page + Search sheet page + blank sheet drop target for Search
 		await expect(page.locator(SELECTORS.phoneContainer)).toHaveCount(3);
+		await expect(page.getByTestId("blank-sheet-page")).toBeVisible();
 	});
 
 	test("clicking the row in the child page selects that child row", async ({
@@ -317,10 +323,10 @@ test.describe("Child Page Rendering", () => {
 						type: "Text" as const,
 						title: "Parent Row",
 						subtitle: "Parent subtitle",
-						child: {
+						sheet: {
 							type: "Text" as const,
 							title: "Child Text Row",
-							text: "Child text",
+							text: "Sheet text",
 							actions: [],
 						},
 						actions: [],
@@ -334,16 +340,16 @@ test.describe("Child Page Rendering", () => {
 		await parentRow.click();
 
 		// Verify child page is visible with its row
-		const childPage = page.getByTestId("child-page");
-		await expect(childPage).toBeVisible();
+		const sheetPage = page.getByTestId("sheet-page");
+		await expect(sheetPage).toBeVisible();
 		await expect(
-			childPage.getByRole("button", {
+			sheetPage.getByRole("button", {
 				name: "Child Text Row",
 			}),
 		).toBeVisible();
 
 		// Click the sheet title to select the child row
-		const childRow = childPage.getByRole("button", {
+		const childRow = sheetPage.getByRole("button", {
 			name: "Child Text Row",
 		});
 		await childRow.click();
@@ -367,9 +373,9 @@ test.describe("Child Page Rendering", () => {
 						type: "Text" as const,
 						title: "Parent Row",
 						subtitle: "Parent subtitle",
-						child: {
+						sheet: {
 							type: "Text" as const,
-							title: "Existing Child Row",
+							title: "Existing Sheet Row",
 							text: "Existing child text",
 							actions: [],
 						},
@@ -382,26 +388,26 @@ test.describe("Child Page Rendering", () => {
 		const parentRow = page.getByText("Parent Row", { exact: true }).first();
 		await parentRow.click();
 
-		const childPage = page.getByTestId("child-page");
-		await expect(childPage).toBeVisible();
+		const sheetPage = page.getByTestId("sheet-page");
+		await expect(sheetPage).toBeVisible();
 		await expect(
-			childPage.getByText("Existing Child Row", { exact: true }),
+			sheetPage.getByText("Existing Sheet Row", { exact: true }),
 		).toBeVisible();
 
 		const sidebarRow = await getSidebarRow(page, "Text row title");
-		await sidebarRow.dragTo(childPage.locator(SELECTORS.pageContent));
+		await sidebarRow.dragTo(sheetPage.locator(SELECTORS.pageContent));
 
 		// After drop, the child page immediately shows the new row
 		// with a new blank child page beside it, no re-click needed.
 		await expect(
-			childPage.getByText("Text row title", { exact: true }),
+			sheetPage.getByText("Text row title", { exact: true }),
 		).toBeVisible();
 		await expect(
-			childPage.getByText("Existing Child Row", { exact: true }),
+			sheetPage.getByText("Existing Sheet Row", { exact: true }),
 		).not.toBeVisible();
 		// A new blank child page appears for the row that was just dropped
 		// (it has no child of its own).
-		await expect(page.getByTestId("blank-child-page")).toBeVisible();
+		await expect(page.getByTestId("blank-sheet-page")).toBeVisible();
 	});
 
 	test("dropping a row into the blank child page creates child", async ({
@@ -428,22 +434,22 @@ test.describe("Child Page Rendering", () => {
 
 		// Drag a row from sidebar to the blank child page
 		const sidebarRow = await getSidebarRow(page, "Text row title");
-		const blankChildPage = page.getByTestId("blank-child-page");
-		await expect(blankChildPage).toBeVisible();
+		const blankSheetPage = page.getByTestId("blank-sheet-page");
+		await expect(blankSheetPage).toBeVisible();
 
-		await sidebarRow.dragTo(blankChildPage.locator(SELECTORS.pageContent));
+		await sidebarRow.dragTo(blankSheetPage.locator(SELECTORS.pageContent));
 
 		// After drop, the child page is immediately visible, no re-click needed.
-		const childPage = page.getByTestId("child-page");
-		await expect(childPage).toBeVisible({ timeout: 10000 });
+		const sheetPage = page.getByTestId("sheet-page");
+		await expect(sheetPage).toBeVisible({ timeout: 10000 });
 		await expect(
-			childPage.getByText("Text row title", { exact: true }),
+			sheetPage.getByText("Text row title", { exact: true }),
 		).toBeVisible();
 		// A new blank child page appears for the row that was just dropped
 		// (it has no child of its own).
-		await expect(page.getByTestId("blank-child-page")).toBeVisible();
+		await expect(page.getByTestId("blank-sheet-page")).toBeVisible();
 
-		// Non-Search parent should have received a show() action.
+		// Non-Search parent should have received a show(rowId) action.
 		// Navigate back to the parent via breadcrumb to verify.
 		const breadcrumb = page.getByLabel("Configure row: Root Row");
 		await expect(breadcrumb).toBeVisible();
@@ -455,7 +461,47 @@ test.describe("Child Page Rendering", () => {
 		await expect(configPanel.getByText("show")).toBeVisible();
 	});
 
-	test("Search row no longer renders child/template preview directly on the main page", async ({
+	test("Search with child renders one inline sample under the input", async ({
+		page,
+	}) => {
+		await openAppWithTestFlows(page, [
+			{
+				id: "step_1",
+				title: "Page 1",
+				rows: [
+					{
+						type: "Search" as const,
+						title: "Search Row Title",
+						placeholder: "Search...",
+						value: "",
+						child: {
+							type: "Text" as const,
+							title: "Result Template",
+							text: "Template body",
+							actions: [],
+						},
+						actions: [],
+					},
+				],
+			},
+		]);
+
+		const searchRow = page
+			.getByText("Search Row Title", { exact: true })
+			.first();
+		await searchRow.click();
+
+		const activePage = getFirstPage(page);
+		await expect(
+			activePage.getByTestId("search-child-sample"),
+		).toBeVisible();
+		await expect(
+			activePage.getByText("Result Template", { exact: true }),
+		).toBeVisible();
+		await expect(page.getByTestId("sheet-page")).not.toBeVisible();
+	});
+
+	test("Search without child shows inline drop target and optional blank sheet page", async ({
 		page,
 	}) => {
 		await openAppWithTestFlows(page, [
@@ -474,28 +520,17 @@ test.describe("Child Page Rendering", () => {
 			},
 		]);
 
-		// Click to select the search row
 		const searchRow = page
 			.getByText("Search Row Title", { exact: true })
 			.first();
-		await expect(searchRow).toBeVisible();
 		await searchRow.click();
 
-		// The Search row should show its search input but NOT render preview results children.
-		// Verify existing elements are still visible.
 		const activePage = getFirstPage(page);
 		await expect(
-			activePage.getByText("Search Row Title", { exact: true }),
+			activePage.getByTestId("search-child-drop-target"),
 		).toBeVisible();
-
-		await expect(page.getByTestId("blank-child-page")).toBeVisible();
-		await expect(page.getByTestId("child-page")).not.toBeVisible();
-
-		// Verify the Search row only shows its own content, not preview rows.
-		// There should be no "Example tag" preview text on the main page.
-		await expect(
-			activePage.getByText("Example tag", { exact: true }),
-		).not.toBeVisible();
+		await expect(page.getByTestId("blank-sheet-page")).toBeVisible();
+		await expect(page.getByTestId("sheet-page")).not.toBeVisible();
 	});
 
 	test("clicking a TabContainer child from the config panel shows that child on the main page", async ({
@@ -569,68 +604,5 @@ test.describe("Child Page Rendering", () => {
 		await expect(
 			getConfigPanel(page).getByText("type: TabContainer"),
 		).toBeVisible();
-	});
-
-	test("horizontal container shows child template slot before static children when source is set", async ({
-		page,
-	}) => {
-		await openAppWithTestFlows(page, [
-			{
-				id: "step_1",
-				title: "Page 1",
-				rows: [
-					{
-						type: "HorizontalContainer" as const,
-						title: "Horizontal Container",
-						source: "{items}",
-						child: {
-							type: "Text" as const,
-							title: "Template row",
-							subtitle: "",
-							actions: [],
-						},
-						children: [
-							{
-								type: "Text" as const,
-								title: "Static child",
-								subtitle: "",
-								actions: [],
-							},
-						],
-						actions: [],
-					},
-				],
-			},
-		]);
-
-		const activePage = getFirstPage(page);
-		await getPageRow(page, "Horizontal Container").click();
-
-		const configPanel = getConfigPanel(page);
-		await configPanel
-			.getByRole("button", { name: /: Text$/ })
-			.first()
-			.click();
-
-		await expect(page.getByTestId("child-page")).toBeVisible();
-		const template = activePage.getByTestId("container-child-template");
-		await expect(template).toBeVisible();
-		await expect(
-			activePage.getByText("Template — repeats per source item"),
-		).toBeVisible();
-		await expect(
-			activePage.getByText("Static child", { exact: true }),
-		).toBeVisible();
-
-		const templateBox = await template.boundingBox();
-		const staticChild = activePage.getByText("Static child", {
-			exact: true,
-		});
-		const staticBox = await staticChild.boundingBox();
-		expect(templateBox).not.toBeNull();
-		expect(staticBox).not.toBeNull();
-		if (templateBox && staticBox) {
-			expect(templateBox.y).toBeLessThan(staticBox.y);
-		}
 	});
 });

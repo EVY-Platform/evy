@@ -163,7 +163,15 @@ On the wire this is accessed with `service: "475731ac-31aa-4d65-94d2-7032782ae35
 
 #### DATA_EVY_Row
 
-Persisted row record. Row-type-specific SDUI fields live in `data`. Nested row relationships are stored by ID in `data.child_row_id` and `data.children_row_ids`, then expanded back to `child` / `children` by clients.
+Persisted row record. Row-type-specific SDUI fields live in `data`. Nested row relationships are stored by UUID inside `data` and expanded back to nested `sheet`, `child`, and `children` when clients assemble [`UI_Flow`](sdui.md):
+
+| Flat key | SDUI field | Ownership |
+| --- | --- | --- |
+| `sheet_row_id` | `sheet` | Optional on **every** row type — overlay content for `{show(rowId)}` |
+| `child_row_id` | `child` | **Search only** — one result-row template (not a sheet) |
+| `children_row_ids` | `children` | Container rows with static nested children |
+
+A Search row may persist both `child_row_id` and `sheet_row_id`. Relationship kind is explicit in storage; do not infer it from row type alone beyond the Search-only rule for `child`.
 
 ```
 id: uuid

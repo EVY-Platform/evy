@@ -140,6 +140,7 @@ describe("idCandidates", () => {
 		expect(names).toContain("placeholder");
 		expect(names).not.toContain("childRowId");
 		expect(names).not.toContain("childrenRowIds");
+		expect(names).not.toContain("sheetRowId");
 		expect(names).not.toContain("actions");
 		expect(new Set(names).size).toBe(names.length);
 		expect(

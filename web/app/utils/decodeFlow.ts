@@ -77,6 +77,12 @@ function normalizeRowAttributes(
 			}
 			continue;
 		}
+		if (key === "sheet") {
+			if (value !== undefined && value !== null) {
+				out.sheet = transformRow(value as ServerRow);
+			}
+			continue;
+		}
 		if (key === "segments") {
 			out.segments = Array.isArray(value)
 				? value.filter(
@@ -128,6 +134,12 @@ function rowToServerRow(row: Row): ServerRow {
 			}
 			continue;
 		}
+		if (key === "sheet") {
+			if (value) {
+				serverRow.sheet = rowToServerRow(value as Row);
+			}
+			continue;
+		}
 		serverRow[key] = value;
 	}
 
@@ -171,6 +183,12 @@ function decodeRowConfig(row: ServerRow, name?: string): RowConfig {
 			}
 			continue;
 		}
+		if (key === "sheet") {
+			if (value) {
+				config.sheet = decodeRow(value as ServerRow);
+			}
+			continue;
+		}
 		config[key] = value;
 	}
 
@@ -191,6 +209,9 @@ function assignFreshIdsInPlace(row: ServerRow, rootId: string): void {
 	row.id = rootId;
 	if (row.child) {
 		assignFreshIdsInPlace(row.child, crypto.randomUUID());
+	}
+	if (row.sheet) {
+		assignFreshIdsInPlace(row.sheet, crypto.randomUUID());
 	}
 	if (row.children) {
 		for (const childRow of row.children) {
@@ -226,6 +247,12 @@ function resetRowAttributesForNewPage(row: ServerRow): ServerRow {
 		if (key === "child") {
 			if (value !== undefined && value !== null) {
 				resetRow.child = value;
+			}
+			continue;
+		}
+		if (key === "sheet") {
+			if (value !== undefined && value !== null) {
+				resetRow.sheet = value;
 			}
 			continue;
 		}

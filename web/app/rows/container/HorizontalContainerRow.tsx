@@ -1,5 +1,4 @@
 import { ContainerChildren } from "../../components/ContainerChildren";
-import { ContainerChildTemplate } from "../../components/ContainerChildTemplate";
 import type { RowConfig } from "../../types/row";
 import { defineRow } from "../defineRow";
 import { RowLayout } from "../design-system/RowLayout";
@@ -14,30 +13,17 @@ export default defineRow(typeName, {
 		title: "Horizontal container row title",
 		children: [],
 	} satisfies RowConfig,
-	render: (row) => {
-		const source =
-			typeof row.config.source === "string"
-				? row.config.source
-				: undefined;
-		return (
-			<RowLayout title={row.config.title}>
-				<div className="evy-flex evy-flex-col">
-					<ContainerChildTemplate
-						childRowId={row.config.childRowId}
-						source={source}
-						orientation="horizontal"
-					/>
-					<div className="evy-flex">
-						<ContainerChildren
-							childIds={row.config.childrenRowIds ?? []}
-							orientation="horizontal"
-							showIndicators
-							containerRowId={row.id}
-							containerType="children"
-						/>
-					</div>
-				</div>
-			</RowLayout>
-		);
-	},
+	render: (row) => (
+		<RowLayout title={row.config.title}>
+			<div className="evy-flex">
+				<ContainerChildren
+					childIds={row.config.childrenRowIds ?? []}
+					orientation="horizontal"
+					showIndicators
+					containerRowId={row.id}
+					containerType="children"
+				/>
+			</div>
+		</RowLayout>
+	),
 });

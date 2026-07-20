@@ -113,7 +113,7 @@
 										"actions": [
 											{
 												"condition": "",
-												"true": "{show()}",
+												"true": "{show(b8c7d6e5-f4a3-4b2c-9d1e-0f8a7b6c5d4e)}",
 												"false": ""
 											}
 										],
@@ -128,7 +128,7 @@
 										"timeslot_format": "{formatDatetime($datum, \"HH:mm\")}",
 										"name": "Pickup available times",
 										"destination": "{selected_pickup_timeslot}",
-										"child": {
+										"sheet": {
 											"id": "b8c7d6e5-f4a3-4b2c-9d1e-0f8a7b6c5d4e",
 											"type": "VerticalContainer",
 											"actions": [],
@@ -183,7 +183,7 @@
 										"actions": [
 											{
 												"condition": "",
-												"true": "{show()}",
+												"true": "{show(f1a2b3c4-d5e6-4f7a-8b9c-0d1e2f3a4b5d)}",
 												"false": ""
 											}
 										],
@@ -192,7 +192,7 @@
 										"label": "Cancel request",
 										"style": "danger",
 										"name": "Cancel request",
-										"child": {
+										"sheet": {
 											"id": "f1a2b3c4-d5e6-4f7a-8b9c-0d1e2f3a4b5d",
 											"type": "VerticalContainer",
 											"actions": [],
@@ -257,7 +257,7 @@
 										"type": "TextAction",
 										"actions": [
 											{
-												"true": "{show()}",
+												"true": "{show(549ca3b3-7a40-448e-84e8-7163e46ce48e)}",
 												"false": "",
 												"condition": ""
 											}
@@ -265,7 +265,9 @@
 										"title": "Delivery address",
 										"subtitle": "{formatAddress(dc28ed59-298e-493c-8ff3-3e60f2ebccbd.transfer_options.pickup.address)}",
 										"action": "Change",
-										"child": {
+										"visible": "true",
+										"name": "Delivery address",
+										"sheet": {
 											"id": "549ca3b3-7a40-448e-84e8-7163e46ce48e",
 											"type": "Search",
 											"child": {
@@ -284,9 +286,7 @@
 											"visible": "true",
 											"name": "Find pickup address",
 											"destination": "{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.transfer_options.pickup.address}"
-										},
-										"visible": "true",
-										"name": "Delivery address"
+										}
 									},
 									{
 										"id": "bd8fa85c-1b67-467a-983d-328e6dc49db7",
@@ -295,7 +295,7 @@
 										"actions": [
 											{
 												"condition": "",
-												"true": "{show()}",
+												"true": "{show(c4d5e6f7-a8b9-4c0d-1e2f-3a4b5c6d7e80)}",
 												"false": ""
 											}
 										],
@@ -310,7 +310,7 @@
 										"timeslot_format": "{formatDatetime($datum, \"HH:mm\")}",
 										"name": "Delivery available times",
 										"destination": "{selected_delivery_timeslot}",
-										"child": {
+										"sheet": {
 											"id": "c4d5e6f7-a8b9-4c0d-1e2f-3a4b5c6d7e80",
 											"type": "VerticalContainer",
 											"actions": [],
@@ -356,7 +356,7 @@
 										"actions": [
 											{
 												"condition": "",
-												"true": "{show()}",
+												"true": "{show(f7a8b9c0-d1e2-4f3a-4b5c-6d7e8f9a0b1d)}",
 												"false": ""
 											}
 										],
@@ -365,7 +365,7 @@
 										"label": "Cancel request",
 										"style": "danger",
 										"name": "Cancel request",
-										"child": {
+										"sheet": {
 											"id": "f7a8b9c0-d1e2-4f3a-4b5c-6d7e8f9a0b1d",
 											"type": "VerticalContainer",
 											"actions": [],
@@ -430,7 +430,7 @@
 										"type": "TextAction",
 										"actions": [
 											{
-												"true": "{show()}",
+												"true": "{show(c46317fb-b410-4b85-81c6-092dee574dbd)}",
 												"false": "",
 												"condition": ""
 											}
@@ -438,7 +438,9 @@
 										"title": "Shipping address",
 										"subtitle": "{formatAddress(dc28ed59-298e-493c-8ff3-3e60f2ebccbd.transfer_options.pickup.address)}",
 										"action": "Change",
-										"child": {
+										"visible": "true",
+										"name": "Shipping address",
+										"sheet": {
 											"id": "c46317fb-b410-4b85-81c6-092dee574dbd",
 											"type": "Search",
 											"child": {
@@ -457,9 +459,7 @@
 											"visible": "true",
 											"name": "Find pickup address",
 											"destination": "{shipping_address}"
-										},
-										"visible": "true",
-										"name": "Shipping address"
+										}
 									},
 									{
 										"id": "e47cc52b-c909-496d-bc9a-af7e8b9d7ed3",
@@ -467,7 +467,7 @@
 										"actions": [
 											{
 												"condition": "{length(shipping_address.postcode) > 0}",
-												"true": "{show()}",
+												"true": "{show(f2a1b0c9-d8e7-4f6a-5b4c-3d2e1f0a9b8c)}",
 												"false": "{highlight_required(postcode)}"
 											}
 										],
@@ -475,7 +475,7 @@
 										"title": "",
 										"label": "Ask to buy",
 										"name": "Ask to buy",
-										"child": {
+										"sheet": {
 											"id": "f2a1b0c9-d8e7-4f6a-5b4c-3d2e1f0a9b8c",
 											"type": "VerticalContainer",
 											"actions": [],
@@ -539,7 +539,7 @@
 										"actions": [
 											{
 												"condition": "",
-												"true": "{show()}",
+												"true": "{show(d1e2f3a4-b5c6-4d7e-8f9a-0b1c2d3e4f5b)}",
 												"false": ""
 											}
 										],
@@ -548,7 +548,7 @@
 										"label": "Cancel request",
 										"style": "danger",
 										"name": "Cancel request",
-										"child": {
+										"sheet": {
 											"id": "d1e2f3a4-b5c6-4d7e-8f9a-0b1c2d3e4f5b",
 											"type": "VerticalContainer",
 											"actions": [],
@@ -833,7 +833,7 @@
 										"type": "TextAction",
 										"actions": [
 											{
-												"true": "{show()}",
+												"true": "{show(3bb1bad9-a193-4eef-825e-da6f63a1a38e)}",
 												"false": "",
 												"condition": ""
 											}
@@ -841,7 +841,9 @@
 										"title": "Where",
 										"subtitle": "{formatAddress(dc28ed59-298e-493c-8ff3-3e60f2ebccbd.transfer_options.pickup.address)}",
 										"action": "Change",
-										"child": {
+										"visible": "true",
+										"name": "Pickup address",
+										"sheet": {
 											"id": "3bb1bad9-a193-4eef-825e-da6f63a1a38e",
 											"type": "Search",
 											"child": {
@@ -860,9 +862,7 @@
 											"visible": "true",
 											"name": "Find pickup address",
 											"destination": "{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.transfer_options.pickup.address}"
-										},
-										"visible": "true",
-										"name": "Pickup address"
+										}
 									},
 									{
 										"id": "22222222-2222-4222-8222-222222222206",
@@ -1112,16 +1112,6 @@
 						"type": "VerticalContainer",
 						"actions": [],
 						"title": "",
-						"source": "{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.photo_ids}",
-						"child": {
-							"id": "44444444-4444-4444-8444-444444444401",
-							"type": "Text",
-							"actions": [],
-							"title": "Photo {$datum.id}",
-							"subtitle": "",
-							"visible": "true",
-							"name": "Dynamic photo row"
-						},
 						"children": [
 							{
 								"id": "33333333-3333-4333-8333-333333333301",
@@ -1158,14 +1148,14 @@
 						{
 							"condition": "{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.payment_cash == true || dc28ed59-298e-493c-8ff3-3e60f2ebccbd.payment_app == true}",
 							"false": "{highlight_required(dc28ed59-298e-493c-8ff3-3e60f2ebccbd.payment_app)}",
-							"true": "{show()}"
+							"true": "{show(a4b5c6d7-e8f9-4a0b-1c2d-3e4f5a6b7c8d)}"
 						}
 					],
 					"title": "",
 					"label": "Submit",
 					"visible": "true",
 					"name": "Submit listing",
-					"child": {
+					"sheet": {
 						"id": "a4b5c6d7-e8f9-4a0b-1c2d-3e4f5a6b7c8d",
 						"type": "VerticalContainer",
 						"actions": [],
