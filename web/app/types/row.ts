@@ -4,7 +4,11 @@
  * Row is the UI type (id + ReactNode + config).
  */
 
-import type { UI_Row as SerialRow, UI_RowAction } from "evy-types";
+import type {
+	RowSpecificAttributes as GeneratedRowSpecificAttributes,
+	UI_Row as SerialRow,
+	UI_RowAction,
+} from "evy-types";
 import type React from "react";
 
 export type Row = {
@@ -13,33 +17,9 @@ export type Row = {
 	config: RowConfig;
 };
 
-// Row-specific attributes. SDUI_ROW_FIELDS (from evy-types) is the generated
-// per-type field catalog; this union is the static typing layer for RowConfig.
-type RowSpecificAttributes = {
-	action?: string;
-	child?: Row;
-	children?: Row[];
-	content?: string;
-	end_time?: string;
-	expandLabel?: string;
-	format?: string;
-	header_format?: string;
-	header_subtitle?: string;
-	icon?: string;
-	image?: string;
-	initial?: string;
-	label?: string;
-	label_interval_minutes?: string;
-	placeholder?: string;
-	segments?: string[];
-	start_time?: string;
-	style?: string;
-	subtitle?: string;
-	text?: string;
-	timeslot_format?: string;
-	timeslot_interval_minutes?: string;
-	value?: string;
-};
+// Row-specific attributes: the generated per-definition field union from
+// evy-types, with child/children rows carrying the web UI Row type.
+type RowSpecificAttributes = GeneratedRowSpecificAttributes<Row>;
 
 type RowBaseAttributes = {
 	type: SerialRow["type"];

@@ -370,6 +370,40 @@ function rowFieldSpecFromAttribute(
 	};
 }
 
+/**
+ * TS source for the union of every row-specific attribute across all
+ * definitions (bindings and actions are base attributes, so excluded).
+ * Row references are generic so UI layers can substitute their own row type.
+ */
+export function rowSpecificAttributesTsSource(
+	definitions: SduiRowDefinition[],
+): string[] {
+	const fieldTypes = new Map<string, string>();
+	for (const definition of definitions) {
+		for (const [name, attribute] of Object.entries(definition.attributes)) {
+			// Bindings and title are base attributes typed by consumers' own
+			// base-attribute types; actions are base too.
+			if (ROW_BINDING_FIELD_NAMES.has(name) || name === "title") continue;
+			if (attribute.type === "Action[]") continue;
+			const tsType = {
+				string: "string",
+				"string[]": "string[]",
+				Row: "TRow",
+				"Row[]": "TRow[]",
+			}[attribute.type];
+			fieldTypes.set(name, tsType);
+		}
+	}
+	const fieldLines = [...fieldTypes.entries()]
+		.sort(([a], [b]) => a.localeCompare(b))
+		.map(([name, tsType]) => `\t${name}?: ${tsType};`);
+	return [
+		`export type RowSpecificAttributes<TRow = unknown> = {`,
+		...fieldLines,
+		`};`,
+	];
+}
+
 export function rowFieldsFromDefinitions(
 	definitions: SduiRowDefinition[],
 ): Record<string, RowFieldSpec[]> {

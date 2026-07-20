@@ -5,6 +5,7 @@ import {
 	extractSduiRowTypeEnum,
 	loadSduiRowDefinitions,
 	rowFieldSpecTsSource,
+	rowSpecificAttributesTsSource,
 	rowFieldsFromDefinitions,
 	type SduiRowDefinition,
 } from "./sdui-row-schema-utils.js";
@@ -80,6 +81,8 @@ function emitSduiDefinitions(definitions: SduiRowDefinition[]): {
 	tsLines.push(
 		`export const SDUI_ROW_FIELDS: Record<string, RowFieldSpec[]> = ${JSON.stringify(rowFields, null, "\t")};`,
 	);
+	tsLines.push("");
+	tsLines.push(...rowSpecificAttributesTsSource(definitions));
 	tsLines.push("");
 
 	const json = JSON.stringify(catalog, null, 2);
