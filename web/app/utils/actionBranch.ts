@@ -1,4 +1,5 @@
 import type { DATA_EVY_Flow, DATA_EVY_Page } from "evy-types";
+import { splitFunctionArguments } from "./functionArgs";
 import { unwrapOptionalBraces } from "./unwrapBraces";
 
 export const ACTION_FUNCTIONS = [
@@ -49,63 +50,6 @@ export function parseBranch(branchString: string): ParsedBranch | null {
 	}
 
 	return null;
-}
-
-function splitFunctionArguments(argsString: string): string[] {
-	if (!argsString.trim()) return [];
-
-	const args: string[] = [];
-	let current = "";
-	let parenDepth = 0;
-	let bracketDepth = 0;
-	let braceDepth = 0;
-	let inString: '"' | "'" | null = null;
-	let previousChar = "";
-
-	for (const char of argsString) {
-		if (inString) {
-			current += char;
-			if (char === inString && previousChar !== "\\") {
-				inString = null;
-			}
-			previousChar = char;
-			continue;
-		}
-
-		if (char === '"' || char === "'") {
-			inString = char;
-			current += char;
-			previousChar = char;
-			continue;
-		}
-
-		if (char === "(") parenDepth++;
-		if (char === ")") parenDepth--;
-		if (char === "[") bracketDepth++;
-		if (char === "]") bracketDepth--;
-		if (char === "{") braceDepth++;
-		if (char === "}") braceDepth--;
-
-		if (
-			char === "," &&
-			parenDepth === 0 &&
-			bracketDepth === 0 &&
-			braceDepth === 0
-		) {
-			const trimmed = current.trim();
-			if (trimmed) args.push(trimmed);
-			current = "";
-			previousChar = char;
-			continue;
-		}
-
-		current += char;
-		previousChar = char;
-	}
-
-	const trimmed = current.trim();
-	if (trimmed) args.push(trimmed);
-	return args;
 }
 
 export function serializeBranch(
