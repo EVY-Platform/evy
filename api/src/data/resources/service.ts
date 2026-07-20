@@ -14,7 +14,7 @@ function mapServiceRow(r: typeof service.$inferSelect): DATA_EVY_Service {
 	};
 }
 
-const serviceResource = makeCoreResource<DATA_EVY_Service>({
+export const servicesResource = makeCoreResource<DATA_EVY_Service>({
 	table: service,
 	validate: validateDataEvyService,
 	toUpdateSet: (validated) => ({
@@ -24,7 +24,3 @@ const serviceResource = makeCoreResource<DATA_EVY_Service>({
 	}),
 	normalize: mapServiceRow,
 });
-
-export const listServiceRows = serviceResource.list;
-export const createServiceResource = serviceResource.create;
-export const updateServiceResource = serviceResource.update;

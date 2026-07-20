@@ -18,50 +18,18 @@ import {
 } from "evy-types/ws";
 import type { EvyDb } from "../database/db";
 
-import { validateAuth as validateDeviceAuth } from "./resources/devices";
 import {
 	createFileResource,
 	deleteFileResource,
 	listFileRowsWithBinary,
 } from "./resources/files";
-import {
-	createFlowResource,
-	deleteFlowResource,
-	listFlowRows,
-	updateFlowResource,
-} from "./resources/flows";
-import {
-	createOrganizationResource,
-	listOrganizationRows,
-	updateOrganizationResource,
-} from "./resources/organisation";
-import {
-	createPageResource,
-	deletePageResource,
-	listPageRows,
-	updatePageResource,
-} from "./resources/pages";
-import {
-	createRowResource,
-	deleteRowResource,
-	listRowRows,
-	updateRowResource,
-} from "./resources/rows";
-import {
-	createServiceResource,
-	listServiceRows,
-	updateServiceResource,
-} from "./resources/service";
-import {
-	createProviderResource,
-	listProviderRows,
-	updateProviderResource,
-} from "./resources/serviceProvider";
-import {
-	createServiceResourceRow,
-	listServiceResourceRows,
-	updateServiceResourceRow,
-} from "./resources/serviceResource";
+import { flowsResource } from "./resources/flows";
+import { organisationsResource } from "./resources/organisation";
+import { pagesResource } from "./resources/pages";
+import { rowsResource } from "./resources/rows";
+import { servicesResource } from "./resources/service";
+import { providersResource } from "./resources/serviceProvider";
+import { serviceResourcesResource } from "./resources/serviceResource";
 
 type BroadcastFn = (eventName: string, payload: unknown) => void;
 
@@ -91,44 +59,32 @@ type CoreResourceOps = {
 	) => Promise<DeleteResponse>;
 };
 
+// Resources that support all CRUD ops register the factory object
+// directly; the rest pick fields explicitly so the omitted operations
+// stay unreachable through the RPC dispatch.
 const CORE_RESOURCE_REGISTRY: Record<string, CoreResourceOps> = {
-	[EVY_CORE_RESOURCE.FLOWS]: {
-		list: listFlowRows,
-		create: createFlowResource,
-		update: updateFlowResource,
-		remove: deleteFlowResource,
-	},
-	[EVY_CORE_RESOURCE.PAGES]: {
-		list: listPageRows,
-		create: createPageResource,
-		update: updatePageResource,
-		remove: deletePageResource,
-	},
-	[EVY_CORE_RESOURCE.ROWS]: {
-		list: listRowRows,
-		create: createRowResource,
-		update: updateRowResource,
-		remove: deleteRowResource,
-	},
+	[EVY_CORE_RESOURCE.FLOWS]: flowsResource,
+	[EVY_CORE_RESOURCE.PAGES]: pagesResource,
+	[EVY_CORE_RESOURCE.ROWS]: rowsResource,
 	[EVY_CORE_RESOURCE.SERVICES]: {
-		list: listServiceRows,
-		create: createServiceResource,
-		update: updateServiceResource,
+		list: servicesResource.list,
+		create: servicesResource.create,
+		update: servicesResource.update,
 	},
 	[EVY_CORE_RESOURCE.ORGANISATIONS]: {
-		list: listOrganizationRows,
-		create: createOrganizationResource,
-		update: updateOrganizationResource,
+		list: organisationsResource.list,
+		create: organisationsResource.create,
+		update: organisationsResource.update,
 	},
 	[EVY_CORE_RESOURCE.PROVIDERS]: {
-		list: listProviderRows,
-		create: createProviderResource,
-		update: updateProviderResource,
+		list: providersResource.list,
+		create: providersResource.create,
+		update: providersResource.update,
 	},
 	[EVY_CORE_RESOURCE.SERVICE_RESOURCES]: {
-		list: listServiceResourceRows,
-		create: createServiceResourceRow,
-		update: updateServiceResourceRow,
+		list: serviceResourcesResource.list,
+		create: serviceResourcesResource.create,
+		update: serviceResourcesResource.update,
 	},
 	[EVY_CORE_RESOURCE.FILES]: {
 		list: listFileRowsWithBinary,
@@ -143,13 +99,7 @@ export function initCoreNotifications(broadcastFn: BroadcastFn | null): void {
 	coreBroadcast = broadcastFn;
 }
 
-export function validateAuth(
-	db: EvyDb,
-	token: string,
-	os: import("evy-types").OS,
-): ReturnType<typeof validateDeviceAuth> {
-	return validateDeviceAuth(db, token, os);
-}
+export { validateAuth } from "./resources/devices";
 
 export async function get(db: EvyDb, params: GetRequest): Promise<GetResponse> {
 	assertEvyCoreAccess(params);
