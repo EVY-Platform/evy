@@ -215,6 +215,21 @@ function emitUIRowClass(rowSpec: RowSpec): string {
 	const decodeLines = entries.map(([key, value]) =>
 		emitRowContentDecodeLine(key, value),
 	);
+	const copyArgs = [
+		"id: id",
+		"type: type",
+		"actions: actions",
+		"visible: visible",
+		"name: name",
+		...entries.map(([key]) =>
+			key === "title"
+				? "title: title"
+				: `${swiftIdentifier(key)}: ${swiftIdentifier(key)}`,
+		),
+	];
+	const withTitleArgs = copyArgs
+		.map((arg) => (arg === "title: title" ? "title: newTitle" : arg))
+		.join(", ");
 	return `// MARK: - UI_Row
 public final class UI_Row: Codable {
     public let id: String
@@ -255,6 +270,11 @@ ${decodeLines.join("\n")}
         try c.encode(visible, forKey: .visible)
         try c.encodeIfPresent(name, forKey: .name)
 ${emitUIRowEncodeSwitch(rowSpec, entries)}
+    }
+
+    /// Copy of this row with a replaced title.
+    public func with(title newTitle: String) -> UI_Row {
+        UI_Row(${withTitleArgs})
     }
 }
 `;
@@ -419,6 +439,17 @@ function emitRowViewDataStruct(
 		([key, field]) =>
 			`    public let ${swiftIdentifier(key)}: ${swiftTypeForSpecType(field.type, field.required)}`,
 	);
+	// Synthesized Codable matches the strict hand-emitted coding exactly,
+	// except optional integers, which decode leniently from Int or String.
+	const needsCustomCoding = entries.some(
+		([, field]) => field.type === "integer" && !field.required,
+	);
+	if (!needsCustomCoding) {
+		return `// MARK: - ${viewDataName}
+public struct ${viewDataName}: Codable {
+${fieldLines.join("\n")}
+}`;
+	}
 	const codingKeyCases = entries.map(
 		([key]) => `        case ${swiftIdentifier(key)}`,
 	);

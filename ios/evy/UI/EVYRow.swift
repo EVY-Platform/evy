@@ -148,14 +148,7 @@ private func initialDraftData(for row: UI_Row, destination: String) -> Data? {
 
 @MainActor
 private func uiRowWithHiddenTitle(_ row: UI_Row) -> UI_Row {
-  guard let encoded = try? JSONEncoder().encode(row),
-    var json = try? JSONSerialization.jsonObject(with: encoded) as? [String: Any]
-  else { return row }
-  json["title"] = ""
-  guard let data = try? JSONSerialization.data(withJSONObject: json),
-    let decoded = try? JSONDecoder().decode(UI_Row.self, from: data)
-  else { return row }
-  return decoded
+  row.with(title: "")
 }
 
 private struct EVYResolvedRow: View {
