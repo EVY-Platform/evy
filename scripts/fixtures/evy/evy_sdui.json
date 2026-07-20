@@ -6,6 +6,26 @@
 			"id": "55e427ac-263c-441f-9673-f60627b1baea",
 			"rows": [
 				{
+					"id": "7c4a8f21-9b3d-4e6a-a1c2-8f7d3e5b9a01",
+					"type": "Search",
+					"child": {
+						"id": "8d5b9e32-ac4e-5f7b-b2d3-9e8f4a6c0b12",
+						"type": "Text",
+						"title": "{$datum.data.type}",
+						"subtitle": "{$datum.resource}",
+						"actions": [],
+						"visible": "true",
+						"name": "Message search result"
+					},
+					"title": "Messages",
+					"placeholder": "Filter messages by resource",
+					"source": "{000c2d05-851e-4456-8f22-bb1e54f17c8c}",
+					"destination": "",
+					"actions": [],
+					"visible": "true",
+					"name": "Search messages"
+				},
+				{
 					"id": "96d3efe4-ea20-4a81-9ccb-64d6b57646e9",
 					"type": "Search",
 					"child": {

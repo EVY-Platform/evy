@@ -3176,3 +3176,74 @@ final class E2EPlaceSearchTests: E2ETestBase {
     ]
   }
 }
+
+// MARK: - Homepage message search
+
+final class E2EHomepageMessageSearchTests: E2ETestBase {
+  private static let homePageId = E2EFlowIds.webSocketHomePage
+  private static let relatedResourceId = "dc28ed59-298e-493c-8ff3-3e60f2ebccbd"
+  private static let unrelatedResourceId = "00000000-0000-4000-8000-000000000099"
+  private static let seededMessageTypeLabels = ["pickup", "delivery", "shipping"]
+
+  func testHomepageMessageSearchShowsAllMessagesAndFiltersByResource() throws {
+    let homePage = app.scrollViews["page_\(Self.homePageId)"]
+    XCTAssertTrue(
+      homePage.waitForExistence(timeout: 20),
+      "Home screen not loaded - verify API is running and database is seeded")
+
+    let messagesSectionTitle = homePage.staticTexts["Messages"]
+    XCTAssertTrue(
+      messagesSectionTitle.waitForExistence(timeout: 10),
+      "Message search section title should be visible on Home")
+
+    let orderedHomeSearchFields = Self.orderedSearchTextFields(in: homePage)
+    XCTAssertEqual(
+      orderedHomeSearchFields.count, 2,
+      "Home should expose exactly two search fields")
+    let messageSearchField = orderedHomeSearchFields[0]
+    let itemSearchField = orderedHomeSearchFields[1]
+    XCTAssertLessThan(
+      messageSearchField.frame.minY, itemSearchField.frame.minY,
+      "Message search should appear above item search")
+
+    assertSeededMessageLabelsVisible(true)
+
+    clearAndType(field: messageSearchField, text: Self.relatedResourceId)
+    assertSeededMessageLabelsVisible(true)
+
+    clearAndType(field: messageSearchField, text: Self.unrelatedResourceId)
+    assertSeededMessageLabelsVisible(false)
+    XCTAssertTrue(
+      itemSearchField.exists,
+      "Item search field should remain on Home after filtering messages")
+  }
+
+  private static func orderedSearchTextFields(in homePage: XCUIElement) -> [XCUIElement] {
+    let fieldCount = homePage.textFields.count
+    return (0..<fieldCount)
+      .map { homePage.textFields.element(boundBy: $0) }
+      .filter { $0.exists }
+      .sorted { $0.frame.minY < $1.frame.minY }
+  }
+
+  private func assertSeededMessageLabelsVisible(
+    _ visible: Bool,
+    file: StaticString = #filePath,
+    line: UInt = #line
+  ) {
+    for label in Self.seededMessageTypeLabels {
+      let messageLabel = app.staticTexts[label]
+      if visible {
+        XCTAssertTrue(
+          messageLabel.waitForExistence(timeout: 5),
+          "Expected seeded message type '\(label)' to be visible",
+          file: file, line: line)
+      } else {
+        XCTAssertFalse(
+          messageLabel.exists,
+          "Expected seeded message type '\(label)' to be hidden",
+          file: file, line: line)
+      }
+    }
+  }
+}
