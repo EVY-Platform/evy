@@ -44,22 +44,16 @@ struct EVYTextSelectRow: View {
   }
 
   var body: some View {
-    VStack(alignment: .leading) {
-      if let title = view.title, !title.isEmpty {
-        EVYTextView(title)
-          .padding(.vertical, Constants.padding)
-      }
-      EVYSelectItem(
-        destination: destination,
-        value: value,
-        valueTemplate: nil,
-        selectionStyle: .multi,
-        target: .single_bool,
-        textStyle: .info
-      )
-      .frame(maxWidth: .infinity, alignment: .leading)
-    }
-    .padding(.horizontal, Constants.majorPadding)
+    EVYSelectItem(
+      destination: destination,
+      value: value,
+      valueTemplate: nil,
+      selectionStyle: .multi,
+      target: .single_bool,
+      textStyle: .info
+    )
+    .frame(maxWidth: .infinity, alignment: .leading)
+    .titledRow(view.title)
   }
 }
 
