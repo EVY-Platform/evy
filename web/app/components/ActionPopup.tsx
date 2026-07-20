@@ -14,7 +14,7 @@ import {
 	buildDatumCandidate,
 	buildFunctionCandidates,
 	buildIdCandidates,
-	buildResourceAttributeCandidatesForResource,
+	createGetAttributeCandidatesForQualifier,
 } from "../utils/idCandidates";
 
 import { BranchEditor } from "./actionPopup/BranchEditor";
@@ -62,14 +62,12 @@ export function ActionPopup({
 		[flowsById, pagesById, serviceResources],
 	);
 
-	const getAttributeCandidatesForQualifier = useCallback(
-		(qualifier: string) =>
-			serviceResources.some((resource) => resource.id === qualifier)
-				? buildResourceAttributeCandidatesForResource(
-						resourceAttributeMetadata,
-						qualifier,
-					)
-				: [],
+	const getAttributeCandidatesForQualifier = useMemo(
+		() =>
+			createGetAttributeCandidatesForQualifier({
+				serviceResources,
+				resourceAttributeMetadata,
+			}),
 		[serviceResources, resourceAttributeMetadata],
 	);
 

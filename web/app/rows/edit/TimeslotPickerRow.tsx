@@ -4,6 +4,7 @@ import type { RowConfig } from "../../types/row";
 import { defineRow } from "../defineRow";
 import CarouselIndicator from "../design-system/CarouselIndicator";
 import { RowLayout } from "../design-system/RowLayout";
+import { mockDatesFromToday } from "./mockDates";
 
 type MockSlot = {
 	datetime: string;
@@ -15,33 +16,20 @@ type MockDay = {
 	slots: MockSlot[];
 };
 
-function isoDateString(date: Date): string {
-	const year = date.getFullYear();
-	const month = String(date.getMonth() + 1).padStart(2, "0");
-	const day = String(date.getDate()).padStart(2, "0");
-	return `${year}-${month}-${day}`;
-}
-
-const today = new Date();
-const mockData: MockDay[] = Array.from({ length: 5 }, (_, index) => {
-	const date = new Date(today);
-	date.setDate(today.getDate() + index);
-	const dateStr = isoDateString(date);
-	return {
-		representativeDatetime: `${dateStr}T11:30:00`,
-		slots: [
-			{ datetime: `${dateStr}T11:30:00`, variant: "dark" },
-			{
-				datetime: `${dateStr}T12:00:00`,
-				variant: index === 0 ? "dark" : "light",
-			},
-			{
-				datetime: `${dateStr}T12:30:00`,
-				variant: index === 0 ? "unavailable" : "dark",
-			},
-		],
-	};
-});
+const mockData: MockDay[] = mockDatesFromToday(5).map((dateStr, index) => ({
+	representativeDatetime: `${dateStr}T11:30:00`,
+	slots: [
+		{ datetime: `${dateStr}T11:30:00`, variant: "dark" },
+		{
+			datetime: `${dateStr}T12:00:00`,
+			variant: index === 0 ? "dark" : "light",
+		},
+		{
+			datetime: `${dateStr}T12:30:00`,
+			variant: index === 0 ? "unavailable" : "dark",
+		},
+	],
+}));
 
 const timeslotPageSize = 4;
 const visibleDays = mockData.slice(0, timeslotPageSize);

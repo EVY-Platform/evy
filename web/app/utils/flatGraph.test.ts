@@ -12,7 +12,7 @@ import {
 	findPageContainingRow,
 	findPageIdContainingRow,
 	findRowIdPath,
-	insertRowIntoPage,
+	insertIntoLocation,
 	moveRow,
 	moveRowToFooter,
 	pageRootIds,
@@ -243,17 +243,17 @@ describe("findContainerByIdInPage", () => {
 });
 
 // ---------------------------------------------------------------------------
-// insertRowIntoPage
+// insertIntoLocation
 // ---------------------------------------------------------------------------
 
-describe("insertRowIntoPage", () => {
+describe("insertIntoLocation", () => {
 	it("inserts a row into page rowIds at the given index", () => {
 		const r1 = makeRow("r1");
 		const r2 = makeRow("r2");
 		const newRow = makeRow("new");
 		const page = makePage("p1", ["r1", "r2"]);
 		const maps = makeMaps([], [page], [r1, r2, newRow]);
-		const next = insertRowIntoPage(maps, "p1", "new", 1);
+		const next = insertIntoLocation(maps, "p1", "new", 1);
 		expect(next.pagesById.p1?.rowIds).toEqual(["r1", "new", "r2"]);
 	});
 
@@ -264,7 +264,7 @@ describe("insertRowIntoPage", () => {
 		const page = makePage("p1", ["container"]);
 		const maps = makeMaps([], [page], [container, child, newRow]);
 
-		const next = insertRowIntoPage(maps, "p1", "new", 0, {
+		const next = insertIntoLocation(maps, "p1", "new", 0, {
 			rowId: "container",
 			type: "children",
 		});
@@ -279,7 +279,7 @@ describe("insertRowIntoPage", () => {
 		const page = makePage("p1", ["container"]);
 		const maps = makeMaps([], [page], [container, newRow]);
 
-		const next = insertRowIntoPage(maps, "p1", "new", 0, {
+		const next = insertIntoLocation(maps, "p1", "new", 0, {
 			rowId: "container",
 			type: "child",
 		});

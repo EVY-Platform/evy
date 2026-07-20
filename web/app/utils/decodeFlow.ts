@@ -35,13 +35,16 @@ export function mergeRowContentWithPaletteDefaults(
 // exported for tests
 export function normalizeServerRow(row: ServerRow): ServerRow {
 	const baseRow = getBaseRowForType(row.type);
-	if (!baseRow) {
-		return normalizeUnknownServerRow(row);
-	}
-	return normalizeKnownServerRow(row);
+	return normalizeServerRowWithDefaultTitle(
+		row,
+		baseRow ? "" : "Unknown row",
+	);
 }
 
-function normalizeKnownServerRow(row: ServerRow): ServerRow {
+function normalizeServerRowWithDefaultTitle(
+	row: ServerRow,
+	defaultTitle: string,
+): ServerRow {
 	return {
 		...normalizeRowAttributes(row, normalizeServerRow),
 		id: row.id,
@@ -49,19 +52,7 @@ function normalizeKnownServerRow(row: ServerRow): ServerRow {
 		...readBindingFields(row as Record<string, unknown>, row.type),
 		actions: row.actions ?? [],
 		visible: row.visible ?? "true",
-		title: typeof row.title === "string" ? row.title : "",
-	} as ServerRow;
-}
-
-function normalizeUnknownServerRow(row: ServerRow): ServerRow {
-	return {
-		...normalizeRowAttributes(row, normalizeServerRow),
-		id: row.id,
-		type: row.type,
-		...readBindingFields(row as Record<string, unknown>, row.type),
-		actions: row.actions ?? [],
-		visible: row.visible ?? "true",
-		title: typeof row.title === "string" ? row.title : "Unknown row",
+		title: typeof row.title === "string" ? row.title : defaultTitle,
 	} as ServerRow;
 }
 

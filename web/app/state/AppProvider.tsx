@@ -30,6 +30,12 @@ import { DragContext } from "./contexts/DragContext";
 import { FlowsContext } from "./contexts/FlowsContext";
 import { draggingReducer, dropIndicatorReducer, pageReducer } from "./reducers";
 
+const PALETTE_ROWS = baseRows.map((row) => ({
+	id: row.name,
+	row: createElement(row, { key: row.name, rowId: row.name }),
+	config: row.config,
+}));
+
 export function AppProvider({
 	children,
 	initialFlowGraph,
@@ -47,12 +53,6 @@ export function AppProvider({
 		() => resourceNameById(serviceResources),
 		[serviceResources],
 	);
-
-	const rows = baseRows.map((row) => ({
-		id: row.name,
-		row: createElement(row, { key: row.name, rowId: row.name }),
-		config: row.config,
-	}));
 
 	const initialState = useMemo(() => {
 		const {
@@ -184,7 +184,7 @@ export function AppProvider({
 
 	const flowsContextValue = useMemo(
 		() => ({
-			rows,
+			rows: PALETTE_ROWS,
 			flowsById: appState.flowsById,
 			pagesById: appState.pagesById,
 			rowsById: appState.rowsById,
@@ -198,7 +198,6 @@ export function AppProvider({
 			dispatchRow,
 		}),
 		[
-			rows,
 			appState.flowsById,
 			appState.pagesById,
 			appState.rowsById,

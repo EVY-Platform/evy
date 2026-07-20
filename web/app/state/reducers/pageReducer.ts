@@ -6,9 +6,10 @@ import {
 	addPage,
 	addRowRecords,
 	ensureShowAction,
+	type FlowEntityMaps,
 	findPageIdContainingRow,
 	findRowIdPath,
-	insertRowIntoPage,
+	insertIntoLocation,
 	moveRow,
 	moveRowToFooter,
 	pageRootIds,
@@ -80,6 +81,41 @@ function resolveChildContainerSelection(
 	};
 }
 
+function applyChildContainerDrop(
+	state: AppState,
+	nextMaps: FlowEntityMaps,
+	destinationPageId: string,
+	destinationContainer: { type: string; rowId: string } | undefined,
+	selectedRowId: string,
+): AppState {
+	if (destinationContainer) {
+		const childSelection = resolveChildContainerSelection(
+			{ ...state, ...nextMaps },
+			destinationPageId,
+			destinationContainer,
+			selectedRowId,
+		);
+		if (childSelection) {
+			const mapsWithShow = ensureShowAction(
+				nextMaps,
+				destinationContainer.rowId,
+			);
+			return {
+				...state,
+				...mapsWithShow,
+				...childSelection,
+			};
+		}
+	}
+
+	return {
+		...state,
+		...nextMaps,
+		activeRowId: selectedRowId,
+		configStack: [],
+	};
+}
+
 const CLEARED_SELECTION: Partial<AppState> = {
 	activePageId: undefined,
 	activeRowId: undefined,
@@ -137,7 +173,7 @@ export const pageReducer = (state: AppState, action: RowAction): AppState => {
 
 			const { rootRowId, rowRecords } = built;
 			let nextMaps = addRowRecords(state, rowRecords);
-			nextMaps = insertRowIntoPage(
+			nextMaps = insertIntoLocation(
 				nextMaps,
 				action.destinationPageId,
 				rootRowId,
@@ -145,32 +181,13 @@ export const pageReducer = (state: AppState, action: RowAction): AppState => {
 				action.destinationContainer,
 			);
 
-			if (action.destinationContainer) {
-				const childSelection = resolveChildContainerSelection(
-					nextMaps as AppState,
-					action.destinationPageId,
-					action.destinationContainer,
-					rootRowId,
-				);
-				if (childSelection) {
-					const mapsWithShow = ensureShowAction(
-						nextMaps,
-						action.destinationContainer.rowId,
-					);
-					return {
-						...state,
-						...mapsWithShow,
-						...childSelection,
-					};
-				}
-			}
-
-			return {
-				...state,
-				...nextMaps,
-				activeRowId: rootRowId,
-				configStack: [],
-			};
+			return applyChildContainerDrop(
+				state,
+				nextMaps,
+				action.destinationPageId,
+				action.destinationContainer,
+				rootRowId,
+			);
 		}
 
 		case "ADD_ROW_AS_FOOTER": {
@@ -216,32 +233,13 @@ export const pageReducer = (state: AppState, action: RowAction): AppState => {
 				action.destinationContainer,
 			);
 
-			if (action.destinationContainer) {
-				const childSelection = resolveChildContainerSelection(
-					nextMaps as AppState,
-					action.destinationPageId,
-					action.destinationContainer,
-					action.rowId,
-				);
-				if (childSelection) {
-					const mapsWithShow = ensureShowAction(
-						nextMaps,
-						action.destinationContainer.rowId,
-					);
-					return {
-						...state,
-						...mapsWithShow,
-						...childSelection,
-					};
-				}
-			}
-
-			return {
-				...state,
-				...nextMaps,
-				activeRowId: action.rowId,
-				configStack: [],
-			};
+			return applyChildContainerDrop(
+				state,
+				nextMaps,
+				action.destinationPageId,
+				action.destinationContainer,
+				action.rowId,
+			);
 		}
 
 		case "REMOVE_ROW": {

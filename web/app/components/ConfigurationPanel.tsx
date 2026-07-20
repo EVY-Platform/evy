@@ -13,50 +13,23 @@ import {
 } from "../rows/rowFields";
 import { useFlowsContext } from "../state/contexts/FlowsContext";
 import type { Row } from "../types/row";
-import { getApiDataSourceAttributeCandidates } from "../utils/apiDataSources";
 import { mergeRowContentWithPaletteDefaults } from "../utils/decodeFlow";
 import {
 	buildDatumCandidate,
 	buildFunctionCandidates,
 	buildIdCandidates,
-	buildResourceAttributeCandidatesForResource,
 	buildRowAttributeCandidates,
+	createGetAttributeCandidatesForQualifier,
 	type IdCandidate,
 } from "../utils/idCandidates";
 import {
 	findPageReferences,
 	type PageReferenceEntry,
 } from "../utils/pageReferences";
-import { parseApiSourceMethod } from "../utils/sourceBinding";
-import { unwrapOptionalBraces } from "../utils/unwrapBraces";
 import { ActionEditor } from "./ActionEditor";
 import { BuilderAssist } from "./BuilderAssist";
 import { PageInUseDialog } from "./PageInUseDialog";
 import { type PopoverOption, PopoverSelect } from "./PopoverSelect";
-
-function resolveSourceResourceId(
-	source: string,
-	serviceResources: { id: string }[],
-): string | null {
-	const sourcePath = unwrapOptionalBraces(source);
-	const resourceId = sourcePath.split(".")[0]?.trim();
-	if (!resourceId) return null;
-	return serviceResources.some((resource) => resource.id === resourceId)
-		? resourceId
-		: null;
-}
-
-function resolveQualifierResourceId(
-	qualifier: string,
-	source: string,
-	serviceResources: { id: string }[],
-): string | null {
-	if (qualifier === "$datum")
-		return resolveSourceResourceId(source, serviceResources);
-	return serviceResources.some((resource) => resource.id === qualifier)
-		? qualifier
-		: null;
-}
 
 function ConfigTextField({
 	id,
@@ -300,26 +273,12 @@ export function ConfigurationPanel() {
 				.filter((f) => f.kind === "child" || f.kind === "children")
 				.sort(compareRowFieldsForPanel);
 
-			const getAttributeCandidatesForQualifier = (qualifier: string) => {
-				if (qualifier === "$datum") {
-					const apiMethod = parseApiSourceMethod(rowSource);
-					if (apiMethod) {
-						return getApiDataSourceAttributeCandidates(apiMethod);
-					}
-				}
-
-				const resourceId = resolveQualifierResourceId(
-					qualifier,
-					rowSource,
+			const getAttributeCandidatesForQualifier =
+				createGetAttributeCandidatesForQualifier({
 					serviceResources,
-				);
-				return resourceId
-					? buildResourceAttributeCandidatesForResource(
-							resourceAttributeMetadata,
-							resourceId,
-						)
-					: [];
-			};
+					resourceAttributeMetadata,
+					rowSource,
+				});
 
 			const contentElements = scalarFields.map((field) => {
 				const uniqueId = `${configRow.id}-${field.name}`;

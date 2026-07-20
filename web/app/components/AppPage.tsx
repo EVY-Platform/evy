@@ -103,6 +103,26 @@ export default function AppPage({ pageId }: { pageId: string }) {
 		? storedRowToRow(footerRecord).row
 		: undefined;
 
+	const blankPageIndicator = showBlankPageIndicator ? (
+		<BlankPageDropIndicator />
+	) : null;
+	const edgeDropZone = (
+		<PageEdgeDropZone
+			pageId={pageId}
+			position={edgePosition}
+			dispatchDropIndicator={dispatchDropIndicator}
+			className="evy-flex-1"
+			style={{ minHeight: "var(--size-8)" }}
+			onClick={selectPageDirect}
+		/>
+	);
+	const scrollBody = (
+		<>
+			{rowElements}
+			{edgeDropZone}
+		</>
+	);
+
 	return (
 		<div
 			className="evy-overflow-hidden evy-h-full evy-w-full"
@@ -118,21 +138,13 @@ export default function AppPage({ pageId }: { pageId: string }) {
 					style={rounded24Style}
 				>
 					{titleElement}
-					{showBlankPageIndicator && <BlankPageDropIndicator />}
+					{blankPageIndicator}
 					<div
 						className="evy-overflow-scroll evy-flex evy-flex-col evy-flex-1"
 						{...canvasPageInteriorDomProps}
 						ref={scrollableRef}
 					>
-						{rowElements}
-						<PageEdgeDropZone
-							pageId={pageId}
-							position={edgePosition}
-							dispatchDropIndicator={dispatchDropIndicator}
-							className="evy-flex-1"
-							style={{ minHeight: "var(--size-8)" }}
-							onClick={selectPageDirect}
-						/>
+						{scrollBody}
 					</div>
 					<DraggableRowContainer
 						rowId={footerRowId}
@@ -152,16 +164,8 @@ export default function AppPage({ pageId }: { pageId: string }) {
 						ref={scrollableRef}
 					>
 						{titleElement}
-						{showBlankPageIndicator && <BlankPageDropIndicator />}
-						{rowElements}
-						<PageEdgeDropZone
-							pageId={pageId}
-							position={edgePosition}
-							dispatchDropIndicator={dispatchDropIndicator}
-							className="evy-flex-1"
-							style={{ minHeight: "var(--size-8)" }}
-							onClick={selectPageDirect}
-						/>
+						{blankPageIndicator}
+						{scrollBody}
 						{dragging && (
 							<FooterPlaceholderDropIndicator pageId={pageId} />
 						)}

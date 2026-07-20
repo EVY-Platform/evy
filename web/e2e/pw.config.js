@@ -1,37 +1,3 @@
-import { defineConfig } from "@playwright/test";
+import { createPwConfig } from "../pw.base.config.js";
 
-if (!process.env.WEB_PORT) throw new Error("WEB_PORT is required");
-const url = `http://localhost:${process.env.WEB_PORT}`;
-const timeout = 30_000;
-
-export default defineConfig({
-	testDir: ".",
-	testMatch: "*.pw.ts",
-	timeout,
-	expect: { timeout },
-	retries: 0,
-	fullyParallel: false,
-	workers: 1,
-	reporter: [["line"], ["html", { open: "never" }]],
-	use: {
-		baseURL: url,
-		screenshot: "only-on-failure",
-		trace: "on-first-retry",
-		video: "retain-on-failure",
-	},
-	projects: [
-		{
-			name: "chromium",
-			use: {
-				viewport: { width: 1280, height: 1700 },
-				ignoreHTTPSErrors: true,
-			},
-		},
-	],
-	webServer: {
-		command: "bun run dev",
-		url,
-		reuseExistingServer: true,
-		timeout,
-	},
-});
+export default createPwConfig({ fullyParallel: false, workers: 1 });

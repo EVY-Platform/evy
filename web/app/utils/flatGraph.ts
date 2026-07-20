@@ -67,11 +67,16 @@ function collectPageRowIds(
 // Lookups
 // ---------------------------------------------------------------------------
 
-function findRowContainer(
+function walkRows<T>(
 	rowsById: FlowEntityMaps["rowsById"],
 	rootRowIds: string[],
-	targetRowId: string,
-): { containerRowId: string; type: "child" | "children" } | null {
+	visit: (
+		id: string,
+		row: DATA_EVY_Row,
+		childId: string | undefined,
+		childrenIds: string[],
+	) => T | null | undefined,
+): T | null {
 	const stack = [...rootRowIds];
 	while (stack.length > 0) {
 		const id = stack.pop();
@@ -81,13 +86,8 @@ function findRowContainer(
 
 		const childId = getChildRowId(row);
 		const childrenIds = getChildrenRowIds(row);
-
-		if (childId === targetRowId) {
-			return { containerRowId: id, type: "child" };
-		}
-		if (childrenIds.includes(targetRowId)) {
-			return { containerRowId: id, type: "children" };
-		}
+		const result = visit(id, row, childId, childrenIds);
+		if (result != null) return result;
 
 		if (childId) stack.push(childId);
 		stack.push(...childrenIds);
@@ -95,38 +95,37 @@ function findRowContainer(
 	return null;
 }
 
-/**
- * Find a container row by its own id (i.e., a row that IS a container).
- * Returns { containerRowId, type: "child" | "children" } or null if the row
- * isn't a container or isn't reachable from rootRowIds.
- */
+function findRowContainer(
+	rowsById: FlowEntityMaps["rowsById"],
+	rootRowIds: string[],
+	targetRowId: string,
+): { containerRowId: string; type: "child" | "children" } | null {
+	return walkRows(rowsById, rootRowIds, (id, _row, childId, childrenIds) => {
+		if (childId === targetRowId) {
+			return { containerRowId: id, type: "child" as const };
+		}
+		if (childrenIds.includes(targetRowId)) {
+			return { containerRowId: id, type: "children" as const };
+		}
+		return null;
+	});
+}
+
 function findContainerById(
 	rowsById: FlowEntityMaps["rowsById"],
 	rootRowIds: string[],
 	containerId: string,
 ): { containerRowId: string; type: "child" | "children" } | null {
-	const stack = [...rootRowIds];
-	while (stack.length > 0) {
-		const id = stack.pop();
-		if (id === undefined) continue;
-		const row = rowsById[id];
-		if (!row) continue;
-
-		const childId = getChildRowId(row);
-		const childrenIds = getChildrenRowIds(row);
-
-		if (id === containerId) {
-			if (childId !== undefined)
-				return { containerRowId: id, type: "child" };
-			if (ROW_CHILDREN_FIELD in row.data) {
-				return { containerRowId: id, type: "children" };
-			}
+	return walkRows(rowsById, rootRowIds, (id, row, childId) => {
+		if (id !== containerId) return null;
+		if (childId !== undefined) {
+			return { containerRowId: id, type: "child" as const };
 		}
-
-		if (childId) stack.push(childId);
-		stack.push(...childrenIds);
-	}
-	return null;
+		if (ROW_CHILDREN_FIELD in row.data) {
+			return { containerRowId: id, type: "children" as const };
+		}
+		return null;
+	});
 }
 
 /**
@@ -183,16 +182,7 @@ export function findPageIdContainingRow(
 	flowId: string,
 	rowId: string,
 ): string | undefined {
-	const flow = maps.flowsById[flowId];
-	if (!flow) return undefined;
-
-	for (const pageId of flow.pageIds) {
-		const page = maps.pagesById[pageId];
-		if (!page) continue;
-		const roots = pageRootIds(page);
-		if (findRowIdPath(maps.rowsById, roots, rowId)) return pageId;
-	}
-	return undefined;
+	return findPageContainingRow(maps, flowId, rowId)?.id;
 }
 
 // ---------------------------------------------------------------------------
@@ -215,7 +205,7 @@ function removeId(ids: string[], targetId: string): string[] {
  * Returns the updated rowsById (if container was updated) and pagesById.
  * Does NOT add the new row record itself — callers must do that separately.
  */
-function insertIntoLocation(
+export function insertIntoLocation(
 	maps: FlowEntityMaps,
 	pageId: string,
 	newRowId: string,
@@ -394,26 +384,6 @@ export function addRowRecords(
 		next[record.id] = record;
 	}
 	return { ...maps, rowsById: next };
-}
-
-/**
- * Insert a row (already in rowsById) into a page at destinationIndex,
- * optionally inside a container.
- */
-export function insertRowIntoPage(
-	maps: FlowEntityMaps,
-	pageId: string,
-	rowId: string,
-	destinationIndex: number,
-	destinationContainer?: { rowId: string; type: "child" | "children" },
-): FlowEntityMaps {
-	return insertIntoLocation(
-		maps,
-		pageId,
-		rowId,
-		destinationIndex,
-		destinationContainer,
-	);
 }
 
 /**
