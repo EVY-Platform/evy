@@ -1,9 +1,5 @@
-export interface UploadChunkMetadata {
-	uploadId: string;
-	index: number;
-	byteOffset: number;
-	byteLength: number;
-}
+import type { FileUploadChunkMetadata } from "evy-types";
+import { validateFileUploadChunkMetadata } from "evy-types/validators";
 
 export interface UploadSession {
 	chunks: Buffer[];
@@ -16,7 +12,7 @@ const uploadSessions = new Map<string, UploadSession>();
 
 // exported for tests
 export function parseUploadChunkFrame(frame: Buffer): {
-	metadata: UploadChunkMetadata;
+	metadata: FileUploadChunkMetadata;
 	chunkData: Buffer;
 } {
 	if (frame.length < 4) {
@@ -35,44 +31,9 @@ export function parseUploadChunkFrame(frame: Buffer): {
 	} catch {
 		throw new Error("Invalid metadata JSON in upload chunk frame");
 	}
-	validateUploadChunkMetadata(rawMetadata);
+	const metadata = validateFileUploadChunkMetadata(rawMetadata);
 	const chunkData = frame.subarray(4 + metadataLength);
-	return { metadata: rawMetadata, chunkData };
-}
-
-function validateUploadChunkMetadata(
-	value: unknown,
-): asserts value is UploadChunkMetadata {
-	if (typeof value !== "object" || value === null) {
-		throw new Error("Chunk metadata must be an object");
-	}
-	const metadata = value as Record<string, unknown>;
-	if (typeof metadata.uploadId !== "string" || metadata.uploadId.length < 1) {
-		throw new Error("Chunk metadata uploadId must be a non-empty string");
-	}
-	if (
-		typeof metadata.index !== "number" ||
-		!Number.isInteger(metadata.index) ||
-		metadata.index < 0
-	) {
-		throw new Error("Chunk metadata index must be a non-negative integer");
-	}
-	if (
-		typeof metadata.byteOffset !== "number" ||
-		!Number.isInteger(metadata.byteOffset) ||
-		metadata.byteOffset < 0
-	) {
-		throw new Error(
-			"Chunk metadata byteOffset must be a non-negative integer",
-		);
-	}
-	if (
-		typeof metadata.byteLength !== "number" ||
-		!Number.isInteger(metadata.byteLength) ||
-		metadata.byteLength < 1
-	) {
-		throw new Error("Chunk metadata byteLength must be a positive integer");
-	}
+	return { metadata, chunkData };
 }
 
 export async function handleUploadChunk(frame: Buffer): Promise<void> {

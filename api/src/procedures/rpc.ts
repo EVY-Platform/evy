@@ -40,7 +40,9 @@ export async function api(params: unknown, db: EvyDb): Promise<unknown> {
 	if (params.service === EVY_CORE_SERVICE) {
 		return coreApi(params, db);
 	}
-	throw new Error(`Unknown service API method: ${params.method}`);
+	throw new Error(
+		`API calls are only supported for service "evy" (got "${params.service}")`,
+	);
 }
 
 export async function create(

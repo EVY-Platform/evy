@@ -122,7 +122,7 @@ describe("api JSON-RPC handler", () => {
 				},
 				dataDb,
 			),
-		).rejects.toThrow("Unknown service API method: not-search");
+		).rejects.toThrow('API calls are only supported for service "evy"');
 	});
 
 	it("rejects requests without an API method", async () => {

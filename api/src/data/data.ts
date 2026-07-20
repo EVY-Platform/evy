@@ -9,11 +9,7 @@ import type {
 	UpdateRequest,
 	UpdateResponse,
 } from "evy-types";
-import {
-	EVY_CORE_RESOURCE,
-	EVY_CORE_RESOURCE_NAME_SET,
-	EVY_CORE_SERVICE,
-} from "evy-types/coreResources";
+import { EVY_CORE_RESOURCE, EVY_CORE_SERVICE } from "evy-types/coreResources";
 import {
 	DATA_CHANGED_EVENT,
 	type DataChangedNotification,
@@ -212,7 +208,7 @@ export async function deleteResource(
 
 function getResourceOps(resource: string): CoreResourceOps {
 	const ops = CORE_RESOURCE_REGISTRY[resource];
-	if (!ops) throw new Error("Unsupported resource for core API");
+	if (!ops) throw new Error("Resource is not served by the core API");
 	return ops;
 }
 
@@ -267,9 +263,6 @@ function assertEvyCoreAccess(
 ): void {
 	if (params.service !== EVY_CORE_SERVICE) {
 		throw new Error("Core API only serves service evy");
-	}
-	if (!EVY_CORE_RESOURCE_NAME_SET.has(params.resource)) {
-		throw new Error("Resource is not served by the core API");
 	}
 }
 
