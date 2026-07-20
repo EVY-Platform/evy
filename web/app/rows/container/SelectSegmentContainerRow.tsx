@@ -1,7 +1,7 @@
 import { type CSSProperties, type MouseEvent, useState } from "react";
 import { ContainerChildren } from "../../components/ContainerChildren";
 import { useRowById } from "../../hooks/useRowById";
-import { useFlowsContext } from "../../state";
+import { useFlowsContext } from "../../state/contexts/FlowsContext";
 import type { RowConfig } from "../../types/row";
 import { defineRow } from "../defineRow";
 import { RowLayout } from "../design-system/RowLayout";

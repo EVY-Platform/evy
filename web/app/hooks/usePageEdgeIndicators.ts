@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 
-import { useDragContext } from "../state";
+import { useDragContext } from "../state/contexts/DragContext";
 
 type ForcedIndicators = {
 	rowId: string;

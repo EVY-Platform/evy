@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 
 import type { DATA_EVY_Flow, DATA_EVY_Page } from "evy-types";
-import type { ServiceResource } from "../api/sync";
+import type { ServiceResource } from "../types/resources";
 import {
 	buildDatumCandidate,
 	buildFunctionCandidates,

@@ -1,5 +1,5 @@
 import type { DATA_EVY_Flow, DATA_EVY_Page } from "evy-types";
-import type { ServiceResource } from "../api/sync";
+import type { ServiceResource } from "../types/resources";
 import { displayLabel } from "./labelFormatting";
 import {
 	formatResourcePathForDisplay,

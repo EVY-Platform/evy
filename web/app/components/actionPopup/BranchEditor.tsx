@@ -2,7 +2,7 @@ import type { DATA_EVY_Flow, DATA_EVY_Page } from "evy-types";
 import { EVY_CORE_SERVICE } from "evy-types/coreResources";
 import { MARKETPLACE_SERVICE } from "evy-types/marketplaceResources";
 import { useCallback, useMemo } from "react";
-import type { ServiceResource } from "../../api/sync";
+import type { ServiceResource } from "../../types/resources";
 import {
 	type ActionFunction,
 	parseBranch,

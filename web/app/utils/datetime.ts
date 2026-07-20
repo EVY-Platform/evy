@@ -1,4 +1,14 @@
-import type { EVYFunctionContext, EVYFunctionOutput } from "./functions";
+// The function context/output types live here (the leaf module) so
+// functions.ts can depend on datetime.ts without a cycle.
+export type EVYFunctionContext = {
+	datum?: string;
+};
+
+export type EVYFunctionOutput = {
+	value: string;
+	prefix?: string;
+	suffix?: string;
+};
 
 type DatetimeParts = {
 	year: number;

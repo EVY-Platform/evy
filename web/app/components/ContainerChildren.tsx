@@ -1,11 +1,11 @@
 import { useCallback } from "react";
-import { useFlowsContext } from "../state";
+import { useFlowsContext } from "../state/contexts/FlowsContext";
 import type { ContainerType } from "../types/row";
-import { storedRowToRow } from "../utils/rowCodec";
 import { DraggableRowContainer } from "./DraggableRowContainer";
 import { DropPlaceholderShell } from "./DropPlaceholderShell";
 import { PlaceholderDropIndicator } from "./PlaceholderDropIndicator";
 import { useIsInRowsPanel } from "./RowRenderLocationContext";
+import { resolveRowElement } from "./resolveRowElement";
 
 export function ContainerChildren({
 	childIds,
@@ -50,10 +50,11 @@ export function ContainerChildren({
 	return (
 		<>
 			{childIds.map((childId) => {
-				const record = rowsById[childId];
-				const rowElement = record
-					? storedRowToRow(record).row
-					: paletteRows.find((r) => r.id === childId)?.row;
+				const rowElement = resolveRowElement(
+					childId,
+					rowsById,
+					paletteRows,
+				);
 				return (
 					<DraggableRowContainer
 						key={childId}

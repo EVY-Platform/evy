@@ -1,8 +1,6 @@
 import { defineRow } from "./defineRow";
 import { RowLayout } from "./design-system/RowLayout";
 
-export const containerDropindicatorId = "placeholder";
-
 export const UnknownRow = defineRow("UnknownRow", {
 	config: {
 		type: "Text",

@@ -1,11 +1,14 @@
 import type { DATA_EVY_Flow, DATA_EVY_Page } from "evy-types";
 import { EVY_CORE_SERVICE } from "evy-types/coreResources";
 import { MARKETPLACE_SERVICE } from "evy-types/marketplaceResources";
-import type { ResourceAttributeMetadata, ServiceResource } from "../api/sync";
 import {
 	getAllRowBindingFieldNames,
 	getAllRowContentFieldNames,
 } from "../rows/rowFields";
+import type {
+	ResourceAttributeMetadata,
+	ServiceResource,
+} from "../types/resources";
 import { ACTION_FUNCTIONS } from "./actionBranch";
 import { ROW_ATTRIBUTE_STATIC_NAMES } from "./rowConstants";
 

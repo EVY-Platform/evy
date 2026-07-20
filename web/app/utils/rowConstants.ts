@@ -21,3 +21,6 @@ export const ROW_DECOMPOSE_SKIP_KEYS = new Set([
 ]);
 
 export const ROW_ATTRIBUTE_STATIC_NAMES = ["title", "visible"] as const;
+
+// Sentinel rowId used by container placeholder drop targets.
+export const containerDropindicatorId = "placeholder";

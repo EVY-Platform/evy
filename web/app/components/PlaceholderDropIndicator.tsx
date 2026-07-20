@@ -4,8 +4,8 @@ import {
 	type DropTargetHighlightDataArgs,
 	useDropTargetHighlight,
 } from "../hooks/useDropTargetHighlight";
-import { containerDropindicatorId } from "../rows/EVYRow";
 import type { ContainerType } from "../types/row";
+import { containerDropindicatorId } from "../utils/rowConstants";
 import { DropPlaceholderShell } from "./DropPlaceholderShell";
 
 export function PlaceholderDropIndicator({

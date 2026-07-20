@@ -7,9 +7,11 @@ import type {
 	UI_Page as ServerPage,
 	UI_Row as ServerRow,
 } from "evy-types";
-import { createElement } from "react";
-import { baseRows } from "../rows/baseRows";
-import { UnknownRow } from "../rows/EVYRow";
+import {
+	createRowElement,
+	getBaseRowForType,
+	type RowComponent,
+} from "../rows/rowElementFactory";
 import { getRowBindingFields, readBindingFields } from "../rows/rowFields";
 import type { Row, RowConfig } from "../types/row";
 import {
@@ -19,21 +21,11 @@ import {
 	ROW_METADATA_KEYS,
 } from "./rowConstants";
 
-type RowComponent = (typeof baseRows)[number];
-
 type FlatFlowGraph = {
 	flowRows: DATA_EVY_Flow[];
 	pageRows: DATA_EVY_Page[];
 	rowRows: DATA_EVY_Row[];
 };
-
-const BASE_ROW_BY_TYPE = new Map<string, RowComponent>(
-	baseRows.map((r) => [r.config.type, r]),
-);
-
-function getBaseRowForType(type: string): RowComponent | undefined {
-	return BASE_ROW_BY_TYPE.get(type);
-}
 
 function rowConfigAttributes(config: RowConfig): Record<string, unknown> {
 	const attributes: Record<string, unknown> = {};
@@ -253,26 +245,10 @@ function decomposeServerRow(
 
 function decodeRow(row: ServerRow): Row {
 	const normalized = normalizeServerRow(row);
-	const baseRow = getBaseRowForType(normalized.type);
-	const config = decodeRowConfig(normalized, row.name);
-	if (!baseRow) {
-		return {
-			id: normalized.id,
-			row: createElement(UnknownRow, {
-				key: normalized.id,
-				rowId: normalized.id,
-			}),
-			config,
-		};
-	}
-
 	return {
 		id: normalized.id,
-		row: createElement(baseRow, {
-			key: normalized.id,
-			rowId: normalized.id,
-		}),
-		config,
+		row: createRowElement(normalized.type, normalized.id),
+		config: decodeRowConfig(normalized, row.name),
 	};
 }
 
@@ -373,7 +349,7 @@ export function buildRowForNewPageFromBase(
 	const tempId = "row-build-temp";
 	const seed: Row = {
 		id: tempId,
-		row: createElement(baseRow, { key: tempId, rowId: tempId }),
+		row: createRowElement(baseRow.config.type, tempId),
 		config: baseRow.config,
 	};
 	const cloned = resetRowAttributesForNewPage(

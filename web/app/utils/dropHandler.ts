@@ -9,7 +9,6 @@ import {
 import type { DATA_EVY_Page } from "evy-types";
 import type { Dispatch } from "react";
 import invariant from "tiny-invariant";
-import { containerDropindicatorId } from "../rows/EVYRow";
 import type { RowAction } from "../types/actions";
 import type { ContainerType } from "../types/row";
 import {
@@ -20,6 +19,7 @@ import {
 	findPageContainingRow,
 	getContainerChildrenCount,
 } from "../utils/flatGraph";
+import { containerDropindicatorId } from "./rowConstants";
 
 type DropDispatchOptions = {
 	destinationPageId: string;

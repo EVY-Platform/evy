@@ -1,8 +1,8 @@
 import type { DATA_EVY_Flow, DATA_EVY_Page, UI_RowAction } from "evy-types";
 import { Trash2 } from "lucide-react";
 import { useCallback, useMemo, useState } from "react";
-import type { ServiceResource } from "../api/sync";
 import { LUCIDE_STROKE_WIDTH } from "../icons/iconSyntax";
+import type { ServiceResource } from "../types/resources";
 import { formatBranchDisplay, parseBranch } from "../utils/actionBranch";
 import {
 	formatExpressionSummary,

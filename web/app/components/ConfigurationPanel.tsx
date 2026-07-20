@@ -11,7 +11,7 @@ import {
 	isPanelScalarField,
 	type RowBindingField,
 } from "../rows/rowFields";
-import { useFlowsContext } from "../state";
+import { useFlowsContext } from "../state/contexts/FlowsContext";
 import type { Row } from "../types/row";
 import { getApiDataSourceAttributeCandidates } from "../utils/apiDataSources";
 import { mergeRowContentWithPaletteDefaults } from "../utils/decodeFlow";

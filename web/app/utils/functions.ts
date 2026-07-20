@@ -1,14 +1,10 @@
-import { evyFormatDatetime } from "./datetime";
+import {
+	type EVYFunctionContext,
+	type EVYFunctionOutput,
+	evyFormatDatetime,
+} from "./datetime";
 
-export type EVYFunctionContext = {
-	datum?: string;
-};
-
-export type EVYFunctionOutput = {
-	value: string;
-	prefix?: string;
-	suffix?: string;
-};
+export type { EVYFunctionContext, EVYFunctionOutput };
 
 type EVYFunctionHandler = (
 	args: string,

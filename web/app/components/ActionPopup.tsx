@@ -3,7 +3,7 @@ import { useCallback, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 
 import { useEscapeKey } from "../hooks/useEscapeKey";
-import { useFlowsContext } from "../state";
+import { useFlowsContext } from "../state/contexts/FlowsContext";
 import { extractDraftVariables } from "../utils/actionVariables";
 import {
 	type ConditionExpression,

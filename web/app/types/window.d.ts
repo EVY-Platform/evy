@@ -1,5 +1,5 @@
 import type { UI_Flow } from "evy-types";
-import type { ResourceAttributeMetadata, ServiceResource } from "../api/sync";
+import type { ResourceAttributeMetadata, ServiceResource } from "./resources";
 
 declare global {
 	interface Window {

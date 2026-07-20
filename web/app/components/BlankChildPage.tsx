@@ -1,7 +1,7 @@
 import { useRef } from "react";
 
 import { usePageDropTarget } from "../hooks/usePageDropTarget";
-import { useDragContext } from "../state";
+import { useDragContext } from "../state/contexts/DragContext";
 import { ChildPageFrame } from "./ChildPageFrame";
 
 /**

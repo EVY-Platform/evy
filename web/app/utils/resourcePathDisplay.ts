@@ -1,4 +1,4 @@
-import type { ServiceResource } from "../api/sync";
+import type { ServiceResource } from "../types/resources";
 
 export function resourceNameById(
 	serviceResources: ServiceResource[],

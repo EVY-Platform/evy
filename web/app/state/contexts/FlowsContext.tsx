@@ -1,10 +1,10 @@
 import type { DATA_EVY_Flow, DATA_EVY_Page, DATA_EVY_Row } from "evy-types";
 import { createContext, type Dispatch, useContext } from "react";
+import type { RowAction } from "../../types/actions";
 import type {
 	ResourceAttributeMetadata,
 	ServiceResource,
-} from "../../api/sync";
-import type { RowAction } from "../../types/actions";
+} from "../../types/resources";
 import type { Row } from "../../types/row";
 
 type FlowsContextValue = {

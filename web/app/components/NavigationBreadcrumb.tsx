@@ -1,14 +1,14 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRowById } from "../hooks/useRowById";
 import parseIconText from "../icons/parseIconText";
-import { useFlowsContext } from "../state";
+import { storedRowToRow } from "../rows/rowElementFactory";
+import { useFlowsContext } from "../state/contexts/FlowsContext";
 import { splitCamelCaseToWords } from "../utils/labelFormatting";
 import {
 	breadcrumbLabelForPage,
 	breadcrumbLabelForRow,
 } from "../utils/navLabels";
 import { capturePageFramePosition } from "../utils/preActivationCapture";
-import { storedRowToRow } from "../utils/rowCodec";
 import { CreateFlowDialog } from "./CreateFlowDialog";
 import { PopoverSelect } from "./PopoverSelect";
 

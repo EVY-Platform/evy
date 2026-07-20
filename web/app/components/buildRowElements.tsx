@@ -1,7 +1,7 @@
 import type { DATA_EVY_Row } from "evy-types";
 import type { Row } from "../types/row";
-import { storedRowToRow } from "../utils/rowCodec";
 import { DraggableRowContainer } from "./DraggableRowContainer";
+import { resolveRowElement } from "./resolveRowElement";
 
 export function buildRowElements(
 	rowIds: string[],
@@ -14,10 +14,7 @@ export function buildRowElements(
 	},
 ) {
 	return rowIds.map((rowId) => {
-		const record = rowsById[rowId];
-		const rowElement = record
-			? storedRowToRow(record).row
-			: paletteRows.find((r) => r.id === rowId)?.row;
+		const rowElement = resolveRowElement(rowId, rowsById, paletteRows);
 		const rowForcedIndicators =
 			forcedIndicators && forcedIndicators.rowId === rowId
 				? forcedIndicators.indicators

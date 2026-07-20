@@ -1,19 +1,6 @@
 import type { DATA_EVY_Row, DATA_EVY_RowData } from "evy-types";
-import { createElement } from "react";
-import { baseRows } from "../rows/baseRows";
-import { UnknownRow } from "../rows/EVYRow";
 import type { Row } from "../types/row";
-import { buildRowConfigFromRecord } from "./rowConfig";
 import { ROW_METADATA_KEYS } from "./rowConstants";
-
-export function storedRowToRow(record: DATA_EVY_Row): Row {
-	const config = buildRowConfigFromRecord(record);
-	const baseRow = baseRows.find((r) => r.config.type === record.type);
-	const row = baseRow
-		? createElement(baseRow, { key: record.id, rowId: record.id })
-		: createElement(UnknownRow, { key: record.id, rowId: record.id });
-	return { id: record.id, row, config };
-}
 
 export function rowToFlatRecords(row: Row, nowIso?: string): DATA_EVY_Row[] {
 	const now = nowIso ?? new Date().toISOString();

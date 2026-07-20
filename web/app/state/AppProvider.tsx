@@ -6,10 +6,13 @@ import {
 	useReducer,
 	useRef,
 } from "react";
-import type { ResourceAttributeMetadata, ServiceResource } from "../api/sync";
 import { wsClient } from "../api/wsClient";
 import { useUrlSync } from "../hooks/useUrlSync";
 import { baseRows } from "../rows/baseRows";
+import type {
+	ResourceAttributeMetadata,
+	ServiceResource,
+} from "../types/resources";
 import {
 	collectionsEqual,
 	collectionsToMaps,
