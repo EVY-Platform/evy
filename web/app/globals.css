@@ -819,19 +819,6 @@ label {
 	min-height: 0;
 }
 
-.evy-action-popup-textarea {
-	width: 100%;
-	padding: 4px 6px;
-	line-height: 1.4;
-	resize: vertical;
-	overflow-y: auto;
-}
-
-.evy-action-popup-textarea:focus-visible {
-	outline: none;
-	border-color: var(--color-evy-blue);
-}
-
 /* ---- Action summary (ActionEditor) ---- */
 
 .evy-action-summary-body {

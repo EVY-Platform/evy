@@ -67,7 +67,11 @@ function getBuilderAssistToken(field: Locator, text: string): Locator {
 	});
 }
 
-function buildBuilderAssistFlow(): ServerFlow[] {
+function buildBuilderAssistFlow(
+	buttonActions: { condition: string; false: string; true: string }[] = [
+		{ condition: "", false: "", true: "" },
+	],
+): ServerFlow[] {
 	return [
 		{
 			id: "flow-builder",
@@ -91,7 +95,7 @@ function buildBuilderAssistFlow(): ServerFlow[] {
 							type: "Button",
 							title: "",
 							label: "Open checkout",
-							actions: [{ condition: "", false: "", true: "" }],
+							actions: buttonActions,
 						},
 					],
 				},
@@ -107,10 +111,11 @@ function buildBuilderAssistFlow(): ServerFlow[] {
 
 async function openBuilderAssistFlow(
 	page: Parameters<typeof openAppWithFullFlows>[0],
+	buttonActions?: { condition: string; false: string; true: string }[],
 ) {
 	await openAppWithFullFlows(
 		page,
-		buildBuilderAssistFlow(),
+		buildBuilderAssistFlow(buttonActions),
 		SERVICE_RESOURCES,
 		RESOURCE_ATTRIBUTE_METADATA,
 	);
@@ -310,8 +315,50 @@ test.describe("Builder Assist flows", () => {
 			"data-value",
 			"page-checkout",
 		);
+		await expect
+			.poll(() =>
+				readBuilderAssistRawValue(
+					reopenedPopup.getByLabel("true-0-navigate-query"),
+				),
+			)
+			.toBe("{items: [$datum.id]}");
+	});
+
+	test("shows resource ids as named chips in update() argument fields", async ({
+		page,
+	}) => {
+		const updateBranch = `{update(${MARKETPLACE_SERVICE},${ITEM_RESOURCE_ID},{fk: ${ITEM_RESOURCE_ID}.id, archivedAt: null},{archivedAt: now()})}`;
+		await openBuilderAssistFlow(page, [
+			{ condition: "", false: "", true: updateBranch },
+		]);
+
+		await page.getByText("Open checkout", { exact: true }).first().click();
+		const configPanel = getConfigPanel(page);
+		await configPanel.getByLabel("Edit action 1").click();
+
+		const popup = page.getByRole("dialog", { name: "Edit action 1" });
+		await expect(popup).toBeVisible();
+
+		const filterField = popup.getByLabel("true-0-update-filter");
+		await expect(getBuilderAssistToken(filterField, "item")).toBeVisible();
+		await expect(filterField).not.toContainText(ITEM_RESOURCE_ID);
+		await expect
+			.poll(() => readBuilderAssistRawValue(filterField))
+			.toBe(`{fk: ${ITEM_RESOURCE_ID}.id, archivedAt: null}`);
+
+		const changesField = popup.getByLabel("true-0-update-changes");
+		await expect
+			.poll(() => readBuilderAssistRawValue(changesField))
+			.toBe("{archivedAt: now()}");
+
+		await popup.getByRole("button", { name: "Save" }).click();
+		await expect(popup).not.toBeVisible();
+
 		await expect(
-			reopenedPopup.getByLabel("true-0-navigate-query"),
-		).toHaveValue("{items: [$datum.id]}");
+			configPanel.getByText(
+				"update(Marketplace, item, {fk: item.id, archivedAt: null}, {archivedAt: now()})",
+				{ exact: true },
+			),
+		).toBeVisible();
 	});
 });

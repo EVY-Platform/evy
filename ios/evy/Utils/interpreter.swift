@@ -10,7 +10,8 @@ import SwiftUI
 private let comparisonBlockPattern = "\\{[^{}\"]+\\}"
 private let comparisonOperators = [">=", "<=", "==", "!=", ">", "<"]
 private let propsPattern = "\\{(?!\")[^}^\"]*(?!\")\\}"
-private let functionParamsPattern = "\\(([^)]*)\\)"
+/// Args may contain one level of nested calls, e.g. update(..., {archivedAt: now()})
+private let functionParamsPattern = "\\((?:[^()]|\\([^()]*\\))*\\)"
 private let functionPattern = "[a-zA-Z_][a-zA-Z0-9_]*\(functionParamsPattern)"
 private let arrayPattern = "\\[([\\d]*)\\]"
 public let PROP_SEPARATOR = "."
@@ -254,8 +255,13 @@ func _getDataFromProps(_ props: String) throws -> EVYJson {
 
   let remainingProps = splitProps.count > 1 ? Array(splitProps[1...]) : []
 
-  if let (funcName, funcArgs) = parseFunctionCall(firstProp), funcName == "findFirst" {
-    return try evyFindFirst(funcArgs, remainingProps: remainingProps)
+  if let (funcName, funcArgs) = parseFunctionCall(firstProp) {
+    if funcName == "findFirst" {
+      return try evyFindFirst(funcArgs, remainingProps: remainingProps)
+    }
+    if funcName == "now" {
+      return .string(EVY.nowISO8601())
+    }
   }
 
   if let ephemeralDatum = ephemeralDatumRegistry[firstProp] {
@@ -490,6 +496,8 @@ private func parseText(
       value = try evyLength(funcArgs)
     case "earliestDatetime":
       value = try evyEarliestDatetime(funcArgs)
+    case "now":
+      value = evyNow()
     case "formatCurrency":
       value = try evyFormatCurrency(funcArgs, editing)
     case "formatDimension":

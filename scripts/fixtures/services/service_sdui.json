@@ -117,7 +117,7 @@
 												"false": ""
 											}
 										],
-										"visible": "{findFirst(000c2d05-851e-4456-8f22-bb1e54f17c8c, dc28ed59-298e-493c-8ff3-3e60f2ebccbd.id, item_id, false, archived).item_id != dc28ed59-298e-493c-8ff3-3e60f2ebccbd.id}",
+										"visible": "{findFirst(000c2d05-851e-4456-8f22-bb1e54f17c8c, dc28ed59-298e-493c-8ff3-3e60f2ebccbd.id, fk, null, archivedAt).fk != dc28ed59-298e-493c-8ff3-3e60f2ebccbd.id}",
 										"title": "",
 										"start_time": "07:00",
 										"end_time": "19:00",
@@ -159,7 +159,7 @@
 													"actions": [
 														{
 															"condition": "",
-															"true": "{create(66b092ae-7cd8-4d67-95b7-30b03568fd90, 000c2d05-851e-4456-8f22-bb1e54f17c8c, {type: pickup, item_id: dc28ed59-298e-493c-8ff3-3e60f2ebccbd.id, time: selected_pickup_timeslot, archived: false})}",
+															"true": "{create(66b092ae-7cd8-4d67-95b7-30b03568fd90, 000c2d05-851e-4456-8f22-bb1e54f17c8c, {fk: dc28ed59-298e-493c-8ff3-3e60f2ebccbd.id, service: \"66b092ae-7cd8-4d67-95b7-30b03568fd90\", resource: \"dc28ed59-298e-493c-8ff3-3e60f2ebccbd\", archivedAt: null, data: {type: pickup, time: selected_pickup_timeslot}})}",
 															"false": ""
 														},
 														{
@@ -187,7 +187,7 @@
 												"false": ""
 											}
 										],
-										"visible": "{findFirst(000c2d05-851e-4456-8f22-bb1e54f17c8c, dc28ed59-298e-493c-8ff3-3e60f2ebccbd.id, item_id, false, archived).item_id == dc28ed59-298e-493c-8ff3-3e60f2ebccbd.id}",
+										"visible": "{findFirst(000c2d05-851e-4456-8f22-bb1e54f17c8c, dc28ed59-298e-493c-8ff3-3e60f2ebccbd.id, fk, null, archivedAt).fk == dc28ed59-298e-493c-8ff3-3e60f2ebccbd.id}",
 										"title": "",
 										"label": "Cancel request",
 										"style": "danger",
@@ -214,7 +214,7 @@
 													"actions": [
 														{
 															"condition": "",
-															"true": "{update(66b092ae-7cd8-4d67-95b7-30b03568fd90, 000c2d05-851e-4456-8f22-bb1e54f17c8c, {item_id: dc28ed59-298e-493c-8ff3-3e60f2ebccbd.id, archived: false}, {archived: true})}",
+															"true": "{update(66b092ae-7cd8-4d67-95b7-30b03568fd90, 000c2d05-851e-4456-8f22-bb1e54f17c8c, {fk: dc28ed59-298e-493c-8ff3-3e60f2ebccbd.id, archivedAt: null}, {archivedAt: now()})}",
 															"false": ""
 														},
 														{
@@ -299,7 +299,7 @@
 												"false": ""
 											}
 										],
-										"visible": "{findFirst(000c2d05-851e-4456-8f22-bb1e54f17c8c, dc28ed59-298e-493c-8ff3-3e60f2ebccbd.id, item_id, false, archived).item_id != dc28ed59-298e-493c-8ff3-3e60f2ebccbd.id}",
+										"visible": "{findFirst(000c2d05-851e-4456-8f22-bb1e54f17c8c, dc28ed59-298e-493c-8ff3-3e60f2ebccbd.id, fk, null, archivedAt).fk != dc28ed59-298e-493c-8ff3-3e60f2ebccbd.id}",
 										"title": "",
 										"start_time": "07:00",
 										"end_time": "19:00",
@@ -332,7 +332,7 @@
 													"actions": [
 														{
 															"condition": "",
-															"true": "{create(66b092ae-7cd8-4d67-95b7-30b03568fd90, 000c2d05-851e-4456-8f22-bb1e54f17c8c, {type: delivery, item_id: dc28ed59-298e-493c-8ff3-3e60f2ebccbd.id, time: selected_delivery_timeslot, archived: false})}",
+															"true": "{create(66b092ae-7cd8-4d67-95b7-30b03568fd90, 000c2d05-851e-4456-8f22-bb1e54f17c8c, {fk: dc28ed59-298e-493c-8ff3-3e60f2ebccbd.id, service: \"66b092ae-7cd8-4d67-95b7-30b03568fd90\", resource: \"dc28ed59-298e-493c-8ff3-3e60f2ebccbd\", archivedAt: null, data: {type: delivery, time: selected_delivery_timeslot}})}",
 															"false": ""
 														},
 														{
@@ -360,7 +360,7 @@
 												"false": ""
 											}
 										],
-										"visible": "{findFirst(000c2d05-851e-4456-8f22-bb1e54f17c8c, dc28ed59-298e-493c-8ff3-3e60f2ebccbd.id, item_id, false, archived).item_id == dc28ed59-298e-493c-8ff3-3e60f2ebccbd.id}",
+										"visible": "{findFirst(000c2d05-851e-4456-8f22-bb1e54f17c8c, dc28ed59-298e-493c-8ff3-3e60f2ebccbd.id, fk, null, archivedAt).fk == dc28ed59-298e-493c-8ff3-3e60f2ebccbd.id}",
 										"title": "",
 										"label": "Cancel request",
 										"style": "danger",
@@ -387,7 +387,7 @@
 													"actions": [
 														{
 															"condition": "",
-															"true": "{update(66b092ae-7cd8-4d67-95b7-30b03568fd90, 000c2d05-851e-4456-8f22-bb1e54f17c8c, {item_id: dc28ed59-298e-493c-8ff3-3e60f2ebccbd.id, archived: false}, {archived: true})}",
+															"true": "{update(66b092ae-7cd8-4d67-95b7-30b03568fd90, 000c2d05-851e-4456-8f22-bb1e54f17c8c, {fk: dc28ed59-298e-493c-8ff3-3e60f2ebccbd.id, archivedAt: null}, {archivedAt: now()})}",
 															"false": ""
 														},
 														{
@@ -471,7 +471,7 @@
 												"false": "{highlight_required(postcode)}"
 											}
 										],
-										"visible": "{findFirst(000c2d05-851e-4456-8f22-bb1e54f17c8c, dc28ed59-298e-493c-8ff3-3e60f2ebccbd.id, item_id, false, archived).item_id != dc28ed59-298e-493c-8ff3-3e60f2ebccbd.id}",
+										"visible": "{findFirst(000c2d05-851e-4456-8f22-bb1e54f17c8c, dc28ed59-298e-493c-8ff3-3e60f2ebccbd.id, fk, null, archivedAt).fk != dc28ed59-298e-493c-8ff3-3e60f2ebccbd.id}",
 										"title": "",
 										"label": "Ask to buy",
 										"name": "Ask to buy",
@@ -515,7 +515,7 @@
 													"actions": [
 														{
 															"condition": "",
-															"true": "{create(66b092ae-7cd8-4d67-95b7-30b03568fd90, 000c2d05-851e-4456-8f22-bb1e54f17c8c, {type: shipping, item_id: dc28ed59-298e-493c-8ff3-3e60f2ebccbd.id, postalcode: shipping_address.postcode, archived: false})}",
+															"true": "{create(66b092ae-7cd8-4d67-95b7-30b03568fd90, 000c2d05-851e-4456-8f22-bb1e54f17c8c, {fk: dc28ed59-298e-493c-8ff3-3e60f2ebccbd.id, service: \"66b092ae-7cd8-4d67-95b7-30b03568fd90\", resource: \"dc28ed59-298e-493c-8ff3-3e60f2ebccbd\", archivedAt: null, data: {type: shipping, postalcode: shipping_address.postcode}})}",
 															"false": ""
 														},
 														{
@@ -543,7 +543,7 @@
 												"false": ""
 											}
 										],
-										"visible": "{findFirst(000c2d05-851e-4456-8f22-bb1e54f17c8c, dc28ed59-298e-493c-8ff3-3e60f2ebccbd.id, item_id, false, archived).item_id == dc28ed59-298e-493c-8ff3-3e60f2ebccbd.id}",
+										"visible": "{findFirst(000c2d05-851e-4456-8f22-bb1e54f17c8c, dc28ed59-298e-493c-8ff3-3e60f2ebccbd.id, fk, null, archivedAt).fk == dc28ed59-298e-493c-8ff3-3e60f2ebccbd.id}",
 										"title": "",
 										"label": "Cancel request",
 										"style": "danger",
@@ -570,7 +570,7 @@
 													"actions": [
 														{
 															"condition": "",
-															"true": "{update(66b092ae-7cd8-4d67-95b7-30b03568fd90, 000c2d05-851e-4456-8f22-bb1e54f17c8c, {item_id: dc28ed59-298e-493c-8ff3-3e60f2ebccbd.id, archived: false}, {archived: true})}",
+															"true": "{update(66b092ae-7cd8-4d67-95b7-30b03568fd90, 000c2d05-851e-4456-8f22-bb1e54f17c8c, {fk: dc28ed59-298e-493c-8ff3-3e60f2ebccbd.id, archivedAt: null}, {archivedAt: now()})}",
 															"false": ""
 														},
 														{

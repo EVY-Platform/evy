@@ -57,6 +57,19 @@ func evyEarliestDatetime(_ args: String) throws -> EVYFunctionOutput {
 }
 
 @MainActor
+func evyNow() -> EVYFunctionOutput {
+  EVYFunctionOutput(value: EVY.nowISO8601(), prefix: nil, suffix: nil)
+}
+
+/// `null` in a findFirst (value, prop) pair matches records where the prop is absent or JSON null
+private func recordPropIsNull(_ record: EVYJson, prop: String) -> Bool {
+  guard case .dictionary(let dictValue) = record else { return false }
+  guard let propValue = dictValue[prop] else { return true }
+  if case .null = propValue { return true }
+  return false
+}
+
+@MainActor
 func evyFindFirst(_ args: String, remainingProps: [String] = []) throws -> EVYJson {
   let parts = splitFunctionArguments(args)
   guard parts.count >= 2 else { throw EVYParamError.invalidProps }
@@ -78,6 +91,9 @@ func evyFindFirst(_ args: String, remainingProps: [String] = []) throws -> EVYJs
       stride(from: 1, to: parts.count, by: 2).allSatisfy { index in
         let valueArg = parts[index].trimmingCharacters(in: .whitespacesAndNewlines)
         let propArg = parts[index + 1].trimmingCharacters(in: .whitespacesAndNewlines)
+        if valueArg == "null" {
+          return recordPropIsNull(record, prop: propArg)
+        }
         let resolvedValue =
           (try? EVY.getDataFromProps(valueArg))?.toString()
           ?? stripOptionalSurroundingQuotes(valueArg)

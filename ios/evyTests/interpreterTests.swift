@@ -765,8 +765,8 @@ final class InterpreterTests: XCTestCase {
     XCTAssertEqual(countBefore, countAfter)
   }
 
-  func testFindFirstMultiPairReturnsActiveRequestWhenArchivedComesFirst() throws {
-    let requestsKey = uniqueKey("requests")
+  func testFindFirstMultiPairReturnsActiveMessageWhenArchivedComesFirst() throws {
+    let messagesKey = uniqueKey("messages")
     let itemKey = uniqueKey("item")
     let itemId = UUID().uuidString
     let archivedId = UUID().uuidString
@@ -776,53 +776,53 @@ final class InterpreterTests: XCTestCase {
       .array([
         .dictionary([
           "id": .string(archivedId),
-          "item_id": .string(itemId),
-          "archived": .bool(true),
-          "type": .string("pickup"),
+          "fk": .string(itemId),
+          "archivedAt": .string("2026-06-02T00:00:00Z"),
+          "data": .dictionary(["type": .string("pickup")]),
         ]),
         .dictionary([
           "id": .string(activeId),
-          "item_id": .string(itemId),
-          "archived": .bool(false),
-          "type": .string("pickup"),
+          "fk": .string(itemId),
+          "archivedAt": .null,
+          "data": .dictionary(["type": .string("pickup")]),
         ]),
       ]),
-      at: "\(EVYNamespace.marketplace):\(requestsKey)"
+      at: "\(EVYNamespace.marketplace):\(messagesKey)"
     )
     try store(.dictionary(["id": .string(itemId)]), at: itemKey)
 
     let result = try parseTextFromText(
-      "{findFirst(\(requestsKey), \(itemKey).id, item_id, false, archived).id}")
+      "{findFirst(\(messagesKey), \(itemKey).id, fk, null, archivedAt).id}")
 
     XCTAssertEqual(result.value, activeId)
   }
 
-  func testFindFirstMultiPairReturnsEmptyWhenOnlyArchivedExist() throws {
-    let requestsKey = uniqueKey("requests")
+  func testFindFirstNullPairMatchesAbsentProp() throws {
+    let messagesKey = uniqueKey("messages")
     let itemKey = uniqueKey("item")
     let itemId = UUID().uuidString
+    let activeId = UUID().uuidString
 
     try store(
       .array([
         .dictionary([
-          "id": .string(UUID().uuidString),
-          "item_id": .string(itemId),
-          "archived": .bool(true),
-          "type": .string("pickup"),
+          "id": .string(activeId),
+          "fk": .string(itemId),
+          "data": .dictionary(["type": .string("pickup")]),
         ])
       ]),
-      at: "\(EVYNamespace.marketplace):\(requestsKey)"
+      at: "\(EVYNamespace.marketplace):\(messagesKey)"
     )
     try store(.dictionary(["id": .string(itemId)]), at: itemKey)
 
     let result = try parseTextFromText(
-      "{findFirst(\(requestsKey), \(itemKey).id, item_id, false, archived).id}")
+      "{findFirst(\(messagesKey), \(itemKey).id, fk, null, archivedAt).id}")
 
-    XCTAssertEqual(result.value, "")
+    XCTAssertEqual(result.value, activeId, "null pair should match records without the prop")
   }
 
-  func testHasActiveRequestVisibilityExpression() throws {
-    let requestsKey = uniqueKey("requests")
+  func testFindFirstMultiPairReturnsEmptyWhenOnlyArchivedExist() throws {
+    let messagesKey = uniqueKey("messages")
     let itemKey = uniqueKey("item")
     let itemId = UUID().uuidString
 
@@ -830,22 +830,56 @@ final class InterpreterTests: XCTestCase {
       .array([
         .dictionary([
           "id": .string(UUID().uuidString),
-          "item_id": .string(itemId),
-          "archived": .bool(false),
-          "type": .string("pickup"),
+          "fk": .string(itemId),
+          "archivedAt": .string("2026-06-02T00:00:00Z"),
+          "data": .dictionary(["type": .string("pickup")]),
         ])
       ]),
-      at: "\(EVYNamespace.marketplace):\(requestsKey)"
+      at: "\(EVYNamespace.marketplace):\(messagesKey)"
+    )
+    try store(.dictionary(["id": .string(itemId)]), at: itemKey)
+
+    let result = try parseTextFromText(
+      "{findFirst(\(messagesKey), \(itemKey).id, fk, null, archivedAt).id}")
+
+    XCTAssertEqual(result.value, "")
+  }
+
+  func testHasActiveMessageVisibilityExpression() throws {
+    let messagesKey = uniqueKey("messages")
+    let itemKey = uniqueKey("item")
+    let itemId = UUID().uuidString
+
+    try store(
+      .array([
+        .dictionary([
+          "id": .string(UUID().uuidString),
+          "fk": .string(itemId),
+          "archivedAt": .null,
+          "data": .dictionary(["type": .string("pickup")]),
+        ])
+      ]),
+      at: "\(EVYNamespace.marketplace):\(messagesKey)"
     )
     try store(.dictionary(["id": .string(itemId)]), at: itemKey)
 
     let hasActive =
-      "{findFirst(\(requestsKey), \(itemKey).id, item_id, false, archived).item_id == \(itemKey).id}"
+      "{findFirst(\(messagesKey), \(itemKey).id, fk, null, archivedAt).fk == \(itemKey).id}"
     let noActive =
-      "{findFirst(\(requestsKey), \(itemKey).id, item_id, false, archived).item_id != \(itemKey).id}"
+      "{findFirst(\(messagesKey), \(itemKey).id, fk, null, archivedAt).fk != \(itemKey).id}"
 
     XCTAssertTrue(try EVY.evaluateFromText(hasActive))
     XCTAssertFalse(try EVY.evaluateFromText(noActive))
+  }
+
+  func testNowFunctionReturnsPinnedClockISO8601() throws {
+    let pinnedDate = Date(timeIntervalSince1970: 1_780_000_000)
+    EVY.nowProvider = { pinnedDate }
+    defer { EVY.nowProvider = { Date() } }
+
+    let result = try parseTextFromText("{now()}")
+
+    XCTAssertEqual(result.value, pinnedDate.ISO8601Format())
   }
 
   func testFindFirstTwoArgStillMatchesByIdentifier() throws {
@@ -863,14 +897,14 @@ final class InterpreterTests: XCTestCase {
   }
 
   func testFindFirstMultiPairWatchTargetsIncludeCollectionKey() throws {
-    let requestsKey = uniqueKey("requests")
+    let messagesKey = uniqueKey("messages")
     let itemKey = uniqueKey("item")
     let expression =
-      "{findFirst(\(requestsKey), \(itemKey).id, item_id, false, archived).item_id == \(itemKey).id}"
+      "{findFirst(\(messagesKey), \(itemKey).id, fk, null, archivedAt).fk == \(itemKey).id}"
 
     let targets = EVY.watchTargets(for: expression)
 
-    XCTAssertTrue(targets.contains(requestsKey))
+    XCTAssertTrue(targets.contains(messagesKey))
     XCTAssertTrue(targets.contains("\(itemKey).id"))
   }
 

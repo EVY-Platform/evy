@@ -157,6 +157,9 @@ extension EVY {
     let newId = UUID().uuidString
     var payloadWithId = payload
     payloadWithId["id"] = .string(newId)
+    if payloadWithId["createdAt"] == nil {
+      payloadWithId["createdAt"] = .string(EVY.nowISO8601())
+    }
     let dataWithId = EVYJson.dictionary(payloadWithId)
     let params = MutationParams(
       service: namespace,
@@ -191,7 +194,13 @@ extension EVY {
       guard case .dictionary(let record) = decoded else { continue }
       guard case .string(let recordId) = record["id"] else { continue }
       let matches = filter.allSatisfy { key, expectedValue in
-        record[key]?.toString() == expectedValue.toString()
+        if case .null = expectedValue {
+          // null filters match records where the key is absent or JSON null
+          guard let recordValue = record[key] else { return true }
+          if case .null = recordValue { return true }
+          return false
+        }
+        return record[key]?.toString() == expectedValue.toString()
       }
       guard matches else { continue }
 

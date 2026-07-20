@@ -43,6 +43,45 @@ describe("action branch helpers", () => {
 		);
 	});
 
+	it("parses update with filter and changes objects", () => {
+		expect(
+			parseBranch(
+				`{update(${MARKETPLACE_SERVICE},${MARKETPLACE_RESOURCE.MESSAGES},{fk: $datum.id, archivedAt: null},{archivedAt: now()})}`,
+			),
+		).toEqual({
+			functionName: "update",
+			args: [
+				MARKETPLACE_SERVICE,
+				MARKETPLACE_RESOURCE.MESSAGES,
+				"{fk: $datum.id, archivedAt: null}",
+				"{archivedAt: now()}",
+			],
+		});
+	});
+
+	it("serializes update with filter and changes objects", () => {
+		expect(
+			serializeBranch("update", [
+				MARKETPLACE_SERVICE,
+				MARKETPLACE_RESOURCE.MESSAGES,
+				"{fk: $datum.id, archivedAt: null}",
+				"{archivedAt: now()}",
+			]),
+		).toBe(
+			`{update(${MARKETPLACE_SERVICE},${MARKETPLACE_RESOURCE.MESSAGES},{fk: $datum.id, archivedAt: null},{archivedAt: now()})}`,
+		);
+	});
+
+	it("keeps filter and changes in update display text", () => {
+		expect(
+			formatBranchDisplay(
+				"{update(svc-1,res-1,{fk: id-1, archivedAt: null},{archivedAt: now()})}",
+			),
+		).toBe(
+			"update(svc-1, res-1, {fk: id-1, archivedAt: null}, {archivedAt: now()})",
+		);
+	});
+
 	it("parses navigate query as a third function argument", () => {
 		expect(
 			parseBranch("{navigate(flow-1,page-2,{items: [id-1, id-2]})}"),

@@ -821,25 +821,27 @@ class E2ETestBase: XCTestCase {
   }
 
   static func cancelRequestVisibilityExpressions() -> (hasActive: String, noActive: String) {
-    let requestsResourceId = MarketplaceResource.requests.rawValue
+    let messagesResourceId = MarketplaceResource.messages.rawValue
     let activeMatch =
-      "{findFirst(\(requestsResourceId), \(MARKETPLACE_ITEMS_RESOURCE_ID).id, item_id, false, archived).item_id"
+      "{findFirst(\(messagesResourceId), \(MARKETPLACE_ITEMS_RESOURCE_ID).id, fk, null, archivedAt).fk"
     let hasActive = "\(activeMatch) == \(MARKETPLACE_ITEMS_RESOURCE_ID).id}"
     let noActive = "\(activeMatch) != \(MARKETPLACE_ITEMS_RESOURCE_ID).id}"
     return (hasActive, noActive)
   }
 
   static func viewItemCancelRequestFlowData(flowId: String, pageId: String) -> [String: Any] {
-    let requestsResourceId = MarketplaceResource.requests.rawValue
+    let messagesResourceId = MarketplaceResource.messages.rawValue
     let visibility = cancelRequestVisibilityExpressions()
+    let messageEnvelope =
+      "fk: \(MARKETPLACE_ITEMS_RESOURCE_ID).id, service: \"\(MARKETPLACE_SERVICE)\", resource: \"\(MARKETPLACE_ITEMS_RESOURCE_ID)\", archivedAt: null"
     let pickupCreateAction =
-      "{create(\(MARKETPLACE_SERVICE),\(requestsResourceId),{type: pickup, item_id: \(MARKETPLACE_ITEMS_RESOURCE_ID).id, time: selected_pickup_timeslot, archived: false})}"
+      "{create(\(MARKETPLACE_SERVICE),\(messagesResourceId),{\(messageEnvelope), data: {type: pickup, time: selected_pickup_timeslot}})}"
     let deliveryCreateAction =
-      "{create(\(MARKETPLACE_SERVICE),\(requestsResourceId),{type: delivery, item_id: \(MARKETPLACE_ITEMS_RESOURCE_ID).id, time: selected_delivery_timeslot, archived: false})}"
+      "{create(\(MARKETPLACE_SERVICE),\(messagesResourceId),{\(messageEnvelope), data: {type: delivery, time: selected_delivery_timeslot}})}"
     let shippingCreateAction =
-      "{create(\(MARKETPLACE_SERVICE),\(requestsResourceId),{type: shipping, item_id: \(MARKETPLACE_ITEMS_RESOURCE_ID).id, postalcode: shipping_address.postcode, archived: false})}"
+      "{create(\(MARKETPLACE_SERVICE),\(messagesResourceId),{\(messageEnvelope), data: {type: shipping, postalcode: shipping_address.postcode}})}"
     let cancelAction =
-      "{update(\(MARKETPLACE_SERVICE),\(requestsResourceId),{item_id: \(MARKETPLACE_ITEMS_RESOURCE_ID).id, archived: false},{archived: true})}"
+      "{update(\(MARKETPLACE_SERVICE),\(messagesResourceId),{fk: \(MARKETPLACE_ITEMS_RESOURCE_ID).id, archivedAt: null},{archivedAt: now()})}"
 
     return [
       "id": flowId,
@@ -1238,11 +1240,13 @@ class E2ETestBase: XCTestCase {
   }
 
   static func viewItemRequestFlowData(flowId: String, pageId: String) -> [String: Any] {
-    let requestsResourceId = MarketplaceResource.requests.rawValue
+    let messagesResourceId = MarketplaceResource.messages.rawValue
+    let messageEnvelope =
+      "fk: \(MARKETPLACE_ITEMS_RESOURCE_ID).id, service: \"\(MARKETPLACE_SERVICE)\", resource: \"\(MARKETPLACE_ITEMS_RESOURCE_ID)\", archivedAt: null"
     let pickupCreateAction =
-      "{create(\(MARKETPLACE_SERVICE),\(requestsResourceId),{type: pickup, item_id: \(MARKETPLACE_ITEMS_RESOURCE_ID).id, time: selected_pickup_timeslot, archived: false})}"
+      "{create(\(MARKETPLACE_SERVICE),\(messagesResourceId),{\(messageEnvelope), data: {type: pickup, time: selected_pickup_timeslot}})}"
     let shippingCreateAction =
-      "{create(\(MARKETPLACE_SERVICE),\(requestsResourceId),{type: shipping, item_id: \(MARKETPLACE_ITEMS_RESOURCE_ID).id, postalcode: shipping_address.postcode, archived: false})}"
+      "{create(\(MARKETPLACE_SERVICE),\(messagesResourceId),{\(messageEnvelope), data: {type: shipping, postalcode: shipping_address.postcode}})}"
 
     return [
       "id": flowId,
@@ -1972,7 +1976,7 @@ final class WebSocketE2ETests: E2ETestBase {
       app.alerts.firstMatch.waitForExistence(timeout: 2),
       "Pickup request should not show a native confirmation alert")
 
-    let pickupRequestCreated = try await waitForMarketplaceRequest(
+    let pickupRequestCreated = try await waitForMarketplaceMessage(
       emitter: emitter,
       type: "pickup",
       itemId: selectedItemId,
@@ -1981,7 +1985,7 @@ final class WebSocketE2ETests: E2ETestBase {
     )
     XCTAssertTrue(
       pickupRequestCreated,
-      "Tapping a pickup timeslot should create a matching marketplace request"
+      "Tapping a pickup timeslot should create a matching marketplace message"
     )
     await emitter.disconnect()
   }
@@ -2019,13 +2023,13 @@ final class WebSocketE2ETests: E2ETestBase {
       "Pickup confirmation sheet should appear after selecting a timeslot")
     dismissConfirmationSheet()
 
-    let requestsAfterCancel = try await emitter.getResource(
+    let messagesAfterCancel = try await emitter.getResource(
       service: MARKETPLACE_SERVICE,
-      resource: MarketplaceResource.requests.rawValue
+      resource: MarketplaceResource.messages.rawValue
     )
     XCTAssertFalse(
-      Self.marketplaceRequestsContain(
-        requestsAfterCancel,
+      Self.marketplaceMessagesContain(
+        messagesAfterCancel,
         type: "pickup",
         itemId: selectedItemId
       ),
@@ -2131,14 +2135,14 @@ final class WebSocketE2ETests: E2ETestBase {
       "Pickup confirmation sheet should appear after selecting a timeslot")
     tapConfirmationSheetRequestButton()
 
-    let pickupRequestCreated = try await waitForMarketplaceRequest(
+    let pickupRequestCreated = try await waitForMarketplaceMessage(
       emitter: emitter,
       type: "pickup",
       itemId: selectedItemId,
       valueKey: "time",
       value: selectedTimeslot
     )
-    XCTAssertTrue(pickupRequestCreated, "Tapping a pickup timeslot should create a request")
+    XCTAssertTrue(pickupRequestCreated, "Tapping a pickup timeslot should create a message")
 
     let cancelButton = app.buttons["Cancel request"].firstMatch
     XCTAssertTrue(
@@ -2168,11 +2172,11 @@ final class WebSocketE2ETests: E2ETestBase {
       "Confirm cancel button should be tappable in the sheet")
     confirmCancelButton.tap()
 
-    let requestArchived = try await waitForArchivedMarketplaceRequest(
+    let messageArchived = try await waitForArchivedMarketplaceMessage(
       emitter: emitter,
       itemId: selectedItemId
     )
-    XCTAssertTrue(requestArchived, "Cancel request should archive the active request")
+    XCTAssertTrue(messageArchived, "Cancel request should archive the active message")
     XCTAssertTrue(
       timeslot.waitForExistence(timeout: 10),
       "Pickup timeslot should return after cancelling the request")
@@ -2223,13 +2227,13 @@ final class WebSocketE2ETests: E2ETestBase {
       missingInformationAlert.waitForExistence(timeout: 5),
       "An empty shipping postcode should show the missing-information alert"
     )
-    let requestsAfterEmptyPostcode = try await emitter.getResource(
+    let messagesAfterEmptyPostcode = try await emitter.getResource(
       service: MARKETPLACE_SERVICE,
-      resource: MarketplaceResource.requests.rawValue
+      resource: MarketplaceResource.messages.rawValue
     )
     XCTAssertFalse(
-      Self.marketplaceRequestsContain(
-        requestsAfterEmptyPostcode,
+      Self.marketplaceMessagesContain(
+        messagesAfterEmptyPostcode,
         type: "shipping",
         itemId: selectedItemId
       ),
@@ -2246,7 +2250,7 @@ final class WebSocketE2ETests: E2ETestBase {
       "Shipping confirmation sheet should appear after Ask to buy with a postcode")
     tapConfirmationSheetRequestButton()
 
-    let shippingRequestCreated = try await waitForMarketplaceRequest(
+    let shippingRequestCreated = try await waitForMarketplaceMessage(
       emitter: emitter,
       type: "shipping",
       itemId: selectedItemId,
@@ -2510,39 +2514,40 @@ final class WebSocketE2ETests: E2ETestBase {
       "{navigate(\(E2EFlowIds.webSocketViewFlow),\(E2EFlowIds.webSocketViewPage),{\(MARKETPLACE_ITEMS_RESOURCE_ID): [\(viewItemId)]})}"
   }
 
-  private func waitForArchivedMarketplaceRequest(
+  private func waitForArchivedMarketplaceMessage(
     emitter: WSEmitter,
     itemId: String
   ) async throws -> Bool {
     let deadline = Date().addingTimeInterval(10)
     repeat {
-      let requests = try await emitter.getResource(
+      let messages = try await emitter.getResource(
         service: MARKETPLACE_SERVICE,
-        resource: MarketplaceResource.requests.rawValue
+        resource: MarketplaceResource.messages.rawValue
       )
-      if Self.marketplaceRequestsArchived(requests, itemId: itemId) {
+      if Self.marketplaceMessagesArchived(messages, itemId: itemId) {
         return true
       }
     } while try await emitter.nextDataChanged(
-      resource: MarketplaceResource.requests.rawValue, deadline: deadline)
+      resource: MarketplaceResource.messages.rawValue, deadline: deadline)
     return false
   }
 
-  private static func marketplaceRequestsArchived(
-    _ requests: Any,
+  private static func marketplaceMessagesArchived(
+    _ messages: Any,
     itemId: String
   ) -> Bool {
-    guard let requestRows = responseDataArray(from: requests) else { return false }
-    return requestRows.contains { request in
-      guard let requestData = request as? [String: Any],
-        requestData["item_id"] as? String == itemId,
-        requestData["archived"] as? Bool == true
+    guard let messageRows = responseDataArray(from: messages) else { return false }
+    return messageRows.contains { message in
+      guard let messageData = message as? [String: Any],
+        messageData["fk"] as? String == itemId,
+        let archivedAt = messageData["archivedAt"] as? String,
+        !archivedAt.isEmpty
       else { return false }
       return true
     }
   }
 
-  private func waitForMarketplaceRequest(
+  private func waitForMarketplaceMessage(
     emitter: WSEmitter,
     type: String,
     itemId: String,
@@ -2551,12 +2556,12 @@ final class WebSocketE2ETests: E2ETestBase {
   ) async throws -> Bool {
     let deadline = Date().addingTimeInterval(10)
     repeat {
-      let requests = try await emitter.getResource(
+      let messages = try await emitter.getResource(
         service: MARKETPLACE_SERVICE,
-        resource: MarketplaceResource.requests.rawValue
+        resource: MarketplaceResource.messages.rawValue
       )
-      if Self.marketplaceRequestsContain(
-        requests,
+      if Self.marketplaceMessagesContain(
+        messages,
         type: type,
         itemId: itemId,
         valueKey: valueKey,
@@ -2565,27 +2570,28 @@ final class WebSocketE2ETests: E2ETestBase {
         return true
       }
     } while try await emitter.nextDataChanged(
-      resource: MarketplaceResource.requests.rawValue, deadline: deadline)
+      resource: MarketplaceResource.messages.rawValue, deadline: deadline)
     return false
   }
 
-  private static func marketplaceRequestsContain(
-    _ requests: Any,
+  private static func marketplaceMessagesContain(
+    _ messages: Any,
     type: String,
     itemId: String,
     valueKey: String? = nil,
     value: String? = nil
   ) -> Bool {
-    guard let requestRows = responseDataArray(from: requests) else { return false }
-    return requestRows.contains { request in
-      guard let requestData = request as? [String: Any],
-        requestData["type"] as? String == type,
-        requestData["item_id"] as? String == itemId
+    guard let messageRows = responseDataArray(from: messages) else { return false }
+    return messageRows.contains { message in
+      guard let messageData = message as? [String: Any],
+        messageData["fk"] as? String == itemId,
+        let messageDetails = messageData["data"] as? [String: Any],
+        messageDetails["type"] as? String == type
       else {
         return false
       }
       guard let valueKey, let value else { return true }
-      return requestData[valueKey] as? String == value
+      return messageDetails[valueKey] as? String == value
     }
   }
 

@@ -9,7 +9,7 @@ type WSClient = InstanceType<typeof Client>;
 
 const MARKETPLACE_SERVICE_ID = MARKETPLACE_SERVICE;
 const MARKETPLACE_ITEMS_RESOURCE_ID = MARKETPLACE_RESOURCE.ITEMS;
-const MARKETPLACE_REQUESTS_RESOURCE_ID = MARKETPLACE_RESOURCE.REQUESTS;
+const MARKETPLACE_MESSAGES_RESOURCE_ID = MARKETPLACE_RESOURCE.MESSAGES;
 
 const API_URL = process.env.API_URL;
 if (!API_URL) {
@@ -104,41 +104,31 @@ describe("Marketplace E2E (via API WebSocket)", () => {
 		expect(isRecord(matchingRecord)).toBe(true);
 	});
 
-	it("creates validated marketplace requests", async () => {
-		const requestId = crypto.randomUUID();
-		const request = {
-			id: requestId,
-			type: "pickup",
-			item_id: crypto.randomUUID(),
-			time: "2026-06-03T10:00:00",
-			archived: false,
+	it("creates generic marketplace messages", async () => {
+		const messageId = crypto.randomUUID();
+		const message = {
+			id: messageId,
+			fk: crypto.randomUUID(),
+			service: MARKETPLACE_SERVICE_ID,
+			resource: MARKETPLACE_ITEMS_RESOURCE_ID,
+			archivedAt: null,
+			createdAt: "2026-06-01T00:00:00.000Z",
+			data: { type: "pickup", time: "2026-06-03T10:00:00" },
 		};
 
 		await client.call("create", {
 			service: MARKETPLACE_SERVICE_ID,
-			resource: MARKETPLACE_REQUESTS_RESOURCE_ID,
-			filter: { id: requestId },
-			data: request,
+			resource: MARKETPLACE_MESSAGES_RESOURCE_ID,
+			filter: { id: messageId },
+			data: message,
 		});
 
 		const rows = await client.call("get", {
 			service: MARKETPLACE_SERVICE_ID,
-			resource: MARKETPLACE_REQUESTS_RESOURCE_ID,
-			filter: { id: requestId },
+			resource: MARKETPLACE_MESSAGES_RESOURCE_ID,
+			filter: { id: messageId },
 		});
-		expect(rows).toEqual([request]);
-
-		await expect(
-			client.call("create", {
-				service: MARKETPLACE_SERVICE_ID,
-				resource: MARKETPLACE_REQUESTS_RESOURCE_ID,
-				data: {
-					id: crypto.randomUUID(),
-					type: "shipping",
-					item_id: crypto.randomUUID(),
-				},
-			}),
-		).rejects.toThrow();
+		expect(rows).toEqual([message]);
 	});
 
 	it("create marketplace items resource with filter.id creates row keyed by client UUID (iOS shape)", async () => {

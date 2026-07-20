@@ -13,7 +13,9 @@ import {
 	getPageOptions,
 	toVariableOptions,
 } from "../../utils/actionFlowOptions";
+import type { IdCandidate } from "../../utils/idCandidates";
 import { displayLabel } from "../../utils/labelFormatting";
+import { BuilderAssist } from "../BuilderAssist";
 import { type PopoverOption, PopoverSelect } from "../PopoverSelect";
 import { BRANCH_FUNCTION_OPTIONS } from "./actionPopupConstants";
 
@@ -24,6 +26,8 @@ type BranchEditorProps = {
 	flowsById: Record<string, DATA_EVY_Flow>;
 	pagesById: Record<string, DATA_EVY_Page>;
 	serviceResources: ServiceResource[];
+	idCandidates: IdCandidate[];
+	getAttributeCandidatesForQualifier: (qualifier: string) => IdCandidate[];
 	onChange: (value: string) => void;
 };
 
@@ -69,17 +73,17 @@ function buildArgDropdowns(
 		return dropdowns;
 	}
 
-	if (functionName === "create") {
+	if (functionName === "create" || functionName === "update") {
 		const namespaceOptions: PopoverOption[] = [
 			{ value: MARKETPLACE_SERVICE, label: "Marketplace" },
 			{ value: EVY_CORE_SERVICE, label: "Evy" },
 		];
 		const dropdowns: ArgDropdownSlot[] = [
-			{ slotId: "create-namespace", options: namespaceOptions },
+			{ slotId: `${functionName}-namespace`, options: namespaceOptions },
 		];
 		if (currentArgs[0]) {
 			dropdowns.push({
-				slotId: "create-resource",
+				slotId: `${functionName}-resource`,
 				options: toResourceOptions(serviceResources, currentArgs[0]),
 			});
 		}
@@ -109,6 +113,8 @@ export function BranchEditor({
 	flowsById,
 	pagesById,
 	serviceResources,
+	idCandidates,
+	getAttributeCandidatesForQualifier,
 	onChange,
 }: BranchEditorProps) {
 	const parsed = useMemo(() => parseBranch(value), [value]);
@@ -177,14 +183,58 @@ export function BranchEditor({
 			))}
 
 			{selectedFunction === "navigate" && args[0] && args[1] && (
-				<textarea
-					aria-label={`${branchId}-navigate-query`}
+				<BuilderAssist
+					ariaLabel={`${branchId}-navigate-query`}
 					value={args[2] ?? ""}
-					onChange={(e) => handleArgChange(2, e.target.value)}
+					onChange={(v) => handleArgChange(2, v)}
+					candidates={idCandidates}
+					getAttributeCandidatesForQualifier={
+						getAttributeCandidatesForQualifier
+					}
 					placeholder="Optional query, e.g. {items: [$datum.id]}"
-					rows={3}
-					className="evy-action-popup-textarea"
+					multiline
 				/>
+			)}
+
+			{selectedFunction === "create" && args[0] && args[1] && (
+				<BuilderAssist
+					ariaLabel={`${branchId}-create-data`}
+					value={args[2] ?? ""}
+					onChange={(v) => handleArgChange(2, v)}
+					candidates={idCandidates}
+					getAttributeCandidatesForQualifier={
+						getAttributeCandidatesForQualifier
+					}
+					placeholder="Optional inline data, e.g. {fk: $datum.id, data: {type: pickup}}"
+					multiline
+				/>
+			)}
+
+			{selectedFunction === "update" && args[0] && args[1] && (
+				<>
+					<BuilderAssist
+						ariaLabel={`${branchId}-update-filter`}
+						value={args[2] ?? ""}
+						onChange={(v) => handleArgChange(2, v)}
+						candidates={idCandidates}
+						getAttributeCandidatesForQualifier={
+							getAttributeCandidatesForQualifier
+						}
+						placeholder="Filter, e.g. {fk: $datum.id, archivedAt: null}"
+						multiline
+					/>
+					<BuilderAssist
+						ariaLabel={`${branchId}-update-changes`}
+						value={args[3] ?? ""}
+						onChange={(v) => handleArgChange(3, v)}
+						candidates={idCandidates}
+						getAttributeCandidatesForQualifier={
+							getAttributeCandidatesForQualifier
+						}
+						placeholder="Changes, e.g. {archivedAt: now()}"
+						multiline
+					/>
+				</>
 			)}
 		</div>
 	);
