@@ -8,6 +8,8 @@ import {
 	useState,
 } from "react";
 import { createPortal } from "react-dom";
+import { useAnchoredDropdownPosition } from "../hooks/useAnchoredDropdownPosition";
+import { useOutsideClick } from "../hooks/useOutsideClick";
 import {
 	buildTokenHtml,
 	getRawCursorIndexFromEditable,
@@ -27,149 +29,6 @@ import {
 	type SuggestionContext,
 } from "../utils/idTokenSearch";
 
-const css = `
-.evy-id-autocomplete-root {
-	width: 100%;
-}
-.evy-id-autocomplete-field {
-	position: relative;
-	width: 100%;
-	min-height: 24px;
-	display: flex;
-	align-items: center;
-	padding: 2px 6px;
-	font-size: var(--text-sm);
-	color: var(--color-black);
-	background-color: var(--color-white);
-	border: 1px solid var(--color-gray-border);
-	border-radius: var(--radius-sm);
-	transition: border-color var(--transition), box-shadow var(--transition);
-}
-.evy-id-autocomplete-field:hover,
-.evy-id-autocomplete-field:focus-within {
-	border-color: var(--color-evy-gray);
-}
-.evy-id-autocomplete-field:focus-within {
-	box-shadow: 0 0 0 3px rgba(60, 60, 100, 0.1);
-}
-/* Reset global input styles — the field div provides all border/focus visuals */
-.evy-id-autocomplete-field input[type="text"],
-.evy-id-autocomplete-field input[type="text"]:hover,
-.evy-id-autocomplete-field input[type="text"]:focus {
-	width: 100%;
-	padding: 0;
-	border: none;
-	border-radius: 0;
-	box-shadow: none;
-	outline: none;
-	background: transparent;
-	transition: none;
-}
-.evy-id-autocomplete-plain {
-	min-height: 18px;
-	cursor: text;
-}
-.evy-id-autocomplete-field--multiline {
-	min-height: 64px;
-	align-items: flex-start;
-}
-.evy-id-autocomplete-token {
-	display: inline-flex;
-	align-items: center;
-	max-width: 100%;
-	padding: 1px 5px;
-	font-size: var(--text-sm);
-	color: var(--color-black);
-	background: var(--color-evy-gray-light);
-	border: 1px solid var(--color-evy-gray);
-	border-radius: 3px;
-	cursor: pointer;
-}
-.evy-id-autocomplete-token:hover {
-	background: var(--color-evy-gray-medium);
-}
-.evy-id-autocomplete-token:focus-visible {
-	outline: 2px solid var(--color-evy-blue);
-	outline-offset: 1px;
-}
-.evy-id-autocomplete-token-text {
-	overflow: hidden;
-	text-overflow: ellipsis;
-	white-space: nowrap;
-}
-.evy-id-autocomplete-inline-display {
-	display: block;
-	width: 100%;
-	outline: none;
-	cursor: text;
-	word-break: break-word;
-	white-space: pre-wrap;
-}
-.evy-id-autocomplete-inline-display--empty::before {
-	content: attr(data-placeholder);
-	color: var(--color-evy-gray);
-	pointer-events: none;
-}
-.evy-id-autocomplete-inline-token {
-	padding: 0 4px;
-	border-color: var(--color-gray-border);
-	vertical-align: middle;
-	margin: 0 1px;
-}
-.evy-id-autocomplete-inline-attribute {
-	cursor: text;
-}
-.evy-id-autocomplete-dropdown {
-	background: var(--color-white);
-	border: 1px solid var(--color-gray-border);
-	border-radius: var(--radius-sm);
-	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-	z-index: 9999;
-	max-height: 200px;
-	overflow-y: auto;
-}
-.evy-id-autocomplete-option {
-	display: flex;
-	align-items: center;
-	justify-content: space-between;
-	gap: var(--size-2);
-	width: 100%;
-	padding: var(--size-1) var(--size-2);
-	font-size: var(--text-sm);
-	text-align: left;
-	background: none;
-	border: none;
-	cursor: pointer;
-	white-space: nowrap;
-}
-.evy-id-autocomplete-option-name {
-	overflow: hidden;
-	text-overflow: ellipsis;
-	white-space: nowrap;
-}
-.evy-id-autocomplete-option-label {
-	margin-left: auto;
-	font-weight: var(--font-semibold);
-	color: var(--color-evy-gray);
-}
-.evy-id-autocomplete-option:hover,
-.evy-id-autocomplete-option[aria-selected="true"] {
-	background-color: var(--color-evy-gray-light);
-}
-.evy-id-autocomplete-option[aria-selected="true"] {
-	font-weight: var(--font-medium);
-}
-`;
-
-let styleInjected = false;
-function injectStyle() {
-	if (styleInjected) return;
-	styleInjected = true;
-	const el = document.createElement("style");
-	el.textContent = css;
-	document.head.appendChild(el);
-}
-
 type BuilderAssistProps = {
 	id?: string;
 	label?: string;
@@ -181,12 +40,6 @@ type BuilderAssistProps = {
 	labelClassName?: string;
 	multiline?: boolean;
 	getAttributeCandidatesForQualifier?: (qualifier: string) => IdCandidate[];
-};
-
-type DropdownPosition = {
-	top: number;
-	left: number;
-	width: number;
 };
 
 export function BuilderAssist({
@@ -201,7 +54,6 @@ export function BuilderAssist({
 	multiline,
 	getAttributeCandidatesForQualifier,
 }: BuilderAssistProps) {
-	injectStyle();
 	const generatedId = useId();
 	const inputId = id ?? `builder-assist-${generatedId}`;
 	const listboxId = `${inputId}-listbox`;
@@ -218,8 +70,10 @@ export function BuilderAssist({
 	const [activeSuggestionContext, setActiveSuggestionContext] =
 		useState<SuggestionContext | null>(null);
 	const [activeIndex, setActiveIndex] = useState(-1);
-	const [dropdownPosition, setDropdownPosition] =
-		useState<DropdownPosition | null>(null);
+	const {
+		position: dropdownPosition,
+		updatePosition: updateDropdownPosition,
+	} = useAnchoredDropdownPosition(fieldRef);
 	const isSelectingOptionRef = useRef(false);
 
 	const displayParts = useMemo(
@@ -258,16 +112,6 @@ export function BuilderAssist({
 		filteredCandidates.length === 0
 			? -1
 			: Math.min(Math.max(activeIndex, 0), filteredCandidates.length - 1);
-
-	const updateDropdownPosition = useCallback(() => {
-		if (!fieldRef.current) return;
-		const rect = fieldRef.current.getBoundingClientRect();
-		setDropdownPosition({
-			top: rect.bottom + 2,
-			left: rect.left,
-			width: Math.max(rect.width, 160),
-		});
-	}, []);
 
 	const closeDropdown = useCallback(() => {
 		setIsOpen(false);
@@ -340,17 +184,11 @@ export function BuilderAssist({
 		updateDropdownPosition();
 	}, [isOpen, updateDropdownPosition]);
 
-	useEffect(() => {
-		if (!isOpen) return;
-		const handlePointerDown = (event: MouseEvent) => {
-			const target = event.target as Node;
-			if (fieldRef.current?.contains(target)) return;
-			closeDropdown();
-		};
-		document.addEventListener("mousedown", handlePointerDown);
-		return () =>
-			document.removeEventListener("mousedown", handlePointerDown);
-	}, [isOpen, closeDropdown]);
+	const isInsideField = useCallback(
+		(target: Node) => Boolean(fieldRef.current?.contains(target)),
+		[],
+	);
+	useOutsideClick(isOpen, isInsideField, closeDropdown);
 
 	useLayoutEffect(() => {
 		const pendingFocus = pendingFocusCursorRef.current;
