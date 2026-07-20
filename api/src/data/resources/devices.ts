@@ -2,10 +2,7 @@ import { eq } from "drizzle-orm";
 
 import type { OS } from "evy-types";
 
-import {
-	device,
-	osEnum,
-} from "../../../../types/generated/ts/db/schema.generated";
+import { device, osEnum } from "evy-types/db/schema.generated";
 import type { EvyDb } from "../../database/db";
 
 // Public API

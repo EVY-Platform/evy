@@ -13,6 +13,7 @@ import type {
 	GetRequest,
 	GetResponse,
 } from "evy-types";
+import { file } from "evy-types/db/schema.generated";
 import { hasDatabaseErrorCode, PG_UNIQUE_VIOLATION } from "evy-types/dbErrors";
 import {
 	validateCreateResponse,
@@ -20,7 +21,6 @@ import {
 	validateDataEvyFile as validateFilePayload,
 	validateGetResponse,
 } from "evy-types/validators";
-import { file } from "../../../../types/generated/ts/db/schema.generated";
 import type { EvyDb } from "../../database/db";
 import {
 	deleteUploadSession,

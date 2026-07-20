@@ -8,11 +8,11 @@ import {
 } from "bun:test";
 import { migrate } from "drizzle-orm/pglite/migrator";
 import { EVY_CORE_SERVICE } from "evy-types/coreResources";
+import * as schema from "evy-types/db/schema.generated";
 import {
 	MARKETPLACE_RESOURCE,
 	MARKETPLACE_SERVICE,
 } from "evy-types/marketplaceResources";
-import * as schema from "../../../types/generated/ts/db/schema.generated";
 import {
 	asEvyDb,
 	clearAllTestTables,

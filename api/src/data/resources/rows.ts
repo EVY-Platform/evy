@@ -1,6 +1,6 @@
 import type { DATA_EVY_Row } from "evy-types";
+import { row } from "evy-types/db/schema.generated";
 import { validateDataEvyRow } from "evy-types/validators";
-import { row } from "../../../../types/generated/ts/db/schema.generated";
 import { makeCoreResource } from "./coreResource";
 
 const rowResource = makeCoreResource<DATA_EVY_Row>({

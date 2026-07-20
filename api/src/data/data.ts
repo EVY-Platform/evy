@@ -10,15 +10,12 @@ import type {
 	UpdateResponse,
 } from "evy-types";
 import { EVY_CORE_RESOURCE, EVY_CORE_SERVICE } from "evy-types/coreResources";
+import { service, serviceResource } from "evy-types/db/schema.generated";
 import {
 	DATA_CHANGED_EVENT,
 	type DataChangedNotification,
 	type DataChangedOperation,
 } from "evy-types/ws";
-import {
-	service,
-	serviceResource,
-} from "../../../types/generated/ts/db/schema.generated";
 import type { EvyDb } from "../database/db";
 
 import { validateAuth as validateDeviceAuth } from "./resources/devices";

@@ -1,9 +1,9 @@
+import * as schema from "evy-types/db/schema.generated";
 import {
 	createPgliteTestDatabase as createPgliteTestDatabaseWithSchema,
 	waitForClientOpen,
 } from "evy-types/wsTestHelpers";
 import { Client } from "rpc-websockets";
-import * as schema from "../../../types/generated/ts/db/schema.generated";
 import type { EvyDb } from "../database/db";
 
 export { getFreePort, waitForClientOpen } from "evy-types/wsTestHelpers";

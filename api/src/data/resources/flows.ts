@@ -1,6 +1,6 @@
 import type { DATA_EVY_Flow } from "evy-types";
+import { flow } from "evy-types/db/schema.generated";
 import { validateDataEvyFlow } from "evy-types/validators";
-import { flow } from "../../../../types/generated/ts/db/schema.generated";
 import { makeCoreResource } from "./coreResource";
 
 const flowResource = makeCoreResource<DATA_EVY_Flow>({

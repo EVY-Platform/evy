@@ -1,8 +1,7 @@
 import { SQL } from "bun";
 import { drizzle } from "drizzle-orm/bun-sql";
+import * as schema from "evy-types/db/schema.generated";
 import { getPostgresConnectionUrl } from "evy-types/env";
-
-import * as schema from "../../../types/generated/ts/db/schema.generated";
 
 export type EvyDb = ReturnType<typeof createDb>;
 

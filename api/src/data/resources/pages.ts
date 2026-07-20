@@ -1,6 +1,6 @@
 import type { DATA_EVY_Page } from "evy-types";
+import { page } from "evy-types/db/schema.generated";
 import { validateDataEvyPage } from "evy-types/validators";
-import { page } from "../../../../types/generated/ts/db/schema.generated";
 import { makeCoreResource } from "./coreResource";
 
 function normalizePageRow(rowData: typeof page.$inferSelect): DATA_EVY_Page {

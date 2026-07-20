@@ -1,13 +1,13 @@
 import { afterAll, beforeAll, describe, expect, it } from "bun:test";
 import { migrate } from "drizzle-orm/pglite/migrator";
 import type { CreateRequest } from "evy-types";
+import * as schema from "evy-types/db/schema.generated";
 import {
 	MARKETPLACE_RESOURCE,
 	MARKETPLACE_SERVICE,
 } from "evy-types/marketplaceResources";
 import { DATA_CHANGED_EVENT } from "evy-types/ws";
 import { Server } from "rpc-websockets";
-import * as schema from "../../../types/generated/ts/db/schema.generated";
 import { emitJsonRpc } from "../shared/ws";
 import {
 	asEvyDb,

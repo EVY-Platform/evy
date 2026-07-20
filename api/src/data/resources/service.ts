@@ -1,6 +1,6 @@
 import type { DATA_EVY_Service } from "evy-types";
+import { service } from "evy-types/db/schema.generated";
 import { validateDataEvyService } from "evy-types/validators";
-import { service } from "../../../../types/generated/ts/db/schema.generated";
 import { makeCoreResource } from "./coreResource";
 
 function mapServiceRow(r: typeof service.$inferSelect): DATA_EVY_Service {

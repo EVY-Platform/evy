@@ -1,6 +1,6 @@
 import type { DATA_EVY_ServiceProvider } from "evy-types";
+import { serviceProvider } from "evy-types/db/schema.generated";
 import { validateDataEvyServiceProvider } from "evy-types/validators";
-import { serviceProvider } from "../../../../types/generated/ts/db/schema.generated";
 import { makeCoreResource } from "./coreResource";
 
 const providerResource = makeCoreResource<DATA_EVY_ServiceProvider>({
