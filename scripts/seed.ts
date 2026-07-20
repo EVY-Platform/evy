@@ -6,7 +6,7 @@ import { fileURLToPath } from "node:url";
 import { SQL } from "bun";
 import { drizzle } from "drizzle-orm/bun-sql";
 import { migrate as migratePg } from "drizzle-orm/bun-sql/migrator";
-import { jsonb, pgTable, text, uuid, varchar } from "drizzle-orm/pg-core";
+import { data as marketplaceDataTable } from "../services/marketplace/src/schema";
 import { getPostgresConnectionUrl, requireEnv } from "../types/env";
 import type {
 	DATA_EVY_Flow,
@@ -72,14 +72,6 @@ type SeedFlow = ReturnType<typeof validateUiFlow>;
 type SeedDataItem = ReturnType<typeof validateSeedDataItemShape>;
 type SeedDataMap = Record<string, SeedDataItem[]>;
 
-const marketplaceDataTable = pgTable("Data", {
-	id: uuid("id").primaryKey().defaultRandom(),
-	resource: varchar("resource", { length: 50 }).notNull(),
-	data: jsonb("data").$type<SeedDataItem>().notNull(),
-	createdAt: text("created_at").notNull(),
-	updatedAt: text("updated_at").notNull(),
-});
-
 const coreSchema = {
 	organization: organizationTable,
 	service: serviceTable,
@@ -118,14 +110,16 @@ const SEED_IDS = {
 	coreFilesResource: "996738e6-15eb-4f3e-8f97-7538a1e2635c",
 } as const;
 
-const MARKETPLACE_SEED_RESOURCE_KEY_TO_ID = {
-	selling_reasons: MARKETPLACE_RESOURCE.SELLING_REASONS,
-	conditions: MARKETPLACE_RESOURCE.CONDITIONS,
-	durations: MARKETPLACE_RESOURCE.DURATIONS,
-	areas: MARKETPLACE_RESOURCE.AREAS,
-	items: MARKETPLACE_RESOURCE.ITEMS,
-	messages: MARKETPLACE_RESOURCE.MESSAGES,
-} as const;
+// Fixture keys are the lowercase forms of the generated resource constants
+// (selling_reasons -> SELLING_REASONS), so derive the map instead of
+// restating every resource.
+const MARKETPLACE_SEED_RESOURCE_KEY_TO_ID: Record<string, string> =
+	Object.fromEntries(
+		Object.entries(MARKETPLACE_RESOURCE).map(([key, id]) => [
+			key.toLowerCase(),
+			id,
+		]),
+	);
 
 type SeedInputPaths = {
 	evyFlowsPath?: string;
@@ -343,6 +337,10 @@ function decomposeRow(
 	return uiRow.id;
 }
 
+// Seeded ServiceResource row names are snake_case singulars. Note this
+// diverges from core.resources.json's "serviceResource" singular; nothing
+// consumes either value programmatically today, so the seeded names are
+// kept stable for existing data.
 const SERVICE_RESOURCE_SPECS: [string, string, string][] = [
 	[SEED_IDS.coreFlowsResource, EVY_CORE_SERVICE, "flow"],
 	[SEED_IDS.corePagesResource, EVY_CORE_SERVICE, "page"],

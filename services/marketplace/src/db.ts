@@ -1,16 +1,9 @@
-import { jsonb, pgTable, text, uuid, varchar } from "drizzle-orm/pg-core";
 import { drizzle } from "drizzle-orm/postgres-js";
-import type { DATA_PRIMITIVE } from "evy-types";
 import { getPostgresConnectionUrl } from "evy-types/env";
 import postgres from "postgres";
+import { data } from "./schema";
 
-export const data = pgTable("Data", {
-	id: uuid("id").primaryKey().defaultRandom(),
-	resource: varchar("resource", { length: 50 }).notNull(),
-	data: jsonb("data").$type<DATA_PRIMITIVE["data"]>().notNull(),
-	createdAt: text("created_at").notNull(),
-	updatedAt: text("updated_at").notNull(),
-});
+export { data } from "./schema";
 
 // exported for tests
 export const schema = { data };
