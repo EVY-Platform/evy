@@ -1,64 +1,22 @@
-import { createServer } from "node:net";
-import { PGlite } from "@electric-sql/pglite";
-import type { PgliteDatabase } from "drizzle-orm/pglite";
-import { drizzle } from "drizzle-orm/pglite";
+import {
+	createPgliteTestDatabase as createPgliteTestDatabaseWithSchema,
+	waitForClientOpen,
+} from "evy-types/wsTestHelpers";
 import { Client } from "rpc-websockets";
 import * as schema from "../../../types/generated/ts/db/schema.generated";
 import type { EvyDb } from "../database/db";
+
+export { getFreePort, waitForClientOpen } from "evy-types/wsTestHelpers";
 
 export type WSServer = Awaited<
 	ReturnType<typeof import("../shared/ws")["initServer"]>
 >;
 
 type RpcWSClient = InstanceType<typeof Client>;
-type PgliteTestDb = PgliteDatabase<typeof schema>;
+type PgliteTestDb = ReturnType<typeof createPgliteTestDatabase>["testDb"];
 
 export function asEvyDb(db: PgliteTestDb): EvyDb {
 	return db as unknown as EvyDb;
-}
-
-const DEFAULT_OPEN_TIMEOUT_MS = 8000;
-
-export function getFreePort(): Promise<number> {
-	return new Promise((resolve, reject) => {
-		const server = createServer();
-		server.listen(0, "127.0.0.1", () => {
-			const addr = server.address();
-			if (!addr || typeof addr === "string") {
-				server.close();
-				reject(new Error("Could not get free port"));
-				return;
-			}
-			const port = addr.port;
-			server.close(() => resolve(port));
-		});
-		server.on("error", reject);
-	});
-}
-
-export function waitForClientOpen(
-	ws: RpcWSClient,
-	timeoutMs = DEFAULT_OPEN_TIMEOUT_MS,
-): Promise<void> {
-	return new Promise((resolve, reject) => {
-		const onOpen = () => {
-			clearTimeout(timeout);
-			ws.removeListener("error", onError);
-			resolve();
-		};
-		const onError = (err: Error) => {
-			clearTimeout(timeout);
-			ws.removeListener("open", onOpen);
-			reject(err);
-		};
-		const timeout = setTimeout(() => {
-			ws.removeListener("open", onOpen);
-			ws.removeListener("error", onError);
-			reject(new Error("WebSocket connection timeout"));
-		}, timeoutMs);
-		ws.on("open", onOpen);
-		ws.on("error", onError);
-	});
 }
 
 export function waitForNotification(
@@ -92,13 +50,8 @@ export async function connectAndLogin(
 	return ws;
 }
 
-export function createPgliteTestDatabase(): {
-	pgliteClient: PGlite;
-	testDb: PgliteTestDb;
-} {
-	const pgliteClient = new PGlite();
-	const testDb = drizzle(pgliteClient, { schema });
-	return { pgliteClient, testDb };
+export function createPgliteTestDatabase() {
+	return createPgliteTestDatabaseWithSchema(schema);
 }
 
 export async function clearAllTestTables(testDb: PgliteTestDb): Promise<void> {

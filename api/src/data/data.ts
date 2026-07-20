@@ -15,11 +15,15 @@ import {
 	EVY_CORE_SERVICE,
 } from "evy-types/coreResources";
 import {
+	DATA_CHANGED_EVENT,
+	type DataChangedNotification,
+	type DataChangedOperation,
+} from "evy-types/ws";
+import {
 	service,
 	serviceResource,
 } from "../../../types/generated/ts/db/schema.generated";
 import type { EvyDb } from "../database/db";
-import { DATA_CHANGED_EVENT } from "../shared/ws";
 
 import { validateAuth as validateDeviceAuth } from "./resources/devices";
 import {
@@ -271,14 +275,15 @@ function assertEvyCoreAccess(
 
 function buildEmitNotification(
 	resource: string,
-	operation: "create" | "update" | "delete",
+	operation: DataChangedOperation,
 ) {
 	return (value: unknown) => {
-		coreBroadcast?.(DATA_CHANGED_EVENT, {
+		const notification: DataChangedNotification = {
 			service: EVY_CORE_SERVICE,
 			resource,
 			operation,
 			value,
-		});
+		};
+		coreBroadcast?.(DATA_CHANGED_EVENT, notification);
 	};
 }

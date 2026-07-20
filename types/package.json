@@ -11,11 +11,17 @@
 		"./rpcRequestHelpers": "./rpcRequestHelpers.ts",
 		"./validators": "./validators.ts",
 		"./env": "./env.ts",
+		"./ws": "./ws.ts",
+		"./wsServer": "./wsServer.ts",
+		"./dbErrors": "./dbErrors.ts",
+		"./readiness": "./readiness.ts",
+		"./wsTestHelpers": "./wsTestHelpers.ts",
 		"./*": "./generated/ts/*.ts"
 	},
-	"//": "This package is consumed via file: deps and never bun-installed directly; its runtime deps (ajv, ajv-formats) must also stay in the root package.json devDependencies so scripts/ and generators can resolve them.",
+	"//": "This package is consumed via file: deps and never bun-installed directly; every dep it imports (ajv, ajv-formats, rpc-websockets, and wsTestHelpers' dev-only @electric-sql/pglite + drizzle-orm) must also live in the root package.json devDependencies, because module resolution walks up from types/ to the repo root.",
 	"dependencies": {
 		"ajv": "^8.20.0",
-		"ajv-formats": "^3.0.1"
+		"ajv-formats": "^3.0.1",
+		"rpc-websockets": "^10.0.1"
 	}
 }

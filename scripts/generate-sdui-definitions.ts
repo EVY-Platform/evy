@@ -5,8 +5,8 @@ import {
 	extractSduiRowTypeEnum,
 	loadSduiRowDefinitions,
 	rowFieldSpecTsSource,
-	rowSpecificAttributesTsSource,
 	rowFieldsFromDefinitions,
+	rowSpecificAttributesTsSource,
 	type SduiRowDefinition,
 } from "./sdui-row-schema-utils.js";
 import {
@@ -120,10 +120,9 @@ function assertRowTypeListsMatch(
 	const oneOf = (uiDefs.UI_Row?.oneOf ?? []) as { $ref?: string }[];
 	const oneOfTypes = oneOf
 		.map((entry) =>
-			(entry.$ref ?? "").replace(/^definitions\//, "").replace(
-				/\.schema\.json$/,
-				"",
-			),
+			(entry.$ref ?? "")
+				.replace(/^definitions\//, "")
+				.replace(/\.schema\.json$/, ""),
 		)
 		.sort();
 	if (JSON.stringify(oneOfTypes) !== JSON.stringify(expected)) {

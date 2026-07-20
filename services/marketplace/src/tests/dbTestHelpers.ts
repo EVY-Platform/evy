@@ -1,20 +1,15 @@
 import { mock } from "bun:test";
-import { PGlite } from "@electric-sql/pglite";
 import { fuzzystrmatch } from "@electric-sql/pglite/contrib/fuzzystrmatch";
-import type { PgliteDatabase } from "drizzle-orm/pglite";
-import { drizzle } from "drizzle-orm/pglite";
+import { createPgliteTestDatabase as createPgliteTestDatabaseWithSchema } from "evy-types/wsTestHelpers";
 
 import { schema } from "../db";
 
-export type PgliteTestDb = PgliteDatabase<typeof schema>;
+export type PgliteTestDb = ReturnType<
+	typeof createPgliteTestDatabase
+>["testDb"];
 
-export function createPgliteTestDatabase(): {
-	pgliteClient: PGlite;
-	testDb: PgliteTestDb;
-} {
-	const pgliteClient = new PGlite({ extensions: { fuzzystrmatch } });
-	const testDb = drizzle(pgliteClient, { schema });
-	return { pgliteClient, testDb };
+export function createPgliteTestDatabase() {
+	return createPgliteTestDatabaseWithSchema(schema, { fuzzystrmatch });
 }
 
 /** Replaces `../db` with an in-memory PGlite instance for the importing test file. */

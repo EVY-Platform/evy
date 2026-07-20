@@ -13,19 +13,15 @@ import type {
 	GetRequest,
 	GetResponse,
 } from "evy-types";
+import { hasDatabaseErrorCode, PG_UNIQUE_VIOLATION } from "evy-types/dbErrors";
 import {
 	validateCreateResponse,
 	validateDeleteResponse,
 	validateDataEvyFile as validateFilePayload,
 	validateGetResponse,
 } from "evy-types/validators";
-
 import { file } from "../../../../types/generated/ts/db/schema.generated";
-import {
-	type EvyDb,
-	hasDatabaseErrorCode,
-	PG_UNIQUE_VIOLATION,
-} from "../../database/db";
+import type { EvyDb } from "../../database/db";
 import {
 	deleteUploadSession,
 	getUploadSession,

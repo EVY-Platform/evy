@@ -1,7 +1,12 @@
 import { EventEmitter } from "node:events";
+import {
+	DATA_CHANGED_EVENT,
+	type DataChangedNotification,
+	type DataChangedOperation,
+} from "evy-types/ws";
 import { MARKETPLACE_SERVICE } from "./resources";
 
-export const DATA_CHANGED_EVENT = "dataChanged" as const;
+export { DATA_CHANGED_EVENT };
 
 const marketplaceEventBus = new EventEmitter();
 marketplaceEventBus.setMaxListeners(0);
@@ -10,15 +15,16 @@ type ServiceEventListener = (eventName: string, payload: unknown) => void;
 
 export function emitDataChanged(
 	resource: string,
-	operation: "create" | "update" | "delete",
+	operation: DataChangedOperation,
 	value: unknown,
 ): void {
-	marketplaceEventBus.emit("notify", DATA_CHANGED_EVENT, {
+	const notification: DataChangedNotification = {
 		service: MARKETPLACE_SERVICE,
 		resource,
 		operation,
 		value,
-	});
+	};
+	marketplaceEventBus.emit("notify", DATA_CHANGED_EVENT, notification);
 }
 
 export function onServiceEvent(listener: ServiceEventListener): void {

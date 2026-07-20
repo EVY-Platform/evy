@@ -5,9 +5,10 @@ import {
 	MARKETPLACE_RESOURCE,
 	MARKETPLACE_SERVICE,
 } from "evy-types/marketplaceResources";
+import { DATA_CHANGED_EVENT } from "evy-types/ws";
 import { Server } from "rpc-websockets";
 import * as schema from "../../../types/generated/ts/db/schema.generated";
-import { DATA_CHANGED_EVENT, emitJsonRpc } from "../shared/ws";
+import { emitJsonRpc } from "../shared/ws";
 import {
 	asEvyDb,
 	createPgliteTestDatabase,

@@ -10,6 +10,7 @@ import type {
 	UpdateRequest,
 	UpdateResponse,
 } from "evy-types";
+import { hasDatabaseErrorCode, PG_UNIQUE_VIOLATION } from "evy-types/dbErrors";
 import {
 	assertIsoDateTimeJsonFields,
 	validateCreateDataPayload,
@@ -22,8 +23,6 @@ import {
 import { data, db } from "./db";
 import { emitDataChanged } from "./events";
 import { MARKETPLACE_SEED_RESOURCES, MARKETPLACE_SERVICE } from "./resources";
-
-const PG_UNIQUE_VIOLATION = "23505" as const;
 
 function assertMarketplaceRules(
 	params: GetRequest | CreateRequest | UpdateRequest | DeleteRequest,
@@ -82,14 +81,7 @@ export async function create(params: CreateRequest): Promise<CreateResponse> {
 	try {
 		result = await db.insert(data).values(insertValues).returning();
 	} catch (err: unknown) {
-		const code =
-			typeof err === "object" &&
-			err !== null &&
-			"code" in err &&
-			typeof err.code === "string"
-				? err.code
-				: undefined;
-		if (code === PG_UNIQUE_VIOLATION) {
+		if (hasDatabaseErrorCode(err, PG_UNIQUE_VIOLATION)) {
 			throw new Error("Resource already exists");
 		}
 		throw err;

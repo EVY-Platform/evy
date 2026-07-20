@@ -14,10 +14,10 @@ import {
 	validateGetResponse,
 	validateUpdateResponse,
 } from "evy-types/validators";
+import { DATA_CHANGED_EVENT } from "evy-types/ws";
 import { Client } from "rpc-websockets";
 import { listExternalServices } from "../data/data";
 import type { EvyDb } from "../database/db";
-import { DATA_CHANGED_EVENT } from "../shared/ws";
 
 type BroadcastFn = (eventName: string, payload: unknown) => void;
 
