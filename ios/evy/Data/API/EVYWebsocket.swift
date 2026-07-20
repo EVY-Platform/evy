@@ -45,9 +45,14 @@ actor EVYWebsocket {
   private var nextId = 1
   private var urlSession: URLSession?
   private let wsURL: URL
+  private let onDataChanged: @MainActor (DataChangedNotification) throws -> Void
 
-  init(host: String) {
+  init(
+    host: String,
+    onDataChanged: @escaping @MainActor (DataChangedNotification) throws -> Void
+  ) {
     wsURL = URL(string: "ws://\(host)")!
+    self.onDataChanged = onDataChanged
   }
 
   func connect(token: String, os: DataOS) async throws -> Bool {
@@ -190,11 +195,7 @@ actor EVYWebsocket {
 
     Task { @MainActor in
       do {
-        try EVY.publicStore.applySyncedValue(
-          namespace: notification.service,
-          resource: notification.resource,
-          value: notification.value
-        )
+        try onDataChanged(notification)
       } catch {
         self.postError(
           EVYError.invalidData(

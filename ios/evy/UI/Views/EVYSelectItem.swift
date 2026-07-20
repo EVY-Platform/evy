@@ -7,7 +7,7 @@
 
 import SwiftUI
 
-public enum EVYSelectItemTarget: String {
+enum EVYSelectItemTarget: String {
   case single_identifier
   case single_value
   case single_bool

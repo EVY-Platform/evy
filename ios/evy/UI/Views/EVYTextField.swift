@@ -27,8 +27,8 @@ struct EVYTextField: View {
   let source: String?
   let isInteractive: Bool
 
-  @Bindable private var displayValue: EVYState<EVYValue>
-  @Bindable private var placeholderValue: EVYState<EVYValue>
+  let displayValue: EVYState<EVYValue>
+  let placeholderValue: EVYState<EVYValue>
 
   @FocusState private var focused: Bool
   @State private var editing: Bool = false
@@ -102,19 +102,7 @@ struct EVYTextField: View {
         }
       }
     }
-    .padding(
-      EdgeInsets(
-        top: Constants.fieldPadding,
-        leading: Constants.minorPadding,
-        bottom: Constants.fieldPadding,
-        trailing: Constants.minorPadding)
-    )
-    .background(
-      RoundedRectangle(cornerRadius: Constants.smallCornerRadius)
-        .strokeBorder(Constants.borderColor, lineWidth: Constants.borderWidth)
-        .opacity(Constants.borderOpacity)
-    )
-    .contentShape(Rectangle())
+    .evyFieldChrome()
     .onTapGesture {
       guard isInteractive else { return }
       if !editing {

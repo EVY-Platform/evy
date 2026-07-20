@@ -30,15 +30,7 @@ struct EVYDropdown: View {
     self.valueTemplate = valueTemplate
     self.placeholder = placeholder
 
-    var loadedOptions: [EVYJson] = []
-
-    do {
-      let data = try EVY.getDataFromText(data)
-      if case .array(let arrayValue) = data {
-        loadedOptions = arrayValue
-      }
-    } catch {
-    }
+    var loadedOptions: [EVYJson] = EVYOptionLoading.loadOptions(from: data)
     options = loadedOptions
     let loadedOptionLabels = EVY.displayLabels(for: loadedOptions, valueTemplate: valueTemplate)
     optionLabels = loadedOptionLabels
@@ -76,19 +68,7 @@ struct EVYDropdown: View {
       EVYTextView("::chevron-down::")
     }
     .buttonStyle(.plain)
-    .padding(
-      EdgeInsets(
-        top: Constants.fieldPadding,
-        leading: Constants.minorPadding,
-        bottom: Constants.fieldPadding,
-        trailing: Constants.minorPadding)
-    )
-    .background(
-      RoundedRectangle(cornerRadius: Constants.smallCornerRadius)
-        .strokeBorder(Constants.borderColor, lineWidth: Constants.borderWidth)
-        .opacity(Constants.borderOpacity)
-    )
-    .contentShape(Rectangle())
+    .evyFieldChrome()
     .onTapGesture { showSheet.toggle() }
     .sheet(
       isPresented: $showSheet,

@@ -89,13 +89,9 @@ enum EVYRowRef: Identifiable, Equatable {
   }
 
   /// Returns the content `UI_Row` for use as a template (e.g. VerticalContainer / Search).
+  // used by tests
   @MainActor
-  func templateRow() -> UI_Row? {
-    templateRow(from: EVY.publicStore)
-  }
-
-  @MainActor
-  func templateRow(from store: EVYDataStore) -> UI_Row? {
+  func templateRow(from store: EVYDataStore = EVY.publicStore) -> UI_Row? {
     switch self {
     case .id(let rowId): return EVYRowStore.row(id: rowId, from: store)?.uiRow()
     case .inline(let row): return row
@@ -107,11 +103,7 @@ enum EVYRowRef: Identifiable, Equatable {
 
 @MainActor
 enum EVYFlowStore {
-  static func flowExists(id: String) -> Bool {
-    flowExists(id: id, from: EVY.publicStore)
-  }
-
-  static func flowExists(id: String, from store: EVYDataStore) -> Bool {
+  static func flowExists(id: String, from store: EVYDataStore = EVY.publicStore) -> Bool {
     (try? store.get(
       namespace: EVYNamespace.evy,
       resource: EVYCoreResource.flows.rawValue,
@@ -119,7 +111,7 @@ enum EVYFlowStore {
     )) != nil
   }
 
-  static func flow(id: String, from store: EVYDataStore) -> EVYStoredFlow? {
+  static func flow(id: String, from store: EVYDataStore = EVY.publicStore) -> EVYStoredFlow? {
     guard
       let evyData = try? store.get(
         namespace: EVYNamespace.evy,
@@ -130,34 +122,25 @@ enum EVYFlowStore {
     return try? JSONDecoder().decode(EVYStoredFlow.self, from: evyData.data)
   }
 
-  static func firstPageId(inFlowId flowId: String) -> String? {
-    firstPageId(inFlowId: flowId, from: EVY.publicStore)
-  }
-
   static func firstPageId(
     inFlowId flowId: String,
-    from store: EVYDataStore
+    from store: EVYDataStore = EVY.publicStore
   ) -> String? {
     flow(id: flowId, from: store)?.pageIds.first
   }
 
-  static func pageIds(inFlowId flowId: String) -> [String] {
-    pageIds(inFlowId: flowId, from: EVY.publicStore)
-  }
-
-  static func pageIds(inFlowId flowId: String, from store: EVYDataStore) -> [String] {
+  static func pageIds(
+    inFlowId flowId: String,
+    from store: EVYDataStore = EVY.publicStore
+  ) -> [String] {
     flow(id: flowId, from: store)?.pageIds ?? []
   }
 
   /// Returns the given `pageId` only if the flow with `flowId` contains it.
-  static func pageId(flowId: String, pageId: String) -> String? {
-    Self.pageId(flowId: flowId, pageId: pageId, from: EVY.publicStore)
-  }
-
   static func pageId(
     flowId: String,
     pageId: String,
-    from store: EVYDataStore
+    from store: EVYDataStore = EVY.publicStore
   ) -> String? {
     guard let flow = flow(id: flowId, from: store), flow.pageIds.contains(pageId) else {
       return nil
@@ -165,13 +148,9 @@ enum EVYFlowStore {
     return pageId
   }
 
-  static func createKeys(flowId: String) -> Set<String> {
-    createKeys(flowId: flowId, from: EVY.publicStore)
-  }
-
   static func createKeys(
     flowId: String,
-    from store: EVYDataStore
+    from store: EVYDataStore = EVY.publicStore
   ) -> Set<String> {
     guard let flow = flow(id: flowId, from: store) else { return [] }
     var keys = Set<String>()
@@ -190,13 +169,9 @@ enum EVYFlowStore {
     return keys
   }
 
-  static func draftScopeId(for route: Route) -> String? {
-    draftScopeId(for: route, from: EVY.publicStore)
-  }
-
   static func draftScopeId(
     for route: Route,
-    from store: EVYDataStore
+    from store: EVYDataStore = EVY.publicStore
   ) -> String? {
     if let entityKey = createKeys(flowId: route.flowId, from: store).sorted().first {
       return EVYDraft.createMergeScopeId(flowId: route.flowId, entityKey: entityKey)
@@ -209,11 +184,7 @@ enum EVYFlowStore {
 
 @MainActor
 enum EVYPageStore {
-  static func page(id: String) -> EVYStoredPage? {
-    page(id: id, from: EVY.publicStore)
-  }
-
-  static func page(id: String, from store: EVYDataStore) -> EVYStoredPage? {
+  static func page(id: String, from store: EVYDataStore = EVY.publicStore) -> EVYStoredPage? {
     guard
       let evyData = try? store.get(
         namespace: EVYNamespace.evy,
@@ -229,11 +200,7 @@ enum EVYPageStore {
 
 @MainActor
 enum EVYRowStore {
-  static func row(id: String) -> EVYStoredRow? {
-    row(id: id, from: EVY.publicStore)
-  }
-
-  static func row(id: String, from store: EVYDataStore) -> EVYStoredRow? {
+  static func row(id: String, from store: EVYDataStore = EVY.publicStore) -> EVYStoredRow? {
     guard
       let evyData = try? store.get(
         namespace: EVYNamespace.evy,

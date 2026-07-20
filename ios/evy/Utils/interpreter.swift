@@ -288,7 +288,7 @@ func _getDataFromProps(_ props: String) throws -> EVYJson {
   }
 
   // 2. Fall back to persistent store — synced API data
-  let json = try store.getJsonForBinding(key: firstProp)
+  let json = try store.getJsonForBinding(key: firstProp, cacheScopeId: EVY.activeCacheScopeId)
   return json.parseProp(props: remainingProps)
 }
 

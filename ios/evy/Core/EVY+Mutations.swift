@@ -89,7 +89,8 @@ extension EVY {
       return true
     }
 
-    if let json = try? store.getJsonForBinding(key: firstProp),
+    if let json = try? store.getJsonForBinding(
+      key: firstProp, cacheScopeId: activeCacheScopeId),
       json.parsePropStrict(props: remainingProps) != nil
     {
       return true
@@ -98,13 +99,10 @@ extension EVY {
     return false
   }
 
-  static func resetEphemeralDrafts(forFlowId flowId: String) {
-    for pageId in EVYFlowStore.pageIds(inFlowId: flowId) {
-      draftStore.deleteDrafts(scopeId: EVYDraft.ephemeralScopeId(forPageId: pageId))
-    }
-  }
-
-  static func resetEphemeralDrafts(forFlowId flowId: String, from store: EVYDataStore) {
+  static func resetEphemeralDrafts(
+    forFlowId flowId: String,
+    from store: EVYDataStore = EVY.publicStore
+  ) {
     for pageId in EVYFlowStore.pageIds(inFlowId: flowId, from: store) {
       draftStore.deleteDrafts(scopeId: EVYDraft.ephemeralScopeId(forPageId: pageId))
     }

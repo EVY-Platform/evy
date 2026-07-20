@@ -16,7 +16,7 @@ actor EVYAPIManager {
 
   static let shared = EVYAPIManager()
 
-  public func fetch<T: Codable>(
+  func fetch<T: Codable>(
     method: String,
     params: Encodable,
     expecting _: T.Type
@@ -25,7 +25,7 @@ actor EVYAPIManager {
     return try await rpcWS.fetch(method: method, params: params, expecting: T.self)
   }
 
-  public func uploadFile(_ fileData: Data) async throws -> String {
+  func uploadFile(_ fileData: Data) async throws -> String {
     try await validateAuth()
     let uploadId = UUID().uuidString
     let frames = try fileData.uploadFrames(uploadId: uploadId)
@@ -33,7 +33,7 @@ actor EVYAPIManager {
       for frame in frames {
         try await rpcWS.sendBinary(frame)
       }
-      let createdAt = Self.iso8601Now()
+      let createdAt = await MainActor.run { EVY.nowISO8601(fractional: true) }
       let response: EVYCreateFileData = try await rpcWS.fetch(
         method: "create",
         params: EVYCreateFileParams(
@@ -60,13 +60,7 @@ actor EVYAPIManager {
     }
   }
 
-  private static func iso8601Now() -> String {
-    let formatter = ISO8601DateFormatter()
-    formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
-    return formatter.string(from: Date())
-  }
-
-  public func getFile(id: String) async throws -> EVYGetFileItem {
+  func getFile(id: String) async throws -> EVYGetFileItem {
     try await validateAuth()
     let items = try await rpcWS.fetch(
       method: "get",
@@ -83,7 +77,7 @@ actor EVYAPIManager {
     return item
   }
 
-  public func deleteFile(id: String) async throws {
+  func deleteFile(id: String) async throws {
     try await validateAuth()
     _ = try await rpcWS.fetch(
       method: "delete",
@@ -98,7 +92,13 @@ actor EVYAPIManager {
 
   private init() {
     let host = ProcessInfo.processInfo.environment["API_HOST"] ?? API_HOST
-    self.rpcWS = EVYWebsocket(host: host)
+    self.rpcWS = EVYWebsocket(host: host) { notification in
+      try EVY.publicStore.applySyncedValue(
+        namespace: notification.service,
+        resource: notification.resource,
+        value: notification.value
+      )
+    }
   }
 
   private func validateAuth() async throws {

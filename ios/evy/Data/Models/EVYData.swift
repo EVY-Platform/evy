@@ -32,6 +32,7 @@ struct EVYValue: Equatable {
 
 enum EVYNamespace {
   static let evy = EVY_CORE_SERVICE
+  // used by tests
   static let marketplace = MARKETPLACE_SERVICE
   static let local = "local"
   static let cache = "cache"

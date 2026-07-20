@@ -15,17 +15,11 @@ struct EVYRow: View, Identifiable {
   @State private var storedRow: EVYStoredRow?
 
   init(rowId: String, datum: EVYJson? = nil, hidesTitle: Bool = false) {
-    self.ref = .id(rowId)
-    self.datum = datum
-    self.hidesTitle = hidesTitle
-    _storedRow = State(initialValue: EVYRowStore.row(id: rowId))
+    self.init(ref: .id(rowId), datum: datum, hidesTitle: hidesTitle)
   }
 
   init(row: UI_Row, datum: EVYJson? = nil, hidesTitle: Bool = false) {
-    self.ref = .inline(row)
-    self.datum = datum
-    self.hidesTitle = hidesTitle
-    _storedRow = State(initialValue: nil)
+    self.init(ref: .inline(row), datum: datum, hidesTitle: hidesTitle)
   }
 
   init(ref: EVYRowRef, datum: EVYJson? = nil, hidesTitle: Bool = false) {

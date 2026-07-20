@@ -717,7 +717,8 @@ final class InterpreterTests: XCTestCase {
       at: "\(EVYNamespace.marketplace):\(resourceKey)"
     )
 
-    XCTAssertThrowsError(try EVY.publicStore.getJsonForBinding(key: entityKey))
+    XCTAssertThrowsError(
+      try EVY.publicStore.getJsonForBinding(key: entityKey, cacheScopeId: nil))
   }
 
   func testSingularQueryKeyDoesNotResolvePluralSyncedCollection() throws {

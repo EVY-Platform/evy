@@ -36,6 +36,7 @@ enum EVYSyncState {
     UserDefaults.standard.set(currentStorageVersion, forKey: storageVersionKey)
   }
 
+  // used by tests
   static func reset() {
     UserDefaults.standard.removeObject(forKey: lastSyncTimestampKey)
     UserDefaults.standard.removeObject(forKey: storageVersionKey)
@@ -88,8 +89,13 @@ struct EVY {
   /// Injectable clock so tests can pin `now()` and generated `createdAt` values
   static var nowProvider: () -> Date = { Date() }
 
-  static func nowISO8601() -> String {
-    nowProvider().ISO8601Format()
+  static func nowISO8601(fractional: Bool = false) -> String {
+    if fractional {
+      let formatter = ISO8601DateFormatter()
+      formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+      return formatter.string(from: nowProvider())
+    }
+    return nowProvider().ISO8601Format()
   }
 
   // MARK: - Core Utilities

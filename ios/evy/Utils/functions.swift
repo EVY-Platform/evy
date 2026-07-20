@@ -33,13 +33,7 @@ func evyCount(_ args: String) throws -> EVYFunctionOutput {
 
 @MainActor
 func evyLength(_ args: String) throws -> EVYFunctionOutput {
-  let res = try EVY.getDataFromProps(args)
-  switch res {
-  case .string(let stringValue):
-    return EVYFunctionOutput(value: String(stringValue.count), prefix: nil, suffix: nil)
-  default:
-    return EVYFunctionOutput(value: args, prefix: nil, suffix: nil)
-  }
+  try evyCount(args)
 }
 
 @MainActor
@@ -148,6 +142,21 @@ func evyFormatCurrency(
 }
 
 @MainActor
+private func scaledUnitOutput(
+  value: Int,
+  thresholds: [(minExclusive: Int, divisor: Int, suffix: String)],
+  baseSuffix: String
+) -> EVYFunctionOutput {
+  for threshold in thresholds {
+    if value > threshold.minExclusive {
+      return EVYFunctionOutput(
+        value: "\(value / threshold.divisor)", prefix: nil, suffix: threshold.suffix)
+    }
+  }
+  return EVYFunctionOutput(value: "\(value)", prefix: nil, suffix: baseSuffix)
+}
+
+@MainActor
 func evyFormatDimension(
   _ args: String,
   _ editing: Bool = false
@@ -175,14 +184,14 @@ func evyFormatDimension(
   if editing {
     return EVYFunctionOutput(value: "\(mm)", prefix: nil, suffix: nil)
   }
-  // Integer division truncates on purpose: 1500mm displays as "1m".
-  if mm > 1000 {
-    return EVYFunctionOutput(value: "\(mm / 1000)", prefix: nil, suffix: "m")
-  }
-  if mm > 100 {
-    return EVYFunctionOutput(value: "\(mm / 10)", prefix: nil, suffix: "cm")
-  }
-  return EVYFunctionOutput(value: "\(mm)", prefix: nil, suffix: "mm")
+  return scaledUnitOutput(
+    value: mm,
+    thresholds: [
+      (1000, 1000, "m"),
+      (100, 10, "cm"),
+    ],
+    baseSuffix: "mm"
+  )
 }
 
 @MainActor

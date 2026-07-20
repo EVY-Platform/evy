@@ -5,7 +5,7 @@
 
 import SwiftUI
 
-let spaceForFirstLabel: CGFloat = 6
+private let spaceForFirstLabel: CGFloat = 6
 let columnWidth: CGFloat = 80
 let rowHeight: CGFloat = 30
 
@@ -14,7 +14,7 @@ struct EVYCalendarLabel: Equatable {
   var full: Bool
 }
 
-struct EVYAxisLabel: View {
+private struct EVYAxisLabel: View {
   let label: String
   let full: Bool
   let action: (_ full: Bool) -> Void
@@ -47,40 +47,50 @@ struct EVYCalendarAxisView: View {
     switch type {
     case .x:
       ScrollView([.horizontal]) {
-        HStack(spacing: .zero) {
-          ForEach(labels.indices, id: \.self) { x in
-            EVYAxisLabel(
-              label: labels[x].value,
-              full: labels[x].full,
-              action: { full in
-                if full {
-                  operate(EVYCalendarOperation.unselectColumn(x: x))
-                } else {
-                  operate(EVYCalendarOperation.selectColumn(x: x))
-                }
-              })
-          }
-        }.offset(x: offset.x)
+        labelStack(axisOffset: offset.x, scrollAxis: .horizontal)
       }.scrollDisabled(true)
     case .y:
       VStack(spacing: .zero) {
         Color.clear.frame(width: .zero, height: rowHeight - spaceForFirstLabel)
         ScrollView([.vertical]) {
-          VStack(spacing: .zero) {
-            ForEach(labels.indices, id: \.self) { y in
-              EVYAxisLabel(
-                label: labels[y].value,
-                full: labels[y].full,
-                action: { full in
-                  if full {
-                    operate(EVYCalendarOperation.unselectRow(y: y))
-                  } else {
-                    operate(EVYCalendarOperation.selectRow(y: y))
-                  }
-                })
-            }
-          }.offset(y: offset.y - spaceForFirstLabel)
+          labelStack(axisOffset: offset.y - spaceForFirstLabel, scrollAxis: .vertical)
         }.scrollDisabled(true)
+      }
+    }
+  }
+
+  @ViewBuilder
+  private func labelStack(axisOffset: CGFloat, scrollAxis: Axis) -> some View {
+    let stack = Group {
+      ForEach(labels.indices, id: \.self) { index in
+        EVYAxisLabel(
+          label: labels[index].value,
+          full: labels[index].full,
+          action: { full in handleLabelTap(index: index, full: full) }
+        )
+      }
+    }
+    switch scrollAxis {
+    case .horizontal:
+      HStack(spacing: .zero) { stack }.offset(x: axisOffset)
+    case .vertical:
+      VStack(spacing: .zero) { stack }.offset(y: axisOffset)
+    }
+  }
+
+  private func handleLabelTap(index: Int, full: Bool) {
+    switch type {
+    case .x:
+      if full {
+        operate(EVYCalendarOperation.unselectColumn(x: index))
+      } else {
+        operate(EVYCalendarOperation.selectColumn(x: index))
+      }
+    case .y:
+      if full {
+        operate(EVYCalendarOperation.unselectRow(y: index))
+      } else {
+        operate(EVYCalendarOperation.selectRow(y: index))
       }
     }
   }

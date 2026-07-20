@@ -7,33 +7,33 @@
 
 import SwiftUI
 
-public enum EVYRectangleStyle: String {
+enum EVYRectangleStyle: String {
   case primary
   case secondary
   case clear
 }
 
-struct EVYRectangle: View {
+struct EVYRectangle<Content: View>: View {
   @Environment(\.colorScheme) var colorScheme
 
-  let content: any View
+  let content: Content
   let style: EVYRectangleStyle
   let width: CGFloat?
 
   private let height: CGFloat = 40
 
   static func fixedWidth(
-    content: any View,
+    content: Content,
     style: EVYRectangleStyle,
     width: CGFloat
-  ) -> EVYRectangle {
+  ) -> EVYRectangle<Content> {
     EVYRectangle(content: content, style: style, width: width)
   }
 
   static func fitWidth(
-    content: any View,
+    content: Content,
     style: EVYRectangleStyle
-  ) -> EVYRectangle {
+  ) -> EVYRectangle<Content> {
     EVYRectangle(content: content, style: style, width: nil)
   }
 
@@ -53,7 +53,8 @@ struct EVYRectangle: View {
       buttonFill = .clear
     }
 
-    return AnyView(content)
+    return
+      content
       .foregroundColor(textColor)
       .padding(Constants.minorPadding)
       .frame(width: width, height: height)

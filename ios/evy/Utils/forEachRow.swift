@@ -10,15 +10,7 @@ import Foundation
 @MainActor
 func forEachStoredRow(
   inPageId pageId: String,
-  visitor: (EVYStoredRow) -> Void
-) {
-  forEachStoredRow(inPageId: pageId, from: EVY.publicStore, visitor: visitor)
-}
-
-@MainActor
-func forEachStoredRow(
-  inPageId pageId: String,
-  from store: EVYDataStore,
+  from store: EVYDataStore = EVY.publicStore,
   visitor: (EVYStoredRow) -> Void
 ) {
   guard let page = EVYPageStore.page(id: pageId, from: store) else { return }
