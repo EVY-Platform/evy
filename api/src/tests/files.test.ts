@@ -11,7 +11,7 @@ import { migrate } from "drizzle-orm/pglite/migrator";
 import { EVY_CORE_SERVICE } from "evy-types/coreResources";
 import * as schema from "evy-types/db/schema.generated";
 import { get } from "../data/data";
-import { writeFileBinary } from "../data/resources/files";
+import { writeFileBinary } from "../data/resources/fileStorage";
 import { useFileStorageDirsForTest } from "./fileStorageTestHelpers";
 import {
 	asEvyDb,
