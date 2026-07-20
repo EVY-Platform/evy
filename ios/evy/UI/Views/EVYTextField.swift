@@ -7,19 +7,6 @@
 
 import SwiftUI
 
-@MainActor
-enum EVYTextResolver {
-  static func resolveDisplay(from source: String?, destination: String) -> EVYValue {
-    let text = EVY.displayText(fromSource: source, destination: destination)
-    return EVYValue(text, nil, nil)
-  }
-
-  static func resolveEditable(from source: String?, destination: String) -> EVYValue {
-    let text = EVY.editableText(fromSource: source, destination: destination)
-    return EVYValue(text, nil, nil)
-  }
-}
-
 struct EVYTextField: View {
   let destination: String
   let placeholder: String?
@@ -51,12 +38,13 @@ struct EVYTextField: View {
     self.displayValue = EVYState(
       watches: watchTargets,
       setter: {
-        EVYTextResolver.resolveDisplay(from: source, destination: destination)
+        let text = EVY.displayText(fromSource: source, destination: destination)
+        return EVYValue(text, nil, nil)
       })
     self.placeholderValue = EVYState(
       textToWatch: placeholder,
       setter: {
-        EVYTextResolver.resolveValue(from: placeholder)
+        EVYTextField.resolvePlaceholderValue(from: placeholder)
       })
   }
 
@@ -73,7 +61,6 @@ struct EVYTextField: View {
           EVYTextView(placeholderText, style: .info)
             .frame(maxWidth: .infinity, alignment: .leading)
         } else {
-          // Spacer so the field stays tappable when display and placeholder are empty.
           Text(" ")
             .font(.evy)
             .frame(maxWidth: .infinity, alignment: .leading)
@@ -94,7 +81,7 @@ struct EVYTextField: View {
           }
         }
         .onChange(of: localEditText) { _, newValue in
-          try? EVY.writeRawValue(newValue, to: destination)
+          try? EVY.writeRawStringValue(newValue, to: destination)
         }
         .onSubmit {
           editing = false
@@ -106,17 +93,25 @@ struct EVYTextField: View {
     .onTapGesture {
       guard isInteractive else { return }
       if !editing {
-        localEditText =
-          EVYTextResolver.resolveEditable(
-            from: source,
-            destination: destination
-          ).value
+        localEditText = EVY.editableText(fromSource: source, destination: destination)
         editing = true
         focused = true
       }
     }
     .allowsHitTesting(isInteractive)
     .accessibilityIdentifier("textField_\(destination)")
+  }
+
+  @MainActor
+  private static func resolvePlaceholderValue(from text: String?) -> EVYValue {
+    guard let text else { return EVYValue("", nil, nil) }
+    if let resolvedValue = try? EVY.getValueFromText(text) {
+      return resolvedValue
+    }
+    if EVY.parsePropsFromText(text) == text {
+      return EVYValue(text, nil, nil)
+    }
+    return EVYValue("", nil, nil)
   }
 }
 
@@ -158,18 +153,5 @@ private struct EVYTextFieldPreview: View {
         destination: "",
         placeholder: "Sample placeholder")
     }
-  }
-}
-
-extension EVYTextResolver {
-  static func resolveValue(from text: String?, editing: Bool = false) -> EVYValue {
-    guard let text else { return EVYValue("", nil, nil) }
-    if let resolvedValue = try? EVY.getValueFromText(text, editing: editing) {
-      return resolvedValue
-    }
-    if EVY.parsePropsFromText(text) == text {
-      return EVYValue(text, nil, nil)
-    }
-    return EVYValue("", nil, nil)
   }
 }

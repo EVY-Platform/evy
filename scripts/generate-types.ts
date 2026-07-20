@@ -11,8 +11,8 @@ import {
 	REPO_ROOT,
 	runMain,
 	SCHEMA_DIR,
-	schemaPathToSwiftTypeName,
 	schemaPathToTsName,
+	schemaPathToTypeName,
 	spawnExitOk,
 	TYPES_ROOT,
 } from "./types-generation-utils.js";
@@ -108,7 +108,7 @@ async function generateTypeScript(
 		schemaFiles.map(
 			({ schemaPath, schema }) =>
 				(schema.title as string | undefined) ??
-				schemaPathToSwiftTypeName(schemaPath),
+				schemaPathToTypeName(schemaPath),
 		),
 	);
 	const tsSchemaFiles = schemaFiles.filter(({ schemaKey }) =>
@@ -124,7 +124,7 @@ async function generateTypeScript(
 
 			const title =
 				(schema.title as string | undefined) ??
-				schemaPathToSwiftTypeName(schemaPath);
+				schemaPathToTypeName(schemaPath);
 
 			const ts = await compile(schema, title, {
 				bannerComment: `/* eslint-disable */\n/** Generated from ${relative(TYPES_ROOT, schemaPath)} - do not edit. */`,
@@ -163,8 +163,7 @@ async function generateTypeScript(
 		) {
 			lines.unshift(`export * from "./${mod}";`);
 		} else {
-			const name =
-				title ?? schemaPathToSwiftTypeName(f).replace(/^Rpc/, "");
+			const name = title ?? schemaPathToTypeName(f).replace(/^Rpc/, "");
 			lines.push(`export type { ${name} } from "./${mod}";`);
 		}
 	}
@@ -198,7 +197,7 @@ async function generateSwift(
 	// machine, which intermittently kills processes (exit 1 / null). Each run is fast,
 	// so a sequential loop keeps generation deterministic.
 	for (const { schemaPath } of schemaFilesToQuicktype) {
-		const typeName = schemaPathToSwiftTypeName(schemaPath);
+		const typeName = schemaPathToTypeName(schemaPath);
 		const outPath = join(OUT_SWIFT, `${typeName}.swift`);
 
 		await spawnExitOk(

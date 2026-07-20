@@ -79,7 +79,7 @@ final class ContentViewTests: XCTestCase {
   ) throws {
     let scopeId = EVYDraft.ephemeralScopeId(forPageId: pageId)
     EVY.draftStore.activeScopeId = scopeId
-    try EVY.writeRawValue(value, to: "{\(variableName)}", scopeId: scopeId)
+    try EVY.writeRawStringValue(value, to: "{\(variableName)}", scopeId: scopeId)
   }
 
   private func readEphemeralValue(pageId: String, variableName: String) throws -> EVYJson {

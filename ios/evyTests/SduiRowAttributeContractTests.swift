@@ -313,7 +313,7 @@ final class SduiRowInitialBootstrapTests: XCTestCase {
     let scopeId = "scope_\(UUID().uuidString)"
     EVY.draftStore.activeScopeId = scopeId
 
-    try EVY.writeRawValue("User edit", to: "{\(key)}", scopeId: scopeId)
+    try EVY.writeRawStringValue("User edit", to: "{\(key)}", scopeId: scopeId)
 
     let row = try makeRow(type: "Input", destination: "{\(key)}", initial: "Ignored default")
     bootstrapRowDraft(row: row, scopeId: scopeId)
@@ -367,7 +367,7 @@ final class SduiRowInitialBootstrapTests: XCTestCase {
       extraFields: ["source": "{formatCurrency(\(priceKey))}"]
     )
     bootstrapRowDraft(row: editRow, scopeId: scopeId)
-    try EVY.writeRawValue("0", to: "{buildCurrency(\(priceKey))}", scopeId: scopeId)
+    try EVY.writeRawStringValue("0", to: "{buildCurrency(\(priceKey))}", scopeId: scopeId)
     let editedValue = try EVY.getDataFromText("{\(priceKey)}")
 
     XCTAssertEqual(seededValue, editedValue)

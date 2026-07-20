@@ -1,0 +1,39 @@
+name: Reusable Bun lint
+
+on:
+    workflow_call:
+        inputs:
+            working-directory:
+                required: true
+                type: string
+            path-filter:
+                required: true
+                type: string
+            path-filter-extra:
+                required: false
+                type: string
+                default: ""
+
+jobs:
+    lint:
+        defaults:
+            run:
+                working-directory: ${{ inputs.working-directory }}
+
+        timeout-minutes: 1
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v6
+
+            - name: Setup environment
+              uses: ./.github/actions/setup-bun
+              id: setup
+              with:
+                  working-directory: ${{ inputs.working-directory }}
+                  path-filter: ${{ inputs.path-filter }}
+                  path-filter-extra: ${{ inputs.path-filter-extra }}
+
+            - name: Run lint
+              if: steps.setup.outputs.has-changes == 'true'
+              run: bun run lint

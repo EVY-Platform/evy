@@ -57,20 +57,20 @@ enum EVYSelectItemTarget: String {
     switch self {
     case .single_bool:
       let newValue = currentlySelected ? "false" : "true"
-      try EVY.writeRawValue(newValue, to: destination)
+      try EVY.writeRawStringValue(newValue, to: destination)
 
     case .single_identifier, .single_value, .single_object:
       if !currentlySelected {
         switch self {
         case .single_identifier:
-          try EVY.writeRawValue(value.identifierValue(), to: destination)
+          try EVY.writeRawStringValue(value.identifierValue(), to: destination)
         case .single_object:
           try EVY.writeRawValue(value, to: destination)
         default:
-          try EVY.writeRawValue(value.toString(), to: destination)
+          try EVY.writeRawStringValue(value.toString(), to: destination)
         }
       } else {
-        try EVY.writeRawValue("", to: destination)
+        try EVY.writeRawStringValue("", to: destination)
       }
 
     case .multi_identifier, .multi_value, .multi_object:

@@ -24,7 +24,7 @@ enum EVYActionParser {
     guard let parsed = functionCall(from: rawBranch), parsed.name == "create" else {
       return nil
     }
-    let args = splitFunctionArguments(parsed.args)
+    let args = EVY.splitFunctionArguments(parsed.args)
     guard args.count >= 2 else { return nil }
     let namespace = args[0].trimmingCharacters(in: .whitespacesAndNewlines)
     let resource = args[1].trimmingCharacters(in: .whitespacesAndNewlines)
@@ -45,7 +45,7 @@ enum EVYActionParser {
     guard let parsed = functionCall(from: rawBranch), parsed.name == "update" else {
       return nil
     }
-    let args = splitFunctionArguments(parsed.args)
+    let args = EVY.splitFunctionArguments(parsed.args)
     guard args.count >= 4 else { return nil }
     let namespace = args[0].trimmingCharacters(in: .whitespacesAndNewlines)
     let resource = args[1].trimmingCharacters(in: .whitespacesAndNewlines)
@@ -77,7 +77,7 @@ enum EVYActionParser {
     guard !inner.isEmpty else { return [:] }
 
     var object: [String: String] = [:]
-    for pair in splitFunctionArguments(inner) {
+    for pair in EVY.splitFunctionArguments(inner) {
       guard let colonIndex = pair.firstIndex(of: ":") else {
         throw EVYError.invalidData(context: "\(context) must be key:value pairs")
       }
@@ -99,7 +99,7 @@ enum EVYActionParser {
     if branch.hasPrefix("{"), branch.hasSuffix("}") {
       branch = String(branch.dropFirst().dropLast())
     }
-    guard let (name, args) = parseFunctionCall(branch) else { return nil }
+    guard let (name, args) = EVY.parseFunctionCall(branch) else { return nil }
     return (name, args)
   }
 }

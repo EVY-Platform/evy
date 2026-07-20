@@ -27,7 +27,7 @@ final class EVYCreateMergesDraftsTests: XCTestCase {
 
   func testCreateMergesScalarTitleFromDraft() throws {
     EVY.ensureDraftExists(variableName: "title", scopeId: testDraftScope)
-    try EVY.updateValue("User Title", at: "{title}", scopeId: testDraftScope)
+    try EVY.updateValue("User Title", destination: "{title}", scopeId: testDraftScope)
 
     try EVY.create(namespace: EVYNamespace.marketplace, resource: "items")
 
@@ -97,7 +97,7 @@ final class EVYCreateMergesDraftsTests: XCTestCase {
       sortIndex: 1)
 
     EVY.ensureDraftExists(variableName: "title", scopeId: testDraftScope)
-    try EVY.updateValue("New Item", at: "{title}", scopeId: testDraftScope)
+    try EVY.updateValue("New Item", destination: "{title}", scopeId: testDraftScope)
     try EVY.create(namespace: EVYNamespace.marketplace, resource: "items")
 
     let instances = try EVY.publicStore.getAll(
@@ -113,13 +113,14 @@ final class EVYCreateMergesDraftsTests: XCTestCase {
     let sellingReasonId = UUID().uuidString
 
     EVY.ensureDraftExists(variableName: "condition_id", scopeId: testDraftScope)
-    try EVY.updateValue(conditionId, at: "{condition_id}", scopeId: testDraftScope)
+    try EVY.updateValue(conditionId, destination: "{condition_id}", scopeId: testDraftScope)
 
     EVY.ensureDraftExists(variableName: "selling_reason_id", scopeId: testDraftScope)
-    try EVY.updateValue(sellingReasonId, at: "{selling_reason_id}", scopeId: testDraftScope)
+    try EVY.updateValue(
+      sellingReasonId, destination: "{selling_reason_id}", scopeId: testDraftScope)
 
     EVY.ensureDraftExists(variableName: "dimensions.width", scopeId: testDraftScope)
-    try EVY.updateValue("500", at: "{dimensions.width}", scopeId: testDraftScope)
+    try EVY.updateValue("500", destination: "{dimensions.width}", scopeId: testDraftScope)
 
     try EVY.create(namespace: EVYNamespace.marketplace, resource: "items")
 
@@ -151,7 +152,7 @@ final class EVYCreateMergesDraftsTests: XCTestCase {
 
   func testCreateWithDataPersistsPayloadWithoutTouchingDrafts() throws {
     EVY.ensureDraftExists(variableName: "title", scopeId: testDraftScope)
-    try EVY.updateValue("Draft Title", at: "{title}", scopeId: testDraftScope)
+    try EVY.updateValue("Draft Title", destination: "{title}", scopeId: testDraftScope)
 
     let payload: [String: EVYJson] = [
       "title": .string("Datum Title"),
@@ -185,7 +186,7 @@ final class EVYCreateMergesDraftsTests: XCTestCase {
     }
 
     EVY.ensureDraftExists(variableName: "title", scopeId: browseScope)
-    try EVY.updateValue("Stray Title", at: "{title}", scopeId: browseScope)
+    try EVY.updateValue("Stray Title", destination: "{title}", scopeId: browseScope)
 
     try EVY.create(namespace: EVYNamespace.marketplace, resource: "items")
 

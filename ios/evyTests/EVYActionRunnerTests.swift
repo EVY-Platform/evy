@@ -56,7 +56,7 @@ final class EVYActionRunnerTests: XCTestCase {
     }
 
     EVY.ensureDraftExists(variableName: "title", scopeId: scopeId)
-    try EVY.updateValue("Flow Submitted Title", at: "{title}", scopeId: scopeId)
+    try EVY.updateValue("Flow Submitted Title", destination: "{title}", scopeId: scopeId)
 
     var received: ActionOperation?
     let action = rowAction(true: "{create(\(namespace),\(resource))}")
@@ -88,7 +88,7 @@ final class EVYActionRunnerTests: XCTestCase {
     }
 
     EVY.ensureDraftExists(variableName: "title", scopeId: scopeId)
-    try EVY.updateValue("Chained Title", at: "{title}", scopeId: scopeId)
+    try EVY.updateValue("Chained Title", destination: "{title}", scopeId: scopeId)
 
     var receivedOperations: [ActionOperation] = []
     let createAction = rowAction(true: "{create(\(namespace),\(resource))}")
@@ -346,7 +346,7 @@ final class EVYActionRunnerTests: XCTestCase {
     EVY.ensureDraftExists(variableName: "selected_pickup_timeslot", scopeId: scopeId)
     try EVY.updateValue(
       selectedTimeslot,
-      at: "{selected_pickup_timeslot}",
+      destination: "{selected_pickup_timeslot}",
       scopeId: scopeId
     )
 
@@ -584,7 +584,7 @@ final class EVYActionRunnerTests: XCTestCase {
       prepareRan = true
       try? EVY.updateValue(
         selectedTimeslot,
-        at: "{selected_pickup_timeslot}",
+        destination: "{selected_pickup_timeslot}",
         scopeId: scopeId
       )
     }

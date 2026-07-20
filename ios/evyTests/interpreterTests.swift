@@ -662,7 +662,7 @@ final class InterpreterTests: XCTestCase {
 
     try EVY.updateValue(
       "2026-06-03T10:00:00",
-      at: "{\(selectedTimeslotKey)}",
+      destination: "{\(selectedTimeslotKey)}",
       scopeId: scopeId
     )
     XCTAssertTrue(
@@ -673,7 +673,7 @@ final class InterpreterTests: XCTestCase {
 
     try EVY.updateValue(
       "2026-06-03T09:00:00",
-      at: "{\(selectedTimeslotKey)}",
+      destination: "{\(selectedTimeslotKey)}",
       scopeId: scopeId
     )
     XCTAssertFalse(

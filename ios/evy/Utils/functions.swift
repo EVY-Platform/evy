@@ -6,7 +6,6 @@
 //
 
 import Foundation
-import SwiftUI
 
 struct EVYFunctionOutput {
   let value: String
@@ -65,7 +64,7 @@ private func recordPropIsNull(_ record: EVYJson, prop: String) -> Bool {
 
 @MainActor
 func evyFindFirst(_ args: String, remainingProps: [String] = []) throws -> EVYJson {
-  let parts = splitFunctionArguments(args)
+  let parts = _splitFunctionArguments(args)
   guard parts.count >= 2 else { throw EVYParamError.invalidProps }
   let collectionArg = parts[0].trimmingCharacters(in: .whitespacesAndNewlines)
   let collection = try EVY.getDataFromProps(collectionArg)
@@ -77,7 +76,7 @@ func evyFindFirst(_ args: String, remainingProps: [String] = []) throws -> EVYJs
   if parts.count == 2 {
     let idArg = parts[1].trimmingCharacters(in: .whitespacesAndNewlines)
     let idValue =
-      (try? EVY.getDataFromProps(idArg))?.toString() ?? stripOptionalSurroundingQuotes(idArg)
+      (try? EVY.getDataFromProps(idArg))?.toString() ?? _stripOptionalSurroundingQuotes(idArg)
     match = items.first(where: { $0.identifierValue() == idValue })
   } else {
     guard parts.count % 2 == 1 else { throw EVYParamError.invalidProps }
@@ -90,7 +89,7 @@ func evyFindFirst(_ args: String, remainingProps: [String] = []) throws -> EVYJs
         }
         let resolvedValue =
           (try? EVY.getDataFromProps(valueArg))?.toString()
-          ?? stripOptionalSurroundingQuotes(valueArg)
+          ?? _stripOptionalSurroundingQuotes(valueArg)
         return record.parseProp(props: [propArg]).toString() == resolvedValue
       }
     }
@@ -335,7 +334,7 @@ func evyFormatAddress(_ args: String) throws -> EVYFunctionOutput {
 
 @MainActor
 private func evyJsonFromFirstArgument(args: String, errorType: String) throws -> EVYJson {
-  let parts = splitFunctionArguments(args)
+  let parts = _splitFunctionArguments(args)
   guard let path = parts.first?.trimmingCharacters(in: .whitespacesAndNewlines), !path.isEmpty
   else {
     throw EVYError.formatFailed(type: errorType, reason: "missing value argument")
@@ -348,14 +347,14 @@ func evyFormatDecimal(
   _ args: String,
   _ editing: Bool = false
 ) throws -> EVYFunctionOutput {
-  let parts = splitFunctionArguments(args)
+  let parts = _splitFunctionArguments(args)
   guard let path = parts.first?.trimmingCharacters(in: .whitespacesAndNewlines), !path.isEmpty
   else {
     throw EVYError.formatFailed(type: "decimal", reason: "missing value argument")
   }
   let places: Int
   if parts.count >= 2 {
-    let rawPlaces = stripOptionalSurroundingQuotes(parts[1])
+    let rawPlaces = _stripOptionalSurroundingQuotes(parts[1])
       .trimmingCharacters(in: .whitespacesAndNewlines)
     guard let parsedPlaces = Int(rawPlaces), parsedPlaces >= 0, parsedPlaces <= 20 else {
       throw EVYError.formatFailed(type: "decimal", reason: "invalid fraction digits '\(rawPlaces)'")
@@ -447,7 +446,7 @@ private func evyFormatIsoDatetime(
   _ editing: Bool,
   errorType: String
 ) throws -> EVYFunctionOutput {
-  let parts = splitFunctionArguments(args)
+  let parts = _splitFunctionArguments(args)
   guard parts.count >= 2 else {
     throw EVYError.formatFailed(type: errorType, reason: "expected value and format pattern")
   }
@@ -456,7 +455,7 @@ private func evyFormatIsoDatetime(
     throw EVYError.formatFailed(type: errorType, reason: "missing value argument")
   }
   let pattern = evyNormalizeDateFormatPattern(
-    stripOptionalSurroundingQuotes(parts[1])
+    _stripOptionalSurroundingQuotes(parts[1])
       .trimmingCharacters(in: .whitespacesAndNewlines)
   )
   guard !pattern.isEmpty else {
@@ -501,25 +500,6 @@ func evyBuildCurrency(
     "value": evyJsonValue(from: value),
   ])
   return try JSONEncoder().encode(builtCurrency)
-}
-
-@MainActor
-func evyBuildAddress(
-  _ args: String,
-  _ value: String
-) throws -> Data {
-  let existingData = try? EVY.getDataFromProps(args)
-  let existingAddress: [String: EVYJson]
-  if case .dictionary(let dictValue) = existingData {
-    existingAddress = dictValue
-  } else {
-    existingAddress = [:]
-  }
-
-  let builtAddress = EVYJson.dictionary(
-    evyAddressFields(from: value, existingAddress: existingAddress)
-  )
-  return try JSONEncoder().encode(builtAddress)
 }
 
 private func evyDoubleValue(from json: EVYJson, type: String) throws -> Double {
@@ -696,149 +676,6 @@ private func evyExistingCurrency(for props: String) -> String? {
   return currencyValue.toString()
 }
 
-private func evyAddressFields(
-  from value: String,
-  existingAddress: [String: EVYJson]
-) -> [String: EVYJson] {
-  let requiredKeys = ["unit", "street", "city", "postcode", "state"]
-  var addressFields = existingAddress
-
-  for key in requiredKeys where addressFields[key] == nil {
-    addressFields[key] = .string("")
-  }
-
-  let trimmedValue = value.trimmingCharacters(in: .whitespacesAndNewlines)
-  if trimmedValue.isEmpty {
-    return addressFields
-  }
-
-  let parsedFields = evyParsedAddressFields(from: trimmedValue, existingAddress: addressFields)
-  for (key, parsedValue) in parsedFields {
-    addressFields[key] = .string(parsedValue)
-  }
-
-  return addressFields
-}
-
-private func evyParsedAddressFields(
-  from value: String,
-  existingAddress: [String: EVYJson]
-) -> [String: String] {
-  let normalizedValue = value.replacingOccurrences(of: "\r\n", with: "\n")
-  let lines =
-    normalizedValue
-    .split(separator: "\n", omittingEmptySubsequences: true)
-    .map { String($0).trimmingCharacters(in: .whitespacesAndNewlines) }
-
-  if lines.count >= 2 {
-    return evyParsedTwoLineAddress(
-      firstLine: lines[0],
-      secondLine: lines[1],
-      existingAddress: existingAddress
-    )
-  }
-
-  let commaSeparatedParts =
-    normalizedValue
-    .split(separator: ",", omittingEmptySubsequences: true)
-    .map { String($0).trimmingCharacters(in: .whitespacesAndNewlines) }
-
-  if commaSeparatedParts.count >= 2 {
-    return evyParsedSingleLineAddress(
-      firstPart: commaSeparatedParts[0],
-      secondPart: commaSeparatedParts[1],
-      existingAddress: existingAddress
-    )
-  }
-
-  return [
-    "unit": existingAddress["unit"]?.toString() ?? "",
-    "street": normalizedValue,
-    "city": existingAddress["city"]?.toString() ?? "",
-    "postcode": existingAddress["postcode"]?.toString() ?? "",
-    "state": existingAddress["state"]?.toString() ?? "",
-  ]
-}
-
-private func evyParsedTwoLineAddress(
-  firstLine: String,
-  secondLine: String,
-  existingAddress: [String: EVYJson]
-) -> [String: String] {
-  let firstLineParts =
-    firstLine
-    .split(separator: ",", omittingEmptySubsequences: true)
-    .map { String($0).trimmingCharacters(in: .whitespacesAndNewlines) }
-  let secondLineParts =
-    secondLine
-    .split(separator: ",", omittingEmptySubsequences: true)
-    .map { String($0).trimmingCharacters(in: .whitespacesAndNewlines) }
-
-  let unitAndStreet = evyAddressUnitAndStreet(
-    from: firstLineParts.first ?? firstLine,
-    existingAddress: existingAddress
-  )
-
-  return [
-    "unit": unitAndStreet.unit,
-    "street": unitAndStreet.street,
-    "city": secondLineParts.first ?? "",
-    "postcode": firstLineParts.count > 1 ? firstLineParts[1] : "",
-    "state": secondLineParts.count > 1 ? secondLineParts[1] : "",
-  ]
-}
-
-private func evyParsedSingleLineAddress(
-  firstPart: String,
-  secondPart: String,
-  existingAddress: [String: EVYJson]
-) -> [String: String] {
-  let unitAndStreet = evyAddressUnitAndStreet(
-    from: firstPart,
-    existingAddress: existingAddress
-  )
-  let locationParts =
-    secondPart
-    .split(separator: " ", omittingEmptySubsequences: true)
-    .map(String.init)
-
-  let postcode = locationParts.last ?? ""
-  let state = locationParts.count > 1 ? locationParts[locationParts.count - 2] : ""
-  let city =
-    locationParts.count > 2
-    ? locationParts.dropLast(2).joined(separator: " ")
-    : ""
-
-  return [
-    "unit": unitAndStreet.unit,
-    "street": unitAndStreet.street,
-    "city": city,
-    "postcode": postcode,
-    "state": state,
-  ]
-}
-
-private func evyAddressUnitAndStreet(
-  from input: String,
-  existingAddress: [String: EVYJson]
-) -> (unit: String, street: String) {
-  let trimmedInput = input.trimmingCharacters(in: .whitespacesAndNewlines)
-  let existingStreet = existingAddress["street"]?.toString() ?? ""
-
-  if !existingStreet.isEmpty, trimmedInput.hasSuffix(existingStreet) {
-    let unit = String(trimmedInput.dropLast(existingStreet.count))
-      .trimmingCharacters(in: .whitespacesAndNewlines)
-    return (unit, existingStreet)
-  }
-
-  let parts = trimmedInput.split(separator: " ", maxSplits: 1, omittingEmptySubsequences: true)
-  if parts.count == 2 {
-    return (String(parts[0]), String(parts[1]))
-  }
-
-  return ("", trimmedInput)
-}
-
 private func evyCompareValues<T: Comparable>(
   _ comparisonOperator: String,
   left: T,
@@ -868,32 +705,4 @@ func evyComparison(_ comparisonOperator: String, left: String, right: String) ->
   }
 
   return evyCompareValues(comparisonOperator, left: left, right: right)
-}
-
-#Preview {
-  EVYFunctionsPreview()
-}
-
-private struct EVYFunctionsPreview: View {
-  init() {
-    EVYPreviewMockData.seedCommon()
-  }
-
-  var body: some View {
-    VStack {
-      EVYTextView("{formatDimension(item.dimensions.width)}")
-      EVYTextView("a == a: {a == a}")
-      EVYTextView("a == b: {a == b}")
-      EVYTextView("1 == 2: {1 == 2}")
-      EVYTextView("1 == 1: {1 == 1}")
-      EVYTextView("1 != 1: {1 != 1}")
-      EVYTextView("title == Amazing: {{item.title} == Amazing}")
-      EVYTextView("title == Amazing Fridge: {{item.title} == Amazing Fridge}")
-      EVYTextView("Amazing Fridge == title: {Amazing Fridge == {item.title}}")
-      EVYTextView("count (title) == 13: {{count(item.title)} == 13}")
-      EVYTextView("count (title) == 14: {{count(item.title)} == 14}")
-      EVYTextView("count (title) > 0: {{count(item.title)} > 0}")
-      EVYTextView("{formatAddress(user.address)}")
-    }
-  }
 }

@@ -6,6 +6,18 @@
 import Foundation
 
 extension EVY {
+  static func parseFunctionCall(_ input: String) -> (functionName: String, functionArgs: String)? {
+    _parseFunctionCall(input)
+  }
+
+  static func splitFunctionArguments(_ args: String) -> [String] {
+    _splitFunctionArguments(args)
+  }
+
+  static func stripOptionalSurroundingQuotes(_ s: String) -> String {
+    _stripOptionalSurroundingQuotes(s)
+  }
+
   static func getDataFromText(_ input: String) throws -> EVYJson {
     try _getDataFromText(input)
   }

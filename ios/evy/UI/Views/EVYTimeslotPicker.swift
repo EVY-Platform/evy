@@ -7,7 +7,7 @@
 
 import SwiftUI
 
-let timeslotWidth: CGFloat = Constants.base * 18
+private let timeslotWidth: CGFloat = Constants.base * 18
 
 struct EVYTimeslot: Equatable {
   let timeslot: String
@@ -29,7 +29,7 @@ struct EVYTimeslotDate: Equatable {
   let timeslots: [EVYTimeslot]
 }
 
-struct EVYTimeslotColumn: View {
+private struct EVYTimeslotColumn: View {
   let timeslotDate: EVYTimeslotDate
   let numberOfTimeslotsPerDay: Int
   let onSelect: ((String) -> Void)?
@@ -110,7 +110,7 @@ struct EVYTimeslotPicker: View {
     to destination: String
   ) {
     guard !destination.isEmpty,
-      (try? EVY.writeRawValue(dateTimeISO, to: destination)) != nil
+      (try? EVY.writeRawStringValue(dateTimeISO, to: destination)) != nil
     else { return }
   }
 

@@ -34,7 +34,7 @@ struct EVYTextSelectRow: View {
 
     guard
       let text = view.text,
-      (try? EVY.updateValue(text, at: temporaryId, scopeId: temporaryScopeId)) != nil,
+      (try? EVY.updateValue(text, destination: temporaryId, scopeId: temporaryScopeId)) != nil,
       let binding = try? EVY.draftStore.binding(
         fromParsedProps: temporaryId, scopeId: temporaryScopeId),
       let draft = EVY.draftStore.draftIfPresent(binding: binding),

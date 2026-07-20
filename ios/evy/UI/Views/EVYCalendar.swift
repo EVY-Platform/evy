@@ -27,7 +27,7 @@ extension EnvironmentValues {
   }
 }
 
-struct EVYCalendarTimeslots: View {
+private struct EVYCalendarTimeslots: View {
   @Environment(\.operate) private var operate
   @Environment(\.colorScheme) var colorScheme
 
@@ -71,7 +71,7 @@ struct EVYCalendarTimeslots: View {
   }
 }
 
-struct ViewOffsetKey: PreferenceKey {
+private struct ViewOffsetKey: PreferenceKey {
   static var defaultValue: CGPoint { CGPoint.zero }
   static func reduce(value: inout CGPoint, nextValue: () -> CGPoint) {
     value.x += nextValue().x
@@ -79,7 +79,7 @@ struct ViewOffsetKey: PreferenceKey {
   }
 }
 
-struct EVYCalendarViewState: Equatable {
+private struct EVYCalendarViewState: Equatable {
   let xLabels: [EVYCalendarLabel]
   let yLabels: [EVYCalendarLabel]
   let rows: Int

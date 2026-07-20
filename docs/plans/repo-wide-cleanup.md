@@ -509,6 +509,16 @@ No dedicated PRs; fold into adjacent work. Zero-risk moves are fine standalone.
 - **api:** flatten `shared/ws.ts:45-57`'s `new Promise().then(async…)` (absorbed by Task 3.2); top-level `import type { OS }` instead of inline `import("evy-types").OS` (absorbed by 4.4); unify `sync.ts`'s half-applied DI (`:24-27,48-52,76-87`) — inject everything through one deps object or nothing.
 - **CI:** the three workflow files (`api.yml`, `marketplace_tests.yml`, `web.yml`) repeat identical trigger + checkout/setup-bun/path-filter scaffolds — a reusable `workflow_call` workflow with a matrix would collapse ~150 YAML lines.
 
+### Phase 6.5 / 7 status (branch `refactor/repo-wide-cleanup`)
+
+**Done (6.5):** access-level tightening; `EVYRectangle<Content>`; `EVYTextField` / `EVYTextResolver` cleanup; `writeRawStringValue` vs `writeRawValue(EVYJson)`; `at:` → `destination:` on mutations + tests; `EVYActionRunner` abort doc; `EVYTextView` placeholder helper; InlinePicker empty-`initial` bootstrap → `[]`.
+
+**Done (6.4 tail):** `EVY+TextParsing` wrappers for `parseFunctionCall` / `splitFunctionArguments` / `stripOptionalSurroundingQuotes`; UI + mutations call `EVY.*`.
+
+**Done (7):** `types/isoDateTime.ts`; `validateSync` → `validateSyncRequest`; `schemaPathToTypeName`; `scripts/seed-files.ts`; reusable `.github/workflows/reusable-bun-lint.yml`; iOS `EVYAddressParsing.swift` + preview extraction; interpreter previews out of utils.
+
+**Deferred (7):** full `schemaRegistry.ts` split + table-driven lazy validators; `rpcRequestHelpers` → ajv translator; `assertDrizzleConfig` ajv; `emitRowContentDecodeLine` mode param; web `decodeFlow` / `AppContent` / `flowGraphReducer` / integration splits; iOS `e2e.swift` + `interpreter.swift` file splits + util renames; `api/sync.ts` DI unification.
+
 ---
 
 # Suggested PR sequence

@@ -7,6 +7,7 @@ import Foundation
 
 @MainActor
 enum EVYActionRunner {
+  /// Runs actions in order; stops at the first branch that returns failure (`runBranch` == false).
   static func run(
     actions: [UI_RowAction],
     datum: EVYJson? = nil,
@@ -120,7 +121,7 @@ enum EVYActionRunner {
         }
         show(childRef)
       case "highlight_required":
-        let args = splitFunctionArguments(functionArgs)
+        let args = EVY.splitFunctionArguments(functionArgs)
         let alias = args.first ?? "field"
         let lastSegment = alias.components(separatedBy: ".").last ?? alias
         let fieldName =
@@ -144,7 +145,7 @@ enum EVYActionRunner {
   }
 
   private static func parseNavigateArguments(_ functionArgs: String) throws -> NavigateArguments {
-    let args = splitFunctionArguments(functionArgs)
+    let args = EVY.splitFunctionArguments(functionArgs)
     guard args.count >= 2 else {
       throw EVYError.invalidData(context: "navigate requires flowId and pageId")
     }
@@ -152,8 +153,8 @@ enum EVYActionRunner {
       throw EVYError.invalidData(context: "navigate accepts at most 3 arguments")
     }
     return NavigateArguments(
-      flowId: stripOptionalSurroundingQuotes(args[0]),
-      pageId: stripOptionalSurroundingQuotes(args[1]),
+      flowId: EVY.stripOptionalSurroundingQuotes(args[0]),
+      pageId: EVY.stripOptionalSurroundingQuotes(args[1]),
       queryArgument: args.count > 2 ? args[2] : ""
     )
   }
@@ -188,7 +189,7 @@ enum EVYActionRunner {
     }
     // Quoted values are literal strings, never data paths
     if value.count >= 2, value.hasPrefix("\""), value.hasSuffix("\"") {
-      return .string(stripOptionalSurroundingQuotes(value))
+      return .string(EVY.stripOptionalSurroundingQuotes(value))
     }
     // Nested object literal, e.g. data: {type: pickup, time: selected_timeslot}
     if value.hasPrefix("{"), value.hasSuffix("}"),
@@ -232,7 +233,7 @@ enum EVYActionRunner {
         .trimmingCharacters(in: .whitespacesAndNewlines)
       guard !innerValue.isEmpty else { return [] }
 
-      return splitFunctionArguments(innerValue)
+      return EVY.splitFunctionArguments(innerValue)
         .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
         .filter { !$0.isEmpty }
     }

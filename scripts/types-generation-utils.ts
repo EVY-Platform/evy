@@ -38,7 +38,7 @@ function pascalCaseIdentifierPart(value: string): string {
 		.join("");
 }
 
-export function schemaPathToSwiftTypeName(schemaPath: string): string {
+export function schemaPathToTypeName(schemaPath: string): string {
 	return schemaPathRelativeToSchemaDir(schemaPath)
 		.split(/[/\\.]+/)
 		.map(pascalCaseIdentifierPart)

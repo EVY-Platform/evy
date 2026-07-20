@@ -1,6 +1,6 @@
 /// <reference types="bun-types" />
 
-import { copyFile, mkdir, readFile, stat } from "node:fs/promises";
+import { readFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { SQL } from "bun";
@@ -32,6 +32,7 @@ import {
 	MARKETPLACE_SERVICE,
 } from "../types/generated/ts/marketplaceResources";
 import { validateUiFlow } from "../types/validators";
+import { copySeedFileBinaries } from "./seed-files";
 
 const UUID_RE =
 	/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -376,93 +377,6 @@ function buildServiceResourceRows(now: string) {
 	}));
 }
 
-async function runCommand(
-	command: string[],
-): Promise<{ ok: boolean; stderr: string }> {
-	try {
-		const proc = Bun.spawn(command, {
-			cwd: REPO_ROOT,
-			stdout: "pipe",
-			stderr: "pipe",
-		});
-		const stderr = await new Response(proc.stderr).text();
-		await proc.exited;
-		return { ok: proc.exitCode === 0, stderr };
-	} catch (error) {
-		const message = error instanceof Error ? error.message : String(error);
-		return { ok: false, stderr: message };
-	}
-}
-
-async function isApiContainerRunning(): Promise<boolean> {
-	try {
-		const proc = Bun.spawn(
-			["docker", "compose", "ps", "-q", API_DOCKER_SERVICE],
-			{ cwd: REPO_ROOT, stdout: "pipe", stderr: "pipe" },
-		);
-		const stdout = await new Response(proc.stdout).text();
-		await proc.exited;
-		return proc.exitCode === 0 && stdout.trim().length > 0;
-	} catch {
-		return false;
-	}
-}
-
-async function copySeedFileBinaries(files: SeedFileRow[]): Promise<void> {
-	if (files.length === 0) {
-		return;
-	}
-	await mkdir(RUNTIME_FILES_PATH, { recursive: true });
-	for (const fileRow of files) {
-		const sourcePath = join(SEED_FILES_PATH, fileRow.id);
-		try {
-			await stat(sourcePath);
-		} catch {
-			throw new Error(
-				`Missing seed binary for file "${fileRow.id}". Expected asset at ${sourcePath}.`,
-			);
-		}
-		await copyFile(sourcePath, join(RUNTIME_FILES_PATH, fileRow.id));
-	}
-
-	// When the API runs in Docker, its file storage lives inside the container
-	// rather than on the host, so seeded binaries are also copied in via
-	// `docker compose cp`. Skipped when Docker is absent or no API container
-	// is running.
-	if (!(await isApiContainerRunning())) {
-		return;
-	}
-	const mkdirResult = await runCommand([
-		"docker",
-		"compose",
-		"exec",
-		"-T",
-		API_DOCKER_SERVICE,
-		"mkdir",
-		"-p",
-		API_CONTAINER_FILES_DIR,
-	]);
-	if (!mkdirResult.ok) {
-		throw new Error(
-			`Failed to create file storage dir in API container: ${mkdirResult.stderr.trim()}`,
-		);
-	}
-	for (const fileRow of files) {
-		const copyResult = await runCommand([
-			"docker",
-			"compose",
-			"cp",
-			join(SEED_FILES_PATH, fileRow.id),
-			`${API_DOCKER_SERVICE}:${API_CONTAINER_FILES_DIR}/${fileRow.id}`,
-		]);
-		if (!copyResult.ok) {
-			throw new Error(
-				`Failed to copy seed binary "${fileRow.id}" into API container: ${copyResult.stderr.trim()}`,
-			);
-		}
-	}
-}
-
 function quotePostgresIdentifier(identifier: string): string {
 	return `"${identifier.replaceAll('"', '""')}"`;
 }
@@ -557,7 +471,14 @@ async function seedDatabase({
 	}
 
 	const fileRows = buildFileRows(evyFiles, now);
-	await copySeedFileBinaries(fileRows);
+	await copySeedFileBinaries({
+		files: fileRows,
+		repoRoot: REPO_ROOT,
+		seedFilesPath: SEED_FILES_PATH,
+		runtimeFilesPath: RUNTIME_FILES_PATH,
+		apiDockerService: API_DOCKER_SERVICE,
+		apiContainerFilesDir: API_CONTAINER_FILES_DIR,
+	});
 
 	await coreDb.transaction(async (tx) => {
 		await tx.delete(coreSchema.serviceResource);

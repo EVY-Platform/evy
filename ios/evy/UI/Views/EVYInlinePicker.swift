@@ -55,7 +55,7 @@ struct EVYInlinePicker: View {
         in: selectedIdentifiers.value
       )
       let encoded = try JSONEncoder().encode(updatedIdentifiers)
-      try EVY.updateData(encoded, at: destination)
+      try EVY.updateData(encoded, destination: destination)
     } catch {
       #if DEBUG
         print("[EVYInlinePicker] Error updating selection: \(error)")

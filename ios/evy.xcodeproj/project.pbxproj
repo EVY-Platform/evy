@@ -7,6 +7,9 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		B6C3D4E5F60718293A4C01 /* EVYAddressParsing.swift in Sources */ = {isa = PBXBuildFile; fileRef = B6C3D4E5F60718293A4C11 /* EVYAddressParsing.swift */; };
+		B6C3D4E5F60718293A4C02 /* EVYInterpreterPreviews.swift in Sources */ = {isa = PBXBuildFile; fileRef = B6C3D4E5F60718293A4C12 /* EVYInterpreterPreviews.swift */; };
+		B6C3D4E5F60718293A4C03 /* EVYFunctionsPreviews.swift in Sources */ = {isa = PBXBuildFile; fileRef = B6C3D4E5F60718293A4C13 /* EVYFunctionsPreviews.swift */; };
 		A6B2C3D4E5F60718293A4B01 /* EVYFieldChrome.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6B2C3D4E5F60718293A4B11 /* EVYFieldChrome.swift */; };
 		A6B2C3D4E5F60718293A4B02 /* EVYOptionLoading.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6B2C3D4E5F60718293A4B12 /* EVYOptionLoading.swift */; };
 		A6B2C3D4E5F60718293A4B03 /* EVYRouting.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6B2C3D4E5F60718293A4B13 /* EVYRouting.swift */; };
@@ -157,6 +160,9 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		B6C3D4E5F60718293A4C11 /* EVYAddressParsing.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EVYAddressParsing.swift; sourceTree = "<group>"; };
+		B6C3D4E5F60718293A4C12 /* EVYInterpreterPreviews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EVYInterpreterPreviews.swift; sourceTree = "<group>"; };
+		B6C3D4E5F60718293A4C13 /* EVYFunctionsPreviews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EVYFunctionsPreviews.swift; sourceTree = "<group>"; };
 		A6B2C3D4E5F60718293A4B11 /* EVYFieldChrome.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EVYFieldChrome.swift; sourceTree = "<group>"; };
 		A6B2C3D4E5F60718293A4B12 /* EVYOptionLoading.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EVYOptionLoading.swift; sourceTree = "<group>"; };
 		A6B2C3D4E5F60718293A4B13 /* EVYRouting.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EVYRouting.swift; sourceTree = "<group>"; };
@@ -343,6 +349,7 @@
 				73F5D2002F50000200000001 /* forEachRow.swift */,
 				A6B2C3D4E5F60718293A4B12 /* EVYOptionLoading.swift */,
 				A6B2C3D4E5F60718293A4B15 /* EVYSelectionHelpers.swift */,
+				B6C3D4E5F60718293A4C11 /* EVYAddressParsing.swift */,
 			);
 			path = Utils;
 			sourceTree = "<group>";
@@ -387,6 +394,7 @@
 				73C78AFB2BC564E30026F39D /* Assets */,
 				736D104F2B78C4A100503C4D /* Rows */,
 				73CDCAB42B27176700D4E82A /* Views */,
+				B6C3D4E5F60718293A4C20 /* Previews */,
 				73A2AB572C99A09800307E37 /* Atoms */,
 			);
 			path = UI;
@@ -532,6 +540,15 @@
 				73C78AFC2BC564F00026F39D /* SF-Pro-Text-Regular.otf */,
 			);
 			path = Assets;
+			sourceTree = "<group>";
+		};
+		B6C3D4E5F60718293A4C20 /* Previews */ = {
+			isa = PBXGroup;
+			children = (
+				B6C3D4E5F60718293A4C12 /* EVYInterpreterPreviews.swift */,
+				B6C3D4E5F60718293A4C13 /* EVYFunctionsPreviews.swift */,
+			);
+			path = Previews;
 			sourceTree = "<group>";
 		};
 		73CDCAB42B27176700D4E82A /* Views */ = {
@@ -783,6 +800,9 @@
 				73F5D2012F50000200000001 /* forEachRow.swift in Sources */,
 				A6B2C3D4E5F60718293A4B02 /* EVYOptionLoading.swift in Sources */,
 				A6B2C3D4E5F60718293A4B05 /* EVYSelectionHelpers.swift in Sources */,
+				B6C3D4E5F60718293A4C01 /* EVYAddressParsing.swift in Sources */,
+				B6C3D4E5F60718293A4C02 /* EVYInterpreterPreviews.swift in Sources */,
+				B6C3D4E5F60718293A4C03 /* EVYFunctionsPreviews.swift in Sources */,
 				737334FB2B7B671100D2E1CF /* EVYTextField.swift in Sources */,
 				A6B2C3D4E5F60718293A4B01 /* EVYFieldChrome.swift in Sources */,
 				738B4AEE2B95DC3F005FF527 /* EVYData.swift in Sources */,

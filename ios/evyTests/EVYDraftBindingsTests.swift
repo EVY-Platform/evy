@@ -187,7 +187,7 @@ final class EVYDraftBindingTests: XCTestCase {
     let scopeId = "scope_\(UUID().uuidString)"
     EVY.draftStore.activeScopeId = scopeId
 
-    try EVY.writeRawValue("99", to: "{buildCurrency(\(key))}", scopeId: scopeId)
+    try EVY.writeRawStringValue("99", to: "{buildCurrency(\(key))}", scopeId: scopeId)
 
     let stored = try EVY.getDataFromText("{\(key)}")
     XCTAssertEqual(
@@ -215,7 +215,7 @@ final class EVYDraftBindingTests: XCTestCase {
     }
     defer { NotificationCenter.default.removeObserver(token) }
 
-    try EVY.writeRawValue("Hello", to: "{\(variableName)}", scopeId: scopeId)
+    try EVY.writeRawStringValue("Hello", to: "{\(variableName)}", scopeId: scopeId)
 
     XCTAssertEqual(try EVY.getDataFromText("{\(variableName)}"), .string("Hello"))
     XCTAssertTrue(notificationKeys.contains(variableName))
@@ -227,7 +227,7 @@ final class EVYDraftBindingTests: XCTestCase {
     EVY.draftStore.activeScopeId = scopeId
     let destination = "{\(key)}"
 
-    try EVY.writeRawValue("Persisted title", to: destination, scopeId: scopeId)
+    try EVY.writeRawStringValue("Persisted title", to: destination, scopeId: scopeId)
 
     XCTAssertEqual(
       EVY.displayText(fromSource: nil, destination: destination),
@@ -319,7 +319,7 @@ final class EVYDraftBindingTests: XCTestCase {
     }
     defer { NotificationCenter.default.removeObserver(observer) }
 
-    try EVY.writeRawValue(updatedTitle, to: "{\(resourceId).title}")
+    try EVY.writeRawStringValue(updatedTitle, to: "{\(resourceId).title}")
 
     XCTAssertEqual(
       try EVY.getDataFromText("{\(resourceId).title}"),

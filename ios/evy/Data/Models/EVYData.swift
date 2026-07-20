@@ -68,7 +68,7 @@ class EVYData {
   }
 }
 
-public enum EVYJson: Codable, Hashable {
+enum EVYJson: Codable, Hashable {
   case string(String)
   case int(Int)
   case decimal(Decimal)
@@ -77,7 +77,7 @@ public enum EVYJson: Codable, Hashable {
   case array([EVYJson])
   case null
 
-  public init(from decoder: Decoder) throws {
+  init(from decoder: Decoder) throws {
     let container = try decoder.singleValueContainer()
 
     if container.decodeNil() {
@@ -119,7 +119,7 @@ public enum EVYJson: Codable, Hashable {
       in: container, debugDescription: "Unknown EVYJson value")
   }
 
-  public func encode(to encoder: Encoder) throws {
+  func encode(to encoder: Encoder) throws {
     var container = encoder.singleValueContainer()
 
     switch self {
@@ -140,7 +140,7 @@ public enum EVYJson: Codable, Hashable {
     }
   }
 
-  public func toString() -> String {
+  func toString() -> String {
     let encoder = JSONEncoder()
 
     switch self {
@@ -198,7 +198,7 @@ public enum EVYJson: Codable, Hashable {
   }
 
   @MainActor
-  public func identifierValue() -> String {
+  func identifierValue() -> String {
     switch self {
     case .dictionary(_):
       return parseProp(props: ["id"]).toString()
@@ -208,7 +208,7 @@ public enum EVYJson: Codable, Hashable {
   }
 
   @MainActor
-  public func parseProp(props: [String]) -> EVYJson {
+  func parseProp(props: [String]) -> EVYJson {
     if props.count < 1 {
       return self
     }
@@ -248,7 +248,7 @@ public enum EVYJson: Codable, Hashable {
   /// falling back to `self`. Used to tell "the path resolves to a real value" apart from
   /// "the container could not descend into the requested path".
   @MainActor
-  public func parsePropStrict(props: [String]) -> EVYJson? {
+  func parsePropStrict(props: [String]) -> EVYJson? {
     guard let firstVariable = props.first else {
       return self
     }

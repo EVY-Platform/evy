@@ -12,27 +12,11 @@ on:
 
 jobs:
     web_lint:
-        defaults:
-            run:
-                working-directory: web
-
-        timeout-minutes: 1
-        runs-on: ubuntu-latest
-        steps:
-            - name: Checkout code
-              uses: actions/checkout@v6
-
-            - name: Setup environment
-              uses: ./.github/actions/setup-bun
-              id: setup
-              with:
-                  working-directory: web
-                  path-filter: "web/**"
-                  path-filter-extra: "types/**"
-
-            - name: Run lint
-              if: steps.setup.outputs.has-changes == 'true'
-              run: bun run lint
+        uses: ./.github/workflows/reusable-bun-lint.yml
+        with:
+            working-directory: web
+            path-filter: "web/**"
+            path-filter-extra: "types/**"
 
     web_tests:
         permissions:

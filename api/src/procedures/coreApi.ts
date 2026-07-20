@@ -7,7 +7,7 @@ import type {
 import {
 	validatePlaceSearchRequest,
 	validatePlaceSearchResponse,
-	validateSync,
+	validateSyncRequest,
 	validateSyncResponse,
 } from "evy-types/validators";
 import type { EvyDb } from "../database/db";
@@ -18,7 +18,7 @@ type CoreApiHandler = (params: ApiRequest, db: EvyDb) => Promise<unknown>;
 
 const coreApiHandlers: Record<string, CoreApiHandler> = {
 	sync: async (params, db) => {
-		const syncParams = validateSync(params.data);
+		const syncParams = validateSyncRequest(params.data);
 		const response: SyncResponse = await syncProcedure.sync(syncParams, db);
 		return validateSyncResponse(response);
 	},

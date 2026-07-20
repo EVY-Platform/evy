@@ -76,7 +76,7 @@ func bootstrapRowDraft(row: UI_Row, scopeId: String?, payload: UI_RowPayload? = 
   else { return }
 
   let destinationProps = EVY.parsePropsFromText(destination)
-  let variableName = parseFunctionCall(destinationProps)?.functionArgs ?? destinationProps
+  let variableName = EVY.parseFunctionCall(destinationProps)?.functionArgs ?? destinationProps
   guard !variableName.isEmpty else { return }
 
   let initialData =
@@ -114,9 +114,9 @@ private func draftShape(for type: EVYRowType) -> RowDraftShape? {
 
 private func defaultBootstrapData(for type: EVYRowType) -> Data? {
   switch draftShape(for: type) {
-  case .emptyArray:
+  case .emptyArray, .stringArray:
     return "[]".data(using: .utf8)
-  case .emptyStringScalar:
+  case .emptyStringScalar, .scalarString:
     return "\"\"".data(using: .utf8)
   default:
     return nil
