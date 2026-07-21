@@ -24,7 +24,7 @@ test.describe("Row configuration", () => {
 				title: "Test Page",
 				rows: [
 					{
-						type: "ColumnContainer",
+						type: "HorizontalContainer",
 						title: "Container Row",
 						children: [
 							{
@@ -996,7 +996,7 @@ test.describe("Row configuration", () => {
 		page,
 	}) => {
 		type DeepNestRow = {
-			type: "Input" | "ColumnContainer";
+			type: "Input" | "HorizontalContainer";
 			title: string;
 			placeholder?: string;
 			value?: string;
@@ -1015,7 +1015,7 @@ test.describe("Row configuration", () => {
 				};
 			}
 			return {
-				type: "ColumnContainer",
+				type: "HorizontalContainer",
 				title: `Nest level ${level}`,
 				children: [deepNest(level - 1)],
 				actions: [],
@@ -1035,7 +1035,7 @@ test.describe("Row configuration", () => {
 
 		for (let i = 0; i < 11; i++) {
 			const nextButton = configPanel.getByRole("button", {
-				name: /: ColumnContainer$/,
+				name: /: HorizontalContainer$/,
 			});
 			await expect(nextButton.first()).toBeVisible();
 			await nextButton.first().click();
@@ -1226,5 +1226,99 @@ test.describe("Row configuration", () => {
 		await initialInput.fill("Updated default");
 
 		await expect(initialInput).toHaveText("Updated default");
+	});
+
+	test("selecting Show defaults to the configured row sheet id", async ({
+		page,
+	}) => {
+		await openAppWithTestFlows(page, [
+			{
+				id: "step_1",
+				title: "Page 1",
+				rows: [
+					{
+						type: "Button",
+						title: "Open Sheet",
+						label: "Open",
+						sheet: {
+							type: "Text",
+							title: "Sheet Content",
+							text: "Inside sheet",
+							actions: [],
+						},
+						actions: [],
+					},
+				],
+			},
+		]);
+
+		await page.getByText("Open Sheet", { exact: true }).first().click();
+		const configPanel = getConfigPanel(page);
+		await configPanel.getByRole("button", { name: "Add action" }).click();
+
+		const popup = page.getByRole("dialog", { name: "Edit action 1" });
+		const trueFunctionSelect = popup.getByLabel("true-0-function");
+		await popoverSelect(page, trueFunctionSelect, "Show row");
+
+		const rowArgSelect = popup.getByLabel("true-0-arg-0");
+		await expect(rowArgSelect).toHaveAttribute("data-value", /.+/);
+		const selectedRowId = await rowArgSelect.getAttribute("data-value");
+		expect(selectedRowId).toBeTruthy();
+	});
+
+	test("Show row target can be changed to a row on another page", async ({
+		page,
+	}) => {
+		await openAppWithTestFlows(page, [
+			{
+				id: "step_1",
+				title: "Page 1",
+				rows: [
+					{
+						type: "Button",
+						title: "Trigger",
+						label: "Go",
+						sheet: {
+							type: "Text",
+							title: "Local Sheet",
+							text: "Local",
+							actions: [],
+						},
+						actions: [],
+					},
+				],
+			},
+			{
+				id: "step_2",
+				title: "Page 2",
+				rows: [
+					{
+						type: "Text",
+						title: "Remote Target Row",
+						text: "Remote",
+						actions: [],
+					},
+				],
+			},
+		]);
+
+		await page.getByText("Trigger", { exact: true }).first().click();
+		const configPanel = getConfigPanel(page);
+		await configPanel.getByRole("button", { name: "Add action" }).click();
+
+		const popup = page.getByRole("dialog", { name: "Edit action 1" });
+		const trueFunctionSelect = popup.getByLabel("true-0-function");
+		await popoverSelect(page, trueFunctionSelect, "Show row");
+
+		const rowArgSelect = popup.getByLabel("true-0-arg-0");
+		await popoverSelect(
+			page,
+			rowArgSelect,
+			"Test Flow / Page 2 / Remote Target Row",
+		);
+
+		await popup.getByRole("button", { name: "Save" }).click();
+		await expect(configPanel.getByText(/show\(/)).toBeVisible();
+		await expect(configPanel.getByText(/Remote Target Row/)).toBeVisible();
 	});
 });

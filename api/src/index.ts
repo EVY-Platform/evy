@@ -1,7 +1,7 @@
 import { initCoreNotifications, validateAuth } from "./data/data";
 import { createDb } from "./database/db";
 import { api, create, deleteResource, get, update } from "./procedures/rpc";
-import { initServiceAdapters, wireServiceEvents } from "./procedures/services";
+import { initServiceAdapters } from "./procedures/services";
 import { cancelUpload, handleUploadChunk } from "./procedures/uploads";
 import { runHealthCli } from "./readiness";
 import {
@@ -19,15 +19,13 @@ function authHandler(data: WSParams): Promise<boolean> {
 }
 
 async function startServer(): Promise<void> {
-	await initServiceAdapters(appDb);
-
 	const server = await initServer(authHandler);
 	const broadcast = (eventName: string, payload: unknown) => {
 		emitJsonRpc(server, eventName, payload);
 	};
 
 	initCoreNotifications(broadcast);
-	wireServiceEvents(broadcast);
+	await initServiceAdapters(appDb, broadcast);
 
 	server.register("api", (params: unknown) => api(params, appDb));
 	server.register("cancelUpload", cancelUpload).protected();

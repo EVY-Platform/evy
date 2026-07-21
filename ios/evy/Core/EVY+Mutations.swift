@@ -89,7 +89,8 @@ extension EVY {
       return true
     }
 
-    if let json = try? store.getJsonForBinding(key: firstProp),
+    if let json = try? store.getJsonForBinding(
+      key: firstProp, cacheScopeId: activeCacheScopeId),
       json.parsePropStrict(props: remainingProps) != nil
     {
       return true
@@ -98,13 +99,10 @@ extension EVY {
     return false
   }
 
-  static func resetEphemeralDrafts(forFlowId flowId: String) {
-    for pageId in EVYFlowStore.pageIds(inFlowId: flowId) {
-      draftStore.deleteDrafts(scopeId: EVYDraft.ephemeralScopeId(forPageId: pageId))
-    }
-  }
-
-  static func resetEphemeralDrafts(forFlowId flowId: String, from store: EVYDataStore) {
+  static func resetEphemeralDrafts(
+    forFlowId flowId: String,
+    from store: EVYDataStore = EVY.publicStore
+  ) {
     for pageId in EVYFlowStore.pageIds(inFlowId: flowId, from: store) {
       draftStore.deleteDrafts(scopeId: EVYDraft.ephemeralScopeId(forPageId: pageId))
     }
@@ -236,7 +234,7 @@ extension EVY {
     destination: String
   ) throws -> (variableName: String, data: Data) {
     let destinationProps = _parsePropsFromText(destination)
-    if let (functionName, functionArgs) = parseFunctionCall(destinationProps),
+    if let (functionName, functionArgs) = EVY.parseFunctionCall(destinationProps),
       let builtData = try dataForBuildFunction(
         functionName, functionArgs: functionArgs, value: value.toString())
     {
@@ -252,27 +250,32 @@ extension EVY {
     scopeId: String? = nil
   ) throws {
     let (variableName, data) = try prepareDraftData(value: value, destination: destination)
-    try updateData(data, at: variableName, scopeId: scopeId)
+    try updateData(data, destination: variableName, scopeId: scopeId)
   }
 
-  static func writeRawValue(
+  /// Writes a string destination value, quoting plain text when the destination is not a build* function call.
+  static func writeRawStringValue(
     _ value: String,
     to destination: String,
     scopeId: String? = nil
   ) throws {
-    try updateValue(value, at: destination, scopeId: scopeId)
+    try updateValue(value, destination: destination, scopeId: scopeId)
   }
 
-  static func updateValue(_ value: String, at: String, scopeId: String? = nil) throws {
-    let destinationProps = _parsePropsFromText(at)
-    if let (functionName, functionArgs) = parseFunctionCall(destinationProps),
+  static func updateValue(
+    _ value: String,
+    destination: String,
+    scopeId: String? = nil
+  ) throws {
+    let destinationProps = _parsePropsFromText(destination)
+    if let (functionName, functionArgs) = EVY.parseFunctionCall(destinationProps),
       let builtData = try dataForBuildFunction(
         functionName, functionArgs: functionArgs, value: value)
     {
-      try updateData(builtData, at: functionArgs, scopeId: scopeId)
+      try updateData(builtData, destination: functionArgs, scopeId: scopeId)
       return
     }
-    try updateData("\"\(value)\"".data(using: .utf8)!, at: at, scopeId: scopeId)
+    try updateData("\"\(value)\"".data(using: .utf8)!, destination: destination, scopeId: scopeId)
   }
 
   private static func dataForBuildFunction(
@@ -290,8 +293,8 @@ extension EVY {
     }
   }
 
-  static func updateData(_ newData: Data, at: String, scopeId: String? = nil) throws {
-    let variableName = _parsePropsFromText(at)
+  static func updateData(_ newData: Data, destination: String, scopeId: String? = nil) throws {
+    let variableName = _parsePropsFromText(destination)
     let (store, cleanVariableName) = store(for: variableName)
     let splitProps = try splitPropsFromText(cleanVariableName)
     let rootVariable = splitProps.first!

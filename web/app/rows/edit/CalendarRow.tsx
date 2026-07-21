@@ -3,24 +3,12 @@ import { useParseText } from "../../hooks/useParseText";
 import type { RowConfig } from "../../types/row";
 import { defineRow } from "../defineRow";
 import { RowLayout } from "../design-system/RowLayout";
+import { mockDatesFromToday } from "./mockDates";
 
 const COLUMN_WIDTH = 60;
 const ROW_HEIGHT = 20;
 
-function isoDateString(date: Date): string {
-	const year = date.getFullYear();
-	const month = String(date.getMonth() + 1).padStart(2, "0");
-	const day = String(date.getDate()).padStart(2, "0");
-	return `${year}-${month}-${day}`;
-}
-
-const today = new Date();
-
-const mockColumnDates = Array.from({ length: 4 }, (_, i) => {
-	const d = new Date(today);
-	d.setDate(today.getDate() + i);
-	return `${isoDateString(d)}T00:00:00`;
-});
+const mockColumnDates = mockDatesFromToday(4).map((date) => `${date}T00:00:00`);
 
 const mockTimeSlots = Array.from({ length: 8 }, (_, i) => {
 	const minutes = 7 * 60 + i * 30;

@@ -8,6 +8,11 @@
 import Foundation
 import SwiftData
 
+enum EVYDataError: Error {
+  case keyNotFound
+  case keyAlreadyExists
+}
+
 @MainActor
 final class EVYDataStore {
   private let context: ModelContext
@@ -114,6 +119,7 @@ final class EVYDataStore {
     postRecordAndValueChanged(namespace: namespace, resource: resource, id: id)
   }
 
+  // used by tests
   func delete(namespace: String, resource: String, id: String) throws {
     let existing = try get(namespace: namespace, resource: resource, id: id)
     context.delete(existing)
@@ -196,12 +202,11 @@ final class EVYDataStore {
     return .array(items)
   }
 
-  func getJsonForBinding(key: String, cacheScopeId: String? = nil) throws -> EVYJson {
-    let resolvedCacheScopeId = cacheScopeId ?? EVY.activeCacheScopeId
+  func getJsonForBinding(key: String, cacheScopeId: String?) throws -> EVYJson {
     if !key.contains(":") {
-      if let resolvedCacheScopeId,
+      if let cacheScopeId,
         let cached = try? get(
-          namespace: EVYNamespace.cache, resource: resolvedCacheScopeId, id: key)
+          namespace: EVYNamespace.cache, resource: cacheScopeId, id: key)
       {
         return try cached.decoded()
       }

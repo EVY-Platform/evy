@@ -36,8 +36,8 @@ struct EVYSearch: View {
       localResults = EVYState(
         textToWatch: source,
         setter: {
-          EVYSearchResult.makeResults(
-            from: try? EVY.getDataFromText(source),
+          EVYSearchResult.loadLocalResults(
+            source: source,
             resultTemplate: resultTemplate,
             scopeId: scopeId
           )
@@ -77,7 +77,12 @@ struct EVYSearch: View {
 
   var body: some View {
     VStack(spacing: 0) {
-      EVYSearchField(text: $searchText, placeholder: placeholder)
+      EVYTextInput(
+        text: $searchText,
+        placeholder: placeholder.map { "::search:: \($0)" }
+      )
+      .autocorrectionDisabled()
+      .textInputAutocapitalization(.never)
 
       ForEach(displayedResults) { result in
         EVYRow(row: result.displayRow, datum: result.datum)

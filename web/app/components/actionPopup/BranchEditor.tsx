@@ -1,14 +1,15 @@
-import type { DATA_EVY_Flow, DATA_EVY_Page } from "evy-types";
+import type { DATA_EVY_Flow, DATA_EVY_Page, DATA_EVY_Row } from "evy-types";
 import { EVY_CORE_SERVICE } from "evy-types/coreResources";
 import { MARKETPLACE_SERVICE } from "evy-types/marketplaceResources";
 import { useCallback, useMemo } from "react";
-import type { ServiceResource } from "../../api/sync";
+import type { ServiceResource } from "../../types/resources";
 import {
 	type ActionFunction,
 	parseBranch,
 	serializeBranch,
 } from "../../utils/actionBranch";
 import {
+	getAllRowOptions,
 	getFlowOptions,
 	getPageOptions,
 	toVariableOptions,
@@ -27,6 +28,8 @@ type BranchEditorProps = {
 	pagesById: Record<string, DATA_EVY_Page>;
 	serviceResources: ServiceResource[];
 	idCandidates: IdCandidate[];
+	rowsById: Record<string, DATA_EVY_Row>;
+	defaultSheetRowId?: string;
 	getAttributeCandidatesForQualifier: (qualifier: string) => IdCandidate[];
 	onChange: (value: string) => void;
 };
@@ -53,8 +56,22 @@ function buildArgDropdowns(
 	flowsById: Record<string, DATA_EVY_Flow>,
 	pagesById: Record<string, DATA_EVY_Page>,
 	serviceResources: ServiceResource[],
+	rowsById: Record<string, DATA_EVY_Row>,
 ): ArgDropdownSlot[] {
-	if (!functionName || functionName === "close" || functionName === "show") {
+	if (!functionName) {
+		return [];
+	}
+
+	if (functionName === "show") {
+		return [
+			{
+				slotId: "show-row",
+				options: getAllRowOptions(flowsById, pagesById, rowsById),
+			},
+		];
+	}
+
+	if (functionName === "close") {
 		return [];
 	}
 
@@ -114,6 +131,8 @@ export function BranchEditor({
 	pagesById,
 	serviceResources,
 	idCandidates,
+	rowsById,
+	defaultSheetRowId,
 	getAttributeCandidatesForQualifier,
 	onChange,
 }: BranchEditorProps) {
@@ -127,9 +146,13 @@ export function BranchEditor({
 				onChange("");
 				return;
 			}
+			if (functionName === "show" && defaultSheetRowId) {
+				onChange(serializeBranch("show", [defaultSheetRowId]));
+				return;
+			}
 			onChange(serializeBranch(functionName as ActionFunction, []));
 		},
-		[onChange],
+		[defaultSheetRowId, onChange],
 	);
 
 	const handleArgChange = useCallback(
@@ -161,6 +184,7 @@ export function BranchEditor({
 		flowsById,
 		pagesById,
 		serviceResources,
+		rowsById,
 	);
 
 	return (

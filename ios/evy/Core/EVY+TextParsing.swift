@@ -6,6 +6,18 @@
 import Foundation
 
 extension EVY {
+  static func parseFunctionCall(_ input: String) -> (functionName: String, functionArgs: String)? {
+    _parseFunctionCall(input)
+  }
+
+  static func splitFunctionArguments(_ args: String) -> [String] {
+    _splitFunctionArguments(args)
+  }
+
+  static func stripOptionalSurroundingQuotes(_ s: String) -> String {
+    _stripOptionalSurroundingQuotes(s)
+  }
+
   static func getDataFromText(_ input: String) throws -> EVYJson {
     try _getDataFromText(input)
   }
@@ -39,10 +51,6 @@ extension EVY {
       return json.toString()
     }
     return try formatData(json: json, format: format)
-  }
-
-  static func displayText(fromSource source: String?) -> String {
-    _displayText(fromSource: source)
   }
 
   static func displayText(fromSource source: String?, destination: String?) -> String {

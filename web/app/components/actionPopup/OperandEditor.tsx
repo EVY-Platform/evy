@@ -1,6 +1,6 @@
 import { useCallback, useMemo } from "react";
 
-import type { ServiceResource } from "../../api/sync";
+import type { ServiceResource } from "../../types/resources";
 import { toVariableOptions } from "../../utils/actionFlowOptions";
 import {
 	CONDITION_FUNCTIONS,

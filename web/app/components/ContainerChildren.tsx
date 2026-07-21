@@ -1,11 +1,11 @@
 import { useCallback } from "react";
-import { useFlowsContext } from "../state";
+import { useFlowsContext } from "../state/contexts/FlowsContext";
 import type { ContainerType } from "../types/row";
-import { storedRowToRow } from "../utils/rowCodec";
 import { DraggableRowContainer } from "./DraggableRowContainer";
 import { DropPlaceholderShell } from "./DropPlaceholderShell";
 import { PlaceholderDropIndicator } from "./PlaceholderDropIndicator";
 import { useIsInRowsPanel } from "./RowRenderLocationContext";
+import { resolveRowElement } from "./resolveRowElement";
 
 export function ContainerChildren({
 	childIds,
@@ -13,14 +13,12 @@ export function ContainerChildren({
 	showIndicators = false,
 	containerRowId,
 	containerType,
-	showPlaceholder = true,
 }: {
 	childIds: string[];
 	orientation?: "horizontal" | "vertical";
 	showIndicators?: boolean;
 	containerRowId: string;
 	containerType: ContainerType;
-	showPlaceholder?: boolean;
 }) {
 	const { dispatchRow, rowsById, rows: paletteRows } = useFlowsContext();
 	const isInRowsPanel = useIsInRowsPanel();
@@ -40,22 +38,23 @@ export function ContainerChildren({
 				</DropPlaceholderShell>
 			);
 		}
-		return showPlaceholder ? (
+		return (
 			<PlaceholderDropIndicator
 				key="placeholder"
 				containerRowId={containerRowId}
 				containerType={containerType}
 			/>
-		) : null;
+		);
 	}
 
 	return (
 		<>
 			{childIds.map((childId) => {
-				const record = rowsById[childId];
-				const rowElement = record
-					? storedRowToRow(record).row
-					: paletteRows.find((r) => r.id === childId)?.row;
+				const rowElement = resolveRowElement(
+					childId,
+					rowsById,
+					paletteRows,
+				);
 				return (
 					<DraggableRowContainer
 						key={childId}

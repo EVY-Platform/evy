@@ -1,18 +1,14 @@
 import { EVY_CORE_RESOURCE, EVY_CORE_SERVICE } from "evy-types/coreResources";
+import { runReadinessCli } from "evy-types/readiness";
 import * as data from "./data/data";
 import { createDb, type EvyDb } from "./database/db";
 import { requireServiceWsEndpoint } from "./procedures/services";
 
-type AssertApiReadableOptions = {
-	requireSeeded: boolean;
-};
-
+// exported for tests
 export async function assertApiReadable(
 	db: EvyDb,
-	options: AssertApiReadableOptions,
+	requireSeeded: boolean,
 ): Promise<void> {
-	const { requireSeeded } = options;
-
 	const externalServices = await data.listExternalServices(db);
 	for (const { id, name } of externalServices) {
 		requireServiceWsEndpoint(name, id);
@@ -37,19 +33,10 @@ export async function assertApiReadable(
 	}
 }
 
-export async function runHealthCli(): Promise<void> {
+export function runHealthCli(): Promise<void> {
 	const db = createDb();
-	const requireSeededData = process.argv.includes("--require-seeded");
-	try {
-		await assertApiReadable(db, { requireSeeded: requireSeededData });
-		console.info(
-			requireSeededData
-				? "API seeded-data readiness OK"
-				: "API readiness OK",
-		);
-		process.exit(0);
-	} catch (error) {
-		console.error(error);
-		process.exit(1);
-	}
+	return runReadinessCli({
+		label: "API",
+		assertReadable: (requireSeeded) => assertApiReadable(db, requireSeeded),
+	});
 }

@@ -253,6 +253,68 @@ final class InterpreterTests: XCTestCase {
     XCTAssertEqual(try EVY.getDataFromText("{\(entityKey).title}"), .string("Selected item"))
   }
 
+  func testResolveQueryParamsRefreshesStatesWhenSelectedEntityChanges() throws {
+    let entityKey = uniqueKey("entities")
+    let firstId = UUID().uuidString
+    let secondId = UUID().uuidString
+    let firstAddress = EVYJson.dictionary([
+      "street": .string("1 First Street"),
+      "latitude": .decimal(-33.86),
+      "longitude": .decimal(151.20),
+    ])
+    let secondAddress = EVYJson.dictionary([
+      "street": .string("28 Rothschild Avenue"),
+      "latitude": .decimal(-33.9135576),
+      "longitude": .decimal(151.2052514),
+    ])
+
+    try store(
+      .array([
+        .dictionary([
+          "id": .string(firstId),
+          "pickup_selection": .array([.string("2026-07-19T07:00:00")]),
+          "delivery_selection": .array([.string("2026-07-21T07:00:00")]),
+          "transfer_options": .dictionary([
+            "pickup": .dictionary(["address": firstAddress])
+          ]),
+        ]),
+        .dictionary([
+          "id": .string(secondId),
+          "pickup_selection": .array([.string("2026-07-20T07:00:00")]),
+          "delivery_selection": .array([.string("2026-07-22T07:00:00")]),
+          "transfer_options": .dictionary([
+            "pickup": .dictionary(["address": secondAddress])
+          ]),
+        ]),
+      ]),
+      at: "\(EVYNamespace.marketplace):\(entityKey)"
+    )
+    let pickupSelections = EVYState<[String]>(
+      watches: ["{\(entityKey).pickup_selection}"],
+      setter: { EVYDatetime.readTimeslots("{\(entityKey).pickup_selection}") }
+    )
+    let deliverySelections = EVYState<[String]>(
+      watches: ["{\(entityKey).delivery_selection}"],
+      setter: { EVYDatetime.readTimeslots("{\(entityKey).delivery_selection}") }
+    )
+    let pickupAddress = EVYState<EVYJson>(
+      watches: ["{\(entityKey).transfer_options.pickup.address}"],
+      setter: {
+        (try? EVY.getDataFromText("{\(entityKey).transfer_options.pickup.address}")) ?? .null
+      }
+    )
+
+    XCTAssertTrue(pickupSelections.value.isEmpty)
+    XCTAssertTrue(deliverySelections.value.isEmpty)
+    XCTAssertNotEqual(pickupAddress.value, secondAddress)
+
+    EVY.cacheQueryParams([EVY.entityIdQueryKey: [secondId]], forPageId: testPageId)
+
+    XCTAssertEqual(pickupSelections.value, ["2026-07-20T07:00:00"])
+    XCTAssertEqual(deliverySelections.value, ["2026-07-22T07:00:00"])
+    XCTAssertEqual(pickupAddress.value, secondAddress)
+  }
+
   func testResolveQueryParamsDoesNotCacheSingularAlias() throws {
     let randomId = UUID().uuidString.replacingOccurrences(of: "-", with: "_")
     let resourceKey = "evy_interpreter_tests_\(randomId)_items"
@@ -600,7 +662,7 @@ final class InterpreterTests: XCTestCase {
 
     try EVY.updateValue(
       "2026-06-03T10:00:00",
-      at: "{\(selectedTimeslotKey)}",
+      destination: "{\(selectedTimeslotKey)}",
       scopeId: scopeId
     )
     XCTAssertTrue(
@@ -611,7 +673,7 @@ final class InterpreterTests: XCTestCase {
 
     try EVY.updateValue(
       "2026-06-03T09:00:00",
-      at: "{\(selectedTimeslotKey)}",
+      destination: "{\(selectedTimeslotKey)}",
       scopeId: scopeId
     )
     XCTAssertFalse(
@@ -655,7 +717,8 @@ final class InterpreterTests: XCTestCase {
       at: "\(EVYNamespace.marketplace):\(resourceKey)"
     )
 
-    XCTAssertThrowsError(try EVY.publicStore.getJsonForBinding(key: entityKey))
+    XCTAssertThrowsError(
+      try EVY.publicStore.getJsonForBinding(key: entityKey, cacheScopeId: nil))
   }
 
   func testSingularQueryKeyDoesNotResolvePluralSyncedCollection() throws {
@@ -906,22 +969,6 @@ final class InterpreterTests: XCTestCase {
 
     XCTAssertTrue(targets.contains(messagesKey))
     XCTAssertTrue(targets.contains("\(itemKey).id"))
-  }
-
-  func testRawDataFromPlainSourceExpression() throws {
-    let key = uniqueKey("title")
-    try store(.string("Hello world"), at: key)
-
-    let raw = try _rawDataFromSource("{\(key)}")
-    XCTAssertEqual(raw, .string("Hello world"))
-  }
-
-  func testDisplayTextFromFormattedSourceExpression() throws {
-    let key = uniqueKey("price")
-    try store(.dictionary(["value": .string("99"), "currency": .string("AUD")]), at: key)
-
-    let display = EVY.displayText(fromSource: "{formatCurrency(\(key))}")
-    XCTAssertEqual(display, "$99.00")
   }
 
   func testFormatAddress() throws {

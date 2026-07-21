@@ -3,7 +3,7 @@ import { useCallback, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 
 import { useEscapeKey } from "../hooks/useEscapeKey";
-import { useFlowsContext } from "../state";
+import { useFlowsContext } from "../state/contexts/FlowsContext";
 import { extractDraftVariables } from "../utils/actionVariables";
 import {
 	type ConditionExpression,
@@ -14,7 +14,7 @@ import {
 	buildDatumCandidate,
 	buildFunctionCandidates,
 	buildIdCandidates,
-	buildResourceAttributeCandidatesForResource,
+	createGetAttributeCandidatesForQualifier,
 } from "../utils/idCandidates";
 
 import { BranchEditor } from "./actionPopup/BranchEditor";
@@ -23,6 +23,7 @@ import { ConditionGroupEditor } from "./actionPopup/ConditionGroupEditor";
 type ActionPopupProps = {
 	action: UI_RowAction;
 	actionIndex: number;
+	defaultSheetRowId?: string;
 	onSave: (action: UI_RowAction) => void;
 	onCancel: () => void;
 };
@@ -30,6 +31,7 @@ type ActionPopupProps = {
 export function ActionPopup({
 	action,
 	actionIndex,
+	defaultSheetRowId,
 	onSave,
 	onCancel,
 }: ActionPopupProps) {
@@ -62,14 +64,12 @@ export function ActionPopup({
 		[flowsById, pagesById, serviceResources],
 	);
 
-	const getAttributeCandidatesForQualifier = useCallback(
-		(qualifier: string) =>
-			serviceResources.some((resource) => resource.id === qualifier)
-				? buildResourceAttributeCandidatesForResource(
-						resourceAttributeMetadata,
-						qualifier,
-					)
-				: [],
+	const getAttributeCandidatesForQualifier = useMemo(
+		() =>
+			createGetAttributeCandidatesForQualifier({
+				serviceResources,
+				resourceAttributeMetadata,
+			}),
 		[serviceResources, resourceAttributeMetadata],
 	);
 
@@ -130,6 +130,8 @@ export function ActionPopup({
 								pagesById={pagesById}
 								serviceResources={serviceResources}
 								idCandidates={idCandidates}
+								rowsById={rowsById}
+								defaultSheetRowId={defaultSheetRowId}
 								getAttributeCandidatesForQualifier={
 									getAttributeCandidatesForQualifier
 								}
@@ -149,6 +151,8 @@ export function ActionPopup({
 								pagesById={pagesById}
 								serviceResources={serviceResources}
 								idCandidates={idCandidates}
+								rowsById={rowsById}
+								defaultSheetRowId={defaultSheetRowId}
 								getAttributeCandidatesForQualifier={
 									getAttributeCandidatesForQualifier
 								}

@@ -25,17 +25,13 @@ struct EVYMapRow: View {
 
   var body: some View {
     VStack(alignment: .leading, spacing: Constants.padding) {
-      if let title = view.title, !title.isEmpty {
-        EVYTextView(title)
-          .padding(.vertical, Constants.padding)
-      }
       EVYMap(location: location.value)
       if let subtitle = view.subtitle, !subtitle.isEmpty {
         EVYTextView(subtitle, style: .info)
           .frame(maxWidth: .infinity, alignment: .leading)
       }
     }
-    .padding(.horizontal, Constants.majorPadding)
+    .titledRow(view.title, spacing: Constants.padding)
   }
 }
 

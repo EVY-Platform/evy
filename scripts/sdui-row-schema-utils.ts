@@ -8,7 +8,6 @@ const UI_ROW_BASE_REF = "../evy.schema.json#/$defs/UI_RowBase";
 
 type SduiRowSpecType =
 	| "string"
-	| "integer"
 	| "[String]"
 	| "UI_Row"
 	| "[UI_Row]"
@@ -281,18 +280,29 @@ export async function loadSduiRowDefinitions(): Promise<SduiRowDefinition[]> {
 
 const ROW_BINDING_FIELD_NAMES = new Set(["source", "destination", "secondary"]);
 
+/**
+ * Universal structural fields inherited from UI_RowBase into every builder
+ * row-field list. Keep this allowlist narrow — never dump all base metadata.
+ */
+export const INHERITED_STRUCTURAL_ROW_FIELDS = ["sheet"] as const;
+
 const SCHEMA_TO_UI_FIELD_NAME: Record<string, string> = {
 	child: "childRowId",
 	children: "childrenRowIds",
+	sheet: "sheetRowId",
 };
 
-export type RowFieldSpecKind =
-	| "text"
-	| "textList"
-	| "child"
-	| "children"
-	| "binding"
-	| "enum";
+const ROW_FIELD_SPEC_KINDS = [
+	"text",
+	"textList",
+	"child",
+	"children",
+	"sheet",
+	"binding",
+	"enum",
+] as const;
+
+export type RowFieldSpecKind = (typeof ROW_FIELD_SPEC_KINDS)[number];
 
 export type RowFieldSpec = {
 	name: string;
@@ -300,6 +310,25 @@ export type RowFieldSpec = {
 	required: boolean;
 	options?: string[];
 };
+
+/**
+ * TS source emitted verbatim into definitions.generated.ts so the generated
+ * types cannot drift from RowFieldSpecKind/RowFieldSpec above.
+ */
+export function rowFieldSpecTsSource(): string[] {
+	return [
+		`export type RowFieldSpecKind = ${ROW_FIELD_SPEC_KINDS.map(
+			(kind) => `"${kind}"`,
+		).join(" | ")};`,
+		"",
+		`export type RowFieldSpec = {`,
+		`\tname: string;`,
+		`\tkind: RowFieldSpecKind;`,
+		`\trequired: boolean;`,
+		`\toptions?: string[];`,
+		`};`,
+	];
+}
 
 function rowFieldSpecFromAttribute(
 	schemaName: string,
@@ -333,7 +362,7 @@ function rowFieldSpecFromAttribute(
 			kind = "textList";
 			break;
 		case "Row":
-			kind = "child";
+			kind = schemaName === "sheet" ? "sheet" : "child";
 			break;
 		case "Row[]":
 			kind = "children";
@@ -349,12 +378,55 @@ function rowFieldSpecFromAttribute(
 	};
 }
 
+export function inheritedStructuralRowFields(): RowFieldSpec[] {
+	return INHERITED_STRUCTURAL_ROW_FIELDS.map((schemaName) => ({
+		name: SCHEMA_TO_UI_FIELD_NAME[schemaName] ?? schemaName,
+		kind: "sheet" as const,
+		required: false,
+	}));
+}
+
+/**
+ * TS source for the union of every row-specific attribute across all
+ * definitions (bindings and actions are base attributes, so excluded).
+ * Row references are generic so UI layers can substitute their own row type.
+ */
+export function rowSpecificAttributesTsSource(
+	definitions: SduiRowDefinition[],
+): string[] {
+	const fieldTypes = new Map<string, string>();
+	for (const definition of definitions) {
+		for (const [name, attribute] of Object.entries(definition.attributes)) {
+			// Bindings and title are base attributes typed by consumers' own
+			// base-attribute types; actions are base too.
+			if (ROW_BINDING_FIELD_NAMES.has(name) || name === "title") continue;
+			if (attribute.type === "Action[]") continue;
+			const tsType = {
+				string: "string",
+				"string[]": "string[]",
+				Row: "TRow",
+				"Row[]": "TRow[]",
+			}[attribute.type];
+			fieldTypes.set(name, tsType);
+		}
+	}
+	const fieldLines = [...fieldTypes.entries()]
+		.sort(([a], [b]) => a.localeCompare(b))
+		.map(([name, tsType]) => `\t${name}?: ${tsType};`);
+	return [
+		`export type RowSpecificAttributes<TRow = unknown> = {`,
+		...fieldLines,
+		`};`,
+	];
+}
+
 export function rowFieldsFromDefinitions(
 	definitions: SduiRowDefinition[],
 ): Record<string, RowFieldSpec[]> {
+	const inheritedFields = inheritedStructuralRowFields();
 	const rowFields: Record<string, RowFieldSpec[]> = {};
 	for (const definition of definitions) {
-		const fields: RowFieldSpec[] = [];
+		const fields: RowFieldSpec[] = [...inheritedFields];
 		for (const [schemaName, attribute] of Object.entries(
 			definition.attributes,
 		)) {

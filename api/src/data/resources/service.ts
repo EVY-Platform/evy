@@ -1,6 +1,6 @@
 import type { DATA_EVY_Service } from "evy-types";
+import { service } from "evy-types/db/schema.generated";
 import { validateDataEvyService } from "evy-types/validators";
-import { service } from "../../../../types/generated/ts/db/schema.generated";
 import { makeCoreResource } from "./coreResource";
 
 function mapServiceRow(r: typeof service.$inferSelect): DATA_EVY_Service {
@@ -14,7 +14,7 @@ function mapServiceRow(r: typeof service.$inferSelect): DATA_EVY_Service {
 	};
 }
 
-const serviceResource = makeCoreResource<DATA_EVY_Service>({
+export const servicesResource = makeCoreResource<DATA_EVY_Service>({
 	table: service,
 	validate: validateDataEvyService,
 	toUpdateSet: (validated) => ({
@@ -24,7 +24,3 @@ const serviceResource = makeCoreResource<DATA_EVY_Service>({
 	}),
 	normalize: mapServiceRow,
 });
-
-export const listServiceRows = serviceResource.list;
-export const createServiceResource = serviceResource.create;
-export const updateServiceResource = serviceResource.update;

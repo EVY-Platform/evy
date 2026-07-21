@@ -14,14 +14,8 @@ struct EVYCalendarRow: View {
   }
 
   var body: some View {
-    VStack(alignment: .leading) {
-      if let title = view.title, !title.isEmpty {
-        EVYTextView(title)
-          .padding(.vertical, Constants.padding)
-      }
-      EVYCalendar(content: view)
-    }
-    .padding(.horizontal, Constants.majorPadding)
+    EVYCalendar(content: view)
+      .titledRow(view.title)
   }
 }
 

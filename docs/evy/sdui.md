@@ -88,7 +88,7 @@ Rows are what are put into pages. They are the building block of the EVY server-
 ```
 {
     "id": "uuid",
-    "type": "Button" | "Calendar" | "ColumnContainer" | "Heading" | "Text" | ... ,
+    "type": "Button" | "Calendar" | "HorizontalContainer" | "Heading" | "Text" | ... ,
 
     // Required. Developer-facing row name.
     "name": "string",
@@ -97,10 +97,14 @@ Rows are what are put into pages. They are the building block of the EVY server-
     // Row-type-specific attributes live at the row root, e.g. label, text, subtitle, placeholder, value, etc.
     "label": "string",
     "text": "string",
-    // Layout: "children" (array of rows), "child" (single row), "segments" (array of strings).
-    // Optional array of children rows to display
+
+    // Structural relationships (persisted as IDs in row data — see data.md):
+    // sheet — optional on every row; overlay content presented via {show(rowId)}
+    // child — Search only; one result-row template (not a sheet)
+    // children — static nested rows on container types
+    // segments — TabContainer tab labels, paired with static children entries
+    "sheet": ROW,
     "children": [ROW],
-    // Optional single child row to display
     "child": ROW,
 
     // Binding fields (only on row types that declare them — see table below):
@@ -126,6 +130,16 @@ Rows are what are put into pages. They are the building block of the EVY server-
 }
 ```
 
+#### Row relationships
+
+Every row may declare an optional nested `sheet` row. At runtime, `{show(rowId)}` presents that stored row (or any other row ID loaded in the client) in a sheet overlay. The sheet root row's `title` is the sheet header and is live-interpolated when it contains expressions; put confirmation headings on the sheet root, not on nested rows inside it.
+
+`Search` is the only row type that may declare `child`. That `child` is a **result template**: the iOS app renders one instantiated copy per search result. It is not opened with `show`. A Search row may own both `child` and `sheet` independently.
+
+`VerticalContainer`, `HorizontalContainer`, and `TabContainer` support static `children` (and `TabContainer` uses `segments` paired with those children). Dynamic `source` + per-item `child` templates are not supported; collection-driven layouts must use static structure or row types that bind their own `source`.
+
+**Web builder:** Secondary builder pages edit a row's optional `sheet` only. For Search, the configured `child` template renders **once** inline directly under the search input as a layout sample—it is not a live search and does not mirror API results. When you add or edit a Show action, the row argument defaults to the currently configured row's `sheet` row ID when one exists; you can pick any row from any loaded flow/page instead. Show requires an explicit row ID—there is no zero-argument `{show()}`.
+
 #### Row binding fields
 
 `source`, `destination`, `secondary`, and datum display `value` are row-type-specific — do not add them to rows that do not declare them in the schema.
@@ -134,13 +148,13 @@ Rows are what are put into pages. They are the building block of the EVY server-
 | --- | --- | --- | --- | --- | --- |
 | `Input`, `TextArea` | yes | yes | no | no | Display reads `source`; writes pass raw text to `destination`. Optional `initial` seeds literal text into the draft on activation. |
 | `Dropdown`, `InlinePicker` | yes | yes | no | yes | `source` = options; `value` = `$datum` display template; selection writes raw datum to `destination`. Optional `initial` seeds the default selection — a single option identifier for `Dropdown`, and a one-element identifier array for `InlinePicker`. |
-| `Search` | yes | yes | no | no | `destination` stores the selected raw datum (builder-aware). |
+| `Search` | yes | yes | no | no | `destination` stores the selected raw datum (builder-aware). Optional `child` is the search **result template** only (not a sheet). Optional `sheet` uses the universal overlay relationship. |
 | `Calendar` | yes | yes | yes | no | `source` = main timeslots to display (same binding as `destination`); `destination` = edited selection; `secondary` = greyed background slots. |
-| `TimeslotPicker` | yes | yes | no | no | Single selected timeslot string in `destination`. Optional `child` row is shown in a sheet when `{show()}` runs. |
+| `TimeslotPicker` | yes | yes | no | no | Single selected timeslot string in `destination`. Optional `sheet` for confirmation overlays via `{show(sheetRowId)}`. |
 | `SelectPhoto` | yes | yes | no | no | `source` = shown images; `destination` = written image IDs. |
 | `TextSelect` | yes | yes | no | no | `source` = current selected state; `destination` = write target. |
-| `PhotoGallery`, `Map`, `ListContainer`, `InputList` | yes | no | no | no | Read-only or collection source. |
-| `Button`, `Text`, `TextAction`, `Heading` | no | no | no | no | `Button` accepts an optional `style` of `"primary"` (default) or `"danger"` (red background on iOS) and an optional `child` row shown in a sheet when `{show()}` runs. |
+| `PhotoGallery`, `Map`, `VerticalContainer`, `HorizontalContainer`, `TabContainer`, `InputList` | yes | no | no | no | Read-only or collection `source`. Containers render static `children` only (`TabContainer`: `segments` paired with `children`). Optional `sheet` on any row type. |
+| `Button`, `Text`, `TextAction`, `Heading` | no | no | no | no | `Button` accepts optional `style` `"primary"` (default) or `"danger"` (red on iOS). Any row type may attach optional `sheet`; `TextAction` commonly pairs with `{show(sheetRowId)}`. |
 
 Formatted vs raw: the runtime resolves `source` for display (including `{formatCurrency(...)}` expressions) and exposes raw values for writes. `destination` may use builder functions such as `{buildCurrency(item.price)}` — writes pass raw user/selection data into the builder.
 
@@ -165,9 +179,9 @@ Builder destinations (e.g. `{buildCurrency(item.price)}`) transform an `initial`
 
 Each row has an `actions` attribute which is an array of `UI_RowAction` objects that can trigger various actions if a condition is met or not met. All action functions dispatch through a single client-side action channel; navigation (`navigate`, `close`) and non-navigation effects (`create`, `highlight_required`) are handled by the same runner.
 
-For destructive or important `create`/`update` actions, use a `{show()}` child sheet: put the confirmation copy on the child row's `title` and message rows, then run the actual `create`/`update` followed by `{close()}` from a confirm button inside the sheet.
+For destructive or important `create`/`update` actions, attach a `sheet` row to the triggering row and call `{show(sheetRowId)}` with that sheet row's ID (often the nested `sheet.id`). Put confirmation copy on the sheet root's `title` and message rows inside the sheet, then run the actual `create`/`update` followed by `{close()}` from a confirm button in the sheet.
 
-Inside a sheet opened with `{show()}`, `{close()}` dismisses the sheet instead of popping navigation.
+Inside a sheet overlay, `{close()}` dismisses the sheet instead of popping navigation.
 
 #### Sequencing
 
@@ -199,11 +213,11 @@ Supported action functions:
 
 | Function | Meaning |
 | -------- | ------- |
-| `close()` | Close current UI, e.g. `{close()}`. Inside a `{show()}` sheet, dismisses the sheet only. |
-| `create(service_id, resource_id, data?)` | Create a domain entity. **Never changes routes** — with a plain-text data object, resolves its data-path or `$datum` values, preserves unresolved bare words as literals (bare `true`/`false` resolve as booleans, bare `null` resolves as JSON null, quoted `"…"` values stay literal strings, and `{…}` values resolve as nested objects), and creates that one entity immediately, e.g. `{create([service_id],[resource_id],{fk: $datum.id, service: "[service_id]", resource: "[items_resource_id]", archivedAt: null, data: {type: pickup, time: selected_pickup_timeslot}})}`. The client stamps `createdAt` on the payload when absent. With no data, it submits the active flow's drafts (merging them into the created entity) and cleans them up — the client decides this by comparing the active draft scope to the target resource. Either way, a flow that should close after submitting must do so explicitly with a following `{close()}` action. For user confirmation, present a `{show()}` child sheet and run `create` from the sheet's confirm button. |
-| `update(service_id, resource_id, filter, changes)` | Update matching domain entities immediately. Resolves filter and changes like inline `create` data (including boolean, `null`, quoted-string, and nested-object literals); a filter value of `null` matches records where the property is absent or JSON `null`. Locally finds rows where every filter property matches, merges changes, then syncs each match to the server with an `update` RPC. Filter and changes objects are required and non-empty, e.g. `{update([service_id],[resource_id],{fk: [items_resource].id, archivedAt: null},{archivedAt: now()})}`. For user confirmation, present a `{show()}` child sheet and run `update` from the sheet's confirm button. |
+| `close()` | Close current UI, e.g. `{close()}`. Inside a sheet overlay, dismisses the sheet only. |
+| `create(service_id, resource_id, data?)` | Create a domain entity. **Never changes routes** — with a plain-text data object, resolves its data-path or `$datum` values, preserves unresolved bare words as literals (bare `true`/`false` resolve as booleans, bare `null` resolves as JSON null, quoted `"…"` values stay literal strings, and `{…}` values resolve as nested objects), and creates that one entity immediately, e.g. `{create([service_id],[resource_id],{fk: $datum.id, service: "[service_id]", resource: "[items_resource_id]", archivedAt: null, data: {type: pickup, time: selected_pickup_timeslot}})}`. The client stamps `createdAt` on the payload when absent. With no data, it submits the active flow's drafts (merging them into the created entity) and cleans them up — the client decides this by comparing the active draft scope to the target resource. Either way, a flow that should close after submitting must do so explicitly with a following `{close()}` action. For user confirmation, call `{show(sheetRowId)}` then run `create` from the sheet's confirm button. |
+| `update(service_id, resource_id, filter, changes)` | Update matching domain entities immediately. Resolves filter and changes like inline `create` data (including boolean, `null`, quoted-string, and nested-object literals); a filter value of `null` matches records where the property is absent or JSON `null`. Locally finds rows where every filter property matches, merges changes, then syncs each match to the server with an `update` RPC. Filter and changes objects are required and non-empty, e.g. `{update([service_id],[resource_id],{fk: [items_resource].id, archivedAt: null},{archivedAt: now()})}`. For user confirmation, call `{show(sheetRowId)}` then run `update` from the sheet's confirm button. |
 | `navigate(flowId, pageId, queryParams?)` | Go to a page within a flow, e.g. `{navigate(flowId, pageId)}`. Pass query params as the optional third argument using a plain-text query object, e.g. `{navigate(flowId, pageId, {id: $datum.id})}`. |
-| `show()` | Present the row's singular `child` in a sheet overlay, e.g. `{show()}`. Requires a `child` row on `TimeslotPicker` or `Button`; no arguments. The child's `title` is shown as the sheet's main header (like a page title) and is live-interpolated when it contains expressions; put sheet headings on the root child row, not nested rows. |
+| `show(rowId)` | Present the row with ID `rowId` in a sheet overlay, e.g. `{show(b8c7d6e5-f4a3-4b2c-9d1e-0f8a7b6c5d4e)}`. Requires exactly one non-empty row ID. The target may belong to any page in the synced flow data, not only the action row's nested `sheet`. If the ID is missing from the client row store, the action fails and later actions in the same array do not run. The presented row's `title` is the sheet header (live-interpolated when it contains expressions). |
 | `highlight_required(field)` | Mark a field as required / show validation, e.g. `{highlight_required(title)}` |
 
 Note that the web builder does not execute actions; it only stores these strings and displays mocks.
@@ -267,6 +281,45 @@ Submit:
 ]
 ```
 
+Open a confirmation sheet (sheet row nested on the action row; Show uses the sheet row's ID):
+
+```json
+{
+	"id": "timeslot-picker-row-id",
+	"type": "TimeslotPicker",
+	"actions": [
+		{
+			"condition": "",
+			"false": "",
+			"true": "{show(b8c7d6e5-f4a3-4b2c-9d1e-0f8a7b6c5d4e)}"
+		}
+	],
+	"sheet": {
+		"id": "b8c7d6e5-f4a3-4b2c-9d1e-0f8a7b6c5d4e",
+		"type": "VerticalContainer",
+		"title": "Confirmation",
+		"children": []
+	}
+}
+```
+
+Search result template (`child` only on Search; separate from `sheet`):
+
+```json
+{
+	"id": "search-row-id",
+	"type": "Search",
+	"source": "{$api:place_search}",
+	"destination": "{pickup_address}",
+	"child": {
+		"id": "387ebe5b-b5b5-4be9-b5db-918bb9db706f",
+		"type": "Text",
+		"title": "{$datum.unit} {$datum.street}",
+		"subtitle": "{$datum.postcode} {$datum.city}, {$datum.state}"
+	}
+}
+```
+
 ---
 
 ## Architecture: flat storage model
@@ -286,7 +339,8 @@ flowchart TD
     F -- "pageIds[]" --> P
     P -- "rowIds[]" --> R
     P -- "footerRowId?" --> R
-    R -- "data.child_row_id?" --> R
+    R -- "data.sheet_row_id?" --> R
+    R -- "data.child_row_id? (Search)" --> R
     R -- "data.children_row_ids[]?" --> R
 ```
 
@@ -322,7 +376,7 @@ flowchart TD
 Both clients connect to the same JSON-RPC WebSocket gateway. The API returns flows, pages, and rows as independent flat collections. Each client builds its own in-memory representation:
 
 - **Web builder** converts records to ID-keyed maps and uses `flatGraph.ts` for all edits. Changes are written back to the API as individual record updates.
-- **iOS app** stores records in `EVYDataStore` and resolves them on demand through typed store accessors (`EVYFlowStore`, `EVYPageStore`, `EVYRowStore`). Container rows follow `child_row_id` / `children_row_ids` links at render time.
+- **iOS app** stores records in `EVYDataStore` and resolves them on demand through typed store accessors (`EVYFlowStore`, `EVYPageStore`, `EVYRowStore`). Rows follow `sheet_row_id`, Search-only `child_row_id`, and container `children_row_ids` links at render time; `{show(rowId)}` resolves targets through `EVYRowStore` across pages.
 
 ```mermaid
 flowchart TD

@@ -63,6 +63,64 @@ final class SduiRowAttributeContractTests: XCTestCase {
     }
   }
 
+  func testUIRowDecodesOptionalSheetForEveryRowType() throws {
+    for rowType in SduiRowViewDataRegistry.decoders.keys.sorted() {
+      let rowJson: [String: Any] = [
+        "id": "sheet-contract-row",
+        "type": rowType,
+        "visible": "true",
+        "actions": [] as [Any],
+        "sheet": [
+          "id": "nested-sheet",
+          "type": "Text",
+          "visible": "true",
+          "actions": [] as [Any],
+          "title": "Sheet",
+        ],
+      ]
+      let rowData = try JSONSerialization.data(withJSONObject: rowJson)
+      let row = try JSONDecoder().decode(UI_Row.self, from: rowData)
+      XCTAssertEqual(row.sheet?.id, "nested-sheet", "\(rowType) must decode optional sheet")
+    }
+  }
+
+  func testSearchRowViewDataExposesChildOnlyAmongRowPayloads() {
+    let searchAttributes = reflectAttributes(
+      SearchRowViewData(
+        title: nil,
+        source: "{items}",
+        destination: "{query}",
+        placeholder: nil,
+        child: nil
+      )
+    )
+    XCTAssertNotNil(searchAttributes["child"])
+
+    let buttonAttributes = reflectAttributes(ButtonRowViewData(title: nil, label: "Go", style: nil))
+    XCTAssertNil(buttonAttributes["child"])
+  }
+
+  func testOnlySearchSchemaDeclaresChildRelationship() throws {
+    let catalogData = try XCTUnwrap(
+      SduiDefinitions.json.data(using: .utf8),
+      "SduiDefinitions.json must be valid UTF-8"
+    )
+    let catalog = try XCTUnwrap(
+      JSONSerialization.jsonObject(with: catalogData) as? [String: Any],
+      "SduiDefinitions.json must be a JSON object"
+    )
+
+    for (rowType, schemaDef) in catalog {
+      let schemaDefDict = try XCTUnwrap(schemaDef as? [String: Any])
+      let attributes = Self.extractExpectedAttributes(from: schemaDefDict, rowType: rowType)
+      if rowType == "Search" {
+        XCTAssertNotNil(attributes["child"])
+      } else {
+        XCTAssertNil(attributes["child"], "\(rowType) must not declare child in schema")
+      }
+    }
+  }
+
   func testEveryRowStructMatchesSchemaAttributes() throws {
     let catalogData = try XCTUnwrap(
       SduiDefinitions.json.data(using: .utf8),
@@ -313,7 +371,7 @@ final class SduiRowInitialBootstrapTests: XCTestCase {
     let scopeId = "scope_\(UUID().uuidString)"
     EVY.draftStore.activeScopeId = scopeId
 
-    try EVY.writeRawValue("User edit", to: "{\(key)}", scopeId: scopeId)
+    try EVY.writeRawStringValue("User edit", to: "{\(key)}", scopeId: scopeId)
 
     let row = try makeRow(type: "Input", destination: "{\(key)}", initial: "Ignored default")
     bootstrapRowDraft(row: row, scopeId: scopeId)
@@ -367,7 +425,7 @@ final class SduiRowInitialBootstrapTests: XCTestCase {
       extraFields: ["source": "{formatCurrency(\(priceKey))}"]
     )
     bootstrapRowDraft(row: editRow, scopeId: scopeId)
-    try EVY.writeRawValue("0", to: "{buildCurrency(\(priceKey))}", scopeId: scopeId)
+    try EVY.writeRawStringValue("0", to: "{buildCurrency(\(priceKey))}", scopeId: scopeId)
     let editedValue = try EVY.getDataFromText("{\(priceKey)}")
 
     XCTAssertEqual(seededValue, editedValue)

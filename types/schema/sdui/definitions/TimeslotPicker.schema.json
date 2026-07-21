@@ -52,9 +52,6 @@
 				},
 				"timeslot_format": {
 					"type": "string"
-				},
-				"child": {
-					"$ref": "../evy.schema.json#/$defs/UI_Row"
 				}
 			}
 		}

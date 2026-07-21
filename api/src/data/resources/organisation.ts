@@ -1,9 +1,9 @@
 import type { DATA_EVY_Organization } from "evy-types";
+import { organization } from "evy-types/db/schema.generated";
 import { validateDataEvyOrganization } from "evy-types/validators";
-import { organization } from "../../../../types/generated/ts/db/schema.generated";
 import { makeCoreResource } from "./coreResource";
 
-const organizationResource = makeCoreResource<DATA_EVY_Organization>({
+export const organisationsResource = makeCoreResource<DATA_EVY_Organization>({
 	table: organization,
 	validate: validateDataEvyOrganization,
 	toUpdateSet: (validated) => ({
@@ -14,7 +14,3 @@ const organizationResource = makeCoreResource<DATA_EVY_Organization>({
 		supportEmail: validated.supportEmail,
 	}),
 });
-
-export const listOrganizationRows = organizationResource.list;
-export const createOrganizationResource = organizationResource.create;
-export const updateOrganizationResource = organizationResource.update;

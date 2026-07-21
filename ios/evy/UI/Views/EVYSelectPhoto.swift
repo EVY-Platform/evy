@@ -284,9 +284,6 @@ private struct EVYSelectPhotoButton: View {
 
       selectedItem = nil
     } catch {
-      #if DEBUG
-        print("[EVYSelectPhoto] Failed to upload image: \(error)")
-      #endif
       NotificationCenter.default.post(
         name: .evyErrorOccurred,
         object: EVYError.imageLoadFailed(name: "selected photo")

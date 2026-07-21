@@ -14,10 +14,10 @@ import {
 	validateGetResponse,
 	validateUpdateResponse,
 } from "evy-types/validators";
+import { DATA_CHANGED_EVENT } from "evy-types/ws";
 import { Client } from "rpc-websockets";
 import { listExternalServices } from "../data/data";
 import type { EvyDb } from "../database/db";
-import { DATA_CHANGED_EVENT } from "../shared/ws";
 
 type BroadcastFn = (eventName: string, payload: unknown) => void;
 
@@ -126,7 +126,7 @@ function makeWsAdapter(wsUrl: string): ServiceAdapter {
 
 let serviceAdapters: Map<string, ServiceAdapter> | null = null;
 let serviceAdapterDb: EvyDb | null = null;
-let serviceEventListener: BroadcastFn | null = null;
+let serviceBroadcast: BroadcastFn | null = null;
 
 export function requireServiceWsEndpoint(
 	name: string,
@@ -143,8 +143,14 @@ export function requireServiceWsEndpoint(
 	return { host, port };
 }
 
-export async function initServiceAdapters(db: EvyDb): Promise<void> {
+export async function initServiceAdapters(
+	db: EvyDb,
+	broadcast: BroadcastFn | null = null,
+): Promise<void> {
 	serviceAdapterDb = db;
+	if (broadcast) {
+		serviceBroadcast = broadcast;
+	}
 	const rows = await listExternalServices(db);
 
 	const next = new Map<string, ServiceAdapter>();
@@ -152,8 +158,8 @@ export async function initServiceAdapters(db: EvyDb): Promise<void> {
 	for (const { id, name } of rows) {
 		const { host, port } = requireServiceWsEndpoint(name, id);
 		const adapter = makeWsAdapter(`ws://${host}:${port}`);
-		if (serviceEventListener) {
-			adapter.onEvent(serviceEventListener);
+		if (serviceBroadcast) {
+			adapter.onEvent(serviceBroadcast);
 		}
 		next.set(id, adapter);
 	}
@@ -208,11 +214,4 @@ export async function forwardDelete(
 	params: DeleteRequest,
 ): Promise<DeleteResponse> {
 	return (await getServiceAdapter(serviceId)).delete(params);
-}
-
-export function wireServiceEvents(broadcast: BroadcastFn): void {
-	serviceEventListener = broadcast;
-	for (const adapter of requireAdapters().values()) {
-		adapter.onEvent(broadcast);
-	}
 }

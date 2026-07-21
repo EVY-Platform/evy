@@ -1,0 +1,35 @@
+{
+	"$schema": "https://json-schema.org/draft/2020-12/schema",
+	"$id": "sdui/definitions/TabContainer",
+	"title": "TabContainer_Row",
+	"allOf": [
+		{
+			"$ref": "../evy.schema.json#/$defs/UI_RowBase"
+		},
+		{
+			"type": "object",
+			"required": ["type", "children", "segments"],
+			"properties": {
+				"type": {
+					"const": "TabContainer"
+				},
+				"title": {
+					"type": "string"
+				},
+				"children": {
+					"type": "array",
+					"items": {
+						"$ref": "../evy.schema.json#/$defs/UI_Row"
+					}
+				},
+				"segments": {
+					"type": "array",
+					"items": {
+						"type": "string"
+					}
+				}
+			}
+		}
+	],
+	"unevaluatedProperties": false
+}

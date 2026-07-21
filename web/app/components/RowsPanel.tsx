@@ -3,7 +3,8 @@ import { dropTargetForElements } from "@atlaskit/pragmatic-drag-and-drop/element
 import { useLayoutEffect, useMemo, useRef, useState } from "react";
 import invariant from "tiny-invariant";
 
-import { useDragContext, useFlowsContext } from "../state";
+import { useDragContext } from "../state/contexts/DragContext";
+import { useFlowsContext } from "../state/contexts/FlowsContext";
 import { CancelOverlay } from "./CancelOverlay";
 import { DraggableRowContainer } from "./DraggableRowContainer";
 import { RowsPanelProvider } from "./RowRenderLocationContext";

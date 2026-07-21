@@ -1,4 +1,6 @@
-import type { DATA_EVY_Flow, DATA_EVY_Page } from "evy-types";
+import type { DATA_EVY_Flow, DATA_EVY_Page, DATA_EVY_Row } from "evy-types";
+import { splitFunctionArguments } from "./functionArgs";
+import { forEachRowInFlows, rowLocationLabel } from "./rowTraversal";
 import { unwrapOptionalBraces } from "./unwrapBraces";
 
 export const ACTION_FUNCTIONS = [
@@ -16,7 +18,7 @@ export const FUNCTION_LABELS: Record<ActionFunction, string> = {
 	create: "Create",
 	update: "Update",
 	navigate: "Navigate",
-	show: "Show child sheet",
+	show: "Show row",
 	highlight_required: "Highlight required",
 };
 
@@ -51,63 +53,6 @@ export function parseBranch(branchString: string): ParsedBranch | null {
 	return null;
 }
 
-function splitFunctionArguments(argsString: string): string[] {
-	if (!argsString.trim()) return [];
-
-	const args: string[] = [];
-	let current = "";
-	let parenDepth = 0;
-	let bracketDepth = 0;
-	let braceDepth = 0;
-	let inString: '"' | "'" | null = null;
-	let previousChar = "";
-
-	for (const char of argsString) {
-		if (inString) {
-			current += char;
-			if (char === inString && previousChar !== "\\") {
-				inString = null;
-			}
-			previousChar = char;
-			continue;
-		}
-
-		if (char === '"' || char === "'") {
-			inString = char;
-			current += char;
-			previousChar = char;
-			continue;
-		}
-
-		if (char === "(") parenDepth++;
-		if (char === ")") parenDepth--;
-		if (char === "[") bracketDepth++;
-		if (char === "]") bracketDepth--;
-		if (char === "{") braceDepth++;
-		if (char === "}") braceDepth--;
-
-		if (
-			char === "," &&
-			parenDepth === 0 &&
-			bracketDepth === 0 &&
-			braceDepth === 0
-		) {
-			const trimmed = current.trim();
-			if (trimmed) args.push(trimmed);
-			current = "";
-			previousChar = char;
-			continue;
-		}
-
-		current += char;
-		previousChar = char;
-	}
-
-	const trimmed = current.trim();
-	if (trimmed) args.push(trimmed);
-	return args;
-}
-
 export function serializeBranch(
 	functionName: ActionFunction | "",
 	args: string[],
@@ -118,6 +63,11 @@ export function serializeBranch(
 
 	if (functionName === "close") return "{close()}";
 
+	if (functionName === "show") {
+		const rowId = filteredArgs[0]?.trim();
+		return rowId ? `{show(${rowId})}` : "";
+	}
+
 	if (filteredArgs.length === 0) return `{${functionName}()}`;
 	return `{${functionName}(${filteredArgs.join(",")})}`;
 }
@@ -126,9 +76,22 @@ export function formatBranchDisplay(
 	branchString: string,
 	flowsById?: Record<string, DATA_EVY_Flow>,
 	pagesById?: Record<string, DATA_EVY_Page>,
+	rowsById?: Record<string, DATA_EVY_Row>,
 ): string {
 	const parsed = parseBranch(branchString);
 	if (!parsed) return "None";
+
+	if (
+		parsed.functionName === "show" &&
+		rowsById &&
+		flowsById &&
+		pagesById &&
+		parsed.args[0]
+	) {
+		const rowId = parsed.args[0].trim();
+		const label = formatShowRowLabel(rowId, flowsById, pagesById, rowsById);
+		return `show(${label})`;
+	}
 
 	if (
 		parsed.functionName === "navigate" &&
@@ -147,4 +110,23 @@ export function formatBranchDisplay(
 
 	if (parsed.args.length === 0) return parsed.functionName;
 	return `${parsed.functionName}(${parsed.args.join(", ")})`;
+}
+
+function formatShowRowLabel(
+	rowId: string,
+	flowsById: Record<string, DATA_EVY_Flow>,
+	pagesById: Record<string, DATA_EVY_Page>,
+	rowsById: Record<string, DATA_EVY_Row>,
+): string {
+	const row = rowsById[rowId];
+	if (!row) return rowId;
+
+	const label = forEachRowInFlows(
+		flowsById,
+		pagesById,
+		rowsById,
+		(flow, page, _row, id) =>
+			id === rowId ? rowLocationLabel(flow, page, row) : null,
+	);
+	return label ?? (row.name || rowId);
 }

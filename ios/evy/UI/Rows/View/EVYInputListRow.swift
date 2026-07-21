@@ -16,18 +16,12 @@ struct EVYInputListRow: View {
   }
 
   var body: some View {
-    VStack(alignment: .leading) {
-      if let title = view.title, !title.isEmpty {
-        EVYTextView(title)
-          .padding(.vertical, Constants.padding)
-      }
-      EVYInputList(
-        data: view.source,
-        format: view.format,
-        placeholder: view.placeholder
-      )
-    }
-    .padding(.horizontal, Constants.majorPadding)
+    EVYInputList(
+      data: view.source,
+      format: view.format,
+      placeholder: view.placeholder
+    )
+    .titledRow(view.title)
   }
 }
 

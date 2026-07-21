@@ -15,17 +15,11 @@ struct EVYRow: View, Identifiable {
   @State private var storedRow: EVYStoredRow?
 
   init(rowId: String, datum: EVYJson? = nil, hidesTitle: Bool = false) {
-    self.ref = .id(rowId)
-    self.datum = datum
-    self.hidesTitle = hidesTitle
-    _storedRow = State(initialValue: EVYRowStore.row(id: rowId))
+    self.init(ref: .id(rowId), datum: datum, hidesTitle: hidesTitle)
   }
 
   init(row: UI_Row, datum: EVYJson? = nil, hidesTitle: Bool = false) {
-    self.ref = .inline(row)
-    self.datum = datum
-    self.hidesTitle = hidesTitle
-    _storedRow = State(initialValue: nil)
+    self.init(ref: .inline(row), datum: datum, hidesTitle: hidesTitle)
   }
 
   init(ref: EVYRowRef, datum: EVYJson? = nil, hidesTitle: Bool = false) {
@@ -82,7 +76,7 @@ func bootstrapRowDraft(row: UI_Row, scopeId: String?, payload: UI_RowPayload? = 
   else { return }
 
   let destinationProps = EVY.parsePropsFromText(destination)
-  let variableName = parseFunctionCall(destinationProps)?.functionArgs ?? destinationProps
+  let variableName = EVY.parseFunctionCall(destinationProps)?.functionArgs ?? destinationProps
   guard !variableName.isEmpty else { return }
 
   let initialData =
@@ -120,9 +114,9 @@ private func draftShape(for type: EVYRowType) -> RowDraftShape? {
 
 private func defaultBootstrapData(for type: EVYRowType) -> Data? {
   switch draftShape(for: type) {
-  case .emptyArray:
+  case .emptyArray, .stringArray:
     return "[]".data(using: .utf8)
-  case .emptyStringScalar:
+  case .emptyStringScalar, .scalarString:
     return "\"\"".data(using: .utf8)
   default:
     return nil
@@ -148,14 +142,7 @@ private func initialDraftData(for row: UI_Row, destination: String) -> Data? {
 
 @MainActor
 private func uiRowWithHiddenTitle(_ row: UI_Row) -> UI_Row {
-  guard let encoded = try? JSONEncoder().encode(row),
-    var json = try? JSONSerialization.jsonObject(with: encoded) as? [String: Any]
-  else { return row }
-  json["title"] = ""
-  guard let data = try? JSONSerialization.data(withJSONObject: json),
-    let decoded = try? JSONDecoder().decode(UI_Row.self, from: data)
-  else { return row }
-  return decoded
+  row.with(title: "")
 }
 
 private struct EVYResolvedRow: View {
@@ -205,8 +192,10 @@ private struct EVYResolvedRow: View {
   private var childRef: EVYRowRef? {
     switch ref {
     case .id:
+      guard storedRow?.type == .search else { return nil }
       return storedRow?.childRowId.map(EVYRowRef.id)
     case .inline(let row):
+      guard row.type == .search else { return nil }
       return row.child.map(EVYRowRef.inline)
     }
   }
@@ -285,8 +274,12 @@ private struct EVYResolvedRow: View {
     EVYActionRunner.run(
       actions: contentRow.actions,
       datum: datum,
-      childRef: childRef,
-      show: { ref in presentedSheetRef = ref },
+      show: { rowId in
+        guard EVYRowStore.row(id: rowId) != nil else {
+          throw EVYError.invalidData(context: "show could not resolve row id \(rowId)")
+        }
+        presentedSheetRef = .id(rowId)
+      },
       prepare: prepare,
       action: { operation in
         if case .close = operation, let sheetDismiss {
@@ -316,8 +309,8 @@ private struct EVYResolvedRow: View {
       EVYButtonRow(view: view, action: { runActions(contentRow: contentRow) })
     case .calendar(let view, _):
       EVYCalendarRow(view: view)
-    case .columnContainer(let view, _):
-      EVYColumnContainerRow(view: view, childRefs: childRefs)
+    case .horizontalContainer(let view, _):
+      EVYHorizontalContainerRow(view: view, childRefs: childRefs)
     case .dropdown(let view, _):
       EVYDropdownRow(view: view)
     case .heading(let view, _):
@@ -328,8 +321,8 @@ private struct EVYResolvedRow: View {
       EVYInputListRow(view: view)
     case .input(let view, _):
       EVYInputRow(view: view, isInteractive: contentRow.actions.isEmpty)
-    case .listContainer(let view, _):
-      EVYListContainerRow(view: view, childRef: childRef, childRefs: childRefs)
+    case .verticalContainer(let view, _):
+      EVYVerticalContainerRow(view: view, childRefs: childRefs)
     case .listItem(let view, _):
       EVYListItemRow(view: view)
     case .map(let view, _):
@@ -340,8 +333,8 @@ private struct EVYResolvedRow: View {
       EVYPhotoGalleryRow(view: view)
     case .selectPhoto(let view, _):
       EVYSelectPhotoRow(view: view)
-    case .selectSegmentContainer(let view, _):
-      EVYSelectSegmentContainerRow(view: view, childRefs: childRefs)
+    case .tabContainer(let view, _):
+      EVYTabContainerRow(view: view, childRefs: childRefs)
     case .timeslotPicker(let view, _):
       EVYTimeslotPickerRow(
         view: view,
@@ -367,7 +360,7 @@ private struct EVYResolvedRow: View {
   }
 }
 
-/// Sheet presented by `{show()}`: child row `title` is the main header (like a page title).
+/// Sheet presented by `{show(rowId)}`: child row `title` is the main header (like a page title).
 private struct EVYSheetOverlay: View {
   let sheetRef: EVYRowRef
   let onDismiss: () -> Void

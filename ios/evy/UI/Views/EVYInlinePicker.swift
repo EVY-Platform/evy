@@ -26,17 +26,7 @@ struct EVYInlinePicker: View {
     self.valueTemplate = valueTemplate
     self.destination = destination
 
-    var loadedOptions: [EVYJson] = []
-    do {
-      let data = try EVY.getDataFromText(data)
-      if case .array(let arrayValue) = data {
-        loadedOptions.append(contentsOf: arrayValue)
-      }
-    } catch {
-      #if DEBUG
-        print("[EVYInlinePicker] Error loading options: \(error)")
-      #endif
-    }
+    let loadedOptions = EVYOptionLoading.loadOptions(from: data)
     options = loadedOptions
     formattedOptionLabels = EVY.displayLabels(for: loadedOptions, valueTemplate: valueTemplate)
 
@@ -52,9 +42,6 @@ struct EVYInlinePicker: View {
           return arrayValue.map { $0.identifierValue() }
         } catch {
           NotificationCenter.default.post(name: .evyErrorOccurred, object: error)
-          #if DEBUG
-            print("[EVYInlinePicker] Error loading selection: \(error)")
-          #endif
         }
         return []
       })
@@ -63,14 +50,12 @@ struct EVYInlinePicker: View {
   private func performAction(option: EVYJson) {
     let optionIdentifier = option.identifierValue()
     do {
-      var updatedIdentifiers = selectedIdentifiers.value.filter {
-        $0 != optionIdentifier
-      }
-      if updatedIdentifiers.count == selectedIdentifiers.value.count {
-        updatedIdentifiers.append(optionIdentifier)
-      }
+      let updatedIdentifiers = EVYSelectionHelpers.toggledIdentifier(
+        optionIdentifier,
+        in: selectedIdentifiers.value
+      )
       let encoded = try JSONEncoder().encode(updatedIdentifiers)
-      try EVY.updateData(encoded, at: destination)
+      try EVY.updateData(encoded, destination: destination)
     } catch {
       #if DEBUG
         print("[EVYInlinePicker] Error updating selection: \(error)")

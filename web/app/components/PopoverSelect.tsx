@@ -2,140 +2,9 @@ import { ChevronDown } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 
+import { useAnchoredDropdownPosition } from "../hooks/useAnchoredDropdownPosition";
+import { useOutsideClick } from "../hooks/useOutsideClick";
 import { LUCIDE_STROKE_WIDTH } from "../icons/iconSyntax";
-
-const css = `
-.evy-popover-trigger,
-.evy-popover-trigger--breadcrumb {
-	display: inline-flex;
-	align-items: center;
-	justify-content: space-between;
-	gap: var(--size-1);
-	font-size: var(--text-sm);
-	text-align: left;
-	cursor: pointer;
-	min-width: 0;
-}
-.evy-popover-trigger {
-	padding: 2px 6px;
-	color: var(--color-black);
-	background-color: var(--color-white);
-	border: 1px solid var(--color-gray-border);
-	border-radius: var(--radius-sm);
-	width: 100%;
-	transition: border-color var(--transition), box-shadow var(--transition);
-}
-.evy-popover-trigger:hover {
-	border-color: var(--color-evy-gray);
-}
-.evy-popover-trigger:focus {
-	outline: none;
-	border-color: var(--color-evy-gray);
-	box-shadow: 0 0 0 3px rgba(60, 60, 100, 0.1);
-}
-.evy-popover-text {
-	overflow: hidden;
-	text-overflow: ellipsis;
-	white-space: nowrap;
-	flex: 1;
-	min-width: 0;
-}
-.evy-popover-chevron {
-	flex-shrink: 0;
-	opacity: var(--opacity-60);
-}
-.evy-popover-menu {
-	background: var(--color-white);
-	border: 1px solid var(--color-gray-border);
-	border-radius: var(--radius-sm);
-	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-	z-index: 9999;
-	max-height: 200px;
-	overflow: hidden;
-}
-.evy-popover-menu-scroll {
-	max-height: 200px;
-	overflow-y: auto;
-	overscroll-behavior: contain;
-	padding: 2px 0;
-}
-.evy-popover-option {
-	display: block;
-	width: 100%;
-	padding: var(--size-1) var(--size-2);
-	font-size: var(--text-sm);
-	text-align: left;
-	background: none;
-	border: none;
-	cursor: pointer;
-	white-space: nowrap;
-}
-.evy-popover-option:hover,
-.evy-popover-option--active,
-.evy-popover-option[aria-selected="true"] {
-	background-color: var(--color-evy-gray-light);
-}
-.evy-popover-option[aria-selected="true"] {
-	font-weight: var(--font-medium);
-}
-.evy-popover-separator {
-	padding: 4px 8px 2px;
-	font-size: 0.625rem;
-	font-weight: var(--font-semibold);
-	text-transform: uppercase;
-	letter-spacing: 0.05em;
-	color: var(--color-evy-gray);
-	border-top: 1px solid var(--color-gray-border);
-	margin-top: 2px;
-}
-.evy-popover-divider {
-	border: none;
-	border-top: 1px solid var(--color-gray-border);
-	margin: 6px 0 0;
-	height: 0;
-}
-.evy-popover-trigger--breadcrumb {
-	width: auto;
-	max-width: 14rem;
-	min-height: var(--size-nav-control);
-	padding: 0 2px 0 var(--size-2);
-	font-weight: var(--font-semibold);
-	color: var(--color-evy-blue);
-	background: transparent;
-	border: none;
-	outline: none;
-}
-.evy-popover-trigger--breadcrumb:hover {
-	text-decoration: underline;
-}
-.evy-popover-trigger--breadcrumb:focus-visible {
-	outline: 2px solid var(--color-evy-blue);
-	outline-offset: 2px;
-}
-.evy-popover-trigger--breadcrumb .evy-popover-chevron {
-	opacity: 1;
-	color: var(--color-evy-blue);
-}
-.evy-popover-search {
-	display: block;
-	width: 100%;
-	padding: 4px var(--size-2);
-	font-size: var(--text-sm);
-	border: none;
-	border-bottom: 1px solid var(--color-gray-border);
-	outline: none;
-	background: transparent;
-}
-`;
-
-let styleInjected = false;
-function injectStyle() {
-	if (styleInjected) return;
-	styleInjected = true;
-	const el = document.createElement("style");
-	el.textContent = css;
-	document.head.appendChild(el);
-}
 
 export type PopoverOption = {
 	value: string;
@@ -177,7 +46,6 @@ export function PopoverSelect({
 	id,
 	openOnHover = false,
 }: PopoverSelectProps) {
-	injectStyle();
 	const [isOpen, setIsOpen] = useState(false);
 	const [activeIndex, setActiveIndex] = useState(-1);
 	const [searchQuery, setSearchQuery] = useState("");
@@ -187,11 +55,8 @@ export function PopoverSelect({
 	const hoverCloseTimerRef = useRef<ReturnType<typeof setTimeout> | null>(
 		null,
 	);
-	const [position, setPosition] = useState<{
-		top: number;
-		left: number;
-		minWidth: number;
-	} | null>(null);
+	const { position, setPosition, updatePosition } =
+		useAnchoredDropdownPosition(triggerRef);
 
 	const filteredOptions = useMemo(
 		() =>
@@ -207,16 +72,11 @@ export function PopoverSelect({
 
 	const open = useCallback(() => {
 		if (!triggerRef.current) return;
-		const rect = triggerRef.current.getBoundingClientRect();
-		setPosition({
-			top: rect.bottom + 2,
-			left: rect.left,
-			minWidth: Math.max(rect.width, 160),
-		});
+		updatePosition();
 		setSearchQuery("");
 		setActiveIndex(options.findIndex((option) => option.value === value));
 		setIsOpen(true);
-	}, [options, value]);
+	}, [options, value, updatePosition]);
 
 	const clearHoverCloseTimer = useCallback(() => {
 		if (hoverCloseTimerRef.current !== null) {
@@ -267,23 +127,17 @@ export function PopoverSelect({
 				prev ? { ...prev, left: adjustedLeft, top: adjustedTop } : prev,
 			);
 		}
-	}, [isOpen, position]);
+	}, [isOpen, position, setPosition]);
 
-	useEffect(() => {
-		if (!isOpen) return;
-		const handleClickOutside = (e: MouseEvent) => {
-			const target = e.target as Node;
-			if (
+	const isInsidePopover = useCallback(
+		(target: Node) =>
+			Boolean(
 				triggerRef.current?.contains(target) ||
-				menuRef.current?.contains(target)
-			)
-				return;
-			close();
-		};
-		document.addEventListener("mousedown", handleClickOutside);
-		return () =>
-			document.removeEventListener("mousedown", handleClickOutside);
-	}, [isOpen, close]);
+					menuRef.current?.contains(target),
+			),
+		[],
+	);
+	useOutsideClick(isOpen, isInsidePopover, close);
 
 	useEffect(() => {
 		if (isOpen) {
@@ -428,7 +282,7 @@ export function PopoverSelect({
 							position: "fixed",
 							top: position.top,
 							left: position.left,
-							minWidth: position.minWidth,
+							minWidth: position.width,
 						}}
 					>
 						<input

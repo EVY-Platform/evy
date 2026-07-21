@@ -1,15 +1,21 @@
 import type { DATA_EVY_Flow, DATA_EVY_Page } from "evy-types";
+import { API_DATA_SOURCE_ATTRIBUTES } from "evy-types/apiDataSources";
 import { EVY_CORE_SERVICE } from "evy-types/coreResources";
 import { MARKETPLACE_SERVICE } from "evy-types/marketplaceResources";
-import type { ResourceAttributeMetadata, ServiceResource } from "../api/sync";
 import {
 	getAllRowBindingFieldNames,
 	getAllRowContentFieldNames,
 } from "../rows/rowFields";
+import type {
+	ResourceAttributeMetadata,
+	ServiceResource,
+} from "../types/resources";
 import { ACTION_FUNCTIONS } from "./actionBranch";
 import { ROW_ATTRIBUTE_STATIC_NAMES } from "./rowConstants";
+import { parseApiSourceMethod } from "./sourceBinding";
+import { unwrapOptionalBraces } from "./unwrapBraces";
 
-export type IdCandidateCategory =
+type IdCandidateCategory =
 	| "Flow"
 	| "Page"
 	| "Resource"
@@ -189,6 +195,65 @@ export function buildResourceAttributeCandidatesForResource(
 	return buildAttributeCandidates(metadata?.attributeNames ?? []);
 }
 
+function resolveSourceResourceId(
+	source: string,
+	serviceResources: { id: string }[],
+): string | null {
+	const sourcePath = unwrapOptionalBraces(source);
+	const resourceId = sourcePath.split(".")[0]?.trim();
+	if (!resourceId) return null;
+	return serviceResources.some((resource) => resource.id === resourceId)
+		? resourceId
+		: null;
+}
+
+function resolveQualifierResourceId(
+	qualifier: string,
+	serviceResources: { id: string }[],
+	rowSource?: string,
+): string | null {
+	if (rowSource !== undefined && qualifier === "$datum") {
+		return resolveSourceResourceId(rowSource, serviceResources);
+	}
+	return serviceResources.some((resource) => resource.id === qualifier)
+		? qualifier
+		: null;
+}
+
+export function createGetAttributeCandidatesForQualifier({
+	serviceResources,
+	resourceAttributeMetadata,
+	rowSource,
+}: {
+	serviceResources: { id: string }[];
+	resourceAttributeMetadata: ResourceAttributeMetadata[];
+	rowSource?: string;
+}): (qualifier: string) => IdCandidate[] {
+	return (qualifier: string) => {
+		if (rowSource !== undefined && qualifier === "$datum") {
+			const apiMethod = parseApiSourceMethod(rowSource);
+			if (apiMethod) {
+				const attributeNames = API_DATA_SOURCE_ATTRIBUTES[apiMethod];
+				return attributeNames
+					? buildAttributeCandidates(attributeNames)
+					: [];
+			}
+		}
+
+		const resourceId = resolveQualifierResourceId(
+			qualifier,
+			serviceResources,
+			rowSource,
+		);
+		return resourceId
+			? buildResourceAttributeCandidatesForResource(
+					resourceAttributeMetadata,
+					resourceId,
+				)
+			: [];
+	};
+}
+
 export function buildDatumCandidate(): IdCandidate {
 	return {
 		id: DATUM_CANDIDATE_ID,
@@ -209,6 +274,7 @@ export function buildFunctionCandidates(): IdCandidate[] {
 		}));
 }
 
+// exported for tests
 export function filterCandidates(
 	candidates: IdCandidate[],
 	query: string,

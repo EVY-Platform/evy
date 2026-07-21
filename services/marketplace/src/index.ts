@@ -3,10 +3,7 @@ import { startMarketplaceRpcServer, stopMarketplaceRpcServer } from "./rpc";
 async function main() {
 	await startMarketplaceRpcServer();
 
-	const shutdown = (signal: NodeJS.Signals) => {
-		console.info(
-			`Received ${signal}, stopping Marketplace JSON-RPC server`,
-		);
+	const shutdown = () => {
 		stopMarketplaceRpcServer();
 		process.exit(0);
 	};

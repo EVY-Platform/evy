@@ -4,7 +4,7 @@ import type {
 	DATA_EVY_Row,
 	UI_Flow as ServerFlow,
 } from "evy-types";
-import { decomposeServerFlow } from "./decodeFlow";
+import { decomposeServerFlow } from "./serverFlowDecompose";
 
 type EntityMap<T extends { id: string }> = Record<string, T>;
 
@@ -71,6 +71,11 @@ export function collectSubtreeRowIds(
 	const childRowId = row.data.child_row_id;
 	if (typeof childRowId === "string") {
 		collectSubtreeRowIds(childRowId, rowsById, visited);
+	}
+
+	const sheetRowId = row.data.sheet_row_id;
+	if (typeof sheetRowId === "string") {
+		collectSubtreeRowIds(sheetRowId, rowsById, visited);
 	}
 
 	const childrenRowIds = row.data.children_row_ids;

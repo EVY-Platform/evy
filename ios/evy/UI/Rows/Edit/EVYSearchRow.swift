@@ -20,21 +20,15 @@ struct EVYSearchRow: View {
   }
 
   var body: some View {
-    VStack(alignment: .leading, spacing: 0) {
-      if let title = view.title, !title.isEmpty {
-        EVYTextView(title)
-          .padding(.vertical, Constants.padding)
-      }
-      EVYSearch(
-        source: view.source,
-        destination: view.destination,
-        placeholder: view.placeholder,
-        resultTemplate: childRef?.templateRow(),
-        scopeId: evyScope.cacheScopeId,
-        draftScopeId: evyScope.draftScopeId
-      )
-    }
-    .padding(.horizontal, Constants.majorPadding)
+    EVYSearch(
+      source: view.source,
+      destination: view.destination,
+      placeholder: view.placeholder,
+      resultTemplate: childRef?.templateRow(),
+      scopeId: evyScope.cacheScopeId,
+      draftScopeId: evyScope.draftScopeId
+    )
+    .titledRow(view.title, spacing: 0)
   }
 }
 

@@ -117,6 +117,31 @@ describe("validateRowPathSegmentsForPage", () => {
 		});
 	});
 
+	it("accepts a valid sheet chain", () => {
+		const sheetLeaf = makeDataRow("sheet-leaf");
+		const rootRow = makeDataRow("root-parent", {
+			sheet_row_id: "sheet-leaf",
+		});
+		const page = makePage("p1", ["root-parent"]);
+		const pagesById = { p1: page };
+		const rowsById = {
+			"root-parent": rootRow,
+			"sheet-leaf": sheetLeaf,
+		};
+
+		expect(
+			validateRowPathSegmentsForPage(
+				"p1",
+				["root-parent", "sheet-leaf"],
+				pagesById,
+				rowsById,
+			),
+		).toEqual({
+			rootRowId: "root-parent",
+			configStack: ["sheet-leaf"],
+		});
+	});
+
 	it("accepts a valid child chain", () => {
 		const leafRow = makeDataRow("leaf-child");
 		const middleRow = makeDataRow("middle-child", {

@@ -11,52 +11,25 @@ import {
 	isPanelScalarField,
 	type RowBindingField,
 } from "../rows/rowFields";
-import { useFlowsContext } from "../state";
+import { useFlowsContext } from "../state/contexts/FlowsContext";
 import type { Row } from "../types/row";
-import { getApiDataSourceAttributeCandidates } from "../utils/apiDataSources";
 import { mergeRowContentWithPaletteDefaults } from "../utils/decodeFlow";
 import {
 	buildDatumCandidate,
 	buildFunctionCandidates,
 	buildIdCandidates,
-	buildResourceAttributeCandidatesForResource,
 	buildRowAttributeCandidates,
+	createGetAttributeCandidatesForQualifier,
 	type IdCandidate,
 } from "../utils/idCandidates";
 import {
 	findPageReferences,
 	type PageReferenceEntry,
 } from "../utils/pageReferences";
-import { parseApiSourceMethod } from "../utils/sourceBinding";
-import { unwrapOptionalBraces } from "../utils/unwrapBraces";
 import { ActionEditor } from "./ActionEditor";
 import { BuilderAssist } from "./BuilderAssist";
 import { PageInUseDialog } from "./PageInUseDialog";
 import { type PopoverOption, PopoverSelect } from "./PopoverSelect";
-
-function resolveSourceResourceId(
-	source: string,
-	serviceResources: { id: string }[],
-): string | null {
-	const sourcePath = unwrapOptionalBraces(source);
-	const resourceId = sourcePath.split(".")[0]?.trim();
-	if (!resourceId) return null;
-	return serviceResources.some((resource) => resource.id === resourceId)
-		? resourceId
-		: null;
-}
-
-function resolveQualifierResourceId(
-	qualifier: string,
-	source: string,
-	serviceResources: { id: string }[],
-): string | null {
-	if (qualifier === "$datum")
-		return resolveSourceResourceId(source, serviceResources);
-	return serviceResources.some((resource) => resource.id === qualifier)
-		? qualifier
-		: null;
-}
 
 function ConfigTextField({
 	id,
@@ -297,29 +270,20 @@ export function ConfigurationPanel() {
 				.filter((f) => isPanelScalarField(f.kind))
 				.sort(compareRowFieldsForPanel);
 			const childFields = fields
-				.filter((f) => f.kind === "child" || f.kind === "children")
+				.filter(
+					(f) =>
+						f.kind === "child" ||
+						f.kind === "children" ||
+						f.kind === "sheet",
+				)
 				.sort(compareRowFieldsForPanel);
 
-			const getAttributeCandidatesForQualifier = (qualifier: string) => {
-				if (qualifier === "$datum") {
-					const apiMethod = parseApiSourceMethod(rowSource);
-					if (apiMethod) {
-						return getApiDataSourceAttributeCandidates(apiMethod);
-					}
-				}
-
-				const resourceId = resolveQualifierResourceId(
-					qualifier,
-					rowSource,
+			const getAttributeCandidatesForQualifier =
+				createGetAttributeCandidatesForQualifier({
 					serviceResources,
-				);
-				return resourceId
-					? buildResourceAttributeCandidatesForResource(
-							resourceAttributeMetadata,
-							resourceId,
-						)
-					: [];
-			};
+					resourceAttributeMetadata,
+					rowSource,
+				});
 
 			const contentElements = scalarFields.map((field) => {
 				const uniqueId = `${configRow.id}-${field.name}`;
@@ -357,19 +321,19 @@ export function ConfigurationPanel() {
 			const containerElements = childFields.flatMap((field) => {
 				const uniqueId = `${configRow.id}-${field.name}`;
 				let childInfos: ChildInfo[] = [];
-				if (
-					field.kind === "child" &&
-					typeof merged[field.name] === "string"
-				) {
-					const record = rowsById[merged[field.name] as string];
-					if (record) {
-						childInfos = [
-							{
-								id: merged[field.name] as string,
-								name: record.name,
-								type: record.type,
-							},
-						];
+				if (field.kind === "child" || field.kind === "sheet") {
+					const relationshipId = merged[field.name];
+					if (typeof relationshipId === "string") {
+						const record = rowsById[relationshipId];
+						if (record) {
+							childInfos = [
+								{
+									id: relationshipId,
+									name: record.name,
+									type: record.type,
+								},
+							];
+						}
 					}
 				} else if (
 					field.kind === "children" &&
@@ -386,7 +350,12 @@ export function ConfigurationPanel() {
 				}
 
 				if (childInfos.length === 0) return [];
-				const label = field.kind === "child" ? "Child" : "Children";
+				const label =
+					field.kind === "child"
+						? "Search result"
+						: field.kind === "sheet"
+							? "Sheet"
+							: "Children";
 
 				return [
 					<div key={uniqueId}>
@@ -559,7 +528,11 @@ export function ConfigurationPanel() {
 							actions={currentConfigRow.config.actions}
 							flowsById={flowsById}
 							pagesById={pagesById}
+							rowsById={rowsById}
 							serviceResources={serviceResources}
+							defaultSheetRowId={
+								currentConfigRow.config.sheetRowId
+							}
 							onUpdate={updateRowActions}
 						/>
 					</>

@@ -8,11 +8,11 @@ import {
 } from "bun:test";
 import { migrate } from "drizzle-orm/pglite/migrator";
 import { EVY_CORE_SERVICE } from "evy-types/coreResources";
+import * as schema from "evy-types/db/schema.generated";
 import {
 	MARKETPLACE_RESOURCE,
 	MARKETPLACE_SERVICE,
 } from "evy-types/marketplaceResources";
-import * as schema from "../../../types/generated/ts/db/schema.generated";
 import {
 	asEvyDb,
 	clearAllTestTables,
@@ -122,7 +122,7 @@ describe("api JSON-RPC handler", () => {
 				},
 				dataDb,
 			),
-		).rejects.toThrow("Unknown service API method: not-search");
+		).rejects.toThrow('API calls are only supported for service "evy"');
 	});
 
 	it("rejects requests without an API method", async () => {

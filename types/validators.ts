@@ -537,7 +537,7 @@ export const validateDeleteResponse = makeValidator<DeleteResponse>(
 	"DeleteResponse",
 	getValidateDeleteResponse,
 );
-export const validateSync = makeValidator<SyncRequest>(
+export const validateSyncRequest = makeValidator<SyncRequest>(
 	"SyncRequest",
 	getValidateSyncRequest,
 );
@@ -562,6 +562,7 @@ export const validateFileWithBinary = makeValidator<FileWithBinary>(
 	"FileWithBinary",
 	getValidateFileWithBinary,
 );
+// ISO date-time field validation for data payloads (post-schema).
 
 function isIsoDateTimeFieldName(key: string): boolean {
 	return key === "createdAt" || key === "updatedAt" || key === "archivedAt";

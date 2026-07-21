@@ -4,7 +4,6 @@
 //
 
 import Foundation
-import SwiftUI
 
 extension Notification.Name {
   static let evyRecordChanged = Notification.Name("EVYRecordChanged")
@@ -51,22 +50,5 @@ struct EVYValueChange: Equatable {
     let comparedSegmentCount = min(watchSegments.count, notificationSegments.count)
     return watchSegments.prefix(comparedSegmentCount)
       == notificationSegments.prefix(comparedSegmentCount)
-  }
-}
-
-extension View {
-  func onEVYRecordChange(
-    namespace: String,
-    resource: String,
-    id: String,
-    perform action: @escaping () -> Void
-  ) -> some View {
-    onReceive(NotificationCenter.default.publisher(for: .evyRecordChanged)) { notification in
-      guard
-        let change = EVYRecordChange.from(notification),
-        change.matches(namespace: namespace, resource: resource, id: id)
-      else { return }
-      action()
-    }
   }
 }

@@ -3,8 +3,11 @@ import {
 	assertExactSduiRowTypeCoverage,
 	assertSduiRowDefinitionFileMatchesType,
 	extractSduiRowDefinition,
+	inheritedStructuralRowFields,
+	loadSduiRowDefinitions,
 	rowFieldsFromDefinitions,
 	rowSpecFromDefinitions,
+	rowSpecificAttributesTsSource,
 } from "./sdui-row-schema-utils";
 
 const calendarSchema = {
@@ -188,6 +191,11 @@ describe("rowFieldsFromDefinitions", () => {
 		expect(rowFieldsFromDefinitions([definition])).toEqual({
 			Fixture: [
 				{
+					name: "sheetRowId",
+					kind: "sheet",
+					required: false,
+				},
+				{
 					name: "childRowId",
 					kind: "child",
 					required: true,
@@ -220,6 +228,72 @@ describe("rowFieldsFromDefinitions", () => {
 				},
 			],
 		});
+	});
+});
+
+describe("inherited structural sheet fields", () => {
+	test("allowlists only sheet as an inherited structural field", () => {
+		expect(inheritedStructuralRowFields()).toEqual([
+			{ name: "sheetRowId", kind: "sheet", required: false },
+		]);
+	});
+
+	test("every live row type inherits optional sheet and only Search exposes child", async () => {
+		const definitions = await loadSduiRowDefinitions();
+		const rowFields = rowFieldsFromDefinitions(definitions);
+		const rowSpec = rowSpecFromDefinitions(definitions);
+
+		for (const definition of definitions) {
+			expect(rowFields[definition.type]).toContainEqual({
+				name: "sheetRowId",
+				kind: "sheet",
+				required: false,
+			});
+			expect(rowSpec[definition.type]?.content.sheet).toBeUndefined();
+		}
+
+		const searchFields = rowFields.Search ?? [];
+		expect(searchFields).toContainEqual({
+			name: "childRowId",
+			kind: "child",
+			required: false,
+		});
+
+		for (const definition of definitions) {
+			if (definition.type === "Search") continue;
+			expect(
+				(rowFields[definition.type] ?? []).some(
+					(field) => field.name === "childRowId",
+				),
+			).toBe(false);
+			expect(definition.attributes.child).toBeUndefined();
+		}
+
+		for (const containerType of [
+			"VerticalContainer",
+			"HorizontalContainer",
+			"TabContainer",
+		]) {
+			expect(
+				definitions.find(
+					(definition) => definition.type === containerType,
+				)?.attributes.source,
+			).toBeUndefined();
+		}
+
+		const specificAttributesSource =
+			rowSpecificAttributesTsSource(definitions).join("\n");
+		for (const baseField of [
+			"id",
+			"type",
+			"actions",
+			"visible",
+			"title",
+			"name",
+			"sheet",
+		]) {
+			expect(specificAttributesSource).not.toContain(`\t${baseField}?:`);
+		}
 	});
 });
 

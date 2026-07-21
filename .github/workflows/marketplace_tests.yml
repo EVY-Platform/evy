@@ -12,20 +12,11 @@ on:
 
 jobs:
     marketplace_lint:
-        defaults:
-            run:
-                working-directory: services/marketplace
-        runs-on: ubuntu-latest
-        steps:
-            - uses: actions/checkout@v6
-            - uses: ./.github/actions/setup-bun
-              id: setup
-              with:
-                  working-directory: services/marketplace
-                  path-filter: "services/marketplace/**"
-                  path-filter-extra: "types/**"
-            - run: bun run lint
-              if: steps.setup.outputs.has-changes == 'true'
+        uses: ./.github/workflows/reusable-bun-lint.yml
+        with:
+            working-directory: services/marketplace
+            path-filter: "services/marketplace/**"
+            path-filter-extra: "types/**"
 
     marketplace_build:
         defaults:

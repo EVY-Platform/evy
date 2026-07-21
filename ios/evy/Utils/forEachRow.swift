@@ -6,19 +6,11 @@
 import Foundation
 
 /// Visits every stored row reachable from a page (rows + footer, recursing into
-/// child_row_id / children_row_ids). Cycle-safe via visited-id tracking.
+/// `children_row_ids`, then `child_row_id`, then `sheet_row_id`). Cycle-safe via visited-id tracking.
 @MainActor
 func forEachStoredRow(
   inPageId pageId: String,
-  visitor: (EVYStoredRow) -> Void
-) {
-  forEachStoredRow(inPageId: pageId, from: EVY.publicStore, visitor: visitor)
-}
-
-@MainActor
-func forEachStoredRow(
-  inPageId pageId: String,
-  from store: EVYDataStore,
+  from store: EVYDataStore = EVY.publicStore,
   visitor: (EVYStoredRow) -> Void
 ) {
   guard let page = EVYPageStore.page(id: pageId, from: store) else { return }
@@ -48,5 +40,8 @@ private func visitStoredRow(
   }
   if let childId = storedRow.childRowId {
     visitStoredRow(id: childId, from: store, visitedRowIds: &visitedRowIds, visitor: visitor)
+  }
+  if let sheetId = storedRow.sheetRowId {
+    visitStoredRow(id: sheetId, from: store, visitedRowIds: &visitedRowIds, visitor: visitor)
   }
 }

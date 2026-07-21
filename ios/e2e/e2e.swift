@@ -200,8 +200,11 @@ actor WSEmitter {
   ) -> String {
     let rowId = (rowData["id"] as? String) ?? UUID().uuidString
     var data = rowData
-    for key in ["id", "name", "type", "visible", "child", "children"] {
+    for key in ["id", "name", "type", "visible", "child", "children", "sheet"] {
       data.removeValue(forKey: key)
+    }
+    if let sheet = rowData["sheet"] as? [String: Any] {
+      data["sheet_row_id"] = decomposeRow(rowData: sheet, rows: &rows, now: now)
     }
     if let child = rowData["child"] as? [String: Any] {
       data["child_row_id"] = decomposeRow(rowData: child, rows: &rows, now: now)
@@ -373,10 +376,10 @@ class E2ETestBase: XCTestCase {
               [
                 "condition": "",
                 "false": "",
-                "true": "{show()}",
+                "true": "{show(a4b5c6d7-e8f9-4a0b-1c2d-3e4f5a6b7c8d)}",
               ]
             ],
-            "child": Self.submitListingSheetChild(
+            "sheet": Self.submitListingSheetChild(
               createAction:
                 "{create(\(MARKETPLACE_SERVICE),\(MARKETPLACE_ITEMS_RESOURCE_ID))}"
             ),
@@ -663,7 +666,7 @@ class E2ETestBase: XCTestCase {
           "rows": [
             [
               "id": "a74bc80e-ffda-4e19-b8f3-cd882405958b",
-              "type": "ListContainer",
+              "type": "VerticalContainer",
               "actions": [],
               "visible": "true",
               "title": "",
@@ -763,7 +766,7 @@ class E2ETestBase: XCTestCase {
     falseAction: String = "",
     visible: String = "true",
     style: String? = nil,
-    child: [String: Any]? = nil
+    sheet: [String: Any]? = nil
   ) -> [String: Any] {
     let resolvedActions: [[String: String]]
     if let action {
@@ -788,8 +791,8 @@ class E2ETestBase: XCTestCase {
     if let style {
       row["style"] = style
     }
-    if let child {
-      row["child"] = child
+    if let sheet {
+      row["sheet"] = sheet
     }
     return row
   }
@@ -853,7 +856,7 @@ class E2ETestBase: XCTestCase {
           "rows": [
             [
               "id": "f1a2b3c4-d5e6-4f7a-8b9c-0d1e2f3a4b5c",
-              "type": "SelectSegmentContainer",
+              "type": "TabContainer",
               "actions": [],
               "visible": "true",
               "title": "",
@@ -861,7 +864,7 @@ class E2ETestBase: XCTestCase {
               "children": [
                 [
                   "id": "a2b3c4d5-e6f7-4a8b-9c0d-1e2f3a4b5c6d",
-                  "type": "ListContainer",
+                  "type": "VerticalContainer",
                   "actions": [],
                   "visible": "true",
                   "title": "",
@@ -870,21 +873,21 @@ class E2ETestBase: XCTestCase {
                       id: "b3c4d5e6-f7a8-4b9c-0d1e-2f3a4b5c6d7e",
                       source: "{\(MARKETPLACE_ITEMS_RESOURCE_ID).pickup_selection}",
                       actions: [
-                        Self.rowAction(true: "{show()}")
+                        Self.rowAction(true: "{show(b8c7d6e5-f4a3-4b2c-9d1e-0f8a7b6c5d4e)}")
                       ],
                       visible: visibility.noActive,
                       name: "Pickup request times",
-                      child: Self.pickupConfirmationSheetChild(
+                      sheet: Self.pickupConfirmationSheetChild(
                         pickupCreateAction: pickupCreateAction
                       )
                     ),
                     Self.buttonRow(
                       id: "c4d5e6f7-a8b9-4c0d-1e2f-3a4b5c6d7e8f",
                       label: "Cancel request",
-                      action: "{show()}",
+                      action: "{show(f1a2b3c4-d5e6-4f7a-8b9c-0d1e2f3a4b5d)}",
                       visible: visibility.hasActive,
                       style: "danger",
-                      child: Self.cancelRequestSheetChild(
+                      sheet: Self.cancelRequestSheetChild(
                         cancelAction: cancelAction,
                         message:
                           "Cancel pickup request for the \"{\(MARKETPLACE_ITEMS_RESOURCE_ID).title}\"?"
@@ -894,7 +897,7 @@ class E2ETestBase: XCTestCase {
                 ],
                 [
                   "id": "d5e6f7a8-b9c0-4d1e-2f3a-4b5c6d7e8f9a",
-                  "type": "ListContainer",
+                  "type": "VerticalContainer",
                   "actions": [],
                   "visible": "true",
                   "title": "",
@@ -904,21 +907,21 @@ class E2ETestBase: XCTestCase {
                       source: "{\(MARKETPLACE_ITEMS_RESOURCE_ID).delivery_selection}",
                       destination: "{selected_delivery_timeslot}",
                       actions: [
-                        Self.rowAction(true: "{show()}")
+                        Self.rowAction(true: "{show(c4d5e6f7-a8b9-4c0d-1e2f-3a4b5c6d7e80)}")
                       ],
                       visible: visibility.noActive,
                       name: "Delivery request times",
-                      child: Self.deliveryConfirmationSheetChild(
+                      sheet: Self.deliveryConfirmationSheetChild(
                         deliveryCreateAction: deliveryCreateAction
                       )
                     ),
                     Self.buttonRow(
                       id: "f7a8b9c0-d1e2-4f3a-4b5c-6d7e8f9a0b1c",
                       label: "Cancel request",
-                      action: "{show()}",
+                      action: "{show(f1a2b3c4-d5e6-4f7a-8b9c-0d1e2f3a4b5d)}",
                       visible: visibility.hasActive,
                       style: "danger",
-                      child: Self.cancelRequestSheetChild(
+                      sheet: Self.cancelRequestSheetChild(
                         cancelAction: cancelAction,
                         message:
                           "Cancel delivery request for the \"{\(MARKETPLACE_ITEMS_RESOURCE_ID).title}\"?"
@@ -928,7 +931,7 @@ class E2ETestBase: XCTestCase {
                 ],
                 [
                   "id": "a8b9c0d1-e2f3-4a4b-5c6d-7e8f9a0b1c2d",
-                  "type": "ListContainer",
+                  "type": "VerticalContainer",
                   "actions": [],
                   "visible": "true",
                   "title": "",
@@ -944,21 +947,21 @@ class E2ETestBase: XCTestCase {
                     Self.buttonRow(
                       id: "c0d1e2f3-a4b5-4c6d-7e8f-9a0b1c2d3e4f",
                       label: "Ask to buy",
-                      action: "{show()}",
+                      action: "{show(f2a1b0c9-d8e7-4f6a-5b4c-3d2e1f0a9b8c)}",
                       condition: "{length(shipping_address.postcode) > 0}",
                       falseAction: "{highlight_required(postcode)}",
                       visible: visibility.noActive,
-                      child: Self.shippingConfirmationSheetChild(
+                      sheet: Self.shippingConfirmationSheetChild(
                         shippingCreateAction: shippingCreateAction
                       )
                     ),
                     Self.buttonRow(
                       id: "d1e2f3a4-b5c6-4d7e-8f9a-0b1c2d3e4f5a",
                       label: "Cancel request",
-                      action: "{show()}",
+                      action: "{show(f1a2b3c4-d5e6-4f7a-8b9c-0d1e2f3a4b5d)}",
                       visible: visibility.hasActive,
                       style: "danger",
-                      child: Self.cancelRequestSheetChild(
+                      sheet: Self.cancelRequestSheetChild(
                         cancelAction: cancelAction,
                         message:
                           "Cancel shipping request for the \"{\(MARKETPLACE_ITEMS_RESOURCE_ID).title}\"?"
@@ -981,7 +984,7 @@ class E2ETestBase: XCTestCase {
     actions: [[String: String]] = [],
     visible: String = "true",
     name: String = "Pickup available times",
-    child: [String: Any]? = nil
+    sheet: [String: Any]? = nil
   ) -> [String: Any] {
     var row: [String: Any] = [
       "id": id,
@@ -1000,8 +1003,8 @@ class E2ETestBase: XCTestCase {
       "timeslot_format": "{formatDatetime($datum, \"HH:mm\")}",
       "name": name,
     ]
-    if let child {
-      row["child"] = child
+    if let sheet {
+      row["sheet"] = sheet
     }
     return row
   }
@@ -1036,7 +1039,7 @@ class E2ETestBase: XCTestCase {
   ) -> [String: Any] {
     [
       "id": id,
-      "type": "ListContainer",
+      "type": "VerticalContainer",
       "actions": [],
       "visible": "true",
       "title": "Confirmation",
@@ -1054,14 +1057,14 @@ class E2ETestBase: XCTestCase {
           id: "c9d8e7f6-a5b4-4c3d-8e2f-1a9b8c7d6e5f",
           title: "",
           subtitle:
-            "You are about to request to pickup {\(MARKETPLACE_ITEMS_RESOURCE_ID).title} at {formatDatetime(selected_pickup_timeslot, \"EEE do\")} {formatDatetime(selected_pickup_timeslot, \"HH:mm\")}",
+            "Request to pick up {\(MARKETPLACE_ITEMS_RESOURCE_ID).title} on {formatDatetime(selected_pickup_timeslot, \"EEE do\")} at {formatDatetime(selected_pickup_timeslot, \"HH:mm\")}",
           name: "Pickup confirmation message"
         ),
         Self.textRow(
           id: "d0e9f8a7-b6c5-4d4e-9f3a-2b0c9d8e7f6a",
           title: "",
           subtitle:
-            "Be advised someone may request to pickup {\(MARKETPLACE_ITEMS_RESOURCE_ID).title} earlier than your selected timeslot.",
+            "Be advised someone may request to pick up {\(MARKETPLACE_ITEMS_RESOURCE_ID).title} earlier than your selected timeslot.",
           visible:
             "{selected_pickup_timeslot != earliestDatetime(\(MARKETPLACE_ITEMS_RESOURCE_ID).pickup_selection)}",
           name: "Pickup earlier timeslot warning"
@@ -1209,7 +1212,7 @@ class E2ETestBase: XCTestCase {
             ),
             [
               "id": "b2c3d4e5-f6a7-4b8c-9d0e-1f2a3b4c5d6f",
-              "type": "SelectSegmentContainer",
+              "type": "TabContainer",
               "actions": [],
               "visible": "true",
               "title": "",
@@ -1217,7 +1220,7 @@ class E2ETestBase: XCTestCase {
               "children": [
                 [
                   "id": "c3d4e5f6-a7b8-4c9d-0e1f-2a3b4c5d6e7f",
-                  "type": "ListContainer",
+                  "type": "VerticalContainer",
                   "actions": [],
                   "visible": "true",
                   "title": "",
@@ -1260,10 +1263,10 @@ class E2ETestBase: XCTestCase {
               id: "9405eec8-4729-4ce0-b3e0-5c7f5a611001",
               source: "{\(MARKETPLACE_ITEMS_RESOURCE_ID).pickup_selection}",
               actions: [
-                Self.rowAction(true: "{show()}")
+                Self.rowAction(true: "{show(b8c7d6e5-f4a3-4b2c-9d1e-0f8a7b6c5d4e)}")
               ],
               name: "Pickup request times",
-              child: Self.pickupConfirmationSheetChild(pickupCreateAction: pickupCreateAction)
+              sheet: Self.pickupConfirmationSheetChild(pickupCreateAction: pickupCreateAction)
             ),
             Self.inputRow(
               id: "9405eec8-4729-4ce0-b3e0-5c7f5a611002",
@@ -1275,10 +1278,10 @@ class E2ETestBase: XCTestCase {
             Self.buttonRow(
               id: "9405eec8-4729-4ce0-b3e0-5c7f5a611003",
               label: "Ask to buy",
-              action: "{show()}",
+              action: "{show(f2a1b0c9-d8e7-4f6a-5b4c-3d2e1f0a9b8c)}",
               condition: "{length(shipping_address.postcode) > 0}",
               falseAction: "{highlight_required(postcode)}",
-              child: Self.shippingConfirmationSheetChild(
+              sheet: Self.shippingConfirmationSheetChild(
                 shippingCreateAction: shippingCreateAction
               )
             ),
@@ -1300,10 +1303,10 @@ class E2ETestBase: XCTestCase {
             Self.buttonRow(
               id: "f8e7d6c5-b4a3-4f2e-9d1c-0b9a8f7e6d5c",
               label: "Open sheet",
-              action: "{show()}",
-              child: [
+              action: "{show(a9f8e7d6-c5b4-4a3f-2e1d-0c9b8a7f6e5d)}",
+              sheet: [
                 "id": "a9f8e7d6-c5b4-4a3f-2e1d-0c9b8a7f6e5d",
-                "type": "ListContainer",
+                "type": "VerticalContainer",
                 "actions": [],
                 "visible": "true",
                 "title": "{\(MARKETPLACE_ITEMS_RESOURCE_ID).title}",
@@ -1321,6 +1324,56 @@ class E2ETestBase: XCTestCase {
             )
           ],
         ]
+      ],
+    ]
+  }
+
+  private static let crossPageSheetHostPageId = "10000000-0000-4000-8000-00000000000a"
+  private static let crossPageSheetRowId = "10000000-0000-4000-8000-00000000000b"
+
+  static func crossPageSheetFlowData(flowId: String, pageId: String) -> [String: Any] {
+    [
+      "id": flowId,
+      "name": "E2E Cross Page Sheet",
+      "pages": [
+        [
+          "id": pageId,
+          "title": "{\(MARKETPLACE_ITEMS_RESOURCE_ID).title}",
+          "rows": [
+            Self.buttonRow(
+              id: "10000000-0000-4000-8000-00000000000c",
+              label: "Open cross-page sheet",
+              action: "{show(\(crossPageSheetRowId))}"
+            )
+          ],
+        ],
+        [
+          "id": crossPageSheetHostPageId,
+          "title": "Sheet host",
+          "rows": [
+            [
+              "id": crossPageSheetRowId,
+              "type": "VerticalContainer",
+              "actions": [],
+              "visible": "true",
+              "title": "Confirmation",
+              "children": [
+                Self.textRow(
+                  id: "10000000-0000-4000-8000-00000000000d",
+                  title: "",
+                  subtitle: "Opened sheet row from another page",
+                  name: "Cross-page sheet message"
+                ),
+                Self.buttonRow(
+                  id: "10000000-0000-4000-8000-00000000000e",
+                  label: "Done",
+                  action: "{close()}"
+                ),
+              ],
+              "name": "Cross-page sheet",
+            ]
+          ],
+        ],
       ],
     ]
   }
@@ -1566,6 +1619,7 @@ final class WebSocketE2ETests: E2ETestBase {
     let typedText = "reset me \(Int(Date().timeIntervalSince1970))"
     try await typeIntoHomeEphemeralField(typedText)
     XCTAssertTrue(sharedHomeText(typedText).waitForExistence(timeout: 5))
+    dismissKeyboard()
 
     app.buttons["Details"].tap()
     XCTAssertTrue(app.staticTexts["Details page"].waitForExistence(timeout: 5))
@@ -1598,6 +1652,7 @@ final class WebSocketE2ETests: E2ETestBase {
     let typedText = "bg share \(Int(Date().timeIntervalSince1970))"
     try await typeIntoHomeEphemeralField(typedText)
     XCTAssertTrue(sharedHomeText(typedText).waitForExistence(timeout: 5))
+    dismissKeyboard()
 
     // Navigate away so the home page is no longer the active scope.
     app.buttons["Details"].tap()
@@ -1882,6 +1937,41 @@ final class WebSocketE2ETests: E2ETestBase {
     XCTAssertTrue(
       app.navigationBars.staticTexts[editedTitle].waitForExistence(timeout: 10),
       "Sheet nav title should update when {\(MARKETPLACE_ITEMS_RESOURCE_ID).title} is edited without dismissing the sheet"
+    )
+  }
+
+  @MainActor
+  func testShowPresentsSheetRowFromAnotherPage() async throws {
+    let viewItemButton = app.buttons["View"]
+    XCTAssertTrue(
+      viewItemButton.waitForExistence(timeout: 20),
+      "Home screen not loaded - verify API is running and database is seeded")
+
+    let emitter = WSEmitter()
+    try await emitter.connect(host: apiHost)
+    try await emitter.login(token: "e2e-test", os: "ios")
+
+    let (selectedItemId, _) = try await createMarketplaceItem(
+      emitter: emitter,
+      titlePrefix: "Cross Page Sheet Item"
+    )
+
+    _ = try await openViewItemPage(
+      emitter: emitter,
+      labelPrefix: "View cross page sheet",
+      itemId: selectedItemId,
+      viewFlowDataBuilder: Self.crossPageSheetFlowData
+    )
+
+    let openSheetButton = app.buttons["Open cross-page sheet"]
+    XCTAssertTrue(
+      openSheetButton.waitForExistence(timeout: 10),
+      "Cross-page sheet test page should show the Open cross-page sheet button")
+    openSheetButton.tap()
+
+    XCTAssertTrue(
+      app.staticTexts["Opened sheet row from another page"].waitForExistence(timeout: 10),
+      "Show should present a sheet row that belongs to another page in the same flow"
     )
   }
 
@@ -2778,7 +2868,7 @@ final class WebSocketE2ETests: E2ETestBase {
           "rows": [
             [
               "id": "a74bc80e-ffda-4e19-b8f3-cd882405958b",
-              "type": "ListContainer",
+              "type": "VerticalContainer",
               "actions": [],
               "visible": "true",
               "title": "",
@@ -2889,7 +2979,7 @@ final class E2ESegmentContainerTests: E2ETestBase {
           "rows": [
             [
               "id": "6a5b4c3d-2e1f-4a0b-8c9d-1e2f3a4b5c6d",
-              "type": "SelectSegmentContainer",
+              "type": "TabContainer",
               "actions": [],
               "visible": "true",
               "title": "",
@@ -3017,7 +3107,7 @@ final class E2EPlaceSearchTests: E2ETestBase {
               id: "a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d",
               title: "Where",
               subtitle: subtitle,
-              child: searchRow(
+              sheet: searchRow(
                 id: "b2c3d4e5-f6a7-4b8c-9d0e-1f2a3b4c5d6f",
                 source: "{$api:place_search}",
                 destination: destination,
@@ -3043,9 +3133,10 @@ final class E2EPlaceSearchTests: E2ETestBase {
     title: String,
     subtitle: String,
     action: String = "Change",
-    child: [String: Any],
+    sheet: [String: Any],
     visible: String = "true"
   ) -> [String: Any] {
+    let sheetId = (sheet["id"] as? String) ?? UUID().uuidString
     return [
       "id": id,
       "type": "TextAction",
@@ -3057,10 +3148,10 @@ final class E2EPlaceSearchTests: E2ETestBase {
         [
           "condition": "",
           "false": "",
-          "true": "{show()}",
+          "true": "{show(\(sheetId))}",
         ]
       ],
-      "child": child,
+      "sheet": sheet,
     ]
   }
 
@@ -3083,5 +3174,161 @@ final class E2EPlaceSearchTests: E2ETestBase {
       "actions": [],
       "child": child,
     ]
+  }
+}
+
+// MARK: - Homepage message search
+
+final class E2EHomepageMessageSearchTests: E2ETestBase {
+  private static let homePageId = E2EFlowIds.webSocketHomePage
+  private static let matchingTypeQuery = "pickup"
+  private static let unmatchedTypeQuery = "nomatch"
+  private static let seededMessageTypeLabels = [
+    "pickup request", "delivery request", "shipping request",
+  ]
+
+  override var homeFlowId: String? { E2EFlowIds.defaultHomeFlow }
+
+  // Page ids are stored globally, so the synthetic home flows other test classes seed
+  // (homeFlowData/createHomeFlowData) overwrite the production home page's rows with their
+  // button content. Reseed the production home page's message + item search rows before each
+  // launch so this test is independent of execution order.
+  override func setUpWithError() throws {
+    continueAfterFailure = false
+    try seedFlows([
+      (flowId: E2EFlowIds.defaultHomeFlow, flowData: Self.messageSearchHomeFlowData())
+    ])
+    try launchApp()
+  }
+
+  private static func messageSearchHomeFlowData() -> [String: Any] {
+    let messageSearchRow: [String: Any] = [
+      "id": "7c4a8f21-9b3d-4e6a-a1c2-8f7d3e5b9a01",
+      "type": "Search",
+      "child": [
+        "id": "8d5b9e32-ac4e-5f7b-b2d3-9e8f4a6c0b12",
+        "type": "Text",
+        "title": "{$datum.data.type} request",
+        "subtitle": "",
+        "actions": [],
+        "visible": "true",
+        "name": "Message search result",
+      ],
+      "title": "",
+      "placeholder": "Filter messages by type",
+      "source": "{\(MarketplaceResource.messages.rawValue)}",
+      "destination": "",
+      "actions": [],
+      "visible": "true",
+      "name": "Search messages",
+    ]
+    let itemSearchRow: [String: Any] = [
+      "id": "96d3efe4-ea20-4a81-9ccb-64d6b57646e9",
+      "type": "Search",
+      "child": [
+        "id": "d5922ca1-fc26-430a-81ed-fd343c13dab1",
+        "type": "ListItem",
+        "title": "{$datum.title}",
+        "subtitle": "{formatCurrency($datum.price)}",
+        "image": "{$datum.photo_ids.0}",
+        "actions": [
+          Self.rowAction(
+            true:
+              "{navigate(74a49d4b-2176-4925-857a-e29e2991f1bd,82cae120-c7b1-4c29-bd42-e1521320b109,{id: $datum.id})}"
+          )
+        ],
+        "visible": "true",
+        "name": "Item search result",
+      ],
+      "title": "",
+      "placeholder": "Search anything",
+      "source": "{\(MARKETPLACE_ITEMS_RESOURCE_ID)}",
+      "destination": "",
+      "actions": [],
+      "visible": "true",
+      "name": "Search items",
+    ]
+    return [
+      "id": E2EFlowIds.defaultHomeFlow,
+      "name": "Home",
+      "pages": [
+        [
+          "id": E2EFlowIds.webSocketHomePage,
+          "title": "Home",
+          "rows": [messageSearchRow, itemSearchRow],
+        ]
+      ],
+    ]
+  }
+
+  func testHomepageMessageSearchShowsAllMessagesAndFiltersByType() throws {
+    let homePage = app.scrollViews["page_\(Self.homePageId)"]
+    XCTAssertTrue(
+      homePage.waitForExistence(timeout: 20),
+      "Home screen not loaded - verify API is running and database is seeded")
+
+    let firstSearchField = homePage.textFields.firstMatch
+    XCTAssertTrue(
+      firstSearchField.waitForExistence(timeout: 10),
+      "Message search field should be visible on Home")
+
+    let orderedHomeSearchFields = Self.orderedSearchTextFields(in: homePage)
+    XCTAssertEqual(
+      orderedHomeSearchFields.count, 2,
+      "Home should expose exactly two search fields")
+    let messageSearchField = orderedHomeSearchFields[0]
+    let itemSearchField = orderedHomeSearchFields[1]
+    XCTAssertLessThan(
+      messageSearchField.frame.minY, itemSearchField.frame.minY,
+      "Message search should appear above item search")
+
+    assertSeededMessageLabelsVisible(
+      ["pickup request", "delivery request", "shipping request"])
+
+    clearAndType(field: messageSearchField, text: Self.matchingTypeQuery)
+    assertSeededMessageLabelsVisible(["pickup request"])
+    assertSeededMessageLabelsHidden(["delivery request", "shipping request"])
+
+    clearAndType(field: messageSearchField, text: Self.unmatchedTypeQuery)
+    assertSeededMessageLabelsHidden(Self.seededMessageTypeLabels)
+    XCTAssertTrue(
+      itemSearchField.exists,
+      "Item search field should remain on Home after filtering messages")
+  }
+
+  private static func orderedSearchTextFields(in homePage: XCUIElement) -> [XCUIElement] {
+    let fieldCount = homePage.textFields.count
+    return (0..<fieldCount)
+      .map { homePage.textFields.element(boundBy: $0) }
+      .filter { $0.exists }
+      .sorted { $0.frame.minY < $1.frame.minY }
+  }
+
+  private func assertSeededMessageLabelsVisible(
+    _ labels: [String],
+    file: StaticString = #filePath,
+    line: UInt = #line
+  ) {
+    for label in labels {
+      let messageLabel = app.staticTexts[label]
+      XCTAssertTrue(
+        messageLabel.waitForExistence(timeout: 5),
+        "Expected seeded message '\(label)' to be visible",
+        file: file, line: line)
+    }
+  }
+
+  private func assertSeededMessageLabelsHidden(
+    _ labels: [String],
+    file: StaticString = #filePath,
+    line: UInt = #line
+  ) {
+    for label in labels {
+      let messageLabel = app.staticTexts[label]
+      XCTAssertFalse(
+        messageLabel.exists,
+        "Expected seeded message '\(label)' to be hidden",
+        file: file, line: line)
+    }
   }
 }

@@ -1,6 +1,3 @@
-import { mkdir, readFile, rename, unlink, writeFile } from "node:fs/promises";
-import { dirname, join, resolve } from "node:path";
-import { fileURLToPath } from "node:url";
 import { and, asc, eq, gt } from "drizzle-orm";
 
 import type {
@@ -13,24 +10,25 @@ import type {
 	GetRequest,
 	GetResponse,
 } from "evy-types";
+import { file } from "evy-types/db/schema.generated";
+import { hasDatabaseErrorCode, PG_UNIQUE_VIOLATION } from "evy-types/dbErrors";
 import {
 	validateCreateResponse,
 	validateDeleteResponse,
 	validateDataEvyFile as validateFilePayload,
 	validateGetResponse,
 } from "evy-types/validators";
-
-import { file } from "../../../../types/generated/ts/db/schema.generated";
-import {
-	type EvyDb,
-	hasDatabaseErrorCode,
-	PG_UNIQUE_VIOLATION,
-} from "../../database/db";
+import type { EvyDb } from "../../database/db";
 import {
 	deleteUploadSession,
 	getUploadSession,
 	uploadSessionToBuffer,
-} from "../../procedures/uploads";
+} from "../../shared/uploadSessions";
+import {
+	deleteFileBinaryIfExists,
+	readFileBinary,
+	writeFileBinary,
+} from "./fileStorage";
 
 // Types
 
@@ -39,31 +37,7 @@ type PreparedFileUpload = {
 	metadataPayload: DATA_EVY_File;
 };
 
-// Storage configuration
-
-const __dirname = dirname(fileURLToPath(import.meta.url));
-
-let filesDir = resolve(join(__dirname, "..", "..", "public", "files"));
-let uploadTmpDir = resolve(join(__dirname, "..", "..", "public", "uploads"));
-
-// Test hooks
-
-export function setFileStorageDirsForTest(params: {
-	filesDir: string;
-	uploadTmpDir: string;
-}): void {
-	filesDir = params.filesDir;
-	uploadTmpDir = params.uploadTmpDir;
-}
-
-export function resetFileStorageDirsForTest(): void {
-	filesDir = resolve(join(__dirname, "..", "..", "public", "files"));
-	uploadTmpDir = resolve(join(__dirname, "..", "..", "public", "uploads"));
-}
-
 // Resource operations
-
-const NODE_ENOENT = "ENOENT" as const;
 
 export async function listFileRowsWithBinary(
 	db: EvyDb,
@@ -120,13 +94,7 @@ export async function deleteFileResource(
 	notify: (value: unknown) => void,
 ): Promise<DeleteResponse> {
 	const metadata = await selectFileRowById(db, filter.id);
-	try {
-		await deleteFileBinary(metadata.id);
-	} catch (err) {
-		if (!hasNodeErrorCode(err, NODE_ENOENT)) {
-			throw err;
-		}
-	}
+	await deleteFileBinaryIfExists(metadata.id);
 
 	return deleteFileMetadata(db, filter, notify);
 }
@@ -224,40 +192,6 @@ async function createFileFromUpload(params: {
 	};
 }
 
-// Binary storage
-
-export async function writeFileBinary(params: {
-	id: string;
-	bytes: Buffer;
-}): Promise<void> {
-	await mkdir(filesDir, { recursive: true });
-	await mkdir(uploadTmpDir, { recursive: true });
-
-	const finalPath = filePath(params.id);
-	const tmpPath = join(uploadTmpDir, `${sanitizeFileId(params.id)}.tmp`);
-
-	try {
-		await writeFile(tmpPath, params.bytes);
-		await rename(tmpPath, finalPath);
-	} catch (err) {
-		await deletePathIfExists(finalPath);
-		await deletePathIfExists(tmpPath);
-		throw err;
-	}
-}
-
-async function readFileBinary(id: string): Promise<Buffer> {
-	return readFile(filePath(id));
-}
-
-async function deleteFileBinary(id: string): Promise<void> {
-	await unlink(filePath(id));
-}
-
-async function deleteFileBinaryIfExists(id: string): Promise<void> {
-	await deletePathIfExists(filePath(id));
-}
-
 // Response mapping
 
 async function fileRowToGetFileResponse(
@@ -277,33 +211,4 @@ async function fileRowToGetFileResponse(
 		updatedAt: metadata.updatedAt,
 		dataBase64: fileData.toString("base64"),
 	};
-}
-
-// Local helpers
-
-function filePath(id: string): string {
-	return resolve(join(filesDir, sanitizeFileId(id)));
-}
-
-function sanitizeFileId(id: string): string {
-	return id.replace(/[^a-zA-Z0-9-]/g, "");
-}
-
-function hasNodeErrorCode(err: unknown, code: string): boolean {
-	return (
-		typeof err === "object" &&
-		err !== null &&
-		"code" in err &&
-		err.code === code
-	);
-}
-
-async function deletePathIfExists(path: string): Promise<void> {
-	try {
-		await unlink(path);
-	} catch (err) {
-		if (!hasNodeErrorCode(err, NODE_ENOENT)) {
-			throw err;
-		}
-	}
 }

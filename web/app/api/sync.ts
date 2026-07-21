@@ -11,20 +11,12 @@ import {
 	validateDataEvyRow,
 	validateDataEvyServiceResource,
 } from "evy-types/validators";
+import type {
+	ResourceAttributeMetadata,
+	ServiceResource,
+} from "../types/resources";
 import type { FlowEntityCollections } from "../utils/flowEntities";
 import { wsClient } from "./wsClient";
-
-export type ServiceResource = {
-	id: string;
-	fkServiceId: string;
-	name: string;
-};
-
-export type ResourceAttributeMetadata = {
-	serviceId: string;
-	resourceId: string;
-	attributeNames: string[];
-};
 
 const MAX_ATTRIBUTE_DEPTH = 5;
 

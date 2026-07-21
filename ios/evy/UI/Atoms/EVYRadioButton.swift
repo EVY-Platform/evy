@@ -7,9 +7,9 @@
 
 import SwiftUI
 
-let radioSize: CGFloat = Constants.base * 5
+private let radioSize: CGFloat = Constants.base * 5
 
-public enum EVYRadioStyle: String {
+enum EVYRadioStyle: String {
   case single
   case multi
 }

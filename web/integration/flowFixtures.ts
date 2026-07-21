@@ -21,6 +21,7 @@ interface ServerRowInput {
 	title: string;
 	children?: ServerRowInput[];
 	child?: ServerRowInput;
+	sheet?: ServerRowInput;
 	value?: string;
 	placeholder?: string;
 	text?: string;
@@ -41,7 +42,7 @@ interface ServerPageInput {
 }
 
 function ensureRowId(row: ServerRowInput): ServerRow {
-	const { children, child, ...rowRest } = row;
+	const { children, child, sheet, ...rowRest } = row;
 	const base: Record<string, unknown> = {
 		...rowRest,
 		id: row.id ?? crypto.randomUUID(),
@@ -58,6 +59,7 @@ function ensureRowId(row: ServerRowInput): ServerRow {
 		...base,
 		...(children !== undefined ? { children: ensureRowIds(children) } : {}),
 		...(child !== undefined ? { child: ensureRowId(child) } : {}),
+		...(sheet !== undefined ? { sheet: ensureRowId(sheet) } : {}),
 	} as ServerRow;
 }
 
@@ -68,6 +70,7 @@ function ensureRowIds(rows: ServerRowInput[]): ServerRow[] {
 function fillServerRowName(row: ServerRow): ServerRow {
 	const children = (row as { children?: ServerRow[] }).children;
 	const child = (row as { child?: ServerRow }).child;
+	const sheet = (row as { sheet?: ServerRow }).sheet;
 	return {
 		...row,
 		name: row.name || row.title,
@@ -75,6 +78,7 @@ function fillServerRowName(row: ServerRow): ServerRow {
 			? { children: children.map(fillServerRowName) }
 			: {}),
 		...(child !== undefined ? { child: fillServerRowName(child) } : {}),
+		...(sheet !== undefined ? { sheet: fillServerRowName(sheet) } : {}),
 	} as ServerRow;
 }
 
@@ -92,7 +96,7 @@ function fillEntityNames(flows: ServerFlow[]): ServerFlow[] {
 	}));
 }
 
-export function createTestFlows(pages: ServerPageInput[]): ServerFlow[] {
+function createTestFlows(pages: ServerPageInput[]): ServerFlow[] {
 	return [
 		{
 			id: crypto.randomUUID(),
@@ -108,7 +112,7 @@ export function createTestFlows(pages: ServerPageInput[]): ServerFlow[] {
 	];
 }
 
-export async function initTestFlows(
+async function initTestFlows(
 	page: Page,
 	pages: ServerPageInput[],
 	resources: ServiceResource[] = [],
@@ -134,7 +138,7 @@ export async function initFullFlows(
 	await initResourceAttributeMetadata(page, metadata);
 }
 
-export async function initServiceResources(
+async function initServiceResources(
 	page: Page,
 	resources: ServiceResource[],
 ): Promise<void> {
@@ -143,7 +147,7 @@ export async function initServiceResources(
 	}, resources);
 }
 
-export async function initResourceAttributeMetadata(
+async function initResourceAttributeMetadata(
 	page: Page,
 	metadata: ResourceAttributeMetadata[],
 ): Promise<void> {

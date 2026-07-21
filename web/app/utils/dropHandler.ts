@@ -9,7 +9,6 @@ import {
 import type { DATA_EVY_Page } from "evy-types";
 import type { Dispatch } from "react";
 import invariant from "tiny-invariant";
-import { containerDropindicatorId } from "../rows/EVYRow";
 import type { RowAction } from "../types/actions";
 import type { ContainerType } from "../types/row";
 import {
@@ -20,6 +19,7 @@ import {
 	findPageContainingRow,
 	getContainerChildrenCount,
 } from "../utils/flatGraph";
+import { containerDropindicatorId } from "./rowConstants";
 
 type DropDispatchOptions = {
 	destinationPageId: string;
@@ -35,22 +35,6 @@ type DropTargetRecord = {
 };
 
 type PageDropPosition = "start" | "end";
-
-function getDefaultAppendIndexForPageDrop(
-	destinationPage: DATA_EVY_Page,
-): number {
-	return destinationPage.rowIds.length;
-}
-
-function buildInitialDropDispatchOptions(
-	destinationPage: DATA_EVY_Page,
-	resolvedPageId: string,
-): DropDispatchOptions {
-	return {
-		destinationIndex: getDefaultAppendIndexForPageDrop(destinationPage),
-		destinationPageId: resolvedPageId,
-	};
-}
 
 function getPageDropPosition(
 	dropTarget: DropTargetRecord | undefined,
@@ -72,8 +56,7 @@ function applyPageDropPosition(
 	}
 
 	if (pageDropPosition === "end") {
-		dispatchOptions.destinationIndex =
-			getDefaultAppendIndexForPageDrop(destinationPage);
+		dispatchOptions.destinationIndex = destinationPage.rowIds.length;
 	}
 }
 
@@ -211,19 +194,26 @@ export function handleDrop(
 	const pageDestinationContainerRowId = getDestinationContainerRowId(
 		destinationPageRecord,
 	);
+	const pageDestinationContainerType =
+		destinationPageRecord.data.destinationContainerType;
 
 	const destinationPage = maps.pagesById[destinationPageId];
 	invariant(destinationPage, "handleDrop: destinationPage is not defined");
-	const resolvedPageId = destinationPageId;
 
-	const dispatchOptions = buildInitialDropDispatchOptions(
-		destinationPage,
-		resolvedPageId,
-	);
+	const dispatchOptions: DropDispatchOptions = {
+		destinationIndex: destinationPage.rowIds.length,
+		destinationPageId,
+	};
 	if (pageDestinationContainerRowId) {
+		const containerType =
+			pageDestinationContainerType === "child" ||
+			pageDestinationContainerType === "children" ||
+			pageDestinationContainerType === "sheet"
+				? pageDestinationContainerType
+				: "sheet";
 		dispatchOptions.destinationContainer = {
 			rowId: pageDestinationContainerRowId,
-			type: "child",
+			type: containerType,
 		};
 		dispatchOptions.destinationIndex = 0;
 
@@ -284,7 +274,8 @@ export function handleDrop(
 			isPlaceholderDrop &&
 			typeof placeholderContainerRowId === "string" &&
 			(placeholderContainerType === "child" ||
-				placeholderContainerType === "children")
+				placeholderContainerType === "children" ||
+				placeholderContainerType === "sheet")
 		) {
 			// Drop into an empty container placeholder - use explicit metadata.
 			dispatchOptions.destinationContainer = {
@@ -325,7 +316,10 @@ export function handleDrop(
 					destinationContainer.containerRowId,
 					destinationRow.data.rowId as string,
 				);
-			} else if (destinationContainer?.type === "child") {
+			} else if (
+				destinationContainer?.type === "child" ||
+				destinationContainer?.type === "sheet"
+			) {
 				dispatchOptions.destinationIndex = 0;
 			} else if (closestEdgeOfTarget && !destinationContainer) {
 				const destinationRowIndex = destinationPage.rowIds.indexOf(

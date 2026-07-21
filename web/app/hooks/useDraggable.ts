@@ -29,7 +29,7 @@ export type DraggableState =
 	| { type: "preview"; container: HTMLElement | null; rect: DOMRect | null };
 
 export const idleState: DraggableState = { type: "idle" };
-export const draggingState: DraggableState = { type: "dragging" };
+const draggingState: DraggableState = { type: "dragging" };
 
 type DragEvent = {
 	source: { data: Record<string, unknown> };
@@ -187,7 +187,8 @@ export function useDraggable({
 				canDrop: () => true,
 				getIsSticky: () =>
 					!!currentRow?.config.children?.length ||
-					!!currentRow?.config.child,
+					!!currentRow?.config.child ||
+					!!currentRow?.config.sheet,
 				getData: ({ input, element: targetElement }) =>
 					attachClosestEdge(
 						{ rowId },
@@ -213,6 +214,7 @@ export function useDraggable({
 	}, [
 		allowedEdges,
 		currentRow?.config.child,
+		currentRow?.config.sheet,
 		currentRow?.config.children?.length,
 		dispatchDropIndicator,
 		isDraggable,

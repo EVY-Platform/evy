@@ -1,4 +1,15 @@
-import type { EVYFunctionContext, EVYFunctionOutput } from "./functions";
+import { splitFunctionArguments } from "./functionArgs";
+// The function context/output types live here (the leaf module) so
+// functions.ts can depend on datetime.ts without a cycle.
+export type EVYFunctionContext = {
+	datum?: string;
+};
+
+export type EVYFunctionOutput = {
+	value: string;
+	prefix?: string;
+	suffix?: string;
+};
 
 type DatetimeParts = {
 	year: number;
@@ -24,53 +35,6 @@ const monthAbbreviations = [
 	"Nov",
 	"Dec",
 ];
-
-export function splitFunctionArguments(args: string): string[] {
-	const parts: string[] = [];
-	let current = "";
-	let quote: string | null = null;
-	let escaped = false;
-
-	for (const character of args) {
-		if (escaped) {
-			current += character;
-			escaped = false;
-			continue;
-		}
-
-		if (character === "\\") {
-			current += character;
-			escaped = true;
-			continue;
-		}
-
-		if ((character === '"' || character === "'") && !quote) {
-			quote = character;
-			current += character;
-			continue;
-		}
-
-		if (character === quote) {
-			quote = null;
-			current += character;
-			continue;
-		}
-
-		if (character === "," && !quote) {
-			parts.push(current.trim());
-			current = "";
-			continue;
-		}
-
-		current += character;
-	}
-
-	if (current || args.trim()) {
-		parts.push(current.trim());
-	}
-
-	return parts;
-}
 
 function stripOptionalSurroundingQuotes(value: string): string {
 	const trimmed = value.trim();

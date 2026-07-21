@@ -1,5 +1,6 @@
 import type { DATA_EVY_Flow, DATA_EVY_Page, DATA_EVY_Row } from "evy-types";
-import { findRowIdPath, pageRootIds } from "./flatGraph";
+import { findRowIdPath } from "./flatGraph";
+import { pageRootIds } from "./rowTraversal";
 
 export function parseUrlPath(): {
 	flowId?: string;
@@ -21,6 +22,7 @@ export function parseUrlPath(): {
 }
 
 /** Synthetic search preview row ids must never appear in real URLs. */
+// exported for tests
 export function isNonRoutablePreviewRowId(rowId: string): boolean {
 	return (
 		rowId.includes(":search-preview:") ||
@@ -37,6 +39,7 @@ function isDirectChildRow(
 	if (!row) return false;
 	return (
 		row.data.child_row_id === childId ||
+		row.data.sheet_row_id === childId ||
 		(Array.isArray(row.data.children_row_ids) &&
 			(row.data.children_row_ids as string[]).includes(childId))
 	);

@@ -12,9 +12,9 @@ test.describe("EVY Rows", () => {
 		const rowsPanel = await getRowsPanel(page);
 
 		for (const containerTitle of [
-			"Column container row title",
-			"List container row title",
-			"Select segment container row title",
+			"Horizontal container row title",
+			"Vertical container row title",
+			"Tab container row title",
 		]) {
 			const containerRow = rowsPanel
 				.getByRole("button")

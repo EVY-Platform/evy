@@ -5,7 +5,7 @@
 //  Created by Geoffroy Lesage on 18/12/2023.
 //
 
-import SwiftUI
+import Foundation
 
 private let comparisonBlockPattern = "\\{[^{}\"]+\\}"
 private let comparisonOperators = [">=", "<=", "==", "!=", ">", "<"]
@@ -14,7 +14,7 @@ private let propsPattern = "\\{(?!\")[^}^\"]*(?!\")\\}"
 private let functionParamsPattern = "\\((?:[^()]|\\([^()]*\\))*\\)"
 private let functionPattern = "[a-zA-Z_][a-zA-Z0-9_]*\(functionParamsPattern)"
 private let arrayPattern = "\\[([\\d]*)\\]"
-public let PROP_SEPARATOR = "."
+let PROP_SEPARATOR = "."
 
 // Ephemeral datum registry for in-memory formatting.
 // Temporary datums used by _formatData are stored here instead of SwiftData
@@ -23,7 +23,7 @@ public let PROP_SEPARATOR = "."
 private var ephemeralDatumRegistry: [String: EVYJson] = [:]
 
 @MainActor
-public func splitPropsFromText(_ props: String) throws -> [String] {
+func splitPropsFromText(_ props: String) throws -> [String] {
   if props.count < 1 {
     throw EVYParamError.invalidProps
   }
@@ -55,7 +55,7 @@ func parseTextFromText(
 }
 
 @MainActor
-public func parseFunctionCall(_ input: String) -> (functionName: String, functionArgs: String)? {
+func _parseFunctionCall(_ input: String) -> (functionName: String, functionArgs: String)? {
   let trimmedInput = input.trimmingCharacters(in: .whitespacesAndNewlines)
   if let (_, functionName, functionArgs) = parseFunctionInText(trimmedInput) {
     return (functionName, functionArgs)
@@ -64,12 +64,12 @@ public func parseFunctionCall(_ input: String) -> (functionName: String, functio
 }
 
 @MainActor
-func splitFunctionArguments(_ args: String) -> [String] {
+func _splitFunctionArguments(_ args: String) -> [String] {
   splitTopLevel(args, separator: ",")
 }
 
 @MainActor
-public func stripOptionalSurroundingQuotes(_ s: String) -> String {
+func _stripOptionalSurroundingQuotes(_ s: String) -> String {
   let trimmed = s.trimmingCharacters(in: .whitespacesAndNewlines)
   guard trimmed.count >= 2, trimmed.first == "\"", trimmed.last == "\"" else {
     return trimmed
@@ -255,7 +255,7 @@ func _getDataFromProps(_ props: String) throws -> EVYJson {
 
   let remainingProps = splitProps.count > 1 ? Array(splitProps[1...]) : []
 
-  if let (funcName, funcArgs) = parseFunctionCall(firstProp) {
+  if let (funcName, funcArgs) = _parseFunctionCall(firstProp) {
     if funcName == "findFirst" {
       return try evyFindFirst(funcArgs, remainingProps: remainingProps)
     }
@@ -288,7 +288,7 @@ func _getDataFromProps(_ props: String) throws -> EVYJson {
   }
 
   // 2. Fall back to persistent store — synced API data
-  let json = try store.getJsonForBinding(key: firstProp)
+  let json = try store.getJsonForBinding(key: firstProp, cacheScopeId: EVY.activeCacheScopeId)
   return json.parseProp(props: remainingProps)
 }
 
@@ -303,20 +303,6 @@ func _evaluateFromText(_ input: String) throws -> Bool {
   let match = try parseTextFromText(input)
   return match.value == "true"
 }
-
-private let sourceFormatFunctions = [
-  "formatCurrency",
-  "formatDimension",
-  "formatWeight",
-  "formatDecimal",
-  "formatMetricLength",
-  "formatImperialLength",
-  "formatDuration",
-  "formatDatetime",
-  "formatAddress",
-  "formatAddressLine1",
-  "formatAddressLine2",
-]
 
 private let formatFunctionsByBuildFunction = [
   "buildCurrency": "formatCurrency",
@@ -344,7 +330,7 @@ private func _resolvedText(fromSource source: String?, destination: String?, edi
 
   let wrapped = wrappedExpression(trimmedDestination)
   let inner = _parsePropsFromText(wrapped)
-  if let (functionName, functionArgs) = parseFunctionCall(inner),
+  if let (functionName, functionArgs) = _parseFunctionCall(inner),
     let formatFunction = formatFunctionsByBuildFunction[functionName]
   {
     return
@@ -375,31 +361,6 @@ func _watchTargets(forSource source: String?, destination: String?) -> [String] 
     targets.append(contentsOf: _watchTargets(for: destination))
   }
   return targets
-}
-
-@MainActor
-func _rawDataFromSource(_ source: String) throws -> EVYJson {
-  let trimmed = source.trimmingCharacters(in: .whitespacesAndNewlines)
-  guard !trimmed.isEmpty else { return .string("") }
-
-  let wrapped = wrappedExpression(trimmed)
-  let inner = _parsePropsFromText(wrapped)
-
-  if let (functionName, functionArgs) = parseFunctionCall(inner),
-    sourceFormatFunctions.contains(functionName)
-  {
-    return try _getDataFromProps(functionArgs.trimmingCharacters(in: .whitespacesAndNewlines))
-  }
-
-  return try _getDataFromText(wrapped)
-}
-
-@MainActor
-func _displayText(fromSource source: String?) -> String {
-  guard let source else { return "" }
-  let trimmed = source.trimmingCharacters(in: .whitespacesAndNewlines)
-  guard !trimmed.isEmpty else { return "" }
-  return (try? _getValueFromText(trimmed, editing: false).toString()) ?? ""
 }
 
 @MainActor
@@ -493,7 +454,7 @@ private func parseText(
     case "count":
       value = try evyCount(funcArgs)
     case "length":
-      value = try evyLength(funcArgs)
+      value = try evyCount(funcArgs)
     case "earliestDatetime":
       value = try evyEarliestDatetime(funcArgs)
     case "now":
@@ -918,67 +879,11 @@ private func appendWatchTargetsFromFunctions(in text: String, to paths: inout [S
 
   while let functionCall = parseFunctionInText(remaining) {
     foundFunction = true
-    for argument in splitFunctionArguments(functionCall.functionArgs) {
+    for argument in _splitFunctionArguments(functionCall.functionArgs) {
       appendWatchTargets(fromExpression: argument, to: &paths)
     }
     remaining = advancePastFunction(functionCall.match, in: remaining)
   }
 
   return foundFunction
-}
-
-#Preview {
-  EVYInterpreterPreview()
-}
-
-private struct EVYInterpreterPreview: View {
-  init() {
-    EVYPreviewMockData.seedCommon()
-  }
-
-  var body: some View {
-    let bare = "test"
-    let data = "{item.title}"
-
-    let parsedData = try! parseTextFromText(data)
-    let withPrefix = try! parseTextFromText(
-      "{formatCurrency(item.price)}"
-    )
-    let withSuffix = try! parseTextFromText(
-      "{formatDimension(item.dimensions.width)}"
-    )
-    let WithSuffixAndRight = try! parseTextFromText(
-      "{formatDimension(item.dimensions.width)} - {item.title}"
-    )
-    let withComparison = try! parseTextFromText(
-      "{count(item.title) == count(selling_reasons)} v {count(item.title) == count(item.title)}"
-    )
-    let withMultiComparison = try! parseTextFromText(
-      "{count(item.title) > 0 || (1 > 2 && count(selling_reasons) > 0)}"
-    )
-
-    let weight = try! parseTextFromText(
-      "{formatWeight(item.dimensions.weight)}"
-    )
-
-    let firstSellingReason = try! EVY.getDataFromText("{selling_reasons[0]}")
-
-    return VStack {
-      Text("parseProps but no props: " + _parsePropsFromText(bare))
-      Text("parseProps with props: " + _parsePropsFromText(data))
-      Text(parsedData.toString())
-      Text(withPrefix.toString())
-      Text(withSuffix.toString())
-      Text(WithSuffixAndRight.toString())
-      Text(withComparison.toString())
-      Text(withMultiComparison.toString())
-      Text(weight.toString())
-      Text(firstSellingReason.toString())
-
-      EVYTextField(
-        source: "{formatCurrency(item.price)}",
-        destination: "{item.price}",
-        placeholder: "Editing price")
-    }
-  }
 }

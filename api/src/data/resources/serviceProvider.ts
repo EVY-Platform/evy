@@ -1,9 +1,9 @@
 import type { DATA_EVY_ServiceProvider } from "evy-types";
+import { serviceProvider } from "evy-types/db/schema.generated";
 import { validateDataEvyServiceProvider } from "evy-types/validators";
-import { serviceProvider } from "../../../../types/generated/ts/db/schema.generated";
 import { makeCoreResource } from "./coreResource";
 
-const providerResource = makeCoreResource<DATA_EVY_ServiceProvider>({
+export const providersResource = makeCoreResource<DATA_EVY_ServiceProvider>({
 	table: serviceProvider,
 	validate: validateDataEvyServiceProvider,
 	toUpdateSet: (validated) => ({
@@ -16,7 +16,3 @@ const providerResource = makeCoreResource<DATA_EVY_ServiceProvider>({
 		retired: validated.retired,
 	}),
 });
-
-export const listProviderRows = providerResource.list;
-export const createProviderResource = providerResource.create;
-export const updateProviderResource = providerResource.update;

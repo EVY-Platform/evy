@@ -3,6 +3,7 @@ import {
 	MARKETPLACE_RESOURCE,
 	MARKETPLACE_SERVICE,
 } from "evy-types/marketplaceResources";
+import { waitForClientOpen } from "evy-types/wsTestHelpers";
 import { Client } from "rpc-websockets";
 
 type WSClient = InstanceType<typeof Client>;
@@ -24,37 +25,12 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 	return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
-function waitForClientOpen(
-	ws: WSClient,
-	timeoutMs = CONNECTION_TIMEOUT_MS,
-): Promise<void> {
-	return new Promise((resolve, reject) => {
-		const onOpen = () => {
-			clearTimeout(timeout);
-			ws.removeListener("error", onError);
-			resolve();
-		};
-		const onError = (err: Error) => {
-			clearTimeout(timeout);
-			ws.removeListener("open", onOpen);
-			reject(err);
-		};
-		const timeout = setTimeout(() => {
-			ws.removeListener("open", onOpen);
-			ws.removeListener("error", onError);
-			reject(new Error("WebSocket connection timeout"));
-		}, timeoutMs);
-		ws.on("open", onOpen);
-		ws.on("error", onError);
-	});
-}
-
 describe("Marketplace E2E (via API WebSocket)", () => {
 	let client: WSClient;
 
 	beforeAll(async () => {
 		client = new Client(API_URL);
-		await waitForClientOpen(client);
+		await waitForClientOpen(client, CONNECTION_TIMEOUT_MS);
 		await client.login({ token: TEST_TOKEN, os: TEST_OS });
 	});
 

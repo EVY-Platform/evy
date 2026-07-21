@@ -66,7 +66,7 @@ describe("parseUploadChunkFrame", () => {
 		};
 		const frame = buildChunkFrame(metadata, Buffer.from([0x00]));
 		expect(() => parseUploadChunkFrame(frame)).toThrow(
-			"Chunk metadata uploadId must be a non-empty string",
+			"FileUploadChunkMetadata validation failed",
 		);
 	});
 });

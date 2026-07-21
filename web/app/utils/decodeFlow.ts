@@ -1,39 +1,12 @@
-import type {
-	DATA_EVY_Flow,
-	DATA_EVY_Page,
-	DATA_EVY_Row,
-	DATA_EVY_RowData,
-	UI_Flow as ServerFlow,
-	UI_Page as ServerPage,
-	UI_Row as ServerRow,
-} from "evy-types";
-import { createElement } from "react";
-import { baseRows } from "../rows/baseRows";
-import { UnknownRow } from "../rows/EVYRow";
+import type { UI_Row as ServerRow } from "evy-types";
+import {
+	createRowElement,
+	getBaseRowForType,
+	type RowComponent,
+} from "../rows/rowElementFactory";
 import { getRowBindingFields, readBindingFields } from "../rows/rowFields";
 import type { Row, RowConfig } from "../types/row";
-import {
-	ROW_CHILD_FIELD,
-	ROW_CHILDREN_FIELD,
-	ROW_DECOMPOSE_SKIP_KEYS,
-	ROW_METADATA_KEYS,
-} from "./rowConstants";
-
-type RowComponent = (typeof baseRows)[number];
-
-type FlatFlowGraph = {
-	flowRows: DATA_EVY_Flow[];
-	pageRows: DATA_EVY_Page[];
-	rowRows: DATA_EVY_Row[];
-};
-
-const BASE_ROW_BY_TYPE = new Map<string, RowComponent>(
-	baseRows.map((r) => [r.config.type, r]),
-);
-
-function getBaseRowForType(type: string): RowComponent | undefined {
-	return BASE_ROW_BY_TYPE.get(type);
-}
+import { ROW_METADATA_KEYS } from "./rowConstants";
 
 function rowConfigAttributes(config: RowConfig): Record<string, unknown> {
 	const attributes: Record<string, unknown> = {};
@@ -59,15 +32,19 @@ export function mergeRowContentWithPaletteDefaults(
 	};
 }
 
+// exported for tests
 export function normalizeServerRow(row: ServerRow): ServerRow {
 	const baseRow = getBaseRowForType(row.type);
-	if (!baseRow) {
-		return normalizeUnknownServerRow(row);
-	}
-	return normalizeKnownServerRow(row);
+	return normalizeServerRowWithDefaultTitle(
+		row,
+		baseRow ? "" : "Unknown row",
+	);
 }
 
-function normalizeKnownServerRow(row: ServerRow): ServerRow {
+function normalizeServerRowWithDefaultTitle(
+	row: ServerRow,
+	defaultTitle: string,
+): ServerRow {
 	return {
 		...normalizeRowAttributes(row, normalizeServerRow),
 		id: row.id,
@@ -75,19 +52,7 @@ function normalizeKnownServerRow(row: ServerRow): ServerRow {
 		...readBindingFields(row as Record<string, unknown>, row.type),
 		actions: row.actions ?? [],
 		visible: row.visible ?? "true",
-		title: typeof row.title === "string" ? row.title : "",
-	} as ServerRow;
-}
-
-function normalizeUnknownServerRow(row: ServerRow): ServerRow {
-	return {
-		...normalizeRowAttributes(row, normalizeServerRow),
-		id: row.id,
-		type: row.type,
-		...readBindingFields(row as Record<string, unknown>, row.type),
-		actions: row.actions ?? [],
-		visible: row.visible ?? "true",
-		title: typeof row.title === "string" ? row.title : "Unknown row",
+		title: typeof row.title === "string" ? row.title : defaultTitle,
 	} as ServerRow;
 }
 
@@ -109,6 +74,12 @@ function normalizeRowAttributes(
 		if (key === "child") {
 			if (value !== undefined && value !== null) {
 				out.child = transformRow(value as ServerRow);
+			}
+			continue;
+		}
+		if (key === "sheet") {
+			if (value !== undefined && value !== null) {
+				out.sheet = transformRow(value as ServerRow);
 			}
 			continue;
 		}
@@ -163,6 +134,12 @@ function rowToServerRow(row: Row): ServerRow {
 			}
 			continue;
 		}
+		if (key === "sheet") {
+			if (value) {
+				serverRow.sheet = rowToServerRow(value as Row);
+			}
+			continue;
+		}
 		serverRow[key] = value;
 	}
 
@@ -173,105 +150,12 @@ function rowToServerRow(row: Row): ServerRow {
 	return serverRow as unknown as ServerRow;
 }
 
-export function decomposeServerFlow(
-	flow: ServerFlow,
-	nowIso: string,
-): FlatFlowGraph {
-	const rowRows: DATA_EVY_Row[] = [];
-	const pageRows = flow.pages.map((page) =>
-		decomposeServerPage(page, rowRows, nowIso),
-	);
-	return {
-		flowRows: [
-			{
-				id: flow.id,
-				name: flow.name,
-				pageIds: pageRows.map((page) => page.id),
-				createdAt: nowIso,
-				updatedAt: nowIso,
-			},
-		],
-		pageRows,
-		rowRows,
-	};
-}
-
-function decomposeServerPage(
-	page: ServerPage,
-	rowRows: DATA_EVY_Row[],
-	nowIso: string,
-): DATA_EVY_Page {
-	return {
-		id: page.id,
-		name: page.name,
-		title: page.title,
-		rowIds: page.rows.map((row) =>
-			decomposeServerRow(row, rowRows, nowIso),
-		),
-		footerRowId: page.footer
-			? decomposeServerRow(page.footer, rowRows, nowIso)
-			: undefined,
-		createdAt: nowIso,
-		updatedAt: nowIso,
-	};
-}
-
-function decomposeServerRow(
-	row: ServerRow,
-	rowRows: DATA_EVY_Row[],
-	nowIso: string,
-): string {
-	const data: Record<string, unknown> = {};
-	for (const [key, value] of Object.entries(row)) {
-		if (ROW_DECOMPOSE_SKIP_KEYS.has(key)) {
-			continue;
-		}
-		if (value !== undefined) {
-			data[key] = value;
-		}
-	}
-	if (row.child) {
-		data[ROW_CHILD_FIELD] = decomposeServerRow(row.child, rowRows, nowIso);
-	}
-	if (Array.isArray(row.children) && row.children.length > 0) {
-		data[ROW_CHILDREN_FIELD] = row.children.map((child) =>
-			decomposeServerRow(child, rowRows, nowIso),
-		);
-	}
-	rowRows.push({
-		id: row.id,
-		name: row.name,
-		type: row.type,
-		visible: row.visible || "true",
-		data: data as DATA_EVY_RowData,
-		createdAt: nowIso,
-		updatedAt: nowIso,
-	});
-	return row.id;
-}
-
 function decodeRow(row: ServerRow): Row {
 	const normalized = normalizeServerRow(row);
-	const baseRow = getBaseRowForType(normalized.type);
-	const config = decodeRowConfig(normalized, row.name);
-	if (!baseRow) {
-		return {
-			id: normalized.id,
-			row: createElement(UnknownRow, {
-				key: normalized.id,
-				rowId: normalized.id,
-			}),
-			config,
-		};
-	}
-
 	return {
 		id: normalized.id,
-		row: createElement(baseRow, {
-			key: normalized.id,
-			rowId: normalized.id,
-		}),
-		config,
+		row: createRowElement(normalized.type, normalized.id),
+		config: decodeRowConfig(normalized, row.name),
 	};
 }
 
@@ -299,6 +183,12 @@ function decodeRowConfig(row: ServerRow, name?: string): RowConfig {
 			}
 			continue;
 		}
+		if (key === "sheet") {
+			if (value) {
+				config.sheet = decodeRow(value as ServerRow);
+			}
+			continue;
+		}
 		config[key] = value;
 	}
 
@@ -319,6 +209,9 @@ function assignFreshIdsInPlace(row: ServerRow, rootId: string): void {
 	row.id = rootId;
 	if (row.child) {
 		assignFreshIdsInPlace(row.child, crypto.randomUUID());
+	}
+	if (row.sheet) {
+		assignFreshIdsInPlace(row.sheet, crypto.randomUUID());
 	}
 	if (row.children) {
 		for (const childRow of row.children) {
@@ -357,6 +250,12 @@ function resetRowAttributesForNewPage(row: ServerRow): ServerRow {
 			}
 			continue;
 		}
+		if (key === "sheet") {
+			if (value !== undefined && value !== null) {
+				resetRow.sheet = value;
+			}
+			continue;
+		}
 		resetRow[key] = typeof value === "string" ? "" : value;
 	}
 	if (typeof resetRow.title !== "string") {
@@ -372,7 +271,7 @@ export function buildRowForNewPageFromBase(
 	const tempId = "row-build-temp";
 	const seed: Row = {
 		id: tempId,
-		row: createElement(baseRow, { key: tempId, rowId: tempId }),
+		row: createRowElement(baseRow.config.type, tempId),
 		config: baseRow.config,
 	};
 	const cloned = resetRowAttributesForNewPage(

@@ -3,13 +3,13 @@
 	"description": "EVY monorepo - api, web, ios, services and shared types",
 	"license": "GPL-3.0-only",
 	"scripts": {
-		"dev:postgres": "docker compose up postgres",
+		"dev:postgres:logs": "docker compose up postgres",
 		"dev:setup": "docker compose up --wait postgres && bun run db:seed",
 		"dev:api": "bun run --cwd api dev",
 		"dev:web": "bun run --cwd web dev",
 		"dev:marketplace": "bun run --cwd services/marketplace dev",
 		"dev:watch": "bun scripts/watch.ts",
-		"dev": "bun run types:generate && bun run dev:setup && bun run --parallel --no-exit-on-error dev:postgres dev:api dev:web dev:marketplace dev:watch",
+		"dev": "bun run types:generate && bun run dev:setup && bun run --parallel --no-exit-on-error dev:postgres:logs dev:api dev:web dev:marketplace dev:watch",
 		"format": "bunx biome check --write . && bun run --cwd api format && bun run --cwd web format && bun run --cwd services/marketplace format && xcrun swift-format format --in-place --recursive ios",
 		"install:all": "bun install && bun install --cwd api && bun install --cwd web && bun install --cwd services/marketplace",
 		"types:generate": "bun scripts/generate-types.ts && bun run types:generate:resources",
@@ -21,12 +21,15 @@
 	},
 	"devDependencies": {
 		"@biomejs/biome": "^2.4.16",
+		"@electric-sql/pglite": "^0.5.1",
+		"@types/ws": "^8.18.1",
 		"ajv": "^8.20.0",
 		"ajv-formats": "^3.0.1",
 		"bun-types": "^1.3.14",
 		"decamelize": "^6.0.1",
 		"drizzle-orm": "^0.45.2",
 		"json-schema-to-typescript": "^15.0.4",
-		"quicktype": "^23.2.6"
+		"quicktype": "^23.2.6",
+		"rpc-websockets": "^10.0.1"
 	}
 }

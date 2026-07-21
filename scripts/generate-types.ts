@@ -11,16 +11,11 @@ import {
 	REPO_ROOT,
 	runMain,
 	SCHEMA_DIR,
-	schemaPathToSwiftTypeName,
 	schemaPathToTsName,
+	schemaPathToTypeName,
 	spawnExitOk,
 	TYPES_ROOT,
 } from "./types-generation-utils.js";
-
-const COMMON_SCHEMA_ROOT_REF: Record<string, string> = {
-	"common/json": "#/$defs/JSONValue",
-	"common/rpc": "#/$defs/IdFilter",
-};
 
 type LoadedSchemaFile = {
 	schemaPath: string;
@@ -57,58 +52,6 @@ async function loadSchemaFiles(
 	return loadedFiles;
 }
 
-function buildSchemaWithRootRef(
-	schema: Record<string, unknown>,
-	rootRef: string,
-): Record<string, unknown> {
-	const { $defs, ...rest } = schema;
-	return { ...rest, $ref: rootRef, $defs };
-}
-
-function getRootDefinition(
-	schema: Record<string, unknown>,
-	rootRef: string,
-	schemaKey: string,
-): Record<string, unknown> {
-	const refName = rootRef.replace(/^#\/\$defs\//, "");
-	const defs = schema.$defs as Record<string, unknown> | undefined;
-	const rootDef = defs?.[refName] as Record<string, unknown> | undefined;
-	if (!rootDef) {
-		throw new Error(
-			`Schema ${schemaKey}: $defs.${refName} not found for root $ref ${rootRef}`,
-		);
-	}
-	return rootDef;
-}
-
-function inlineDefsRefs(
-	obj: unknown,
-	defsMap: Record<string, unknown>,
-	expanding: Set<string> = new Set(),
-): unknown {
-	if (obj && typeof obj === "object" && !Array.isArray(obj)) {
-		const o = obj as Record<string, unknown>;
-		const ref = o.$ref as string | undefined;
-		if (ref?.startsWith("#/$defs/")) {
-			const name = ref.replace(/^#\/\$defs\//, "");
-			if (expanding.has(name)) return obj;
-			const d = defsMap[name];
-			if (d === undefined) return obj;
-			const next = new Set(expanding);
-			next.add(name);
-			return inlineDefsRefs(JSON.parse(JSON.stringify(d)), defsMap, next);
-		}
-		const out: Record<string, unknown> = {};
-		for (const [k, v] of Object.entries(o)) {
-			out[k] = inlineDefsRefs(v, defsMap, expanding);
-		}
-		return out;
-	}
-	if (Array.isArray(obj))
-		return obj.map((item) => inlineDefsRefs(item, defsMap, expanding));
-	return obj;
-}
-
 /**
  * Detect whether a JSON schema references external files (non-local $ref).
  */
@@ -142,6 +85,22 @@ function unexportReferencedTypes(
 	);
 }
 
+/**
+ * Schemas that never become standalone TypeScript modules: the SDUI row
+ * definitions are already inlined into sdui/evy's UI_Row union, the
+ * definition meta-schema is generator-time validation only, and common/*
+ * are only $ref'd by other schemas on disk (both compilers resolve them
+ * without a standalone module). None of their would-be exports have
+ * consumers.
+ */
+function isTsEmittedSchema(schemaKey: string): boolean {
+	return (
+		schemaKey !== "sdui/definition" &&
+		!schemaKey.startsWith("sdui/definitions/") &&
+		!schemaKey.startsWith("common/")
+	);
+}
+
 async function generateTypeScript(
 	schemaFiles: LoadedSchemaFile[],
 ): Promise<void> {
@@ -149,39 +108,25 @@ async function generateTypeScript(
 		schemaFiles.map(
 			({ schemaPath, schema }) =>
 				(schema.title as string | undefined) ??
-				schemaPathToSwiftTypeName(schemaPath),
+				schemaPathToTypeName(schemaPath),
 		),
+	);
+	const tsSchemaFiles = schemaFiles.filter(({ schemaKey }) =>
+		isTsEmittedSchema(schemaKey),
 	);
 
 	await Promise.all(
-		schemaFiles.map(async ({ schemaPath, schemaKey, schema }) => {
+		tsSchemaFiles.map(async ({ schemaPath, schema }) => {
 			const outRel = `${schemaPathToTsName(schemaPath)}.ts`;
 			const outPath = join(OUT_TS, outRel);
 
 			await mkdir(dirname(outPath), { recursive: true });
 
-			let schemaForCompile = schema;
-			let title =
+			const title =
 				(schema.title as string | undefined) ??
-				schemaPathToSwiftTypeName(schemaPath);
+				schemaPathToTypeName(schemaPath);
 
-			const rootRef = COMMON_SCHEMA_ROOT_REF[schemaKey];
-			if (rootRef) {
-				const defs = (schema.$defs as Record<string, unknown>) ?? {};
-				const rootDef = getRootDefinition(schema, rootRef, schemaKey);
-				const expandedRoot = inlineDefsRefs(
-					JSON.parse(JSON.stringify(rootDef)),
-					defs,
-				) as Record<string, unknown>;
-				title = (schema.title as string | undefined) ?? "CommonJSON";
-				schemaForCompile = {
-					...schema,
-					...expandedRoot,
-					title,
-					description: schema.description as string | undefined,
-				};
-			}
-			const ts = await compile(schemaForCompile, title, {
+			const ts = await compile(schema, title, {
 				bannerComment: `/* eslint-disable */\n/** Generated from ${relative(TYPES_ROOT, schemaPath)} - do not edit. */`,
 				declareExternallyReferenced: true,
 				style: { singleQuote: false },
@@ -207,7 +152,7 @@ async function generateTypeScript(
 	);
 
 	const lines: string[] = [];
-	for (const { schemaPath: f, schemaKey, schema } of schemaFiles) {
+	for (const { schemaPath: f, schema } of tsSchemaFiles) {
 		const rel = schemaPathToTsName(f);
 		const mod = rel.replace(/\.ts$/, "");
 		const title = (schema.title as string | undefined) ?? null;
@@ -217,11 +162,8 @@ async function generateTypeScript(
 			mod.startsWith("data/")
 		) {
 			lines.unshift(`export * from "./${mod}";`);
-		} else if (schemaKey === "rpc/get.request") {
-			lines.push(`export type { GetRequest } from "./${mod}";`);
 		} else {
-			const name =
-				title ?? schemaPathToSwiftTypeName(f).replace(/^Rpc/, "");
+			const name = title ?? schemaPathToTypeName(f).replace(/^Rpc/, "");
 			lines.push(`export type { ${name} } from "./${mod}";`);
 		}
 	}
@@ -241,58 +183,40 @@ async function generateSwift(
 ): Promise<void> {
 	await mkdir(OUT_SWIFT, { recursive: true });
 
-	const schemaFilesToQuicktype = schemaFiles.filter(
-		(f) =>
-			f.schemaKey !== "sdui/evy" && // generated by generate-swift-sdui.ts
-			f.schemaKey !== "sdui/definition" && // generator validation only
-			!f.schemaKey.startsWith("sdui/definitions/") && // generated by generate-swift-sdui.ts
-			f.schemaKey !== "rpc/get.response", // recursive $defs unsupported by quicktype
+	// Only schemas the Xcode target actually compiles are run through
+	// quicktype (SDUI Swift comes from generate-swift-sdui.ts below). The
+	// other schema outputs (Rpc*, Data*, Common*) had no iOS consumers; add a
+	// schema key back here if iOS ever adopts one.
+	const SWIFT_QUICKTYPE_SCHEMAS = new Set(["data/os", "files/file"]);
+	const schemaFilesToQuicktype = schemaFiles.filter((f) =>
+		SWIFT_QUICKTYPE_SCHEMAS.has(f.schemaKey),
 	);
 
 	// Run quicktype invocations sequentially: spawning every schema's process at
 	// once (via Promise.all) races on the shared `bunx` resolution and overloads the
 	// machine, which intermittently kills processes (exit 1 / null). Each run is fast,
 	// so a sequential loop keeps generation deterministic.
-	for (const { schemaPath, schemaKey, schema } of schemaFilesToQuicktype) {
-		const typeName = schemaPathToSwiftTypeName(schemaPath);
+	for (const { schemaPath } of schemaFilesToQuicktype) {
+		const typeName = schemaPathToTypeName(schemaPath);
 		const outPath = join(OUT_SWIFT, `${typeName}.swift`);
 
-		let inputPath = schemaPath;
-		let tempPath: string | null = null;
-
-		const rootRef = COMMON_SCHEMA_ROOT_REF[schemaKey];
-		if (rootRef) {
-			const withRef = buildSchemaWithRootRef(schema, rootRef);
-			const safeSchemaKey = schemaKey.replace(/[/\\]/g, "-");
-			tempPath = join(
-				TYPES_ROOT,
-				`.quicktype-${safeSchemaKey}-tmp.schema.json`,
-			);
-			await writeFile(tempPath, JSON.stringify(withRef), "utf-8");
-			inputPath = tempPath;
-		}
-
-		try {
-			await spawnExitOk(
-				"bunx",
-				[
-					"quicktype",
-					"--src-lang",
-					"schema",
-					"--lang",
-					"swift",
-					"--no-initializers",
-					"--no-date-times",
-					"-o",
-					outPath,
-					inputPath,
-				],
-				{ stdio: "inherit", cwd: REPO_ROOT },
+		await spawnExitOk(
+			"bunx",
+			[
 				"quicktype",
-			);
-		} finally {
-			if (tempPath) await rm(tempPath, { force: true });
-		}
+				"--src-lang",
+				"schema",
+				"--lang",
+				"swift",
+				"--no-initializers",
+				"--no-date-times",
+				"-o",
+				outPath,
+				schemaPath,
+			],
+			{ stdio: "inherit", cwd: REPO_ROOT },
+			"quicktype",
+		);
 	}
 
 	const evySchemaFile = schemaFiles.find((f) => f.schemaKey === "sdui/evy");

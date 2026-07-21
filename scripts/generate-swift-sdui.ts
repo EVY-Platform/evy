@@ -1,5 +1,6 @@
 import { join } from "node:path";
 import {
+	INHERITED_STRUCTURAL_ROW_FIELDS,
 	rowSpecFromDefinitions,
 	type SduiRowDefinition,
 	type SduiRowSpec,
@@ -8,6 +9,9 @@ import {
 import { OUT_SWIFT } from "./types-generation-utils.js";
 
 type RowSpec = SduiRowSpec;
+
+const INHERITED_STRUCTURAL_UI_ROW_ENTRIES: [string, string][] =
+	INHERITED_STRUCTURAL_ROW_FIELDS.map((name) => [name, "UI_Row"]);
 
 type SchemaObject = Record<string, unknown>;
 
@@ -20,8 +24,6 @@ function swiftTypeForSpecType(s: string, required = true): string {
 	switch (s) {
 		case "string":
 			return required ? "String" : "String?";
-		case "integer":
-			return required ? "Int" : "Int?";
 		case "[UI_Row]":
 			return required ? "[UI_Row]" : "[UI_Row]?";
 		case "UI_Row":
@@ -121,6 +123,9 @@ function buildShapeOverrides(): Map<string, string> {
 
 function collectRowAttributeEntries(rowSpec: RowSpec): [string, string][] {
 	const entries = new Map<string, string>();
+	for (const [key, specType] of INHERITED_STRUCTURAL_UI_ROW_ENTRIES) {
+		entries.set(key, specType);
+	}
 	for (const spec of Object.values(rowSpec)) {
 		for (const [key, field] of Object.entries(spec.content)) {
 			entries.set(key, field.type);
@@ -130,7 +135,15 @@ function collectRowAttributeEntries(rowSpec: RowSpec): [string, string][] {
 }
 
 function buildRowTypeAttributeKeys(rowSpec: RowSpec): Map<string, string[]> {
-	const baseKeys = ["id", "type", "actions", "visible", "title", "name"];
+	const baseKeys = [
+		"id",
+		"type",
+		"actions",
+		"visible",
+		"title",
+		"name",
+		...INHERITED_STRUCTURAL_ROW_FIELDS,
+	];
 	const map = new Map<string, string[]>();
 	for (const [rowType, spec] of Object.entries(rowSpec)) {
 		const keys = [
@@ -170,8 +183,6 @@ ${cases.join("\n")}
 
 function swiftDefaultValueForSpecType(specType: string): string {
 	switch (specType) {
-		case "integer":
-			return "0";
 		case "[UI_Row]":
 		case "[String]":
 		case "[UI_RowAction]":
@@ -215,6 +226,21 @@ function emitUIRowClass(rowSpec: RowSpec): string {
 	const decodeLines = entries.map(([key, value]) =>
 		emitRowContentDecodeLine(key, value),
 	);
+	const copyArgs = [
+		"id: id",
+		"type: type",
+		"actions: actions",
+		"visible: visible",
+		"name: name",
+		...entries.map(([key]) =>
+			key === "title"
+				? "title: title"
+				: `${swiftIdentifier(key)}: ${swiftIdentifier(key)}`,
+		),
+	];
+	const withTitleArgs = copyArgs
+		.map((arg) => (arg === "title: title" ? "title: newTitle" : arg))
+		.join(", ");
 	return `// MARK: - UI_Row
 public final class UI_Row: Codable {
     public let id: String
@@ -255,6 +281,11 @@ ${decodeLines.join("\n")}
         try c.encode(visible, forKey: .visible)
         try c.encodeIfPresent(name, forKey: .name)
 ${emitUIRowEncodeSwitch(rowSpec, entries)}
+    }
+
+    /// Copy of this row with a replaced title.
+    public func with(title newTitle: String) -> UI_Row {
+        UI_Row(${withTitleArgs})
     }
 }
 `;
@@ -334,62 +365,20 @@ ${defBlocks.join("\n\n")}
 `;
 }
 
-function emitRowContentDecodeLine(
-	key: string,
-	specType: string,
-	required = true,
-	strict = false,
-): string {
+/**
+ * Decode line for the UI_Row union class: every field is lenient
+ * (decodeIfPresent with a safe default) because a given JSON row only
+ * carries its own row type's attributes.
+ */
+function emitRowContentDecodeLine(key: string, specType: string): string {
 	const k = swiftIdentifier(key);
-	if (!required) {
-		// Optional fields: decodeIfPresent, nil when absent
-		switch (specType) {
-			case "[UI_Row]":
-				return `        ${k} = try c.decodeIfPresent([UI_Row].self, forKey: .${k})`;
-			case "[String]":
-				return `        ${k} = try c.decodeIfPresent([String].self, forKey: .${k})`;
-			case "[UI_RowAction]":
-				return `        ${k} = try c.decodeIfPresent([UI_RowAction].self, forKey: .${k})`;
-			case "integer":
-				return `        ${k} = (try? c.decodeIfPresent(Int.self, forKey: .${k})) ?? Int((try? c.decodeIfPresent(String.self, forKey: .${k})) ?? "")`;
-			case "UI_Row":
-				return `        ${k} = try c.decodeIfPresent(UI_Row.self, forKey: .${k})`;
-			default:
-				return `        ${k} = try c.decodeIfPresent(String.self, forKey: .${k})`;
-		}
-	}
-	if (strict) {
-		// Required + strict: throws if the key is absent
-		switch (specType) {
-			case "string":
-				return `        ${k} = try c.decode(String.self, forKey: .${k})`;
-			case "[UI_Row]":
-				return `        ${k} = try c.decode([UI_Row].self, forKey: .${k})`;
-			case "[String]":
-				return `        ${k} = try c.decode([String].self, forKey: .${k})`;
-			case "[UI_RowAction]":
-				return `        ${k} = try c.decode([UI_RowAction].self, forKey: .${k})`;
-			case "integer":
-				return `        ${k} = try c.decode(Int.self, forKey: .${k})`;
-			case "UI_Row":
-				// UI_Row references are always UI_Row? — keep lenient even when required
-				return `        ${k} = try c.decodeIfPresent(UI_Row.self, forKey: .${k})`;
-			default:
-				return `        ${k} = try c.decode(String.self, forKey: .${k})`;
-		}
-	}
-	// Required + lenient (mega-class union type): decodeIfPresent with a safe default
 	switch (specType) {
-		case "string":
-			return `        ${k} = try c.decodeIfPresent(String.self, forKey: .${k}) ?? ""`;
 		case "[UI_Row]":
 			return `        ${k} = try c.decodeIfPresent([UI_Row].self, forKey: .${k}) ?? []`;
 		case "[String]":
 			return `        ${k} = try c.decodeIfPresent([String].self, forKey: .${k}) ?? []`;
 		case "[UI_RowAction]":
 			return `        ${k} = try c.decodeIfPresent([UI_RowAction].self, forKey: .${k}) ?? []`;
-		case "integer":
-			return `        ${k} = (try? c.decodeIfPresent(Int.self, forKey: .${k})) ?? Int((try? c.decodeIfPresent(String.self, forKey: .${k})) ?? "0") ?? 0`;
 		case "UI_Row":
 			return `        ${k} = try c.decodeIfPresent(UI_Row.self, forKey: .${k})`;
 		default:
@@ -414,52 +403,42 @@ function emitRowViewDataStruct(
 	spec: { content: Record<string, SduiRowSpecField> },
 ): string {
 	const viewDataName = `${rowType}RowViewData`;
-	const entries = Object.entries(spec.content);
+	const inheritedStructuralKeys = new Set<string>(
+		INHERITED_STRUCTURAL_ROW_FIELDS,
+	);
+	const entries = Object.entries(spec.content).filter(
+		([key]) => !inheritedStructuralKeys.has(key),
+	);
 	const fieldLines = entries.map(
 		([key, field]) =>
 			`    public let ${swiftIdentifier(key)}: ${swiftTypeForSpecType(field.type, field.required)}`,
 	);
-	const codingKeyCases = entries.map(
-		([key]) => `        case ${swiftIdentifier(key)}`,
-	);
-	const decodeLines = entries.map(([key, field]) =>
-		emitRowContentDecodeLine(key, field.type, field.required, true),
-	);
-	const encodeLines = entries.map(([key, field]) =>
-		emitRowContentEncodeLine(key, field.type, field.required),
-	);
+	// Synthesized Codable matches the previously hand-emitted strict coding
+	// exactly for every supported spec type (all keys equal property names,
+	// optionals decodeIfPresent/omit-nil, required fields throw when absent).
 	return `// MARK: - ${viewDataName}
 public struct ${viewDataName}: Codable {
 ${fieldLines.join("\n")}
-
-    private enum CodingKeys: String, CodingKey {
-${codingKeyCases.join("\n")}
-    }
-
-    public init(from decoder: Decoder) throws {
-        let c = try decoder.container(keyedBy: CodingKeys.self)
-${decodeLines.join("\n")}
-    }
-
-    public func encode(to encoder: Encoder) throws {
-        var c = encoder.container(keyedBy: CodingKeys.self)
-${encodeLines.join("\n")}
-    }
 }`;
 }
 
 function emitRowAttributeProtocols(rowSpec: RowSpec): string {
 	const rowTypes = getRowTypesFromSpec(rowSpec);
+	const inheritedStructuralKeys = new Set<string>(
+		INHERITED_STRUCTURAL_ROW_FIELDS,
+	);
 	const blocks: string[] = [];
 	for (const rowType of rowTypes) {
 		const spec = rowSpec[rowType];
 		if (!spec) continue;
 		const protocolName = `${rowType}RowAttributes`;
 		const viewDataName = `${rowType}RowViewData`;
-		const propLines = Object.entries(spec.content).map(
-			([key, field]) =>
-				`    var ${swiftIdentifier(key)}: ${swiftTypeForSpecType(field.type, field.required)} { get }`,
-		);
+		const propLines = Object.entries(spec.content)
+			.filter(([key]) => !inheritedStructuralKeys.has(key))
+			.map(
+				([key, field]) =>
+					`    var ${swiftIdentifier(key)}: ${swiftTypeForSpecType(field.type, field.required)} { get }`,
+			);
 		blocks.push(
 			`public protocol ${protocolName} {\n${propLines.join("\n")}\n}\n\nextension ${viewDataName}: ${protocolName} {}`,
 		);

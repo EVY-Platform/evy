@@ -1,12 +1,12 @@
 /// <reference types="bun-types" />
 
-import { copyFile, mkdir, readFile, stat } from "node:fs/promises";
+import { readFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { SQL } from "bun";
 import { drizzle } from "drizzle-orm/bun-sql";
 import { migrate as migratePg } from "drizzle-orm/bun-sql/migrator";
-import { jsonb, pgTable, text, uuid, varchar } from "drizzle-orm/pg-core";
+import { data as marketplaceDataTable } from "../services/marketplace/src/schema";
 import { getPostgresConnectionUrl, requireEnv } from "../types/env";
 import type {
 	DATA_EVY_Flow,
@@ -32,6 +32,7 @@ import {
 	MARKETPLACE_SERVICE,
 } from "../types/generated/ts/marketplaceResources";
 import { validateUiFlow } from "../types/validators";
+import { copySeedFileBinaries } from "./seed-files";
 
 const UUID_RE =
 	/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -72,14 +73,6 @@ type SeedFlow = ReturnType<typeof validateUiFlow>;
 type SeedDataItem = ReturnType<typeof validateSeedDataItemShape>;
 type SeedDataMap = Record<string, SeedDataItem[]>;
 
-const marketplaceDataTable = pgTable("Data", {
-	id: uuid("id").primaryKey().defaultRandom(),
-	resource: varchar("resource", { length: 50 }).notNull(),
-	data: jsonb("data").$type<SeedDataItem>().notNull(),
-	createdAt: text("created_at").notNull(),
-	updatedAt: text("updated_at").notNull(),
-});
-
 const coreSchema = {
 	organization: organizationTable,
 	service: serviceTable,
@@ -118,14 +111,16 @@ const SEED_IDS = {
 	coreFilesResource: "996738e6-15eb-4f3e-8f97-7538a1e2635c",
 } as const;
 
-const MARKETPLACE_SEED_RESOURCE_KEY_TO_ID = {
-	selling_reasons: MARKETPLACE_RESOURCE.SELLING_REASONS,
-	conditions: MARKETPLACE_RESOURCE.CONDITIONS,
-	durations: MARKETPLACE_RESOURCE.DURATIONS,
-	areas: MARKETPLACE_RESOURCE.AREAS,
-	items: MARKETPLACE_RESOURCE.ITEMS,
-	messages: MARKETPLACE_RESOURCE.MESSAGES,
-} as const;
+// Fixture keys are the lowercase forms of the generated resource constants
+// (selling_reasons -> SELLING_REASONS), so derive the map instead of
+// restating every resource.
+const MARKETPLACE_SEED_RESOURCE_KEY_TO_ID: Record<string, string> =
+	Object.fromEntries(
+		Object.entries(MARKETPLACE_RESOURCE).map(([key, id]) => [
+			key.toLowerCase(),
+			id,
+		]),
+	);
 
 type SeedInputPaths = {
 	evyFlowsPath?: string;
@@ -305,7 +300,15 @@ function decomposeRow(
 	const data: DATA_EVY_RowData = {};
 	for (const [key, value] of Object.entries(uiRow)) {
 		if (
-			["id", "name", "type", "visible", "child", "children"].includes(key)
+			[
+				"id",
+				"name",
+				"type",
+				"visible",
+				"child",
+				"children",
+				"sheet",
+			].includes(key)
 		) {
 			continue;
 		}
@@ -313,6 +316,14 @@ function decomposeRow(
 			data[key] = value;
 		}
 	}
+	const sheetRow = uiRow.sheet;
+	if (sheetRow !== undefined) {
+		if (!isUiRow(sheetRow)) {
+			throw new Error(`Row ${uiRow.id} has an invalid sheet row`);
+		}
+		data.sheet_row_id = decomposeRow(sheetRow, rowRows, now);
+	}
+
 	const childRow = uiRow.child;
 	if (childRow !== undefined) {
 		if (!isUiRow(childRow)) {
@@ -343,6 +354,10 @@ function decomposeRow(
 	return uiRow.id;
 }
 
+// Seeded ServiceResource row names are snake_case singulars. Note this
+// diverges from core.resources.json's "serviceResource" singular; nothing
+// consumes either value programmatically today, so the seeded names are
+// kept stable for existing data.
 const SERVICE_RESOURCE_SPECS: [string, string, string][] = [
 	[SEED_IDS.coreFlowsResource, EVY_CORE_SERVICE, "flow"],
 	[SEED_IDS.corePagesResource, EVY_CORE_SERVICE, "page"],
@@ -376,93 +391,6 @@ function buildServiceResourceRows(now: string) {
 		name,
 		...timestamped(now),
 	}));
-}
-
-async function runCommand(
-	command: string[],
-): Promise<{ ok: boolean; stderr: string }> {
-	try {
-		const proc = Bun.spawn(command, {
-			cwd: REPO_ROOT,
-			stdout: "pipe",
-			stderr: "pipe",
-		});
-		const stderr = await new Response(proc.stderr).text();
-		await proc.exited;
-		return { ok: proc.exitCode === 0, stderr };
-	} catch (error) {
-		const message = error instanceof Error ? error.message : String(error);
-		return { ok: false, stderr: message };
-	}
-}
-
-async function isApiContainerRunning(): Promise<boolean> {
-	try {
-		const proc = Bun.spawn(
-			["docker", "compose", "ps", "-q", API_DOCKER_SERVICE],
-			{ cwd: REPO_ROOT, stdout: "pipe", stderr: "pipe" },
-		);
-		const stdout = await new Response(proc.stdout).text();
-		await proc.exited;
-		return proc.exitCode === 0 && stdout.trim().length > 0;
-	} catch {
-		return false;
-	}
-}
-
-async function copySeedFileBinaries(files: SeedFileRow[]): Promise<void> {
-	if (files.length === 0) {
-		return;
-	}
-	await mkdir(RUNTIME_FILES_PATH, { recursive: true });
-	for (const fileRow of files) {
-		const sourcePath = join(SEED_FILES_PATH, fileRow.id);
-		try {
-			await stat(sourcePath);
-		} catch {
-			throw new Error(
-				`Missing seed binary for file "${fileRow.id}". Expected asset at ${sourcePath}.`,
-			);
-		}
-		await copyFile(sourcePath, join(RUNTIME_FILES_PATH, fileRow.id));
-	}
-
-	// When the API runs in Docker, its file storage lives inside the container
-	// rather than on the host, so seeded binaries are also copied in via
-	// `docker compose cp`. Skipped when Docker is absent or no API container
-	// is running.
-	if (!(await isApiContainerRunning())) {
-		return;
-	}
-	const mkdirResult = await runCommand([
-		"docker",
-		"compose",
-		"exec",
-		"-T",
-		API_DOCKER_SERVICE,
-		"mkdir",
-		"-p",
-		API_CONTAINER_FILES_DIR,
-	]);
-	if (!mkdirResult.ok) {
-		throw new Error(
-			`Failed to create file storage dir in API container: ${mkdirResult.stderr.trim()}`,
-		);
-	}
-	for (const fileRow of files) {
-		const copyResult = await runCommand([
-			"docker",
-			"compose",
-			"cp",
-			join(SEED_FILES_PATH, fileRow.id),
-			`${API_DOCKER_SERVICE}:${API_CONTAINER_FILES_DIR}/${fileRow.id}`,
-		]);
-		if (!copyResult.ok) {
-			throw new Error(
-				`Failed to copy seed binary "${fileRow.id}" into API container: ${copyResult.stderr.trim()}`,
-			);
-		}
-	}
 }
 
 function quotePostgresIdentifier(identifier: string): string {
@@ -559,7 +487,14 @@ async function seedDatabase({
 	}
 
 	const fileRows = buildFileRows(evyFiles, now);
-	await copySeedFileBinaries(fileRows);
+	await copySeedFileBinaries({
+		files: fileRows,
+		repoRoot: REPO_ROOT,
+		seedFilesPath: SEED_FILES_PATH,
+		runtimeFilesPath: RUNTIME_FILES_PATH,
+		apiDockerService: API_DOCKER_SERVICE,
+		apiContainerFilesDir: API_CONTAINER_FILES_DIR,
+	});
 
 	await coreDb.transaction(async (tx) => {
 		await tx.delete(coreSchema.serviceResource);

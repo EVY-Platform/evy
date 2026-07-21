@@ -1,60 +1,27 @@
-import { type IRPCMethodParams, Server } from "rpc-websockets";
+import { DATA_CHANGED_EVENT } from "evy-types/ws";
+import {
+	emitJsonRpc,
+	requirePortEnv,
+	startWsServer,
+	type WSParams,
+	type WSServer,
+} from "evy-types/wsServer";
 import type { WebSocket } from "ws";
 
-type WSServer = typeof Server;
-export type WSParams = typeof IRPCMethodParams;
+export { emitJsonRpc, type WSParams, type WSServer };
 
-export const DATA_CHANGED_EVENT = "dataChanged" as const;
-
-function getListenPort(): number {
-	const apiPort = process.env.API_PORT;
-	if (!apiPort) {
-		throw new Error("API_PORT environment variable is not set");
-	}
-	return parseInt(apiPort, 10);
-}
-
-// rpc-websockets emits non-standard notifications: { notification: name, params }
-// EVY clients expect standard JSON-RPC 2.0: { jsonrpc: "2.0", method: name, params }
-export function emitJsonRpc(
-	server: WSServer,
-	eventName: string,
-	params: unknown,
-) {
-	const namespace = server.namespaces["/"];
-	const nsEvent = namespace?.events?.[eventName];
-	const eventSockets: string[] = nsEvent?.sockets || [];
-	const clients: Map<string, WebSocket> = namespace?.clients || new Map();
-
-	const message = JSON.stringify({
-		jsonrpc: "2.0",
-		method: eventName,
-		params: params,
-	});
-
-	for (const socketId of eventSockets) {
-		const socket = clients.get(socketId);
-		if (socket) socket.send(message);
-	}
-}
-
-export function initServer(
+export async function initServer(
 	authHandler: (params: WSParams) => Promise<boolean>,
 ): Promise<WSServer> {
-	const port = getListenPort();
-	return new Promise<WSServer>((resolve, reject) => {
-		const server = new Server({ host: "0.0.0.0", port });
+	const port = requirePortEnv("API_PORT");
+	const server = await startWsServer({ port });
 
-		server.on("listening", () => resolve(server));
-		server.on("error", (error: Error) => reject(error));
-	}).then(async (server) => {
-		await server.setAuth(authHandler);
+	await server.setAuth(authHandler);
 
-		await server.event(DATA_CHANGED_EVENT);
+	await server.event(DATA_CHANGED_EVENT);
 
-		console.info(`WS server listening at 0.0.0.0:${port}`);
-		return server;
-	});
+	console.info(`WS server listening at 0.0.0.0:${port}`);
+	return server;
 }
 
 export function makeAuthChecker(

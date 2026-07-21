@@ -7,72 +7,6 @@
 
 import SwiftUI
 
-struct Route: Hashable, Codable {
-  let flowId: String
-  let pageId: String
-  let query: [String: [String]]
-
-  init(flowId: String, pageId: String, query: [String: [String]] = [:]) {
-    self.flowId = flowId
-    self.pageId = pageId
-    self.query = query
-  }
-}
-
-enum ActionOperation: Hashable {
-  case navigate(Route)
-  case highlightRequired(String)
-  case close
-}
-
-extension ActionOperation {
-  static func == (lhs: ActionOperation, rhs: ActionOperation) -> Bool {
-    switch (lhs, rhs) {
-    case (.navigate(let leftRoute), .navigate(let rightRoute)):
-      return leftRoute == rightRoute
-    case (.highlightRequired(let leftField), .highlightRequired(let rightField)):
-      return leftField == rightField
-    case (.close, .close):
-      return true
-    default:
-      return false
-    }
-  }
-
-  func hash(into hasher: inout Hasher) {
-    switch self {
-    case .navigate(let route):
-      hasher.combine(0)
-      hasher.combine(route)
-    case .highlightRequired(let fieldName):
-      hasher.combine(1)
-      hasher.combine(fieldName)
-    case .close:
-      hasher.combine(2)
-    }
-  }
-}
-
-struct ActionEnvironmentKey: EnvironmentKey {
-  static let defaultValue: (ActionOperation) -> Void = { _ in }
-}
-
-struct SheetDismissEnvironmentKey: EnvironmentKey {
-  static let defaultValue: (() -> Void)? = nil
-}
-
-extension EnvironmentValues {
-  var action: (ActionOperation) -> Void {
-    get { self[ActionEnvironmentKey.self] }
-    set { self[ActionEnvironmentKey.self] = newValue }
-  }
-
-  var sheetDismiss: (() -> Void)? {
-    get { self[SheetDismissEnvironmentKey.self] }
-    set { self[SheetDismissEnvironmentKey.self] = newValue }
-  }
-}
-
 private let DEFAULT_HOME_FLOW_ID = "f267c629-2594-4770-8cec-d5324ebb4058"
 private var HOME_FLOW_ID: String {
   let configuredHomeFlowId = ProcessInfo.processInfo.environment["HOME_FLOW_ID"] ?? ""
@@ -127,13 +61,13 @@ struct ContentView: View {
   private func handleAction(_ navOperation: ActionOperation) {
     switch navOperation {
     case .navigate(let route):
-      if let existing = routes.lastIndex(of: route) {
-        routes.removeSubrange(existing...)
-      } else {
-        routes.append(route)
-      }
+      routes = routesAfterNavigating(
+        from: routes,
+        to: route,
+        homeFlowId: HOME_FLOW_ID
+      )
 
-      if currentFlowId == route.flowId {
+      if route.flowId == HOME_FLOW_ID || currentFlowId == route.flowId {
         break
       }
 
@@ -199,11 +133,6 @@ struct ContentView: View {
             try await EVY.sync()
             homeFirstPageId = EVYFlowStore.firstPageId(inFlowId: HOME_FLOW_ID)
             loading = false
-          } catch let error as EVYRPCError {
-            alertTitle = "Error"
-            alertMessage = error.localizedDescription
-            showingAlert = true
-            loading = false
           } catch {
             alertTitle = "Error"
             alertMessage = error.localizedDescription
@@ -241,6 +170,11 @@ struct ContentView: View {
     .onChange(of: routes) { oldRoutes, newRoutes in
       let previousFlowId = oldRoutes.last?.flowId ?? HOME_FLOW_ID
       let newFlowId = newRoutes.last?.flowId ?? HOME_FLOW_ID
+
+      if newRoutes.isEmpty, let homeFirstPageId {
+        EVY.activeCacheScopeId = homeFirstPageId
+        EVYValueChange.post(key: nil)
+      }
 
       guard newFlowId != previousFlowId else {
         return

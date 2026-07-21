@@ -54,20 +54,14 @@ struct EVYTitledTextFieldRow: View {
   }
 
   var body: some View {
-    VStack(alignment: .leading) {
-      if let title, !title.isEmpty {
-        EVYTextView(title)
-          .padding(.vertical, Constants.padding)
-      }
-      EVYTextField(
-        source: source,
-        destination: destination,
-        placeholder: placeholder,
-        multiLine: multiLine,
-        isInteractive: isInteractive
-      )
-    }
-    .padding(.horizontal, Constants.majorPadding)
+    EVYTextField(
+      source: source,
+      destination: destination,
+      placeholder: placeholder,
+      multiLine: multiLine,
+      isInteractive: isInteractive
+    )
+    .titledRow(title)
   }
 }
 

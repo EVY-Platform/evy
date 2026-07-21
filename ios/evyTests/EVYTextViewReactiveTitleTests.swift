@@ -25,7 +25,7 @@ final class EVYTextViewReactiveTitleTests: XCTestCase {
       "Bold title should resolve the seeded value on init, got: '\(initial)'"
     )
 
-    try EVY.writeRawValue("Updated", to: "{\(key)}", scopeId: scopeId)
+    try EVY.writeRawStringValue("Updated", to: "{\(key)}", scopeId: scopeId)
 
     let updated = view.toString()
     XCTAssertTrue(
@@ -66,7 +66,7 @@ final class EVYTextViewReactiveTitleTests: XCTestCase {
       "makeState should resolve the seeded value on init, got: '\(initial)'"
     )
 
-    try EVY.writeRawValue("Updated", to: "{\(key)}", scopeId: scopeId)
+    try EVY.writeRawStringValue("Updated", to: "{\(key)}", scopeId: scopeId)
 
     let updated = state.value.toString()
     XCTAssertTrue(
@@ -86,7 +86,7 @@ final class EVYTextViewReactiveTitleTests: XCTestCase {
       "init(state:) should resolve the seeded value, got: '\(initial)'"
     )
 
-    try EVY.writeRawValue("Updated", to: "{\(key)}", scopeId: scopeId)
+    try EVY.writeRawStringValue("Updated", to: "{\(key)}", scopeId: scopeId)
 
     let updated = view.toString()
     XCTAssertTrue(
@@ -102,7 +102,7 @@ final class EVYTextViewReactiveTitleTests: XCTestCase {
     EVY.ensureDraftExists(variableName: "selected_pickup_timeslot", scopeId: scopeId)
     try EVY.updateValue(
       "2026-06-03T10:00:00",
-      at: "{selected_pickup_timeslot}",
+      destination: "{selected_pickup_timeslot}",
       scopeId: scopeId
     )
 
@@ -122,7 +122,7 @@ final class EVYTextViewReactiveTitleTests: XCTestCase {
     let key = uniqueKey("title")
     let scopeId = EVYDraft.ephemeralScopeId(forPageId: UUID().uuidString)
     EVY.draftStore.activeScopeId = scopeId
-    try EVY.writeRawValue(initial, to: "{\(key)}", scopeId: scopeId)
+    try EVY.writeRawStringValue(initial, to: "{\(key)}", scopeId: scopeId)
     return (key, scopeId)
   }
 }

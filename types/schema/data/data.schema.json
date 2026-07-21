@@ -311,9 +311,14 @@
 				"$ref": "../common/json.schema.json#/$defs/JSONValue"
 			},
 			"properties": {
-				"child_row_id": {
+				"sheet_row_id": {
 					"type": "string",
 					"format": "uuid"
+				},
+				"child_row_id": {
+					"type": "string",
+					"format": "uuid",
+					"description": "Search-only result template relationship at the SDUI layer."
 				},
 				"children_row_ids": {
 					"type": "array",
@@ -350,7 +355,7 @@
 					"enum": [
 						"Button",
 						"Calendar",
-						"ColumnContainer",
+						"HorizontalContainer",
 						"Dropdown",
 						"Heading",
 						"Text",
@@ -360,12 +365,12 @@
 						"Map",
 						"InputList",
 						"Input",
-						"ListContainer",
+						"VerticalContainer",
 						"ListItem",
 						"Search",
 						"PhotoGallery",
 						"SelectPhoto",
-						"SelectSegmentContainer",
+						"TabContainer",
 						"TextArea",
 						"TextSelect",
 						"TimeslotPicker"

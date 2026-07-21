@@ -1,8 +1,7 @@
 import { Plus, Trash2 } from "lucide-react";
 import { useCallback, useMemo, useState } from "react";
-
-import type { ServiceResource } from "../../api/sync";
 import { LUCIDE_STROKE_WIDTH } from "../../icons/iconSyntax";
+import type { ServiceResource } from "../../types/resources";
 import {
 	type ConditionExpression,
 	type ConditionGroup,

@@ -20,7 +20,7 @@ import type {
 	UpdateRequest,
 } from "evy-types";
 import { EVY_CORE_RESOURCE, EVY_CORE_SERVICE } from "evy-types/coreResources";
-import * as schema from "../../../types/generated/ts/db/schema.generated";
+import * as schema from "evy-types/db/schema.generated";
 import { useFileStorageDirsForTest } from "./fileStorageTestHelpers";
 import {
 	asEvyDb,

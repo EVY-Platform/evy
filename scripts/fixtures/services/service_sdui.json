@@ -83,7 +83,7 @@
 					},
 					{
 						"id": "ec3bef23-6d74-43eb-adde-8d498d9ed70e",
-						"type": "SelectSegmentContainer",
+						"type": "TabContainer",
 						"actions": [],
 						"visible": "true",
 						"title": "",
@@ -91,7 +91,7 @@
 						"children": [
 							{
 								"id": "256c223c-71df-42f5-b12f-5267517d87cd",
-								"type": "ListContainer",
+								"type": "VerticalContainer",
 								"actions": [],
 								"visible": "true",
 								"title": "",
@@ -113,7 +113,7 @@
 										"actions": [
 											{
 												"condition": "",
-												"true": "{show()}",
+												"true": "{show(b8c7d6e5-f4a3-4b2c-9d1e-0f8a7b6c5d4e)}",
 												"false": ""
 											}
 										],
@@ -128,9 +128,9 @@
 										"timeslot_format": "{formatDatetime($datum, \"HH:mm\")}",
 										"name": "Pickup available times",
 										"destination": "{selected_pickup_timeslot}",
-										"child": {
+										"sheet": {
 											"id": "b8c7d6e5-f4a3-4b2c-9d1e-0f8a7b6c5d4e",
-											"type": "ListContainer",
+											"type": "VerticalContainer",
 											"actions": [],
 											"visible": "true",
 											"title": "Confirmation",
@@ -141,7 +141,7 @@
 													"actions": [],
 													"visible": "true",
 													"title": "",
-													"subtitle": "You are about to request to pickup {dc28ed59-298e-493c-8ff3-3e60f2ebccbd.title} at {formatDatetime(selected_pickup_timeslot, \"EEE do\")} {formatDatetime(selected_pickup_timeslot, \"HH:mm\")}",
+													"subtitle": "Request to pick up {dc28ed59-298e-493c-8ff3-3e60f2ebccbd.title} on {formatDatetime(selected_pickup_timeslot, \"EEE do\")} at {formatDatetime(selected_pickup_timeslot, \"HH:mm\")}",
 													"name": "Pickup confirmation message"
 												},
 												{
@@ -150,7 +150,7 @@
 													"actions": [],
 													"visible": "{selected_pickup_timeslot != earliestDatetime(dc28ed59-298e-493c-8ff3-3e60f2ebccbd.pickup_selection)}",
 													"title": "",
-													"subtitle": "Be advised someone may request to pickup {dc28ed59-298e-493c-8ff3-3e60f2ebccbd.title} earlier than your selected timeslot.",
+													"subtitle": "Be advised someone may request to pick up {dc28ed59-298e-493c-8ff3-3e60f2ebccbd.title} earlier than your selected timeslot.",
 													"name": "Pickup earlier timeslot warning"
 												},
 												{
@@ -183,7 +183,7 @@
 										"actions": [
 											{
 												"condition": "",
-												"true": "{show()}",
+												"true": "{show(f1a2b3c4-d5e6-4f7a-8b9c-0d1e2f3a4b5d)}",
 												"false": ""
 											}
 										],
@@ -192,9 +192,9 @@
 										"label": "Cancel request",
 										"style": "danger",
 										"name": "Cancel request",
-										"child": {
+										"sheet": {
 											"id": "f1a2b3c4-d5e6-4f7a-8b9c-0d1e2f3a4b5d",
-											"type": "ListContainer",
+											"type": "VerticalContainer",
 											"actions": [],
 											"visible": "true",
 											"title": "Confirmation",
@@ -238,7 +238,7 @@
 							},
 							{
 								"id": "0fa00e83-881b-4ecb-b7d3-958d8eaf807c",
-								"type": "ListContainer",
+								"type": "VerticalContainer",
 								"actions": [],
 								"visible": "true",
 								"title": "",
@@ -257,7 +257,7 @@
 										"type": "TextAction",
 										"actions": [
 											{
-												"true": "{show()}",
+												"true": "{show(549ca3b3-7a40-448e-84e8-7163e46ce48e)}",
 												"false": "",
 												"condition": ""
 											}
@@ -265,7 +265,9 @@
 										"title": "Delivery address",
 										"subtitle": "{formatAddress(dc28ed59-298e-493c-8ff3-3e60f2ebccbd.transfer_options.pickup.address)}",
 										"action": "Change",
-										"child": {
+										"visible": "true",
+										"name": "Delivery address",
+										"sheet": {
 											"id": "549ca3b3-7a40-448e-84e8-7163e46ce48e",
 											"type": "Search",
 											"child": {
@@ -284,9 +286,7 @@
 											"visible": "true",
 											"name": "Find pickup address",
 											"destination": "{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.transfer_options.pickup.address}"
-										},
-										"visible": "true",
-										"name": "Delivery address"
+										}
 									},
 									{
 										"id": "bd8fa85c-1b67-467a-983d-328e6dc49db7",
@@ -295,7 +295,7 @@
 										"actions": [
 											{
 												"condition": "",
-												"true": "{show()}",
+												"true": "{show(c4d5e6f7-a8b9-4c0d-1e2f-3a4b5c6d7e80)}",
 												"false": ""
 											}
 										],
@@ -310,9 +310,9 @@
 										"timeslot_format": "{formatDatetime($datum, \"HH:mm\")}",
 										"name": "Delivery available times",
 										"destination": "{selected_delivery_timeslot}",
-										"child": {
+										"sheet": {
 											"id": "c4d5e6f7-a8b9-4c0d-1e2f-3a4b5c6d7e80",
-											"type": "ListContainer",
+											"type": "VerticalContainer",
 											"actions": [],
 											"visible": "true",
 											"title": "Confirmation",
@@ -356,7 +356,7 @@
 										"actions": [
 											{
 												"condition": "",
-												"true": "{show()}",
+												"true": "{show(f7a8b9c0-d1e2-4f3a-4b5c-6d7e8f9a0b1d)}",
 												"false": ""
 											}
 										],
@@ -365,9 +365,9 @@
 										"label": "Cancel request",
 										"style": "danger",
 										"name": "Cancel request",
-										"child": {
+										"sheet": {
 											"id": "f7a8b9c0-d1e2-4f3a-4b5c-6d7e8f9a0b1d",
-											"type": "ListContainer",
+											"type": "VerticalContainer",
 											"actions": [],
 											"visible": "true",
 											"title": "Confirmation",
@@ -411,7 +411,7 @@
 							},
 							{
 								"id": "3ef805de-1386-4f2d-b0f6-54130dc1ba8d",
-								"type": "ListContainer",
+								"type": "VerticalContainer",
 								"actions": [],
 								"visible": "true",
 								"title": "",
@@ -430,7 +430,7 @@
 										"type": "TextAction",
 										"actions": [
 											{
-												"true": "{show()}",
+												"true": "{show(c46317fb-b410-4b85-81c6-092dee574dbd)}",
 												"false": "",
 												"condition": ""
 											}
@@ -438,7 +438,9 @@
 										"title": "Shipping address",
 										"subtitle": "{formatAddress(dc28ed59-298e-493c-8ff3-3e60f2ebccbd.transfer_options.pickup.address)}",
 										"action": "Change",
-										"child": {
+										"visible": "true",
+										"name": "Shipping address",
+										"sheet": {
 											"id": "c46317fb-b410-4b85-81c6-092dee574dbd",
 											"type": "Search",
 											"child": {
@@ -457,9 +459,7 @@
 											"visible": "true",
 											"name": "Find pickup address",
 											"destination": "{shipping_address}"
-										},
-										"visible": "true",
-										"name": "Shipping address"
+										}
 									},
 									{
 										"id": "e47cc52b-c909-496d-bc9a-af7e8b9d7ed3",
@@ -467,7 +467,7 @@
 										"actions": [
 											{
 												"condition": "{length(shipping_address.postcode) > 0}",
-												"true": "{show()}",
+												"true": "{show(f2a1b0c9-d8e7-4f6a-5b4c-3d2e1f0a9b8c)}",
 												"false": "{highlight_required(postcode)}"
 											}
 										],
@@ -475,9 +475,9 @@
 										"title": "",
 										"label": "Ask to buy",
 										"name": "Ask to buy",
-										"child": {
+										"sheet": {
 											"id": "f2a1b0c9-d8e7-4f6a-5b4c-3d2e1f0a9b8c",
-											"type": "ListContainer",
+											"type": "VerticalContainer",
 											"actions": [],
 											"visible": "true",
 											"title": "Confirmation",
@@ -539,7 +539,7 @@
 										"actions": [
 											{
 												"condition": "",
-												"true": "{show()}",
+												"true": "{show(d1e2f3a4-b5c6-4d7e-8f9a-0b1c2d3e4f5b)}",
 												"false": ""
 											}
 										],
@@ -548,9 +548,9 @@
 										"label": "Cancel request",
 										"style": "danger",
 										"name": "Cancel request",
-										"child": {
+										"sheet": {
 											"id": "d1e2f3a4-b5c6-4d7e-8f9a-0b1c2d3e4f5b",
-											"type": "ListContainer",
+											"type": "VerticalContainer",
 											"actions": [],
 											"visible": "true",
 											"title": "Confirmation",
@@ -672,7 +672,7 @@
 					},
 					{
 						"id": "a7b8c9d0-e1f2-4a3b-8c5d-6e7f8a9b0c1d",
-						"type": "ColumnContainer",
+						"type": "HorizontalContainer",
 						"actions": [],
 						"title": "Dimensions (width x height x depth)",
 						"children": [
@@ -808,14 +808,14 @@
 				"rows": [
 					{
 						"id": "d0e1f2a3-b4c5-4d6e-8f8a-9b0c1d2e3f4a",
-						"type": "SelectSegmentContainer",
+						"type": "TabContainer",
 						"actions": [],
 						"title": "",
 						"segments": ["Pickup", "Delivery", "Shipping"],
 						"children": [
 							{
 								"id": "22222222-2222-4222-8222-222222222201",
-								"type": "ListContainer",
+								"type": "VerticalContainer",
 								"actions": [],
 								"title": "",
 								"children": [
@@ -833,7 +833,7 @@
 										"type": "TextAction",
 										"actions": [
 											{
-												"true": "{show()}",
+												"true": "{show(3bb1bad9-a193-4eef-825e-da6f63a1a38e)}",
 												"false": "",
 												"condition": ""
 											}
@@ -841,7 +841,9 @@
 										"title": "Where",
 										"subtitle": "{formatAddress(dc28ed59-298e-493c-8ff3-3e60f2ebccbd.transfer_options.pickup.address)}",
 										"action": "Change",
-										"child": {
+										"visible": "true",
+										"name": "Pickup address",
+										"sheet": {
 											"id": "3bb1bad9-a193-4eef-825e-da6f63a1a38e",
 											"type": "Search",
 											"child": {
@@ -860,9 +862,7 @@
 											"visible": "true",
 											"name": "Find pickup address",
 											"destination": "{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.transfer_options.pickup.address}"
-										},
-										"visible": "true",
-										"name": "Pickup address"
+										}
 									},
 									{
 										"id": "22222222-2222-4222-8222-222222222206",
@@ -920,7 +920,7 @@
 							},
 							{
 								"id": "22222222-2222-4222-8222-222222222209",
-								"type": "ListContainer",
+								"type": "VerticalContainer",
 								"actions": [],
 								"title": "",
 								"children": [
@@ -998,7 +998,7 @@
 							},
 							{
 								"id": "22222222-2222-4222-8222-222222222216",
-								"type": "ListContainer",
+								"type": "VerticalContainer",
 								"actions": [],
 								"title": "",
 								"children": [
@@ -1109,7 +1109,7 @@
 					},
 					{
 						"id": "f2a3b4c5-d6e7-4f8a-9b0c-1d2e3f4a5b6c",
-						"type": "ListContainer",
+						"type": "VerticalContainer",
 						"actions": [],
 						"title": "",
 						"children": [
@@ -1148,16 +1148,16 @@
 						{
 							"condition": "{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.payment_cash == true || dc28ed59-298e-493c-8ff3-3e60f2ebccbd.payment_app == true}",
 							"false": "{highlight_required(dc28ed59-298e-493c-8ff3-3e60f2ebccbd.payment_app)}",
-							"true": "{show()}"
+							"true": "{show(a4b5c6d7-e8f9-4a0b-1c2d-3e4f5a6b7c8d)}"
 						}
 					],
 					"title": "",
 					"label": "Submit",
 					"visible": "true",
 					"name": "Submit listing",
-					"child": {
+					"sheet": {
 						"id": "a4b5c6d7-e8f9-4a0b-1c2d-3e4f5a6b7c8d",
-						"type": "ListContainer",
+						"type": "VerticalContainer",
 						"actions": [],
 						"visible": "true",
 						"title": "Confirmation",

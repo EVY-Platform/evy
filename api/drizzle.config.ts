@@ -1,12 +1,12 @@
 import { defineConfig } from "drizzle-kit";
-import { getConnectionUrl } from "./src/data/connection";
+import { getPostgresConnectionUrl } from "evy-types/env";
 
 export default defineConfig({
 	schema: "../types/generated/ts/db/schema.generated.ts",
 	out: "./drizzle",
 	dialect: "postgresql",
 	dbCredentials: {
-		url: getConnectionUrl(),
+		url: getPostgresConnectionUrl("DB_EVY_DATABASE"),
 	},
 	verbose: true,
 	strict: true,

@@ -9,7 +9,7 @@ import LucideIcons
 import SwiftUI
 import UIKit
 
-public enum EVYTextStyle: String {
+enum EVYTextStyle: String {
   case body
   case bodyBold
   case title
@@ -43,11 +43,19 @@ struct EVYTextView: View {
           return placeholderVal
         }
 
-        if templateText.contains(value.value) {
+        if templateShowsResolvedValueAsPlaceholder(template: templateText, resolved: value.value) {
           return placeholderVal
         }
         return value
       })
+  }
+
+  /// True when the template still contains the resolved substring (unexpanded binding / placeholder).
+  private static func templateShowsResolvedValueAsPlaceholder(
+    template: String,
+    resolved: String
+  ) -> Bool {
+    !resolved.isEmpty && template.contains(resolved)
   }
 
   init(state: EVYState<EVYValue>, style: EVYTextStyle = .body) {

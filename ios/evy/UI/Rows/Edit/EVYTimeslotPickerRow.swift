@@ -19,19 +19,13 @@ struct EVYTimeslotPickerRow: View {
   }
 
   var body: some View {
-    VStack(alignment: .leading) {
-      if let title = view.title, !title.isEmpty {
-        EVYTextView(title)
-          .padding(.vertical, Constants.padding)
-      }
-      EVYTimeslotPicker(
-        content: view,
-        source: view.source,
-        destination: view.destination,
-        onTimeslotSelected: onTimeslotSelected
-      )
-    }
-    .padding(.horizontal, Constants.majorPadding)
+    EVYTimeslotPicker(
+      content: view,
+      source: view.source,
+      destination: view.destination,
+      onTimeslotSelected: onTimeslotSelected
+    )
+    .titledRow(view.title)
   }
 }
 

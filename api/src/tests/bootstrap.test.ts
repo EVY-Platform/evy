@@ -109,22 +109,20 @@ describe("assertApiReadable", () => {
 	});
 
 	it("resolves when flows get returns an array envelope and requireSeeded is false", async () => {
-		await expect(
-			assertApiReadable(db, { requireSeeded: false }),
-		).resolves.toBeUndefined();
+		await expect(assertApiReadable(db, false)).resolves.toBeUndefined();
 	});
 
 	it("throws when flows get does not return a data array", async () => {
 		getImpl = async () => "not-array" as unknown as GetResponse;
-		await expect(
-			assertApiReadable(db, { requireSeeded: false }),
-		).rejects.toThrow("expected flows response data array");
+		await expect(assertApiReadable(db, false)).rejects.toThrow(
+			"expected flows response data array",
+		);
 	});
 
 	it("throws when requireSeeded is true but flows is empty", async () => {
-		await expect(
-			assertApiReadable(db, { requireSeeded: true }),
-		).rejects.toThrow("missing seeded flows");
+		await expect(assertApiReadable(db, true)).rejects.toThrow(
+			"missing seeded flows",
+		);
 	});
 
 	it("resolves when requireSeeded is true and flows has at least one flow", async () => {
@@ -143,9 +141,7 @@ describe("assertApiReadable", () => {
 				},
 			] as GetResponse;
 		};
-		await expect(
-			assertApiReadable(db, { requireSeeded: true }),
-		).resolves.toBeUndefined();
+		await expect(assertApiReadable(db, true)).resolves.toBeUndefined();
 	});
 
 	it("throws when an external service is missing its WebSocket env vars", async () => {
@@ -157,9 +153,9 @@ describe("assertApiReadable", () => {
 		delete process.env.MARKETPLACE_WS_HOST;
 		delete process.env.MARKETPLACE_WS_PORT;
 		try {
-			await expect(
-				assertApiReadable(db, { requireSeeded: false }),
-			).rejects.toThrow("MARKETPLACE_WS_HOST");
+			await expect(assertApiReadable(db, false)).rejects.toThrow(
+				"MARKETPLACE_WS_HOST",
+			);
 		} finally {
 			if (savedHost !== undefined)
 				process.env.MARKETPLACE_WS_HOST = savedHost;
@@ -177,9 +173,7 @@ describe("assertApiReadable", () => {
 		process.env.MARKETPLACE_WS_HOST = "localhost";
 		process.env.MARKETPLACE_WS_PORT = "50051";
 		try {
-			await expect(
-				assertApiReadable(db, { requireSeeded: false }),
-			).resolves.toBeUndefined();
+			await expect(assertApiReadable(db, false)).resolves.toBeUndefined();
 		} finally {
 			if (savedHost !== undefined)
 				process.env.MARKETPLACE_WS_HOST = savedHost;

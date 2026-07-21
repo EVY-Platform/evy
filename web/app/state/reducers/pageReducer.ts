@@ -6,12 +6,13 @@ import {
 	addPage,
 	addRowRecords,
 	ensureShowAction,
+	type FlowEntityMaps,
 	findPageIdContainingRow,
 	findRowIdPath,
-	insertRowIntoPage,
+	insertIntoLocation,
 	moveRow,
 	moveRowToFooter,
-	pageRootIds,
+	removePage,
 	removeRowFromPage,
 	setFooterRow,
 	updatePageTitle,
@@ -23,6 +24,7 @@ import {
 	buildNewPageRecord,
 } from "../../utils/flowFactory";
 import { rowToFlatRecords } from "../../utils/rowCodec";
+import { pageRootIds } from "../../utils/rowTraversal";
 
 const COMMA_SEPARATED_CONTENT_KEYS = new Set(["segments"]);
 
@@ -55,15 +57,24 @@ function buildFlatPaletteRow(
 	return { rootRowId: row.id, rowRecords: rowToFlatRecords(row) };
 }
 
-type ChildContainerSelection = { activeRowId: string; configStack: string[] };
+type ContainerDropSelection = {
+	activeRowId: string;
+	configStack: string[];
+};
 
-function resolveChildContainerSelection(
+function resolveContainerDropSelection(
 	state: AppState,
 	pageId: string,
 	destinationContainer: { type: string; rowId: string } | undefined,
 	targetRowId: string,
-): ChildContainerSelection | null {
-	if (destinationContainer?.type !== "child") return null;
+): ContainerDropSelection | null {
+	if (
+		!destinationContainer ||
+		(destinationContainer.type !== "child" &&
+			destinationContainer.type !== "sheet")
+	) {
+		return null;
+	}
 	const page = state.pagesById[pageId];
 	if (!page) return null;
 	const roots = pageRootIds(page);
@@ -76,6 +87,55 @@ function resolveChildContainerSelection(
 	return {
 		activeRowId: path[0],
 		configStack: [...path.slice(1), targetRowId],
+	};
+}
+
+function applyStructuralContainerDrop(
+	state: AppState,
+	nextMaps: FlowEntityMaps,
+	destinationPageId: string,
+	destinationContainer: { type: string; rowId: string } | undefined,
+	selectedRowId: string,
+): AppState {
+	const containerSelection = resolveContainerDropSelection(
+		{ ...state, ...nextMaps },
+		destinationPageId,
+		destinationContainer,
+		selectedRowId,
+	);
+
+	if (!destinationContainer || !containerSelection) {
+		return {
+			...state,
+			...nextMaps,
+			activeRowId: selectedRowId,
+			configStack: [],
+		};
+	}
+
+	if (destinationContainer.type === "sheet") {
+		const parentRow = state.rowsById[destinationContainer.rowId];
+		const replacedSheetRowId =
+			typeof parentRow?.data.sheet_row_id === "string"
+				? parentRow.data.sheet_row_id
+				: undefined;
+		const mapsWithShow = ensureShowAction(
+			nextMaps,
+			destinationContainer.rowId,
+			selectedRowId,
+			replacedSheetRowId,
+		);
+		return {
+			...state,
+			...mapsWithShow,
+			...containerSelection,
+		};
+	}
+
+	return {
+		...state,
+		...nextMaps,
+		...containerSelection,
 	};
 }
 
@@ -136,7 +196,7 @@ export const pageReducer = (state: AppState, action: RowAction): AppState => {
 
 			const { rootRowId, rowRecords } = built;
 			let nextMaps = addRowRecords(state, rowRecords);
-			nextMaps = insertRowIntoPage(
+			nextMaps = insertIntoLocation(
 				nextMaps,
 				action.destinationPageId,
 				rootRowId,
@@ -144,32 +204,13 @@ export const pageReducer = (state: AppState, action: RowAction): AppState => {
 				action.destinationContainer,
 			);
 
-			if (action.destinationContainer) {
-				const childSelection = resolveChildContainerSelection(
-					nextMaps as AppState,
-					action.destinationPageId,
-					action.destinationContainer,
-					rootRowId,
-				);
-				if (childSelection) {
-					const mapsWithShow = ensureShowAction(
-						nextMaps,
-						action.destinationContainer.rowId,
-					);
-					return {
-						...state,
-						...mapsWithShow,
-						...childSelection,
-					};
-				}
-			}
-
-			return {
-				...state,
-				...nextMaps,
-				activeRowId: rootRowId,
-				configStack: [],
-			};
+			return applyStructuralContainerDrop(
+				state,
+				nextMaps,
+				action.destinationPageId,
+				action.destinationContainer,
+				rootRowId,
+			);
 		}
 
 		case "ADD_ROW_AS_FOOTER": {
@@ -215,32 +256,13 @@ export const pageReducer = (state: AppState, action: RowAction): AppState => {
 				action.destinationContainer,
 			);
 
-			if (action.destinationContainer) {
-				const childSelection = resolveChildContainerSelection(
-					nextMaps as AppState,
-					action.destinationPageId,
-					action.destinationContainer,
-					action.rowId,
-				);
-				if (childSelection) {
-					const mapsWithShow = ensureShowAction(
-						nextMaps,
-						action.destinationContainer.rowId,
-					);
-					return {
-						...state,
-						...mapsWithShow,
-						...childSelection,
-					};
-				}
-			}
-
-			return {
-				...state,
-				...nextMaps,
-				activeRowId: action.rowId,
-				configStack: [],
-			};
+			return applyStructuralContainerDrop(
+				state,
+				nextMaps,
+				action.destinationPageId,
+				action.destinationContainer,
+				action.rowId,
+			);
 		}
 
 		case "REMOVE_ROW": {
@@ -367,47 +389,18 @@ export const pageReducer = (state: AppState, action: RowAction): AppState => {
 			if (!flow || flow.pageIds.length <= 1) return state;
 			if (!flow.pageIds.includes(action.pageId)) return state;
 
-			const { [action.pageId]: _removedPage, ...remainingPages } =
-				state.pagesById;
-			const nextPageIds = flow.pageIds.filter(
-				(id) => id !== action.pageId,
+			const nextMaps = removePage(
+				state,
+				state.activeFlowId,
+				action.pageId,
 			);
-			const updatedFlow = {
-				...flow,
-				pageIds: nextPageIds,
-				updatedAt: new Date().toISOString(),
-			};
-
-			// clean orphaned rows
-			const reachableRows = new Set<string>();
-			for (const pgId of nextPageIds) {
-				const pg = remainingPages[pgId];
-				if (!pg) continue;
-				for (const rowId of pg.rowIds) {
-					collectSubtreeIds(rowId, state.rowsById, reachableRows);
-				}
-				if (pg.footerRowId) {
-					collectSubtreeIds(
-						pg.footerRowId,
-						state.rowsById,
-						reachableRows,
-					);
-				}
-			}
-			const nextRows: typeof state.rowsById = {};
-			for (const [id, row] of Object.entries(state.rowsById)) {
-				if (reachableRows.has(id)) nextRows[id] = row;
-			}
+			const nextPageIds =
+				nextMaps.flowsById[state.activeFlowId]?.pageIds ?? [];
 
 			const wasActive = state.activePageId === action.pageId;
 			return {
 				...state,
-				flowsById: {
-					...state.flowsById,
-					[state.activeFlowId]: updatedFlow,
-				},
-				pagesById: remainingPages,
-				rowsById: nextRows,
+				...nextMaps,
 				activePageId: wasActive ? nextPageIds[0] : state.activePageId,
 				activeRowId: wasActive ? undefined : state.activeRowId,
 				configStack: wasActive ? [] : state.configStack,
@@ -440,25 +433,3 @@ export const pageReducer = (state: AppState, action: RowAction): AppState => {
 			return state;
 	}
 };
-
-// Used only by REMOVE_PAGE inline since flatGraph.removePage isn't imported here
-function collectSubtreeIds(
-	rowId: string,
-	rowsById: AppState["rowsById"],
-	visited: Set<string>,
-) {
-	if (visited.has(rowId)) return;
-	const row = rowsById[rowId];
-	if (!row) return;
-	visited.add(rowId);
-	const childId = row.data.child_row_id;
-	if (typeof childId === "string")
-		collectSubtreeIds(childId, rowsById, visited);
-	const childrenIds = row.data.children_row_ids;
-	if (Array.isArray(childrenIds)) {
-		for (const id of childrenIds) {
-			if (typeof id === "string")
-				collectSubtreeIds(id, rowsById, visited);
-		}
-	}
-}
