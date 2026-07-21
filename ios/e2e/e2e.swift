@@ -3187,6 +3187,80 @@ final class E2EHomepageMessageSearchTests: E2ETestBase {
     "pickup request", "delivery request", "shipping request",
   ]
 
+  override var homeFlowId: String? { E2EFlowIds.defaultHomeFlow }
+
+  // Page ids are stored globally, so the synthetic home flows other test classes seed
+  // (homeFlowData/createHomeFlowData) overwrite the production home page's rows with their
+  // button content. Reseed the production home page's message + item search rows before each
+  // launch so this test is independent of execution order.
+  override func setUpWithError() throws {
+    continueAfterFailure = false
+    try seedFlows([
+      (flowId: E2EFlowIds.defaultHomeFlow, flowData: Self.messageSearchHomeFlowData())
+    ])
+    try launchApp()
+  }
+
+  private static func messageSearchHomeFlowData() -> [String: Any] {
+    let messageSearchRow: [String: Any] = [
+      "id": "7c4a8f21-9b3d-4e6a-a1c2-8f7d3e5b9a01",
+      "type": "Search",
+      "child": [
+        "id": "8d5b9e32-ac4e-5f7b-b2d3-9e8f4a6c0b12",
+        "type": "Text",
+        "title": "{$datum.data.type} request",
+        "subtitle": "",
+        "actions": [],
+        "visible": "true",
+        "name": "Message search result",
+      ],
+      "title": "",
+      "placeholder": "Filter messages by type",
+      "source": "{\(MarketplaceResource.messages.rawValue)}",
+      "destination": "",
+      "actions": [],
+      "visible": "true",
+      "name": "Search messages",
+    ]
+    let itemSearchRow: [String: Any] = [
+      "id": "96d3efe4-ea20-4a81-9ccb-64d6b57646e9",
+      "type": "Search",
+      "child": [
+        "id": "d5922ca1-fc26-430a-81ed-fd343c13dab1",
+        "type": "ListItem",
+        "title": "{$datum.title}",
+        "subtitle": "{formatCurrency($datum.price)}",
+        "image": "{$datum.photo_ids.0}",
+        "actions": [
+          Self.rowAction(
+            true:
+              "{navigate(74a49d4b-2176-4925-857a-e29e2991f1bd,82cae120-c7b1-4c29-bd42-e1521320b109,{id: $datum.id})}"
+          )
+        ],
+        "visible": "true",
+        "name": "Item search result",
+      ],
+      "title": "",
+      "placeholder": "Search anything",
+      "source": "{\(MARKETPLACE_ITEMS_RESOURCE_ID)}",
+      "destination": "",
+      "actions": [],
+      "visible": "true",
+      "name": "Search items",
+    ]
+    return [
+      "id": E2EFlowIds.defaultHomeFlow,
+      "name": "Home",
+      "pages": [
+        [
+          "id": E2EFlowIds.webSocketHomePage,
+          "title": "Home",
+          "rows": [messageSearchRow, itemSearchRow],
+        ]
+      ],
+    ]
+  }
+
   func testHomepageMessageSearchShowsAllMessagesAndFiltersByType() throws {
     let homePage = app.scrollViews["page_\(Self.homePageId)"]
     XCTAssertTrue(
