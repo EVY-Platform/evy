@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
-import {
-	type ResourceAttributeMetadata,
-	type ServiceResource,
-	syncWebData,
-} from "../api/sync";
+import { syncWebData } from "../api/sync";
+import type {
+	ResourceAttributeMetadata,
+	ServiceResource,
+} from "../types/resources";
 import type { FlowEntityCollections } from "../utils/flowEntities";
 
 type UseFlowsResult = {

@@ -4,9 +4,9 @@ import { useParseText } from "../hooks/useParseText";
 import { SheetRootRowIdContext, useRowById } from "../hooks/useRowById";
 import { useDragContext } from "../state/contexts/DragContext";
 import { useFlowsContext } from "../state/contexts/FlowsContext";
-import { ChildPageFrame } from "./ChildPageFrame";
 import { DraggableRowContainer } from "./DraggableRowContainer";
 import { baseTitleStyle } from "./pageStyles";
+import { SheetPageFrame } from "./SheetPageFrame";
 
 const sheetTitleStyle: CSSProperties = {
 	...baseTitleStyle,
@@ -77,10 +77,10 @@ export function SheetPage({
 	);
 
 	return (
-		<ChildPageFrame scrollableRef={scrollableRef} variant="sheet">
+		<SheetPageFrame scrollableRef={scrollableRef}>
 			<SheetRootRowIdContext.Provider value={sheetRowId}>
 				{content}
 			</SheetRootRowIdContext.Provider>
-		</ChildPageFrame>
+		</SheetPageFrame>
 	);
 }

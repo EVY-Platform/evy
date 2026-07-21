@@ -3,7 +3,7 @@ import { getPostgresConnectionUrl } from "evy-types/env";
 import postgres from "postgres";
 import { data } from "./schema";
 
-export { data } from "./schema";
+export { data };
 
 // exported for tests
 export const schema = { data };

@@ -31,11 +31,6 @@ func evyCount(_ args: String) throws -> EVYFunctionOutput {
 }
 
 @MainActor
-func evyLength(_ args: String) throws -> EVYFunctionOutput {
-  try evyCount(args)
-}
-
-@MainActor
 func evyEarliestDatetime(_ args: String) throws -> EVYFunctionOutput {
   let res = try EVY.getDataFromProps(args)
   guard case .array(let items) = res else {

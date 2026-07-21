@@ -104,8 +104,8 @@ function emitSduiDefinitions(definitions: SduiRowDefinition[]): {
 }
 
 /**
- * The row-type list is maintained in three hand-written places; fail
- * generation if any of them drift from the UI_RowBase enum:
+ * The row-type list is maintained in two other hand-written places; fail
+ * generation if either of them drifts from the UI_RowBase enum:
  * - sdui/evy.schema.json UI_Row.oneOf (one ref per definition schema)
  * - data/data.schema.json DATA_EVY_Row.properties.type.enum
  */

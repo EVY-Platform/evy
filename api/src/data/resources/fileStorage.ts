@@ -11,7 +11,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 let filesDir = resolve(join(__dirname, "..", "..", "public", "files"));
 let uploadTmpDir = resolve(join(__dirname, "..", "..", "public", "uploads"));
 
-export const NODE_ENOENT = "ENOENT" as const;
+const NODE_ENOENT = "ENOENT" as const;
 
 // Test hooks
 
@@ -55,10 +55,6 @@ export async function readFileBinary(id: string): Promise<Buffer> {
 	return readFile(filePath(id));
 }
 
-export async function deleteFileBinary(id: string): Promise<void> {
-	await unlink(filePath(id));
-}
-
 export async function deleteFileBinaryIfExists(id: string): Promise<void> {
 	await deletePathIfExists(filePath(id));
 }
@@ -73,7 +69,7 @@ function sanitizeFileId(id: string): string {
 	return id.replace(/[^a-zA-Z0-9-]/g, "");
 }
 
-export function hasNodeErrorCode(err: unknown, code: string): boolean {
+function hasNodeErrorCode(err: unknown, code: string): boolean {
 	return (
 		typeof err === "object" &&
 		err !== null &&

@@ -316,9 +316,10 @@ export function handleDrop(
 					destinationContainer.containerRowId,
 					destinationRow.data.rowId as string,
 				);
-			} else if (destinationContainer?.type === "child") {
-				dispatchOptions.destinationIndex = 0;
-			} else if (destinationContainer?.type === "sheet") {
+			} else if (
+				destinationContainer?.type === "child" ||
+				destinationContainer?.type === "sheet"
+			) {
 				dispatchOptions.destinationIndex = 0;
 			} else if (closestEdgeOfTarget && !destinationContainer) {
 				const destinationRowIndex = destinationPage.rowIds.indexOf(

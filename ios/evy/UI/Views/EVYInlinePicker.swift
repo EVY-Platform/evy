@@ -26,7 +26,7 @@ struct EVYInlinePicker: View {
     self.valueTemplate = valueTemplate
     self.destination = destination
 
-    var loadedOptions = EVYOptionLoading.loadOptions(from: data)
+    let loadedOptions = EVYOptionLoading.loadOptions(from: data)
     options = loadedOptions
     formattedOptionLabels = EVY.displayLabels(for: loadedOptions, valueTemplate: valueTemplate)
 

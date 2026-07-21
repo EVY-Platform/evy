@@ -25,10 +25,7 @@ import {
 	uploadSessionToBuffer,
 } from "../../shared/uploadSessions";
 import {
-	deleteFileBinary,
 	deleteFileBinaryIfExists,
-	hasNodeErrorCode,
-	NODE_ENOENT,
 	readFileBinary,
 	writeFileBinary,
 } from "./fileStorage";
@@ -97,13 +94,7 @@ export async function deleteFileResource(
 	notify: (value: unknown) => void,
 ): Promise<DeleteResponse> {
 	const metadata = await selectFileRowById(db, filter.id);
-	try {
-		await deleteFileBinary(metadata.id);
-	} catch (err) {
-		if (!hasNodeErrorCode(err, NODE_ENOENT)) {
-			throw err;
-		}
-	}
+	await deleteFileBinaryIfExists(metadata.id);
 
 	return deleteFileMetadata(db, filter, notify);
 }

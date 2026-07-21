@@ -1,5 +1,6 @@
 import type { DATA_EVY_Flow, DATA_EVY_Page, DATA_EVY_Row } from "evy-types";
-import { findRowIdPath, pageRootIds } from "./flatGraph";
+import { findRowIdPath } from "./flatGraph";
+import { pageRootIds } from "./rowTraversal";
 
 export function parseUrlPath(): {
 	flowId?: string;

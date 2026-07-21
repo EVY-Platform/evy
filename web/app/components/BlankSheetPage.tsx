@@ -2,7 +2,7 @@ import { useRef } from "react";
 
 import { usePageDropTarget } from "../hooks/usePageDropTarget";
 import { useDragContext } from "../state/contexts/DragContext";
-import { ChildPageFrame } from "./ChildPageFrame";
+import { SheetPageFrame } from "./SheetPageFrame";
 
 export function BlankSheetPage({
 	pageId,
@@ -27,14 +27,13 @@ export function BlankSheetPage({
 	});
 
 	return (
-		<ChildPageFrame
+		<SheetPageFrame
 			scrollableRef={scrollableRef}
 			className="evy-items-center evy-justify-center"
-			variant="sheet"
 		>
 			<div className="evy-text-gray-dark evy-text-sm evy-text-center evy-px-4">
 				Drop a row to show in the sheet on tap
 			</div>
-		</ChildPageFrame>
+		</SheetPageFrame>
 	);
 }

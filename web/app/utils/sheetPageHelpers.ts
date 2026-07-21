@@ -1,7 +1,7 @@
 import type { DATA_EVY_Row } from "evy-types";
 import { ROW_SHEET_FIELD } from "./rowConstants";
 
-export type ActiveSheetPage = {
+type ActiveSheetPage = {
 	sheetRowId: string;
 	parentRowId: string;
 };

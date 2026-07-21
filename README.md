@@ -33,9 +33,9 @@ flowchart LR
   - [Web](./web/README.md)
 - Services
   - [Marketplace](./services/marketplace/README.md)
-	  - [Data models](./docs/services/marketplace/data.md)
-	  - [Example data](./scripts/fixtures/services/service_data.json)
-	  - [Example UI flow for view & create item pages](./scripts/fixtures/services/service_sdui.json)
+    - [Data models](./docs/services/marketplace/data.md)
+    - [Example data](./scripts/fixtures/services/service_data.json)
+    - [Example UI flow for view & create item pages](./scripts/fixtures/services/service_sdui.json)
 
 ## Setup
 
@@ -47,9 +47,9 @@ flowchart LR
 
 ### Development
 
-#### All-in-one with Docker
+#### All-in-one (`bun dev`)
 
-Run Postgres, the marketplace service, the main API, and the web app:
+Run Postgres (in Docker), the marketplace service, the main API, and the web app:
 
 ```bash
 bun dev

@@ -4,17 +4,11 @@ import * as data from "./data/data";
 import { createDb, type EvyDb } from "./database/db";
 import { requireServiceWsEndpoint } from "./procedures/services";
 
-type AssertApiReadableOptions = {
-	requireSeeded: boolean;
-};
-
 // exported for tests
 export async function assertApiReadable(
 	db: EvyDb,
-	options: AssertApiReadableOptions,
+	requireSeeded: boolean,
 ): Promise<void> {
-	const { requireSeeded } = options;
-
 	const externalServices = await data.listExternalServices(db);
 	for (const { id, name } of externalServices) {
 		requireServiceWsEndpoint(name, id);
@@ -43,7 +37,6 @@ export function runHealthCli(): Promise<void> {
 	const db = createDb();
 	return runReadinessCli({
 		label: "API",
-		assertReadable: (requireSeeded) =>
-			assertApiReadable(db, { requireSeeded }),
+		assertReadable: (requireSeeded) => assertApiReadable(db, requireSeeded),
 	});
 }

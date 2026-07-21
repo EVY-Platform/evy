@@ -1,12 +1,11 @@
 import type { CSSProperties, ReactNode, RefObject } from "react";
 import { canvasPageInteriorDomProps } from "../utils/canvasPageInterior";
-import { phoneContentPadding, rounded24Style } from "./pageStyles";
+import { phoneContentPadding } from "./pageStyles";
 
-type ChildPageFrameProps = {
+type SheetPageFrameProps = {
 	children: ReactNode;
 	scrollableRef: RefObject<HTMLDivElement | null>;
 	className?: string;
-	variant?: "full" | "sheet";
 };
 
 const sheetOuterStyle: CSSProperties = {
@@ -67,48 +66,29 @@ const sheetContentStyle: CSSProperties = {
 	flexDirection: "column",
 };
 
-export function ChildPageFrame({
+export function SheetPageFrame({
 	children,
 	scrollableRef,
 	className = "",
-	variant = "full",
-}: ChildPageFrameProps) {
-	if (variant === "sheet") {
-		return (
-			<div
-				className="evy-overflow-hidden evy-h-full evy-w-full"
-				style={{ position: "relative", padding: phoneContentPadding }}
-			>
-				<div
-					style={sheetOuterStyle}
-					{...canvasPageInteriorDomProps}
-					ref={scrollableRef}
-				>
-					<div style={sheetPreviewPageStyle} aria-hidden />
-					<div style={sheetScrimStyle} aria-hidden />
-					<div style={sheetOverlayStyle}>
-						<div style={sheetHandleStyle} aria-hidden />
-						<div className={className} style={sheetContentStyle}>
-							{children}
-						</div>
-					</div>
-				</div>
-			</div>
-		);
-	}
-
+}: SheetPageFrameProps) {
 	return (
 		<div
 			className="evy-overflow-hidden evy-h-full evy-w-full"
-			style={{ padding: phoneContentPadding }}
+			style={{ position: "relative", padding: phoneContentPadding }}
 		>
 			<div
-				className={`evy-overflow-scroll evy-flex evy-flex-col evy-h-full evy-bg-white${className ? ` ${className}` : ""}`}
-				style={rounded24Style}
+				style={sheetOuterStyle}
 				{...canvasPageInteriorDomProps}
 				ref={scrollableRef}
 			>
-				{children}
+				<div style={sheetPreviewPageStyle} aria-hidden />
+				<div style={sheetScrimStyle} aria-hidden />
+				<div style={sheetOverlayStyle}>
+					<div style={sheetHandleStyle} aria-hidden />
+					<div className={className} style={sheetContentStyle}>
+						{children}
+					</div>
+				</div>
 			</div>
 		</div>
 	);

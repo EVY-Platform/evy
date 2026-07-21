@@ -38,8 +38,6 @@ type RowAttributes = RowBaseAttributes &
 		childRowId?: string;
 		sheetRowId?: string;
 		sheet?: Row;
-		child?: Row;
-		children?: Row[];
 	};
 
 export type RowConfig = RowAttributes;

@@ -456,53 +456,54 @@ function makeValidator<T>(
 	};
 }
 
-const v = makeValidator;
-
-export const validateApiRequest = v<ApiRequest>(
+export const validateApiRequest = makeValidator<ApiRequest>(
 	"ApiRequest",
 	getValidateApiRequest,
 );
-export const validateCreateRequest = v<CreateRequest>(
+export const validateCreateRequest = makeValidator<CreateRequest>(
 	"CreateRequest",
 	getValidateCreateRequest,
 );
-export const validateUpdateRequest = v<UpdateRequest>(
+export const validateUpdateRequest = makeValidator<UpdateRequest>(
 	"UpdateRequest",
 	getValidateUpdateRequest,
 );
-export const validateDeleteRequest = v<DeleteRequest>(
+export const validateDeleteRequest = makeValidator<DeleteRequest>(
 	"DeleteRequest",
 	getValidateDeleteRequest,
 );
-export const validateCreateDataPayload = v<CreateRequest["data"]>(
+export const validateCreateDataPayload = makeValidator<CreateRequest["data"]>(
 	"Create data",
 	getValidateCreateDataPayload,
 );
-export const validateUpdateDataPayload = v<UpdateRequest["data"]>(
+export const validateUpdateDataPayload = makeValidator<UpdateRequest["data"]>(
 	"Update data",
 	getValidateUpdateDataPayload,
 );
-export const validateGetRequest = v<GetRequest>(
+export const validateGetRequest = makeValidator<GetRequest>(
 	"GetRequest",
 	getValidateGetRequest,
 );
 
 /** Human-oriented label for API errors (matches prior `validation.ts` wrappers). */
-export const validateUiFlow = v<UI_Flow>("Flow", getValidateUiFlow);
-export const validateDataEvyFlow = v<DATA_EVY_Flow>(
+export const validateUiFlow = makeValidator<UI_Flow>("Flow", getValidateUiFlow);
+export const validateDataEvyFlow = makeValidator<DATA_EVY_Flow>(
 	"Flow",
 	getValidateDataEvyFlow,
 );
-export const validateDataEvyPage = v<DATA_EVY_Page>(
+export const validateDataEvyPage = makeValidator<DATA_EVY_Page>(
 	"Page",
 	getValidateDataEvyPage,
 );
-export const validateDataEvyRow = v<DATA_EVY_Row>("Row", getValidateDataEvyRow);
-export const validateDataEvyService = v<DATA_EVY_Service>(
+export const validateDataEvyRow = makeValidator<DATA_EVY_Row>(
+	"Row",
+	getValidateDataEvyRow,
+);
+export const validateDataEvyService = makeValidator<DATA_EVY_Service>(
 	"Service",
 	getValidateDataEvyService,
 );
-export const validateDataEvyOrganization = v<DATA_EVY_Organization>(
+export const validateDataEvyOrganization = makeValidator<DATA_EVY_Organization>(
 	"Organization",
 	getValidateDataEvyOrganization,
 );
@@ -516,39 +517,39 @@ export const validateDataEvyServiceResource =
 		"ServiceResource",
 		getValidateDataEvyServiceResource,
 	);
-export const validateDataEvyFile = v<DATA_EVY_File>(
+export const validateDataEvyFile = makeValidator<DATA_EVY_File>(
 	"File",
 	getValidateDataEvyFile,
 );
-export const validateGetResponse = v<GetResponse>(
+export const validateGetResponse = makeValidator<GetResponse>(
 	"GetResponse",
 	getValidateGetResponse,
 );
-export const validateCreateResponse = v<CreateResponse>(
+export const validateCreateResponse = makeValidator<CreateResponse>(
 	"CreateResponse",
 	getValidateCreateResponse,
 );
-export const validateUpdateResponse = v<UpdateResponse>(
+export const validateUpdateResponse = makeValidator<UpdateResponse>(
 	"UpdateResponse",
 	getValidateUpdateResponse,
 );
-export const validateDeleteResponse = v<DeleteResponse>(
+export const validateDeleteResponse = makeValidator<DeleteResponse>(
 	"DeleteResponse",
 	getValidateDeleteResponse,
 );
-export const validateSyncRequest = v<SyncRequest>(
+export const validateSyncRequest = makeValidator<SyncRequest>(
 	"SyncRequest",
 	getValidateSyncRequest,
 );
-export const validateSyncResponse = v<SyncResponse>(
+export const validateSyncResponse = makeValidator<SyncResponse>(
 	"SyncResponse",
 	getValidateSyncResponse,
 );
-export const validatePlaceSearchRequest = v<PlaceSearchRequest>(
+export const validatePlaceSearchRequest = makeValidator<PlaceSearchRequest>(
 	"PlaceSearchRequest",
 	getValidatePlaceSearchRequest,
 );
-export const validatePlaceSearchResponse = v<PlaceSearchResponse>(
+export const validatePlaceSearchResponse = makeValidator<PlaceSearchResponse>(
 	"PlaceSearchResponse",
 	getValidatePlaceSearchResponse,
 );
@@ -557,8 +558,72 @@ export const validateFileUploadChunkMetadata =
 		"FileUploadChunkMetadata",
 		getValidateFileUploadChunkMetadata,
 	);
-export const validateFileWithBinary = v<FileWithBinary>(
+export const validateFileWithBinary = makeValidator<FileWithBinary>(
 	"FileWithBinary",
 	getValidateFileWithBinary,
 );
-export { assertIsoDateTimeJsonFields } from "./isoDateTime.ts";
+// ISO date-time field validation for data payloads (post-schema).
+
+function isIsoDateTimeFieldName(key: string): boolean {
+	return key === "createdAt" || key === "updatedAt" || key === "archivedAt";
+}
+
+/** archivedAt is null while the record is active */
+function isoDateTimeFieldAllowsNull(key: string): boolean {
+	return key === "archivedAt";
+}
+
+function throwDataIsoValidationError(path: string, reason: string): never {
+	throw new Error(`Data validation failed: ${path}: ${reason}`);
+}
+
+/**
+ * Walks arbitrary JSON under a data payload and enforces ISO date-time strings on
+ * keys matched by {@link isIsoDateTimeFieldName}. Rejects finite numbers and non-string types for those keys.
+ */
+export function assertIsoDateTimeJsonFields(
+	value: unknown,
+	pathPrefix = "",
+): void {
+	if (value === null || typeof value !== "object") {
+		return;
+	}
+	if (Array.isArray(value)) {
+		for (let index = 0; index < value.length; index++) {
+			assertIsoDateTimeJsonFields(
+				value[index],
+				pathPrefix ? `${pathPrefix}[${index}]` : `[${index}]`,
+			);
+		}
+		return;
+	}
+
+	const record = value as Record<string, unknown>;
+	for (const [key, child] of Object.entries(record)) {
+		const path = pathPrefix ? `${pathPrefix}.${key}` : key;
+		if (isIsoDateTimeFieldName(key)) {
+			if (child === null && isoDateTimeFieldAllowsNull(key)) {
+				continue;
+			}
+			if (typeof child === "number" && Number.isFinite(child)) {
+				throwDataIsoValidationError(
+					path,
+					"date-time fields must be ISO 8601 strings, not numeric timestamps",
+				);
+			}
+			if (typeof child !== "string") {
+				throwDataIsoValidationError(
+					path,
+					"date-time field must be an ISO 8601 string",
+				);
+			}
+			if (Number.isNaN(Date.parse(child))) {
+				throwDataIsoValidationError(
+					path,
+					"expected ISO 8601 date-time string",
+				);
+			}
+		}
+		assertIsoDateTimeJsonFields(child, path);
+	}
+}

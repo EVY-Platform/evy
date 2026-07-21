@@ -30,7 +30,7 @@ struct EVYDropdown: View {
     self.valueTemplate = valueTemplate
     self.placeholder = placeholder
 
-    var loadedOptions: [EVYJson] = EVYOptionLoading.loadOptions(from: data)
+    let loadedOptions: [EVYJson] = EVYOptionLoading.loadOptions(from: data)
     options = loadedOptions
     let loadedOptionLabels = EVY.displayLabels(for: loadedOptions, valueTemplate: valueTemplate)
     optionLabels = loadedOptionLabels

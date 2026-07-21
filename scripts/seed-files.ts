@@ -3,9 +3,9 @@
 import { copyFile, mkdir, stat } from "node:fs/promises";
 import { join } from "node:path";
 
-export type SeedFileRow = { id: string };
+type SeedFileBinary = { id: string };
 
-export async function runCommand(
+async function runCommand(
 	command: string[],
 	repoRoot: string,
 ): Promise<{ ok: boolean; stderr: string }> {
@@ -24,7 +24,7 @@ export async function runCommand(
 	}
 }
 
-export async function isApiContainerRunning(
+async function isApiContainerRunning(
 	repoRoot: string,
 	apiDockerService: string,
 ): Promise<boolean> {
@@ -46,7 +46,7 @@ export async function isApiContainerRunning(
 }
 
 export async function copySeedFileBinaries(options: {
-	files: SeedFileRow[];
+	files: SeedFileBinary[];
 	repoRoot: string;
 	seedFilesPath: string;
 	runtimeFilesPath: string;

@@ -11,14 +11,14 @@
 					"child": {
 						"id": "8d5b9e32-ac4e-5f7b-b2d3-9e8f4a6c0b12",
 						"type": "Text",
-						"title": "{$datum.data.type}",
-						"subtitle": "{$datum.resource}",
+						"title": "{$datum.data.type} request",
+						"subtitle": "",
 						"actions": [],
 						"visible": "true",
 						"name": "Message search result"
 					},
-					"title": "Messages",
-					"placeholder": "Filter messages by resource",
+					"title": "",
+					"placeholder": "Filter messages by type",
 					"source": "{000c2d05-851e-4456-8f22-bb1e54f17c8c}",
 					"destination": "",
 					"actions": [],

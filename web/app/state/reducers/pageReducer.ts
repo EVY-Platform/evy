@@ -12,7 +12,6 @@ import {
 	insertIntoLocation,
 	moveRow,
 	moveRowToFooter,
-	pageRootIds,
 	removePage,
 	removeRowFromPage,
 	setFooterRow,
@@ -25,6 +24,7 @@ import {
 	buildNewPageRecord,
 } from "../../utils/flowFactory";
 import { rowToFlatRecords } from "../../utils/rowCodec";
+import { pageRootIds } from "../../utils/rowTraversal";
 
 const COMMA_SEPARATED_CONTENT_KEYS = new Set(["segments"]);
 
@@ -97,15 +97,6 @@ function applyStructuralContainerDrop(
 	destinationContainer: { type: string; rowId: string } | undefined,
 	selectedRowId: string,
 ): AppState {
-	if (!destinationContainer) {
-		return {
-			...state,
-			...nextMaps,
-			activeRowId: selectedRowId,
-			configStack: [],
-		};
-	}
-
 	const containerSelection = resolveContainerDropSelection(
 		{ ...state, ...nextMaps },
 		destinationPageId,
@@ -113,7 +104,7 @@ function applyStructuralContainerDrop(
 		selectedRowId,
 	);
 
-	if (!containerSelection) {
+	if (!destinationContainer || !containerSelection) {
 		return {
 			...state,
 			...nextMaps,

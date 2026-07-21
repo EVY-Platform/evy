@@ -1,6 +1,6 @@
 import { type RefObject, useCallback, useState } from "react";
 
-export type DropdownPosition = {
+type DropdownPosition = {
 	top: number;
 	left: number;
 	width: number;

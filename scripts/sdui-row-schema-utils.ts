@@ -292,7 +292,7 @@ const SCHEMA_TO_UI_FIELD_NAME: Record<string, string> = {
 	sheet: "sheetRowId",
 };
 
-export const ROW_FIELD_SPEC_KINDS = [
+const ROW_FIELD_SPEC_KINDS = [
 	"text",
 	"textList",
 	"child",

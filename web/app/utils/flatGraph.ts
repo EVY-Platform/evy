@@ -21,6 +21,13 @@ import {
 	ROW_CHILDREN_FIELD,
 	ROW_SHEET_FIELD,
 } from "./rowConstants";
+import {
+	getChildRowId,
+	getChildrenRowIds,
+	getSheetRowId,
+	pageRootIds,
+	walkRows,
+} from "./rowTraversal";
 
 export type { FlowEntityMaps };
 export { collectSubtreeRowIds };
@@ -41,23 +48,6 @@ function touchPage(page: DATA_EVY_Page, updatedAt = now()): DATA_EVY_Page {
 	return { ...page, updatedAt };
 }
 
-function getChildRowId(row: DATA_EVY_Row): string | undefined {
-	const v = row.data[ROW_CHILD_FIELD];
-	return typeof v === "string" ? v : undefined;
-}
-
-function getSheetRowId(row: DATA_EVY_Row): string | undefined {
-	const v = row.data[ROW_SHEET_FIELD];
-	return typeof v === "string" ? v : undefined;
-}
-
-function getChildrenRowIds(row: DATA_EVY_Row): string[] {
-	const v = row.data[ROW_CHILDREN_FIELD];
-	return Array.isArray(v)
-		? v.filter((x): x is string => typeof x === "string")
-		: [];
-}
-
 /** Returns all row ids reachable from a page (rowIds + footerRowId, recursively). */
 function collectPageRowIds(
 	page: DATA_EVY_Page,
@@ -76,37 +66,6 @@ function collectPageRowIds(
 // ---------------------------------------------------------------------------
 // Lookups
 // ---------------------------------------------------------------------------
-
-function walkRows<T>(
-	rowsById: FlowEntityMaps["rowsById"],
-	rootRowIds: string[],
-	visit: (
-		id: string,
-		row: DATA_EVY_Row,
-		childId: string | undefined,
-		sheetId: string | undefined,
-		childrenIds: string[],
-	) => T | null | undefined,
-): T | null {
-	const stack = [...rootRowIds];
-	while (stack.length > 0) {
-		const id = stack.pop();
-		if (id === undefined) continue;
-		const row = rowsById[id];
-		if (!row) continue;
-
-		const childId = getChildRowId(row);
-		const sheetId = getSheetRowId(row);
-		const childrenIds = getChildrenRowIds(row);
-		const result = visit(id, row, childId, sheetId, childrenIds);
-		if (result != null) return result;
-
-		if (childId) stack.push(childId);
-		if (sheetId) stack.push(sheetId);
-		stack.push(...childrenIds);
-	}
-	return null;
-}
 
 function findRowContainer(
 	rowsById: FlowEntityMaps["rowsById"],
@@ -149,16 +108,6 @@ function findContainerById(
 		}
 		return null;
 	});
-}
-
-/**
- * Returns the root ids of all rows in a page (rowIds + footerRowId if present).
- * Used to scope container searches.
- */
-export function pageRootIds(page: DATA_EVY_Page): string[] {
-	return page.footerRowId
-		? [...page.rowIds, page.footerRowId]
-		: [...page.rowIds];
 }
 
 /**

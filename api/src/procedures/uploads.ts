@@ -5,7 +5,6 @@ export {
 	clearUploadsForTest,
 	handleUploadChunk,
 	parseUploadChunkFrame,
-	type UploadSession,
 } from "../shared/uploadSessions";
 
 export async function cancelUpload(params: unknown): Promise<{ ok: true }> {

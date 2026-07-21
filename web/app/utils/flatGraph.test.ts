@@ -15,7 +15,6 @@ import {
 	insertIntoLocation,
 	moveRow,
 	moveRowToFooter,
-	pageRootIds,
 	removePage,
 	removeRowFromPage,
 	setFooterRow,
@@ -24,6 +23,7 @@ import {
 	updateRowField,
 } from "./flatGraph";
 import type { FlowEntityMaps } from "./flowEntities";
+import { pageRootIds } from "./rowTraversal";
 
 const NOW = "2024-01-01T00:00:00.000Z";
 

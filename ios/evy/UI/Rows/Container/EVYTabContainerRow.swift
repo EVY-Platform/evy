@@ -7,18 +7,11 @@
 
 import SwiftUI
 
-private struct EVYTabContainerTab: Identifiable, Equatable {
-  let id: String
-  let label: String
-  let childRef: EVYRowRef
-}
-
 struct EVYTabContainerRow: View {
 
   private let view: TabContainerRowViewData
   private let childRefs: [EVYRowRef]
   @State private var selected: Int = 0
-  @State private var tabs: [EVYTabContainerTab] = []
 
   init(
     view: TabContainerRowViewData,
@@ -28,43 +21,31 @@ struct EVYTabContainerRow: View {
     self.childRefs = childRefs
   }
 
+  private var tabCount: Int {
+    min(view.segments.count, childRefs.count)
+  }
+
   var body: some View {
     Group {
       Picker("", selection: $selected) {
-        ForEach(Array(tabs.enumerated()), id: \.element.id) { index, tab in
-          Text(tab.label).tag(index)
+        ForEach(0..<tabCount, id: \.self) { index in
+          Text(view.segments[index]).tag(index)
         }
       }
       .pickerStyle(.segmented)
       .padding(.horizontal, Constants.majorPadding)
       .padding(.bottom, Constants.majorPadding)
 
-      if selected < tabs.count {
-        EVYRow(ref: tabs[selected].childRef)
-          .id(tabs[selected].id)
+      if selected < tabCount {
+        EVYRow(ref: childRefs[selected])
+          .id(childRefs[selected].id)
       }
     }
     .containerTitleHeader(view.title)
-    .onAppear {
-      refreshTabs()
-    }
     .onChange(of: view.segments) { _, _ in
-      refreshTabs()
-    }
-  }
-
-  private func refreshTabs() {
-    let staticCount = min(view.segments.count, childRefs.count)
-    tabs = (0..<staticCount).map { index in
-      let ref = childRefs[index]
-      return EVYTabContainerTab(
-        id: "static-\(ref.id)",
-        label: view.segments[index],
-        childRef: ref
-      )
-    }
-    if selected >= tabs.count {
-      selected = max(0, tabs.count - 1)
+      if selected >= tabCount {
+        selected = max(0, tabCount - 1)
+      }
     }
   }
 }

@@ -92,13 +92,7 @@ actor EVYAPIManager {
 
   private init() {
     let host = ProcessInfo.processInfo.environment["API_HOST"] ?? API_HOST
-    self.rpcWS = EVYWebsocket(host: host) { notification in
-      try EVY.publicStore.applySyncedValue(
-        namespace: notification.service,
-        resource: notification.resource,
-        value: notification.value
-      )
-    }
+    self.rpcWS = EVYWebsocket(host: host)
   }
 
   private func validateAuth() async throws {

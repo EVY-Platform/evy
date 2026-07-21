@@ -1,4 +1,9 @@
-import type { DATA_EVY_Flow, DATA_EVY_Page, UI_RowAction } from "evy-types";
+import type {
+	DATA_EVY_Flow,
+	DATA_EVY_Page,
+	DATA_EVY_Row,
+	UI_RowAction,
+} from "evy-types";
 import { Trash2 } from "lucide-react";
 import { useCallback, useMemo, useState } from "react";
 import { LUCIDE_STROKE_WIDTH } from "../icons/iconSyntax";

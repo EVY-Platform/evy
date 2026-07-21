@@ -190,18 +190,12 @@ private struct EVYResolvedRow: View {
   }
 
   private var childRef: EVYRowRef? {
-    let rowType: EVYRowType?
     switch ref {
     case .id:
-      rowType = storedRow?.type
-    case .inline(let row):
-      rowType = row.type
-    }
-    guard rowType == .search else { return nil }
-    switch ref {
-    case .id:
+      guard storedRow?.type == .search else { return nil }
       return storedRow?.childRowId.map(EVYRowRef.id)
     case .inline(let row):
+      guard row.type == .search else { return nil }
       return row.child.map(EVYRowRef.inline)
     }
   }

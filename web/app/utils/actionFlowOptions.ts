@@ -1,11 +1,11 @@
 import type { DATA_EVY_Flow, DATA_EVY_Page, DATA_EVY_Row } from "evy-types";
 import type { ServiceResource } from "../types/resources";
-import { pageRootIds } from "./flatGraph";
 import { displayLabel } from "./labelFormatting";
 import {
 	formatResourcePathForDisplay,
 	resourceNameById,
 } from "./resourcePathDisplay";
+import { forEachRowInFlows, rowLocationLabel } from "./rowTraversal";
 
 export type RowOption = { value: string; label: string };
 
@@ -15,38 +15,17 @@ export function getAllRowOptions(
 	rowsById: Record<string, DATA_EVY_Row>,
 ): RowOption[] {
 	const options: RowOption[] = [];
-
-	for (const flow of Object.values(flowsById)) {
-		for (const pageId of flow.pageIds) {
-			const page = pagesById[pageId];
-			if (!page) continue;
-			const roots = pageRootIds(page);
-			const visited = new Set<string>();
-			const stack = [...roots];
-			while (stack.length > 0) {
-				const rowId = stack.pop();
-				if (!rowId || visited.has(rowId)) continue;
-				visited.add(rowId);
-				const row = rowsById[rowId];
-				if (!row) continue;
-				options.push({
-					value: rowId,
-					label: `${flow.name} / ${page.name} / ${row.name}`,
-				});
-				const childId = row.data.child_row_id;
-				if (typeof childId === "string") stack.push(childId);
-				const sheetId = row.data.sheet_row_id;
-				if (typeof sheetId === "string") stack.push(sheetId);
-				const childrenIds = row.data.children_row_ids;
-				if (Array.isArray(childrenIds)) {
-					for (const child of childrenIds) {
-						if (typeof child === "string") stack.push(child);
-					}
-				}
-			}
-		}
-	}
-
+	forEachRowInFlows(
+		flowsById,
+		pagesById,
+		rowsById,
+		(flow, page, row, rowId) => {
+			options.push({
+				value: rowId,
+				label: rowLocationLabel(flow, page, row),
+			});
+		},
+	);
 	return options.sort((a, b) => a.label.localeCompare(b.label));
 }
 

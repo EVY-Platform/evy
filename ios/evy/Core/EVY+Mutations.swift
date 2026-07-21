@@ -259,10 +259,10 @@ extension EVY {
     to destination: String,
     scopeId: String? = nil
   ) throws {
-    try updateStringValue(value, destination: destination, scopeId: scopeId)
+    try updateValue(value, destination: destination, scopeId: scopeId)
   }
 
-  static func updateStringValue(
+  static func updateValue(
     _ value: String,
     destination: String,
     scopeId: String? = nil
@@ -276,14 +276,6 @@ extension EVY {
       return
     }
     try updateData("\"\(value)\"".data(using: .utf8)!, destination: destination, scopeId: scopeId)
-  }
-
-  static func updateValue(
-    _ value: String,
-    destination: String,
-    scopeId: String? = nil
-  ) throws {
-    try updateStringValue(value, destination: destination, scopeId: scopeId)
   }
 
   private static func dataForBuildFunction(
