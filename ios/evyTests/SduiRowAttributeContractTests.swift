@@ -86,7 +86,9 @@ final class SduiRowAttributeContractTests: XCTestCase {
   }
 
   func testSduiDefinitionsIncludeTriggersMetadata() throws {
-    let allowedTriggers: Set<String> = ["tap", "delete", "tap-row", "tap-column"]
+    let allowedTriggers: Set<String> = [
+      "tap", "delete", "tap-row", "tap-column", "slide-left",
+    ]
     let catalogData = try XCTUnwrap(
       SduiDefinitions.json.data(using: .utf8),
       "SduiDefinitions.json must be valid UTF-8"

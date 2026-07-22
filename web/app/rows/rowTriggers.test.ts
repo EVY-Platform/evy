@@ -3,7 +3,13 @@ import { SDUI_ROW_TRIGGERS } from "evy-types";
 import { getRowTriggers } from "./rowTriggers";
 
 const ALL_ROW_TYPES = Object.keys(SDUI_ROW_TRIGGERS);
-const KNOWN_TRIGGER_NAMES = ["tap", "delete", "tap-row", "tap-column"];
+const KNOWN_TRIGGER_NAMES = [
+	"tap",
+	"delete",
+	"tap-row",
+	"tap-column",
+	"slide-left",
+];
 
 describe("rowTriggers", () => {
 	test("returns declared triggers for each row type", () => {
@@ -31,9 +37,12 @@ describe("rowTriggers", () => {
 		]);
 	});
 
-	test("optional tap rows mark tap as not required", () => {
-		expect(getRowTriggers("Text")).toEqual([
-			{ trigger: "tap", required: false },
-		]);
+	test("Heading, Input, ListItem, and Text declare optional slide-left", () => {
+		for (const type of ["Heading", "Input", "ListItem", "Text"]) {
+			expect(getRowTriggers(type)).toEqual([
+				{ trigger: "slide-left", required: false },
+				{ trigger: "tap", required: false },
+			]);
+		}
 	});
 });

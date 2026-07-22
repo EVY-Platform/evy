@@ -82,6 +82,8 @@
 		73CB09522C7608A7008F7D2C /* EVYRectangle.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73CB09512C7608A7008F7D2C /* EVYRectangle.swift */; };
 		73CB09542C7609E5008F7D2C /* EVYInputListRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73CB09532C7609E5008F7D2C /* EVYInputListRow.swift */; };
 		73CDCAC22B272E0C00D4E82A /* EVYRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73CDCAC12B272E0C00D4E82A /* EVYRow.swift */; };
+		SL0010012F90000100000001 /* EVYSwipeableRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = SL0010022F90000100000001 /* EVYSwipeableRow.swift */; };
+		SL0010032F90000100000001 /* EVYSwipeGeometryTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = SL0010042F90000100000001 /* EVYSwipeGeometryTests.swift */; };
 		73D878E82B2ECD6900A1F9C2 /* chunked.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73D878E72B2ECD6900A1F9C2 /* chunked.swift */; };
 		73D878EE2B2EEFF900A1F9C2 /* EVYCarouselIndicator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73D878ED2B2EEFF900A1F9C2 /* EVYCarouselIndicator.swift */; };
 		73DAEC0C2C7729F8003A0A29 /* EVYDatumRowFormatter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73DAEC0B2C7729F8003A0A29 /* EVYDatumRowFormatter.swift */; };
@@ -238,6 +240,8 @@
 		73CB09512C7608A7008F7D2C /* EVYRectangle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EVYRectangle.swift; sourceTree = "<group>"; };
 		73CB09532C7609E5008F7D2C /* EVYInputListRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EVYInputListRow.swift; sourceTree = "<group>"; };
 		73CDCAC12B272E0C00D4E82A /* EVYRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EVYRow.swift; sourceTree = "<group>"; };
+		SL0010022F90000100000001 /* EVYSwipeableRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EVYSwipeableRow.swift; sourceTree = "<group>"; };
+		SL0010042F90000100000001 /* EVYSwipeGeometryTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EVYSwipeGeometryTests.swift; sourceTree = "<group>"; };
 		73D878E72B2ECD6900A1F9C2 /* chunked.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = chunked.swift; sourceTree = "<group>"; };
 		73D878ED2B2EEFF900A1F9C2 /* EVYCarouselIndicator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EVYCarouselIndicator.swift; sourceTree = "<group>"; };
 		73DAEC0B2C7729F8003A0A29 /* EVYDatumRowFormatter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EVYDatumRowFormatter.swift; sourceTree = "<group>"; };
@@ -390,6 +394,7 @@
 
 				736D10562B78C4C500503C4D /* EVYPage.swift */,
 				73CDCAC12B272E0C00D4E82A /* EVYRow.swift */,
+				SL0010022F90000100000001 /* EVYSwipeableRow.swift */,
 				A6B2C3D4E5F60718293A4B14 /* EVYRecordChangeView.swift */,
 				73F3A0022F30B00300000001 /* EVYActionRunner.swift */,
 				A7R0W0022F90000100000001 /* EVYRowActionOperation.swift */,
@@ -622,6 +627,7 @@
 				FA002006MP00001000000001 /* EVYMapTests.swift */,
 				FA003002DP00001000000001 /* EVYDataPatcherTests.swift */,
 				74A100262F32000100000001 /* EVYCalendarTests.swift */,
+				SL0010042F90000100000001 /* EVYSwipeGeometryTests.swift */,
 				74A1002B2F32000100000001 /* EVYSelectionHelpersTests.swift */,
 				74A100042F32000100000001 /* interpreterTests.swift */,
 				74A100282F32000100000001 /* SduiRowAttributeContractTests.swift */,
@@ -822,6 +828,7 @@
 				A7R0W0012F90000100000001 /* EVYRowActionOperation.swift in Sources */,
 				A7R0W0032F90000100000001 /* EVYPhotoFullScreen.swift in Sources */,
 				73CDCAC22B272E0C00D4E82A /* EVYRow.swift in Sources */,
+				SL0010012F90000100000001 /* EVYSwipeableRow.swift in Sources */,
 				FA10A0012F90000100000001 /* EVYChange.swift in Sources */,
 				A6B2C3D4E5F60718293A4B03 /* EVYRouting.swift in Sources */,
 				A6B2C3D4E5F60718293A4B04 /* EVYRecordChangeView.swift in Sources */,
@@ -904,6 +911,7 @@
 				FA002005MP00001000000001 /* EVYMapTests.swift in Sources */,
 				FA003001DP00001000000001 /* EVYDataPatcherTests.swift in Sources */,
 				74A100252F32000100000001 /* EVYCalendarTests.swift in Sources */,
+				SL0010032F90000100000001 /* EVYSwipeGeometryTests.swift in Sources */,
 				74A1002A2F32000100000001 /* EVYSelectionHelpersTests.swift in Sources */,
 				74A100012F32000100000001 /* interpreterTests.swift in Sources */,
 				73F2A0072F30B00200000001 /* SduiDefinitions.generated.swift in Sources */,

@@ -3,7 +3,8 @@
 	"$id": "sdui/definitions/Input",
 	"title": "Input_Row",
 	"triggers": {
-		"tap": "optional"
+		"tap": "optional",
+		"slide-left": "optional"
 	},
 	"allOf": [
 		{

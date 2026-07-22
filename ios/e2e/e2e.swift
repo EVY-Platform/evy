@@ -830,7 +830,8 @@ class E2ETestBase: XCTestCase {
 
   static func actionsObject(
     tap: [[String: String]] = [],
-    delete: [[String: String]] = []
+    delete: [[String: String]] = [],
+    slideLeft: [[String: String]] = []
   ) -> [String: Any] {
     var result: [String: Any] = [:]
     if !tap.isEmpty {
@@ -838,6 +839,9 @@ class E2ETestBase: XCTestCase {
     }
     if !delete.isEmpty {
       result["delete"] = delete
+    }
+    if !slideLeft.isEmpty {
+      result["slide-left"] = slideLeft
     }
     return result
   }
@@ -2944,6 +2948,116 @@ final class WebSocketE2ETests: E2ETestBase {
     pages[0] = homePage
     flowData["pages"] = pages
     return flowData
+  }
+}
+
+// MARK: - Slide-left swipe trigger
+
+final class E2ESlideLeftTests: E2ETestBase {
+  private static let slideLeftHomeFlowId = "a9b8c7d6-e5f4-4a3b-9c2d-1e0f9a8b7c6d"
+  private static let slideLeftHomePageId = "b8c7d6e5-f4a3-4b2c-9d1e-0f8a7b6c5d4e"
+  private static let slideLeftDestPageId = "c7d6e5f4-a3b2-4c1d-8e0f-1a2b3c4d5e6f"
+  private static let slideLeftRowId = "d6e5f4a3-b2c1-4d0e-9f8a-7b6c5d4e3f2a"
+
+  override var homeFlowId: String? { Self.slideLeftHomeFlowId }
+
+  override func setUpWithError() throws {
+    continueAfterFailure = false
+    try seedFlows(
+      [
+        (
+          flowId: Self.slideLeftHomeFlowId,
+          flowData: Self.slideLeftFlowData(
+            flowId: Self.slideLeftHomeFlowId,
+            homePageId: Self.slideLeftHomePageId,
+            destPageId: Self.slideLeftDestPageId,
+            swipeRowId: Self.slideLeftRowId
+          )
+        )
+      ]
+    )
+    try launchApp()
+  }
+
+  func testSlideLeftButtonNavigatesToDestinationPage() throws {
+    let homePage = app.scrollViews["page_\(Self.slideLeftHomePageId)"]
+    XCTAssertTrue(
+      homePage.waitForExistence(timeout: 20),
+      "Slide-left home page should load - verify API is running and seeded")
+
+    let swipeLabel = app.staticTexts["Swipe me"]
+    XCTAssertTrue(
+      swipeLabel.waitForExistence(timeout: 10),
+      "Swipeable text row should be visible")
+
+    swipeLabel.swipeLeft(velocity: .slow)
+
+    let destinationPage = app.scrollViews["page_\(Self.slideLeftDestPageId)"]
+    if destinationPage.waitForExistence(timeout: 3)
+      || app.staticTexts["Arrived"].waitForExistence(timeout: 1)
+    {
+      return
+    }
+
+    let slideButton = app.buttons["slideLeft_\(Self.slideLeftRowId)"]
+    if !slideButton.waitForExistence(timeout: 3) {
+      // Retry with a faster full swipe that should auto-execute.
+      swipeLabel.swipeLeft(velocity: .fast)
+      XCTAssertTrue(
+        destinationPage.waitForExistence(timeout: 5)
+          || app.staticTexts["Arrived"].waitForExistence(timeout: 5),
+        "Slide-left full swipe should navigate to the destination page")
+      return
+    }
+    slideButton.tap()
+
+    XCTAssertTrue(
+      destinationPage.waitForExistence(timeout: 5)
+        || app.staticTexts["Arrived"].waitForExistence(timeout: 5),
+      "Slide-left action should navigate to the destination page")
+  }
+
+  private static func slideLeftFlowData(
+    flowId: String,
+    homePageId: String,
+    destPageId: String,
+    swipeRowId: String
+  ) -> [String: Any] {
+    return [
+      "id": flowId,
+      "name": "E2E Slide Left",
+      "pages": [
+        [
+          "id": homePageId,
+          "title": "Slide home",
+          "rows": [
+            [
+              "id": swipeRowId,
+              "type": "Text",
+              "visible": "true",
+              "title": "Swipe me",
+              "subtitle": "",
+              "name": "Swipeable text",
+              "actions": Self.actionsObject(
+                slideLeft: [
+                  Self.rowAction(true: "{navigate(\(flowId),\(destPageId))}")
+                ]
+              ),
+            ]
+          ],
+        ],
+        [
+          "id": destPageId,
+          "title": "Destination",
+          "rows": [
+            Self.textRow(
+              id: "e5f4a3b2-c1d0-4e9f-8a7b-6c5d4e3f2a1b",
+              title: "Arrived"
+            )
+          ],
+        ],
+      ],
+    ]
   }
 }
 

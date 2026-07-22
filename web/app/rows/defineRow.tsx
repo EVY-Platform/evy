@@ -1,4 +1,4 @@
-import type { UI_RowActions } from "evy-types";
+import type { RowTriggerName, UI_RowActions } from "evy-types";
 import { createElement, type ReactNode } from "react";
 
 import { useRowById } from "../hooks/useRowById";
@@ -18,28 +18,25 @@ type RowComponent = ((props: { rowId: string }) => ReactNode) & {
 	name: string;
 };
 
-type DefaultRowActionsInput = {
-	tap?: string;
-	delete?: string;
-	"tap-row"?: string;
-	"tap-column"?: string;
-};
+const DEFAULT_ROW_ACTION_TRIGGERS: RowTriggerName[] = [
+	"tap",
+	"delete",
+	"tap-row",
+	"tap-column",
+	"slide-left",
+];
+
+type DefaultRowActionsInput = Partial<Record<RowTriggerName, string>>;
 
 export function defaultRowActions(
 	options: DefaultRowActionsInput,
 ): UI_RowActions {
 	const actions: UI_RowActions = {};
-	if (options.tap !== undefined) {
-		actions.tap = [rowAction(options.tap)];
-	}
-	if (options.delete !== undefined) {
-		actions.delete = [rowAction(options.delete)];
-	}
-	if (options["tap-row"] !== undefined) {
-		actions["tap-row"] = [rowAction(options["tap-row"])];
-	}
-	if (options["tap-column"] !== undefined) {
-		actions["tap-column"] = [rowAction(options["tap-column"])];
+	for (const trigger of DEFAULT_ROW_ACTION_TRIGGERS) {
+		const branch = options[trigger];
+		if (branch !== undefined) {
+			actions[trigger] = [rowAction(branch)];
+		}
 	}
 	return actions;
 }

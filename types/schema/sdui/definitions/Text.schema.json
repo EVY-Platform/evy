@@ -3,7 +3,8 @@
 	"$id": "sdui/definitions/Text",
 	"title": "Text_Row",
 	"triggers": {
-		"tap": "optional"
+		"tap": "optional",
+		"slide-left": "optional"
 	},
 	"allOf": [
 		{

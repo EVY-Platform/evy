@@ -3,7 +3,8 @@
 	"$id": "sdui/definitions/ListItem",
 	"title": "ListItem_Row",
 	"triggers": {
-		"tap": "optional"
+		"tap": "optional",
+		"slide-left": "optional"
 	},
 	"allOf": [
 		{

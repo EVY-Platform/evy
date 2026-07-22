@@ -28,7 +28,7 @@
 		"triggers": {
 			"type": "object",
 			"propertyNames": {
-				"enum": ["tap", "delete", "tap-row", "tap-column"]
+				"enum": ["tap", "delete", "tap-row", "tap-column", "slide-left"]
 			},
 			"additionalProperties": {
 				"type": "string",

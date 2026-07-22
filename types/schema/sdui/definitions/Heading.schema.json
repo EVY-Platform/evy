@@ -3,7 +3,8 @@
 	"$id": "sdui/definitions/Heading",
 	"title": "Heading_Row",
 	"triggers": {
-		"tap": "optional"
+		"tap": "optional",
+		"slide-left": "optional"
 	},
 	"allOf": [
 		{

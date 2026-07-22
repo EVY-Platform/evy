@@ -463,6 +463,114 @@ describe("validateFlowData", () => {
 			}),
 		).toThrow('trigger "tap-row" is not declared');
 	});
+
+	it("accepts Text with optional slide-left actions", () => {
+		const flowId = crypto.randomUUID();
+		const pageId = crypto.randomUUID();
+		const rowId = crypto.randomUUID();
+		const out = validateFlowData({
+			id: flowId,
+			name: "F",
+			pages: [
+				{
+					id: pageId,
+					name: "Page",
+					title: "P",
+					rows: [
+						{
+							id: rowId,
+							name: "Label",
+							type: "Text",
+							actions: {
+								"slide-left": [
+									{
+										condition: "",
+										false: "",
+										true: "{close()}",
+									},
+								],
+							},
+							visible: "true",
+							title: "Hello",
+						},
+					],
+				},
+			],
+		});
+		expect(out.pages[0]?.rows[0]?.type).toBe("Text");
+	});
+
+	it("rejects slide-left on a Button", () => {
+		const flowId = crypto.randomUUID();
+		const pageId = crypto.randomUUID();
+		const rowId = crypto.randomUUID();
+		expect(() =>
+			validateFlowData({
+				id: flowId,
+				name: "F",
+				pages: [
+					{
+						id: pageId,
+						name: "Page",
+						title: "P",
+						rows: [
+							{
+								id: rowId,
+								name: "Submit",
+								type: "Button",
+								actions: {
+									tap: [
+										{
+											condition: "",
+											false: "",
+											true: "{close()}",
+										},
+									],
+									"slide-left": [
+										{
+											condition: "",
+											false: "",
+											true: "{close()}",
+										},
+									],
+								},
+								visible: "true",
+								label: "Go",
+							},
+						],
+					},
+				],
+			}),
+		).toThrow('trigger "slide-left" is not declared');
+	});
+
+	it("accepts ListItem without slide-left when optional", () => {
+		const flowId = crypto.randomUUID();
+		const pageId = crypto.randomUUID();
+		const rowId = crypto.randomUUID();
+		const out = validateFlowData({
+			id: flowId,
+			name: "F",
+			pages: [
+				{
+					id: pageId,
+					name: "Page",
+					title: "P",
+					rows: [
+						{
+							id: rowId,
+							name: "Item",
+							type: "ListItem",
+							actions: {},
+							visible: "true",
+							title: "Hello",
+						},
+					],
+				},
+			],
+		});
+		expect(out.pages[0]?.rows[0]?.type).toBe("ListItem");
+	});
 });
 
 describe("validateFileUploadChunkMetadata", () => {

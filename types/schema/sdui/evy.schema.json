@@ -198,6 +198,12 @@
 					"items": {
 						"$ref": "action.schema.json"
 					}
+				},
+				"slide-left": {
+					"type": "array",
+					"items": {
+						"$ref": "action.schema.json"
+					}
 				}
 			}
 		}

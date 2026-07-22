@@ -237,11 +237,44 @@ describe("rowTriggersFromDefinitions", () => {
 		});
 	});
 
+	test("maps optional slide-left trigger", () => {
+		const text = extractSduiRowDefinition(
+			{
+				triggers: {
+					tap: "optional",
+					"slide-left": "optional",
+				},
+				allOf: [
+					{ $ref: "../evy.schema.json#/$defs/UI_RowBase" },
+					{
+						type: "object",
+						required: ["type"],
+						properties: {
+							type: { const: "Text" },
+						},
+					},
+				],
+			},
+			"Text.schema.json",
+		);
+
+		expect(text.triggers).toEqual({
+			tap: "optional",
+			"slide-left": "optional",
+		});
+		expect(rowTriggersFromDefinitions([text])).toEqual({
+			Text: [
+				{ trigger: "slide-left", required: false },
+				{ trigger: "tap", required: false },
+			],
+		});
+	});
+
 	test("rejects unknown trigger names and values", () => {
 		expect(() =>
 			extractSduiRowDefinition(
 				{
-					triggers: { "slide-left": "required" },
+					triggers: { "tap-and-hold": "required" },
 					allOf: [
 						{ $ref: "../evy.schema.json#/$defs/UI_RowBase" },
 						{
@@ -253,7 +286,7 @@ describe("rowTriggersFromDefinitions", () => {
 				},
 				"Broken.schema.json",
 			),
-		).toThrow('unknown trigger name "slide-left"');
+		).toThrow('unknown trigger name "tap-and-hold"');
 
 		expect(() =>
 			extractSduiRowDefinition(

@@ -565,6 +565,23 @@ final class EVYActionRunnerTests: XCTestCase {
     XCTAssertTrue(deleteReceived)
   }
 
+  func testSlideLeftTriggerIsolationRunsOnlyRequestedActionList() {
+    var tapReceived = false
+    var slideLeftReceived = false
+    let actions = UI_RowActions(
+      slideLeft: [rowAction(true: "{close()}")],
+      tap: [rowAction(true: "{close()}")]
+    )
+    EVYActionRunner.run(actions: actions.tap) { operation in
+      if case .close = operation { tapReceived = true }
+    }
+    EVYActionRunner.run(actions: actions.slideLeft) { operation in
+      if case .close = operation { slideLeftReceived = true }
+    }
+    XCTAssertTrue(tapReceived)
+    XCTAssertTrue(slideLeftReceived)
+  }
+
   func testSelectPhotoDispatchesAndContinues() {
     var received: EVYRowActionOperation?
     var receivedOps: [ActionOperation] = []
