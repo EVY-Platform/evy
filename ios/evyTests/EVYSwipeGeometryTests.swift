@@ -42,13 +42,21 @@ final class EVYSwipeGeometryTests: XCTestCase {
     XCTAssertEqual(offset, -30)
   }
 
-  func testDragOffsetRubberBandsPastRevealWidth() {
+  func testDragOffsetTracksOneToOneUntilMaxStretch() {
     let offset = EVYSwipeGeometry.dragOffset(
       translation: CGSize(width: -100, height: 0),
       isOpen: false
     )
-    XCTAssertLessThan(offset, -EVYSwipeGeometry.revealWidth)
-    XCTAssertGreaterThan(offset, -100)
+    XCTAssertEqual(offset, -100)
+  }
+
+  func testDragOffsetRubberBandsPastMaxStretch() {
+    let offset = EVYSwipeGeometry.dragOffset(
+      translation: CGSize(width: -200, height: 0),
+      isOpen: false
+    )
+    XCTAssertLessThan(offset, -EVYSwipeGeometry.maxStretchWidth)
+    XCTAssertGreaterThan(offset, -200)
   }
 
   func testDragOffsetFromOpenStartsAtRevealWidth() {
@@ -59,42 +67,38 @@ final class EVYSwipeGeometryTests: XCTestCase {
     XCTAssertEqual(offset, -EVYSwipeGeometry.revealWidth)
   }
 
-  func testEndStateClosedBelowRevealThreshold() {
+  func testEndStateClosedBelowHalfwayReveal() {
     let state = EVYSwipeGeometry.endState(
       translation: CGSize(width: -10, height: 0),
       velocity: .zero,
-      isOpen: false,
-      rowWidth: 320
+      isOpen: false
     )
     XCTAssertEqual(state, .closed)
   }
 
-  func testEndStateOpenPastRevealThreshold() {
+  func testEndStateOpenPastHalfwayReveal() {
     let state = EVYSwipeGeometry.endState(
       translation: CGSize(width: -40, height: 0),
       velocity: .zero,
-      isOpen: false,
-      rowWidth: 320
+      isOpen: false
     )
     XCTAssertEqual(state, .open)
   }
 
-  func testEndStateExecutePastFullSwipeThreshold() {
+  func testEndStateStaysOpenWhenReleasedFarPastReveal() {
     let state = EVYSwipeGeometry.endState(
       translation: CGSize(width: -200, height: 0),
       velocity: .zero,
-      isOpen: false,
-      rowWidth: 320
+      isOpen: false
     )
-    XCTAssertEqual(state, .execute)
+    XCTAssertEqual(state, .open)
   }
 
   func testEndStateWhileOpenBiasesTowardClosedOnRightwardDrag() {
     let state = EVYSwipeGeometry.endState(
       translation: CGSize(width: 40, height: 0),
       velocity: .zero,
-      isOpen: true,
-      rowWidth: 320
+      isOpen: true
     )
     XCTAssertEqual(state, .closed)
   }
@@ -103,8 +107,7 @@ final class EVYSwipeGeometryTests: XCTestCase {
     let state = EVYSwipeGeometry.endState(
       translation: CGSize(width: 10, height: 0),
       velocity: .zero,
-      isOpen: true,
-      rowWidth: 320
+      isOpen: true
     )
     XCTAssertEqual(state, .open)
   }
@@ -129,8 +132,7 @@ final class EVYSwipeGeometryTests: XCTestCase {
     let state = EVYSwipeGeometry.endState(
       translation: CGSize(width: -20, height: 0),
       velocity: CGSize(width: -800, height: 0),
-      isOpen: false,
-      rowWidth: 320
+      isOpen: false
     )
     XCTAssertEqual(state, .open)
   }
@@ -139,48 +141,16 @@ final class EVYSwipeGeometryTests: XCTestCase {
     let state = EVYSwipeGeometry.endState(
       translation: CGSize(width: -20, height: 0),
       velocity: .zero,
-      isOpen: false,
-      rowWidth: 320
+      isOpen: false
     )
     XCTAssertEqual(state, .closed)
-  }
-
-  func testEndStateRawOffsetPastFullSwipeThresholdExecutesWithZeroVelocity() {
-    let state = EVYSwipeGeometry.endState(
-      translation: CGSize(width: -200, height: 0),
-      velocity: .zero,
-      isOpen: false,
-      rowWidth: 320
-    )
-    XCTAssertEqual(state, .execute)
-  }
-
-  func testEndStateHardFlickPastProjectedThresholdExecutes() {
-    let state = EVYSwipeGeometry.endState(
-      translation: CGSize(width: -100, height: 0),
-      velocity: CGSize(width: -1200, height: 0),
-      isOpen: false,
-      rowWidth: 320
-    )
-    XCTAssertEqual(state, .execute)
-  }
-
-  func testEndStateModerateVelocityProjectsOpenButDoesNotExecute() {
-    let state = EVYSwipeGeometry.endState(
-      translation: CGSize(width: -100, height: 0),
-      velocity: CGSize(width: -600, height: 0),
-      isOpen: false,
-      rowWidth: 320
-    )
-    XCTAssertEqual(state, .open)
   }
 
   func testEndStateOpenRowRightwardFlickCloses() {
     let state = EVYSwipeGeometry.endState(
       translation: CGSize(width: 10, height: 0),
       velocity: CGSize(width: 600, height: 0),
-      isOpen: true,
-      rowWidth: 320
+      isOpen: true
     )
     XCTAssertEqual(state, .closed)
   }
@@ -189,30 +159,6 @@ final class EVYSwipeGeometryTests: XCTestCase {
     XCTAssertEqual(EVYSwipeGeometry.revealButtonWidth(for: 0), EVYSwipeGeometry.revealWidth)
     XCTAssertEqual(EVYSwipeGeometry.revealButtonWidth(for: -40), EVYSwipeGeometry.revealWidth)
     XCTAssertEqual(EVYSwipeGeometry.revealButtonWidth(for: -120), 120)
-  }
-
-  func testCrossedExecuteThresholdDetectsCrossingInAndOut() {
-    XCTAssertTrue(
-      EVYSwipeGeometry.crossedExecuteThreshold(
-        previousOffset: -170,
-        currentOffset: -180,
-        rowWidth: 320
-      )
-    )
-    XCTAssertTrue(
-      EVYSwipeGeometry.crossedExecuteThreshold(
-        previousOffset: -180,
-        currentOffset: -170,
-        rowWidth: 320
-      )
-    )
-    XCTAssertFalse(
-      EVYSwipeGeometry.crossedExecuteThreshold(
-        previousOffset: -100,
-        currentOffset: -120,
-        rowWidth: 320
-      )
-    )
   }
 
   func testSpringInitialVelocityNormalizesAndHandlesZeroDistance() {

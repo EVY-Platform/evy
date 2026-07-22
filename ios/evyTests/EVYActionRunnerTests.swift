@@ -933,25 +933,84 @@ final class EVYActionRunnerTests: XCTestCase {
   }
 
   func testDatumRowFormatterResolvesDatumReferencesInActions() throws {
-    let actionString = "{navigate(flowX,pageY,{id: $datum.id})}"
+    let navigateAction = "{navigate(flowX,pageY,{id: $datum.id})}"
+    let updateAction =
+      "{update(66b092ae-7cd8-4d67-95b7-30b03568fd90, 000c2d05-851e-4456-8f22-bb1e54f17c8c, {id: $datum.id, status: \"pending\"}, {status: \"accepted\"})}"
     let row = try decodeRow(
       content: """
         {
-          "title": "{$datum.title}"
+          "title": "{$datum.title}",
+          "subtitle": "{$datum.status}"
         }
         """,
-      actions: UI_RowActions(tap: [rowAction(true: actionString)])
+      actions: UI_RowActions(
+        slideLeft: [rowAction(true: updateAction)],
+        tap: [rowAction(true: navigateAction)]
+      )
     )
     let formatter = try EVYDatumRowFormatter(template: row)
     let datum = EVYJson.dictionary([
       "id": .string("resolved-uuid"),
       "title": .string("Resolved Title"),
+      "status": .string("pending"),
     ])
 
     let formattedRow = try formatter.formattedResult(datum: datum).row
 
+    XCTAssertEqual(formattedRow.id, row.id)
     XCTAssertEqual(formattedRow.title, "Resolved Title")
-    XCTAssertEqual(formattedRow.actions.tap.first?.true, actionString)
+    XCTAssertEqual(formattedRow.actions.tap.first?.true, navigateAction)
+    XCTAssertEqual(formattedRow.actions.slideLeft.first?.true, updateAction)
+  }
+
+  func testSlideLeftUpdateActionAcceptsPendingMessageFromFormattedSearchResult() throws {
+    let namespace = EVYNamespace.marketplace
+    let resource = MarketplaceTestFixture.messagesResourceId
+    let pendingMessageId = UUID().uuidString
+    try? EVY.publicStore.deleteAll(namespace: namespace, resource: resource)
+    defer { try? EVY.publicStore.deleteAll(namespace: namespace, resource: resource) }
+
+    let message = EVYJson.dictionary([
+      "id": .string(pendingMessageId),
+      "status": .string("pending"),
+      "data": .dictionary([
+        "type": .string("pickup"),
+        "time": .string("2026-06-03T09:00:00"),
+      ]),
+    ])
+    try EVY.publicStore.applySyncedValue(
+      namespace: namespace, resource: resource, value: .array([message]))
+
+    let template = try decodeRow(
+      content: """
+        {
+          "title": "{$datum.data.type} request",
+          "subtitle": "{$datum.status}"
+        }
+        """,
+      actions: UI_RowActions(
+        slideLeft: [
+          rowAction(
+            true:
+              "{update(\(namespace),\(resource),{id: $datum.id, status: \"pending\"},{status: \"accepted\"})}"
+          )
+        ]
+      )
+    )
+    let results = EVYSearchResult.makeResults(
+      from: .array([message]),
+      resultTemplate: template,
+      scopeId: nil
+    )
+    let result = try XCTUnwrap(results.first)
+
+    EVYActionRunner.run(
+      actions: result.displayRow.actions.slideLeft,
+      datum: result.datum
+    ) { _ in }
+
+    let statusById = try statusByMessageId(namespace: namespace, resource: resource)
+    XCTAssertEqual(statusById[pendingMessageId], "accepted")
   }
 
   private func makeRowWithSheet() throws -> UI_Row {

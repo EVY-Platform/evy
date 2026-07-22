@@ -619,7 +619,7 @@ class E2ETestBase: XCTestCase {
     try launchApp()
   }
 
-  var apiHost: String { ProcessInfo.processInfo.environment["API_HOST"] ?? "localhost:8000" }
+  var apiHost: String { ProcessInfo.processInfo.environment["API_HOST"] ?? "127.0.0.1:8000" }
 
   func launchApp() throws {
     app = XCUIApplication()
@@ -2992,25 +2992,13 @@ final class E2ESlideLeftTests: E2ETestBase {
 
     swipeLabel.swipeLeft(velocity: .slow)
 
-    let destinationPage = app.scrollViews["page_\(Self.slideLeftDestPageId)"]
-    if destinationPage.waitForExistence(timeout: 3)
-      || app.staticTexts["Arrived"].waitForExistence(timeout: 1)
-    {
-      return
-    }
-
     let slideButton = app.buttons["slideLeft_\(Self.slideLeftRowId)"]
-    if !slideButton.waitForExistence(timeout: 3) {
-      // Retry with a faster full swipe that should auto-execute.
-      swipeLabel.swipeLeft(velocity: .fast)
-      XCTAssertTrue(
-        destinationPage.waitForExistence(timeout: 5)
-          || app.staticTexts["Arrived"].waitForExistence(timeout: 5),
-        "Slide-left full swipe should navigate to the destination page")
-      return
-    }
+    XCTAssertTrue(
+      slideButton.waitForExistence(timeout: 3),
+      "Slide-left action button should be revealed after swipe")
     slideButton.tap()
 
+    let destinationPage = app.scrollViews["page_\(Self.slideLeftDestPageId)"]
     XCTAssertTrue(
       destinationPage.waitForExistence(timeout: 5)
         || app.staticTexts["Arrived"].waitForExistence(timeout: 5),
@@ -3476,11 +3464,10 @@ final class E2EHomepageMessageSearchTests: E2ETestBase {
     let slideButtonId =
       "slideLeft_\(Self.messageChildRowId)_\(Self.pickupMessageId)"
     let slideButton = app.buttons[slideButtonId]
-    if slideButton.waitForExistence(timeout: 3) {
-      slideButton.tap()
-    } else {
-      pickupLabel.swipeLeft(velocity: .fast)
-    }
+    XCTAssertTrue(
+      slideButton.waitForExistence(timeout: 3),
+      "Slide-left action button should be revealed for the pickup message")
+    slideButton.tap()
 
     XCTAssertTrue(
       app.staticTexts["accepted"].waitForExistence(timeout: 5),

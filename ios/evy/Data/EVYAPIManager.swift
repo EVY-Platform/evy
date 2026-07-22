@@ -7,7 +7,7 @@
 
 import Foundation
 
-let API_HOST = "localhost:8000"
+let API_HOST = "127.0.0.1:8000"
 let AUTH_TOKEN = "Geo"
 
 actor EVYAPIManager {

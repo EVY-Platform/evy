@@ -54,7 +54,14 @@ final class EVYDatumRowFormatter {
       var formatted: [String: Any] = [:]
       formatted.reserveCapacity(dictionaryValue.count)
       for (key, nestedValue) in dictionaryValue {
-        formatted[key] = formatDatumReferencesInJSONValue(nestedValue, datum: datum)
+        // Action branches resolve $datum at run time. Running them through formatData
+        // replaces $datum with a temporary id that is cleared before the action executes,
+        // which silently breaks filters like {id: $datum.id, status: "pending"}.
+        if key == "actions" {
+          formatted[key] = nestedValue
+        } else {
+          formatted[key] = formatDatumReferencesInJSONValue(nestedValue, datum: datum)
+        }
       }
       return formatted
     case let arrayValue as [Any]:
@@ -86,7 +93,9 @@ final class EVYDatumRowFormatter {
     let searchableValues =
       Self.extractAllStrings(from: root)
       .filter { !$0.isEmpty }
-    root["id"] = UUID().uuidString
+    // Keep the template row id. Search results are identified by datum id, and swipe
+    // identity is `templateId_datumId` — replacing this with a random UUID breaks
+    // accessibility ids and one-open-at-a-time coordination against authored row ids.
     let out = try JSONSerialization.data(withJSONObject: root)
     return (try JSONDecoder().decode(UI_Row.self, from: out), searchableValues)
   }

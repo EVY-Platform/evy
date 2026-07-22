@@ -9,15 +9,13 @@ import UIKit
 enum EVYSwipeEndState: Equatable {
   case closed
   case open
-  case execute
 }
 
 enum EVYSwipeGeometry {
   static let revealWidth: CGFloat = 72
   static let revealSnapThreshold: CGFloat = 36
-  static let fullSwipeThresholdFraction: CGFloat = 0.55
+  static let maxStretchWidth: CGFloat = revealWidth * 2
   static let rubberBandFactor: CGFloat = 0.35
-  static let executeFlickVelocity: CGFloat = 1000
   static let decelerationRate: CGFloat = 0.998
 
   private static let projectionFactor: CGFloat =
@@ -35,9 +33,9 @@ enum EVYSwipeGeometry {
     if proposedOffset > 0 {
       return 0
     }
-    if proposedOffset < -revealWidth {
-      let overshoot = proposedOffset + revealWidth
-      return -revealWidth + overshoot * rubberBandFactor
+    if proposedOffset < -maxStretchWidth {
+      let overshoot = proposedOffset + maxStretchWidth
+      return -maxStretchWidth + overshoot * rubberBandFactor
     }
     return proposedOffset
   }
@@ -49,25 +47,14 @@ enum EVYSwipeGeometry {
   static func endState(
     translation: CGSize,
     velocity: CGSize,
-    isOpen: Bool,
-    rowWidth: CGFloat
+    isOpen: Bool
   ) -> EVYSwipeEndState {
     let baseOffset: CGFloat = isOpen ? -revealWidth : 0
     let rawOffset = baseOffset + translation.width
-    let fullSwipeThreshold = executeThreshold(rowWidth: rowWidth)
-    if rawOffset <= fullSwipeThreshold {
-      return .execute
-    }
-
-    let projected = projectedOffset(rawOffset: rawOffset, velocityX: velocity.width)
-    if projected <= fullSwipeThreshold && abs(velocity.width) >= executeFlickVelocity {
-      return .execute
-    }
-
     let decisionOffset =
       abs(velocity.width) < nearZeroDistance
       ? dragOffset(translation: translation, isOpen: isOpen)
-      : projected
+      : projectedOffset(rawOffset: rawOffset, velocityX: velocity.width)
     if decisionOffset <= -revealSnapThreshold {
       return .open
     }
@@ -76,17 +63,6 @@ enum EVYSwipeGeometry {
 
   static func revealButtonWidth(for offset: CGFloat) -> CGFloat {
     max(0, max(revealWidth, -offset))
-  }
-
-  static func crossedExecuteThreshold(
-    previousOffset: CGFloat,
-    currentOffset: CGFloat,
-    rowWidth: CGFloat
-  ) -> Bool {
-    let threshold = executeThreshold(rowWidth: rowWidth)
-    let wasPast = previousOffset <= threshold
-    let isPast = currentOffset <= threshold
-    return wasPast != isPast
   }
 
   static func springInitialVelocity(
@@ -98,10 +74,6 @@ enum EVYSwipeGeometry {
     guard abs(distance) >= nearZeroDistance else { return 0 }
     let normalized = velocityX / distance
     return min(springVelocityClamp, max(-springVelocityClamp, normalized))
-  }
-
-  private static func executeThreshold(rowWidth: CGFloat) -> CGFloat {
-    -max(rowWidth, revealWidth) * fullSwipeThresholdFraction
   }
 }
 
@@ -158,21 +130,17 @@ struct EVYSwipeableRow<Content: View>: View {
   @State private var isDragging = false
   @State private var wasOpenAtDragStart = false
   @State private var rowWidth: CGFloat = 0
-  @State private var lastRawOffset: CGFloat = 0
-  @State private var isPastExecuteThreshold = false
   @State private var isSettlingFromGesture = false
-  @State private var impactFeedback = UIImpactFeedbackGenerator(style: .medium)
 
   private var isOpen: Bool {
     coordinator.openRowId == swipeIdentity
   }
 
   var body: some View {
+    // Action button must be above content in the ZStack. Content stays full-width and only
+    // moves visually via offset, so when drawn on top it still owns the revealed trailing
+    // hit region and turns button taps into tap-to-close (no onExecute / status update).
     ZStack(alignment: .trailing) {
-      trailingActionButton
-        .opacity(offset < 0 ? 1 : 0)
-        .allowsHitTesting(offset < -1)
-
       content()
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(
@@ -183,74 +151,54 @@ struct EVYSwipeableRow<Content: View>: View {
         )
         .offset(x: offset)
         .overlay {
-          if isOpen && !isDragging {
-            Constants.tappableClearColor
-              .contentShape(Rectangle())
-              .onTapGesture {
-                settle(to: 0, velocityX: 0)
+          EVYSwipePanOverlay(
+            isOpen: isOpen,
+            onBegan: { open in
+              wasOpenAtDragStart = open
+              isDragging = true
+              if let openId = coordinator.openRowId, openId != swipeIdentity {
+                coordinator.close(openId)
+                wasOpenAtDragStart = false
               }
-          }
+            },
+            onChanged: { translation in
+              let nextOffset = EVYSwipeGeometry.dragOffset(
+                translation: translation,
+                isOpen: wasOpenAtDragStart
+              )
+              var transaction = Transaction()
+              transaction.disablesAnimations = true
+              withTransaction(transaction) {
+                offset = nextOffset
+              }
+            },
+            onEnded: { translation, velocity in
+              isDragging = false
+              let endState = EVYSwipeGeometry.endState(
+                translation: translation,
+                velocity: velocity,
+                isOpen: wasOpenAtDragStart
+              )
+              switch endState {
+              case .closed:
+                settle(to: 0, velocityX: velocity.width)
+              case .open:
+                settle(to: -EVYSwipeGeometry.revealWidth, velocityX: velocity.width)
+              }
+            },
+            onTapWhenOpen: {
+              settle(to: 0, velocityX: 0)
+            }
+          )
         }
+
+      trailingActionButton
+        .frame(width: EVYSwipeGeometry.revealButtonWidth(for: offset))
+        .opacity(offset < 0 ? 1 : 0)
+        .allowsHitTesting(offset <= -EVYSwipeGeometry.revealSnapThreshold && !isDragging)
     }
     .contentShape(Rectangle())
     .clipped()
-    .overlay {
-      EVYSwipePanOverlay(
-        isOpen: isOpen,
-        onBegan: { open in
-          wasOpenAtDragStart = open
-          isDragging = true
-          lastRawOffset = open ? -EVYSwipeGeometry.revealWidth : 0
-          isPastExecuteThreshold = false
-          impactFeedback.prepare()
-          if let openId = coordinator.openRowId, openId != swipeIdentity {
-            coordinator.close(openId)
-            wasOpenAtDragStart = false
-            lastRawOffset = 0
-          }
-        },
-        onChanged: { translation in
-          let baseOffset: CGFloat =
-            wasOpenAtDragStart ? -EVYSwipeGeometry.revealWidth : 0
-          let rawOffset = baseOffset + translation.width
-          let nextOffset = EVYSwipeGeometry.dragOffset(
-            translation: translation,
-            isOpen: wasOpenAtDragStart
-          )
-          if EVYSwipeGeometry.crossedExecuteThreshold(
-            previousOffset: lastRawOffset,
-            currentOffset: rawOffset,
-            rowWidth: rowWidth
-          ) {
-            isPastExecuteThreshold = !isPastExecuteThreshold
-            impactFeedback.impactOccurred()
-          }
-          lastRawOffset = rawOffset
-          var transaction = Transaction()
-          transaction.disablesAnimations = true
-          withTransaction(transaction) {
-            offset = nextOffset
-          }
-        },
-        onEnded: { translation, velocity in
-          isDragging = false
-          let endState = EVYSwipeGeometry.endState(
-            translation: translation,
-            velocity: velocity,
-            isOpen: wasOpenAtDragStart,
-            rowWidth: rowWidth
-          )
-          switch endState {
-          case .closed:
-            settle(to: 0, velocityX: velocity.width)
-          case .open:
-            settle(to: -EVYSwipeGeometry.revealWidth, velocityX: velocity.width)
-          case .execute:
-            executeWithCommitSweep()
-          }
-        }
-      )
-    }
     .onPreferenceChange(EVYSwipeRowWidthKey.self) { width in
       rowWidth = width
     }
@@ -268,17 +216,12 @@ struct EVYSwipeableRow<Content: View>: View {
     Button {
       executeWithCommitSweep()
     } label: {
-      ZStack(alignment: .trailing) {
-        Constants.actionColor
-          .frame(width: EVYSwipeGeometry.revealButtonWidth(for: offset))
-
-        Image(systemName: "ellipsis")
-          .font(.system(size: 20, weight: .semibold))
-          .foregroundStyle(.white)
-          .frame(width: EVYSwipeGeometry.revealWidth)
-          .frame(maxHeight: .infinity)
-      }
-      .frame(maxHeight: .infinity)
+      Image(systemName: "ellipsis")
+        .font(.system(size: 20, weight: .semibold))
+        .foregroundStyle(.white)
+        .frame(maxWidth: .infinity)
+        .frame(maxHeight: .infinity)
+        .background(Constants.actionColor)
     }
     .buttonStyle(.plain)
     .accessibilityLabel("Slide left")
@@ -336,6 +279,7 @@ private struct EVYSwipePanOverlay: UIViewRepresentable {
   let onBegan: (_ isOpen: Bool) -> Void
   let onChanged: (CGSize) -> Void
   let onEnded: (_ translation: CGSize, _ velocity: CGSize) -> Void
+  let onTapWhenOpen: () -> Void
 
   func makeCoordinator() -> Coordinator {
     Coordinator(parent: self)
@@ -352,6 +296,15 @@ private struct EVYSwipePanOverlay: UIViewRepresentable {
     pan.cancelsTouchesInView = false
     view.addGestureRecognizer(pan)
     context.coordinator.pan = pan
+
+    let tap = UITapGestureRecognizer(
+      target: context.coordinator,
+      action: #selector(Coordinator.handleTap(_:))
+    )
+    tap.delegate = context.coordinator
+    tap.require(toFail: pan)
+    view.addGestureRecognizer(tap)
+    context.coordinator.tap = tap
     return view
   }
 
@@ -362,6 +315,7 @@ private struct EVYSwipePanOverlay: UIViewRepresentable {
   final class Coordinator: NSObject, UIGestureRecognizerDelegate {
     var parent: EVYSwipePanOverlay
     weak var pan: UIPanGestureRecognizer?
+    weak var tap: UITapGestureRecognizer?
     private var didBegin = false
 
     init(parent: EVYSwipePanOverlay) {
@@ -393,6 +347,11 @@ private struct EVYSwipePanOverlay: UIViewRepresentable {
       }
     }
 
+    @objc func handleTap(_ recognizer: UITapGestureRecognizer) {
+      guard parent.isOpen, recognizer.state == .ended else { return }
+      parent.onTapWhenOpen()
+    }
+
     func gestureRecognizer(
       _ gestureRecognizer: UIGestureRecognizer,
       shouldRecognizeSimultaneouslyWith otherGestureRecognizer: UIGestureRecognizer
@@ -401,6 +360,9 @@ private struct EVYSwipePanOverlay: UIViewRepresentable {
     }
 
     func gestureRecognizerShouldBegin(_ gestureRecognizer: UIGestureRecognizer) -> Bool {
+      if gestureRecognizer === tap {
+        return parent.isOpen
+      }
       guard let pan = gestureRecognizer as? UIPanGestureRecognizer else { return true }
       let velocity = pan.velocity(in: pan.view)
       if abs(velocity.y) >= abs(velocity.x) {
