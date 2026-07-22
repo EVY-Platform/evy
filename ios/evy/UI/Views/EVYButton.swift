@@ -29,11 +29,12 @@ struct EVYButton: View {
 
   var body: some View {
     Button(action: action) {
-      EVYTextView(label, style: .button).frame(maxWidth: .infinity)
+      EVYTextView(label, style: .button)
+        .lineLimit(1)
+        .fixedSize(horizontal: true, vertical: false)
     }
     .buttonStyle(.plain)
     .padding(Constants.majorPadding)
-    .frame(maxWidth: 150)
     .background(backgroundColor)
     .cornerRadius(Constants.smallCornerRadius)
   }
@@ -45,7 +46,7 @@ struct EVYButton: View {
       label: "Button",
       action: {})
     EVYButton(
-      label: "Cancel request",
+      label: "Cancel pickup request",
       style: "danger",
       action: {})
   }

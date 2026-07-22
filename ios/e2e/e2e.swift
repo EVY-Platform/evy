@@ -897,6 +897,46 @@ class E2ETestBase: XCTestCase {
     return "{\(acceptedRequestFindFirstExpression(type: type)).fk != \(itemId).id}"
   }
 
+  static func activeRequestFindFirstExpression(type: String) -> String {
+    let messagesResourceId = MarketplaceResource.messages.rawValue
+    let itemId = MARKETPLACE_ITEMS_RESOURCE_ID
+    return
+      "findFirst(\(messagesResourceId), fk == \(itemId).id && archivedAt == null && data.type == \(type))"
+  }
+
+  static func activeRequestVisibilityExpression(type: String) -> String {
+    let itemId = MARKETPLACE_ITEMS_RESOURCE_ID
+    return "{\(activeRequestFindFirstExpression(type: type)).fk == \(itemId).id}"
+  }
+
+  static func pendingRequestVisibilityExpression(type: String) -> String {
+    let messagesResourceId = MarketplaceResource.messages.rawValue
+    let itemId = MARKETPLACE_ITEMS_RESOURCE_ID
+    return
+      "{findFirst(\(messagesResourceId), fk == \(itemId).id && archivedAt == null && status == pending && data.type == \(type)).fk == \(itemId).id}"
+  }
+
+  static func cancelRequestButtonLabel(type: String) -> String {
+    "Cancel \(type) request"
+  }
+
+  static func activeRequestContainer(
+    id: String,
+    type: String,
+    name: String,
+    children: [[String: Any]]
+  ) -> [String: Any] {
+    [
+      "id": id,
+      "type": "VerticalContainer",
+      "actions": [:],
+      "visible": Self.activeRequestVisibilityExpression(type: type),
+      "title": "",
+      "name": name,
+      "children": children,
+    ]
+  }
+
   static func pickupAcceptedConfirmationSubtitle() -> String {
     let match = acceptedRequestFindFirstExpression(type: "pickup")
     return
@@ -942,7 +982,7 @@ class E2ETestBase: XCTestCase {
               "actions": Self.actionsObject(
                 tap: [Self.rowAction(true: "{select($datum)}")]
               ),
-              "visible": "true",
+              "visible": visibility.noActive,
               "title": "",
               "segments": ["Pickup", "Delivery", "Shipping"],
               "children": [
@@ -953,13 +993,6 @@ class E2ETestBase: XCTestCase {
                   "visible": "true",
                   "title": "",
                   "children": [
-                    Self.textRow(
-                      id: "1a713180-a4a4-4f23-98cf-f3e79140c832",
-                      title: "",
-                      subtitle: Self.pickupAcceptedConfirmationSubtitle(),
-                      visible: Self.acceptedRequestVisibilityExpression(type: "pickup"),
-                      name: "Pickup accepted confirmation"
-                    ),
                     Self.timeslotPickerRow(
                       id: "b3c4d5e6-f7a8-4b9c-0d1e-2f3a4b5c6d7e",
                       source: "{\(MARKETPLACE_ITEMS_RESOURCE_ID).pickup_selection}",
@@ -971,19 +1004,7 @@ class E2ETestBase: XCTestCase {
                       sheet: Self.pickupConfirmationSheetChild(
                         pickupCreateAction: pickupCreateAction
                       )
-                    ),
-                    Self.buttonRow(
-                      id: "c4d5e6f7-a8b9-4c0d-1e2f-3a4b5c6d7e8f",
-                      label: "Cancel request",
-                      action: "{show(f1a2b3c4-d5e6-4f7a-8b9c-0d1e2f3a4b5d)}",
-                      visible: visibility.hasActive,
-                      style: "danger",
-                      sheet: Self.cancelRequestSheetChild(
-                        cancelAction: cancelAction,
-                        message:
-                          "Cancel pickup request for the \"{\(MARKETPLACE_ITEMS_RESOURCE_ID).title}\"?"
-                      )
-                    ),
+                    )
                   ],
                 ],
                 [
@@ -994,18 +1015,9 @@ class E2ETestBase: XCTestCase {
                   "title": "",
                   "children": [
                     Self.textRow(
-                      id: "0fa0adba-aab4-4a0e-a8a4-fa1236f7dd9c",
-                      title: "",
-                      subtitle: Self.deliveryAcceptedConfirmationSubtitle(),
-                      visible: Self.acceptedRequestVisibilityExpression(type: "delivery"),
-                      name: "Delivery accepted confirmation"
-                    ),
-                    Self.textRow(
                       id: "357d3351-93e6-47bd-91ab-3616fd70b8aa",
                       title: "",
                       subtitle: "Buyer will drop off",
-                      visible: Self.hideSegmentInfoWhenAcceptedVisibilityExpression(
-                        type: "delivery"),
                       name: "Drop-off note"
                     ),
                     Self.timeslotPickerRow(
@@ -1021,18 +1033,6 @@ class E2ETestBase: XCTestCase {
                         deliveryCreateAction: deliveryCreateAction
                       )
                     ),
-                    Self.buttonRow(
-                      id: "f7a8b9c0-d1e2-4f3a-4b5c-6d7e8f9a0b1c",
-                      label: "Cancel request",
-                      action: "{show(f1a2b3c4-d5e6-4f7a-8b9c-0d1e2f3a4b5d)}",
-                      visible: visibility.hasActive,
-                      style: "danger",
-                      sheet: Self.cancelRequestSheetChild(
-                        cancelAction: cancelAction,
-                        message:
-                          "Cancel delivery request for the \"{\(MARKETPLACE_ITEMS_RESOURCE_ID).title}\"?"
-                      )
-                    ),
                   ],
                 ],
                 [
@@ -1043,18 +1043,9 @@ class E2ETestBase: XCTestCase {
                   "title": "",
                   "children": [
                     Self.textRow(
-                      id: "ba000cfa-6a3b-4817-8296-0c14f77bc199",
-                      title: "",
-                      subtitle: Self.shippingAcceptedConfirmationSubtitle(),
-                      visible: Self.acceptedRequestVisibilityExpression(type: "shipping"),
-                      name: "Shipping accepted confirmation"
-                    ),
-                    Self.textRow(
                       id: "4aac26f8-7c51-4c09-a6ac-910e5636cbb5",
                       title: "",
                       subtitle: "Delivered to your door",
-                      visible: Self.hideSegmentInfoWhenAcceptedVisibilityExpression(
-                        type: "shipping"),
                       name: "Shipping note"
                     ),
                     Self.inputRow(
@@ -1076,22 +1067,102 @@ class E2ETestBase: XCTestCase {
                         shippingCreateAction: shippingCreateAction
                       )
                     ),
-                    Self.buttonRow(
-                      id: "d1e2f3a4-b5c6-4d7e-8f9a-0b1c2d3e4f5a",
-                      label: "Cancel request",
-                      action: "{show(f1a2b3c4-d5e6-4f7a-8b9c-0d1e2f3a4b5d)}",
-                      visible: visibility.hasActive,
-                      style: "danger",
-                      sheet: Self.cancelRequestSheetChild(
-                        cancelAction: cancelAction,
-                        message:
-                          "Cancel shipping request for the \"{\(MARKETPLACE_ITEMS_RESOURCE_ID).title}\"?"
-                      )
-                    ),
                   ],
                 ],
               ],
-            ]
+            ],
+            Self.activeRequestContainer(
+              id: "f9a8b7c6-d5e4-4f3a-9b8c-7d6e5f4a3b2c",
+              type: "pickup",
+              name: "Active pickup request",
+              children: [
+                Self.textRow(
+                  id: "1a713180-a4a4-4f23-98cf-f3e79140c832",
+                  title: "",
+                  subtitle: Self.pickupAcceptedConfirmationSubtitle(),
+                  visible: Self.acceptedRequestVisibilityExpression(type: "pickup"),
+                  name: "Pickup accepted confirmation"
+                ),
+                Self.buttonRow(
+                  id: "c4d5e6f7-a8b9-4c0d-1e2f-3a4b5c6d7e8f",
+                  label: Self.cancelRequestButtonLabel(type: "pickup"),
+                  action: "{show(f1a2b3c4-d5e6-4f7a-8b9c-0d1e2f3a4b5d)}",
+                  visible: Self.pendingRequestVisibilityExpression(type: "pickup"),
+                  style: "danger",
+                  sheet: Self.cancelRequestSheetChild(
+                    cancelAction: cancelAction,
+                    message:
+                      "Cancel pickup request for the \"{\(MARKETPLACE_ITEMS_RESOURCE_ID).title}\"?"
+                  )
+                ),
+              ]
+            ),
+            Self.activeRequestContainer(
+              id: "e8a7b6c5-d4e3-4f2a-8b9c-6d5e4f3a2b1c",
+              type: "delivery",
+              name: "Active delivery request",
+              children: [
+                Self.textRow(
+                  id: "0fa0adba-aab4-4a0e-a8a4-fa1236f7dd9c",
+                  title: "",
+                  subtitle: Self.deliveryAcceptedConfirmationSubtitle(),
+                  visible: Self.acceptedRequestVisibilityExpression(type: "delivery"),
+                  name: "Delivery accepted confirmation"
+                ),
+                Self.textRow(
+                  id: "357d3351-93e6-47bd-91ab-3616fd70b8aa",
+                  title: "",
+                  subtitle: "Buyer will drop off",
+                  visible: Self.hideSegmentInfoWhenAcceptedVisibilityExpression(type: "delivery"),
+                  name: "Drop-off note"
+                ),
+                Self.buttonRow(
+                  id: "f7a8b9c0-d1e2-4f3a-4b5c-6d7e8f9a0b1c",
+                  label: Self.cancelRequestButtonLabel(type: "delivery"),
+                  action: "{show(f1a2b3c4-d5e6-4f7a-8b9c-0d1e2f3a4b5d)}",
+                  visible: Self.pendingRequestVisibilityExpression(type: "delivery"),
+                  style: "danger",
+                  sheet: Self.cancelRequestSheetChild(
+                    cancelAction: cancelAction,
+                    message:
+                      "Cancel delivery request for the \"{\(MARKETPLACE_ITEMS_RESOURCE_ID).title}\"?"
+                  )
+                ),
+              ]
+            ),
+            Self.activeRequestContainer(
+              id: "d7b6a5c4-e3f2-4a1b-9c8d-5e4f3a2b1c0d",
+              type: "shipping",
+              name: "Active shipping request",
+              children: [
+                Self.textRow(
+                  id: "ba000cfa-6a3b-4817-8296-0c14f77bc199",
+                  title: "",
+                  subtitle: Self.shippingAcceptedConfirmationSubtitle(),
+                  visible: Self.acceptedRequestVisibilityExpression(type: "shipping"),
+                  name: "Shipping accepted confirmation"
+                ),
+                Self.textRow(
+                  id: "4aac26f8-7c51-4c09-a6ac-910e5636cbb5",
+                  title: "",
+                  subtitle: "Delivered to your door",
+                  visible: Self.hideSegmentInfoWhenAcceptedVisibilityExpression(type: "shipping"),
+                  name: "Shipping note"
+                ),
+                Self.buttonRow(
+                  id: "d1e2f3a4-b5c6-4d7e-8f9a-0b1c2d3e4f5a",
+                  label: Self.cancelRequestButtonLabel(type: "shipping"),
+                  action: "{show(f1a2b3c4-d5e6-4f7a-8b9c-0d1e2f3a4b5d)}",
+                  visible: Self.pendingRequestVisibilityExpression(type: "shipping"),
+                  style: "danger",
+                  sheet: Self.cancelRequestSheetChild(
+                    cancelAction: cancelAction,
+                    message:
+                      "Cancel shipping request for the \"{\(MARKETPLACE_ITEMS_RESOURCE_ID).title}\"?"
+                  )
+                ),
+              ]
+            ),
           ],
         ]
       ],
@@ -2255,8 +2326,8 @@ final class WebSocketE2ETests: E2ETestBase {
     )
     XCTAssertTrue(timeslot.exists, "Pickup timeslot should remain visible after cancel")
     XCTAssertFalse(
-      app.buttons["Cancel request"].exists,
-      "Cancel request should not appear when no request was created"
+      app.buttons["Cancel pickup request"].exists,
+      "Cancel pickup request should not appear when no request was created"
     )
     await emitter.disconnect()
   }
@@ -2344,8 +2415,8 @@ final class WebSocketE2ETests: E2ETestBase {
     let timeslot = app.staticTexts["09:00"].firstMatch
     XCTAssertTrue(timeslot.waitForExistence(timeout: 10), "Pickup timeslot should be visible")
     XCTAssertFalse(
-      app.buttons["Cancel request"].exists,
-      "Cancel request should be hidden before a request exists")
+      app.buttons["Cancel pickup request"].exists,
+      "Cancel pickup request should be hidden before a request exists")
 
     timeslot.tap()
     XCTAssertTrue(
@@ -2362,23 +2433,18 @@ final class WebSocketE2ETests: E2ETestBase {
     )
     XCTAssertTrue(pickupRequestCreated, "Tapping a pickup timeslot should create a message")
 
-    let cancelButton = app.buttons["Cancel request"].firstMatch
+    let cancelButton = app.buttons["Cancel pickup request"].firstMatch
     XCTAssertTrue(
       cancelButton.waitForExistence(timeout: 10),
-      "Cancel request should replace the pickup timeslot")
+      "Cancel pickup request should replace the transfer tabs and pickup timeslot")
     XCTAssertFalse(timeslot.exists, "Pickup timeslot should be hidden after creating a request")
-
-    let shippingTab = app.segmentedControls.buttons["Shipping"]
-    XCTAssertTrue(shippingTab.waitForExistence(timeout: 5), "Shipping segment should exist")
-    shippingTab.tap()
-    XCTAssertTrue(
-      app.buttons["Cancel request"].firstMatch.waitForExistence(timeout: 5),
-      "Cancel request should appear in the shipping segment")
+    XCTAssertFalse(
+      app.segmentedControls.buttons["Shipping"].waitForExistence(timeout: 2),
+      "Transfer tabs should hide while a pickup request is active")
     XCTAssertFalse(
       app.buttons["Ask to buy"].exists,
       "Ask to buy should be hidden while an active request exists")
 
-    app.segmentedControls.buttons["Pickup"].tap()
     cancelButton.tap()
     XCTAssertTrue(
       waitForConfirmationSheet(timeout: 5),
@@ -2405,8 +2471,8 @@ final class WebSocketE2ETests: E2ETestBase {
       "Pickup confirmation sheet should reopen after cancelling the request")
     tapConfirmationSheetRequestButton()
     XCTAssertTrue(
-      app.buttons["Cancel request"].firstMatch.waitForExistence(timeout: 10),
-      "Cancel request should reappear after creating another request")
+      app.buttons["Cancel pickup request"].firstMatch.waitForExistence(timeout: 10),
+      "Cancel pickup request should reappear after creating another request")
     await emitter.disconnect()
   }
 
@@ -2455,8 +2521,8 @@ final class WebSocketE2ETests: E2ETestBase {
     XCTAssertTrue(pickupRequestCreated, "Tapping a pickup timeslot should create a message")
 
     XCTAssertTrue(
-      app.buttons["Cancel request"].firstMatch.waitForExistence(timeout: 10),
-      "Cancel request should be visible for a pending request")
+      app.buttons["Cancel pickup request"].firstMatch.waitForExistence(timeout: 10),
+      "Cancel pickup request should be visible for a pending request")
     XCTAssertFalse(
       app.staticTexts[pickupConfirmedLabel].waitForExistence(timeout: 2),
       "Pickup confirmation text should stay hidden while the request is pending")
@@ -2486,14 +2552,14 @@ final class WebSocketE2ETests: E2ETestBase {
 
     XCTAssertTrue(
       waitForCancelRequestHidden(timeout: 10),
-      "Cancel request should hide once the message is accepted")
+      "Cancel pickup request should hide once the message is accepted")
     XCTAssertTrue(
       app.staticTexts[pickupConfirmedLabel].waitForExistence(timeout: 10),
       "Pickup segment should show the accepted confirmation row")
 
-    let shippingTab = app.segmentedControls.buttons["Shipping"]
-    XCTAssertTrue(shippingTab.waitForExistence(timeout: 5), "Shipping segment should exist")
-    shippingTab.tap()
+    XCTAssertFalse(
+      app.segmentedControls.buttons["Shipping"].waitForExistence(timeout: 2),
+      "Transfer tabs should stay hidden for an accepted pickup request")
     let shippingConfirmation = app.staticTexts.matching(
       NSPredicate(format: "label BEGINSWITH %@", "Shipping confirmed")
     ).firstMatch
@@ -2829,12 +2895,18 @@ final class WebSocketE2ETests: E2ETestBase {
   private func waitForCancelRequestHidden(timeout: TimeInterval) -> Bool {
     let deadline = Date().addingTimeInterval(timeout)
     while Date() < deadline {
-      if !app.buttons["Cancel request"].firstMatch.exists {
+      if !Self.anyCancelRequestButtonExists(in: app) {
         return true
       }
       RunLoop.current.run(until: Date().addingTimeInterval(0.2))
     }
-    return !app.buttons["Cancel request"].firstMatch.exists
+    return !Self.anyCancelRequestButtonExists(in: app)
+  }
+
+  private static func anyCancelRequestButtonExists(in app: XCUIApplication) -> Bool {
+    app.buttons["Cancel pickup request"].exists
+      || app.buttons["Cancel delivery request"].exists
+      || app.buttons["Cancel shipping request"].exists
   }
 
   private func waitForArchivedMarketplaceMessage(
