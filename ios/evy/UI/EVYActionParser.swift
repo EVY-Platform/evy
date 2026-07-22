@@ -112,17 +112,4 @@ enum EVYActionParser {
     guard !rowId.isEmpty else { return nil }
     return rowId
   }
-
-  /// Parses a function call with exactly one non-empty id argument (e.g. `{show(rowId)}`).
-  static func singleIdArgument(from rawBranch: String, function: String) -> String? {
-    guard let parsed = functionCall(from: rawBranch), parsed.name == function else {
-      return nil
-    }
-    return singleIdArgument(fromArgs: parsed.args)
-  }
-
-  /// Parses `{show(rowId)}` and returns the target row id when the branch is valid.
-  static func showRowId(from rawBranch: String) -> String? {
-    singleIdArgument(from: rawBranch, function: "show")
-  }
 }

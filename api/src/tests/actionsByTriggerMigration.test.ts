@@ -11,7 +11,11 @@ import { join } from "node:path";
 import { eq } from "drizzle-orm";
 import { migrate } from "drizzle-orm/pglite/migrator";
 import * as schema from "evy-types/db/schema.generated";
-import { clearAllTestTables, createPgliteTestDatabase } from "./wsTestHelpers";
+import {
+	clearAllTestTables,
+	createPgliteTestDatabase,
+	insertRow,
+} from "./wsTestHelpers";
 
 const { pgliteClient, testDb } = createPgliteTestDatabase();
 
@@ -19,29 +23,6 @@ const MIGRATION_SQL = readFileSync(
 	join(import.meta.dir, "../../drizzle/0009_actions_by_trigger.sql"),
 	"utf8",
 );
-
-function nowIso(): string {
-	return new Date().toISOString();
-}
-
-async function insertRow(row: {
-	id: string;
-	name: string;
-	type: string;
-	visible?: string;
-	data: Record<string, unknown>;
-}): Promise<void> {
-	const iso = nowIso();
-	await testDb.insert(schema.row).values({
-		id: row.id,
-		name: row.name,
-		type: row.type,
-		visible: row.visible ?? "true",
-		data: row.data,
-		createdAt: iso,
-		updatedAt: iso,
-	});
-}
 
 beforeAll(async () => {
 	await migrate(testDb, { migrationsFolder: "./drizzle" });
@@ -63,7 +44,7 @@ describe("0009_actions_by_trigger", () => {
 		const selectPhotoId = "33333333-3333-4333-8333-333333333333";
 		const buttonId = "44444444-4444-4444-8444-444444444444";
 
-		await insertRow({
+		await insertRow(testDb, {
 			id: textId,
 			name: "Optional tap text",
 			type: "Text",
@@ -72,7 +53,7 @@ describe("0009_actions_by_trigger", () => {
 				actions: [],
 			},
 		});
-		await insertRow({
+		await insertRow(testDb, {
 			id: dropdownId,
 			name: "Required tap dropdown",
 			type: "Dropdown",
@@ -83,7 +64,7 @@ describe("0009_actions_by_trigger", () => {
 				actions: [],
 			},
 		});
-		await insertRow({
+		await insertRow(testDb, {
 			id: selectPhotoId,
 			name: "Photos",
 			type: "SelectPhoto",
@@ -99,7 +80,7 @@ describe("0009_actions_by_trigger", () => {
 				],
 			},
 		});
-		await insertRow({
+		await insertRow(testDb, {
 			id: buttonId,
 			name: "Close",
 			type: "Button",

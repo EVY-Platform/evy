@@ -18,22 +18,16 @@ type RowComponent = ((props: { rowId: string }) => ReactNode) & {
 	name: string;
 };
 
-const DEFAULT_ROW_ACTION_TRIGGERS: RowTriggerName[] = [
-	"tap",
-	"delete",
-	"tap-row",
-	"tap-column",
-	"slide-left",
-];
-
 type DefaultRowActionsInput = Partial<Record<RowTriggerName, string>>;
 
 export function defaultRowActions(
 	options: DefaultRowActionsInput,
 ): UI_RowActions {
 	const actions: UI_RowActions = {};
-	for (const trigger of DEFAULT_ROW_ACTION_TRIGGERS) {
-		const branch = options[trigger];
+	for (const [trigger, branch] of Object.entries(options) as [
+		RowTriggerName,
+		string | undefined,
+	][]) {
 		if (branch !== undefined) {
 			actions[trigger] = [rowAction(branch)];
 		}

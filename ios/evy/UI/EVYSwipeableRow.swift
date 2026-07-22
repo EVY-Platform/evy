@@ -92,10 +92,6 @@ final class EVYSwipeCoordinator: ObservableObject {
       openRowId = nil
     }
   }
-
-  func closeAll() {
-    openRowId = nil
-  }
 }
 
 enum EVYSwipeRowIdentity {
@@ -130,7 +126,6 @@ struct EVYSwipeableRow<Content: View>: View {
   @State private var isDragging = false
   @State private var wasOpenAtDragStart = false
   @State private var rowWidth: CGFloat = 0
-  @State private var isSettlingFromGesture = false
 
   private var isOpen: Bool {
     coordinator.openRowId == swipeIdentity
@@ -203,7 +198,7 @@ struct EVYSwipeableRow<Content: View>: View {
       rowWidth = width
     }
     .onChange(of: coordinator.openRowId) { _, openId in
-      guard !isDragging, !isSettlingFromGesture else { return }
+      guard !isDragging else { return }
       let target: CGFloat = openId == swipeIdentity ? -EVYSwipeGeometry.revealWidth : 0
       guard offset != target else { return }
       withAnimation(.spring(response: 0.28, dampingFraction: 0.86)) {
@@ -229,13 +224,11 @@ struct EVYSwipeableRow<Content: View>: View {
   }
 
   private func settle(to targetOffset: CGFloat, velocityX: CGFloat) {
-    isSettlingFromGesture = true
     if targetOffset == 0 {
       coordinator.close(swipeIdentity)
     } else {
       coordinator.open(swipeIdentity)
     }
-    isSettlingFromGesture = false
     guard offset != targetOffset else { return }
     let initialVelocity = EVYSwipeGeometry.springInitialVelocity(
       velocityX: velocityX,
@@ -250,9 +243,7 @@ struct EVYSwipeableRow<Content: View>: View {
   }
 
   private func executeWithCommitSweep() {
-    isSettlingFromGesture = true
     coordinator.close(swipeIdentity)
-    isSettlingFromGesture = false
     let sweepTarget = -max(rowWidth, EVYSwipeGeometry.revealWidth)
     withAnimation(.easeOut(duration: 0.15), completionCriteria: .logicallyComplete) {
       offset = sweepTarget

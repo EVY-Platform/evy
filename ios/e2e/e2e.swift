@@ -423,6 +423,13 @@ class E2ETestBase: XCTestCase {
     return try result.get()
   }
 
+  static func responseDataArray(from response: Any) -> [Any]? {
+    if let envelope = response as? [String: Any] {
+      return envelope["data"] as? [Any]
+    }
+    return response as? [Any]
+  }
+
   /// Returns the hittable button with the given label, waiting for one to appear.
   /// Used when a sheet's confirm button shares its label with an obscured button behind
   /// the sheet (`isHittable` is not a legal key path inside XCUI query predicates).
@@ -2744,13 +2751,6 @@ final class WebSocketE2ETests: E2ETestBase {
     return false
   }
 
-  private static func responseDataArray(from response: Any) -> [Any]? {
-    if let envelope = response as? [String: Any] {
-      return envelope["data"] as? [Any]
-    }
-    return response as? [Any]
-  }
-
   @MainActor
   private func publishHomeFlow(_ flowData: [String: Any]) async {
     let emitter = WSEmitter()
@@ -3520,13 +3520,6 @@ final class E2EHomepageMessageSearchTests: E2ETestBase {
       else { return false }
       return true
     }
-  }
-
-  private static func responseDataArray(from response: Any) -> [Any]? {
-    if let envelope = response as? [String: Any] {
-      return envelope["data"] as? [Any]
-    }
-    return response as? [Any]
   }
 
   private static func orderedSearchTextFields(in homePage: XCUIElement) -> [XCUIElement] {

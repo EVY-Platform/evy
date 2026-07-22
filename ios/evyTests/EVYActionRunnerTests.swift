@@ -513,11 +513,11 @@ final class EVYActionRunnerTests: XCTestCase {
     XCTAssertEqual(shownRowId, "sheet-row")
   }
 
-  func testShowRowIdParserRejectsInvalidBranches() {
-    XCTAssertNil(EVYActionParser.showRowId(from: "{show()}"))
-    XCTAssertNil(EVYActionParser.showRowId(from: "{show(a, b)}"))
-    XCTAssertNil(EVYActionParser.showRowId(from: "{navigate(flow,page)}"))
-    XCTAssertEqual(EVYActionParser.showRowId(from: "{show(target-id)}"), "target-id")
+  func testSingleIdArgumentRejectsInvalidArgs() {
+    XCTAssertNil(EVYActionParser.singleIdArgument(fromArgs: ""))
+    XCTAssertNil(EVYActionParser.singleIdArgument(fromArgs: "a, b"))
+    XCTAssertNil(EVYActionParser.singleIdArgument(fromArgs: "flow, page"))
+    XCTAssertEqual(EVYActionParser.singleIdArgument(fromArgs: "target-id"), "target-id")
   }
 
   func testSelectDispatchesBareDatum() {

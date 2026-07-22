@@ -153,6 +153,26 @@ describe("validateServiceProviderPayload", () => {
 	});
 });
 
+function flowWithRow(row: Record<string, unknown>) {
+	return {
+		id: crypto.randomUUID(),
+		name: "F",
+		pages: [
+			{
+				id: crypto.randomUUID(),
+				name: "Page",
+				title: "P",
+				rows: [
+					{
+						id: crypto.randomUUID(),
+						...row,
+					},
+				],
+			},
+		],
+	};
+}
+
 describe("validateFlowData", () => {
 	it("accepts minimal valid flow", () => {
 		const id = crypto.randomUUID();
@@ -174,401 +194,236 @@ describe("validateFlowData", () => {
 	});
 
 	it("requires row visible", () => {
-		const flowId = crypto.randomUUID();
-		const pageId = crypto.randomUUID();
-		const rowId = crypto.randomUUID();
 		expect(() =>
-			validateFlowData({
-				id: flowId,
-				name: "F",
-				pages: [
-					{
-						id: pageId,
-						name: "Page",
-						title: "P",
-						rows: [
-							{
-								id: rowId,
-								name: "Always Visible Row",
-								type: "Text",
-								actions: {},
-								title: "Always visible",
-							},
-						],
-					},
-				],
-			}),
+			validateFlowData(
+				flowWithRow({
+					name: "Always Visible Row",
+					type: "Text",
+					actions: {},
+					title: "Always visible",
+				}),
+			),
 		).toThrow("Flow validation failed");
 	});
 
 	it("accepts row with visible predicate", () => {
-		const flowId = crypto.randomUUID();
-		const pageId = crypto.randomUUID();
-		const rowId = crypto.randomUUID();
-		const out = validateFlowData({
-			id: flowId,
-			name: "F",
-			pages: [
-				{
-					id: pageId,
-					name: "Page",
-					title: "P",
-					rows: [
-						{
-							id: rowId,
-							name: "Cash Accepted Row",
-							type: "Text",
-							actions: {},
-							visible: `{${MARKETPLACE_RESOURCE.ITEMS}.payment_methods.cash == true}`,
-							title: "Cash accepted",
-						},
-					],
-				},
-			],
-		});
+		const out = validateFlowData(
+			flowWithRow({
+				name: "Cash Accepted Row",
+				type: "Text",
+				actions: {},
+				visible: `{${MARKETPLACE_RESOURCE.ITEMS}.payment_methods.cash == true}`,
+				title: "Cash accepted",
+			}),
+		);
 		expect(out.pages[0]?.rows[0]?.visible).toBe(
 			`{${MARKETPLACE_RESOURCE.ITEMS}.payment_methods.cash == true}`,
 		);
 	});
 
 	it("rejects required tap trigger with no actions", () => {
-		const flowId = crypto.randomUUID();
-		const pageId = crypto.randomUUID();
-		const rowId = crypto.randomUUID();
 		expect(() =>
-			validateFlowData({
-				id: flowId,
-				name: "F",
-				pages: [
-					{
-						id: pageId,
-						name: "Page",
-						title: "P",
-						rows: [
-							{
-								id: rowId,
-								name: "Submit",
-								type: "Button",
-								actions: {},
-								visible: "true",
-								label: "Go",
-							},
-						],
-					},
-				],
-			}),
+			validateFlowData(
+				flowWithRow({
+					name: "Submit",
+					type: "Button",
+					actions: {},
+					visible: "true",
+					label: "Go",
+				}),
+			),
 		).toThrow("required trigger must have at least one action");
 	});
 
 	it("rejects triggers not declared for the row type", () => {
-		const flowId = crypto.randomUUID();
-		const pageId = crypto.randomUUID();
-		const rowId = crypto.randomUUID();
 		expect(() =>
-			validateFlowData({
-				id: flowId,
-				name: "F",
-				pages: [
-					{
-						id: pageId,
-						name: "Page",
-						title: "P",
-						rows: [
+			validateFlowData(
+				flowWithRow({
+					name: "Submit",
+					type: "Button",
+					actions: {
+						delete: [
 							{
-								id: rowId,
-								name: "Submit",
-								type: "Button",
-								actions: {
-									delete: [
-										{
-											condition: "",
-											false: "",
-											true: "{delete_photo()}",
-										},
-									],
-								},
-								visible: "true",
-								label: "Go",
+								condition: "",
+								false: "",
+								true: "{delete_photo()}",
 							},
 						],
 					},
-				],
-			}),
+					visible: "true",
+					label: "Go",
+				}),
+			),
 		).toThrow('trigger "delete" is not declared');
 	});
 
 	it("accepts optional tap trigger when absent", () => {
-		const flowId = crypto.randomUUID();
-		const pageId = crypto.randomUUID();
-		const rowId = crypto.randomUUID();
-		const out = validateFlowData({
-			id: flowId,
-			name: "F",
-			pages: [
-				{
-					id: pageId,
-					name: "Page",
-					title: "P",
-					rows: [
-						{
-							id: rowId,
-							name: "Label",
-							type: "Text",
-							actions: {},
-							visible: "true",
-							title: "Hello",
-						},
-					],
-				},
-			],
-		});
+		const out = validateFlowData(
+			flowWithRow({
+				name: "Label",
+				type: "Text",
+				actions: {},
+				visible: "true",
+				title: "Hello",
+			}),
+		);
 		expect(out.pages[0]?.rows[0]?.type).toBe("Text");
 	});
 
 	it("rejects Calendar missing required tap-row actions", () => {
-		const flowId = crypto.randomUUID();
-		const pageId = crypto.randomUUID();
-		const rowId = crypto.randomUUID();
 		expect(() =>
-			validateFlowData({
-				id: flowId,
-				name: "F",
-				pages: [
-					{
-						id: pageId,
-						name: "Page",
-						title: "P",
-						rows: [
+			validateFlowData(
+				flowWithRow({
+					name: "Availability",
+					type: "Calendar",
+					actions: {
+						tap: [
 							{
-								id: rowId,
-								name: "Availability",
-								type: "Calendar",
-								actions: {
-									tap: [
-										{
-											condition: "",
-											false: "",
-											true: "{select($datum)}",
-										},
-									],
-									"tap-column": [
-										{
-											condition: "",
-											false: "",
-											true: "{select($datum)}",
-										},
-									],
-								},
-								visible: "true",
-								source: "{item.pickup_selection}",
-								destination: "{item.pickup_selection}",
-								start_time: "07:00",
-								end_time: "19:00",
-								timeslot_interval_minutes: "30",
-								label_interval_minutes: "60",
-								header_format: "EEE d",
-								timeslot_format: "HH:mm",
+								condition: "",
+								false: "",
+								true: "{select($datum)}",
+							},
+						],
+						"tap-column": [
+							{
+								condition: "",
+								false: "",
+								true: "{select($datum)}",
 							},
 						],
 					},
-				],
-			}),
+					visible: "true",
+					source: "{item.pickup_selection}",
+					destination: "{item.pickup_selection}",
+					start_time: "07:00",
+					end_time: "19:00",
+					timeslot_interval_minutes: "30",
+					label_interval_minutes: "60",
+					header_format: "EEE d",
+					timeslot_format: "HH:mm",
+				}),
+			),
 		).toThrow("required trigger must have at least one action");
 	});
 
 	it("accepts Calendar with tap, tap-row, and tap-column actions", () => {
-		const flowId = crypto.randomUUID();
-		const pageId = crypto.randomUUID();
-		const rowId = crypto.randomUUID();
 		const selectAction = {
 			condition: "",
 			false: "",
 			true: "{select($datum)}",
 		};
-		const out = validateFlowData({
-			id: flowId,
-			name: "F",
-			pages: [
-				{
-					id: pageId,
-					name: "Page",
-					title: "P",
-					rows: [
-						{
-							id: rowId,
-							name: "Availability",
-							type: "Calendar",
-							actions: {
-								tap: [selectAction],
-								"tap-row": [selectAction],
-								"tap-column": [selectAction],
-							},
-							visible: "true",
-							source: "{item.pickup_selection}",
-							destination: "{item.pickup_selection}",
-							start_time: "07:00",
-							end_time: "19:00",
-							timeslot_interval_minutes: "30",
-							label_interval_minutes: "60",
-							header_format: "EEE d",
-							timeslot_format: "HH:mm",
-						},
-					],
+		const out = validateFlowData(
+			flowWithRow({
+				name: "Availability",
+				type: "Calendar",
+				actions: {
+					tap: [selectAction],
+					"tap-row": [selectAction],
+					"tap-column": [selectAction],
 				},
-			],
-		});
+				visible: "true",
+				source: "{item.pickup_selection}",
+				destination: "{item.pickup_selection}",
+				start_time: "07:00",
+				end_time: "19:00",
+				timeslot_interval_minutes: "30",
+				label_interval_minutes: "60",
+				header_format: "EEE d",
+				timeslot_format: "HH:mm",
+			}),
+		);
 		expect(out.pages[0]?.rows[0]?.type).toBe("Calendar");
 	});
 
 	it("rejects tap-row on a non-Calendar row", () => {
-		const flowId = crypto.randomUUID();
-		const pageId = crypto.randomUUID();
-		const rowId = crypto.randomUUID();
 		expect(() =>
-			validateFlowData({
-				id: flowId,
-				name: "F",
-				pages: [
-					{
-						id: pageId,
-						name: "Page",
-						title: "P",
-						rows: [
+			validateFlowData(
+				flowWithRow({
+					name: "Submit",
+					type: "Button",
+					actions: {
+						tap: [
 							{
-								id: rowId,
-								name: "Submit",
-								type: "Button",
-								actions: {
-									tap: [
-										{
-											condition: "",
-											false: "",
-											true: "{close()}",
-										},
-									],
-									"tap-row": [
-										{
-											condition: "",
-											false: "",
-											true: "{select($datum)}",
-										},
-									],
-								},
-								visible: "true",
-								label: "Go",
+								condition: "",
+								false: "",
+								true: "{close()}",
+							},
+						],
+						"tap-row": [
+							{
+								condition: "",
+								false: "",
+								true: "{select($datum)}",
 							},
 						],
 					},
-				],
-			}),
+					visible: "true",
+					label: "Go",
+				}),
+			),
 		).toThrow('trigger "tap-row" is not declared');
 	});
 
 	it("accepts Text with optional slide-left actions", () => {
-		const flowId = crypto.randomUUID();
-		const pageId = crypto.randomUUID();
-		const rowId = crypto.randomUUID();
-		const out = validateFlowData({
-			id: flowId,
-			name: "F",
-			pages: [
-				{
-					id: pageId,
-					name: "Page",
-					title: "P",
-					rows: [
+		const out = validateFlowData(
+			flowWithRow({
+				name: "Label",
+				type: "Text",
+				actions: {
+					"slide-left": [
 						{
-							id: rowId,
-							name: "Label",
-							type: "Text",
-							actions: {
-								"slide-left": [
-									{
-										condition: "",
-										false: "",
-										true: "{close()}",
-									},
-								],
-							},
-							visible: "true",
-							title: "Hello",
+							condition: "",
+							false: "",
+							true: "{close()}",
 						},
 					],
 				},
-			],
-		});
+				visible: "true",
+				title: "Hello",
+			}),
+		);
 		expect(out.pages[0]?.rows[0]?.type).toBe("Text");
 	});
 
 	it("rejects slide-left on a Button", () => {
-		const flowId = crypto.randomUUID();
-		const pageId = crypto.randomUUID();
-		const rowId = crypto.randomUUID();
 		expect(() =>
-			validateFlowData({
-				id: flowId,
-				name: "F",
-				pages: [
-					{
-						id: pageId,
-						name: "Page",
-						title: "P",
-						rows: [
+			validateFlowData(
+				flowWithRow({
+					name: "Submit",
+					type: "Button",
+					actions: {
+						tap: [
 							{
-								id: rowId,
-								name: "Submit",
-								type: "Button",
-								actions: {
-									tap: [
-										{
-											condition: "",
-											false: "",
-											true: "{close()}",
-										},
-									],
-									"slide-left": [
-										{
-											condition: "",
-											false: "",
-											true: "{close()}",
-										},
-									],
-								},
-								visible: "true",
-								label: "Go",
+								condition: "",
+								false: "",
+								true: "{close()}",
+							},
+						],
+						"slide-left": [
+							{
+								condition: "",
+								false: "",
+								true: "{close()}",
 							},
 						],
 					},
-				],
-			}),
+					visible: "true",
+					label: "Go",
+				}),
+			),
 		).toThrow('trigger "slide-left" is not declared');
 	});
 
 	it("accepts ListItem without slide-left when optional", () => {
-		const flowId = crypto.randomUUID();
-		const pageId = crypto.randomUUID();
-		const rowId = crypto.randomUUID();
-		const out = validateFlowData({
-			id: flowId,
-			name: "F",
-			pages: [
-				{
-					id: pageId,
-					name: "Page",
-					title: "P",
-					rows: [
-						{
-							id: rowId,
-							name: "Item",
-							type: "ListItem",
-							actions: {},
-							visible: "true",
-							title: "Hello",
-						},
-					],
-				},
-			],
-		});
+		const out = validateFlowData(
+			flowWithRow({
+				name: "Item",
+				type: "ListItem",
+				actions: {},
+				visible: "true",
+				title: "Hello",
+			}),
+		);
 		expect(out.pages[0]?.rows[0]?.type).toBe("ListItem");
 	});
 });

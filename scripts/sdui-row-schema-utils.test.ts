@@ -72,7 +72,7 @@ describe("extractSduiRowDefinition", () => {
 		});
 	});
 
-	test("maps row, row array, string array, and action array attributes into row specs", () => {
+	test("maps row, row array, and string array attributes into row specs", () => {
 		const definition = extractSduiRowDefinition(
 			{
 				triggers: { tap: "optional" },
@@ -80,13 +80,7 @@ describe("extractSduiRowDefinition", () => {
 					{ $ref: "../evy.schema.json#/$defs/UI_RowBase" },
 					{
 						type: "object",
-						required: [
-							"type",
-							"child",
-							"children",
-							"segments",
-							"actions",
-						],
+						required: ["type", "child", "children", "segments"],
 						properties: {
 							type: { const: "Fixture" },
 							child: { $ref: "../evy.schema.json#/$defs/UI_Row" },
@@ -100,10 +94,6 @@ describe("extractSduiRowDefinition", () => {
 								type: "array",
 								items: { type: "string" },
 							},
-							actions: {
-								type: "array",
-								items: { $ref: "../action.schema.json" },
-							},
 						},
 					},
 				],
@@ -115,7 +105,6 @@ describe("extractSduiRowDefinition", () => {
 			child: { required: true, type: "Row" },
 			children: { required: true, type: "Row[]" },
 			segments: { required: true, type: "string[]" },
-			actions: { required: true, type: "Action[]" },
 		});
 		expect(rowSpecFromDefinitions([definition])).toEqual({
 			Fixture: {
@@ -123,7 +112,6 @@ describe("extractSduiRowDefinition", () => {
 					child: { type: "UI_Row", required: true },
 					children: { type: "[UI_Row]", required: true },
 					segments: { type: "[String]", required: true },
-					actions: { type: "[UI_RowAction]", required: true },
 				},
 			},
 		});

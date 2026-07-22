@@ -30,10 +30,6 @@ function swiftTypeForSpecType(s: string, required = true): string {
 			return "UI_Row?"; // always optional: single-row reference
 		case "[String]":
 			return required ? "[String]" : "[String]?";
-		case "[UI_RowAction]":
-			return required ? "[UI_RowAction]" : "[UI_RowAction]?";
-		case "UI_RowActions":
-			return "UI_RowActions";
 		default:
 			return required ? "String" : "String?";
 	}
@@ -198,7 +194,6 @@ function swiftDefaultValueForSpecType(specType: string): string {
 	switch (specType) {
 		case "[UI_Row]":
 		case "[String]":
-		case "[UI_RowAction]":
 			return "[]";
 		case "UI_Row":
 			return "nil";

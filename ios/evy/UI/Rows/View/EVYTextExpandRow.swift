@@ -17,7 +17,7 @@ struct EVYTextExpandRow: View {
 
   init(
     view: TextExpandRowViewData,
-    rowId: String = "",
+    rowId: String,
     onExpandTapped: @escaping () -> Void
   ) {
     self.view = view

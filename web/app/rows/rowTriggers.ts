@@ -4,7 +4,7 @@ import {
 	SDUI_ROW_TRIGGERS,
 } from "evy-types";
 
-export type { RowTriggerName, RowTriggerSpec };
+export type { RowTriggerName };
 
 export function getRowTriggers(type: string): RowTriggerSpec[] {
 	return SDUI_ROW_TRIGGERS[type] ?? [];

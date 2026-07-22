@@ -498,13 +498,7 @@ function assertUiFlowRowTriggerConstraints(row: UI_Row, path: string): void {
 		);
 	}
 	const declaredTriggers = new Set(triggerSpecs.map((spec) => spec.trigger));
-	const actions = row.actions;
-	if (Array.isArray(actions)) {
-		throw new Error(
-			`Flow validation failed: ${path}.actions must be an object keyed by trigger, not an array`,
-		);
-	}
-	const actionsRecord = actions ?? {};
+	const actionsRecord = row.actions ?? {};
 	for (const triggerKey of Object.keys(actionsRecord)) {
 		if (!declaredTriggers.has(triggerKey as RowTriggerName)) {
 			throw new Error(

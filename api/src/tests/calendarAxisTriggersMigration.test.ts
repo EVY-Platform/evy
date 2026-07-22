@@ -11,7 +11,11 @@ import { join } from "node:path";
 import { eq } from "drizzle-orm";
 import { migrate } from "drizzle-orm/pglite/migrator";
 import * as schema from "evy-types/db/schema.generated";
-import { clearAllTestTables, createPgliteTestDatabase } from "./wsTestHelpers";
+import {
+	clearAllTestTables,
+	createPgliteTestDatabase,
+	insertRow,
+} from "./wsTestHelpers";
 
 const { pgliteClient, testDb } = createPgliteTestDatabase();
 
@@ -25,29 +29,6 @@ const SELECT_DATUM_ACTION = {
 	false: "",
 	true: "{select($datum)}",
 };
-
-function nowIso(): string {
-	return new Date().toISOString();
-}
-
-async function insertRow(row: {
-	id: string;
-	name: string;
-	type: string;
-	visible?: string;
-	data: Record<string, unknown>;
-}): Promise<void> {
-	const iso = nowIso();
-	await testDb.insert(schema.row).values({
-		id: row.id,
-		name: row.name,
-		type: row.type,
-		visible: row.visible ?? "true",
-		data: row.data,
-		createdAt: iso,
-		updatedAt: iso,
-	});
-}
 
 beforeAll(async () => {
 	await migrate(testDb, { migrationsFolder: "./drizzle" });
@@ -73,7 +54,7 @@ describe("0010_calendar_axis_triggers", () => {
 			true: "{show(aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa)}",
 		};
 
-		await insertRow({
+		await insertRow(testDb, {
 			id: calendarNeedsBackfillId,
 			name: "Needs backfill",
 			type: "Calendar",
@@ -85,7 +66,7 @@ describe("0010_calendar_axis_triggers", () => {
 				},
 			},
 		});
-		await insertRow({
+		await insertRow(testDb, {
 			id: calendarCustomId,
 			name: "Custom tap-row",
 			type: "Calendar",
@@ -99,7 +80,7 @@ describe("0010_calendar_axis_triggers", () => {
 				},
 			},
 		});
-		await insertRow({
+		await insertRow(testDb, {
 			id: buttonId,
 			name: "Close",
 			type: "Button",

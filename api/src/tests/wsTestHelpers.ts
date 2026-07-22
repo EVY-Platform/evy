@@ -54,6 +54,32 @@ export function createPgliteTestDatabase() {
 	return createPgliteTestDatabaseWithSchema(schema);
 }
 
+export function nowIso(): string {
+	return new Date().toISOString();
+}
+
+export async function insertRow(
+	testDb: PgliteTestDb,
+	row: {
+		id: string;
+		name: string;
+		type: string;
+		visible?: string;
+		data: Record<string, unknown>;
+	},
+): Promise<void> {
+	const iso = nowIso();
+	await testDb.insert(schema.row).values({
+		id: row.id,
+		name: row.name,
+		type: row.type,
+		visible: row.visible ?? "true",
+		data: row.data,
+		createdAt: iso,
+		updatedAt: iso,
+	});
+}
+
 export async function clearAllTestTables(testDb: PgliteTestDb): Promise<void> {
 	await testDb.delete(schema.row);
 	await testDb.delete(schema.page);
