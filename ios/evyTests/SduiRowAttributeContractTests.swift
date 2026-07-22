@@ -63,6 +63,46 @@ final class SduiRowAttributeContractTests: XCTestCase {
     }
   }
 
+  func testSwipeLabelPresentAndOptionalOnlyForSwipeLeftRows() throws {
+    let catalogData = try XCTUnwrap(
+      SduiDefinitions.json.data(using: .utf8),
+      "SduiDefinitions.json must be valid UTF-8"
+    )
+    let catalog = try XCTUnwrap(
+      JSONSerialization.jsonObject(with: catalogData) as? [String: Any],
+      "SduiDefinitions.json must be a JSON object"
+    )
+    let supportedSwipeLabelRowTypes: Set<String> = [
+      "Heading", "Input", "ListItem", "Text",
+    ]
+
+    for (rowType, schemaDef) in catalog {
+      let schemaDefDict = try XCTUnwrap(
+        schemaDef as? [String: Any],
+        "\(rowType): schema definition must be a JSON object"
+      )
+      let expectedAttributes = Self.extractExpectedAttributes(from: schemaDefDict, rowType: rowType)
+      let hasSwipeLabel = expectedAttributes["swipeLabel"] != nil
+      let isOptional = expectedAttributes["swipeLabel"] ?? false
+
+      if supportedSwipeLabelRowTypes.contains(rowType) {
+        XCTAssertTrue(
+          hasSwipeLabel,
+          "\(rowType): expected optional `swipeLabel` attribute in schema"
+        )
+        XCTAssertTrue(
+          isOptional,
+          "\(rowType): `swipeLabel` must be optional (not in required)"
+        )
+      } else {
+        XCTAssertFalse(
+          hasSwipeLabel,
+          "\(rowType): must not declare `swipeLabel` — only Heading, Input, ListItem, and Text support it"
+        )
+      }
+    }
+  }
+
   func testUIRowDecodesTriggerKeyedActions() throws {
     let rowData = try JSONSerialization.data(
       withJSONObject: [
@@ -87,7 +127,7 @@ final class SduiRowAttributeContractTests: XCTestCase {
 
   func testSduiDefinitionsIncludeTriggersMetadata() throws {
     let allowedTriggers: Set<String> = [
-      "tap", "delete", "tap-row", "tap-column", "slide-left",
+      "tap", "delete", "tap-row", "tap-column", "swipe-left",
     ]
     let catalogData = try XCTUnwrap(
       SduiDefinitions.json.data(using: .utf8),

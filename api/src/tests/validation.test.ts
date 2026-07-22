@@ -364,13 +364,13 @@ describe("validateFlowData", () => {
 		).toThrow('trigger "tap-row" is not declared');
 	});
 
-	it("accepts Text with optional slide-left actions", () => {
+	it("accepts Text with optional swipe-left actions", () => {
 		const out = validateFlowData(
 			flowWithRow({
 				name: "Label",
 				type: "Text",
 				actions: {
-					"slide-left": [
+					"swipe-left": [
 						{
 							condition: "",
 							false: "",
@@ -385,7 +385,7 @@ describe("validateFlowData", () => {
 		expect(out.pages[0]?.rows[0]?.type).toBe("Text");
 	});
 
-	it("rejects slide-left on a Button", () => {
+	it("rejects swipe-left on a Button", () => {
 		expect(() =>
 			validateFlowData(
 				flowWithRow({
@@ -399,7 +399,7 @@ describe("validateFlowData", () => {
 								true: "{close()}",
 							},
 						],
-						"slide-left": [
+						"swipe-left": [
 							{
 								condition: "",
 								false: "",
@@ -411,10 +411,10 @@ describe("validateFlowData", () => {
 					label: "Go",
 				}),
 			),
-		).toThrow('trigger "slide-left" is not declared');
+		).toThrow('trigger "swipe-left" is not declared');
 	});
 
-	it("accepts ListItem without slide-left when optional", () => {
+	it("accepts ListItem without swipe-left when optional", () => {
 		const out = validateFlowData(
 			flowWithRow({
 				name: "Item",

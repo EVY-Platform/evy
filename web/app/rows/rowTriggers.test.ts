@@ -8,7 +8,7 @@ const KNOWN_TRIGGER_NAMES = [
 	"delete",
 	"tap-row",
 	"tap-column",
-	"slide-left",
+	"swipe-left",
 ];
 
 describe("rowTriggers", () => {
@@ -37,10 +37,10 @@ describe("rowTriggers", () => {
 		]);
 	});
 
-	test("Heading, Input, ListItem, and Text declare optional slide-left", () => {
+	test("Heading, Input, ListItem, and Text declare optional swipe-left", () => {
 		for (const type of ["Heading", "Input", "ListItem", "Text"]) {
 			expect(getRowTriggers(type)).toEqual([
-				{ trigger: "slide-left", required: false },
+				{ trigger: "swipe-left", required: false },
 				{ trigger: "tap", required: false },
 			]);
 		}

@@ -13,7 +13,7 @@ enum EVYRowActionTrigger {
   case delete
   case tapRow
   case tapColumn
-  case slideLeft
+  case swipeLeft
 }
 
 enum EVYRowActionOperation {

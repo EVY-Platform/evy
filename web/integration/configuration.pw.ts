@@ -1503,7 +1503,7 @@ test.describe("Row configuration", () => {
 		await expect(configPanel.getByText(/select\(\$datum\)/)).toHaveCount(3);
 	});
 
-	test("shows Slide left for Text without required badge, not for Button", async ({
+	test("shows Swipe left for Text without required badge, not for Button", async ({
 		page,
 	}) => {
 		await openAppWithTestFlows(page, [
@@ -1534,7 +1534,7 @@ test.describe("Row configuration", () => {
 		const configPanel = getConfigPanel(page);
 		await page.getByText("Slide Text", { exact: true }).click();
 		await expect(
-			configPanel.getByText("Slide left", { exact: true }),
+			configPanel.getByText("Swipe left", { exact: true }),
 		).toBeVisible();
 		await expect(configPanel.getByText("(required)")).toHaveCount(0);
 		await expect(
@@ -1543,7 +1543,7 @@ test.describe("Row configuration", () => {
 
 		await page.getByText("Slide Button", { exact: true }).click();
 		await expect(
-			configPanel.getByText("Slide left", { exact: true }),
+			configPanel.getByText("Swipe left", { exact: true }),
 		).not.toBeVisible();
 	});
 });

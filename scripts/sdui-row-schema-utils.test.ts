@@ -225,12 +225,12 @@ describe("rowTriggersFromDefinitions", () => {
 		});
 	});
 
-	test("maps optional slide-left trigger", () => {
+	test("maps optional swipe-left trigger", () => {
 		const text = extractSduiRowDefinition(
 			{
 				triggers: {
 					tap: "optional",
-					"slide-left": "optional",
+					"swipe-left": "optional",
 				},
 				allOf: [
 					{ $ref: "../evy.schema.json#/$defs/UI_RowBase" },
@@ -248,11 +248,11 @@ describe("rowTriggersFromDefinitions", () => {
 
 		expect(text.triggers).toEqual({
 			tap: "optional",
-			"slide-left": "optional",
+			"swipe-left": "optional",
 		});
 		expect(rowTriggersFromDefinitions([text])).toEqual({
 			Text: [
-				{ trigger: "slide-left", required: false },
+				{ trigger: "swipe-left", required: false },
 				{ trigger: "tap", required: false },
 			],
 		});

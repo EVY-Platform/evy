@@ -199,7 +199,7 @@
 						"$ref": "action.schema.json"
 					}
 				},
-				"slide-left": {
+				"swipe-left": {
 					"type": "array",
 					"items": {
 						"$ref": "action.schema.json"

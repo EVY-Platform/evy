@@ -15,5 +15,5 @@ export const TRIGGER_LABELS: Record<RowTriggerName, string> = {
 	delete: "Delete",
 	"tap-row": "Tap row",
 	"tap-column": "Tap column",
-	"slide-left": "Slide left",
+	"swipe-left": "Swipe left",
 };

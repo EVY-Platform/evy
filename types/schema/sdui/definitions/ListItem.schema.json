@@ -4,7 +4,7 @@
 	"title": "ListItem_Row",
 	"triggers": {
 		"tap": "optional",
-		"slide-left": "optional"
+		"swipe-left": "optional"
 	},
 	"allOf": [
 		{
@@ -24,6 +24,9 @@
 					"type": "string"
 				},
 				"image": {
+					"type": "string"
+				},
+				"swipeLabel": {
 					"type": "string"
 				}
 			}

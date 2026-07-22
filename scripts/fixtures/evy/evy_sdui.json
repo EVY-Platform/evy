@@ -13,10 +13,11 @@
 						"type": "Text",
 						"title": "{$datum.data.type} request",
 						"subtitle": "{$datum.status}",
+						"swipeLabel": "Accept",
 						"visible": "true",
 						"name": "Message search result",
 						"actions": {
-							"slide-left": [
+							"swipe-left": [
 								{
 									"condition": "",
 									"false": "",

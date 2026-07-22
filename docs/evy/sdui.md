@@ -179,7 +179,7 @@ Builder destinations (e.g. `{buildCurrency(item.price)}`) transform an `initial`
 
 ### Actions
 
-Each row has an `actions` attribute: an object keyed by **trigger** name. Each trigger maps to an ordered list of `UI_RowAction` objects (condition / `true` / `false` branches). Supported triggers in this release are `tap`, `delete`, `tap-row`, `tap-column`, and `slide-left`; each row type declares which triggers it supports and whether a trigger is **required** (flow validation requires at least one action on that trigger) or **optional** (may be omitted or empty).
+Each row has an `actions` attribute: an object keyed by **trigger** name. Each trigger maps to an ordered list of `UI_RowAction` objects (condition / `true` / `false` branches). Supported triggers in this release are `tap`, `delete`, `tap-row`, `tap-column`, and `swipe-left`; each row type declares which triggers it supports and whether a trigger is **required** (flow validation requires at least one action on that trigger) or **optional** (may be omitted or empty).
 
 ```jsonc
 "actions": {
@@ -187,7 +187,7 @@ Each row has an `actions` attribute: an object keyed by **trigger** name. Each t
   "delete": [{ "condition": "", "false": "", "true": "{delete_photo()}" }],
   "tap-row": [{ "condition": "", "false": "", "true": "{select($datum)}" }],
   "tap-column": [{ "condition": "", "false": "", "true": "{select($datum)}" }],
-  "slide-left": [{ "condition": "", "false": "", "true": "{show(sheetId)}" }]
+  "swipe-left": [{ "condition": "", "false": "", "true": "{show(sheetId)}" }]
 }
 ```
 
@@ -195,7 +195,7 @@ An empty object `{}` is the canonical “no actions” state (do not use `{"tap"
 
 #### Trigger matrix
 
-| Row type | `tap` | `delete` | `tap-row` | `tap-column` | `slide-left` |
+| Row type | `tap` | `delete` | `tap-row` | `tap-column` | `swipe-left` |
 | --- | --- | --- | --- | --- | --- |
 | Button | **required** | — | — | — | — |
 | Calendar | **required** | — | **required** | **required** | — |
@@ -221,13 +221,15 @@ An empty object `{}` is the canonical “no actions” state (do not use `{"tap"
 
 Required triggers are enforced in `validateUiFlow` (fixtures, seed, tests). The web builder shows a required badge and warning when a required trigger has no actions but still allows saving.
 
-All action functions dispatch through a single client-side action channel; navigation (`navigate`, `close`) and non-navigation effects (`create`, `highlight_required`, `select`, `select_photo`, `delete_photo`, `expand_photo`, `expand_text`) are handled by the same runner. **Which list runs** depends on the trigger: row tap gestures and control-specific taps use `actions.tap`; the `SelectPhoto` remove control uses `actions.delete`; Calendar day headers use `actions.tap-column` and time-axis labels use `actions.tap-row`; swipe-to-reveal on Heading/Input/ListItem/Text uses `actions.slide-left`.
+All action functions dispatch through a single client-side action channel; navigation (`navigate`, `close`) and non-navigation effects (`create`, `highlight_required`, `select`, `select_photo`, `delete_photo`, `expand_photo`, `expand_text`) are handled by the same runner. **Which list runs** depends on the trigger: row tap gestures and control-specific taps use `actions.tap`; the `SelectPhoto` remove control uses `actions.delete`; Calendar day headers use `actions.tap-column` and time-axis labels use `actions.tap-row`; swipe-to-reveal on Heading/Input/ListItem/Text uses `actions.swipe-left`.
 
 For row types that handle their own interactive elements (`SelectPhoto`, `TextExpand`, `TextSelect`, `PhotoGallery`, `TabContainer`, `TimeslotPicker`, `Calendar`, `InlinePicker`), behaviour on **tap** comes only from `actions.tap`. An empty `tap` list means those taps do nothing. Calendar axis headings similarly run only `actions.tap-row` / `actions.tap-column`; empty axis triggers mean those headings do nothing.
 
-#### Swipe (`slide-left`)
+#### Swipe (`swipe-left`)
 
-On iOS, Heading, Input, ListItem, and Text rows with a non-empty `slide-left` action list become swipeable (Mail-style trailing reveal). Dragging left reveals a single accent-colored button with a white ellipsis; releasing past the reveal threshold snaps open, and a fuller swipe executes immediately. Tapping the revealed button runs `actions.slide-left` with datum `nil` and closes the row. Only one row stays open at a time; tapping open content closes without firing `tap`. Empty or absent `slide-left` means no swipe affordance. Button label/icon is fixed in this release (not author-configurable).
+On iOS, Heading, Input, ListItem, and Text rows with a non-empty `swipe-left` action list become swipeable (Mail-style trailing reveal). Dragging left reveals a single accent-colored button; releasing past the reveal threshold snaps open, and a fuller swipe executes immediately. Tapping the revealed button runs `actions.swipe-left` with datum `nil` and closes the row. Only one row stays open at a time; tapping open content closes without firing `tap`. Empty or absent `swipe-left` means no swipe affordance.
+
+Optional **`swipeLabel`** (Heading, Input, ListItem, Text only) sets the revealed button text. When omitted or blank, iOS shows a white ellipsis icon and uses the accessibility label “Swipe left”.
 
 For destructive or important `create`/`update` actions, attach a `sheet` row to the triggering row and call `{show(sheetRowId)}` with that sheet row's ID (often the nested `sheet.id`). Put confirmation copy on the sheet root's `title` and message rows inside the sheet, then run the actual `create`/`update` followed by `{close()}` from a confirm button in the sheet.
 

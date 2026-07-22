@@ -108,15 +108,19 @@ enum EVYSwipeRowIdentity {
 
 struct EVYSwipeableRow<Content: View>: View {
   let swipeIdentity: String
+  let swipeLabel: String?
   let onExecute: () -> Void
   private let content: () -> Content
 
   init(
     swipeIdentity: String,
+    swipeLabel: String = "",
     onExecute: @escaping () -> Void,
     @ViewBuilder content: @escaping () -> Content
   ) {
     self.swipeIdentity = swipeIdentity
+    let trimmedLabel = swipeLabel.trimmingCharacters(in: .whitespacesAndNewlines)
+    self.swipeLabel = trimmedLabel.isEmpty ? nil : trimmedLabel
     self.onExecute = onExecute
     self.content = content
   }
@@ -207,20 +211,35 @@ struct EVYSwipeableRow<Content: View>: View {
     }
   }
 
+  private var resolvedSwipeLabel: String? {
+    guard let swipeLabel else { return nil }
+    let trimmed = swipeLabel.trimmingCharacters(in: .whitespacesAndNewlines)
+    return trimmed.isEmpty ? nil : trimmed
+  }
+
   private var trailingActionButton: some View {
     Button {
       executeWithCommitSweep()
     } label: {
-      Image(systemName: "ellipsis")
-        .font(.system(size: 20, weight: .semibold))
-        .foregroundStyle(.white)
-        .frame(maxWidth: .infinity)
-        .frame(maxHeight: .infinity)
-        .background(Constants.actionColor)
+      Group {
+        if let resolvedSwipeLabel {
+          Text(resolvedSwipeLabel)
+            .font(.system(size: 15, weight: .semibold))
+            .lineLimit(1)
+            .minimumScaleFactor(0.7)
+        } else {
+          Image(systemName: "ellipsis")
+            .font(.system(size: 20, weight: .semibold))
+        }
+      }
+      .foregroundStyle(.white)
+      .frame(maxWidth: .infinity)
+      .frame(maxHeight: .infinity)
+      .background(Constants.actionColor)
     }
     .buttonStyle(.plain)
-    .accessibilityLabel("Slide left")
-    .accessibilityIdentifier("slideLeft_\(swipeIdentity)")
+    .accessibilityLabel(resolvedSwipeLabel ?? "Swipe left")
+    .accessibilityIdentifier("swipeLeft_\(swipeIdentity)")
   }
 
   private func settle(to targetOffset: CGFloat, velocityX: CGFloat) {

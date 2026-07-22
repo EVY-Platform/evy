@@ -644,21 +644,21 @@ final class EVYActionRunnerTests: XCTestCase {
     XCTAssertTrue(deleteReceived)
   }
 
-  func testSlideLeftTriggerIsolationRunsOnlyRequestedActionList() {
+  func testSwipeLeftTriggerIsolationRunsOnlyRequestedActionList() {
     var tapReceived = false
-    var slideLeftReceived = false
+    var swipeLeftReceived = false
     let actions = UI_RowActions(
-      slideLeft: [rowAction(true: "{close()}")],
+      swipeLeft: [rowAction(true: "{close()}")],
       tap: [rowAction(true: "{close()}")]
     )
     EVYActionRunner.run(actions: actions.tap) { operation in
       if case .close = operation { tapReceived = true }
     }
-    EVYActionRunner.run(actions: actions.slideLeft) { operation in
-      if case .close = operation { slideLeftReceived = true }
+    EVYActionRunner.run(actions: actions.swipeLeft) { operation in
+      if case .close = operation { swipeLeftReceived = true }
     }
     XCTAssertTrue(tapReceived)
-    XCTAssertTrue(slideLeftReceived)
+    XCTAssertTrue(swipeLeftReceived)
   }
 
   func testSelectPhotoDispatchesAndContinues() {
@@ -944,7 +944,7 @@ final class EVYActionRunnerTests: XCTestCase {
         }
         """,
       actions: UI_RowActions(
-        slideLeft: [rowAction(true: updateAction)],
+        swipeLeft: [rowAction(true: updateAction)],
         tap: [rowAction(true: navigateAction)]
       )
     )
@@ -960,10 +960,10 @@ final class EVYActionRunnerTests: XCTestCase {
     XCTAssertEqual(formattedRow.id, row.id)
     XCTAssertEqual(formattedRow.title, "Resolved Title")
     XCTAssertEqual(formattedRow.actions.tap.first?.true, navigateAction)
-    XCTAssertEqual(formattedRow.actions.slideLeft.first?.true, updateAction)
+    XCTAssertEqual(formattedRow.actions.swipeLeft.first?.true, updateAction)
   }
 
-  func testSlideLeftUpdateActionAcceptsPendingMessageFromFormattedSearchResult() throws {
+  func testSwipeLeftUpdateActionAcceptsPendingMessageFromFormattedSearchResult() throws {
     let namespace = EVYNamespace.marketplace
     let resource = MarketplaceTestFixture.messagesResourceId
     let pendingMessageId = UUID().uuidString
@@ -989,7 +989,7 @@ final class EVYActionRunnerTests: XCTestCase {
         }
         """,
       actions: UI_RowActions(
-        slideLeft: [
+        swipeLeft: [
           rowAction(
             true:
               "{update(\(namespace),\(resource),{id: $datum.id, status: \"pending\"},{status: \"accepted\"})}"
@@ -1005,7 +1005,7 @@ final class EVYActionRunnerTests: XCTestCase {
     let result = try XCTUnwrap(results.first)
 
     EVYActionRunner.run(
-      actions: result.displayRow.actions.slideLeft,
+      actions: result.displayRow.actions.swipeLeft,
       datum: result.datum
     ) { _ in }
 

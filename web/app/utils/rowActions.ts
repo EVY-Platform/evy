@@ -5,7 +5,7 @@ const ROW_ACTION_TRIGGER_KEYS: RowTriggerName[] = [
 	"delete",
 	"tap-row",
 	"tap-column",
-	"slide-left",
+	"swipe-left",
 ];
 
 export function rowAction(branch: string): UI_RowAction {

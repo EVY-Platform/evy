@@ -4,7 +4,7 @@
 	"title": "Input_Row",
 	"triggers": {
 		"tap": "optional",
-		"slide-left": "optional"
+		"swipe-left": "optional"
 	},
 	"allOf": [
 		{
@@ -30,6 +30,9 @@
 					"type": "string"
 				},
 				"initial": {
+					"type": "string"
+				},
+				"swipeLabel": {
 					"type": "string"
 				}
 			}

@@ -28,7 +28,7 @@ const ROW_TRIGGER_NAMES = [
 	"delete",
 	"tap-row",
 	"tap-column",
-	"slide-left",
+	"swipe-left",
 ] as const;
 
 export type RowTriggerName = (typeof ROW_TRIGGER_NAMES)[number];
@@ -487,7 +487,7 @@ export function rowTriggersFromDefinitions(
 
 export function rowTriggersTsSource(): string[] {
 	return [
-		`export type RowTriggerName = "tap" | "delete" | "tap-row" | "tap-column" | "slide-left";`,
+		`export type RowTriggerName = "tap" | "delete" | "tap-row" | "tap-column" | "swipe-left";`,
 		``,
 		`export type RowTriggerSpec = {`,
 		`\ttrigger: RowTriggerName;`,

@@ -838,7 +838,7 @@ class E2ETestBase: XCTestCase {
   static func actionsObject(
     tap: [[String: String]] = [],
     delete: [[String: String]] = [],
-    slideLeft: [[String: String]] = []
+    swipeLeft: [[String: String]] = []
   ) -> [String: Any] {
     var result: [String: Any] = [:]
     if !tap.isEmpty {
@@ -847,8 +847,8 @@ class E2ETestBase: XCTestCase {
     if !delete.isEmpty {
       result["delete"] = delete
     }
-    if !slideLeft.isEmpty {
-      result["slide-left"] = slideLeft
+    if !swipeLeft.isEmpty {
+      result["swipe-left"] = swipeLeft
     }
     return result
   }
@@ -2951,27 +2951,27 @@ final class WebSocketE2ETests: E2ETestBase {
   }
 }
 
-// MARK: - Slide-left swipe trigger
+// MARK: - Swipe-left trigger
 
-final class E2ESlideLeftTests: E2ETestBase {
-  private static let slideLeftHomeFlowId = "a9b8c7d6-e5f4-4a3b-9c2d-1e0f9a8b7c6d"
-  private static let slideLeftHomePageId = "b8c7d6e5-f4a3-4b2c-9d1e-0f8a7b6c5d4e"
-  private static let slideLeftDestPageId = "c7d6e5f4-a3b2-4c1d-8e0f-1a2b3c4d5e6f"
-  private static let slideLeftRowId = "d6e5f4a3-b2c1-4d0e-9f8a-7b6c5d4e3f2a"
+final class E2ESwipeLeftTests: E2ETestBase {
+  private static let swipeLeftHomeFlowId = "a9b8c7d6-e5f4-4a3b-9c2d-1e0f9a8b7c6d"
+  private static let swipeLeftHomePageId = "b8c7d6e5-f4a3-4b2c-9d1e-0f8a7b6c5d4e"
+  private static let swipeLeftDestPageId = "c7d6e5f4-a3b2-4c1d-8e0f-1a2b3c4d5e6f"
+  private static let swipeLeftRowId = "d6e5f4a3-b2c1-4d0e-9f8a-7b6c5d4e3f2a"
 
-  override var homeFlowId: String? { Self.slideLeftHomeFlowId }
+  override var homeFlowId: String? { Self.swipeLeftHomeFlowId }
 
   override func setUpWithError() throws {
     continueAfterFailure = false
     try seedFlows(
       [
         (
-          flowId: Self.slideLeftHomeFlowId,
-          flowData: Self.slideLeftFlowData(
-            flowId: Self.slideLeftHomeFlowId,
-            homePageId: Self.slideLeftHomePageId,
-            destPageId: Self.slideLeftDestPageId,
-            swipeRowId: Self.slideLeftRowId
+          flowId: Self.swipeLeftHomeFlowId,
+          flowData: Self.swipeLeftFlowData(
+            flowId: Self.swipeLeftHomeFlowId,
+            homePageId: Self.swipeLeftHomePageId,
+            destPageId: Self.swipeLeftDestPageId,
+            swipeRowId: Self.swipeLeftRowId
           )
         )
       ]
@@ -2979,33 +2979,34 @@ final class E2ESlideLeftTests: E2ETestBase {
     try launchApp()
   }
 
-  func testSlideLeftButtonNavigatesToDestinationPage() throws {
-    let homePage = app.scrollViews["page_\(Self.slideLeftHomePageId)"]
+  func testSwipeLeftButtonNavigatesToDestinationPage() throws {
+    let homePage = app.scrollViews["page_\(Self.swipeLeftHomePageId)"]
     XCTAssertTrue(
       homePage.waitForExistence(timeout: 20),
-      "Slide-left home page should load - verify API is running and seeded")
+      "Swipe-left home page should load - verify API is running and seeded")
 
-    let swipeLabel = app.staticTexts["Swipe me"]
+    let rowTitle = app.staticTexts["Swipe me"]
     XCTAssertTrue(
-      swipeLabel.waitForExistence(timeout: 10),
+      rowTitle.waitForExistence(timeout: 10),
       "Swipeable text row should be visible")
 
-    swipeLabel.swipeLeft(velocity: .slow)
+    rowTitle.swipeLeft(velocity: .slow)
 
-    let slideButton = app.buttons["slideLeft_\(Self.slideLeftRowId)"]
+    let swipeButton = app.buttons["swipeLeft_\(Self.swipeLeftRowId)"]
     XCTAssertTrue(
-      slideButton.waitForExistence(timeout: 3),
-      "Slide-left action button should be revealed after swipe")
-    slideButton.tap()
+      swipeButton.waitForExistence(timeout: 3),
+      "Swipe-left action button should be revealed after swipe")
+    XCTAssertEqual(swipeButton.label, "Open")
+    swipeButton.tap()
 
-    let destinationPage = app.scrollViews["page_\(Self.slideLeftDestPageId)"]
+    let destinationPage = app.scrollViews["page_\(Self.swipeLeftDestPageId)"]
     XCTAssertTrue(
       destinationPage.waitForExistence(timeout: 5)
         || app.staticTexts["Arrived"].waitForExistence(timeout: 5),
-      "Slide-left action should navigate to the destination page")
+      "Swipe-left action should navigate to the destination page")
   }
 
-  private static func slideLeftFlowData(
+  private static func swipeLeftFlowData(
     flowId: String,
     homePageId: String,
     destPageId: String,
@@ -3013,11 +3014,11 @@ final class E2ESlideLeftTests: E2ETestBase {
   ) -> [String: Any] {
     return [
       "id": flowId,
-      "name": "E2E Slide Left",
+      "name": "E2E Swipe Left",
       "pages": [
         [
           "id": homePageId,
-          "title": "Slide home",
+          "title": "Swipe home",
           "rows": [
             [
               "id": swipeRowId,
@@ -3025,9 +3026,10 @@ final class E2ESlideLeftTests: E2ETestBase {
               "visible": "true",
               "title": "Swipe me",
               "subtitle": "",
+              "swipeLabel": "Open",
               "name": "Swipeable text",
               "actions": Self.actionsObject(
-                slideLeft: [
+                swipeLeft: [
                   Self.rowAction(true: "{navigate(\(flowId),\(destPageId))}")
                 ]
               ),
@@ -3347,8 +3349,9 @@ final class E2EHomepageMessageSearchTests: E2ETestBase {
         "type": "Text",
         "title": "{$datum.data.type} request",
         "subtitle": "{$datum.status}",
+        "swipeLabel": "Accept",
         "actions": Self.actionsObject(
-          slideLeft: [
+          swipeLeft: [
             Self.rowAction(
               true:
                 "{update(\(MARKETPLACE_SERVICE),\(MarketplaceResource.messages.rawValue),{id: $datum.id, status: \"pending\"},{status: \"accepted\"})}"
@@ -3461,13 +3464,14 @@ final class E2EHomepageMessageSearchTests: E2ETestBase {
     let pickupLabel = app.staticTexts["pickup request"]
     pickupLabel.swipeLeft(velocity: .slow)
 
-    let slideButtonId =
-      "slideLeft_\(Self.messageChildRowId)_\(Self.pickupMessageId)"
-    let slideButton = app.buttons[slideButtonId]
+    let swipeButtonId =
+      "swipeLeft_\(Self.messageChildRowId)_\(Self.pickupMessageId)"
+    let swipeButton = app.buttons[swipeButtonId]
     XCTAssertTrue(
-      slideButton.waitForExistence(timeout: 3),
-      "Slide-left action button should be revealed for the pickup message")
-    slideButton.tap()
+      swipeButton.waitForExistence(timeout: 3),
+      "Swipe-left action button should be revealed for the pickup message")
+    XCTAssertEqual(swipeButton.label, "Accept")
+    swipeButton.tap()
 
     XCTAssertTrue(
       app.staticTexts["accepted"].waitForExistence(timeout: 5),

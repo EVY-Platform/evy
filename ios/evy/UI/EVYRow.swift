@@ -299,8 +299,8 @@ private struct EVYResolvedRow: View {
       actions = contentRow.actions.tapRow
     case .tapColumn:
       actions = contentRow.actions.tapColumn
-    case .slideLeft:
-      actions = contentRow.actions.slideLeft
+    case .swipeLeft:
+      actions = contentRow.actions.swipeLeft
     }
     EVYActionRunner.run(
       actions: actions,
@@ -324,11 +324,12 @@ private struct EVYResolvedRow: View {
 
   @ViewBuilder
   private func renderedRow(for payload: UI_RowPayload, contentRow: UI_Row) -> some View {
-    if !contentRow.actions.slideLeft.isEmpty {
+    if !contentRow.actions.swipeLeft.isEmpty {
       EVYSwipeableRow(
         swipeIdentity: EVYSwipeRowIdentity.make(rowId: contentRow.id, datum: datum),
+        swipeLabel: contentRow.swipeLabel,
         onExecute: {
-          runActions(trigger: .slideLeft, contentRow: contentRow)
+          runActions(trigger: .swipeLeft, contentRow: contentRow)
         }
       ) {
         tappedOrPlainRow(for: payload, contentRow: contentRow)
