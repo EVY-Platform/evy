@@ -198,7 +198,7 @@
 														"tap": [
 															{
 																"condition": "",
-																"true": "{create(66b092ae-7cd8-4d67-95b7-30b03568fd90, 000c2d05-851e-4456-8f22-bb1e54f17c8c, {fk: dc28ed59-298e-493c-8ff3-3e60f2ebccbd.id, service: \"66b092ae-7cd8-4d67-95b7-30b03568fd90\", resource: \"dc28ed59-298e-493c-8ff3-3e60f2ebccbd\", archivedAt: null, data: {type: pickup, time: selected_pickup_timeslot}})}",
+																"true": "{create(66b092ae-7cd8-4d67-95b7-30b03568fd90, 000c2d05-851e-4456-8f22-bb1e54f17c8c, {fk: dc28ed59-298e-493c-8ff3-3e60f2ebccbd.id, service: \"66b092ae-7cd8-4d67-95b7-30b03568fd90\", resource: \"dc28ed59-298e-493c-8ff3-3e60f2ebccbd\", archivedAt: null, status: \"pending\", data: {type: pickup, time: selected_pickup_timeslot}})}",
 																"false": ""
 															},
 															{
@@ -386,7 +386,7 @@
 														"tap": [
 															{
 																"condition": "",
-																"true": "{create(66b092ae-7cd8-4d67-95b7-30b03568fd90, 000c2d05-851e-4456-8f22-bb1e54f17c8c, {fk: dc28ed59-298e-493c-8ff3-3e60f2ebccbd.id, service: \"66b092ae-7cd8-4d67-95b7-30b03568fd90\", resource: \"dc28ed59-298e-493c-8ff3-3e60f2ebccbd\", archivedAt: null, data: {type: delivery, time: selected_delivery_timeslot}})}",
+																"true": "{create(66b092ae-7cd8-4d67-95b7-30b03568fd90, 000c2d05-851e-4456-8f22-bb1e54f17c8c, {fk: dc28ed59-298e-493c-8ff3-3e60f2ebccbd.id, service: \"66b092ae-7cd8-4d67-95b7-30b03568fd90\", resource: \"dc28ed59-298e-493c-8ff3-3e60f2ebccbd\", archivedAt: null, status: \"pending\", data: {type: delivery, time: selected_delivery_timeslot}})}",
 																"false": ""
 															},
 															{
@@ -579,7 +579,7 @@
 														"tap": [
 															{
 																"condition": "",
-																"true": "{create(66b092ae-7cd8-4d67-95b7-30b03568fd90, 000c2d05-851e-4456-8f22-bb1e54f17c8c, {fk: dc28ed59-298e-493c-8ff3-3e60f2ebccbd.id, service: \"66b092ae-7cd8-4d67-95b7-30b03568fd90\", resource: \"dc28ed59-298e-493c-8ff3-3e60f2ebccbd\", archivedAt: null, data: {type: shipping, postalcode: shipping_address.postcode}})}",
+																"true": "{create(66b092ae-7cd8-4d67-95b7-30b03568fd90, 000c2d05-851e-4456-8f22-bb1e54f17c8c, {fk: dc28ed59-298e-493c-8ff3-3e60f2ebccbd.id, service: \"66b092ae-7cd8-4d67-95b7-30b03568fd90\", resource: \"dc28ed59-298e-493c-8ff3-3e60f2ebccbd\", archivedAt: null, status: \"pending\", data: {type: shipping, postalcode: shipping_address.postcode}})}",
 																"false": ""
 															},
 															{

@@ -197,11 +197,12 @@ fk: uuid (the related record, e.g. a marketplace item id)
 service: uuid (service the fk belongs to)
 resource: uuid (resource the fk belongs to)
 archivedAt: string (date-time) | null (null/absent while active)
+status: "pending" | "accepted" (new messages start pending; accept via slide-left `{update(...)}` on the homepage)
 createdAt: string (date-time, set by the client at creation)
 data: object (free-form, use-case specific)
 ```
 
-Cancelling a message sets `archivedAt` to the current timestamp via an update — records are not hard-deleted. Message rows are currently stored by the marketplace service under its `messages` resource (see [marketplace data models](../services/marketplace/data.md)).
+Cancelling a message sets `archivedAt` to the current timestamp via an update — records are not hard-deleted. Accepting a pending message sets `status` to `accepted` (also via `{update(...)}`, often wired to the `slide-left` trigger on message search rows). Message rows are currently stored by the marketplace service under its `messages` resource (see [marketplace data models](../services/marketplace/data.md)).
 
 ---
 

@@ -329,6 +329,85 @@ final class EVYActionRunnerTests: XCTestCase {
     XCTAssertEqual(archivedAtById[otherActiveMessageId], .null)
   }
 
+  func testUpdateActionAcceptsOnlyMatchingPendingMessageForDatum() throws {
+    let namespace = EVYNamespace.marketplace
+    let resource = MarketplaceTestFixture.messagesResourceId
+    let itemId = UUID().uuidString
+    let pendingMessageId = UUID().uuidString
+    let otherPendingMessageId = UUID().uuidString
+    let acceptedMessageId = UUID().uuidString
+    try? EVY.publicStore.deleteAll(namespace: namespace, resource: resource)
+    defer { try? EVY.publicStore.deleteAll(namespace: namespace, resource: resource) }
+
+    let messages = EVYJson.array([
+      .dictionary([
+        "id": .string(pendingMessageId),
+        "fk": .string(itemId),
+        "status": .string("pending"),
+        "archivedAt": .null,
+        "data": .dictionary([
+          "type": .string("pickup"),
+          "time": .string("2026-06-03T09:00:00"),
+        ]),
+      ]),
+      .dictionary([
+        "id": .string(otherPendingMessageId),
+        "fk": .string(itemId),
+        "status": .string("pending"),
+        "archivedAt": .null,
+        "data": .dictionary([
+          "type": .string("delivery"),
+          "time": .string("2026-06-03T10:00:00"),
+        ]),
+      ]),
+      .dictionary([
+        "id": .string(acceptedMessageId),
+        "fk": .string(itemId),
+        "status": .string("accepted"),
+        "archivedAt": .null,
+        "data": .dictionary([
+          "type": .string("shipping"),
+          "postalcode": .string("2018"),
+        ]),
+      ]),
+    ])
+    try EVY.publicStore.applySyncedValue(namespace: namespace, resource: resource, value: messages)
+
+    let acceptAction = rowAction(
+      true:
+        "{update(\(namespace),\(resource),{id: $datum.id, status: \"pending\"},{status: \"accepted\"})}"
+    )
+
+    let pendingDatum = EVYJson.dictionary(["id": .string(pendingMessageId)])
+    EVYActionRunner.run(actions: [acceptAction], datum: pendingDatum) { _ in }
+
+    let statusById = try statusByMessageId(namespace: namespace, resource: resource)
+    XCTAssertEqual(statusById[pendingMessageId], "accepted")
+    XCTAssertEqual(statusById[otherPendingMessageId], "pending")
+    XCTAssertEqual(statusById[acceptedMessageId], "accepted")
+
+    EVYActionRunner.run(
+      actions: [acceptAction],
+      datum: EVYJson.dictionary(["id": .string(acceptedMessageId)])
+    ) { _ in }
+
+    let afterNoOp = try statusByMessageId(namespace: namespace, resource: resource)
+    XCTAssertEqual(afterNoOp[acceptedMessageId], "accepted")
+  }
+
+  private func statusByMessageId(namespace: String, resource: String) throws -> [String: String] {
+    let rows = try EVY.publicStore.getAll(namespace: namespace, resource: resource)
+    return Dictionary(
+      uniqueKeysWithValues: rows.compactMap { row -> (String, String)? in
+        guard let decoded = try? row.decoded(),
+          case .dictionary(let values) = decoded,
+          case .string(let id) = values["id"],
+          case .string(let status) = values["status"]
+        else { return nil }
+        return (id, status)
+      })
+  }
+
   func testInlineCreateActionWritesResolvedPayloadWithoutNavigating() throws {
     let namespace = "test"
     let resource = "inline-create-actions"

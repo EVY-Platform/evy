@@ -14,6 +14,10 @@ struct EVYSearchResult: Equatable, Identifiable {
 
   static func == (lhs: EVYSearchResult, rhs: EVYSearchResult) -> Bool {
     lhs.id == rhs.id
+      && lhs.datum == rhs.datum
+      && lhs.searchableText == rhs.searchableText
+      && lhs.displayRow.title == rhs.displayRow.title
+      && lhs.displayRow.subtitle == rhs.displayRow.subtitle
   }
 
   @MainActor

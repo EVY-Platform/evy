@@ -326,7 +326,7 @@ private struct EVYResolvedRow: View {
   private func renderedRow(for payload: UI_RowPayload, contentRow: UI_Row) -> some View {
     if !contentRow.actions.slideLeft.isEmpty {
       EVYSwipeableRow(
-        rowId: contentRow.id,
+        swipeIdentity: EVYSwipeRowIdentity.make(rowId: contentRow.id, datum: datum),
         onExecute: {
           runActions(trigger: .slideLeft, contentRow: contentRow)
         }

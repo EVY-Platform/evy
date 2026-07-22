@@ -103,4 +103,20 @@ final class EVYSwipeGeometryTests: XCTestCase {
     )
     XCTAssertEqual(state, .open)
   }
+
+  func testSwipeIdentityDisambiguatesSharedTemplateRowIds() {
+    let rowId = "8d5b9e32-ac4e-5f7b-b2d3-9e8f4a6c0b12"
+    let firstId = "c84f227e-69ed-4c69-9f53-aafd7a918c6b"
+    let secondId = "d533476c-5099-4c7d-8e9a-42a8f6ca2f6e"
+    let firstDatum = EVYJson.dictionary(["id": .string(firstId)])
+    let secondDatum = EVYJson.dictionary(["id": .string(secondId)])
+
+    let firstIdentity = EVYSwipeRowIdentity.make(rowId: rowId, datum: firstDatum)
+    let secondIdentity = EVYSwipeRowIdentity.make(rowId: rowId, datum: secondDatum)
+
+    XCTAssertEqual(firstIdentity, "\(rowId)_\(firstId)")
+    XCTAssertEqual(secondIdentity, "\(rowId)_\(secondId)")
+    XCTAssertNotEqual(firstIdentity, secondIdentity)
+    XCTAssertEqual(EVYSwipeRowIdentity.make(rowId: rowId, datum: nil), rowId)
+  }
 }

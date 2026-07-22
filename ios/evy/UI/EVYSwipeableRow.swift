@@ -76,10 +76,32 @@ final class EVYSwipeCoordinator: ObservableObject {
   }
 }
 
+enum EVYSwipeRowIdentity {
+  static func make(rowId: String, datum: EVYJson?) -> String {
+    guard case .dictionary(let values) = datum,
+      case .string(let datumId) = values["id"],
+      !datumId.isEmpty
+    else {
+      return rowId
+    }
+    return "\(rowId)_\(datumId)"
+  }
+}
+
 struct EVYSwipeableRow<Content: View>: View {
-  let rowId: String
+  let swipeIdentity: String
   let onExecute: () -> Void
-  @ViewBuilder let content: () -> Content
+  private let content: () -> Content
+
+  init(
+    swipeIdentity: String,
+    onExecute: @escaping () -> Void,
+    @ViewBuilder content: @escaping () -> Content
+  ) {
+    self.swipeIdentity = swipeIdentity
+    self.onExecute = onExecute
+    self.content = content
+  }
 
   @ObservedObject private var coordinator = EVYSwipeCoordinator.shared
   @State private var dragOffset: CGFloat = 0
@@ -88,7 +110,7 @@ struct EVYSwipeableRow<Content: View>: View {
   @State private var rowWidth: CGFloat = 0
 
   private var isOpen: Bool {
-    coordinator.openRowId == rowId
+    coordinator.openRowId == swipeIdentity
   }
 
   private var contentOffset: CGFloat {
@@ -132,7 +154,7 @@ struct EVYSwipeableRow<Content: View>: View {
         onBegan: { open in
           wasOpenAtDragStart = open
           isDragging = true
-          if let openId = coordinator.openRowId, openId != rowId {
+          if let openId = coordinator.openRowId, openId != swipeIdentity {
             coordinator.close(openId)
             wasOpenAtDragStart = false
           }
@@ -167,7 +189,7 @@ struct EVYSwipeableRow<Content: View>: View {
     .onChange(of: coordinator.openRowId) { _, openId in
       guard !isDragging else { return }
       withAnimation(.spring(response: 0.28, dampingFraction: 0.86)) {
-        dragOffset = openId == rowId ? -EVYSwipeGeometry.revealWidth : 0
+        dragOffset = openId == swipeIdentity ? -EVYSwipeGeometry.revealWidth : 0
       }
     }
   }
@@ -185,18 +207,18 @@ struct EVYSwipeableRow<Content: View>: View {
     }
     .buttonStyle(.plain)
     .accessibilityLabel("Slide left")
-    .accessibilityIdentifier("slideLeft_\(rowId)")
+    .accessibilityIdentifier("slideLeft_\(swipeIdentity)")
   }
 
   private func openWithAnimation() {
-    coordinator.open(rowId)
+    coordinator.open(swipeIdentity)
     withAnimation(.spring(response: 0.28, dampingFraction: 0.86)) {
       dragOffset = -EVYSwipeGeometry.revealWidth
     }
   }
 
   private func closeWithAnimation() {
-    coordinator.close(rowId)
+    coordinator.close(swipeIdentity)
     withAnimation(.spring(response: 0.28, dampingFraction: 0.86)) {
       dragOffset = 0
     }

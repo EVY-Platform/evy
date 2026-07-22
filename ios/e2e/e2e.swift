@@ -3328,6 +3328,8 @@ final class E2EPlaceSearchTests: E2ETestBase {
 
 final class E2EHomepageMessageSearchTests: E2ETestBase {
   private static let homePageId = E2EFlowIds.webSocketHomePage
+  private static let messageChildRowId = "8d5b9e32-ac4e-5f7b-b2d3-9e8f4a6c0b12"
+  private static let pickupMessageId = "c84f227e-69ed-4c69-9f53-aafd7a918c6b"
   private static let matchingTypeQuery = "pickup"
   private static let unmatchedTypeQuery = "nomatch"
   private static let seededMessageTypeLabels = [
@@ -3356,8 +3358,15 @@ final class E2EHomepageMessageSearchTests: E2ETestBase {
         "id": "8d5b9e32-ac4e-5f7b-b2d3-9e8f4a6c0b12",
         "type": "Text",
         "title": "{$datum.data.type} request",
-        "subtitle": "",
-        "actions": [:],
+        "subtitle": "{$datum.status}",
+        "actions": Self.actionsObject(
+          slideLeft: [
+            Self.rowAction(
+              true:
+                "{update(\(MARKETPLACE_SERVICE),\(MarketplaceResource.messages.rawValue),{id: $datum.id, status: \"pending\"},{status: \"accepted\"})}"
+            )
+          ]
+        ),
         "visible": "true",
         "name": "Message search result",
       ],
@@ -3443,6 +3452,94 @@ final class E2EHomepageMessageSearchTests: E2ETestBase {
     XCTAssertTrue(
       itemSearchField.exists,
       "Item search field should remain on Home after filtering messages")
+  }
+
+  func testHomepageSwipeAcceptUpdatesPickupMessageStatus() throws {
+    let homePage = app.scrollViews["page_\(Self.homePageId)"]
+    XCTAssertTrue(
+      homePage.waitForExistence(timeout: 20),
+      "Home screen not loaded - verify API is running and database is seeded")
+
+    let messageSearchField = Self.orderedSearchTextFields(in: homePage)[0]
+    clearAndType(field: messageSearchField, text: Self.matchingTypeQuery)
+
+    XCTAssertTrue(
+      app.staticTexts["pickup request"].waitForExistence(timeout: 10),
+      "Pickup message row should be visible")
+    XCTAssertTrue(
+      app.staticTexts["pending"].waitForExistence(timeout: 5),
+      "Pickup message should show pending status")
+
+    let pickupLabel = app.staticTexts["pickup request"]
+    pickupLabel.swipeLeft(velocity: .slow)
+
+    let slideButtonId =
+      "slideLeft_\(Self.messageChildRowId)_\(Self.pickupMessageId)"
+    let slideButton = app.buttons[slideButtonId]
+    if slideButton.waitForExistence(timeout: 3) {
+      slideButton.tap()
+    } else {
+      pickupLabel.swipeLeft(velocity: .fast)
+    }
+
+    XCTAssertTrue(
+      app.staticTexts["accepted"].waitForExistence(timeout: 5),
+      "Pickup message subtitle should show accepted after swipe")
+
+    let acceptedOnServer = try awaitResult("pickup message status accepted") {
+      let emitter = WSEmitter()
+      try await emitter.connect(host: self.apiHost)
+      try await emitter.login(token: "e2e-test", os: "ios")
+      let accepted = try await self.waitForMarketplaceMessageStatus(
+        emitter: emitter,
+        messageId: Self.pickupMessageId,
+        status: "accepted"
+      )
+      await emitter.disconnect()
+      return accepted
+    }
+    XCTAssertTrue(acceptedOnServer, "Marketplace should persist accepted status for pickup message")
+  }
+
+  private func waitForMarketplaceMessageStatus(
+    emitter: WSEmitter,
+    messageId: String,
+    status: String
+  ) async throws -> Bool {
+    let deadline = Date().addingTimeInterval(10)
+    repeat {
+      let messages = try await emitter.getResource(
+        service: MARKETPLACE_SERVICE,
+        resource: MarketplaceResource.messages.rawValue
+      )
+      if Self.marketplaceMessageHasStatus(messages, messageId: messageId, status: status) {
+        return true
+      }
+    } while try await emitter.nextDataChanged(
+      resource: MarketplaceResource.messages.rawValue, deadline: deadline)
+    return false
+  }
+
+  private static func marketplaceMessageHasStatus(
+    _ messages: Any,
+    messageId: String,
+    status: String
+  ) -> Bool {
+    guard let messageRows = Self.responseDataArray(from: messages) else { return false }
+    return messageRows.contains { message in
+      guard let messageData = message as? [String: Any],
+        messageData["id"] as? String == messageId,
+        messageData["status"] as? String == status
+      else { return false }
+      return true
+    }
+  }
+
+  private static func responseDataArray(from response: Any) -> [Any]? {
+    if let envelope = response as? [String: Any] {
+      return envelope["data"] as? [Any]
+    }
+    return response as? [Any]
   }
 
   private static func orderedSearchTextFields(in homePage: XCUIElement) -> [XCUIElement] {

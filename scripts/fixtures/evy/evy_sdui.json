@@ -12,10 +12,18 @@
 						"id": "8d5b9e32-ac4e-5f7b-b2d3-9e8f4a6c0b12",
 						"type": "Text",
 						"title": "{$datum.data.type} request",
-						"subtitle": "",
+						"subtitle": "{$datum.status}",
 						"visible": "true",
 						"name": "Message search result",
-						"actions": {}
+						"actions": {
+							"slide-left": [
+								{
+									"condition": "",
+									"false": "",
+									"true": "{update(66b092ae-7cd8-4d67-95b7-30b03568fd90, 000c2d05-851e-4456-8f22-bb1e54f17c8c, {id: $datum.id, status: \"pending\"}, {status: \"accepted\"})}"
+								}
+							]
+						}
 					},
 					"title": "",
 					"placeholder": "Filter messages by type",

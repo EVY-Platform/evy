@@ -198,6 +198,7 @@ describe("marketplace get/create/update", () => {
 			resource: MARKETPLACE_RESOURCE.ITEMS,
 			archivedAt: null,
 			createdAt: "2026-06-01T00:00:00.000Z",
+			status: "pending" as const,
 		};
 		const pickupMessage = {
 			...baseMessage,

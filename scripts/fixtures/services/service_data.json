@@ -237,6 +237,7 @@
 			"resource": "dc28ed59-298e-493c-8ff3-3e60f2ebccbd",
 			"archivedAt": null,
 			"createdAt": "2026-06-01T00:00:00.000Z",
+			"status": "pending",
 			"data": {
 				"type": "pickup",
 				"time": "2026-06-03T09:00:00"
@@ -249,6 +250,7 @@
 			"resource": "dc28ed59-298e-493c-8ff3-3e60f2ebccbd",
 			"archivedAt": null,
 			"createdAt": "2026-06-01T00:00:00.000Z",
+			"status": "pending",
 			"data": {
 				"type": "delivery",
 				"time": "2026-06-03T14:00:00"
@@ -261,6 +263,7 @@
 			"resource": "dc28ed59-298e-493c-8ff3-3e60f2ebccbd",
 			"archivedAt": null,
 			"createdAt": "2026-06-01T00:00:00.000Z",
+			"status": "pending",
 			"data": {
 				"type": "shipping",
 				"postalcode": "2018"
