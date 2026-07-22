@@ -256,6 +256,21 @@ actor WSEmitter {
     return try await rpcResult(method: "create", params: params)
   }
 
+  func updateResource(
+    service: String,
+    resource: String,
+    filter: [String: Any],
+    data: [String: Any]
+  ) async throws -> Any {
+    let params: [String: Any] = [
+      "service": service,
+      "resource": resource,
+      "filter": filter,
+      "data": data,
+    ]
+    return try await rpcResult(method: "update", params: params)
+  }
+
   private func rpcResult(method: String, params: Any) async throws -> Any {
     let response = try await send(method: method, params: params)
     guard let result = response["result"] else {
@@ -853,20 +868,57 @@ class E2ETestBase: XCTestCase {
     return result
   }
 
-  static func cancelRequestVisibilityExpressions() -> (hasActive: String, noActive: String) {
+  static func cancelRequestVisibilityExpressions() -> (
+    hasActive: String, noActive: String
+  ) {
     let messagesResourceId = MarketplaceResource.messages.rawValue
-    let activeMatch =
-      "{findFirst(\(messagesResourceId), \(MARKETPLACE_ITEMS_RESOURCE_ID).id, fk, null, archivedAt).fk"
-    let hasActive = "\(activeMatch) == \(MARKETPLACE_ITEMS_RESOURCE_ID).id}"
-    let noActive = "\(activeMatch) != \(MARKETPLACE_ITEMS_RESOURCE_ID).id}"
+    let itemId = MARKETPLACE_ITEMS_RESOURCE_ID
+    let hasActive =
+      "{findFirst(\(messagesResourceId), fk == \(itemId).id && archivedAt == null && status == pending).fk == \(itemId).id}"
+    let noActive =
+      "{findFirst(\(messagesResourceId), fk == \(itemId).id && archivedAt == null).fk != \(itemId).id}"
     return (hasActive, noActive)
+  }
+
+  static func acceptedRequestFindFirstExpression(type: String) -> String {
+    let messagesResourceId = MarketplaceResource.messages.rawValue
+    let itemId = MARKETPLACE_ITEMS_RESOURCE_ID
+    return
+      "findFirst(\(messagesResourceId), fk == \(itemId).id && archivedAt == null && status == accepted && data.type == \(type))"
+  }
+
+  static func acceptedRequestVisibilityExpression(type: String) -> String {
+    let itemId = MARKETPLACE_ITEMS_RESOURCE_ID
+    return "{\(acceptedRequestFindFirstExpression(type: type)).fk == \(itemId).id}"
+  }
+
+  static func hideSegmentInfoWhenAcceptedVisibilityExpression(type: String) -> String {
+    let itemId = MARKETPLACE_ITEMS_RESOURCE_ID
+    return "{\(acceptedRequestFindFirstExpression(type: type)).fk != \(itemId).id}"
+  }
+
+  static func pickupAcceptedConfirmationSubtitle() -> String {
+    let match = acceptedRequestFindFirstExpression(type: "pickup")
+    return
+      "Pickup confirmed for {formatDatetime(\(match).data.time, \"EEE do\")} at {formatDatetime(\(match).data.time, \"HH:mm\")}"
+  }
+
+  static func deliveryAcceptedConfirmationSubtitle() -> String {
+    let match = acceptedRequestFindFirstExpression(type: "delivery")
+    return
+      "Delivery confirmed for {formatDatetime(\(match).data.time, \"EEE do\")} at {formatDatetime(\(match).data.time, \"HH:mm\")}"
+  }
+
+  static func shippingAcceptedConfirmationSubtitle() -> String {
+    let match = acceptedRequestFindFirstExpression(type: "shipping")
+    return "Shipping confirmed to postcode {\(match).data.postalcode}"
   }
 
   static func viewItemCancelRequestFlowData(flowId: String, pageId: String) -> [String: Any] {
     let messagesResourceId = MarketplaceResource.messages.rawValue
     let visibility = cancelRequestVisibilityExpressions()
     let messageEnvelope =
-      "fk: \(MARKETPLACE_ITEMS_RESOURCE_ID).id, service: \"\(MARKETPLACE_SERVICE)\", resource: \"\(MARKETPLACE_ITEMS_RESOURCE_ID)\", archivedAt: null"
+      "fk: \(MARKETPLACE_ITEMS_RESOURCE_ID).id, service: \"\(MARKETPLACE_SERVICE)\", resource: \"\(MARKETPLACE_ITEMS_RESOURCE_ID)\", archivedAt: null, status: \"pending\""
     let pickupCreateAction =
       "{create(\(MARKETPLACE_SERVICE),\(messagesResourceId),{\(messageEnvelope), data: {type: pickup, time: selected_pickup_timeslot}})}"
     let deliveryCreateAction =
@@ -874,7 +926,7 @@ class E2ETestBase: XCTestCase {
     let shippingCreateAction =
       "{create(\(MARKETPLACE_SERVICE),\(messagesResourceId),{\(messageEnvelope), data: {type: shipping, postalcode: shipping_address.postcode}})}"
     let cancelAction =
-      "{update(\(MARKETPLACE_SERVICE),\(messagesResourceId),{fk: \(MARKETPLACE_ITEMS_RESOURCE_ID).id, archivedAt: null},{archivedAt: now()})}"
+      "{update(\(MARKETPLACE_SERVICE),\(messagesResourceId),{fk: \(MARKETPLACE_ITEMS_RESOURCE_ID).id, archivedAt: null, status: \"pending\"},{archivedAt: now()})}"
 
     return [
       "id": flowId,
@@ -901,6 +953,13 @@ class E2ETestBase: XCTestCase {
                   "visible": "true",
                   "title": "",
                   "children": [
+                    Self.textRow(
+                      id: "1a713180-a4a4-4f23-98cf-f3e79140c832",
+                      title: "",
+                      subtitle: Self.pickupAcceptedConfirmationSubtitle(),
+                      visible: Self.acceptedRequestVisibilityExpression(type: "pickup"),
+                      name: "Pickup accepted confirmation"
+                    ),
                     Self.timeslotPickerRow(
                       id: "b3c4d5e6-f7a8-4b9c-0d1e-2f3a4b5c6d7e",
                       source: "{\(MARKETPLACE_ITEMS_RESOURCE_ID).pickup_selection}",
@@ -934,6 +993,21 @@ class E2ETestBase: XCTestCase {
                   "visible": "true",
                   "title": "",
                   "children": [
+                    Self.textRow(
+                      id: "0fa0adba-aab4-4a0e-a8a4-fa1236f7dd9c",
+                      title: "",
+                      subtitle: Self.deliveryAcceptedConfirmationSubtitle(),
+                      visible: Self.acceptedRequestVisibilityExpression(type: "delivery"),
+                      name: "Delivery accepted confirmation"
+                    ),
+                    Self.textRow(
+                      id: "357d3351-93e6-47bd-91ab-3616fd70b8aa",
+                      title: "",
+                      subtitle: "Buyer will drop off",
+                      visible: Self.hideSegmentInfoWhenAcceptedVisibilityExpression(
+                        type: "delivery"),
+                      name: "Drop-off note"
+                    ),
                     Self.timeslotPickerRow(
                       id: "e6f7a8b9-c0d1-4e2f-3a4b-5c6d7e8f9a0b",
                       source: "{\(MARKETPLACE_ITEMS_RESOURCE_ID).delivery_selection}",
@@ -968,6 +1042,21 @@ class E2ETestBase: XCTestCase {
                   "visible": "true",
                   "title": "",
                   "children": [
+                    Self.textRow(
+                      id: "ba000cfa-6a3b-4817-8296-0c14f77bc199",
+                      title: "",
+                      subtitle: Self.shippingAcceptedConfirmationSubtitle(),
+                      visible: Self.acceptedRequestVisibilityExpression(type: "shipping"),
+                      name: "Shipping accepted confirmation"
+                    ),
+                    Self.textRow(
+                      id: "4aac26f8-7c51-4c09-a6ac-910e5636cbb5",
+                      title: "",
+                      subtitle: "Delivered to your door",
+                      visible: Self.hideSegmentInfoWhenAcceptedVisibilityExpression(
+                        type: "shipping"),
+                      name: "Shipping note"
+                    ),
                     Self.inputRow(
                       id: "b9c0d1e2-f3a4-4b5c-6d7e-8f9a0b1c2d3e",
                       title: "Shipping postcode",
@@ -2322,6 +2411,100 @@ final class WebSocketE2ETests: E2ETestBase {
   }
 
   @MainActor
+  func testAcceptedRequestHidesCancelAndShowsConfirmation() async throws {
+    let viewItemButton = app.buttons["View"]
+    XCTAssertTrue(
+      viewItemButton.waitForExistence(timeout: 20),
+      "Home screen not loaded - verify API is running and database is seeded")
+
+    let emitter = WSEmitter()
+    try await emitter.connect(host: apiHost)
+    try await emitter.login(token: "e2e-test", os: "ios")
+    let selectedTimeslot = "2026-06-03T09:00:00"
+    let pickupConfirmedLabel = "Pickup confirmed for Wed 3rd at 09:00"
+    let (selectedItemId, _) = try await createMarketplaceItem(
+      emitter: emitter,
+      titlePrefix: "Accepted request item",
+      pickupSelection: [selectedTimeslot]
+    )
+
+    _ = try await openViewItemPage(
+      emitter: emitter,
+      labelPrefix: "Accepted request",
+      itemId: selectedItemId,
+      viewFlowDataBuilder: Self.viewItemCancelRequestFlowData,
+      buttonExistenceMessage: "Request view button should load"
+    )
+    try await emitter.subscribe(event: "dataChanged")
+
+    let timeslot = app.staticTexts["09:00"].firstMatch
+    XCTAssertTrue(timeslot.waitForExistence(timeout: 10), "Pickup timeslot should be visible")
+    timeslot.tap()
+    XCTAssertTrue(
+      waitForConfirmationSheet(timeout: 5),
+      "Pickup confirmation sheet should appear after selecting a timeslot")
+    tapConfirmationSheetRequestButton()
+
+    let pickupRequestCreated = try await waitForMarketplaceMessage(
+      emitter: emitter,
+      type: "pickup",
+      itemId: selectedItemId,
+      valueKey: "time",
+      value: selectedTimeslot
+    )
+    XCTAssertTrue(pickupRequestCreated, "Tapping a pickup timeslot should create a message")
+
+    XCTAssertTrue(
+      app.buttons["Cancel request"].firstMatch.waitForExistence(timeout: 10),
+      "Cancel request should be visible for a pending request")
+    XCTAssertFalse(
+      app.staticTexts[pickupConfirmedLabel].waitForExistence(timeout: 2),
+      "Pickup confirmation text should stay hidden while the request is pending")
+
+    let messagesPayload = try await emitter.getResource(
+      service: MARKETPLACE_SERVICE,
+      resource: MarketplaceResource.messages.rawValue
+    )
+    let messageId = try XCTUnwrap(
+      Self.marketplaceMessageId(
+        messagesPayload,
+        itemId: selectedItemId,
+        type: "pickup"
+      ),
+      "Created pickup message should be readable from the API"
+    )
+    _ = try await emitter.updateResource(
+      service: MARKETPLACE_SERVICE,
+      resource: MarketplaceResource.messages.rawValue,
+      filter: ["id": messageId],
+      data: ["status": "accepted"]
+    )
+    _ = try await emitter.nextDataChanged(
+      resource: MarketplaceResource.messages.rawValue,
+      deadline: Date().addingTimeInterval(10)
+    )
+
+    XCTAssertTrue(
+      waitForCancelRequestHidden(timeout: 10),
+      "Cancel request should hide once the message is accepted")
+    XCTAssertTrue(
+      app.staticTexts[pickupConfirmedLabel].waitForExistence(timeout: 10),
+      "Pickup segment should show the accepted confirmation row")
+
+    let shippingTab = app.segmentedControls.buttons["Shipping"]
+    XCTAssertTrue(shippingTab.waitForExistence(timeout: 5), "Shipping segment should exist")
+    shippingTab.tap()
+    let shippingConfirmation = app.staticTexts.matching(
+      NSPredicate(format: "label BEGINSWITH %@", "Shipping confirmed")
+    ).firstMatch
+    XCTAssertFalse(
+      shippingConfirmation.waitForExistence(timeout: 2),
+      "Shipping confirmation should stay hidden for an accepted pickup request")
+
+    await emitter.disconnect()
+  }
+
+  @MainActor
   func testAskToBuyCreatesShippingRequestAndValidatesEmptyPostcode() async throws {
     let viewItemButton = app.buttons["View"]
     XCTAssertTrue(
@@ -2643,6 +2826,17 @@ final class WebSocketE2ETests: E2ETestBase {
       "{navigate(\(E2EFlowIds.webSocketViewFlow),\(E2EFlowIds.webSocketViewPage),{\(MARKETPLACE_ITEMS_RESOURCE_ID): [\(viewItemId)]})}"
   }
 
+  private func waitForCancelRequestHidden(timeout: TimeInterval) -> Bool {
+    let deadline = Date().addingTimeInterval(timeout)
+    while Date() < deadline {
+      if !app.buttons["Cancel request"].firstMatch.exists {
+        return true
+      }
+      RunLoop.current.run(until: Date().addingTimeInterval(0.2))
+    }
+    return !app.buttons["Cancel request"].firstMatch.exists
+  }
+
   private func waitForArchivedMarketplaceMessage(
     emitter: WSEmitter,
     itemId: String
@@ -2659,6 +2853,26 @@ final class WebSocketE2ETests: E2ETestBase {
     } while try await emitter.nextDataChanged(
       resource: MarketplaceResource.messages.rawValue, deadline: deadline)
     return false
+  }
+
+  private static func marketplaceMessageId(
+    _ messages: Any,
+    itemId: String,
+    type: String
+  ) -> String? {
+    guard let messageRows = responseDataArray(from: messages) else { return nil }
+    for message in messageRows {
+      guard let messageData = message as? [String: Any],
+        messageData["fk"] as? String == itemId,
+        let messageId = messageData["id"] as? String,
+        let messageDetails = messageData["data"] as? [String: Any],
+        messageDetails["type"] as? String == type
+      else {
+        continue
+      }
+      return messageId
+    }
+    return nil
   }
 
   private static func marketplaceMessagesArchived(
@@ -3349,7 +3563,7 @@ final class E2EHomepageMessageSearchTests: E2ETestBase {
         "type": "Text",
         "title": "{$datum.data.type} request",
         "subtitle": "{$datum.status}",
-        "swipeLabel": "Accept",
+        "swipeLabel": "::check::",
         "actions": Self.actionsObject(
           swipeLeft: [
             Self.rowAction(
@@ -3470,7 +3684,7 @@ final class E2EHomepageMessageSearchTests: E2ETestBase {
     XCTAssertTrue(
       swipeButton.waitForExistence(timeout: 3),
       "Swipe-left action button should be revealed for the pickup message")
-    XCTAssertEqual(swipeButton.label, "Accept")
+    XCTAssertEqual(swipeButton.label, "::check::")
     swipeButton.tap()
 
     XCTAssertTrue(

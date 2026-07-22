@@ -223,8 +223,7 @@ struct EVYSwipeableRow<Content: View>: View {
     } label: {
       Group {
         if let resolvedSwipeLabel {
-          Text(resolvedSwipeLabel)
-            .font(.system(size: 15, weight: .semibold))
+          EVYTextView(resolvedSwipeLabel, style: .button)
             .lineLimit(1)
             .minimumScaleFactor(0.7)
         } else {

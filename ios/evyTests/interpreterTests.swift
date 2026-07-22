@@ -828,7 +828,7 @@ final class InterpreterTests: XCTestCase {
     XCTAssertEqual(countBefore, countAfter)
   }
 
-  func testFindFirstMultiPairReturnsActiveMessageWhenArchivedComesFirst() throws {
+  func testFindFirstExpressionReturnsActiveMessageWhenArchivedComesFirst() throws {
     let messagesKey = uniqueKey("messages")
     let itemKey = uniqueKey("item")
     let itemId = UUID().uuidString
@@ -855,12 +855,123 @@ final class InterpreterTests: XCTestCase {
     try store(.dictionary(["id": .string(itemId)]), at: itemKey)
 
     let result = try parseTextFromText(
-      "{findFirst(\(messagesKey), \(itemKey).id, fk, null, archivedAt).id}")
+      "{findFirst(\(messagesKey), fk == \(itemKey).id && archivedAt == null).id}")
 
     XCTAssertEqual(result.value, activeId)
   }
 
-  func testFindFirstNullPairMatchesAbsentProp() throws {
+  func testFindFirstExpressionFiltersByUnquotedLiteralStatus() throws {
+    let messagesKey = uniqueKey("messages")
+    let itemKey = uniqueKey("item")
+    let itemId = UUID().uuidString
+    let messageId = UUID().uuidString
+
+    try store(
+      .array([
+        .dictionary([
+          "id": .string(messageId),
+          "fk": .string(itemId),
+          "archivedAt": .null,
+          "status": .string("accepted"),
+          "data": .dictionary(["type": .string("pickup"), "time": .string("2026-06-03T09:00:00")]),
+        ])
+      ]),
+      at: "\(EVYNamespace.marketplace):\(messagesKey)"
+    )
+    try store(.dictionary(["id": .string(itemId)]), at: itemKey)
+
+    let pendingResult = try parseTextFromText(
+      "{findFirst(\(messagesKey), fk == \(itemKey).id && archivedAt == null && status == pending).id}"
+    )
+    let acceptedResult = try parseTextFromText(
+      "{findFirst(\(messagesKey), fk == \(itemKey).id && archivedAt == null && status == accepted).id}"
+    )
+
+    XCTAssertEqual(pendingResult.value, "")
+    XCTAssertEqual(acceptedResult.value, messageId)
+  }
+
+  func testCancelVisibilityHiddenOnceAccepted() throws {
+    let messagesKey = uniqueKey("messages")
+    let itemKey = uniqueKey("item")
+    let itemId = UUID().uuidString
+    let messageId = UUID().uuidString
+
+    let cancelVisible =
+      "{findFirst(\(messagesKey), fk == \(itemKey).id && archivedAt == null && status == pending).fk == \(itemKey).id}"
+    let acceptedVisible =
+      "{findFirst(\(messagesKey), fk == \(itemKey).id && archivedAt == null && status == accepted).fk == \(itemKey).id}"
+
+    try store(.dictionary(["id": .string(itemId)]), at: itemKey)
+
+    func storeMessage(status: String) throws {
+      try store(
+        .array([
+          .dictionary([
+            "id": .string(messageId),
+            "fk": .string(itemId),
+            "archivedAt": .null,
+            "status": .string(status),
+            "data": .dictionary(["type": .string("pickup"), "time": .string("2026-06-03T09:00:00")]
+            ),
+          ])
+        ]),
+        at: "\(EVYNamespace.marketplace):\(messagesKey)"
+      )
+    }
+
+    try storeMessage(status: "accepted")
+    XCTAssertFalse(try EVY.evaluateFromText(cancelVisible))
+    XCTAssertTrue(try EVY.evaluateFromText(acceptedVisible))
+
+    try storeMessage(status: "pending")
+    XCTAssertTrue(try EVY.evaluateFromText(cancelVisible))
+    XCTAssertFalse(try EVY.evaluateFromText(acceptedVisible))
+  }
+
+  func testFormatDatetimeOverFindFirstPath() throws {
+    let messagesKey = uniqueKey("messages")
+    let itemKey = uniqueKey("item")
+    let itemId = UUID().uuidString
+
+    try store(
+      .array([
+        .dictionary([
+          "id": .string(UUID().uuidString),
+          "fk": .string(itemId),
+          "archivedAt": .null,
+          "status": .string("accepted"),
+          "data": .dictionary(["type": .string("pickup"), "time": .string("2026-06-03T09:00:00")]),
+        ])
+      ]),
+      at: "\(EVYNamespace.marketplace):\(messagesKey)"
+    )
+    try store(.dictionary(["id": .string(itemId)]), at: itemKey)
+
+    let acceptedFindFirst =
+      "findFirst(\(messagesKey), fk == \(itemKey).id && archivedAt == null && status == accepted)"
+    let day = try parseTextFromText(
+      "{formatDatetime(\(acceptedFindFirst).data.time, \"EEE do\")}")
+    let time = try parseTextFromText(
+      "{formatDatetime(\(acceptedFindFirst).data.time, \"HH:mm\")}")
+
+    XCTAssertEqual(day.value, "Wed 3rd")
+    XCTAssertEqual(time.value, "09:00")
+  }
+
+  func testStatusExpressionWatchTargetsIncludeCollectionKey() throws {
+    let messagesKey = uniqueKey("messages")
+    let itemKey = uniqueKey("item")
+    let expression =
+      "{findFirst(\(messagesKey), fk == \(itemKey).id && archivedAt == null && status == pending).fk == \(itemKey).id}"
+
+    let targets = EVY.watchTargets(for: expression)
+
+    XCTAssertTrue(targets.contains(messagesKey))
+    XCTAssertTrue(targets.contains("\(itemKey).id"))
+  }
+
+  func testFindFirstNullExpressionMatchesAbsentProp() throws {
     let messagesKey = uniqueKey("messages")
     let itemKey = uniqueKey("item")
     let itemId = UUID().uuidString
@@ -879,12 +990,12 @@ final class InterpreterTests: XCTestCase {
     try store(.dictionary(["id": .string(itemId)]), at: itemKey)
 
     let result = try parseTextFromText(
-      "{findFirst(\(messagesKey), \(itemKey).id, fk, null, archivedAt).id}")
+      "{findFirst(\(messagesKey), fk == \(itemKey).id && archivedAt == null).id}")
 
-    XCTAssertEqual(result.value, activeId, "null pair should match records without the prop")
+    XCTAssertEqual(result.value, activeId, "null comparison should match records without the prop")
   }
 
-  func testFindFirstMultiPairReturnsEmptyWhenOnlyArchivedExist() throws {
+  func testFindFirstExpressionReturnsEmptyWhenOnlyArchivedExist() throws {
     let messagesKey = uniqueKey("messages")
     let itemKey = uniqueKey("item")
     let itemId = UUID().uuidString
@@ -903,7 +1014,7 @@ final class InterpreterTests: XCTestCase {
     try store(.dictionary(["id": .string(itemId)]), at: itemKey)
 
     let result = try parseTextFromText(
-      "{findFirst(\(messagesKey), \(itemKey).id, fk, null, archivedAt).id}")
+      "{findFirst(\(messagesKey), fk == \(itemKey).id && archivedAt == null).id}")
 
     XCTAssertEqual(result.value, "")
   }
@@ -927,9 +1038,9 @@ final class InterpreterTests: XCTestCase {
     try store(.dictionary(["id": .string(itemId)]), at: itemKey)
 
     let hasActive =
-      "{findFirst(\(messagesKey), \(itemKey).id, fk, null, archivedAt).fk == \(itemKey).id}"
+      "{findFirst(\(messagesKey), fk == \(itemKey).id && archivedAt == null).fk == \(itemKey).id}"
     let noActive =
-      "{findFirst(\(messagesKey), \(itemKey).id, fk, null, archivedAt).fk != \(itemKey).id}"
+      "{findFirst(\(messagesKey), fk == \(itemKey).id && archivedAt == null).fk != \(itemKey).id}"
 
     XCTAssertTrue(try EVY.evaluateFromText(hasActive))
     XCTAssertFalse(try EVY.evaluateFromText(noActive))
@@ -959,16 +1070,144 @@ final class InterpreterTests: XCTestCase {
     XCTAssertEqual(result.value, "Good")
   }
 
-  func testFindFirstMultiPairWatchTargetsIncludeCollectionKey() throws {
+  func testFindFirstExpressionWatchTargetsIncludeCollectionKey() throws {
     let messagesKey = uniqueKey("messages")
     let itemKey = uniqueKey("item")
     let expression =
-      "{findFirst(\(messagesKey), \(itemKey).id, fk, null, archivedAt).fk == \(itemKey).id}"
+      "{findFirst(\(messagesKey), fk == \(itemKey).id && archivedAt == null).fk == \(itemKey).id}"
 
     let targets = EVY.watchTargets(for: expression)
 
     XCTAssertTrue(targets.contains(messagesKey))
     XCTAssertTrue(targets.contains("\(itemKey).id"))
+  }
+
+  func testFindFirstNotNullMatchesArchivedRecord() throws {
+    let messagesKey = uniqueKey("messages")
+    let itemKey = uniqueKey("item")
+    let itemId = UUID().uuidString
+    let archivedId = UUID().uuidString
+
+    try store(
+      .array([
+        .dictionary([
+          "id": .string(archivedId),
+          "fk": .string(itemId),
+          "archivedAt": .string("2026-06-02T00:00:00Z"),
+          "data": .dictionary(["type": .string("pickup")]),
+        ]),
+        .dictionary([
+          "id": .string(UUID().uuidString),
+          "fk": .string(itemId),
+          "archivedAt": .null,
+          "data": .dictionary(["type": .string("pickup")]),
+        ]),
+      ]),
+      at: "\(EVYNamespace.marketplace):\(messagesKey)"
+    )
+    try store(.dictionary(["id": .string(itemId)]), at: itemKey)
+
+    let result = try parseTextFromText(
+      "{findFirst(\(messagesKey), fk == \(itemKey).id && archivedAt != null).id}")
+
+    XCTAssertEqual(result.value, archivedId)
+  }
+
+  func testFindFirstOrExpressionMatchesEitherStatus() throws {
+    let messagesKey = uniqueKey("messages")
+    let itemKey = uniqueKey("item")
+    let itemId = UUID().uuidString
+    let acceptedId = UUID().uuidString
+
+    try store(
+      .array([
+        .dictionary([
+          "id": .string(acceptedId),
+          "fk": .string(itemId),
+          "archivedAt": .null,
+          "status": .string("accepted"),
+          "data": .dictionary(["type": .string("pickup")]),
+        ])
+      ]),
+      at: "\(EVYNamespace.marketplace):\(messagesKey)"
+    )
+    try store(.dictionary(["id": .string(itemId)]), at: itemKey)
+
+    let result = try parseTextFromText(
+      "{findFirst(\(messagesKey), fk == \(itemKey).id && (status == pending || status == accepted)).id}"
+    )
+
+    XCTAssertEqual(result.value, acceptedId)
+  }
+
+  func testFindFirstNestedRecordPathMatches() throws {
+    let messagesKey = uniqueKey("messages")
+    let pickupId = UUID().uuidString
+
+    try store(
+      .array([
+        .dictionary([
+          "id": .string(UUID().uuidString),
+          "data": .dictionary(["type": .string("delivery")]),
+        ]),
+        .dictionary([
+          "id": .string(pickupId),
+          "data": .dictionary(["type": .string("pickup")]),
+        ]),
+      ]),
+      at: "\(EVYNamespace.marketplace):\(messagesKey)"
+    )
+
+    let result = try parseTextFromText(
+      "{findFirst(\(messagesKey), data.type == pickup).id}")
+
+    XCTAssertEqual(result.value, pickupId)
+  }
+
+  func testFindFirstNumericComparison() throws {
+    let itemsKey = uniqueKey("priced")
+    let expensiveId = UUID().uuidString
+
+    try store(
+      .array([
+        .dictionary([
+          "id": .string(UUID().uuidString),
+          "price": .int(50),
+        ]),
+        .dictionary([
+          "id": .string(expensiveId),
+          "price": .int(150),
+        ]),
+      ]),
+      at: "\(EVYNamespace.marketplace):\(itemsKey)"
+    )
+
+    let result = try parseTextFromText("{findFirst(\(itemsKey), price > 100).id}")
+
+    XCTAssertEqual(result.value, expensiveId)
+  }
+
+  func testFindFirstOldPairFormThrows() throws {
+    let messagesKey = uniqueKey("messages")
+    let itemKey = uniqueKey("item")
+    let itemId = UUID().uuidString
+
+    try store(
+      .array([
+        .dictionary([
+          "id": .string(UUID().uuidString),
+          "fk": .string(itemId),
+          "archivedAt": .null,
+        ])
+      ]),
+      at: "\(EVYNamespace.marketplace):\(messagesKey)"
+    )
+    try store(.dictionary(["id": .string(itemId)]), at: itemKey)
+
+    XCTAssertThrowsError(
+      try parseTextFromText(
+        "{findFirst(\(messagesKey), \(itemKey).id, fk, null, archivedAt).id}")
+    )
   }
 
   func testFormatAddress() throws {

@@ -13,7 +13,7 @@
 						"type": "Text",
 						"title": "{$datum.data.type} request",
 						"subtitle": "{$datum.status}",
-						"swipeLabel": "Accept",
+						"swipeLabel": "::check::",
 						"visible": "true",
 						"name": "Message search result",
 						"actions": {

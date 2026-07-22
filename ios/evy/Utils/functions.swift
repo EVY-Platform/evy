@@ -49,45 +49,86 @@ func evyNow() -> EVYFunctionOutput {
   EVYFunctionOutput(value: EVY.nowISO8601(), prefix: nil, suffix: nil)
 }
 
-/// `null` in a findFirst (value, prop) pair matches records where the prop is absent or JSON null
-private func recordPropIsNull(_ record: EVYJson, prop: String) -> Bool {
-  guard case .dictionary(let dictValue) = record else { return false }
-  guard let propValue = dictValue[prop] else { return true }
-  if case .null = propValue { return true }
+@MainActor
+private func recordPathValue(_ record: EVYJson, path: String) -> EVYJson? {
+  guard let props = try? splitPropsFromText(path), !props.isEmpty else {
+    return nil
+  }
+  return record.parsePropStrict(props: props)
+}
+
+@MainActor
+private func recordPathIsNull(_ record: EVYJson, path: String) -> Bool {
+  guard let value = recordPathValue(record, path: path) else {
+    return true
+  }
+  if case .null = value {
+    return true
+  }
   return false
+}
+
+@MainActor
+private func resolveFindFirstOperand(_ operand: String, record: EVYJson) -> String {
+  if let recordValue = recordPathValue(record, path: operand) {
+    return recordValue.toString()
+  }
+  if let dataValue = try? EVY.getDataFromProps(operand) {
+    return dataValue.toString()
+  }
+  return _stripOptionalSurroundingQuotes(operand)
+}
+
+@MainActor
+private func evaluateFindFirstAtom(
+  left: String,
+  op: String,
+  right: String,
+  record: EVYJson
+) throws -> Bool {
+  let leftIsNull = left == "null"
+  let rightIsNull = right == "null"
+  if leftIsNull || rightIsNull {
+    guard op == "==" || op == "!=" else {
+      throw EVYError.invalidData(
+        context: "findFirst null comparisons only support == and !=")
+    }
+    if leftIsNull && rightIsNull {
+      return op == "=="
+    }
+    let path = leftIsNull ? right : left
+    let isNull = recordPathIsNull(record, path: path)
+    return op == "==" ? isNull : !isNull
+  }
+
+  let resolvedLeft = resolveFindFirstOperand(left, record: record)
+  let resolvedRight = resolveFindFirstOperand(right, record: record)
+  return evyComparison(op, left: resolvedLeft, right: resolvedRight)
 }
 
 @MainActor
 func evyFindFirst(_ args: String, remainingProps: [String] = []) throws -> EVYJson {
   let parts = _splitFunctionArguments(args)
-  guard parts.count >= 2 else { throw EVYParamError.invalidProps }
+  guard parts.count == 2 else { throw EVYParamError.invalidProps }
   let collectionArg = parts[0].trimmingCharacters(in: .whitespacesAndNewlines)
+  let secondArg = parts[1].trimmingCharacters(in: .whitespacesAndNewlines)
   let collection = try EVY.getDataFromProps(collectionArg)
   guard case .array(let items) = collection else {
     return .string("")
   }
 
   let match: EVYJson?
-  if parts.count == 2 {
-    let idArg = parts[1].trimmingCharacters(in: .whitespacesAndNewlines)
-    let idValue =
-      (try? EVY.getDataFromProps(idArg))?.toString() ?? _stripOptionalSurroundingQuotes(idArg)
-    match = items.first(where: { $0.identifierValue() == idValue })
-  } else {
-    guard parts.count % 2 == 1 else { throw EVYParamError.invalidProps }
+  if _containsTopLevelBooleanSyntax(secondArg) {
     match = items.first { record in
-      stride(from: 1, to: parts.count, by: 2).allSatisfy { index in
-        let valueArg = parts[index].trimmingCharacters(in: .whitespacesAndNewlines)
-        let propArg = parts[index + 1].trimmingCharacters(in: .whitespacesAndNewlines)
-        if valueArg == "null" {
-          return recordPropIsNull(record, prop: propArg)
-        }
-        let resolvedValue =
-          (try? EVY.getDataFromProps(valueArg))?.toString()
-          ?? _stripOptionalSurroundingQuotes(valueArg)
-        return record.parseProp(props: [propArg]).toString() == resolvedValue
-      }
+      (try? _evaluateBooleanExpression(secondArg) { left, op, right in
+        try evaluateFindFirstAtom(left: left, op: op, right: right, record: record)
+      }) ?? false
     }
+  } else {
+    let idValue =
+      (try? EVY.getDataFromProps(secondArg))?.toString()
+      ?? _stripOptionalSurroundingQuotes(secondArg)
+    match = items.first(where: { $0.identifierValue() == idValue })
   }
 
   guard let match else {
