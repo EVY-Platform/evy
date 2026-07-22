@@ -372,13 +372,15 @@ class E2ETestBase: XCTestCase {
             "visible": "true",
             "title": "",
             "label": "Submit",
-            "actions": [
-              [
-                "condition": "",
-                "false": "",
-                "true": "{show(a4b5c6d7-e8f9-4a0b-1c2d-3e4f5a6b7c8d)}",
+            "actions": Self.actionsObject(
+              tap: [
+                [
+                  "condition": "",
+                  "false": "",
+                  "true": "{show(a4b5c6d7-e8f9-4a0b-1c2d-3e4f5a6b7c8d)}",
+                ]
               ]
-            ],
+            ),
             "sheet": Self.submitListingSheetChild(
               createAction:
                 "{create(\(MARKETPLACE_SERVICE),\(MARKETPLACE_ITEMS_RESOURCE_ID))}"
@@ -667,7 +669,7 @@ class E2ETestBase: XCTestCase {
             [
               "id": "a74bc80e-ffda-4e19-b8f3-cd882405958b",
               "type": "VerticalContainer",
-              "actions": [],
+              "actions": [:],
               "visible": "true",
               "title": "",
               "children": [
@@ -700,7 +702,7 @@ class E2ETestBase: XCTestCase {
     var row: [String: Any] = [
       "id": id,
       "type": text.isEmpty ? "Text" : "TextExpand",
-      "actions": [],
+      "actions": [:],
       "visible": visible,
       "title": title,
     ]
@@ -710,9 +712,9 @@ class E2ETestBase: XCTestCase {
     } else {
       row["text"] = text
       row["expandLabel"] = "Read more"
-      row["actions"] = [
-        Self.rowAction(true: "{expand_text(\(id))}")
-      ]
+      row["actions"] = Self.actionsObject(
+        tap: [Self.rowAction(true: "{expand_text(\(id))}")]
+      )
     }
     if !name.isEmpty {
       row["name"] = name
@@ -730,7 +732,7 @@ class E2ETestBase: XCTestCase {
     return [
       "id": id,
       "type": "ListItem",
-      "actions": [],
+      "actions": [:],
       "visible": visible,
       "title": title,
       "subtitle": subtitle,
@@ -753,7 +755,7 @@ class E2ETestBase: XCTestCase {
       "title": title,
       "placeholder": placeholder,
       "destination": destination,
-      "actions": [],
+      "actions": [:],
     ]
     if let source, !source.isEmpty {
       row["source"] = source
@@ -789,7 +791,7 @@ class E2ETestBase: XCTestCase {
       "visible": visible,
       "title": "",
       "label": label,
-      "actions": resolvedActions,
+      "actions": Self.actionsObject(tap: resolvedActions),
     ]
     if let style {
       row["style"] = style
@@ -807,7 +809,7 @@ class E2ETestBase: XCTestCase {
     return [
       "id": id,
       "type": "Heading",
-      "actions": [],
+      "actions": [:],
       "visible": "true",
       "title": title,
       "label": "",
@@ -824,6 +826,20 @@ class E2ETestBase: XCTestCase {
       "false": falseAction,
       "true": action,
     ]
+  }
+
+  static func actionsObject(
+    tap: [[String: String]] = [],
+    delete: [[String: String]] = []
+  ) -> [String: Any] {
+    var result: [String: Any] = [:]
+    if !tap.isEmpty {
+      result["tap"] = tap
+    }
+    if !delete.isEmpty {
+      result["delete"] = delete
+    }
+    return result
   }
 
   static func cancelRequestVisibilityExpressions() -> (hasActive: String, noActive: String) {
@@ -860,9 +876,9 @@ class E2ETestBase: XCTestCase {
             [
               "id": "f1a2b3c4-d5e6-4f7a-8b9c-0d1e2f3a4b5c",
               "type": "TabContainer",
-              "actions": [
-                Self.rowAction(true: "{select($datum)}")
-              ],
+              "actions": Self.actionsObject(
+                tap: [Self.rowAction(true: "{select($datum)}")]
+              ),
               "visible": "true",
               "title": "",
               "segments": ["Pickup", "Delivery", "Shipping"],
@@ -870,7 +886,7 @@ class E2ETestBase: XCTestCase {
                 [
                   "id": "a2b3c4d5-e6f7-4a8b-9c0d-1e2f3a4b5c6d",
                   "type": "VerticalContainer",
-                  "actions": [],
+                  "actions": [:],
                   "visible": "true",
                   "title": "",
                   "children": [
@@ -903,7 +919,7 @@ class E2ETestBase: XCTestCase {
                 [
                   "id": "d5e6f7a8-b9c0-4d1e-2f3a-4b5c6d7e8f9a",
                   "type": "VerticalContainer",
-                  "actions": [],
+                  "actions": [:],
                   "visible": "true",
                   "title": "",
                   "children": [
@@ -937,7 +953,7 @@ class E2ETestBase: XCTestCase {
                 [
                   "id": "a8b9c0d1-e2f3-4a4b-5c6d-7e8f9a0b1c2d",
                   "type": "VerticalContainer",
-                  "actions": [],
+                  "actions": [:],
                   "visible": "true",
                   "title": "",
                   "children": [
@@ -996,7 +1012,9 @@ class E2ETestBase: XCTestCase {
       "type": "TimeslotPicker",
       "source": source,
       "destination": destination,
-      "actions": [Self.rowAction(true: "{select($datum)}")] + actions,
+      "actions": Self.actionsObject(
+        tap: [Self.rowAction(true: "{select($datum)}")] + actions
+      ),
       "visible": visible,
       "title": "",
       "start_time": "07:00",
@@ -1028,10 +1046,12 @@ class E2ETestBase: XCTestCase {
       action: action,
       style: style
     )
-    button["actions"] = [
-      Self.rowAction(true: action),
-      Self.rowAction(true: "{close()}"),
-    ]
+    button["actions"] = Self.actionsObject(
+      tap: [
+        Self.rowAction(true: action),
+        Self.rowAction(true: "{close()}"),
+      ]
+    )
     button["name"] = name
     return button
   }
@@ -1045,7 +1065,7 @@ class E2ETestBase: XCTestCase {
     [
       "id": id,
       "type": "VerticalContainer",
-      "actions": [],
+      "actions": [:],
       "visible": "true",
       "title": "Confirmation",
       "children": messageRows + [confirmButton],
@@ -1179,11 +1199,12 @@ class E2ETestBase: XCTestCase {
       action: createAction,
       name: "Confirm submit listing"
     )
-    var confirmActions = (confirmButton["actions"] as? [[String: String]]) ?? []
+    var confirmActions =
+      (confirmButton["actions"] as? [String: Any])?["tap"] as? [[String: String]] ?? []
     confirmActions.append(
       Self.rowAction(
         true: "{navigate(\(E2EFlowIds.defaultHomeFlow),\(E2EFlowIds.webSocketHomePage))}"))
-    confirmButton["actions"] = confirmActions
+    confirmButton["actions"] = Self.actionsObject(tap: confirmActions)
 
     return Self.confirmationSheetChild(
       id: "a4b5c6d7-e8f9-4a0b-1c2d-3e4f5a6b7c8d",
@@ -1218,9 +1239,9 @@ class E2ETestBase: XCTestCase {
             [
               "id": "b2c3d4e5-f6a7-4b8c-9d0e-1f2a3b4c5d6f",
               "type": "TabContainer",
-              "actions": [
-                Self.rowAction(true: "{select($datum)}")
-              ],
+              "actions": Self.actionsObject(
+                tap: [Self.rowAction(true: "{select($datum)}")]
+              ),
               "visible": "true",
               "title": "",
               "segments": ["Pickup"],
@@ -1228,7 +1249,7 @@ class E2ETestBase: XCTestCase {
                 [
                   "id": "c3d4e5f6-a7b8-4c9d-0e1f-2a3b4c5d6e7f",
                   "type": "VerticalContainer",
-                  "actions": [],
+                  "actions": [:],
                   "visible": "true",
                   "title": "",
                   "children": [
@@ -1314,7 +1335,7 @@ class E2ETestBase: XCTestCase {
               sheet: [
                 "id": "a9f8e7d6-c5b4-4a3f-2e1d-0c9b8a7f6e5d",
                 "type": "VerticalContainer",
-                "actions": [],
+                "actions": [:],
                 "visible": "true",
                 "title": "{\(MARKETPLACE_ITEMS_RESOURCE_ID).title}",
                 "children": [
@@ -1361,7 +1382,7 @@ class E2ETestBase: XCTestCase {
             [
               "id": crossPageSheetRowId,
               "type": "VerticalContainer",
-              "actions": [],
+              "actions": [:],
               "visible": "true",
               "title": "Confirmation",
               "children": [
@@ -2876,7 +2897,7 @@ final class WebSocketE2ETests: E2ETestBase {
             [
               "id": "a74bc80e-ffda-4e19-b8f3-cd882405958b",
               "type": "VerticalContainer",
-              "actions": [],
+              "actions": [:],
               "visible": "true",
               "title": "",
               "children": children,
@@ -2905,7 +2926,8 @@ final class WebSocketE2ETests: E2ETestBase {
       var firstRow = rows.first,
       var children = firstRow["children"] as? [[String: Any]],
       let buttonIndex = children.firstIndex(where: { ($0["label"] as? String) == buttonLabel }),
-      var actions = children[buttonIndex]["actions"] as? [[String: Any]],
+      var actionsObject = children[buttonIndex]["actions"] as? [String: Any],
+      var actions = actionsObject["tap"] as? [[String: Any]],
       var firstAction = actions.first
     else {
       return flowData
@@ -2914,7 +2936,7 @@ final class WebSocketE2ETests: E2ETestBase {
     var button = children[buttonIndex]
     firstAction["condition"] = "{1 > 0 || (0 > 1 && 2 > 3)}"
     actions[0] = firstAction
-    button["actions"] = actions
+    button["actions"] = ["tap": actions]
     children[buttonIndex] = button
     firstRow["children"] = children
     rows[0] = firstRow
@@ -2987,9 +3009,9 @@ final class E2ESegmentContainerTests: E2ETestBase {
             [
               "id": "6a5b4c3d-2e1f-4a0b-8c9d-1e2f3a4b5c6d",
               "type": "TabContainer",
-              "actions": [
-                Self.rowAction(true: "{select($datum)}")
-              ],
+              "actions": Self.actionsObject(
+                tap: [Self.rowAction(true: "{select($datum)}")]
+              ),
               "visible": "true",
               "title": "",
               "segments": ["Pickup", "Delivery"],
@@ -3126,7 +3148,7 @@ final class E2EPlaceSearchTests: E2ETestBase {
                   "type": "Text",
                   "title": "{$datum.street}",
                   "subtitle": "{$datum.city}",
-                  "actions": [],
+                  "actions": [:],
                   "visible": "true",
                 ]
               )
@@ -3153,13 +3175,15 @@ final class E2EPlaceSearchTests: E2ETestBase {
       "title": title,
       "subtitle": subtitle,
       "action": action,
-      "actions": [
-        [
-          "condition": "",
-          "false": "",
-          "true": "{show(\(sheetId))}",
+      "actions": Self.actionsObject(
+        tap: [
+          [
+            "condition": "",
+            "false": "",
+            "true": "{show(\(sheetId))}",
+          ]
         ]
-      ],
+      ),
       "sheet": sheet,
     ]
   }
@@ -3180,7 +3204,7 @@ final class E2EPlaceSearchTests: E2ETestBase {
       "placeholder": placeholder,
       "source": source,
       "destination": destination,
-      "actions": [],
+      "actions": [:],
       "child": child,
     ]
   }
@@ -3219,7 +3243,7 @@ final class E2EHomepageMessageSearchTests: E2ETestBase {
         "type": "Text",
         "title": "{$datum.data.type} request",
         "subtitle": "",
-        "actions": [],
+        "actions": [:],
         "visible": "true",
         "name": "Message search result",
       ],
@@ -3227,7 +3251,7 @@ final class E2EHomepageMessageSearchTests: E2ETestBase {
       "placeholder": "Filter messages by type",
       "source": "{\(MarketplaceResource.messages.rawValue)}",
       "destination": "",
-      "actions": [],
+      "actions": [:],
       "visible": "true",
       "name": "Search messages",
     ]
@@ -3240,12 +3264,14 @@ final class E2EHomepageMessageSearchTests: E2ETestBase {
         "title": "{$datum.title}",
         "subtitle": "{formatCurrency($datum.price)}",
         "image": "{$datum.photo_ids.0}",
-        "actions": [
-          Self.rowAction(
-            true:
-              "{navigate(74a49d4b-2176-4925-857a-e29e2991f1bd,82cae120-c7b1-4c29-bd42-e1521320b109,{id: $datum.id})}"
-          )
-        ],
+        "actions": Self.actionsObject(
+          tap: [
+            Self.rowAction(
+              true:
+                "{navigate(74a49d4b-2176-4925-857a-e29e2991f1bd,82cae120-c7b1-4c29-bd42-e1521320b109,{id: $datum.id})}"
+            )
+          ]
+        ),
         "visible": "true",
         "name": "Item search result",
       ],
@@ -3253,7 +3279,7 @@ final class E2EHomepageMessageSearchTests: E2ETestBase {
       "placeholder": "Search anything",
       "source": "{\(MARKETPLACE_ITEMS_RESOURCE_ID)}",
       "destination": "",
-      "actions": [],
+      "actions": [:],
       "visible": "true",
       "name": "Search items",
     ]

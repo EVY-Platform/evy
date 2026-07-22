@@ -2,6 +2,9 @@
 	"$schema": "https://json-schema.org/draft/2020-12/schema",
 	"$id": "sdui/definitions/Input",
 	"title": "Input_Row",
+	"triggers": {
+		"tap": "optional"
+	},
 	"allOf": [
 		{
 			"$ref": "../evy.schema.json#/$defs/UI_RowBase"

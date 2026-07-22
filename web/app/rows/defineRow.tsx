@@ -1,8 +1,9 @@
-import type { UI_RowAction } from "evy-types";
+import type { UI_RowActions } from "evy-types";
 import { createElement, type ReactNode } from "react";
 
 import { useRowById } from "../hooks/useRowById";
 import type { Row, RowConfig } from "../types/row";
+import { rowAction } from "../utils/rowActions";
 import { RowLayout } from "./design-system/RowLayout";
 
 type RowDefinition =
@@ -17,8 +18,22 @@ type RowComponent = ((props: { rowId: string }) => ReactNode) & {
 	name: string;
 };
 
-export function tapAction(branch: string): UI_RowAction {
-	return { condition: "", false: "", true: branch };
+type DefaultRowActionsInput = {
+	tap?: string;
+	delete?: string;
+};
+
+export function defaultRowActions(
+	options: DefaultRowActionsInput,
+): UI_RowActions {
+	const actions: UI_RowActions = {};
+	if (options.tap !== undefined) {
+		actions.tap = [rowAction(options.tap)];
+	}
+	if (options.delete !== undefined) {
+		actions.delete = [rowAction(options.delete)];
+	}
+	return actions;
 }
 
 function UnknownRowContent(): ReactNode {

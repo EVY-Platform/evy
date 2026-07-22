@@ -1,3 +1,4 @@
+import type { UI_RowActions } from "evy-types";
 import { MARKETPLACE_RESOURCE } from "evy-types/marketplaceResources";
 import { ChevronRight, Trash2 } from "lucide-react";
 import { useCallback, useMemo, useState } from "react";
@@ -11,6 +12,7 @@ import {
 	isPanelScalarField,
 	type RowBindingField,
 } from "../rows/rowFields";
+import { getRowTriggers, type RowTriggerName } from "../rows/rowTriggers";
 import { useFlowsContext } from "../state/contexts/FlowsContext";
 import type { Row } from "../types/row";
 import { mergeRowContentWithPaletteDefaults } from "../utils/decodeFlow";
@@ -247,13 +249,20 @@ export function ConfigurationPanel() {
 		[activeRowId, dispatchRow],
 	);
 
-	const updateRowActions = useCallback(
-		(nextActions: NonNullable<Row["config"]["actions"]>) => {
+	const updateRowActionsForTrigger = useCallback(
+		(trigger: RowTriggerName, nextTriggerActions: UI_RowActions["tap"]) => {
 			if (!currentConfigRow) return;
+			const current = currentConfigRow.config.actions ?? {};
+			const merged: UI_RowActions = { ...current };
+			if (!nextTriggerActions || nextTriggerActions.length === 0) {
+				delete merged[trigger];
+			} else {
+				merged[trigger] = nextTriggerActions;
+			}
 			dispatchRow({
 				type: "UPDATE_ROW_ACTIONS",
 				rowId: currentConfigRow.id,
-				actions: nextActions,
+				actions: merged,
 			});
 		},
 		[currentConfigRow, dispatchRow],
@@ -524,17 +533,35 @@ export function ConfigurationPanel() {
 						</div>
 						{configurationElements}
 						<div className="evy-border-b evy-border-gray" />
-						<ActionEditor
-							actions={currentConfigRow.config.actions}
-							flowsById={flowsById}
-							pagesById={pagesById}
-							rowsById={rowsById}
-							serviceResources={serviceResources}
-							defaultSheetRowId={
-								currentConfigRow.config.sheetRowId
-							}
-							onUpdate={updateRowActions}
-						/>
+						{getRowTriggers(currentConfigRow.config.type).map(
+							(triggerSpec) => {
+								const triggerActions =
+									currentConfigRow.config.actions?.[
+										triggerSpec.trigger
+									] ?? [];
+								return (
+									<ActionEditor
+										key={`${currentConfigRow.id}-${triggerSpec.trigger}`}
+										trigger={triggerSpec.trigger}
+										required={triggerSpec.required}
+										actions={triggerActions}
+										flowsById={flowsById}
+										pagesById={pagesById}
+										rowsById={rowsById}
+										serviceResources={serviceResources}
+										defaultSheetRowId={
+											currentConfigRow.config.sheetRowId
+										}
+										onUpdate={(next) =>
+											updateRowActionsForTrigger(
+												triggerSpec.trigger,
+												next,
+											)
+										}
+									/>
+								);
+							},
+						)}
 					</>
 				) : (
 					<div

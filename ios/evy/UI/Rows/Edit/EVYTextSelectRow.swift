@@ -77,7 +77,7 @@ struct EVYTextSelectRow: View {
         "type": "TextSelect",
         "source": "{item.condition}",
         "destination": "{item.condition}",
-        "actions": [{"condition": "", "true": "{select($datum)}", "false": ""}],
+        "actions": {"tap": [{"condition": "", "true": "{select($datum)}", "false": ""}]},
         "title": "Selling reason",
         "text": "reason-1"
       }

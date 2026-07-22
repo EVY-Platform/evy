@@ -35,7 +35,7 @@ struct EVYDropdownRow: View {
         "type": "Dropdown",
         "source": "{conditions}",
         "destination": "{item.condition}",
-        "actions": [],
+        "actions": {},
         "title": "Condition",
         "value": "{$datum.value}",
         "placeholder": "Select a condition"

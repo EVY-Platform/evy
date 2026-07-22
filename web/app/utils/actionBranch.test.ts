@@ -113,6 +113,14 @@ describe("action branch helpers", () => {
 		).toBe("navigate(flow-1, page-2, {items: [$datum.id]})");
 	});
 
+	it("parses delete_photo as a zero-arg action", () => {
+		expect(parseBranch("{delete_photo()}")).toEqual({
+			functionName: "delete_photo",
+			args: [],
+		});
+		expect(serializeBranch("delete_photo", [])).toBe("{delete_photo()}");
+	});
+
 	it("parses and serializes select with datum", () => {
 		expect(parseBranch("{select($datum)}")).toEqual({
 			functionName: "select",

@@ -72,6 +72,8 @@ function buildBuilderAssistFlow(
 		{ condition: "", false: "", true: "" },
 	],
 ): ServerFlow[] {
+	const buttonRowActions =
+		buttonActions.length > 0 ? { tap: buttonActions } : {};
 	return [
 		{
 			id: "flow-builder",
@@ -88,14 +90,14 @@ function buildBuilderAssistFlow(
 							destination: "",
 							title: "Editable title",
 							placeholder: "Title",
-							actions: [],
+							actions: {},
 						},
 						{
 							id: "row-button",
 							type: "Button",
 							title: "",
 							label: "Open checkout",
-							actions: buttonActions,
+							actions: buttonRowActions,
 						},
 					],
 				},

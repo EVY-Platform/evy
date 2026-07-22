@@ -40,7 +40,7 @@ struct EVYInlinePickerRow: View {
         "type": "InlinePicker",
         "source": "{durations}",
         "destination": "{item.duration}",
-        "actions": [{"condition": "", "true": "{select($datum)}", "false": ""}],
+        "actions": {"tap": [{"condition": "", "true": "{select($datum)}", "false": ""}]},
         "title": "Duration",
         "value": "{$datum.value}"
       }

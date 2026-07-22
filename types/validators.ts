@@ -38,8 +38,11 @@ import type { SyncRequest } from "./generated/ts/rpc/sync.request";
 import type { SyncResponse } from "./generated/ts/rpc/sync.response";
 import type { UpdateRequest } from "./generated/ts/rpc/update.request";
 import type { UpdateResponse } from "./generated/ts/rpc/update.response";
-import { SDUI_DEFINITIONS } from "./generated/ts/sdui/definitions.generated";
-import type { UI_Flow } from "./generated/ts/sdui/evy";
+import {
+	SDUI_DEFINITIONS,
+	SDUI_ROW_TRIGGERS,
+} from "./generated/ts/sdui/definitions.generated";
+import type { UI_Flow, UI_Row, UI_RowActions } from "./generated/ts/sdui/evy";
 
 import commonJsonRaw from "./schema/common/json.schema.json" with {
 	type: "json",
@@ -486,7 +489,87 @@ export const validateGetRequest = makeValidator<GetRequest>(
 );
 
 /** Human-oriented label for API errors (matches prior `validation.ts` wrappers). */
-export const validateUiFlow = makeValidator<UI_Flow>("Flow", getValidateUiFlow);
+function assertUiFlowRowTriggerConstraints(row: UI_Row, path: string): void {
+	const triggerSpecs = SDUI_ROW_TRIGGERS[row.type];
+	if (!triggerSpecs) {
+		throw new Error(
+			`Flow validation failed: ${path}: unknown row type "${row.type}"`,
+		);
+	}
+	const declaredTriggers = new Set(triggerSpecs.map((spec) => spec.trigger));
+	const actions = row.actions;
+	if (Array.isArray(actions)) {
+		throw new Error(
+			`Flow validation failed: ${path}.actions must be an object keyed by trigger, not an array`,
+		);
+	}
+	const actionsRecord = actions ?? {};
+	for (const triggerKey of Object.keys(actionsRecord)) {
+		if (!declaredTriggers.has(triggerKey as "tap" | "delete")) {
+			throw new Error(
+				`Flow validation failed: ${path}.actions: trigger "${triggerKey}" is not declared for row type ${row.type}`,
+			);
+		}
+	}
+	for (const spec of triggerSpecs) {
+		if (!spec.required) {
+			continue;
+		}
+		const actionList = actionsRecord[spec.trigger];
+		if (!Array.isArray(actionList) || actionList.length === 0) {
+			throw new Error(
+				`Flow validation failed: ${path}.actions.${spec.trigger}: required trigger must have at least one action`,
+			);
+		}
+	}
+}
+
+function walkUiFlowRowTree(row: UI_Row, path: string): void {
+	assertUiFlowRowTriggerConstraints(row, path);
+	const record = row as Record<string, unknown>;
+	if (record.sheet && typeof record.sheet === "object") {
+		walkUiFlowRowTree(record.sheet as UI_Row, `${path}.sheet`);
+	}
+	if (record.child && typeof record.child === "object") {
+		walkUiFlowRowTree(record.child as UI_Row, `${path}.child`);
+	}
+	if (Array.isArray(record.children)) {
+		for (let index = 0; index < record.children.length; index++) {
+			const child = record.children[index];
+			if (child && typeof child === "object") {
+				walkUiFlowRowTree(
+					child as UI_Row,
+					`${path}.children[${index}]`,
+				);
+			}
+		}
+	}
+}
+
+function assertUiFlowRowTriggers(flow: UI_Flow): void {
+	for (let pageIndex = 0; pageIndex < flow.pages.length; pageIndex++) {
+		const page = flow.pages[pageIndex];
+		if (!page) {
+			continue;
+		}
+		for (let rowIndex = 0; rowIndex < page.rows.length; rowIndex++) {
+			const row = page.rows[rowIndex];
+			if (row) {
+				walkUiFlowRowTree(row, `pages[${pageIndex}].rows[${rowIndex}]`);
+			}
+		}
+		if (page.footer) {
+			walkUiFlowRowTree(page.footer, `pages[${pageIndex}].footer`);
+		}
+	}
+}
+
+export function validateUiFlow(data: unknown): UI_Flow {
+	assertValid("Flow", getValidateUiFlow(), data);
+	const flow = data as UI_Flow;
+	assertUiFlowRowTriggers(flow);
+	return flow;
+}
 export const validateDataEvyFlow = makeValidator<DATA_EVY_Flow>(
 	"Flow",
 	getValidateDataEvyFlow,

@@ -3,7 +3,7 @@ import type {
 	DATA_EVY_Flow,
 	DATA_EVY_Page,
 	DATA_EVY_Row,
-	UI_RowAction,
+	UI_RowActions,
 } from "evy-types";
 import type { ContainerType } from "./row";
 
@@ -56,7 +56,7 @@ export type RowAction =
 	| {
 			type: "UPDATE_ROW_ACTIONS";
 			rowId: string;
-			actions: UI_RowAction[];
+			actions: UI_RowActions;
 	  }
 	| {
 			type: "SET_ACTIVE_FLOW";

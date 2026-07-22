@@ -1,5 +1,5 @@
 import type { RowConfig } from "../../types/row";
-import { defineRow } from "../defineRow";
+import { defaultRowActions, defineRow } from "../defineRow";
 import Button from "../design-system/Button";
 import { RowLayout } from "../design-system/RowLayout";
 
@@ -10,7 +10,7 @@ export default defineRow("ButtonRow", {
 		title: "",
 		label: "Button row text",
 		style: "primary",
-		actions: [{ condition: "", false: "", true: "{close()}" }],
+		actions: defaultRowActions({ tap: "{close()}" }),
 	} satisfies RowConfig,
 	render: (row) => (
 		<RowLayout title={row.config.title}>

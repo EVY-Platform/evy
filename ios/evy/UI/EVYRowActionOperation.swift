@@ -8,10 +8,16 @@ import Foundation
 typealias EVYRowOperationHandler = (EVYRowActionOperation) throws -> Void
 typealias EVYRowTapCallback<Value> = (Value, @escaping EVYRowOperationHandler) -> Void
 
+enum EVYRowActionTrigger {
+  case tap
+  case delete
+}
+
 enum EVYRowActionOperation {
   case select(EVYJson)
   case selectPhoto
   case expandPhoto
+  case deletePhoto
 
   static var unsupportedError: EVYError {
     EVYError.invalidData(context: "row does not support this action")
@@ -40,6 +46,15 @@ enum EVYRowActionOperation {
   ) -> EVYRowOperationHandler {
     { operation in
       guard case .expandPhoto = operation else { throw unsupportedError }
+      try apply()
+    }
+  }
+
+  static func deletePhotoHandler(
+    _ apply: @escaping () throws -> Void
+  ) -> EVYRowOperationHandler {
+    { operation in
+      guard case .deletePhoto = operation else { throw unsupportedError }
       try apply()
     }
   }

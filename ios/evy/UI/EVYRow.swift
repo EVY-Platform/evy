@@ -279,17 +279,25 @@ private struct EVYResolvedRow: View {
 
   private var shouldUseGenericActionTap: Bool {
     guard let contentRow else { return false }
-    return !contentRow.actions.isEmpty
+    return !contentRow.actions.tap.isEmpty
       && !Self.selfHandlingRowTypes.contains(contentRow.type)
   }
 
   private func runActions(
+    trigger: EVYRowActionTrigger = .tap,
     contentRow: UI_Row,
     datum: EVYJson? = nil,
     rowOperation: EVYRowOperationHandler? = nil
   ) {
+    let actions: [UI_RowAction]
+    switch trigger {
+    case .tap:
+      actions = contentRow.actions.tap
+    case .delete:
+      actions = contentRow.actions.delete
+    }
     EVYActionRunner.run(
-      actions: contentRow.actions,
+      actions: actions,
       datum: datum ?? self.datum,
       show: { rowId in
         guard EVYRowStore.row(id: rowId) != nil else {
@@ -345,7 +353,7 @@ private struct EVYResolvedRow: View {
     case .inputList(let view, _):
       EVYInputListRow(view: view)
     case .input(let view, _):
-      EVYInputRow(view: view, isInteractive: contentRow.actions.isEmpty)
+      EVYInputRow(view: view, isInteractive: contentRow.actions.tap.isEmpty)
     case .verticalContainer(let view, _):
       EVYVerticalContainerRow(view: view, childRefs: childRefs)
     case .listItem(let view, _):
@@ -365,6 +373,8 @@ private struct EVYResolvedRow: View {
     case .selectPhoto(let view, _):
       EVYSelectPhotoRow(view: view) { rowOperation in
         runActions(contentRow: contentRow, rowOperation: rowOperation)
+      } onDeletePhotoTapped: { rowOperation in
+        runActions(trigger: .delete, contentRow: contentRow, rowOperation: rowOperation)
       }
     case .tabContainer(let view, _):
       EVYTabContainerRow(view: view, childRefs: childRefs) { segmentIndex, rowOperation in

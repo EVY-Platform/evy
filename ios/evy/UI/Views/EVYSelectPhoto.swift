@@ -82,6 +82,7 @@ struct EVYSelectPhoto: View {
   let content: String?
   let destination: String
   let onAddPhotoTapped: ((@escaping EVYRowOperationHandler) -> Void)?
+  let onDeletePhotoTapped: ((@escaping EVYRowOperationHandler) -> Void)?
 
   @State private var photoTiles: [EVYPhotoTile] = []
   @State private var lastCommittedIds: [String] = []
@@ -95,7 +96,8 @@ struct EVYSelectPhoto: View {
     content: String?,
     data: String?,
     destination: String,
-    onAddPhotoTapped: ((@escaping EVYRowOperationHandler) -> Void)? = nil
+    onAddPhotoTapped: ((@escaping EVYRowOperationHandler) -> Void)? = nil,
+    onDeletePhotoTapped: ((@escaping EVYRowOperationHandler) -> Void)? = nil
   ) {
     self.title = title
     self.icon = icon
@@ -103,6 +105,7 @@ struct EVYSelectPhoto: View {
     self.subtitle = subtitle
     self.destination = destination
     self.onAddPhotoTapped = onAddPhotoTapped
+    self.onDeletePhotoTapped = onDeletePhotoTapped
 
     if let data,
       let props = try? EVY.getValueFromText(data),
@@ -134,7 +137,7 @@ struct EVYSelectPhoto: View {
             ForEach(photoTiles) { tile in
               EVYPhotoTileView(
                 tile: tile,
-                onRemove: { removePhoto(tileId: tile.id) }
+                onRemove: { deletePhotoTapped(tileId: tile.id) }
               )
               .padding(.horizontal, 2)
             }
@@ -180,6 +183,17 @@ struct EVYSelectPhoto: View {
         })
     } else {
       isPickerPresented = true
+    }
+  }
+
+  private func deletePhotoTapped(tileId: UUID) {
+    if let onDeletePhotoTapped {
+      onDeletePhotoTapped(
+        EVYRowActionOperation.deletePhotoHandler {
+          removePhoto(tileId: tileId)
+        })
+    } else {
+      removePhoto(tileId: tileId)
     }
   }
 

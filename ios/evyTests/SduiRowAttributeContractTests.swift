@@ -63,18 +63,77 @@ final class SduiRowAttributeContractTests: XCTestCase {
     }
   }
 
+  func testUIRowDecodesTriggerKeyedActions() throws {
+    let rowData = try JSONSerialization.data(
+      withJSONObject: [
+        "id": "actions-shape-row",
+        "type": "Button",
+        "visible": "true",
+        "actions": [
+          "tap": [
+            [
+              "condition": "",
+              "false": "",
+              "true": "{close()}",
+            ]
+          ]
+        ],
+      ])
+    let row = try JSONDecoder().decode(UI_Row.self, from: rowData)
+    XCTAssertEqual(row.actions.tap.count, 1)
+    XCTAssertEqual(row.actions.tap.first?.true, "{close()}")
+    XCTAssertTrue(row.actions.delete.isEmpty)
+  }
+
+  func testSduiDefinitionsIncludeTriggersMetadata() throws {
+    let catalogData = try XCTUnwrap(
+      SduiDefinitions.json.data(using: .utf8),
+      "SduiDefinitions.json must be valid UTF-8"
+    )
+    let catalog = try XCTUnwrap(
+      JSONSerialization.jsonObject(with: catalogData) as? [String: Any],
+      "SduiDefinitions.json must be a JSON object"
+    )
+    for (rowType, schemaDef) in catalog {
+      let schemaDefDict = try XCTUnwrap(
+        schemaDef as? [String: Any],
+        "\(rowType): schema definition must be a JSON object"
+      )
+      let triggers = try XCTUnwrap(
+        schemaDefDict["triggers"] as? [String: String],
+        "\(rowType): must declare triggers metadata"
+      )
+      XCTAssertFalse(triggers.isEmpty, "\(rowType): triggers must not be empty")
+      for (triggerName, requirement) in triggers {
+        XCTAssertTrue(
+          triggerName == "tap" || triggerName == "delete",
+          "\(rowType): unknown trigger \(triggerName)"
+        )
+        XCTAssertTrue(
+          requirement == "required" || requirement == "optional",
+          "\(rowType): invalid requirement for \(triggerName)"
+        )
+      }
+    }
+    let selectPhotoTriggers = try XCTUnwrap(
+      (catalog["SelectPhoto"] as? [String: Any])?["triggers"] as? [String: String]
+    )
+    XCTAssertEqual(selectPhotoTriggers["tap"], "required")
+    XCTAssertEqual(selectPhotoTriggers["delete"], "required")
+  }
+
   func testUIRowDecodesOptionalSheetForEveryRowType() throws {
     for rowType in SduiRowViewDataRegistry.decoders.keys.sorted() {
       let rowJson: [String: Any] = [
         "id": "sheet-contract-row",
         "type": rowType,
         "visible": "true",
-        "actions": [] as [Any],
+        "actions": [:] as [String: Any],
         "sheet": [
           "id": "nested-sheet",
           "type": "Text",
           "visible": "true",
-          "actions": [] as [Any],
+          "actions": [:] as [String: Any],
           "title": "Sheet",
         ],
       ]
@@ -221,7 +280,7 @@ final class SduiRowAttributeContractTests: XCTestCase {
       "id": "test-row",
       "type": rowType,
       "visible": "",
-      "actions": [] as [Any],
+      "actions": [:] as [String: Any],
     ]
     for (name, value) in buildMinimalPayload(from: schemaDef) {
       rowJson[name] = value
@@ -447,7 +506,7 @@ final class SduiRowInitialBootstrapTests: XCTestCase {
       "id": "test-row-\(UUID().uuidString)",
       "type": type,
       "visible": "true",
-      "actions": [] as [Any],
+      "actions": [:] as [String: Any],
       "title": "",
       "name": "test row",
       "destination": destination,

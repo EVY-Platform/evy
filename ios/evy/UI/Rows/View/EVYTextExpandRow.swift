@@ -84,7 +84,7 @@ struct EVYTextExpandRow: View {
       {
         "id": "preview-text-expand-row",
         "type": "TextExpand",
-        "actions": [{"condition": "", "true": "{expand_text(preview-text-expand-row)}", "false": ""}],
+        "actions": {"tap": [{"condition": "", "true": "{expand_text(preview-text-expand-row)}", "false": ""}]},
         "visible": "true",
         "title": "About this item",
         "text": "This is a longer description that may be truncated when it exceeds the maximum number of lines configured for this row.",

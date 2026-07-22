@@ -8,7 +8,7 @@ const typeName = "VerticalContainerRow";
 export default defineRow(typeName, {
 	config: {
 		type: "VerticalContainer",
-		actions: [],
+		actions: {},
 		visible: "true",
 		title: "Vertical container row title",
 		children: [],

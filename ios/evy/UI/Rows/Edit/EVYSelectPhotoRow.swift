@@ -10,13 +10,16 @@ struct EVYSelectPhotoRow: View {
 
   private let view: SelectPhotoRowViewData
   private let onRunRowActions: (@escaping EVYRowOperationHandler) -> Void
+  private let onDeletePhotoTapped: (@escaping EVYRowOperationHandler) -> Void
 
   init(
     view: SelectPhotoRowViewData,
-    onRunRowActions: @escaping (@escaping EVYRowOperationHandler) -> Void
+    onRunRowActions: @escaping (@escaping EVYRowOperationHandler) -> Void,
+    onDeletePhotoTapped: @escaping (@escaping EVYRowOperationHandler) -> Void
   ) {
     self.view = view
     self.onRunRowActions = onRunRowActions
+    self.onDeletePhotoTapped = onDeletePhotoTapped
   }
 
   var body: some View {
@@ -27,7 +30,8 @@ struct EVYSelectPhotoRow: View {
       content: view.content,
       data: view.source,
       destination: view.destination,
-      onAddPhotoTapped: onRunRowActions
+      onAddPhotoTapped: onRunRowActions,
+      onDeletePhotoTapped: onDeletePhotoTapped
     )
     .padding(.horizontal, Constants.majorPadding)
   }
@@ -41,7 +45,10 @@ struct EVYSelectPhotoRow: View {
         "type": "SelectPhoto",
         "source": "{item.photo_ids}",
         "destination": "{item.photo_ids}",
-        "actions": [{"condition": "", "true": "{select_photo()}", "false": ""}],
+        "actions": {
+          "tap": [{"condition": "", "true": "{select_photo()}", "false": ""}]},
+          "delete": [{"condition": "", "true": "{delete_photo()}", "false": ""}]
+        },
         "title": "Photos",
         "icon": "::image-plus::",
         "subtitle": "Add photos of your item",

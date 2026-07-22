@@ -1,6 +1,7 @@
 import type { DATA_EVY_Flow, DATA_EVY_Page, DATA_EVY_Row } from "evy-types";
 import { parseBranch } from "./actionBranch";
 import { breadcrumbLabelForPage } from "./navLabels";
+import { allRowActions, normalizeStoredRowActions } from "./rowActions";
 
 export type PageReferenceEntry = {
 	/** Stable key for list rendering (`${pageId}:${rowId}`). */
@@ -42,9 +43,9 @@ export function findPageReferences(
 		const pageLabel = breadcrumbLabelForPage(page);
 
 		for (const row of Object.values(rowsById)) {
-			const actions = Array.isArray(row.data.actions)
-				? (row.data.actions as { true: string; false: string }[])
-				: [];
+			const actions = allRowActions(
+				normalizeStoredRowActions(row.data.actions),
+			);
 			const references = actions.some(
 				(action) =>
 					branchReferencesPage(action.true, flowId, targetPageId) ||

@@ -1,6 +1,7 @@
 import type { DATA_EVY_Row } from "evy-types";
 import { readBindingFields } from "../rows/rowFields";
 import type { RowConfig } from "../types/row";
+import { normalizeStoredRowActions } from "./rowActions";
 import {
 	ROW_CHILD_FIELD,
 	ROW_CHILDREN_FIELD,
@@ -49,9 +50,7 @@ export function buildRowConfigFromRecord(record: DATA_EVY_Row): RowConfig {
 		type: record.type,
 		visible: record.visible,
 		title: typeof data.title === "string" ? data.title : "",
-		actions: Array.isArray(data.actions)
-			? (data.actions as RowConfig["actions"])
-			: [],
+		actions: normalizeStoredRowActions(data.actions),
 		...(childRowId !== undefined ? { childRowId } : {}),
 		...(sheetRowId !== undefined ? { sheetRowId } : {}),
 		...(childrenRowIds !== undefined ? { childrenRowIds } : {}),

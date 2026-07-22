@@ -71,7 +71,7 @@ private struct EVYCalendarRowPreview: View {
         "source": "\(EVYPreviewMockData.calendarPreviewSource)",
         "destination": "\(EVYPreviewMockData.calendarPreviewDestination)",
         "secondary": "\(EVYPreviewMockData.calendarPreviewSecondary)",
-        "actions": [{"condition": "", "true": "{select($datum)}", "false": ""}],
+        "actions": {"tap": [{"condition": "", "true": "{select($datum)}", "false": ""}]},
         "title": "",
         "start_time": "07:00",
         "end_time": "19:00",

@@ -372,6 +372,14 @@ Asks the triggering row to select `value`. Usually `{select($datum)}` with the t
 
 Asks the triggering `SelectPhoto` row to present the iOS photo picker. Does not upload by itself — upload still runs after the user picks photos.
 
+#### delete_photo
+
+```
+{delete_photo()}
+```
+
+Asks the triggering `SelectPhoto` row to delete the photo tile the user tapped. Typically wired to the row's `delete` trigger; authors can replace the default with a confirmation sheet before deleting.
+
 #### expand_photo
 
 ```

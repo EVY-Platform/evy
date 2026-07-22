@@ -85,11 +85,8 @@
 					]
 				},
 				"actions": {
-					"type": "array",
-					"default": [],
-					"items": {
-						"$ref": "action.schema.json"
-					}
+					"$ref": "#/$defs/UI_RowActions",
+					"default": {}
 				},
 				"visible": {
 					"type": "string"
@@ -172,6 +169,25 @@
 					"$ref": "definitions/TimeslotPicker.schema.json"
 				}
 			]
+		},
+		"UI_RowActions": {
+			"type": "object",
+			"additionalProperties": false,
+			"default": {},
+			"properties": {
+				"tap": {
+					"type": "array",
+					"items": {
+						"$ref": "action.schema.json"
+					}
+				},
+				"delete": {
+					"type": "array",
+					"items": {
+						"$ref": "action.schema.json"
+					}
+				}
+			}
 		}
 	}
 }

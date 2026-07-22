@@ -8,12 +8,14 @@ import {
 	rowFieldsFromDefinitions,
 	rowSpecFromDefinitions,
 	rowSpecificAttributesTsSource,
+	rowTriggersFromDefinitions,
 } from "./sdui-row-schema-utils";
 
 const calendarSchema = {
 	$schema: "https://json-schema.org/draft/2020-12/schema",
 	$id: "sdui/definitions/Calendar",
 	title: "Calendar_Row",
+	triggers: { tap: "required" },
 	allOf: [
 		{ $ref: "../evy.schema.json#/$defs/UI_RowBase" },
 		{
@@ -55,6 +57,7 @@ describe("extractSduiRowDefinition", () => {
 		);
 
 		expect(definition.type).toBe("Calendar");
+		expect(definition.triggers).toEqual({ tap: "required" });
 		expect(definition.attributes).toEqual({
 			title: { required: false, type: "string" },
 			start_time: { required: true, type: "string" },
@@ -72,6 +75,7 @@ describe("extractSduiRowDefinition", () => {
 	test("maps row, row array, string array, and action array attributes into row specs", () => {
 		const definition = extractSduiRowDefinition(
 			{
+				triggers: { tap: "optional" },
 				allOf: [
 					{ $ref: "../evy.schema.json#/$defs/UI_RowBase" },
 					{
@@ -129,6 +133,7 @@ describe("extractSduiRowDefinition", () => {
 		expect(() =>
 			extractSduiRowDefinition(
 				{
+					triggers: { tap: "optional" },
 					allOf: [
 						{ $ref: "../evy.schema.json#/$defs/UI_RowBase" },
 						{
@@ -147,10 +152,95 @@ describe("extractSduiRowDefinition", () => {
 	});
 });
 
+describe("rowTriggersFromDefinitions", () => {
+	test("maps triggers metadata into registry entries", () => {
+		const button = extractSduiRowDefinition(
+			{
+				triggers: { tap: "required" },
+				allOf: [
+					{ $ref: "../evy.schema.json#/$defs/UI_RowBase" },
+					{
+						type: "object",
+						required: ["type", "label"],
+						properties: {
+							type: { const: "Button" },
+							label: { type: "string" },
+						},
+					},
+				],
+			},
+			"Button.schema.json",
+		);
+		const selectPhoto = extractSduiRowDefinition(
+			{
+				triggers: { tap: "required", delete: "required" },
+				allOf: [
+					{ $ref: "../evy.schema.json#/$defs/UI_RowBase" },
+					{
+						type: "object",
+						required: ["type", "source", "destination"],
+						properties: {
+							type: { const: "SelectPhoto" },
+							source: { type: "string" },
+							destination: { type: "string" },
+						},
+					},
+				],
+			},
+			"SelectPhoto.schema.json",
+		);
+
+		expect(rowTriggersFromDefinitions([button, selectPhoto])).toEqual({
+			Button: [{ trigger: "tap", required: true }],
+			SelectPhoto: [
+				{ trigger: "delete", required: true },
+				{ trigger: "tap", required: true },
+			],
+		});
+	});
+
+	test("rejects unknown trigger names and values", () => {
+		expect(() =>
+			extractSduiRowDefinition(
+				{
+					triggers: { "tap-row": "required" },
+					allOf: [
+						{ $ref: "../evy.schema.json#/$defs/UI_RowBase" },
+						{
+							type: "object",
+							required: ["type"],
+							properties: { type: { const: "Broken" } },
+						},
+					],
+				},
+				"Broken.schema.json",
+			),
+		).toThrow('unknown trigger name "tap-row"');
+
+		expect(() =>
+			extractSduiRowDefinition(
+				{
+					triggers: { tap: "maybe" },
+					allOf: [
+						{ $ref: "../evy.schema.json#/$defs/UI_RowBase" },
+						{
+							type: "object",
+							required: ["type"],
+							properties: { type: { const: "Broken" } },
+						},
+					],
+				},
+				"Broken.schema.json",
+			),
+		).toThrow('trigger "tap" must be "required" or "optional"');
+	});
+});
+
 describe("rowFieldsFromDefinitions", () => {
 	test("maps schema attributes to panel field specs with UI names and binding kinds", () => {
 		const definition = extractSduiRowDefinition(
 			{
+				triggers: { tap: "optional" },
 				allOf: [
 					{ $ref: "../evy.schema.json#/$defs/UI_RowBase" },
 					{

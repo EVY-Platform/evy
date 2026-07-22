@@ -63,7 +63,7 @@ private struct EVYTimeslotPickerRowPreview: View {
         "type": "TimeslotPicker",
         "source": "{pickup_selection}",
         "destination": "{selected_timeslot}",
-        "actions": [{"condition": "", "true": "{select($datum)}", "false": ""}],
+        "actions": {"tap": [{"condition": "", "true": "{select($datum)}", "false": ""}]},
         "title": "",
         "start_time": "07:00",
         "end_time": "19:00",

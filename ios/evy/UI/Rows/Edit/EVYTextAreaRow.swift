@@ -34,7 +34,7 @@ struct EVYTextAreaRow: View {
         "type": "TextArea",
         "source": "{item.description}",
         "destination": "{item.description}",
-        "actions": [],
+        "actions": {},
         "title": "Description",
         "placeholder": "Describe your item in detail"
       }

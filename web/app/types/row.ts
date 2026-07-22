@@ -7,7 +7,7 @@
 import type {
 	RowSpecificAttributes as GeneratedRowSpecificAttributes,
 	UI_Row as SerialRow,
-	UI_RowAction,
+	UI_RowActions,
 } from "evy-types";
 import type React from "react";
 
@@ -23,7 +23,7 @@ type RowSpecificAttributes = GeneratedRowSpecificAttributes<Row>;
 
 type RowBaseAttributes = {
 	type: SerialRow["type"];
-	actions: UI_RowAction[];
+	actions: UI_RowActions;
 	visible: string;
 	title: string;
 	name?: string;

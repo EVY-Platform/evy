@@ -191,7 +191,7 @@ describe("validateFlowData", () => {
 								id: rowId,
 								name: "Always Visible Row",
 								type: "Text",
-								actions: [],
+								actions: {},
 								title: "Always visible",
 							},
 						],
@@ -218,7 +218,7 @@ describe("validateFlowData", () => {
 							id: rowId,
 							name: "Cash Accepted Row",
 							type: "Text",
-							actions: [],
+							actions: {},
 							visible: `{${MARKETPLACE_RESOURCE.ITEMS}.payment_methods.cash == true}`,
 							title: "Cash accepted",
 						},
@@ -229,6 +229,100 @@ describe("validateFlowData", () => {
 		expect(out.pages[0]?.rows[0]?.visible).toBe(
 			`{${MARKETPLACE_RESOURCE.ITEMS}.payment_methods.cash == true}`,
 		);
+	});
+
+	it("rejects required tap trigger with no actions", () => {
+		const flowId = crypto.randomUUID();
+		const pageId = crypto.randomUUID();
+		const rowId = crypto.randomUUID();
+		expect(() =>
+			validateFlowData({
+				id: flowId,
+				name: "F",
+				pages: [
+					{
+						id: pageId,
+						name: "Page",
+						title: "P",
+						rows: [
+							{
+								id: rowId,
+								name: "Submit",
+								type: "Button",
+								actions: {},
+								visible: "true",
+								label: "Go",
+							},
+						],
+					},
+				],
+			}),
+		).toThrow("required trigger must have at least one action");
+	});
+
+	it("rejects triggers not declared for the row type", () => {
+		const flowId = crypto.randomUUID();
+		const pageId = crypto.randomUUID();
+		const rowId = crypto.randomUUID();
+		expect(() =>
+			validateFlowData({
+				id: flowId,
+				name: "F",
+				pages: [
+					{
+						id: pageId,
+						name: "Page",
+						title: "P",
+						rows: [
+							{
+								id: rowId,
+								name: "Submit",
+								type: "Button",
+								actions: {
+									delete: [
+										{
+											condition: "",
+											false: "",
+											true: "{delete_photo()}",
+										},
+									],
+								},
+								visible: "true",
+								label: "Go",
+							},
+						],
+					},
+				],
+			}),
+		).toThrow('trigger "delete" is not declared');
+	});
+
+	it("accepts optional tap trigger when absent", () => {
+		const flowId = crypto.randomUUID();
+		const pageId = crypto.randomUUID();
+		const rowId = crypto.randomUUID();
+		const out = validateFlowData({
+			id: flowId,
+			name: "F",
+			pages: [
+				{
+					id: pageId,
+					name: "Page",
+					title: "P",
+					rows: [
+						{
+							id: rowId,
+							name: "Label",
+							type: "Text",
+							actions: {},
+							visible: "true",
+							title: "Hello",
+						},
+					],
+				},
+			],
+		});
+		expect(out.pages[0]?.rows[0]?.type).toBe("Text");
 	});
 });
 

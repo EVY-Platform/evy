@@ -1,5 +1,6 @@
 import { describe, expect, it } from "bun:test";
 import type { UI_Row as ServerRow } from "evy-types";
+import DropdownRow from "../rows/edit/DropdownRow";
 import SearchRow from "../rows/edit/SearchRow";
 import TextExpandRow from "../rows/view/TextExpandRow";
 import { buildRowForNewPageFromBase, normalizeServerRow } from "./decodeFlow";
@@ -12,7 +13,7 @@ function makeServerRow(overrides: Record<string, unknown> = {}): ServerRow {
 		id: ROW_A,
 		type: "Text",
 		visible: "",
-		actions: [],
+		actions: {},
 		title: "",
 		...overrides,
 	} as unknown as ServerRow;
@@ -23,7 +24,7 @@ describe("normalizeServerRow", () => {
 		const partial = makeServerRow({
 			type: "Button",
 			label: "OK",
-			actions: [{ condition: "", false: "", true: "{close()}" }],
+			actions: { tap: [{ condition: "", false: "", true: "{close()}" }] },
 		});
 
 		const n = normalizeServerRow(partial);
@@ -132,13 +133,35 @@ describe("buildRowForNewPageFromBase", () => {
 		const row = buildRowForNewPageFromBase(TextExpandRow, newId);
 		expect(row.id).toBe(newId);
 		expect(row.config.type).toBe("TextExpand");
-		expect(row.config.actions).toEqual([
-			{
-				condition: "",
-				true: `{expand_text(${newId})}`,
-				false: "",
-			},
-		]);
+		expect(row.config.actions).toEqual({
+			tap: [
+				{
+					condition: "",
+					true: `{expand_text(${newId})}`,
+					false: "",
+				},
+			],
+		});
+	});
+
+	it("injects show-self tap for required-tap rows without palette defaults", () => {
+		const newId = "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee";
+		const row = buildRowForNewPageFromBase(DropdownRow, newId);
+		expect(row.config.actions).toEqual({
+			tap: [
+				{
+					condition: "",
+					true: `{show(${newId})}`,
+					false: "",
+				},
+			],
+		});
+	});
+
+	it("does not inject tap actions for optional-tap rows", () => {
+		const newId = "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee";
+		const row = buildRowForNewPageFromBase(SearchRow, newId);
+		expect(row.config.actions).toEqual({});
 	});
 });
 

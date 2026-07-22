@@ -163,7 +163,7 @@ enum EVYFlowStore {
     for pid in flow.pageIds {
       forEachStoredRow(inPageId: pid, from: store) { storedRow in
         guard let uiRow = storedRow.uiRow() else { return }
-        for action in uiRow.actions {
+        for action in uiRow.actions.tap + uiRow.actions.delete {
           for branch in [action.`true`, action.`false`] {
             if let createAction = EVYActionParser.createAction(from: branch) {
               keys.insert(createAction.resource)

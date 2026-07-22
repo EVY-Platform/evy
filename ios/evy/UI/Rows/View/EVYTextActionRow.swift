@@ -31,7 +31,7 @@ struct EVYTextActionRow: View {
       {
         "id": "preview-text-action-row",
         "type": "TextAction",
-        "actions": [],
+        "actions": {},
         "visible": "true",
         "title": "Pickup location",
         "subtitle": "123 Main St, Sydney",

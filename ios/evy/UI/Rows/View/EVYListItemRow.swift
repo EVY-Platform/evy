@@ -56,7 +56,7 @@ struct EVYListItemRow: View {
       {
         "id": "preview-list-item-row",
         "type": "ListItem",
-        "actions": [],
+        "actions": {},
         "visible": "true",
         "title": "Red mountain bike",
         "subtitle": "Great condition · $120",

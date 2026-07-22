@@ -2,6 +2,9 @@
 	"$schema": "https://json-schema.org/draft/2020-12/schema",
 	"$id": "sdui/definitions/Button",
 	"title": "Button_Row",
+	"triggers": {
+		"tap": "required"
+	},
 	"allOf": [
 		{
 			"$ref": "../evy.schema.json#/$defs/UI_RowBase"

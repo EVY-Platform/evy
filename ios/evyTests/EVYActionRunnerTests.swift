@@ -518,6 +518,36 @@ final class EVYActionRunnerTests: XCTestCase {
     XCTAssertTrue(receivedOps.isEmpty)
   }
 
+  func testDeletePhotoDispatchesAndContinues() {
+    var received: EVYRowActionOperation?
+    var receivedOps: [ActionOperation] = []
+    EVYActionRunner.run(
+      actions: [rowAction(true: "{delete_photo()}"), rowAction(true: "{close()}")],
+      rowOperation: { received = $0 }
+    ) { receivedOps.append($0) }
+    guard case .deletePhoto = received else {
+      return XCTFail("Expected deletePhoto, got \(String(describing: received))")
+    }
+    XCTAssertEqual(receivedOps, [.close])
+  }
+
+  func testTriggerIsolationRunsOnlyRequestedActionList() {
+    var tapReceived = false
+    var deleteReceived = false
+    let tapActions = UI_RowActions(
+      delete: [rowAction(true: "{close()}")],
+      tap: [rowAction(true: "{close()}")]
+    )
+    EVYActionRunner.run(actions: tapActions.tap) { operation in
+      if case .close = operation { tapReceived = true }
+    }
+    EVYActionRunner.run(actions: tapActions.delete) { operation in
+      if case .close = operation { deleteReceived = true }
+    }
+    XCTAssertTrue(tapReceived)
+    XCTAssertTrue(deleteReceived)
+  }
+
   func testSelectPhotoDispatchesAndContinues() {
     var received: EVYRowActionOperation?
     var receivedOps: [ActionOperation] = []
@@ -797,7 +827,7 @@ final class EVYActionRunnerTests: XCTestCase {
           "title": "{$datum.title}"
         }
         """,
-      actions: [rowAction(true: actionString)]
+      actions: UI_RowActions(tap: [rowAction(true: actionString)])
     )
     let formatter = try EVYDatumRowFormatter(template: row)
     let datum = EVYJson.dictionary([
@@ -808,7 +838,7 @@ final class EVYActionRunnerTests: XCTestCase {
     let formattedRow = try formatter.formattedResult(datum: datum).row
 
     XCTAssertEqual(formattedRow.title, "Resolved Title")
-    XCTAssertEqual(formattedRow.actions.first?.true, actionString)
+    XCTAssertEqual(formattedRow.actions.tap.first?.true, actionString)
   }
 
   private func makeRowWithSheet() throws -> UI_Row {
@@ -824,7 +854,7 @@ final class EVYActionRunnerTests: XCTestCase {
             "destination": "",
             "title": "Sheet",
             "text": "Body",
-            "actions": [],
+            "actions": {},
             "visible": "true"
           }
         }
@@ -848,7 +878,7 @@ final class EVYActionRunnerTests: XCTestCase {
 
   private func decodeRow(
     content: String,
-    actions: [UI_RowAction] = []
+    actions: UI_RowActions = UI_RowActions()
   ) throws -> UI_Row {
     let actionsData = try JSONEncoder().encode(actions)
     let actionsJson = try XCTUnwrap(String(data: actionsData, encoding: .utf8))

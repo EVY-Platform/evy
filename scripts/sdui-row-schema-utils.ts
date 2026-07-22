@@ -34,8 +34,19 @@ export type SduiRowSpec = Record<
 
 type SduiRowDefinitionSchema = Record<string, unknown>;
 
+export type RowTriggerName = "tap" | "delete";
+
+export type RowTriggerSpec = {
+	trigger: RowTriggerName;
+	required: boolean;
+};
+
+const ROW_TRIGGER_NAMES = new Set<RowTriggerName>(["tap", "delete"]);
+const ROW_TRIGGER_REQUIREMENTS = new Set(["required", "optional"]);
+
 export interface SduiRowDefinition {
 	type: string;
+	triggers: Partial<Record<RowTriggerName, "required" | "optional">>;
 	attributes: Record<
 		string,
 		{ required: boolean; type: SduiRowAttributeType; enum?: string[] }
@@ -153,10 +164,37 @@ function specTypeForAttributeType(type: SduiRowAttributeType): SduiRowSpecType {
 	}
 }
 
+function parseTriggersFromSchema(
+	schema: SduiRowDefinitionSchema,
+	sourceLabel: string,
+): SduiRowDefinition["triggers"] {
+	const raw = schema.triggers;
+	if (!isSchemaObject(raw)) {
+		throw new Error(`${sourceLabel}: triggers must be an object`);
+	}
+	const triggers: Partial<Record<RowTriggerName, "required" | "optional">> =
+		{};
+	for (const [name, value] of Object.entries(raw)) {
+		if (!ROW_TRIGGER_NAMES.has(name as RowTriggerName)) {
+			throw new Error(
+				`${sourceLabel}: unknown trigger name "${name}" (allowed: tap, delete)`,
+			);
+		}
+		if (typeof value !== "string" || !ROW_TRIGGER_REQUIREMENTS.has(value)) {
+			throw new Error(
+				`${sourceLabel}: trigger "${name}" must be "required" or "optional"`,
+			);
+		}
+		triggers[name as RowTriggerName] = value;
+	}
+	return triggers;
+}
+
 export function extractSduiRowDefinition(
 	schema: SduiRowDefinitionSchema,
 	sourceLabel: string,
 ): SduiRowDefinition {
+	const triggers = parseTriggersFromSchema(schema, sourceLabel);
 	const body = getRowSchemaBody(schema, sourceLabel);
 	const properties = getObject(body.properties, `${sourceLabel}: properties`);
 	const typeProperty = getObject(
@@ -183,7 +221,7 @@ export function extractSduiRowDefinition(
 		};
 	}
 
-	return { type, attributes, schema };
+	return { type, triggers, attributes, schema };
 }
 
 export function rowSpecFromDefinitions(
@@ -438,6 +476,33 @@ export function rowFieldsFromDefinitions(
 		rowFields[definition.type] = fields;
 	}
 	return rowFields;
+}
+
+export function rowTriggersFromDefinitions(
+	definitions: SduiRowDefinition[],
+): Record<string, RowTriggerSpec[]> {
+	const rowTriggers: Record<string, RowTriggerSpec[]> = {};
+	for (const definition of definitions) {
+		const specs: RowTriggerSpec[] = Object.entries(definition.triggers)
+			.sort(([a], [b]) => a.localeCompare(b))
+			.map(([trigger, requirement]) => ({
+				trigger: trigger as RowTriggerName,
+				required: requirement === "required",
+			}));
+		rowTriggers[definition.type] = specs;
+	}
+	return rowTriggers;
+}
+
+export function rowTriggersTsSource(): string[] {
+	return [
+		`export type RowTriggerName = "tap" | "delete";`,
+		``,
+		`export type RowTriggerSpec = {`,
+		`\ttrigger: RowTriggerName;`,
+		`\trequired: boolean;`,
+		`};`,
+	];
 }
 
 export function extractSduiRowTypeEnum(

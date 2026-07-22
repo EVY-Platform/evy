@@ -1,8 +1,8 @@
 import type { Page } from "@playwright/test";
 import type {
-	UI_RowAction as RowAction,
 	UI_Flow as ServerFlow,
 	UI_Row as ServerRow,
+	UI_RowActions,
 } from "evy-types";
 import type {
 	ResourceAttributeMetadata,
@@ -15,7 +15,7 @@ interface ServerRowInput {
 	type: ServerRow["type"];
 	source?: string;
 	destination?: string;
-	actions: RowAction[];
+	actions: UI_RowActions;
 	visible?: string;
 	name?: string;
 	title: string;

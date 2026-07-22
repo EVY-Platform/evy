@@ -14,6 +14,7 @@ export const ACTION_FUNCTIONS = [
 	"select_photo",
 	"expand_photo",
 	"expand_text",
+	"delete_photo",
 ] as const;
 export type ActionFunction = (typeof ACTION_FUNCTIONS)[number];
 
@@ -28,6 +29,7 @@ export const FUNCTION_LABELS: Record<ActionFunction, string> = {
 	select_photo: "Select photo",
 	expand_photo: "Expand photo",
 	expand_text: "Expand text",
+	delete_photo: "Delete photo",
 };
 
 export const ROW_ID_ARG_FUNCTIONS = new Set<ActionFunction>([
@@ -39,6 +41,7 @@ export const ZERO_ARG_FUNCTIONS = new Set<ActionFunction>([
 	"close",
 	"select_photo",
 	"expand_photo",
+	"delete_photo",
 ]);
 
 type ParsedBranch = {

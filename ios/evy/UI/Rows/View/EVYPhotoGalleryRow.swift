@@ -87,7 +87,7 @@ struct EVYPhotoGalleryRow: View {
         "id": "preview-photogallery-row",
         "type": "PhotoGallery",
         "source": "{item.photo_ids}",
-        "actions": [{"condition": "", "true": "{expand_photo()}", "false": ""}],
+        "actions": {"tap": [{"condition": "", "true": "{expand_photo()}", "false": ""}]},
         "title": "Photo Gallery"
       }
       """,

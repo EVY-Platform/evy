@@ -7,7 +7,7 @@ import { RowLayout } from "../design-system/RowLayout";
 export default defineRow("DropdownRow", {
 	config: {
 		type: "Dropdown",
-		actions: [],
+		actions: {},
 		source: `{${MARKETPLACE_RESOURCE.CONDITIONS}}`,
 		visible: "true",
 		title: "Dropdown row title",

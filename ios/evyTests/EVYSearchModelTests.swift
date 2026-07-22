@@ -103,7 +103,7 @@ final class EVYSearchModelTests: XCTestCase {
       {
         "id": "search-list-item-template",
         "type": "ListItem",
-        "actions": [],
+        "actions": {},
         "title": "{$datum.title}",
         "subtitle": "",
         "image": ""
@@ -120,7 +120,7 @@ final class EVYSearchModelTests: XCTestCase {
       {
         "id": "search-result-template",
         "type": "Text",
-        "actions": [],
+        "actions": {},
         "title": "{$datum.street}",
         "subtitle": "{$datum.city}",
         "icon": ""

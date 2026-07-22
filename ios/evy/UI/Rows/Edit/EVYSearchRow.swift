@@ -40,13 +40,13 @@ struct EVYSearchRow: View {
         "type": "Search",
         "source": "{items}",
         "destination": "{selected_item}",
-        "actions": [],
+        "actions": {},
         "title": "Search preview",
         "placeholder": "Search items...",
         "child": {
           "id": "preview-search-result-template",
           "type": "Text",
-          "actions": [],
+          "actions": {},
           "title": "{$datum.title}",
           "subtitle": "{$datum.category}",
           "icon": "::search::"

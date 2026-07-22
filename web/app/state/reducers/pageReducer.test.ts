@@ -14,7 +14,7 @@ const mockTextWithConfig = MockTextBase as typeof MockTextBase & {
 mockTextWithConfig.config = {
 	type: "Text",
 	visible: "true",
-	actions: [],
+	actions: {},
 	title: "",
 	text: "",
 } satisfies RowConfig;
@@ -114,7 +114,7 @@ function makeButtonRow(
 		visible: "true",
 		data: {
 			label: "Go",
-			actions: [],
+			actions: {},
 			...extra,
 		},
 		createdAt: NOW,
@@ -428,7 +428,9 @@ describe("pageReducer", () => {
 
 	it("UPDATE_ROW_ACTIONS sets actions", () => {
 		const state = initialState();
-		const actions = [{ condition: "", true: "{close()}", false: "" }];
+		const actions = {
+			tap: [{ condition: "", true: "{close()}", false: "" }],
+		};
 		const next = pageReducer(state, {
 			type: "UPDATE_ROW_ACTIONS",
 			rowId: "row-1",
@@ -687,21 +689,23 @@ describe("pageReducer", () => {
 			destinationContainer: { rowId: "footer-parent", type: "sheet" },
 		});
 		expect(next.rowsById["footer-parent"]?.data.sheet_row_id).toBe(newId);
-		expect(next.rowsById["footer-parent"]?.data.actions).toEqual([
-			{ condition: "", true: `{show(${newId})}`, false: "" },
-		]);
+		expect(next.rowsById["footer-parent"]?.data.actions).toEqual({
+			tap: [{ condition: "", true: `{show(${newId})}`, false: "" }],
+		});
 	});
 
 	it("ADD_ROW writes Search child independently of an existing sheet", () => {
 		const search = makeSearchRow("search", {
 			sheet_row_id: "existing-sheet",
-			actions: [
-				{
-					condition: "",
-					true: "{show(existing-sheet)}",
-					false: "",
-				},
-			],
+			actions: {
+				tap: [
+					{
+						condition: "",
+						true: "{show(existing-sheet)}",
+						false: "",
+					},
+				],
+			},
 		});
 		const existingSheet = makeTextRow("existing-sheet");
 		const state = initialState({
@@ -727,26 +731,30 @@ describe("pageReducer", () => {
 		});
 		expect(next.rowsById.search?.data.child_row_id).toBe(childId);
 		expect(next.rowsById.search?.data.sheet_row_id).toBe("existing-sheet");
-		expect(next.rowsById.search?.data.actions).toEqual([
-			{
-				condition: "",
-				true: "{show(existing-sheet)}",
-				false: "",
-			},
-		]);
+		expect(next.rowsById.search?.data.actions).toEqual({
+			tap: [
+				{
+					condition: "",
+					true: "{show(existing-sheet)}",
+					false: "",
+				},
+			],
+		});
 	});
 
 	it("ADD_ROW replaces a sheet and updates only the default show action", () => {
 		const button = makeButtonRow("button", {
 			sheet_row_id: "old-sheet",
-			actions: [
-				{ condition: "", true: "{show(old-sheet)}", false: "" },
-				{
-					condition: "other",
-					true: "{show(other-page-row)}",
-					false: "",
-				},
-			],
+			actions: {
+				tap: [
+					{ condition: "", true: "{show(old-sheet)}", false: "" },
+					{
+						condition: "other",
+						true: "{show(other-page-row)}",
+						false: "",
+					},
+				],
+			},
 		});
 		const oldSheet = makeTextRow("old-sheet");
 		const state = initialState({
@@ -771,13 +779,15 @@ describe("pageReducer", () => {
 			destinationContainer: { rowId: "button", type: "sheet" },
 		});
 		expect(next.rowsById.button?.data.sheet_row_id).toBe(newSheetId);
-		expect(next.rowsById.button?.data.actions).toEqual([
-			{ condition: "", true: `{show(${newSheetId})}`, false: "" },
-			{
-				condition: "other",
-				true: "{show(other-page-row)}",
-				false: "",
-			},
-		]);
+		expect(next.rowsById.button?.data.actions).toEqual({
+			tap: [
+				{ condition: "", true: `{show(${newSheetId})}`, false: "" },
+				{
+					condition: "other",
+					true: "{show(other-page-row)}",
+					false: "",
+				},
+			],
+		});
 	});
 });

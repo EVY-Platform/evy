@@ -150,6 +150,9 @@ enum EVYActionRunner {
       case "expand_photo":
         try requireNoArguments(functionArgs, function: "expand_photo")
         try rowOperation(.expandPhoto)
+      case "delete_photo":
+        try requireNoArguments(functionArgs, function: "delete_photo")
+        try rowOperation(.deletePhoto)
       case "expand_text":
         guard let rowId = EVYActionParser.singleIdArgument(fromArgs: functionArgs) else {
           throw EVYError.invalidData(

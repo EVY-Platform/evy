@@ -1,7 +1,7 @@
 import { MARKETPLACE_RESOURCE } from "evy-types/marketplaceResources";
 import { useParseText } from "../../hooks/useParseText";
 import type { RowConfig } from "../../types/row";
-import { defineRow, tapAction } from "../defineRow";
+import { defaultRowActions, defineRow } from "../defineRow";
 import CarouselIndicator from "../design-system/CarouselIndicator";
 import { RowLayout } from "../design-system/RowLayout";
 import { mockDatesFromToday } from "./mockDates";
@@ -108,7 +108,7 @@ function DayColumn({ day, config }: { day: MockDay; config: RowConfig }) {
 export default defineRow("TimeslotPickerRow", {
 	config: {
 		type: "TimeslotPicker",
-		actions: [tapAction("{select($datum)}")],
+		actions: defaultRowActions({ tap: "{select($datum)}" }),
 		source: `{${MARKETPLACE_RESOURCE.ITEMS}.delivery_selection}`,
 		visible: "true",
 		title: "Timeslot picker row title",
