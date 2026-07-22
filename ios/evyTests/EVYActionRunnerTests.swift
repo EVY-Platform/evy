@@ -462,6 +462,23 @@ final class EVYActionRunnerTests: XCTestCase {
     XCTAssertEqual(receivedOps, [.close])
   }
 
+  func testSelectDispatchesArrayDatum() {
+    let datum = EVYJson.array([
+      .string("2026-06-03T09:00:00"),
+      .string("2026-06-04T09:00:00"),
+    ])
+    var received: EVYRowActionOperation?
+    EVYActionRunner.run(
+      actions: [rowAction(true: "{select($datum)}")],
+      datum: datum,
+      rowOperation: { received = $0 }
+    ) { _ in }
+    guard case .select(let value) = received else {
+      return XCTFail("Expected select, got \(String(describing: received))")
+    }
+    XCTAssertEqual(value, datum)
+  }
+
   func testSelectResolvesDatumProperty() {
     let datum = EVYJson.dictionary([
       "dateTimeISO": .string("2026-06-03T11:00:00")

@@ -11,6 +11,8 @@ typealias EVYRowTapCallback<Value> = (Value, @escaping EVYRowOperationHandler) -
 enum EVYRowActionTrigger {
   case tap
   case delete
+  case tapRow
+  case tapColumn
 }
 
 enum EVYRowActionOperation {

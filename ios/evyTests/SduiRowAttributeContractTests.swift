@@ -86,6 +86,7 @@ final class SduiRowAttributeContractTests: XCTestCase {
   }
 
   func testSduiDefinitionsIncludeTriggersMetadata() throws {
+    let allowedTriggers: Set<String> = ["tap", "delete", "tap-row", "tap-column"]
     let catalogData = try XCTUnwrap(
       SduiDefinitions.json.data(using: .utf8),
       "SduiDefinitions.json must be valid UTF-8"
@@ -106,7 +107,7 @@ final class SduiRowAttributeContractTests: XCTestCase {
       XCTAssertFalse(triggers.isEmpty, "\(rowType): triggers must not be empty")
       for (triggerName, requirement) in triggers {
         XCTAssertTrue(
-          triggerName == "tap" || triggerName == "delete",
+          allowedTriggers.contains(triggerName),
           "\(rowType): unknown trigger \(triggerName)"
         )
         XCTAssertTrue(
@@ -120,6 +121,12 @@ final class SduiRowAttributeContractTests: XCTestCase {
     )
     XCTAssertEqual(selectPhotoTriggers["tap"], "required")
     XCTAssertEqual(selectPhotoTriggers["delete"], "required")
+    let calendarTriggers = try XCTUnwrap(
+      (catalog["Calendar"] as? [String: Any])?["triggers"] as? [String: String]
+    )
+    XCTAssertEqual(calendarTriggers["tap"], "required")
+    XCTAssertEqual(calendarTriggers["tap-row"], "required")
+    XCTAssertEqual(calendarTriggers["tap-column"], "required")
   }
 
   func testUIRowDecodesOptionalSheetForEveryRowType() throws {

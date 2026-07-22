@@ -1,5 +1,6 @@
 import { describe, expect, it } from "bun:test";
 import type { UI_Row as ServerRow } from "evy-types";
+import CalendarRow from "../rows/edit/CalendarRow";
 import DropdownRow from "../rows/edit/DropdownRow";
 import SearchRow from "../rows/edit/SearchRow";
 import TextExpandRow from "../rows/view/TextExpandRow";
@@ -162,6 +163,21 @@ describe("buildRowForNewPageFromBase", () => {
 		const newId = "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee";
 		const row = buildRowForNewPageFromBase(SearchRow, newId);
 		expect(row.config.actions).toEqual({});
+	});
+
+	it("keeps palette select defaults for Calendar without show-self injection", () => {
+		const newId = "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee";
+		const row = buildRowForNewPageFromBase(CalendarRow, newId);
+		const selectDatum = {
+			condition: "",
+			true: "{select($datum)}",
+			false: "",
+		};
+		expect(row.config.actions).toEqual({
+			tap: [selectDatum],
+			"tap-row": [selectDatum],
+			"tap-column": [selectDatum],
+		});
 	});
 });
 

@@ -34,14 +34,19 @@ export type SduiRowSpec = Record<
 
 type SduiRowDefinitionSchema = Record<string, unknown>;
 
-export type RowTriggerName = "tap" | "delete";
+export type RowTriggerName = "tap" | "delete" | "tap-row" | "tap-column";
 
 export type RowTriggerSpec = {
 	trigger: RowTriggerName;
 	required: boolean;
 };
 
-const ROW_TRIGGER_NAMES = new Set<RowTriggerName>(["tap", "delete"]);
+const ROW_TRIGGER_NAMES = new Set<RowTriggerName>([
+	"tap",
+	"delete",
+	"tap-row",
+	"tap-column",
+]);
 const ROW_TRIGGER_REQUIREMENTS = new Set(["required", "optional"]);
 
 export interface SduiRowDefinition {
@@ -177,7 +182,7 @@ function parseTriggersFromSchema(
 	for (const [name, value] of Object.entries(raw)) {
 		if (!ROW_TRIGGER_NAMES.has(name as RowTriggerName)) {
 			throw new Error(
-				`${sourceLabel}: unknown trigger name "${name}" (allowed: tap, delete)`,
+				`${sourceLabel}: unknown trigger name "${name}" (allowed: tap, delete, tap-row, tap-column)`,
 			);
 		}
 		if (typeof value !== "string" || !ROW_TRIGGER_REQUIREMENTS.has(value)) {
@@ -496,7 +501,7 @@ export function rowTriggersFromDefinitions(
 
 export function rowTriggersTsSource(): string[] {
 	return [
-		`export type RowTriggerName = "tap" | "delete";`,
+		`export type RowTriggerName = "tap" | "delete" | "tap-row" | "tap-column";`,
 		``,
 		`export type RowTriggerSpec = {`,
 		`\ttrigger: RowTriggerName;`,

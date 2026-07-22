@@ -186,6 +186,18 @@
 					"items": {
 						"$ref": "action.schema.json"
 					}
+				},
+				"tap-row": {
+					"type": "array",
+					"items": {
+						"$ref": "action.schema.json"
+					}
+				},
+				"tap-column": {
+					"type": "array",
+					"items": {
+						"$ref": "action.schema.json"
+					}
 				}
 			}
 		}

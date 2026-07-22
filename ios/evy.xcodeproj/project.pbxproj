@@ -119,6 +119,7 @@
 		74A100172F32000100000001 /* EVYDraftMergesTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 74A100182F32000100000001 /* EVYDraftMergesTests.swift */; };
 		74A100222F32000100000001 /* EVYDraftBindingsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 74A100212F32000100000001 /* EVYDraftBindingsTests.swift */; };
 		74A100252F32000100000001 /* EVYCalendarTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 74A100262F32000100000001 /* EVYCalendarTests.swift */; };
+		74A1002A2F32000100000001 /* EVYSelectionHelpersTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 74A1002B2F32000100000001 /* EVYSelectionHelpersTests.swift */; };
 
 		74B200032F33000100000001 /* EVYCalendarAxisView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 74B200042F33000100000001 /* EVYCalendarAxisView.swift */; };
 		74BE007E2FA0000300000001 /* EVYRemoteFile.swift in Sources */ = {isa = PBXBuildFile; fileRef = 74BE007E2FA0000400000001 /* EVYRemoteFile.swift */; };
@@ -272,6 +273,7 @@
 		74A100182F32000100000001 /* EVYDraftMergesTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EVYDraftMergesTests.swift; sourceTree = "<group>"; };
 		74A100212F32000100000001 /* EVYDraftBindingsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EVYDraftBindingsTests.swift; sourceTree = "<group>"; };
 		74A100262F32000100000001 /* EVYCalendarTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EVYCalendarTests.swift; sourceTree = "<group>"; };
+		74A1002B2F32000100000001 /* EVYSelectionHelpersTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EVYSelectionHelpersTests.swift; sourceTree = "<group>"; };
 
 		74B200042F33000100000001 /* EVYCalendarAxisView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EVYCalendarAxisView.swift; sourceTree = "<group>"; };
 		74BE007E2FA0000400000001 /* EVYRemoteFile.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EVYRemoteFile.swift; sourceTree = "<group>"; };
@@ -620,6 +622,7 @@
 				FA002006MP00001000000001 /* EVYMapTests.swift */,
 				FA003002DP00001000000001 /* EVYDataPatcherTests.swift */,
 				74A100262F32000100000001 /* EVYCalendarTests.swift */,
+				74A1002B2F32000100000001 /* EVYSelectionHelpersTests.swift */,
 				74A100042F32000100000001 /* interpreterTests.swift */,
 				74A100282F32000100000001 /* SduiRowAttributeContractTests.swift */,
 			);
@@ -901,6 +904,7 @@
 				FA002005MP00001000000001 /* EVYMapTests.swift in Sources */,
 				FA003001DP00001000000001 /* EVYDataPatcherTests.swift in Sources */,
 				74A100252F32000100000001 /* EVYCalendarTests.swift in Sources */,
+				74A1002A2F32000100000001 /* EVYSelectionHelpersTests.swift in Sources */,
 				74A100012F32000100000001 /* interpreterTests.swift in Sources */,
 				73F2A0072F30B00200000001 /* SduiDefinitions.generated.swift in Sources */,
 				74A100292F32000100000001 /* SduiRowAttributeContractTests.swift in Sources */,

@@ -1477,4 +1477,29 @@ test.describe("Row configuration", () => {
 			configPanel.getByText(/show\(.*Dropdown row title/),
 		).toBeVisible();
 	});
+
+	test("shows Tap, Tap row, and Tap column for Calendar with required badges", async ({
+		page,
+	}) => {
+		await setupTwoEmptyTestPages(page);
+		const sidebarRow = await getSidebarRow(page, "Calendar row title");
+		const pageContent = getPageContent(page);
+		await sidebarRow.dragTo(pageContent);
+
+		const configPanel = getConfigPanel(page);
+		await expect(
+			configPanel.getByLabel("title", { exact: true }),
+		).toHaveText("Calendar row title");
+		await expect(
+			configPanel.getByText("Tap", { exact: true }),
+		).toBeVisible();
+		await expect(
+			configPanel.getByText("Tap row", { exact: true }),
+		).toBeVisible();
+		await expect(
+			configPanel.getByText("Tap column", { exact: true }),
+		).toBeVisible();
+		await expect(configPanel.getByText("(required)")).toHaveCount(3);
+		await expect(configPanel.getByText(/select\(\$datum\)/)).toHaveCount(3);
+	});
 });

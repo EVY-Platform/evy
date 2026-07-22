@@ -49,7 +49,18 @@ function rowTypeToEnumCase(rowType: string): string {
 }
 
 function swiftIdentifier(name: string): string {
-	return name === "true" || name === "false" ? `\`${name}\`` : name;
+	if (name === "true" || name === "false") {
+		return `\`${name}\``;
+	}
+	if (!name.includes("-")) {
+		return name;
+	}
+	return name
+		.split("-")
+		.map((part, index) =>
+			index === 0 ? part : part.charAt(0).toUpperCase() + part.slice(1),
+		)
+		.join("");
 }
 
 function getRowTypesFromSpec(rowSpec: RowSpec): string[] {
@@ -209,9 +220,12 @@ function emitUIRowActionsStruct(actionsDef: SchemaObject): string {
 		(key) =>
 			`        self.${swiftIdentifier(key)} = ${swiftIdentifier(key)}`,
 	);
-	const codingCases = triggerKeys.map(
-		(key) => `        case ${swiftIdentifier(key)}`,
-	);
+	const codingCases = triggerKeys.map((key) => {
+		const swiftName = swiftIdentifier(key);
+		return key === swiftName
+			? `        case ${swiftName}`
+			: `        case ${swiftName} = "${key}"`;
+	});
 	const decodeLines = triggerKeys.map(
 		(key) =>
 			`        ${swiftIdentifier(key)} = try c.decodeIfPresent([UI_RowAction].self, forKey: .${swiftIdentifier(key)}) ?? []`,

@@ -362,7 +362,11 @@ Presents the row with ID `rowId` in a sheet overlay. Requires exactly one non-em
 {select(value)}
 ```
 
-Asks the triggering row to select `value`. Usually `{select($datum)}` with the tapped unit as datum. Each row type defines what select means (toggle, write scalar, switch segment). Unsupported on rows without a select handler.
+Asks the triggering row to select `value`. Usually `{select($datum)}` with the tapped unit as datum. Each row type defines what select means (toggle, write scalar, switch segment).
+
+When the resolved value is an **array**, Calendar treats it as a batch toggle-all: if every item is already in the destination selection, remove them all; otherwise add every missing item (one destination write). Axis taps (`tap-row` / `tap-column`) pass `$datum` as the array of ISO datetime strings for that row or column, e.g. `{select($datum)}` on `tap-column` selects or clears an entire day.
+
+Unsupported on rows without a select handler.
 
 #### select_photo
 

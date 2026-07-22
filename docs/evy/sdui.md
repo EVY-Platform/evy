@@ -179,12 +179,14 @@ Builder destinations (e.g. `{buildCurrency(item.price)}`) transform an `initial`
 
 ### Actions
 
-Each row has an `actions` attribute: an object keyed by **trigger** name. Each trigger maps to an ordered list of `UI_RowAction` objects (condition / `true` / `false` branches). Supported triggers in this release are `tap` and `delete`; each row type declares which triggers it supports and whether a trigger is **required** (flow validation requires at least one action on that trigger) or **optional** (may be omitted or empty).
+Each row has an `actions` attribute: an object keyed by **trigger** name. Each trigger maps to an ordered list of `UI_RowAction` objects (condition / `true` / `false` branches). Supported triggers in this release are `tap`, `delete`, `tap-row`, and `tap-column`; each row type declares which triggers it supports and whether a trigger is **required** (flow validation requires at least one action on that trigger) or **optional** (may be omitted or empty).
 
 ```jsonc
 "actions": {
   "tap": [{ "condition": "", "false": "", "true": "{close()}" }],
-  "delete": [{ "condition": "", "false": "", "true": "{delete_photo()}" }]
+  "delete": [{ "condition": "", "false": "", "true": "{delete_photo()}" }],
+  "tap-row": [{ "condition": "", "false": "", "true": "{select($datum)}" }],
+  "tap-column": [{ "condition": "", "false": "", "true": "{select($datum)}" }]
 }
 ```
 
@@ -192,35 +194,35 @@ An empty object `{}` is the canonical “no actions” state (do not use `{"tap"
 
 #### Trigger matrix
 
-| Row type | `tap` | `delete` |
-| --- | --- | --- |
-| Button | **required** | — |
-| Calendar | **required** | — |
-| Dropdown | **required** | — |
-| InlinePicker | **required** | — |
-| InputList | **required** | — |
-| PhotoGallery | **required** | — |
-| SelectPhoto | **required** | **required** |
-| TextAction | **required** | — |
-| TextExpand | **required** | — |
-| TextSelect | **required** | — |
-| TimeslotPicker | **required** | — |
-| Heading | optional | — |
-| HorizontalContainer | optional | — |
-| Input | optional | — |
-| ListItem | optional | — |
-| Map | optional | — |
-| Search | optional | — |
-| TabContainer | optional | — |
-| Text | optional | — |
-| TextArea | optional | — |
-| VerticalContainer | optional | — |
+| Row type | `tap` | `delete` | `tap-row` | `tap-column` |
+| --- | --- | --- | --- | --- |
+| Button | **required** | — | — | — |
+| Calendar | **required** | — | **required** | **required** |
+| Dropdown | **required** | — | — | — |
+| InlinePicker | **required** | — | — | — |
+| InputList | **required** | — | — | — |
+| PhotoGallery | **required** | — | — | — |
+| SelectPhoto | **required** | **required** | — | — |
+| TextAction | **required** | — | — | — |
+| TextExpand | **required** | — | — | — |
+| TextSelect | **required** | — | — | — |
+| TimeslotPicker | **required** | — | — | — |
+| Heading | optional | — | — | — |
+| HorizontalContainer | optional | — | — | — |
+| Input | optional | — | — | — |
+| ListItem | optional | — | — | — |
+| Map | optional | — | — | — |
+| Search | optional | — | — | — |
+| TabContainer | optional | — | — | — |
+| Text | optional | — | — | — |
+| TextArea | optional | — | — | — |
+| VerticalContainer | optional | — | — | — |
 
 Required triggers are enforced in `validateUiFlow` (fixtures, seed, tests). The web builder shows a required badge and warning when a required trigger has no actions but still allows saving.
 
-All action functions dispatch through a single client-side action channel; navigation (`navigate`, `close`) and non-navigation effects (`create`, `highlight_required`, `select`, `select_photo`, `delete_photo`, `expand_photo`, `expand_text`) are handled by the same runner. **Which list runs** depends on the trigger: row tap gestures and control-specific taps use `actions.tap`; the `SelectPhoto` remove control uses `actions.delete`.
+All action functions dispatch through a single client-side action channel; navigation (`navigate`, `close`) and non-navigation effects (`create`, `highlight_required`, `select`, `select_photo`, `delete_photo`, `expand_photo`, `expand_text`) are handled by the same runner. **Which list runs** depends on the trigger: row tap gestures and control-specific taps use `actions.tap`; the `SelectPhoto` remove control uses `actions.delete`; Calendar day headers use `actions.tap-column` and time-axis labels use `actions.tap-row`.
 
-For row types that handle their own interactive elements (`SelectPhoto`, `TextExpand`, `TextSelect`, `PhotoGallery`, `TabContainer`, `TimeslotPicker`, `Calendar`, `InlinePicker`), behaviour on **tap** comes only from `actions.tap`. An empty `tap` list means those taps do nothing.
+For row types that handle their own interactive elements (`SelectPhoto`, `TextExpand`, `TextSelect`, `PhotoGallery`, `TabContainer`, `TimeslotPicker`, `Calendar`, `InlinePicker`), behaviour on **tap** comes only from `actions.tap`. An empty `tap` list means those taps do nothing. Calendar axis headings similarly run only `actions.tap-row` / `actions.tap-column`; empty axis triggers mean those headings do nothing.
 
 For destructive or important `create`/`update` actions, attach a `sheet` row to the triggering row and call `{show(sheetRowId)}` with that sheet row's ID (often the nested `sheet.id`). Put confirmation copy on the sheet root's `title` and message rows inside the sheet, then run the actual `create`/`update` followed by `{close()}` from a confirm button in the sheet.
 
@@ -262,7 +264,7 @@ Supported action functions:
 | `navigate(flowId, pageId, queryParams?)` | Go to a page within a flow, e.g. `{navigate(flowId, pageId)}`. Pass query params as the optional third argument using a plain-text query object, e.g. `{navigate(flowId, pageId, {id: $datum.id})}`. |
 | `show(rowId)` | Present the row with ID `rowId` in a sheet overlay, e.g. `{show(b8c7d6e5-f4a3-4b2c-9d1e-0f8a7b6c5d4e)}`. Requires exactly one non-empty row ID. The target may belong to any page in the synced flow data, not only the action row's nested `sheet`. If the ID is missing from the client row store, the action fails and later actions in the same array do not run. The presented row's `title` is the sheet header (live-interpolated when it contains expressions). |
 | `highlight_required(field)` | Mark a field as required / show validation, e.g. `{highlight_required(title)}` |
-| `select(value)` | Ask the triggering row to select `value`. The row defines semantics (toggle bool, toggle array membership, write a scalar, switch segment). Usually `{select($datum)}` where `$datum` is the tapped unit (timeslot ISO string, option object, segment index, etc.). Rows without a select handler treat this as an error. |
+| `select(value)` | Ask the triggering row to select `value`. The row defines semantics (toggle bool, toggle array membership, write a scalar, switch segment, or batch-toggle). Usually `{select($datum)}` where `$datum` is the tapped unit (timeslot ISO string, array of ISO strings for a Calendar axis tap, option object, segment index, etc.). Rows without a select handler treat this as an error. |
 | `select_photo()` | Ask the triggering `SelectPhoto` row to present the photo picker. |
 | `delete_photo()` | Ask the triggering `SelectPhoto` row to remove the photo tile that was tapped (same effect as the built-in delete control when using the default action). |
 | `expand_photo()` | Ask the triggering `PhotoGallery` row to present the current photo full screen. |

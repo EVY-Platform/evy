@@ -112,7 +112,11 @@ function CalendarGrid({ config }: { config: RowConfig }) {
 export default defineRow("CalendarRow", {
 	config: {
 		type: "Calendar",
-		actions: defaultRowActions({ tap: "{select($datum)}" }),
+		actions: defaultRowActions({
+			tap: "{select($datum)}",
+			"tap-row": "{select($datum)}",
+			"tap-column": "{select($datum)}",
+		}),
 		source: `{${MARKETPLACE_RESOURCE.ITEMS}.pickup_selection}`,
 		visible: "true",
 		title: "Calendar row title",

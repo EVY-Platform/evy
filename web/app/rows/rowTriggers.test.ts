@@ -3,6 +3,7 @@ import { SDUI_ROW_TRIGGERS } from "evy-types";
 import { getRowTriggers } from "./rowTriggers";
 
 const ALL_ROW_TYPES = Object.keys(SDUI_ROW_TRIGGERS);
+const KNOWN_TRIGGER_NAMES = ["tap", "delete", "tap-row", "tap-column"];
 
 describe("rowTriggers", () => {
 	test("returns declared triggers for each row type", () => {
@@ -10,9 +11,17 @@ describe("rowTriggers", () => {
 			const triggers = getRowTriggers(type);
 			expect(triggers.length).toBeGreaterThan(0);
 			for (const spec of triggers) {
-				expect(["tap", "delete"]).toContain(spec.trigger);
+				expect(KNOWN_TRIGGER_NAMES).toContain(spec.trigger);
 			}
 		}
+	});
+
+	test("Calendar requires tap, tap-row, and tap-column", () => {
+		expect(getRowTriggers("Calendar")).toEqual([
+			{ trigger: "tap", required: true },
+			{ trigger: "tap-column", required: true },
+			{ trigger: "tap-row", required: true },
+		]);
 	});
 
 	test("SelectPhoto requires tap and delete", () => {

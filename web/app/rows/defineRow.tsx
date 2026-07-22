@@ -21,6 +21,8 @@ type RowComponent = ((props: { rowId: string }) => ReactNode) & {
 type DefaultRowActionsInput = {
 	tap?: string;
 	delete?: string;
+	"tap-row"?: string;
+	"tap-column"?: string;
 };
 
 export function defaultRowActions(
@@ -32,6 +34,12 @@ export function defaultRowActions(
 	}
 	if (options.delete !== undefined) {
 		actions.delete = [rowAction(options.delete)];
+	}
+	if (options["tap-row"] !== undefined) {
+		actions["tap-row"] = [rowAction(options["tap-row"])];
+	}
+	if (options["tap-column"] !== undefined) {
+		actions["tap-column"] = [rowAction(options["tap-column"])];
 	}
 	return actions;
 }

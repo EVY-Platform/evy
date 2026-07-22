@@ -39,6 +39,7 @@ import type { SyncResponse } from "./generated/ts/rpc/sync.response";
 import type { UpdateRequest } from "./generated/ts/rpc/update.request";
 import type { UpdateResponse } from "./generated/ts/rpc/update.response";
 import {
+	type RowTriggerName,
 	SDUI_DEFINITIONS,
 	SDUI_ROW_TRIGGERS,
 } from "./generated/ts/sdui/definitions.generated";
@@ -505,7 +506,7 @@ function assertUiFlowRowTriggerConstraints(row: UI_Row, path: string): void {
 	}
 	const actionsRecord = actions ?? {};
 	for (const triggerKey of Object.keys(actionsRecord)) {
-		if (!declaredTriggers.has(triggerKey as "tap" | "delete")) {
+		if (!declaredTriggers.has(triggerKey as RowTriggerName)) {
 			throw new Error(
 				`Flow validation failed: ${path}.actions: trigger "${triggerKey}" is not declared for row type ${row.type}`,
 			);

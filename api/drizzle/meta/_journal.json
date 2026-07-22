@@ -71,6 +71,13 @@
 			"when": 1784592000000,
 			"tag": "0009_actions_by_trigger",
 			"breakpoints": true
+		},
+		{
+			"idx": 10,
+			"version": "7",
+			"when": 1784678400000,
+			"tag": "0010_calendar_axis_triggers",
+			"breakpoints": true
 		}
 	]
 }

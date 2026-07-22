@@ -295,6 +295,10 @@ private struct EVYResolvedRow: View {
       actions = contentRow.actions.tap
     case .delete:
       actions = contentRow.actions.delete
+    case .tapRow:
+      actions = contentRow.actions.tapRow
+    case .tapColumn:
+      actions = contentRow.actions.tapColumn
     }
     EVYActionRunner.run(
       actions: actions,
@@ -333,13 +337,32 @@ private struct EVYResolvedRow: View {
     case .button(let view, _):
       EVYButtonRow(view: view, action: { runActions(contentRow: contentRow) })
     case .calendar(let view, _):
-      EVYCalendarRow(view: view) { tappedSlot, rowOperation in
-        runActions(
-          contentRow: contentRow,
-          datum: .string(tappedSlot),
-          rowOperation: rowOperation
-        )
-      }
+      EVYCalendarRow(
+        view: view,
+        onSlotTapped: { tappedSlot, rowOperation in
+          runActions(
+            contentRow: contentRow,
+            datum: .string(tappedSlot),
+            rowOperation: rowOperation
+          )
+        },
+        onRowTapped: { dateTimeISOs, rowOperation in
+          runActions(
+            trigger: .tapRow,
+            contentRow: contentRow,
+            datum: .array(dateTimeISOs.map { .string($0) }),
+            rowOperation: rowOperation
+          )
+        },
+        onColumnTapped: { dateTimeISOs, rowOperation in
+          runActions(
+            trigger: .tapColumn,
+            contentRow: contentRow,
+            datum: .array(dateTimeISOs.map { .string($0) }),
+            rowOperation: rowOperation
+          )
+        }
+      )
     case .horizontalContainer(let view, _):
       EVYHorizontalContainerRow(view: view, childRefs: childRefs)
     case .dropdown(let view, _):

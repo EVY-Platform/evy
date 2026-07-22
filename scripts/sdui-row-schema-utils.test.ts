@@ -199,11 +199,49 @@ describe("rowTriggersFromDefinitions", () => {
 		});
 	});
 
+	test("maps Calendar tap-row and tap-column triggers", () => {
+		const calendar = extractSduiRowDefinition(
+			{
+				triggers: {
+					tap: "required",
+					"tap-row": "required",
+					"tap-column": "required",
+				},
+				allOf: [
+					{ $ref: "../evy.schema.json#/$defs/UI_RowBase" },
+					{
+						type: "object",
+						required: ["type", "source", "destination"],
+						properties: {
+							type: { const: "Calendar" },
+							source: { type: "string" },
+							destination: { type: "string" },
+						},
+					},
+				],
+			},
+			"Calendar.schema.json",
+		);
+
+		expect(calendar.triggers).toEqual({
+			tap: "required",
+			"tap-row": "required",
+			"tap-column": "required",
+		});
+		expect(rowTriggersFromDefinitions([calendar])).toEqual({
+			Calendar: [
+				{ trigger: "tap", required: true },
+				{ trigger: "tap-column", required: true },
+				{ trigger: "tap-row", required: true },
+			],
+		});
+	});
+
 	test("rejects unknown trigger names and values", () => {
 		expect(() =>
 			extractSduiRowDefinition(
 				{
-					triggers: { "tap-row": "required" },
+					triggers: { "slide-left": "required" },
 					allOf: [
 						{ $ref: "../evy.schema.json#/$defs/UI_RowBase" },
 						{
@@ -215,7 +253,7 @@ describe("rowTriggersFromDefinitions", () => {
 				},
 				"Broken.schema.json",
 			),
-		).toThrow('unknown trigger name "tap-row"');
+		).toThrow('unknown trigger name "slide-left"');
 
 		expect(() =>
 			extractSduiRowDefinition(

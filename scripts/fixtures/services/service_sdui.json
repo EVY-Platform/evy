@@ -1008,6 +1008,20 @@
 													"true": "{select($datum)}",
 													"false": ""
 												}
+											],
+											"tap-row": [
+												{
+													"condition": "",
+													"true": "{select($datum)}",
+													"false": ""
+												}
+											],
+											"tap-column": [
+												{
+													"condition": "",
+													"true": "{select($datum)}",
+													"false": ""
+												}
 											]
 										},
 										"title": "",
@@ -1097,6 +1111,20 @@
 										"secondary": "{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.pickup_selection}",
 										"actions": {
 											"tap": [
+												{
+													"condition": "",
+													"true": "{select($datum)}",
+													"false": ""
+												}
+											],
+											"tap-row": [
+												{
+													"condition": "",
+													"true": "{select($datum)}",
+													"false": ""
+												}
+											],
+											"tap-column": [
 												{
 													"condition": "",
 													"true": "{select($datum)}",
