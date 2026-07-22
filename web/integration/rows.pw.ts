@@ -37,7 +37,6 @@ test.describe("EVY Rows", () => {
 						type: "Text",
 						title: "Test Text",
 						subtitle: "Test subtitle",
-						actions: {},
 					},
 				],
 			},

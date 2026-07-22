@@ -40,6 +40,19 @@ async function insertDataRow(row: {
 	});
 }
 
+async function insertRawData(id: string, jsonbExpr: string): Promise<void> {
+	await pgliteClient.exec(`
+		INSERT INTO "Data" (id, resource, data, created_at, updated_at)
+		VALUES (
+			'${id}',
+			'${MESSAGES_RESOURCE}',
+			${jsonbExpr},
+			'2026-06-01T00:00:00.000Z',
+			'2026-06-01T00:00:00.000Z'
+		);
+	`);
+}
+
 function messagePayload(
 	id: string,
 	extra: Record<string, unknown> = {},
@@ -81,31 +94,16 @@ describe("0003_message_status", () => {
 			resource: MESSAGES_RESOURCE,
 			data: messagePayload(needsBackfillId),
 		});
-		await pgliteClient.exec(`
-			INSERT INTO "Data" (id, resource, data, created_at, updated_at)
-			VALUES (
-				'${stringEncodedId}',
-				'${MESSAGES_RESOURCE}',
-				to_jsonb('${JSON.stringify(messagePayload(stringEncodedId))}'::text),
-				'2026-06-01T00:00:00.000Z',
-				'2026-06-01T00:00:00.000Z'
-			);
-		`);
+		await insertRawData(
+			stringEncodedId,
+			`to_jsonb('${JSON.stringify(messagePayload(stringEncodedId))}'::text)`,
+		);
 		await insertDataRow({
 			id: alreadyAcceptedId,
 			resource: MESSAGES_RESOURCE,
 			data: messagePayload(alreadyAcceptedId, { status: "accepted" }),
 		});
-		await pgliteClient.exec(`
-			INSERT INTO "Data" (id, resource, data, created_at, updated_at)
-			VALUES (
-				'${scalarMessageId}',
-				'${MESSAGES_RESOURCE}',
-				'"legacy-scalar"'::jsonb,
-				'2026-06-01T00:00:00.000Z',
-				'2026-06-01T00:00:00.000Z'
-			);
-		`);
+		await insertRawData(scalarMessageId, `'"legacy-scalar"'::jsonb`);
 		await insertDataRow({
 			id: conditionRowId,
 			resource: MARKETPLACE_RESOURCE.CONDITIONS,

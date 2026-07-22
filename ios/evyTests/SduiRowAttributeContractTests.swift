@@ -13,6 +13,17 @@ private let baseFieldNames: Set<String> = [
 
 final class SduiRowAttributeContractTests: XCTestCase {
 
+  private func loadCatalog() throws -> [String: Any] {
+    let catalogData = try XCTUnwrap(
+      SduiDefinitions.json.data(using: .utf8),
+      "SduiDefinitions.json must be valid UTF-8"
+    )
+    return try XCTUnwrap(
+      JSONSerialization.jsonObject(with: catalogData) as? [String: Any],
+      "SduiDefinitions.json must be a JSON object"
+    )
+  }
+
   private static func rowTypesWithInitialAttribute(from catalog: [String: Any]) -> Set<String> {
     var rowTypes = Set<String>()
     for (rowType, schemaDef) in catalog {
@@ -26,14 +37,7 @@ final class SduiRowAttributeContractTests: XCTestCase {
   }
 
   func testInitialAttributePresentAndOptionalOnlyForSupportedRows() throws {
-    let catalogData = try XCTUnwrap(
-      SduiDefinitions.json.data(using: .utf8),
-      "SduiDefinitions.json must be valid UTF-8"
-    )
-    let catalog = try XCTUnwrap(
-      JSONSerialization.jsonObject(with: catalogData) as? [String: Any],
-      "SduiDefinitions.json must be a JSON object"
-    )
+    let catalog = try loadCatalog()
     let supportedInitialRowTypes = Self.rowTypesWithInitialAttribute(from: catalog)
 
     for (rowType, schemaDef) in catalog {
@@ -64,14 +68,7 @@ final class SduiRowAttributeContractTests: XCTestCase {
   }
 
   func testSwipeLabelPresentAndOptionalOnlyForSwipeLeftRows() throws {
-    let catalogData = try XCTUnwrap(
-      SduiDefinitions.json.data(using: .utf8),
-      "SduiDefinitions.json must be valid UTF-8"
-    )
-    let catalog = try XCTUnwrap(
-      JSONSerialization.jsonObject(with: catalogData) as? [String: Any],
-      "SduiDefinitions.json must be a JSON object"
-    )
+    let catalog = try loadCatalog()
     let supportedSwipeLabelRowTypes: Set<String> = [
       "Heading", "Input", "ListItem", "Text",
     ]
@@ -129,14 +126,7 @@ final class SduiRowAttributeContractTests: XCTestCase {
     let allowedTriggers: Set<String> = [
       "tap", "delete", "tap-row", "tap-column", "swipe-left",
     ]
-    let catalogData = try XCTUnwrap(
-      SduiDefinitions.json.data(using: .utf8),
-      "SduiDefinitions.json must be valid UTF-8"
-    )
-    let catalog = try XCTUnwrap(
-      JSONSerialization.jsonObject(with: catalogData) as? [String: Any],
-      "SduiDefinitions.json must be a JSON object"
-    )
+    let catalog = try loadCatalog()
     for (rowType, schemaDef) in catalog {
       let schemaDefDict = try XCTUnwrap(
         schemaDef as? [String: Any],
@@ -209,14 +199,7 @@ final class SduiRowAttributeContractTests: XCTestCase {
   }
 
   func testOnlySearchSchemaDeclaresChildRelationship() throws {
-    let catalogData = try XCTUnwrap(
-      SduiDefinitions.json.data(using: .utf8),
-      "SduiDefinitions.json must be valid UTF-8"
-    )
-    let catalog = try XCTUnwrap(
-      JSONSerialization.jsonObject(with: catalogData) as? [String: Any],
-      "SduiDefinitions.json must be a JSON object"
-    )
+    let catalog = try loadCatalog()
 
     for (rowType, schemaDef) in catalog {
       let schemaDefDict = try XCTUnwrap(schemaDef as? [String: Any])
@@ -230,14 +213,7 @@ final class SduiRowAttributeContractTests: XCTestCase {
   }
 
   func testEveryRowStructMatchesSchemaAttributes() throws {
-    let catalogData = try XCTUnwrap(
-      SduiDefinitions.json.data(using: .utf8),
-      "SduiDefinitions.json must be valid UTF-8"
-    )
-    let catalog = try XCTUnwrap(
-      JSONSerialization.jsonObject(with: catalogData) as? [String: Any],
-      "SduiDefinitions.json must be a JSON object"
-    )
+    let catalog = try loadCatalog()
 
     for (rowType, decoder) in SduiRowViewDataRegistry.decoders {
       let schemaDef = try XCTUnwrap(
@@ -279,14 +255,7 @@ final class SduiRowAttributeContractTests: XCTestCase {
   }
 
   func testRowPayloadDestinationMatchesSchemaBindingFields() throws {
-    let catalogData = try XCTUnwrap(
-      SduiDefinitions.json.data(using: .utf8),
-      "SduiDefinitions.json must be valid UTF-8"
-    )
-    let catalog = try XCTUnwrap(
-      JSONSerialization.jsonObject(with: catalogData) as? [String: Any],
-      "SduiDefinitions.json must be a JSON object"
-    )
+    let catalog = try loadCatalog()
 
     for rowType in catalog.keys.sorted() {
       let schemaDef = try XCTUnwrap(

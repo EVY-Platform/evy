@@ -445,6 +445,25 @@ class E2ETestBase: XCTestCase {
     return response as? [Any]
   }
 
+  func waitForMarketplaceResourceUpdate(
+    emitter: WSEmitter,
+    resource: String,
+    timeout: TimeInterval = 10,
+    matches: (Any) -> Bool
+  ) async throws -> Bool {
+    let deadline = Date().addingTimeInterval(timeout)
+    repeat {
+      let payload = try await emitter.getResource(
+        service: MARKETPLACE_SERVICE,
+        resource: resource
+      )
+      if matches(payload) {
+        return true
+      }
+    } while try await emitter.nextDataChanged(resource: resource, deadline: deadline)
+    return false
+  }
+
   /// Returns the hittable button with the given label, waiting for one to appear.
   /// Used when a sheet's confirm button shares its label with an obscured button behind
   /// the sheet (`isHittable` is not a legal key path inside XCUI query predicates).
@@ -852,15 +871,11 @@ class E2ETestBase: XCTestCase {
 
   static func actionsObject(
     tap: [[String: String]] = [],
-    delete: [[String: String]] = [],
     swipeLeft: [[String: String]] = []
   ) -> [String: Any] {
     var result: [String: Any] = [:]
     if !tap.isEmpty {
       result["tap"] = tap
-    }
-    if !delete.isEmpty {
-      result["delete"] = delete
     }
     if !swipeLeft.isEmpty {
       result["swipe-left"] = swipeLeft
@@ -937,16 +952,11 @@ class E2ETestBase: XCTestCase {
     ]
   }
 
-  static func pickupAcceptedConfirmationSubtitle() -> String {
-    let match = acceptedRequestFindFirstExpression(type: "pickup")
+  static func timeAcceptedConfirmationSubtitle(type: String) -> String {
+    let capitalizedType = type.prefix(1).uppercased() + type.dropFirst()
+    let match = acceptedRequestFindFirstExpression(type: type)
     return
-      "Pickup confirmed for {formatDatetime(\(match).data.time, \"EEE do\")} at {formatDatetime(\(match).data.time, \"HH:mm\")}"
-  }
-
-  static func deliveryAcceptedConfirmationSubtitle() -> String {
-    let match = acceptedRequestFindFirstExpression(type: "delivery")
-    return
-      "Delivery confirmed for {formatDatetime(\(match).data.time, \"EEE do\")} at {formatDatetime(\(match).data.time, \"HH:mm\")}"
+      "\(capitalizedType) confirmed for {formatDatetime(\(match).data.time, \"EEE do\")} at {formatDatetime(\(match).data.time, \"HH:mm\")}"
   }
 
   static func shippingAcceptedConfirmationSubtitle() -> String {
@@ -1079,7 +1089,7 @@ class E2ETestBase: XCTestCase {
                 Self.textRow(
                   id: "1a713180-a4a4-4f23-98cf-f3e79140c832",
                   title: "",
-                  subtitle: Self.pickupAcceptedConfirmationSubtitle(),
+                  subtitle: Self.timeAcceptedConfirmationSubtitle(type: "pickup"),
                   visible: Self.acceptedRequestVisibilityExpression(type: "pickup"),
                   name: "Pickup accepted confirmation"
                 ),
@@ -1105,7 +1115,7 @@ class E2ETestBase: XCTestCase {
                 Self.textRow(
                   id: "0fa0adba-aab4-4a0e-a8a4-fa1236f7dd9c",
                   title: "",
-                  subtitle: Self.deliveryAcceptedConfirmationSubtitle(),
+                  subtitle: Self.timeAcceptedConfirmationSubtitle(type: "delivery"),
                   visible: Self.acceptedRequestVisibilityExpression(type: "delivery"),
                   name: "Delivery accepted confirmation"
                 ),
@@ -2892,39 +2902,26 @@ final class WebSocketE2ETests: E2ETestBase {
       "{navigate(\(E2EFlowIds.webSocketViewFlow),\(E2EFlowIds.webSocketViewPage),{\(MARKETPLACE_ITEMS_RESOURCE_ID): [\(viewItemId)]})}"
   }
 
+  @MainActor
   private func waitForCancelRequestHidden(timeout: TimeInterval) -> Bool {
-    let deadline = Date().addingTimeInterval(timeout)
-    while Date() < deadline {
-      if !Self.anyCancelRequestButtonExists(in: app) {
-        return true
+    let labels = ["pickup", "delivery", "shipping"].map { Self.cancelRequestButtonLabel(type: $0) }
+    for label in labels {
+      let button = app.buttons[label]
+      if button.exists {
+        guard button.waitForNonExistence(timeout: timeout) else { return false }
       }
-      RunLoop.current.run(until: Date().addingTimeInterval(0.2))
     }
-    return !Self.anyCancelRequestButtonExists(in: app)
-  }
-
-  private static func anyCancelRequestButtonExists(in app: XCUIApplication) -> Bool {
-    app.buttons["Cancel pickup request"].exists
-      || app.buttons["Cancel delivery request"].exists
-      || app.buttons["Cancel shipping request"].exists
+    return true
   }
 
   private func waitForArchivedMarketplaceMessage(
     emitter: WSEmitter,
     itemId: String
   ) async throws -> Bool {
-    let deadline = Date().addingTimeInterval(10)
-    repeat {
-      let messages = try await emitter.getResource(
-        service: MARKETPLACE_SERVICE,
-        resource: MarketplaceResource.messages.rawValue
-      )
-      if Self.marketplaceMessagesArchived(messages, itemId: itemId) {
-        return true
-      }
-    } while try await emitter.nextDataChanged(
-      resource: MarketplaceResource.messages.rawValue, deadline: deadline)
-    return false
+    try await waitForMarketplaceResourceUpdate(
+      emitter: emitter,
+      resource: MarketplaceResource.messages.rawValue
+    ) { Self.marketplaceMessagesArchived($0, itemId: itemId) }
   }
 
   private static func marketplaceMessageId(
@@ -2969,24 +2966,18 @@ final class WebSocketE2ETests: E2ETestBase {
     valueKey: String,
     value: String
   ) async throws -> Bool {
-    let deadline = Date().addingTimeInterval(10)
-    repeat {
-      let messages = try await emitter.getResource(
-        service: MARKETPLACE_SERVICE,
-        resource: MarketplaceResource.messages.rawValue
-      )
-      if Self.marketplaceMessagesContain(
-        messages,
+    try await waitForMarketplaceResourceUpdate(
+      emitter: emitter,
+      resource: MarketplaceResource.messages.rawValue
+    ) {
+      Self.marketplaceMessagesContain(
+        $0,
         type: type,
         itemId: itemId,
         valueKey: valueKey,
         value: value
-      ) {
-        return true
-      }
-    } while try await emitter.nextDataChanged(
-      resource: MarketplaceResource.messages.rawValue, deadline: deadline)
-    return false
+      )
+    }
   }
 
   private static func marketplaceMessagesContain(
@@ -3287,8 +3278,7 @@ final class E2ESwipeLeftTests: E2ETestBase {
 
     let destinationPage = app.scrollViews["page_\(Self.swipeLeftDestPageId)"]
     XCTAssertTrue(
-      destinationPage.waitForExistence(timeout: 5)
-        || app.staticTexts["Arrived"].waitForExistence(timeout: 5),
+      destinationPage.waitForExistence(timeout: 5),
       "Swipe-left action should navigate to the destination page")
   }
 
@@ -3631,7 +3621,7 @@ final class E2EHomepageMessageSearchTests: E2ETestBase {
       "id": "7c4a8f21-9b3d-4e6a-a1c2-8f7d3e5b9a01",
       "type": "Search",
       "child": [
-        "id": "8d5b9e32-ac4e-5f7b-b2d3-9e8f4a6c0b12",
+        "id": Self.messageChildRowId,
         "type": "Text",
         "title": "{$datum.data.type} request",
         "subtitle": "{$datum.status}",
@@ -3783,18 +3773,10 @@ final class E2EHomepageMessageSearchTests: E2ETestBase {
     messageId: String,
     status: String
   ) async throws -> Bool {
-    let deadline = Date().addingTimeInterval(10)
-    repeat {
-      let messages = try await emitter.getResource(
-        service: MARKETPLACE_SERVICE,
-        resource: MarketplaceResource.messages.rawValue
-      )
-      if Self.marketplaceMessageHasStatus(messages, messageId: messageId, status: status) {
-        return true
-      }
-    } while try await emitter.nextDataChanged(
-      resource: MarketplaceResource.messages.rawValue, deadline: deadline)
-    return false
+    try await waitForMarketplaceResourceUpdate(
+      emitter: emitter,
+      resource: MarketplaceResource.messages.rawValue
+    ) { Self.marketplaceMessageHasStatus($0, messageId: messageId, status: status) }
   }
 
   private static func marketplaceMessageHasStatus(

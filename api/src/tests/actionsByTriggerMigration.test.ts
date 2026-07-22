@@ -1,41 +1,11 @@
-import {
-	afterAll,
-	beforeAll,
-	beforeEach,
-	describe,
-	expect,
-	it,
-} from "bun:test";
-import { readFileSync } from "node:fs";
-import { join } from "node:path";
+import { describe, expect, it } from "bun:test";
 import { eq } from "drizzle-orm";
-import { migrate } from "drizzle-orm/pglite/migrator";
 import * as schema from "evy-types/db/schema.generated";
-import {
-	clearAllTestTables,
-	createPgliteTestDatabase,
-	insertRow,
-} from "./wsTestHelpers";
+import { insertRow, setupMigrationTest } from "./wsTestHelpers";
 
-const { pgliteClient, testDb } = createPgliteTestDatabase();
-
-const MIGRATION_SQL = readFileSync(
-	join(import.meta.dir, "../../drizzle/0009_actions_by_trigger.sql"),
-	"utf8",
+const { testDb, runMigration } = setupMigrationTest(
+	"0009_actions_by_trigger.sql",
 );
-
-beforeAll(async () => {
-	await migrate(testDb, { migrationsFolder: "./drizzle" });
-	await clearAllTestTables(testDb);
-});
-
-afterAll(async () => {
-	await pgliteClient.close();
-});
-
-beforeEach(async () => {
-	await clearAllTestTables(testDb);
-});
 
 describe("0009_actions_by_trigger", () => {
 	it("wraps array actions, backfills SelectPhoto delete, drops empty actions, and show-self backfills required tap", async () => {
@@ -98,7 +68,7 @@ describe("0009_actions_by_trigger", () => {
 			},
 		});
 
-		await pgliteClient.exec(MIGRATION_SQL);
+		await runMigration();
 
 		const text = await testDb.query.row.findFirst({
 			where: eq(schema.row.id, textId),

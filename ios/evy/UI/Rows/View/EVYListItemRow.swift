@@ -18,11 +18,7 @@ struct EVYListItemRow: View {
       !image.isEmpty
     else { return nil }
     let resolved = (try? EVY.getDataFromText(image))?.toString() ?? image
-    let trimmed = resolved.trimmingCharacters(in: .whitespacesAndNewlines)
-    guard !trimmed.isEmpty, !trimmed.hasPrefix("{"), !trimmed.hasPrefix("[") else {
-      return nil
-    }
-    return trimmed
+    return EVYFileIdSanitizer.sanitizedFileId(resolved)
   }
 
   var body: some View {

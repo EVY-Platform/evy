@@ -101,14 +101,12 @@ final class EVYSearchModelTests: XCTestCase {
   func testLoadLocalResultsRefreshWhenMessageResourceChanges() throws {
     let resource = MarketplaceTestFixture.messagesResourceId
     let pendingId = UUID().uuidString
-    let message = EVYJson.dictionary([
-      "id": .string(pendingId),
-      "status": .string("pending"),
-      "data": .dictionary([
-        "type": .string("pickup"),
-        "time": .string("2026-06-03T09:00:00"),
-      ]),
-    ])
+    let message = EVYTestMessageFixtures.message(
+      id: pendingId,
+      status: "pending",
+      type: "pickup",
+      time: "2026-06-03T09:00:00"
+    )
     try EVY.publicStore.applySyncedValue(
       namespace: EVYNamespace.marketplace,
       resource: resource,

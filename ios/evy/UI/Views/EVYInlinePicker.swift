@@ -15,14 +15,14 @@ struct EVYInlinePicker: View {
   private var options: [EVYJson] = []
   private var formattedOptionLabels: [String] = []
   private var selectedIdentifiers: EVYState<[String]>
-  private let onOptionTapped: EVYRowTapCallback<EVYJson>?
+  private let onOptionTapped: EVYRowTapCallback<EVYJson>
 
   init(
     title: String,
     data: String,
     valueTemplate: String?,
     destination: String,
-    onOptionTapped: EVYRowTapCallback<EVYJson>? = nil
+    onOptionTapped: @escaping EVYRowTapCallback<EVYJson>
   ) {
     self.title = title
     self.valueTemplate = valueTemplate
@@ -67,11 +67,9 @@ struct EVYInlinePicker: View {
   }
 
   private func tapOption(_ option: EVYJson) {
-    if let onOptionTapped {
-      onOptionTapped(option, EVYRowActionOperation.selectHandler { applyToggle(for: $0) })
-    } else {
-      applyToggle(for: option)
-    }
+    onOptionTapped(
+      option,
+      EVYRowActionOperation.selectHandler { applyToggle(for: $0) })
   }
 
   var body: some View {
@@ -105,6 +103,9 @@ private struct EVYInlinePickerPreview: View {
       title: "Duration",
       data: "{durations}",
       valueTemplate: "{$datum.value}",
-      destination: "{item.duration}")
+      destination: "{item.duration}",
+      onOptionTapped: { option, handler in
+        try? handler(.select(option))
+      })
   }
 }

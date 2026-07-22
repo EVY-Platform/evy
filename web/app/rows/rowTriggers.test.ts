@@ -1,15 +1,9 @@
 import { describe, expect, test } from "bun:test";
 import { SDUI_ROW_TRIGGERS } from "evy-types";
-import { getRowTriggers } from "./rowTriggers";
+import { getRowTriggers, TRIGGER_LABELS } from "./rowTriggers";
 
 const ALL_ROW_TYPES = Object.keys(SDUI_ROW_TRIGGERS);
-const KNOWN_TRIGGER_NAMES = [
-	"tap",
-	"delete",
-	"tap-row",
-	"tap-column",
-	"swipe-left",
-];
+const KNOWN_TRIGGER_NAMES = Object.keys(TRIGGER_LABELS);
 
 describe("rowTriggers", () => {
 	test("returns declared triggers for each row type", () => {

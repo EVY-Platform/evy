@@ -70,8 +70,8 @@ struct EVYSelectPhoto: View {
   let icon: String?
   let content: String?
   let destination: String
-  let onAddPhotoTapped: ((@escaping EVYRowOperationHandler) -> Void)?
-  let onDeletePhotoTapped: ((@escaping EVYRowOperationHandler) -> Void)?
+  let onAddPhotoTapped: (@escaping EVYRowOperationHandler) -> Void
+  let onDeletePhotoTapped: (@escaping EVYRowOperationHandler) -> Void
 
   @State private var photoTiles: [EVYPhotoTile] = []
   @State private var lastCommittedIds: [String] = []
@@ -83,8 +83,8 @@ struct EVYSelectPhoto: View {
     content: String?,
     data: String?,
     destination: String,
-    onAddPhotoTapped: ((@escaping EVYRowOperationHandler) -> Void)? = nil,
-    onDeletePhotoTapped: ((@escaping EVYRowOperationHandler) -> Void)? = nil
+    onAddPhotoTapped: @escaping (@escaping EVYRowOperationHandler) -> Void,
+    onDeletePhotoTapped: @escaping (@escaping EVYRowOperationHandler) -> Void
   ) {
     self.title = title
     self.icon = icon
@@ -160,14 +160,10 @@ struct EVYSelectPhoto: View {
   }
 
   private func deletePhotoTapped(tileId: UUID) {
-    if let onDeletePhotoTapped {
-      onDeletePhotoTapped(
-        EVYRowActionOperation.deletePhotoHandler {
-          removePhoto(tileId: tileId)
-        })
-    } else {
-      removePhoto(tileId: tileId)
-    }
+    onDeletePhotoTapped(
+      EVYRowActionOperation.handler(for: .deletePhoto) {
+        removePhoto(tileId: tileId)
+      })
   }
 
   @MainActor
@@ -202,7 +198,7 @@ private struct EVYSelectPhotoButton: View {
   let fullScreen: Bool
   let icon: String?
   let content: String?
-  let onAddPhotoTapped: ((@escaping EVYRowOperationHandler) -> Void)?
+  let onAddPhotoTapped: (@escaping EVYRowOperationHandler) -> Void
 
   @State private var selectedItem: PhotosPickerItem?
   @Binding var photoTiles: [EVYPhotoTile]
@@ -240,18 +236,14 @@ private struct EVYSelectPhotoButton: View {
   }
 
   private func startUploadThroughActions() {
-    if let onAddPhotoTapped {
-      var didHandleSelectPhoto = false
-      onAddPhotoTapped(
-        EVYRowActionOperation.selectPhotoHandler {
-          didHandleSelectPhoto = true
-          Task { await uploadSelectedItem() }
-        })
-      if !didHandleSelectPhoto {
-        selectedItem = nil
-      }
-    } else {
-      Task { await uploadSelectedItem() }
+    var didHandleSelectPhoto = false
+    onAddPhotoTapped(
+      EVYRowActionOperation.handler(for: .selectPhoto) {
+        didHandleSelectPhoto = true
+        Task { await uploadSelectedItem() }
+      })
+    if !didHandleSelectPhoto {
+      selectedItem = nil
     }
   }
 
@@ -330,6 +322,8 @@ private struct EVYSelectPhotoPreview: View {
       icon: "::image-plus::",
       content: "A great subtitle",
       data: "{photo_ids}",
-      destination: "{photo_ids}")
+      destination: "{photo_ids}",
+      onAddPhotoTapped: { handler in try? handler(.selectPhoto) },
+      onDeletePhotoTapped: { handler in try? handler(.deletePhoto) })
   }
 }

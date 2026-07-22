@@ -6,7 +6,7 @@
 import SwiftUI
 import UIKit
 
-enum EVYSwipeEndState: Equatable {
+enum EVYSwipeEndState {
   case closed
   case open
 }
@@ -62,7 +62,7 @@ enum EVYSwipeGeometry {
   }
 
   static func revealButtonWidth(for offset: CGFloat) -> CGFloat {
-    max(0, max(revealWidth, -offset))
+    max(revealWidth, -offset)
   }
 
   static func springInitialVelocity(
@@ -114,7 +114,7 @@ struct EVYSwipeableRow<Content: View>: View {
 
   init(
     swipeIdentity: String,
-    swipeLabel: String = "",
+    swipeLabel: String,
     onExecute: @escaping () -> Void,
     @ViewBuilder content: @escaping () -> Content
   ) {
@@ -211,19 +211,13 @@ struct EVYSwipeableRow<Content: View>: View {
     }
   }
 
-  private var resolvedSwipeLabel: String? {
-    guard let swipeLabel else { return nil }
-    let trimmed = swipeLabel.trimmingCharacters(in: .whitespacesAndNewlines)
-    return trimmed.isEmpty ? nil : trimmed
-  }
-
   private var trailingActionButton: some View {
     Button {
       executeWithCommitSweep()
     } label: {
       Group {
-        if let resolvedSwipeLabel {
-          EVYTextView(resolvedSwipeLabel, style: .button)
+        if let swipeLabel {
+          EVYTextView(swipeLabel, style: .button)
             .lineLimit(1)
             .minimumScaleFactor(0.7)
         } else {
@@ -237,7 +231,7 @@ struct EVYSwipeableRow<Content: View>: View {
       .background(Constants.actionColor)
     }
     .buttonStyle(.plain)
-    .accessibilityLabel(resolvedSwipeLabel ?? "Swipe left")
+    .accessibilityLabel(swipeLabel ?? "Swipe left")
     .accessibilityIdentifier("swipeLeft_\(swipeIdentity)")
   }
 
@@ -277,7 +271,7 @@ struct EVYSwipeableRow<Content: View>: View {
 }
 
 private struct EVYSwipeRowWidthKey: PreferenceKey {
-  static var defaultValue: CGFloat = 0
+  static let defaultValue: CGFloat = 0
   static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
     value = nextValue()
   }
@@ -304,7 +298,6 @@ private struct EVYSwipePanOverlay: UIViewRepresentable {
     pan.delegate = context.coordinator
     pan.cancelsTouchesInView = false
     view.addGestureRecognizer(pan)
-    context.coordinator.pan = pan
 
     let tap = UITapGestureRecognizer(
       target: context.coordinator,
@@ -323,7 +316,6 @@ private struct EVYSwipePanOverlay: UIViewRepresentable {
 
   final class Coordinator: NSObject, UIGestureRecognizerDelegate {
     var parent: EVYSwipePanOverlay
-    weak var pan: UIPanGestureRecognizer?
     weak var tap: UITapGestureRecognizer?
     private var didBegin = false
 

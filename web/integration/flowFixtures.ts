@@ -9,13 +9,18 @@ import type {
 	ServiceResource,
 } from "../app/api/sync";
 import { getRowBindingFields } from "../app/rows/rowFields";
+import { rowAction } from "../app/utils/rowActions";
+
+export function tapAction(expr: string): UI_RowActions {
+	return { tap: [rowAction(expr)] };
+}
 
 interface ServerRowInput {
 	id?: string;
 	type: ServerRow["type"];
 	source?: string;
 	destination?: string;
-	actions: UI_RowActions;
+	actions?: UI_RowActions;
 	visible?: string;
 	name?: string;
 	title: string;
@@ -48,6 +53,7 @@ function ensureRowId(row: ServerRowInput): ServerRow {
 		id: row.id ?? crypto.randomUUID(),
 		name: row.name ?? row.title,
 		visible: row.visible ?? "true",
+		actions: row.actions ?? {},
 	};
 	for (const field of getRowBindingFields(row.type)) {
 		const value = row[field];

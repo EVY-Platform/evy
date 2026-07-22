@@ -43,21 +43,12 @@ struct EVYPhotoGalleryRow: View {
   private static func stringIds(from data: EVYJson?) -> [String] {
     switch data {
     case .array(let values):
-      return values.compactMap(stringId(from:))
-    case .string(let value):
-      return stringId(from: .string(value)).map { [$0] } ?? []
-    default:
+      return values.compactMap(EVYFileIdSanitizer.sanitizedFileId(from:))
+    case .some(let value):
+      return EVYFileIdSanitizer.sanitizedFileId(from: value).map { [$0] } ?? []
+    case .none:
       return []
     }
-  }
-
-  private static func stringId(from value: EVYJson) -> String? {
-    guard case .string(let id) = value else { return nil }
-    let trimmed = id.trimmingCharacters(in: .whitespacesAndNewlines)
-    guard !trimmed.isEmpty, !trimmed.hasPrefix("{"), !trimmed.hasPrefix("[") else {
-      return nil
-    }
-    return trimmed
   }
 
   var body: some View {
@@ -67,7 +58,7 @@ struct EVYPhotoGalleryRow: View {
       onPhotoTapped: { imageId in
         onPhotoTapped(
           imageId,
-          EVYRowActionOperation.expandPhotoHandler {
+          EVYRowActionOperation.handler(for: .expandPhoto) {
             fullScreenItem = FullScreenImageItem(id: imageId)
           })
       }

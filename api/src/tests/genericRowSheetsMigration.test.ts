@@ -1,42 +1,11 @@
-import {
-	afterAll,
-	beforeAll,
-	beforeEach,
-	describe,
-	expect,
-	it,
-} from "bun:test";
-import { readFileSync } from "node:fs";
-import { join } from "node:path";
+import { describe, expect, it } from "bun:test";
 import { eq } from "drizzle-orm";
-import { migrate } from "drizzle-orm/pglite/migrator";
 import * as schema from "evy-types/db/schema.generated";
-import {
-	clearAllTestTables,
-	createPgliteTestDatabase,
-	insertRow,
-	nowIso,
-} from "./wsTestHelpers";
+import { insertRow, nowIso, setupMigrationTest } from "./wsTestHelpers";
 
-const { pgliteClient, testDb } = createPgliteTestDatabase();
-
-const MIGRATION_SQL = readFileSync(
-	join(import.meta.dir, "../../drizzle/0008_generic_row_sheets.sql"),
-	"utf8",
+const { testDb, runMigration } = setupMigrationTest(
+	"0008_generic_row_sheets.sql",
 );
-
-beforeAll(async () => {
-	await migrate(testDb, { migrationsFolder: "./drizzle" });
-	await clearAllTestTables(testDb);
-});
-
-afterAll(async () => {
-	await pgliteClient.close();
-});
-
-beforeEach(async () => {
-	await clearAllTestTables(testDb);
-});
 
 describe("0008_generic_row_sheets", () => {
 	it("migrates sheet owners, rewrites show(), removes container templates, and keeps shared templates", async () => {
@@ -128,7 +97,7 @@ describe("0008_generic_row_sheets", () => {
 			updatedAt: iso,
 		});
 
-		await pgliteClient.exec(MIGRATION_SQL);
+		await runMigration();
 
 		const button = await testDb.query.row.findFirst({
 			where: eq(schema.row.id, buttonId),
@@ -191,7 +160,7 @@ describe("0008_generic_row_sheets", () => {
 			},
 		});
 
-		await expect(pgliteClient.exec(MIGRATION_SQL)).rejects.toThrow(
+		await expect(runMigration()).rejects.toThrow(
 			/unsupported \{show\(\)\}/,
 		);
 	});

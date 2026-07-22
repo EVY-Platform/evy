@@ -1,3 +1,8 @@
+import { afterAll, beforeAll, beforeEach } from "bun:test";
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
+import { migrate } from "drizzle-orm/pglite/migrator";
+import type { UI_RowAction } from "evy-types";
 import * as schema from "evy-types/db/schema.generated";
 import {
 	createPgliteTestDatabase as createPgliteTestDatabaseWithSchema,
@@ -56,6 +61,35 @@ export function createPgliteTestDatabase() {
 
 export function nowIso(): string {
 	return new Date().toISOString();
+}
+
+export function action(expr: string): UI_RowAction {
+	return { condition: "", false: "", true: expr };
+}
+
+export function setupMigrationTest(sqlFilename: string) {
+	const { pgliteClient, testDb } = createPgliteTestDatabase();
+	const migrationSql = readFileSync(
+		join(import.meta.dir, "../../drizzle", sqlFilename),
+		"utf8",
+	);
+
+	beforeAll(async () => {
+		await migrate(testDb, { migrationsFolder: "./drizzle" });
+		await clearAllTestTables(testDb);
+	});
+
+	afterAll(async () => {
+		await pgliteClient.close();
+	});
+
+	beforeEach(async () => {
+		await clearAllTestTables(testDb);
+	});
+
+	const runMigration = () => pgliteClient.exec(migrationSql);
+
+	return { pgliteClient, testDb, runMigration };
 }
 
 export async function insertRow(

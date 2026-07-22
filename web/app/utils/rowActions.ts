@@ -1,12 +1,7 @@
 import type { RowTriggerName, UI_RowAction, UI_RowActions } from "evy-types";
+import { TRIGGER_LABELS } from "../rows/rowTriggers";
 
-const ROW_ACTION_TRIGGER_KEYS: RowTriggerName[] = [
-	"tap",
-	"delete",
-	"tap-row",
-	"tap-column",
-	"swipe-left",
-];
+const ROW_ACTION_TRIGGER_KEYS = Object.keys(TRIGGER_LABELS) as RowTriggerName[];
 
 export function rowAction(branch: string): UI_RowAction {
 	return { condition: "", false: "", true: branch };

@@ -121,10 +121,6 @@ final class EVYSwipeGeometryTests: XCTestCase {
 
   func testProjectedOffsetProjectsFurtherLeftWithLeftwardVelocity() {
     let projected = EVYSwipeGeometry.projectedOffset(rawOffset: -20, velocityX: -800)
-    let expected =
-      -20 + (-800) * EVYSwipeGeometry.decelerationRate
-      / (1 - EVYSwipeGeometry.decelerationRate) / 1000
-    XCTAssertEqual(projected, expected, accuracy: 0.001)
     XCTAssertEqual(projected, -20 + (-800) * 0.499, accuracy: 0.001)
   }
 

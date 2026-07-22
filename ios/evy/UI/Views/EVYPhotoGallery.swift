@@ -8,14 +8,14 @@ import SwiftUI
 struct EVYPhotoGallery: View {
   let title: String
   let imageIds: [String]
-  let onPhotoTapped: ((String) -> Void)?
+  let onPhotoTapped: (String) -> Void
 
   @State private var selectedImageIndex = 0
 
   init(
     title: String,
     imageIds: [String] = [],
-    onPhotoTapped: ((String) -> Void)? = nil
+    onPhotoTapped: @escaping (String) -> Void
   ) {
     self.title = title
     self.imageIds = imageIds
@@ -37,7 +37,7 @@ struct EVYPhotoGallery: View {
               .clipped()
               .contentShape(Rectangle())
               .onTapGesture {
-                onPhotoTapped?(imageIds[index])
+                onPhotoTapped(imageIds[index])
               }
               .tag(index)
           }
@@ -62,5 +62,5 @@ struct EVYPhotoGallery: View {
 }
 
 #Preview {
-  EVYPhotoGallery(title: "Photo Gallery")
+  EVYPhotoGallery(title: "Photo Gallery", onPhotoTapped: { _ in })
 }

@@ -9,16 +9,34 @@ import XCTest
 
 @MainActor
 final class EVYActionRunnerTests: XCTestCase {
-  private func rowAction(
-    condition: String = "",
-    true trueBranch: String,
-    false falseBranch: String = ""
-  ) -> UI_RowAction {
-    UI_RowAction(
-      condition: condition,
-      false: falseBranch,
-      true: trueBranch
-    )
+  private func assertSelectValue(
+    _ received: EVYRowActionOperation?,
+    equals expected: EVYJson,
+    file: StaticString = #filePath,
+    line: UInt = #line
+  ) {
+    guard case .select(let value) = received else {
+      XCTFail("Expected select, got \(String(describing: received))", file: file, line: line)
+      return
+    }
+    XCTAssertEqual(value, expected, file: file, line: line)
+  }
+
+  private func assertRowPhotoOperationDispatchesAndContinues(
+    action: String,
+    expected: (EVYRowActionOperation) -> Bool
+  ) {
+    var received: EVYRowActionOperation?
+    var receivedOps: [ActionOperation] = []
+    EVYActionRunner.run(
+      actions: [rowAction(true: action), rowAction(true: "{close()}")],
+      rowOperation: { received = $0 }
+    ) { receivedOps.append($0) }
+    guard let received, expected(received) else {
+      XCTFail("Unexpected row operation \(String(describing: received))")
+      return
+    }
+    XCTAssertEqual(receivedOps, [.close])
   }
 
   func testCloseAction() {
@@ -340,36 +358,30 @@ final class EVYActionRunnerTests: XCTestCase {
     defer { try? EVY.publicStore.deleteAll(namespace: namespace, resource: resource) }
 
     let messages = EVYJson.array([
-      .dictionary([
-        "id": .string(pendingMessageId),
-        "fk": .string(itemId),
-        "status": .string("pending"),
-        "archivedAt": .null,
-        "data": .dictionary([
-          "type": .string("pickup"),
-          "time": .string("2026-06-03T09:00:00"),
-        ]),
-      ]),
-      .dictionary([
-        "id": .string(otherPendingMessageId),
-        "fk": .string(itemId),
-        "status": .string("pending"),
-        "archivedAt": .null,
-        "data": .dictionary([
-          "type": .string("delivery"),
-          "time": .string("2026-06-03T10:00:00"),
-        ]),
-      ]),
-      .dictionary([
-        "id": .string(acceptedMessageId),
-        "fk": .string(itemId),
-        "status": .string("accepted"),
-        "archivedAt": .null,
-        "data": .dictionary([
-          "type": .string("shipping"),
-          "postalcode": .string("2018"),
-        ]),
-      ]),
+      EVYTestMessageFixtures.message(
+        id: pendingMessageId,
+        fk: itemId,
+        status: "pending",
+        archivedAt: .null,
+        type: "pickup",
+        time: "2026-06-03T09:00:00"
+      ),
+      EVYTestMessageFixtures.message(
+        id: otherPendingMessageId,
+        fk: itemId,
+        status: "pending",
+        archivedAt: .null,
+        type: "delivery",
+        time: "2026-06-03T10:00:00"
+      ),
+      EVYTestMessageFixtures.message(
+        id: acceptedMessageId,
+        fk: itemId,
+        status: "accepted",
+        archivedAt: .null,
+        type: "shipping",
+        postalcode: "2018"
+      ),
     ])
     try EVY.publicStore.applySyncedValue(namespace: namespace, resource: resource, value: messages)
 
@@ -534,10 +546,7 @@ final class EVYActionRunnerTests: XCTestCase {
       datum: datum,
       rowOperation: { received = $0 }
     ) { receivedOps.append($0) }
-    guard case .select(let value) = received else {
-      return XCTFail("Expected select, got \(String(describing: received))")
-    }
-    XCTAssertEqual(value, datum)
+    assertSelectValue(received, equals: datum)
     XCTAssertEqual(receivedOps, [.close])
   }
 
@@ -552,10 +561,7 @@ final class EVYActionRunnerTests: XCTestCase {
       datum: datum,
       rowOperation: { received = $0 }
     ) { _ in }
-    guard case .select(let value) = received else {
-      return XCTFail("Expected select, got \(String(describing: received))")
-    }
-    XCTAssertEqual(value, datum)
+    assertSelectValue(received, equals: datum)
   }
 
   func testSelectResolvesDatumProperty() {
@@ -568,10 +574,7 @@ final class EVYActionRunnerTests: XCTestCase {
       datum: datum,
       rowOperation: { received = $0 }
     ) { _ in }
-    guard case .select(let value) = received else {
-      return XCTFail("Expected select, got \(String(describing: received))")
-    }
-    XCTAssertEqual(value, .string("2026-06-03T11:00:00"))
+    assertSelectValue(received, equals: .string("2026-06-03T11:00:00"))
   }
 
   func testSelectPassesQuotedLiteral() {
@@ -580,111 +583,84 @@ final class EVYActionRunnerTests: XCTestCase {
       actions: [rowAction(true: "{select(\"literal\")}")],
       rowOperation: { received = $0 }
     ) { _ in }
-    guard case .select(let value) = received else {
-      return XCTFail("Expected select, got \(String(describing: received))")
-    }
-    XCTAssertEqual(value, .string("literal"))
+    assertSelectValue(received, equals: .string("literal"))
   }
 
-  func testSelectWithNoArgumentPostsErrorAndStops() {
-    var receivedOps: [ActionOperation] = []
-    var rowOps: [EVYRowActionOperation] = []
-    let errors = capturedErrors {
-      EVYActionRunner.run(
-        actions: [rowAction(true: "{select()}"), rowAction(true: "{close()}")],
-        rowOperation: { rowOps.append($0) }
-      ) { receivedOps.append($0) }
+  func testSelectWithInvalidArgumentPostsErrorAndStops() {
+    for branch in ["{select()}", "{select(a, b)}"] {
+      var receivedOps: [ActionOperation] = []
+      var rowOps: [EVYRowActionOperation] = []
+      let errors = capturedErrors {
+        EVYActionRunner.run(
+          actions: [rowAction(true: branch), rowAction(true: "{close()}")],
+          rowOperation: { rowOps.append($0) }
+        ) { receivedOps.append($0) }
+      }
+      XCTAssertFalse(errors.isEmpty, "Expected error for \(branch)")
+      XCTAssertTrue(rowOps.isEmpty, "Expected no row ops for \(branch)")
+      XCTAssertTrue(receivedOps.isEmpty, "Expected stop for \(branch)")
     }
-    XCTAssertFalse(errors.isEmpty)
-    XCTAssertTrue(rowOps.isEmpty)
-    XCTAssertTrue(receivedOps.isEmpty)
   }
 
-  func testSelectWithExtraArgumentPostsErrorAndStops() {
-    var receivedOps: [ActionOperation] = []
-    var rowOps: [EVYRowActionOperation] = []
-    let errors = capturedErrors {
-      EVYActionRunner.run(
-        actions: [rowAction(true: "{select(a, b)}"), rowAction(true: "{close()}")],
-        rowOperation: { rowOps.append($0) }
-      ) { receivedOps.append($0) }
+  func testRowPhotoOperationsDispatchesAndContinues() {
+    let cases: [(String, (EVYRowActionOperation) -> Bool)] = [
+      (
+        "{delete_photo()}",
+        {
+          if case .deletePhoto = $0 { return true }
+          return false
+        }
+      ),
+      (
+        "{select_photo()}",
+        {
+          if case .selectPhoto = $0 { return true }
+          return false
+        }
+      ),
+      (
+        "{expand_photo()}",
+        {
+          if case .expandPhoto = $0 { return true }
+          return false
+        }
+      ),
+    ]
+    for (action, matcher) in cases {
+      assertRowPhotoOperationDispatchesAndContinues(action: action, expected: matcher)
     }
-    XCTAssertFalse(errors.isEmpty)
-    XCTAssertTrue(rowOps.isEmpty)
-    XCTAssertTrue(receivedOps.isEmpty)
-  }
-
-  func testDeletePhotoDispatchesAndContinues() {
-    var received: EVYRowActionOperation?
-    var receivedOps: [ActionOperation] = []
-    EVYActionRunner.run(
-      actions: [rowAction(true: "{delete_photo()}"), rowAction(true: "{close()}")],
-      rowOperation: { received = $0 }
-    ) { receivedOps.append($0) }
-    guard case .deletePhoto = received else {
-      return XCTFail("Expected deletePhoto, got \(String(describing: received))")
-    }
-    XCTAssertEqual(receivedOps, [.close])
   }
 
   func testTriggerIsolationRunsOnlyRequestedActionList() {
-    var tapReceived = false
-    var deleteReceived = false
-    let tapActions = UI_RowActions(
-      delete: [rowAction(true: "{close()}")],
-      tap: [rowAction(true: "{close()}")]
-    )
-    EVYActionRunner.run(actions: tapActions.tap) { operation in
-      if case .close = operation { tapReceived = true }
-    }
-    EVYActionRunner.run(actions: tapActions.delete) { operation in
-      if case .close = operation { deleteReceived = true }
-    }
-    XCTAssertTrue(tapReceived)
-    XCTAssertTrue(deleteReceived)
-  }
-
-  func testSwipeLeftTriggerIsolationRunsOnlyRequestedActionList() {
-    var tapReceived = false
-    var swipeLeftReceived = false
+    let closeAction = rowAction(true: "{close()}")
     let actions = UI_RowActions(
-      swipeLeft: [rowAction(true: "{close()}")],
-      tap: [rowAction(true: "{close()}")]
+      delete: [closeAction],
+      swipeLeft: [closeAction],
+      tap: [closeAction]
     )
-    EVYActionRunner.run(actions: actions.tap) { operation in
-      if case .close = operation { tapReceived = true }
+    let lists: [(String, [UI_RowAction])] = [
+      ("tap", actions.tap),
+      ("delete", actions.delete),
+      ("swipeLeft", actions.swipeLeft),
+    ]
+    for (name, onlyList) in lists {
+      var tapReceived = false
+      var deleteReceived = false
+      var swipeLeftReceived = false
+      EVYActionRunner.run(actions: onlyList) { operation in
+        guard case .close = operation else { return }
+        switch name {
+        case "tap": tapReceived = true
+        case "delete": deleteReceived = true
+        case "swipeLeft": swipeLeftReceived = true
+        default: break
+        }
+      }
+      XCTAssertEqual(tapReceived, name == "tap", "Only tap list should run tap actions")
+      XCTAssertEqual(deleteReceived, name == "delete", "Only delete list should run delete actions")
+      XCTAssertEqual(
+        swipeLeftReceived, name == "swipeLeft", "Only swipeLeft list should run swipe-left actions")
     }
-    EVYActionRunner.run(actions: actions.swipeLeft) { operation in
-      if case .close = operation { swipeLeftReceived = true }
-    }
-    XCTAssertTrue(tapReceived)
-    XCTAssertTrue(swipeLeftReceived)
-  }
-
-  func testSelectPhotoDispatchesAndContinues() {
-    var received: EVYRowActionOperation?
-    var receivedOps: [ActionOperation] = []
-    EVYActionRunner.run(
-      actions: [rowAction(true: "{select_photo()}"), rowAction(true: "{close()}")],
-      rowOperation: { received = $0 }
-    ) { receivedOps.append($0) }
-    guard case .selectPhoto = received else {
-      return XCTFail("Expected selectPhoto, got \(String(describing: received))")
-    }
-    XCTAssertEqual(receivedOps, [.close])
-  }
-
-  func testExpandPhotoDispatchesAndContinues() {
-    var received: EVYRowActionOperation?
-    var receivedOps: [ActionOperation] = []
-    EVYActionRunner.run(
-      actions: [rowAction(true: "{expand_photo()}"), rowAction(true: "{close()}")],
-      rowOperation: { received = $0 }
-    ) { receivedOps.append($0) }
-    guard case .expandPhoto = received else {
-      return XCTFail("Expected expandPhoto, got \(String(describing: received))")
-    }
-    XCTAssertEqual(receivedOps, [.close])
   }
 
   func testSelectWithDefaultRowOperationPostsErrorAndStops() {
@@ -970,14 +946,12 @@ final class EVYActionRunnerTests: XCTestCase {
     try? EVY.publicStore.deleteAll(namespace: namespace, resource: resource)
     defer { try? EVY.publicStore.deleteAll(namespace: namespace, resource: resource) }
 
-    let message = EVYJson.dictionary([
-      "id": .string(pendingMessageId),
-      "status": .string("pending"),
-      "data": .dictionary([
-        "type": .string("pickup"),
-        "time": .string("2026-06-03T09:00:00"),
-      ]),
-    ])
+    let message = EVYTestMessageFixtures.message(
+      id: pendingMessageId,
+      status: "pending",
+      type: "pickup",
+      time: "2026-06-03T09:00:00"
+    )
     try EVY.publicStore.applySyncedValue(
       namespace: namespace, resource: resource, value: .array([message]))
 

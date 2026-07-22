@@ -183,26 +183,14 @@ export function BranchEditor({
 		[selectedFunction, args, onChange],
 	);
 
-	const argDropdowns = useMemo(
-		() =>
-			buildArgDropdowns(
-				selectedFunction as ActionFunction | "",
-				args,
-				draftVariables,
-				flowsById,
-				pagesById,
-				serviceResources,
-				rowsById,
-			),
-		[
-			selectedFunction,
-			args,
-			draftVariables,
-			flowsById,
-			pagesById,
-			serviceResources,
-			rowsById,
-		],
+	const argDropdowns = buildArgDropdowns(
+		selectedFunction as ActionFunction | "",
+		args,
+		draftVariables,
+		flowsById,
+		pagesById,
+		serviceResources,
+		rowsById,
 	);
 
 	return (

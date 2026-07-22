@@ -292,27 +292,26 @@ export function buildRowForNewPageFromBase(
 	if (row.config.type === "TextExpand") {
 		actions = {
 			...actions,
-			tap: [
-				rowAction(`{expand_text(${newRowId})}`),
-				...(actions.tap ?? []),
-			],
+			tap: [rowAction(`{expand_text(${newRowId})}`)],
 		};
 	}
 
+	let nextActions = { ...actions };
 	for (const triggerSpec of getRowTriggers(row.config.type)) {
 		const trigger = triggerSpec.trigger;
-		const existing = actions[trigger];
+		const existing = nextActions[trigger];
 		if (existing && existing.length > 0) {
 			continue;
 		}
 		if (!triggerSpec.required) {
 			continue;
 		}
-		actions = {
-			...actions,
+		nextActions = {
+			...nextActions,
 			[trigger]: [rowAction(`{show(${newRowId})}`)],
 		};
 	}
+	actions = nextActions;
 
 	return {
 		...row,

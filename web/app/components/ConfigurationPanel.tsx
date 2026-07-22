@@ -1,4 +1,4 @@
-import type { UI_RowActions } from "evy-types";
+import type { RowTriggerName, UI_RowAction, UI_RowActions } from "evy-types";
 import { MARKETPLACE_RESOURCE } from "evy-types/marketplaceResources";
 import { ChevronRight, Trash2 } from "lucide-react";
 import { useCallback, useMemo, useState } from "react";
@@ -12,7 +12,7 @@ import {
 	isPanelScalarField,
 	type RowBindingField,
 } from "../rows/rowFields";
-import { getRowTriggers, type RowTriggerName } from "../rows/rowTriggers";
+import { getRowTriggers } from "../rows/rowTriggers";
 import { useFlowsContext } from "../state/contexts/FlowsContext";
 import type { Row } from "../types/row";
 import { mergeRowContentWithPaletteDefaults } from "../utils/decodeFlow";
@@ -250,15 +250,13 @@ export function ConfigurationPanel() {
 	);
 
 	const updateRowActionsForTrigger = useCallback(
-		(trigger: RowTriggerName, nextTriggerActions: UI_RowActions["tap"]) => {
+		(trigger: RowTriggerName, nextTriggerActions: UI_RowAction[]) => {
 			if (!currentConfigRow) return;
 			const current = currentConfigRow.config.actions ?? {};
-			const merged: UI_RowActions = { ...current };
-			if (!nextTriggerActions || nextTriggerActions.length === 0) {
-				delete merged[trigger];
-			} else {
-				merged[trigger] = nextTriggerActions;
-			}
+			const merged: UI_RowActions = {
+				...current,
+				[trigger]: nextTriggerActions,
+			};
 			dispatchRow({
 				type: "UPDATE_ROW_ACTIONS",
 				rowId: currentConfigRow.id,

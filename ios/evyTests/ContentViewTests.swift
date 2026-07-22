@@ -570,6 +570,32 @@ final class ContentViewTests: XCTestCase {
     XCTAssertEqual(keys, Set([MarketplaceTestFixture.itemsResourceId]))
   }
 
+  func testExtractCreateKeysIncludesSwipeLeftActions() throws {
+    let store = makeStore()
+
+    try seedFlow(store: store, id: "swipe-flow", pageIds: ["swipe-page"])
+    try seedPage(store: store, id: "swipe-page", rowIds: ["swipe-row"])
+    try seedRow(
+      store: store, id: "swipe-row", type: "Text",
+      data: [
+        "title": "Swipe",
+        "text": "Hello",
+        "actions": [
+          "swipe-left": [
+            [
+              "condition": "",
+              "false": "",
+              "true":
+                "{create(\(MarketplaceTestFixture.serviceId),\(MarketplaceTestFixture.itemsResourceId))}",
+            ]
+          ]
+        ],
+      ])
+
+    let keys = EVYFlowStore.createKeys(flowId: "swipe-flow", from: store)
+    XCTAssertEqual(keys, Set([MarketplaceTestFixture.itemsResourceId]))
+  }
+
   func testExtractCreateKeysReturnsEmptyForFlowWithoutCreateActions() throws {
     let store = makeStore()
 

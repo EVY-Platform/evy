@@ -126,8 +126,7 @@ struct EVYSelectItem: View {
   let selectionStyle: EVYRadioStyle
   let target: EVYSelectItemTarget
   let textStyle: EVYTextStyle
-  let onSelect: (() -> Void)?
-  let onTap: ((@escaping () throws -> Void) -> Void)?
+  let onTap: (@escaping () throws -> Void) -> Void
 
   private let displayLabel: String
   private var selected: EVYState<Bool>
@@ -140,8 +139,7 @@ struct EVYSelectItem: View {
     selectionStyle: EVYRadioStyle,
     target: EVYSelectItemTarget,
     textStyle: EVYTextStyle = .body,
-    onSelect: (() -> Void)? = nil,
-    onTap: ((@escaping () throws -> Void) -> Void)? = nil
+    onTap: @escaping (@escaping () throws -> Void) -> Void
   ) {
     self.destination = destination
     self.value = value
@@ -149,7 +147,6 @@ struct EVYSelectItem: View {
     self.selectionStyle = selectionStyle
     self.target = target
     self.textStyle = textStyle
-    self.onSelect = onSelect
     self.onTap = onTap
 
     self.displayLabel =
@@ -174,19 +171,8 @@ struct EVYSelectItem: View {
       let performDefault: () throws -> Void = {
         try target.applySelection(
           value: value, currentlySelected: selected.value, destination: destination)
-        onSelect?()
       }
-      if let onTap {
-        onTap(performDefault)
-      } else {
-        do {
-          try performDefault()
-        } catch {
-          #if DEBUG
-            print("[EVYSelectItem] Error updating selection: \(error)")
-          #endif
-        }
-      }
+      onTap(performDefault)
     }
   }
 }

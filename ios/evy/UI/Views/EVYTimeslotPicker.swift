@@ -32,7 +32,7 @@ struct EVYTimeslotDate: Equatable {
 private struct EVYTimeslotColumn: View {
   let timeslotDate: EVYTimeslotDate
   let numberOfTimeslotsPerDay: Int
-  let onSelect: ((String) -> Void)?
+  let onSelect: (String) -> Void
 
   var body: some View {
     VStack {
@@ -53,7 +53,7 @@ private struct EVYTimeslotColumn: View {
           )
           .contentShape(Rectangle())
           .onTapGesture {
-            onSelect?(t.dateTimeISO)
+            onSelect(t.dateTimeISO)
           }
         }
       }
@@ -67,7 +67,7 @@ struct EVYTimeslotPicker: View {
   private static let columnStackSpacing: CGFloat = 8
 
   private let destination: String
-  private let onTimeslotTapped: EVYRowTapCallback<EVYJson>?
+  private let onTimeslotTapped: EVYRowTapCallback<EVYJson>
 
   private let timeslotDates: EVYState<[EVYTimeslotDate]>
 
@@ -77,7 +77,7 @@ struct EVYTimeslotPicker: View {
     content: TimeslotPickerRowViewData,
     source: String,
     destination: String,
-    onTimeslotTapped: EVYRowTapCallback<EVYJson>? = nil
+    onTimeslotTapped: @escaping EVYRowTapCallback<EVYJson>
   ) {
     self.destination = destination
     self.onTimeslotTapped = onTimeslotTapped
@@ -101,7 +101,7 @@ struct EVYTimeslotPicker: View {
   }
 
   private func selectTimeslot(_ dateTimeISO: String) {
-    onTimeslotTapped?(
+    onTimeslotTapped(
       .string(dateTimeISO),
       EVYRowActionOperation.selectHandler { value in
         Self.commitSelection(value.toString(), to: destination)
@@ -189,7 +189,10 @@ private struct EVYTimeslotPickerPreview: View {
       EVYTimeslotPicker(
         content: content,
         source: "{pickup_selection}",
-        destination: "{selected_timeslot}")
+        destination: "{selected_timeslot}",
+        onTimeslotTapped: { value, handler in
+          try? handler(.select(value))
+        })
     }
   }
 }

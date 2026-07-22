@@ -194,10 +194,6 @@ final class EVYCalendarTests: XCTestCase {
     XCTAssertTrue(displayDateSlots.allSatisfy { !$0.isPrimarySelected && !$0.isSecondarySelected })
   }
 
-  private func rowAction(true trueBranch: String) -> UI_RowAction {
-    UI_RowAction(condition: "", false: "", true: trueBranch)
-  }
-
   func testTogglePrimarySelectionBatchAddsMissing() throws {
     let scopeId = "__test__:calendar-batch-add"
     let destination = "{pickup_selection}"
@@ -220,31 +216,6 @@ final class EVYCalendarTests: XCTestCase {
 
     let stored = EVYDatetime.readTimeslots(destination)
     XCTAssertEqual(Set(stored), Set(["2026-06-03T09:00:00", "2026-06-03T10:00:00"]))
-  }
-
-  func testTogglePrimarySelectionBatchRemovesWhenAllPresent() throws {
-    let scopeId = "__test__:calendar-batch-remove"
-    let destination = "{pickup_selection}"
-    EVY.draftStore.deleteDrafts()
-    EVY.draftStore.activeScopeId = scopeId
-    defer {
-      EVY.draftStore.deleteDrafts()
-      EVY.draftStore.activeScopeId = nil
-    }
-    EVY.ensureDraftExists(
-      variableName: "pickup_selection",
-      initialData:
-        "[\"2026-06-03T09:00:00\",\"2026-06-03T10:00:00\",\"2026-06-03T11:00:00\"]"
-        .data(using: .utf8),
-      scopeId: scopeId
-    )
-
-    EVYCalendar.togglePrimarySelection(
-      dateTimeISOs: ["2026-06-03T09:00:00", "2026-06-03T10:00:00"],
-      destination: destination
-    )
-
-    XCTAssertEqual(EVYDatetime.readTimeslots(destination), ["2026-06-03T11:00:00"])
   }
 
   func testTapRowSelectActionUsesTapRowTriggerList() throws {

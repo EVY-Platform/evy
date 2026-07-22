@@ -4,7 +4,7 @@ import {
 	MARKETPLACE_RESOURCE,
 	MARKETPLACE_SERVICE,
 } from "evy-types/marketplaceResources";
-import { initFullFlows, openAppWithTestFlows } from "./flowFixtures";
+import { initFullFlows, openAppWithTestFlows, tapAction } from "./flowFixtures";
 import {
 	getConfigPanel,
 	getPageContent,
@@ -38,10 +38,8 @@ test.describe("Row configuration", () => {
 								type: "Input",
 								title: "Input Row",
 								placeholder: "First placeholder",
-								actions: {},
 							},
 						],
-						actions: {},
 					},
 				],
 			},
@@ -89,7 +87,6 @@ test.describe("Row configuration", () => {
 						type: "Text",
 						title: "Test Text Row",
 						subtitle: "Initial subtitle content",
-						actions: {},
 					},
 				],
 			},
@@ -127,7 +124,6 @@ test.describe("Row configuration", () => {
 						source: "{initial}",
 						title: "Binding row",
 						placeholder: "Enter value",
-						actions: {},
 					},
 				],
 			},
@@ -158,7 +154,6 @@ test.describe("Row configuration", () => {
 						title: "Tags",
 						placeholder: "Search for tags",
 						format: "{$datum.value}",
-						actions: {},
 					},
 				],
 			},
@@ -186,11 +181,7 @@ test.describe("Row configuration", () => {
 						type: "Button",
 						title: "",
 						label: "Test Button",
-						actions: {
-							tap: [
-								{ condition: "", false: "", true: "{close()}" },
-							],
-						},
+						actions: tapAction("{close()}"),
 					},
 				],
 			},
@@ -240,11 +231,7 @@ test.describe("Row configuration", () => {
 						type: "Button",
 						title: "",
 						label: "Nav Button",
-						actions: {
-							tap: [
-								{ condition: "", false: "", true: "{close()}" },
-							],
-						},
+						actions: tapAction("{close()}"),
 					},
 				],
 			},
@@ -297,7 +284,6 @@ test.describe("Row configuration", () => {
 									value: `{${MARKETPLACE_RESOURCE.ITEMS}.name}`,
 									placeholder: "Enter name",
 									destination: `{${MARKETPLACE_RESOURCE.ITEMS}.name}`,
-									actions: {},
 								},
 								{
 									id: "submit_button",
@@ -389,7 +375,6 @@ test.describe("Row configuration", () => {
 						type: "Text",
 						title: "No Action Row",
 						subtitle: "Some subtitle",
-						actions: {},
 					},
 				],
 			},
@@ -420,17 +405,12 @@ test.describe("Row configuration", () => {
 						value: "{price}",
 						placeholder: "",
 						destination: "{price}",
-						actions: {},
 					},
 					{
 						type: "Button",
 						title: "",
 						label: "Check",
-						actions: {
-							tap: [
-								{ condition: "", false: "", true: "{close()}" },
-							],
-						},
+						actions: tapAction("{close()}"),
 					},
 				],
 			},
@@ -476,17 +456,12 @@ test.describe("Row configuration", () => {
 						value: "{items}",
 						placeholder: "",
 						destination: "{items}",
-						actions: {},
 					},
 					{
 						type: "Button",
 						title: "",
 						label: "Validate",
-						actions: {
-							tap: [
-								{ condition: "", false: "", true: "{close()}" },
-							],
-						},
+						actions: tapAction("{close()}"),
 					},
 				],
 			},
@@ -534,7 +509,6 @@ test.describe("Row configuration", () => {
 						value: "{name}",
 						placeholder: "",
 						destination: "{name}",
-						actions: {},
 					},
 					{
 						type: "Input",
@@ -542,17 +516,12 @@ test.describe("Row configuration", () => {
 						value: "{email}",
 						placeholder: "",
 						destination: "{email}",
-						actions: {},
 					},
 					{
 						type: "Button",
 						title: "",
 						label: "Send",
-						actions: {
-							tap: [
-								{ condition: "", false: "", true: "{close()}" },
-							],
-						},
+						actions: tapAction("{close()}"),
 					},
 				],
 			},
@@ -603,11 +572,7 @@ test.describe("Row configuration", () => {
 						type: "Button",
 						title: "",
 						label: "Cancel Test",
-						actions: {
-							tap: [
-								{ condition: "", false: "", true: "{close()}" },
-							],
-						},
+						actions: tapAction("{close()}"),
 					},
 				],
 			},
@@ -700,7 +665,6 @@ test.describe("Row configuration", () => {
 								value: "{name}",
 								placeholder: "",
 								destination: "{name}",
-								actions: {},
 							},
 							{
 								id: "row_btn",
@@ -887,7 +851,6 @@ test.describe("Row configuration", () => {
 						value: "{name}",
 						placeholder: "",
 						destination: "{name}",
-						actions: {},
 					},
 					{
 						type: "Input",
@@ -895,7 +858,6 @@ test.describe("Row configuration", () => {
 						value: "{email}",
 						placeholder: "",
 						destination: "{email}",
-						actions: {},
 					},
 					{
 						type: "Button",
@@ -962,7 +924,6 @@ test.describe("Row configuration", () => {
 						value: "{name}",
 						placeholder: "",
 						destination: "{name}",
-						actions: {},
 					},
 					{
 						type: "Input",
@@ -970,7 +931,6 @@ test.describe("Row configuration", () => {
 						value: "{email}",
 						placeholder: "",
 						destination: "{email}",
-						actions: {},
 					},
 					{
 						type: "Button",
@@ -1046,14 +1006,12 @@ test.describe("Row configuration", () => {
 					title: "Deep leaf",
 					placeholder: "",
 					value: "",
-					actions: {},
 				};
 			}
 			return {
 				type: "HorizontalContainer",
 				title: `Nest level ${level}`,
 				children: [deepNest(level - 1)],
-				actions: {},
 			};
 		}
 
@@ -1114,11 +1072,7 @@ test.describe("Row configuration", () => {
 						type: "Button",
 						title: "",
 						label: "Clear Branch",
-						actions: {
-							tap: [
-								{ condition: "", false: "", true: "{close()}" },
-							],
-						},
+						actions: tapAction("{close()}"),
 					},
 				],
 			},
@@ -1181,11 +1135,7 @@ test.describe("Row configuration", () => {
 						type: "Button",
 						title: "",
 						label: "Cancel Clear",
-						actions: {
-							tap: [
-								{ condition: "", false: "", true: "{close()}" },
-							],
-						},
+						actions: tapAction("{close()}"),
 					},
 				],
 			},
@@ -1247,7 +1197,6 @@ test.describe("Row configuration", () => {
 						title: "Initial value row",
 						placeholder: "Enter a title",
 						initial: "Default title",
-						actions: {},
 					},
 				],
 			},
@@ -1283,9 +1232,7 @@ test.describe("Row configuration", () => {
 							type: "Text",
 							title: "Sheet Content",
 							text: "Inside sheet",
-							actions: {},
 						},
-						actions: {},
 					},
 				],
 			},
@@ -1321,9 +1268,7 @@ test.describe("Row configuration", () => {
 							type: "Text",
 							title: "Local Sheet",
 							text: "Local",
-							actions: {},
 						},
-						actions: {},
 					},
 				],
 			},
@@ -1335,7 +1280,6 @@ test.describe("Row configuration", () => {
 						type: "Text",
 						title: "Remote Target Row",
 						text: "Remote",
-						actions: {},
 					},
 				],
 			},
@@ -1373,11 +1317,7 @@ test.describe("Row configuration", () => {
 						type: "Button",
 						title: "",
 						label: "Trigger Button",
-						actions: {
-							tap: [
-								{ condition: "", false: "", true: "{close()}" },
-							],
-						},
+						actions: tapAction("{close()}"),
 					},
 					{
 						type: "SelectPhoto",
@@ -1436,11 +1376,7 @@ test.describe("Row configuration", () => {
 						type: "Button",
 						title: "",
 						label: "Warn Button",
-						actions: {
-							tap: [
-								{ condition: "", false: "", true: "{close()}" },
-							],
-						},
+						actions: tapAction("{close()}"),
 					},
 				],
 			},
@@ -1515,17 +1451,12 @@ test.describe("Row configuration", () => {
 						type: "Text",
 						title: "Slide Text",
 						subtitle: "",
-						actions: {},
 					},
 					{
 						type: "Button",
 						title: "",
 						label: "Slide Button",
-						actions: {
-							tap: [
-								{ condition: "", false: "", true: "{close()}" },
-							],
-						},
+						actions: tapAction("{close()}"),
 					},
 				],
 			},
@@ -1538,7 +1469,7 @@ test.describe("Row configuration", () => {
 		).toBeVisible();
 		await expect(configPanel.getByText("(required)")).toHaveCount(0);
 		await expect(
-			configPanel.getByText("No slide left actions"),
+			configPanel.getByText("No swipe left actions"),
 		).toBeVisible();
 
 		await page.getByText("Slide Button", { exact: true }).click();

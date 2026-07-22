@@ -1,47 +1,13 @@
-import {
-	afterAll,
-	beforeAll,
-	beforeEach,
-	describe,
-	expect,
-	it,
-} from "bun:test";
-import { readFileSync } from "node:fs";
-import { join } from "node:path";
+import { describe, expect, it } from "bun:test";
 import { eq } from "drizzle-orm";
-import { migrate } from "drizzle-orm/pglite/migrator";
 import * as schema from "evy-types/db/schema.generated";
-import {
-	clearAllTestTables,
-	createPgliteTestDatabase,
-	insertRow,
-} from "./wsTestHelpers";
+import { action, insertRow, setupMigrationTest } from "./wsTestHelpers";
 
-const { pgliteClient, testDb } = createPgliteTestDatabase();
-
-const MIGRATION_SQL = readFileSync(
-	join(import.meta.dir, "../../drizzle/0010_calendar_axis_triggers.sql"),
-	"utf8",
+const { testDb, runMigration } = setupMigrationTest(
+	"0010_calendar_axis_triggers.sql",
 );
 
-const SELECT_DATUM_ACTION = {
-	condition: "",
-	false: "",
-	true: "{select($datum)}",
-};
-
-beforeAll(async () => {
-	await migrate(testDb, { migrationsFolder: "./drizzle" });
-	await clearAllTestTables(testDb);
-});
-
-afterAll(async () => {
-	await pgliteClient.close();
-});
-
-beforeEach(async () => {
-	await clearAllTestTables(testDb);
-});
+const SELECT_DATUM_ACTION = action("{select($datum)}");
 
 describe("0010_calendar_axis_triggers", () => {
 	it("backfills missing tap-row and tap-column on Calendar rows, leaving custom and non-Calendar untouched", async () => {
@@ -98,7 +64,7 @@ describe("0010_calendar_axis_triggers", () => {
 			},
 		});
 
-		await pgliteClient.exec(MIGRATION_SQL);
+		await runMigration();
 
 		const needsBackfill = await testDb.query.row.findFirst({
 			where: eq(schema.row.id, calendarNeedsBackfillId),

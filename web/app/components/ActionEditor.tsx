@@ -2,12 +2,13 @@ import type {
 	DATA_EVY_Flow,
 	DATA_EVY_Page,
 	DATA_EVY_Row,
+	RowTriggerName,
 	UI_RowAction,
 } from "evy-types";
 import { Trash2 } from "lucide-react";
 import { useCallback, useMemo, useState } from "react";
 import { LUCIDE_STROKE_WIDTH } from "../icons/iconSyntax";
-import { type RowTriggerName, TRIGGER_LABELS } from "../rows/rowTriggers";
+import { TRIGGER_LABELS } from "../rows/rowTriggers";
 import type { ServiceResource } from "../types/resources";
 import { formatBranchDisplay, parseBranch } from "../utils/actionBranch";
 import {

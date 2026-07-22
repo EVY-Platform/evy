@@ -14,9 +14,34 @@ enum EVYRowActionTrigger {
   case tapRow
   case tapColumn
   case swipeLeft
+
+  func actions(in rowActions: UI_RowActions) -> [UI_RowAction] {
+    switch self {
+    case .tap:
+      return rowActions.tap
+    case .delete:
+      return rowActions.delete
+    case .tapRow:
+      return rowActions.tapRow
+    case .tapColumn:
+      return rowActions.tapColumn
+    case .swipeLeft:
+      return rowActions.swipeLeft
+    }
+  }
+
+  static func allActionLists(in rowActions: UI_RowActions) -> [UI_RowAction] {
+    [
+      rowActions.tap,
+      rowActions.delete,
+      rowActions.tapRow,
+      rowActions.tapColumn,
+      rowActions.swipeLeft,
+    ].flatMap { $0 }
+  }
 }
 
-enum EVYRowActionOperation {
+enum EVYRowActionOperation: Equatable {
   case select(EVYJson)
   case selectPhoto
   case expandPhoto
@@ -35,29 +60,12 @@ enum EVYRowActionOperation {
     }
   }
 
-  static func selectPhotoHandler(
+  static func handler(
+    for expected: EVYRowActionOperation,
     _ apply: @escaping () throws -> Void
   ) -> EVYRowOperationHandler {
     { operation in
-      guard case .selectPhoto = operation else { throw unsupportedError }
-      try apply()
-    }
-  }
-
-  static func expandPhotoHandler(
-    _ apply: @escaping () throws -> Void
-  ) -> EVYRowOperationHandler {
-    { operation in
-      guard case .expandPhoto = operation else { throw unsupportedError }
-      try apply()
-    }
-  }
-
-  static func deletePhotoHandler(
-    _ apply: @escaping () throws -> Void
-  ) -> EVYRowOperationHandler {
-    { operation in
-      guard case .deletePhoto = operation else { throw unsupportedError }
+      guard operation == expected else { throw unsupportedError }
       try apply()
     }
   }

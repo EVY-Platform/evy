@@ -13,7 +13,7 @@ private struct EVYCalendarTimeslots: View {
   let rows: Int
   let columns: Int
   let slots: [EVYCalendarSlot]
-  let onSlotTapped: ((String) -> Void)?
+  let onSlotTapped: (String) -> Void
 
   var body: some View {
     let actionColor = colorScheme == .light ? Constants.actionColor : .white
@@ -33,7 +33,7 @@ private struct EVYCalendarTimeslots: View {
               .frame(height: rowHeight)
               .frame(width: columnWidth)
               .onTapGesture {
-                onSlotTapped?(slot.dateTimeISO)
+                onSlotTapped(slot.dateTimeISO)
               }
           }
         }.overlay(
@@ -66,17 +66,17 @@ private struct EVYCalendarViewState: Equatable {
 struct EVYCalendar: View {
   private let content: CalendarRowViewData
   private let calendarState: EVYState<EVYCalendarViewState>
-  private let onSlotTapped: ((String) -> Void)?
-  private let onRowTapped: (([String]) -> Void)?
-  private let onColumnTapped: (([String]) -> Void)?
+  private let onSlotTapped: (String) -> Void
+  private let onRowTapped: ([String]) -> Void
+  private let onColumnTapped: ([String]) -> Void
 
   @State private var scrollOffset = CGPoint.zero
 
   init(
     content: CalendarRowViewData,
-    onSlotTapped: ((String) -> Void)? = nil,
-    onRowTapped: (([String]) -> Void)? = nil,
-    onColumnTapped: (([String]) -> Void)? = nil
+    onSlotTapped: @escaping (String) -> Void,
+    onRowTapped: @escaping ([String]) -> Void,
+    onColumnTapped: @escaping ([String]) -> Void
   ) {
     self.content = content
     self.onSlotTapped = onSlotTapped
@@ -180,16 +180,6 @@ struct EVYCalendar: View {
   }
 
   @MainActor
-  static func togglePrimarySelection(dateTimeISO: String, destination: String) {
-    guard !destination.isEmpty else { return }
-    let selections = EVYDatetime.readTimeslots(destination)
-    let updated = EVYSelectionHelpers.toggledIdentifier(dateTimeISO, in: selections)
-    withAnimation(.linear(duration: animationDuration)) {
-      writePrimarySelections(updated, to: destination)
-    }
-  }
-
-  @MainActor
   static func togglePrimarySelection(dateTimeISOs: [String], destination: String) {
     guard !destination.isEmpty else { return }
     let selections = EVYDatetime.readTimeslots(destination)
@@ -203,7 +193,7 @@ struct EVYCalendar: View {
   static func applyPrimarySelection(value: EVYJson, destination: String) throws {
     switch value {
     case .string(let dateTimeISO):
-      togglePrimarySelection(dateTimeISO: dateTimeISO, destination: destination)
+      togglePrimarySelection(dateTimeISOs: [dateTimeISO], destination: destination)
     case .array(let elements):
       let dateTimeISOs = try elements.map { element in
         guard case .string(let dateTimeISO) = element else {
@@ -223,14 +213,14 @@ struct EVYCalendar: View {
         type: .y,
         labels: calendarState.value.yLabels,
         offset: $scrollOffset,
-        onLabelTapped: { index in onRowTapped?(dateTimes(forRow: index)) }
+        onLabelTapped: { index in onRowTapped(dateTimes(forRow: index)) }
       )
       VStack(spacing: .zero) {
         EVYCalendarAxisView(
           type: .x,
           labels: calendarState.value.xLabels,
           offset: $scrollOffset,
-          onLabelTapped: { index in onColumnTapped?(dateTimes(forColumn: index)) }
+          onLabelTapped: { index in onColumnTapped(dateTimes(forColumn: index)) }
         )
         ScrollViewReader { _ in
           ScrollView([.vertical, .horizontal]) {
@@ -287,7 +277,21 @@ private struct EVYCalendarPreview: View {
     if let data = EVYPreviewMockData.calendarPreviewContentJSON.data(using: .utf8),
       let content = try? JSONDecoder().decode(CalendarRowViewData.self, from: data)
     {
-      EVYCalendar(content: content)
+      EVYCalendar(
+        content: content,
+        onSlotTapped: { dateTimeISO in
+          EVYCalendar.togglePrimarySelection(
+            dateTimeISOs: [dateTimeISO], destination: content.destination)
+        },
+        onRowTapped: { dateTimeISOs in
+          EVYCalendar.togglePrimarySelection(
+            dateTimeISOs: dateTimeISOs, destination: content.destination)
+        },
+        onColumnTapped: { dateTimeISOs in
+          EVYCalendar.togglePrimarySelection(
+            dateTimeISOs: dateTimeISOs, destination: content.destination)
+        }
+      )
     } else {
       Text("Unable to build calendar preview")
     }

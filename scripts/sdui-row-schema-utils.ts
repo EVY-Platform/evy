@@ -486,8 +486,11 @@ export function rowTriggersFromDefinitions(
 }
 
 export function rowTriggersTsSource(): string[] {
+	const rowTriggerNameUnion = ROW_TRIGGER_NAMES.map((n) =>
+		JSON.stringify(n),
+	).join(" | ");
 	return [
-		`export type RowTriggerName = "tap" | "delete" | "tap-row" | "tap-column" | "swipe-left";`,
+		`export type RowTriggerName = ${rowTriggerNameUnion};`,
 		``,
 		`export type RowTriggerSpec = {`,
 		`\ttrigger: RowTriggerName;`,

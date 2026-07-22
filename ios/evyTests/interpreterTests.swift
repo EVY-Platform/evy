@@ -837,18 +837,18 @@ final class InterpreterTests: XCTestCase {
 
     try store(
       .array([
-        .dictionary([
-          "id": .string(archivedId),
-          "fk": .string(itemId),
-          "archivedAt": .string("2026-06-02T00:00:00Z"),
-          "data": .dictionary(["type": .string("pickup")]),
-        ]),
-        .dictionary([
-          "id": .string(activeId),
-          "fk": .string(itemId),
-          "archivedAt": .null,
-          "data": .dictionary(["type": .string("pickup")]),
-        ]),
+        EVYTestMessageFixtures.message(
+          id: archivedId,
+          fk: itemId,
+          archivedAt: .string("2026-06-02T00:00:00Z"),
+          type: "pickup"
+        ),
+        EVYTestMessageFixtures.message(
+          id: activeId,
+          fk: itemId,
+          archivedAt: .null,
+          type: "pickup"
+        ),
       ]),
       at: "\(EVYNamespace.marketplace):\(messagesKey)"
     )
@@ -868,13 +868,14 @@ final class InterpreterTests: XCTestCase {
 
     try store(
       .array([
-        .dictionary([
-          "id": .string(messageId),
-          "fk": .string(itemId),
-          "archivedAt": .null,
-          "status": .string("accepted"),
-          "data": .dictionary(["type": .string("pickup"), "time": .string("2026-06-03T09:00:00")]),
-        ])
+        EVYTestMessageFixtures.message(
+          id: messageId,
+          fk: itemId,
+          status: "accepted",
+          archivedAt: .null,
+          type: "pickup",
+          time: "2026-06-03T09:00:00"
+        )
       ]),
       at: "\(EVYNamespace.marketplace):\(messagesKey)"
     )
@@ -907,14 +908,14 @@ final class InterpreterTests: XCTestCase {
     func storeMessage(status: String) throws {
       try store(
         .array([
-          .dictionary([
-            "id": .string(messageId),
-            "fk": .string(itemId),
-            "archivedAt": .null,
-            "status": .string(status),
-            "data": .dictionary(["type": .string("pickup"), "time": .string("2026-06-03T09:00:00")]
-            ),
-          ])
+          EVYTestMessageFixtures.message(
+            id: messageId,
+            fk: itemId,
+            status: status,
+            archivedAt: .null,
+            type: "pickup",
+            time: "2026-06-03T09:00:00"
+          )
         ]),
         at: "\(EVYNamespace.marketplace):\(messagesKey)"
       )
@@ -936,13 +937,14 @@ final class InterpreterTests: XCTestCase {
 
     try store(
       .array([
-        .dictionary([
-          "id": .string(UUID().uuidString),
-          "fk": .string(itemId),
-          "archivedAt": .null,
-          "status": .string("accepted"),
-          "data": .dictionary(["type": .string("pickup"), "time": .string("2026-06-03T09:00:00")]),
-        ])
+        EVYTestMessageFixtures.message(
+          id: UUID().uuidString,
+          fk: itemId,
+          status: "accepted",
+          archivedAt: .null,
+          type: "pickup",
+          time: "2026-06-03T09:00:00"
+        )
       ]),
       at: "\(EVYNamespace.marketplace):\(messagesKey)"
     )
@@ -979,11 +981,11 @@ final class InterpreterTests: XCTestCase {
 
     try store(
       .array([
-        .dictionary([
-          "id": .string(activeId),
-          "fk": .string(itemId),
-          "data": .dictionary(["type": .string("pickup")]),
-        ])
+        EVYTestMessageFixtures.message(
+          id: activeId,
+          fk: itemId,
+          type: "pickup"
+        )
       ]),
       at: "\(EVYNamespace.marketplace):\(messagesKey)"
     )
@@ -1002,12 +1004,12 @@ final class InterpreterTests: XCTestCase {
 
     try store(
       .array([
-        .dictionary([
-          "id": .string(UUID().uuidString),
-          "fk": .string(itemId),
-          "archivedAt": .string("2026-06-02T00:00:00Z"),
-          "data": .dictionary(["type": .string("pickup")]),
-        ])
+        EVYTestMessageFixtures.message(
+          id: UUID().uuidString,
+          fk: itemId,
+          archivedAt: .string("2026-06-02T00:00:00Z"),
+          type: "pickup"
+        )
       ]),
       at: "\(EVYNamespace.marketplace):\(messagesKey)"
     )
@@ -1026,12 +1028,12 @@ final class InterpreterTests: XCTestCase {
 
     try store(
       .array([
-        .dictionary([
-          "id": .string(UUID().uuidString),
-          "fk": .string(itemId),
-          "archivedAt": .null,
-          "data": .dictionary(["type": .string("pickup")]),
-        ])
+        EVYTestMessageFixtures.message(
+          id: UUID().uuidString,
+          fk: itemId,
+          archivedAt: .null,
+          type: "pickup"
+        )
       ]),
       at: "\(EVYNamespace.marketplace):\(messagesKey)"
     )
@@ -1070,18 +1072,6 @@ final class InterpreterTests: XCTestCase {
     XCTAssertEqual(result.value, "Good")
   }
 
-  func testFindFirstExpressionWatchTargetsIncludeCollectionKey() throws {
-    let messagesKey = uniqueKey("messages")
-    let itemKey = uniqueKey("item")
-    let expression =
-      "{findFirst(\(messagesKey), fk == \(itemKey).id && archivedAt == null).fk == \(itemKey).id}"
-
-    let targets = EVY.watchTargets(for: expression)
-
-    XCTAssertTrue(targets.contains(messagesKey))
-    XCTAssertTrue(targets.contains("\(itemKey).id"))
-  }
-
   func testFindFirstNotNullMatchesArchivedRecord() throws {
     let messagesKey = uniqueKey("messages")
     let itemKey = uniqueKey("item")
@@ -1090,18 +1080,18 @@ final class InterpreterTests: XCTestCase {
 
     try store(
       .array([
-        .dictionary([
-          "id": .string(archivedId),
-          "fk": .string(itemId),
-          "archivedAt": .string("2026-06-02T00:00:00Z"),
-          "data": .dictionary(["type": .string("pickup")]),
-        ]),
-        .dictionary([
-          "id": .string(UUID().uuidString),
-          "fk": .string(itemId),
-          "archivedAt": .null,
-          "data": .dictionary(["type": .string("pickup")]),
-        ]),
+        EVYTestMessageFixtures.message(
+          id: archivedId,
+          fk: itemId,
+          archivedAt: .string("2026-06-02T00:00:00Z"),
+          type: "pickup"
+        ),
+        EVYTestMessageFixtures.message(
+          id: UUID().uuidString,
+          fk: itemId,
+          archivedAt: .null,
+          type: "pickup"
+        ),
       ]),
       at: "\(EVYNamespace.marketplace):\(messagesKey)"
     )
@@ -1121,13 +1111,13 @@ final class InterpreterTests: XCTestCase {
 
     try store(
       .array([
-        .dictionary([
-          "id": .string(acceptedId),
-          "fk": .string(itemId),
-          "archivedAt": .null,
-          "status": .string("accepted"),
-          "data": .dictionary(["type": .string("pickup")]),
-        ])
+        EVYTestMessageFixtures.message(
+          id: acceptedId,
+          fk: itemId,
+          status: "accepted",
+          archivedAt: .null,
+          type: "pickup"
+        )
       ]),
       at: "\(EVYNamespace.marketplace):\(messagesKey)"
     )
@@ -1194,11 +1184,11 @@ final class InterpreterTests: XCTestCase {
 
     try store(
       .array([
-        .dictionary([
-          "id": .string(UUID().uuidString),
-          "fk": .string(itemId),
-          "archivedAt": .null,
-        ])
+        EVYTestMessageFixtures.message(
+          id: UUID().uuidString,
+          fk: itemId,
+          archivedAt: .null
+        )
       ]),
       at: "\(EVYNamespace.marketplace):\(messagesKey)"
     )

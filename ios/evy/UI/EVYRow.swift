@@ -289,19 +289,7 @@ private struct EVYResolvedRow: View {
     datum: EVYJson? = nil,
     rowOperation: EVYRowOperationHandler? = nil
   ) {
-    let actions: [UI_RowAction]
-    switch trigger {
-    case .tap:
-      actions = contentRow.actions.tap
-    case .delete:
-      actions = contentRow.actions.delete
-    case .tapRow:
-      actions = contentRow.actions.tapRow
-    case .tapColumn:
-      actions = contentRow.actions.tapColumn
-    case .swipeLeft:
-      actions = contentRow.actions.swipeLeft
-    }
+    let actions = trigger.actions(in: contentRow.actions)
     EVYActionRunner.run(
       actions: actions,
       datum: datum ?? self.datum,

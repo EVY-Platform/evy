@@ -489,7 +489,6 @@ export const validateGetRequest = makeValidator<GetRequest>(
 	getValidateGetRequest,
 );
 
-/** Human-oriented label for API errors (matches prior `validation.ts` wrappers). */
 function assertUiFlowRowTriggerConstraints(row: UI_Row, path: string): void {
 	const triggerSpecs = SDUI_ROW_TRIGGERS[row.type];
 	if (!triggerSpecs) {
@@ -559,6 +558,7 @@ function assertUiFlowRowTriggers(flow: UI_Flow): void {
 	}
 }
 
+/** Human-oriented label for API errors (matches prior `validation.ts` wrappers). */
 export function validateUiFlow(data: unknown): UI_Flow {
 	assertValid("Flow", getValidateUiFlow(), data);
 	const flow = data as UI_Flow;

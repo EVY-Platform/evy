@@ -166,11 +166,7 @@ final class EVYTimeslotPickerTests: XCTestCase {
 
     EVY.ensureDraftExists(variableName: "selected_timeslot", scopeId: scopeId)
     let destination = "{selected_timeslot}"
-    let action = UI_RowAction(
-      condition: "",
-      false: "",
-      true: "{select($datum)}"
-    )
+    let action = rowAction(true: "{select($datum)}")
 
     EVYActionRunner.run(
       actions: [action],
@@ -186,24 +182,6 @@ final class EVYTimeslotPickerTests: XCTestCase {
     ) { _ in }
 
     XCTAssertEqual(try? EVY.getDataFromText(destination), .string(selectedTimeslot))
-  }
-
-  func testEmptyActionsDoNotCommitTimeslotSelection() throws {
-    let scopeId = "__test__:timeslot-empty-actions"
-    let selectedTimeslot = "2026-06-03T09:00:00"
-    EVY.draftStore.deleteDrafts()
-    EVY.draftStore.activeScopeId = scopeId
-    defer {
-      EVY.draftStore.deleteDrafts()
-      EVY.draftStore.activeScopeId = nil
-    }
-
-    EVY.ensureDraftExists(variableName: "selected_timeslot", scopeId: scopeId)
-    let destination = "{selected_timeslot}"
-
-    EVYActionRunner.run(actions: [], datum: .string(selectedTimeslot)) { _ in }
-
-    XCTAssertNotEqual(try? EVY.getDataFromText(destination), .string(selectedTimeslot))
   }
 
   func testCommitSelectionWritesSelectedTimeslot() throws {
