@@ -46,7 +46,7 @@ struct EVYSelectPhotoRow: View {
         "source": "{item.photo_ids}",
         "destination": "{item.photo_ids}",
         "actions": {
-          "tap": [{"condition": "", "true": "{select_photo()}", "false": ""}]},
+          "tap": [{"condition": "", "true": "{select_photo()}", "false": ""}],
           "delete": [{"condition": "", "true": "{delete_photo()}", "false": ""}]
         },
         "title": "Photos",
