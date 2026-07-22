@@ -1,7 +1,7 @@
 import { MARKETPLACE_RESOURCE } from "evy-types/marketplaceResources";
 import { useParseText } from "../../hooks/useParseText";
 import type { RowConfig } from "../../types/row";
-import { defineRow } from "../defineRow";
+import { defineRow, tapAction } from "../defineRow";
 import { RowLayout } from "../design-system/RowLayout";
 import { mockDatesFromToday } from "./mockDates";
 
@@ -112,7 +112,7 @@ function CalendarGrid({ config }: { config: RowConfig }) {
 export default defineRow("CalendarRow", {
 	config: {
 		type: "Calendar",
-		actions: [],
+		actions: [tapAction("{select($datum)}")],
 		source: `{${MARKETPLACE_RESOURCE.ITEMS}.pickup_selection}`,
 		visible: "true",
 		title: "Calendar row title",

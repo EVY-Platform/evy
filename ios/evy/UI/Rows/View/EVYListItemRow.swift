@@ -13,16 +13,25 @@ struct EVYListItemRow: View {
     self.view = view
   }
 
-  private var imageId: String {
-    guard let image = view.image else { return "" }
-    return (try? EVY.getDataFromText(image))?.toString() ?? image
+  private var imageId: String? {
+    guard let image = view.image?.trimmingCharacters(in: .whitespacesAndNewlines),
+      !image.isEmpty
+    else { return nil }
+    let resolved = (try? EVY.getDataFromText(image))?.toString() ?? image
+    let trimmed = resolved.trimmingCharacters(in: .whitespacesAndNewlines)
+    guard !trimmed.isEmpty, !trimmed.hasPrefix("{"), !trimmed.hasPrefix("[") else {
+      return nil
+    }
+    return trimmed
   }
 
   var body: some View {
     HStack(alignment: .center, spacing: 8) {
-      EVYRemoteFile(fileId: imageId)
-        .frame(width: 52, height: 52)
-        .clipShape(RoundedRectangle(cornerRadius: 4))
+      if let imageId {
+        EVYRemoteFile(fileId: imageId)
+          .frame(width: 52, height: 52)
+          .clipShape(RoundedRectangle(cornerRadius: 4))
+      }
 
       VStack(alignment: .leading, spacing: 2) {
         if let title = view.title, !title.isEmpty {

@@ -22,6 +22,18 @@ function makeUiRow(id: string, config: Record<string, unknown>): Row {
 }
 
 describe("rowCodec", () => {
+	it("serializes empty actions array in row data", () => {
+		const row = makeUiRow("row-actions", { type: "Search", actions: [] });
+		const records = rowToFlatRecords(row, NOW);
+		const record = records.find((r) => r.id === "row-actions");
+		expect(record?.data.actions).toEqual([]);
+
+		const rebuilt = buildRowConfigFromRecord(
+			record as NonNullable<typeof record>,
+		);
+		expect(rebuilt.actions).toEqual([]);
+	});
+
 	it("round-trips Search child and sheet independently", () => {
 		const search = makeUiRow("search-1", {
 			type: "Search",

@@ -710,6 +710,9 @@ class E2ETestBase: XCTestCase {
     } else {
       row["text"] = text
       row["expandLabel"] = "Read more"
+      row["actions"] = [
+        Self.rowAction(true: "{expand_text(\(id))}")
+      ]
     }
     if !name.isEmpty {
       row["name"] = name
@@ -857,7 +860,9 @@ class E2ETestBase: XCTestCase {
             [
               "id": "f1a2b3c4-d5e6-4f7a-8b9c-0d1e2f3a4b5c",
               "type": "TabContainer",
-              "actions": [],
+              "actions": [
+                Self.rowAction(true: "{select($datum)}")
+              ],
               "visible": "true",
               "title": "",
               "segments": ["Pickup", "Delivery", "Shipping"],
@@ -991,7 +996,7 @@ class E2ETestBase: XCTestCase {
       "type": "TimeslotPicker",
       "source": source,
       "destination": destination,
-      "actions": actions,
+      "actions": [Self.rowAction(true: "{select($datum)}")] + actions,
       "visible": visible,
       "title": "",
       "start_time": "07:00",
@@ -1213,7 +1218,9 @@ class E2ETestBase: XCTestCase {
             [
               "id": "b2c3d4e5-f6a7-4b8c-9d0e-1f2a3b4c5d6f",
               "type": "TabContainer",
-              "actions": [],
+              "actions": [
+                Self.rowAction(true: "{select($datum)}")
+              ],
               "visible": "true",
               "title": "",
               "segments": ["Pickup"],
@@ -2980,7 +2987,9 @@ final class E2ESegmentContainerTests: E2ETestBase {
             [
               "id": "6a5b4c3d-2e1f-4a0b-8c9d-1e2f3a4b5c6d",
               "type": "TabContainer",
-              "actions": [],
+              "actions": [
+                Self.rowAction(true: "{select($datum)}")
+              ],
               "visible": "true",
               "title": "",
               "segments": ["Pickup", "Delivery"],

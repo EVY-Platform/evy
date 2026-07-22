@@ -34,6 +34,7 @@ private struct EVYCalendarTimeslots: View {
   let rows: Int
   let columns: Int
   let slots: [EVYCalendarSlot]
+  let onSlotTapped: ((String) -> Void)?
 
   var body: some View {
     let actionColor = colorScheme == .light ? Constants.actionColor : .white
@@ -53,7 +54,9 @@ private struct EVYCalendarTimeslots: View {
               .frame(height: rowHeight)
               .frame(width: columnWidth)
               .onTapGesture {
-                if slot.isPrimarySelected {
+                if let onSlotTapped {
+                  onSlotTapped(slot.dateTimeISO)
+                } else if slot.isPrimarySelected {
                   operate(EVYCalendarOperation.unselect(dateTime: slot.dateTimeISO))
                 } else {
                   operate(EVYCalendarOperation.select(dateTime: slot.dateTimeISO))
@@ -90,11 +93,16 @@ private struct EVYCalendarViewState: Equatable {
 struct EVYCalendar: View {
   private let content: CalendarRowViewData
   private let calendarState: EVYState<EVYCalendarViewState>
+  private let onSlotTapped: ((String) -> Void)?
 
   @State private var scrollOffset = CGPoint.zero
 
-  init(content: CalendarRowViewData) {
+  init(
+    content: CalendarRowViewData,
+    onSlotTapped: ((String) -> Void)? = nil
+  ) {
     self.content = content
+    self.onSlotTapped = onSlotTapped
     calendarState = EVYState(
       watches: [
         content.destination,
@@ -226,12 +234,25 @@ struct EVYCalendar: View {
   }
 
   private func writePrimarySelections(_ selections: [String]) {
-    let destination = content.destination
+    Self.writePrimarySelections(selections, to: content.destination)
+  }
+
+  private static func writePrimarySelections(_ selections: [String], to destination: String) {
     guard !destination.isEmpty else { return }
     try? EVY.writeRawValue(
       EVYJson.array(selections.map { .string($0) }),
       to: destination
     )
+  }
+
+  @MainActor
+  static func togglePrimarySelection(dateTimeISO: String, destination: String) {
+    guard !destination.isEmpty else { return }
+    let selections = EVYDatetime.readTimeslots(destination)
+    let updated = EVYSelectionHelpers.toggledIdentifier(dateTimeISO, in: selections)
+    withAnimation(.linear(duration: animationDuration)) {
+      writePrimarySelections(updated, to: destination)
+    }
   }
 
   var body: some View {
@@ -244,7 +265,8 @@ struct EVYCalendar: View {
             EVYCalendarTimeslots(
               rows: calendarState.value.rows,
               columns: calendarState.value.columns,
-              slots: calendarState.value.slots
+              slots: calendarState.value.slots,
+              onSlotTapped: onSlotTapped
             )
             .background(
               GeometryReader { geo in

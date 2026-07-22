@@ -101,6 +101,8 @@
 		73F2A0052F30B00200000001 /* FilesFile.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73F2A0152F30B00200000001 /* FilesFile.swift */; };
 
 		73F3A0012F30B00300000001 /* EVYActionRunner.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73F3A0022F30B00300000001 /* EVYActionRunner.swift */; };
+		A7R0W0012F90000100000001 /* EVYRowActionOperation.swift in Sources */ = {isa = PBXBuildFile; fileRef = A7R0W0022F90000100000001 /* EVYRowActionOperation.swift */; };
+		A7R0W0032F90000100000001 /* EVYPhotoFullScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = A7R0W0042F90000100000001 /* EVYPhotoFullScreen.swift */; };
 
 		73F4B0032F40B00100000001 /* LucideIcons in Frameworks */ = {isa = PBXBuildFile; productRef = 73F4B0022F40B00100000001 /* LucideIcons */; };
 		73F5D1012F50000100000001 /* EVYDraft.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73F5D1002F50000100000001 /* EVYDraft.swift */; };
@@ -254,6 +256,8 @@
 		73F2A0152F30B00200000001 /* FilesFile.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FilesFile.swift; sourceTree = "<group>"; };
 
 		73F3A0022F30B00300000001 /* EVYActionRunner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EVYActionRunner.swift; sourceTree = "<group>"; };
+		A7R0W0022F90000100000001 /* EVYRowActionOperation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EVYRowActionOperation.swift; sourceTree = "<group>"; };
+		A7R0W0042F90000100000001 /* EVYPhotoFullScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EVYPhotoFullScreen.swift; sourceTree = "<group>"; };
 
 		73F5D1002F50000100000001 /* EVYDraft.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EVYDraft.swift; sourceTree = "<group>"; };
 		73F5D2002F50000200000001 /* forEachRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = forEachRow.swift; sourceTree = "<group>"; };
@@ -386,6 +390,7 @@
 				73CDCAC12B272E0C00D4E82A /* EVYRow.swift */,
 				A6B2C3D4E5F60718293A4B14 /* EVYRecordChangeView.swift */,
 				73F3A0022F30B00300000001 /* EVYActionRunner.swift */,
+				A7R0W0022F90000100000001 /* EVYRowActionOperation.swift */,
 				FA10A0102F90000100000001 /* EVYActionParser.swift */,
 				73C78AFB2BC564E30026F39D /* Assets */,
 				736D104F2B78C4A100503C4D /* Rows */,
@@ -565,6 +570,7 @@
 				7330E4382C9BFABB00FE8F31 /* EVYSelectItem.swift */,
 				734F5A232C2ED3BD00C0FD0A /* EVYSelectPhoto.swift */,
 				A61A9E27AFD75A42586274D9 /* EVYPhotoGallery.swift */,
+				A7R0W0042F90000100000001 /* EVYPhotoFullScreen.swift */,
 				74BE007E2FA0000400000001 /* EVYRemoteFile.swift */,
 				73884AC32B2E9AE500BC8726 /* EVYTimeslotPicker.swift */,
 			);
@@ -810,6 +816,8 @@
 				73EDC87D2B8F37E800304DD8 /* EVYButtonRow.swift in Sources */,
 				734F5A222C2EBB2B00C0FD0A /* EVYDropdown.swift in Sources */,
 				73F3A0012F30B00300000001 /* EVYActionRunner.swift in Sources */,
+				A7R0W0012F90000100000001 /* EVYRowActionOperation.swift in Sources */,
+				A7R0W0032F90000100000001 /* EVYPhotoFullScreen.swift in Sources */,
 				73CDCAC22B272E0C00D4E82A /* EVYRow.swift in Sources */,
 				FA10A0012F90000100000001 /* EVYChange.swift in Sources */,
 				A6B2C3D4E5F60718293A4B03 /* EVYRouting.swift in Sources */,

@@ -154,8 +154,42 @@ final class EVYTimeslotPickerTests: XCTestCase {
     XCTAssertEqual(dates.first?.timeslots.map { $0.timeslot }, ["09:00", "11:30", "14:00"])
   }
 
-  func testSelectionDoesNotWriteUntilCommitClosureRuns() throws {
-    let scopeId = "__test__:timeslot-selection"
+  func testSelectActionCommitsTimeslotViaRowOperation() throws {
+    let scopeId = "__test__:timeslot-select-action"
+    let selectedTimeslot = "2026-06-03T09:30:00"
+    EVY.draftStore.deleteDrafts()
+    EVY.draftStore.activeScopeId = scopeId
+    defer {
+      EVY.draftStore.deleteDrafts()
+      EVY.draftStore.activeScopeId = nil
+    }
+
+    EVY.ensureDraftExists(variableName: "selected_timeslot", scopeId: scopeId)
+    let destination = "{selected_timeslot}"
+    let action = UI_RowAction(
+      condition: "",
+      false: "",
+      true: "{select($datum)}"
+    )
+
+    EVYActionRunner.run(
+      actions: [action],
+      datum: .string(selectedTimeslot),
+      rowOperation: { operation in
+        switch operation {
+        case .select(let value):
+          EVYTimeslotPicker.commitSelection(value.toString(), to: destination)
+        default:
+          throw EVYError.invalidData(context: "unexpected row operation")
+        }
+      }
+    ) { _ in }
+
+    XCTAssertEqual(try? EVY.getDataFromText(destination), .string(selectedTimeslot))
+  }
+
+  func testEmptyActionsDoNotCommitTimeslotSelection() throws {
+    let scopeId = "__test__:timeslot-empty-actions"
     let selectedTimeslot = "2026-06-03T09:00:00"
     EVY.draftStore.deleteDrafts()
     EVY.draftStore.activeScopeId = scopeId
@@ -165,24 +199,14 @@ final class EVYTimeslotPickerTests: XCTestCase {
     }
 
     EVY.ensureDraftExists(variableName: "selected_timeslot", scopeId: scopeId)
-    let commit = {
-      EVYTimeslotPicker.commitSelection(
-        selectedTimeslot,
-        to: "{selected_timeslot}"
-      )
-    }
+    let destination = "{selected_timeslot}"
 
-    XCTAssertNotEqual(
-      try? EVY.getDataFromText("{selected_timeslot}"),
-      .string(selectedTimeslot),
-      "Destination should stay unchanged until commit closure runs"
-    )
+    EVYActionRunner.run(actions: [], datum: .string(selectedTimeslot)) { _ in }
 
-    commit()
-    XCTAssertEqual(try? EVY.getDataFromText("{selected_timeslot}"), .string(selectedTimeslot))
+    XCTAssertNotEqual(try? EVY.getDataFromText(destination), .string(selectedTimeslot))
   }
 
-  func testCommitClosureWritesSelectedTimeslot() throws {
+  func testCommitSelectionWritesSelectedTimeslot() throws {
     let scopeId = "__test__:timeslot-commit"
     let selectedTimeslot = "2026-06-03T10:00:00"
     EVY.draftStore.deleteDrafts()

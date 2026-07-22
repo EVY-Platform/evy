@@ -11,7 +11,13 @@
 						"id": "3fbadee6-dc70-434e-8d4d-443fe86e6a09",
 						"type": "PhotoGallery",
 						"source": "{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.photo_ids}",
-						"actions": [],
+						"actions": [
+							{
+								"condition": "",
+								"true": "{expand_photo()}",
+								"false": ""
+							}
+						],
 						"visible": "true",
 						"title": "",
 						"name": "Item photo gallery"
@@ -84,7 +90,13 @@
 					{
 						"id": "ec3bef23-6d74-43eb-adde-8d498d9ed70e",
 						"type": "TabContainer",
-						"actions": [],
+						"actions": [
+							{
+								"condition": "",
+								"true": "{select($datum)}",
+								"false": ""
+							}
+						],
 						"visible": "true",
 						"title": "",
 						"segments": ["Pickup", "Delivery", "Shipping"],
@@ -111,6 +123,11 @@
 										"type": "TimeslotPicker",
 										"source": "{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.pickup_selection}",
 										"actions": [
+											{
+												"condition": "",
+												"true": "{select($datum)}",
+												"false": ""
+											},
 											{
 												"condition": "",
 												"true": "{show(b8c7d6e5-f4a3-4b2c-9d1e-0f8a7b6c5d4e)}",
@@ -293,6 +310,11 @@
 										"type": "TimeslotPicker",
 										"source": "{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.delivery_selection}",
 										"actions": [
+											{
+												"condition": "",
+												"true": "{select($datum)}",
+												"false": ""
+											},
 											{
 												"condition": "",
 												"true": "{show(c4d5e6f7-a8b9-4c0d-1e2f-3a4b5c6d7e80)}",
@@ -612,7 +634,13 @@
 						"type": "SelectPhoto",
 						"source": "{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.photo_ids}",
 						"destination": "{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.photo_ids}",
-						"actions": [],
+						"actions": [
+							{
+								"condition": "",
+								"true": "{select_photo()}",
+								"false": ""
+							}
+						],
 						"title": "",
 						"subtitle": "{count(dc28ed59-298e-493c-8ff3-3e60f2ebccbd.photo_ids)}/10 - Choose your listing's main photo first.",
 						"icon": "::image-plus::",
@@ -809,7 +837,13 @@
 					{
 						"id": "d0e1f2a3-b4c5-4d6e-8f8a-9b0c1d2e3f4a",
 						"type": "TabContainer",
-						"actions": [],
+						"actions": [
+							{
+								"condition": "",
+								"true": "{select($datum)}",
+								"false": ""
+							}
+						],
 						"title": "",
 						"segments": ["Pickup", "Delivery", "Shipping"],
 						"children": [
@@ -903,7 +937,13 @@
 										"source": "{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.pickup_selection}",
 										"destination": "{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.pickup_selection}",
 										"secondary": "{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.delivery_selection}",
-										"actions": [],
+										"actions": [
+											{
+												"condition": "",
+												"true": "{select($datum)}",
+												"false": ""
+											}
+										],
 										"title": "",
 										"start_time": "07:00",
 										"end_time": "19:00",
@@ -959,7 +999,13 @@
 										"type": "InlinePicker",
 										"source": "{e82e1baa-6d33-4649-b495-4e10a4d1d8bf}",
 										"destination": "{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.distance}",
-										"actions": [],
+										"actions": [
+											{
+												"condition": "",
+												"true": "{select($datum)}",
+												"false": ""
+											}
+										],
 										"title": "",
 										"visible": "true",
 										"name": "Delivery distance",
@@ -981,7 +1027,13 @@
 										"source": "{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.delivery_selection}",
 										"destination": "{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.delivery_selection}",
 										"secondary": "{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.pickup_selection}",
-										"actions": [],
+										"actions": [
+											{
+												"condition": "",
+												"true": "{select($datum)}",
+												"false": ""
+											}
+										],
 										"title": "",
 										"start_time": "07:00",
 										"end_time": "19:00",
@@ -1049,7 +1101,13 @@
 										"type": "InlinePicker",
 										"source": "{2532b561-3b14-458b-9039-307e99c4a4ba}",
 										"destination": "{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.shipping_destination_areas}",
-										"actions": [],
+										"actions": [
+											{
+												"condition": "",
+												"true": "{select($datum)}",
+												"false": ""
+											}
+										],
 										"title": "",
 										"visible": "true",
 										"name": "Shipping destinations",
@@ -1117,7 +1175,13 @@
 								"id": "33333333-3333-4333-8333-333333333301",
 								"type": "TextSelect",
 								"destination": "{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.payment_cash}",
-								"actions": [],
+								"actions": [
+									{
+										"condition": "",
+										"true": "{select($datum)}",
+										"false": ""
+									}
+								],
 								"title": "Accept cash",
 								"text": "Let buyers know you will accept cash on pickup",
 								"visible": "true",
@@ -1128,7 +1192,13 @@
 								"id": "33333333-3333-4333-8333-333333333302",
 								"type": "TextSelect",
 								"destination": "{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.payment_app}",
-								"actions": [],
+								"actions": [
+									{
+										"condition": "",
+										"true": "{select($datum)}",
+										"false": ""
+									}
+								],
 								"title": "Accept app payments",
 								"text": "Benefit from EVY seller protection when accepting payments through the app on pickup\\n- Cards are verified before the purchase\\n- Payment is transferred immediately when both buyer and seller confirm using a temporary code",
 								"visible": "true",
@@ -1165,7 +1235,13 @@
 							{
 								"id": "b5c6d7e8-f9a0-4b1c-2d3e-4f5a6b7c8d9e",
 								"type": "TextExpand",
-								"actions": [],
+								"actions": [
+									{
+										"condition": "",
+										"true": "{expand_text(b5c6d7e8-f9a0-4b1c-2d3e-4f5a6b7c8d9e)}",
+										"false": ""
+									}
+								],
 								"visible": "true",
 								"title": "",
 								"text": "EVY is all about Data privacy. Your identity and profile information remains encrypted on your phone and inaccessible to anyone but you. However, the information in your listing will be public",

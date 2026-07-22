@@ -15,16 +15,19 @@ struct EVYInlinePicker: View {
   private var options: [EVYJson] = []
   private var formattedOptionLabels: [String] = []
   private var selectedIdentifiers: EVYState<[String]>
+  private let onOptionTapped: EVYRowTapCallback<EVYJson>?
 
   init(
     title: String,
     data: String,
     valueTemplate: String?,
-    destination: String
+    destination: String,
+    onOptionTapped: EVYRowTapCallback<EVYJson>? = nil
   ) {
     self.title = title
     self.valueTemplate = valueTemplate
     self.destination = destination
+    self.onOptionTapped = onOptionTapped
 
     let loadedOptions = EVYOptionLoading.loadOptions(from: data)
     options = loadedOptions
@@ -47,7 +50,7 @@ struct EVYInlinePicker: View {
       })
   }
 
-  private func performAction(option: EVYJson) {
+  private func applyToggle(for option: EVYJson) {
     let optionIdentifier = option.identifierValue()
     do {
       let updatedIdentifiers = EVYSelectionHelpers.toggledIdentifier(
@@ -63,12 +66,20 @@ struct EVYInlinePicker: View {
     }
   }
 
+  private func tapOption(_ option: EVYJson) {
+    if let onOptionTapped {
+      onOptionTapped(option, EVYRowActionOperation.selectHandler { applyToggle(for: $0) })
+    } else {
+      applyToggle(for: option)
+    }
+  }
+
   var body: some View {
     HStack {
       ForEach(Array(options.enumerated()), id: \.offset) { index, option in
         let isSelected = selectedIdentifiers.value.contains(option.identifierValue())
         Button(action: {
-          performAction(option: option)
+          tapOption(option)
         }) {
           let textView = EVYTextView(formattedOptionLabels[index])
           EVYRectangle.fitWidth(

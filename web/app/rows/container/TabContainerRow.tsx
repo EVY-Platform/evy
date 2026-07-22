@@ -3,7 +3,7 @@ import { ContainerChildren } from "../../components/ContainerChildren";
 import { useRowById } from "../../hooks/useRowById";
 import { useFlowsContext } from "../../state/contexts/FlowsContext";
 import type { RowConfig } from "../../types/row";
-import { defineRow } from "../defineRow";
+import { defineRow, tapAction } from "../defineRow";
 import { RowLayout } from "../design-system/RowLayout";
 
 const typeName = "TabContainerRow";
@@ -27,7 +27,7 @@ const segmentGroupStyle: CSSProperties = {
 export default defineRow(typeName, {
 	config: {
 		type: "TabContainer",
-		actions: [],
+		actions: [tapAction("{select($datum)}")],
 		visible: "true",
 		title: "Tab container row title",
 		segments: ["X", "Y", "Z"],

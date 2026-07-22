@@ -441,6 +441,154 @@ final class EVYActionRunnerTests: XCTestCase {
     XCTAssertEqual(EVYActionParser.showRowId(from: "{show(target-id)}"), "target-id")
   }
 
+  func testSelectDispatchesBareDatum() {
+    let datum = EVYJson.dictionary([
+      "dateTimeISO": .string("2026-06-03T11:00:00"),
+      "label": .string("11:00"),
+    ])
+    var received: EVYRowActionOperation?
+    let selectAction = rowAction(true: "{select($datum)}")
+    let closeAction = rowAction(true: "{close()}")
+    var receivedOps: [ActionOperation] = []
+    EVYActionRunner.run(
+      actions: [selectAction, closeAction],
+      datum: datum,
+      rowOperation: { received = $0 }
+    ) { receivedOps.append($0) }
+    guard case .select(let value) = received else {
+      return XCTFail("Expected select, got \(String(describing: received))")
+    }
+    XCTAssertEqual(value, datum)
+    XCTAssertEqual(receivedOps, [.close])
+  }
+
+  func testSelectResolvesDatumProperty() {
+    let datum = EVYJson.dictionary([
+      "dateTimeISO": .string("2026-06-03T11:00:00")
+    ])
+    var received: EVYRowActionOperation?
+    EVYActionRunner.run(
+      actions: [rowAction(true: "{select($datum.dateTimeISO)}")],
+      datum: datum,
+      rowOperation: { received = $0 }
+    ) { _ in }
+    guard case .select(let value) = received else {
+      return XCTFail("Expected select, got \(String(describing: received))")
+    }
+    XCTAssertEqual(value, .string("2026-06-03T11:00:00"))
+  }
+
+  func testSelectPassesQuotedLiteral() {
+    var received: EVYRowActionOperation?
+    EVYActionRunner.run(
+      actions: [rowAction(true: "{select(\"literal\")}")],
+      rowOperation: { received = $0 }
+    ) { _ in }
+    guard case .select(let value) = received else {
+      return XCTFail("Expected select, got \(String(describing: received))")
+    }
+    XCTAssertEqual(value, .string("literal"))
+  }
+
+  func testSelectWithNoArgumentPostsErrorAndStops() {
+    var receivedOps: [ActionOperation] = []
+    var rowOps: [EVYRowActionOperation] = []
+    let errors = capturedErrors {
+      EVYActionRunner.run(
+        actions: [rowAction(true: "{select()}"), rowAction(true: "{close()}")],
+        rowOperation: { rowOps.append($0) }
+      ) { receivedOps.append($0) }
+    }
+    XCTAssertFalse(errors.isEmpty)
+    XCTAssertTrue(rowOps.isEmpty)
+    XCTAssertTrue(receivedOps.isEmpty)
+  }
+
+  func testSelectWithExtraArgumentPostsErrorAndStops() {
+    var receivedOps: [ActionOperation] = []
+    var rowOps: [EVYRowActionOperation] = []
+    let errors = capturedErrors {
+      EVYActionRunner.run(
+        actions: [rowAction(true: "{select(a, b)}"), rowAction(true: "{close()}")],
+        rowOperation: { rowOps.append($0) }
+      ) { receivedOps.append($0) }
+    }
+    XCTAssertFalse(errors.isEmpty)
+    XCTAssertTrue(rowOps.isEmpty)
+    XCTAssertTrue(receivedOps.isEmpty)
+  }
+
+  func testSelectPhotoDispatchesAndContinues() {
+    var received: EVYRowActionOperation?
+    var receivedOps: [ActionOperation] = []
+    EVYActionRunner.run(
+      actions: [rowAction(true: "{select_photo()}"), rowAction(true: "{close()}")],
+      rowOperation: { received = $0 }
+    ) { receivedOps.append($0) }
+    guard case .selectPhoto = received else {
+      return XCTFail("Expected selectPhoto, got \(String(describing: received))")
+    }
+    XCTAssertEqual(receivedOps, [.close])
+  }
+
+  func testExpandPhotoDispatchesAndContinues() {
+    var received: EVYRowActionOperation?
+    var receivedOps: [ActionOperation] = []
+    EVYActionRunner.run(
+      actions: [rowAction(true: "{expand_photo()}"), rowAction(true: "{close()}")],
+      rowOperation: { received = $0 }
+    ) { receivedOps.append($0) }
+    guard case .expandPhoto = received else {
+      return XCTFail("Expected expandPhoto, got \(String(describing: received))")
+    }
+    XCTAssertEqual(receivedOps, [.close])
+  }
+
+  func testSelectWithDefaultRowOperationPostsErrorAndStops() {
+    var receivedOps: [ActionOperation] = []
+    let errors = capturedErrors {
+      EVYActionRunner.run(
+        actions: [rowAction(true: "{select($datum)}"), rowAction(true: "{close()}")],
+        datum: .string("slot")
+      ) { receivedOps.append($0) }
+    }
+    XCTAssertFalse(errors.isEmpty)
+    XCTAssertTrue(receivedOps.isEmpty)
+  }
+
+  func testExpandTextPostsNotificationWithRowId() {
+    var postedRowId: String?
+    let token = NotificationCenter.default.addObserver(
+      forName: .evyExpandTextRow, object: nil, queue: nil
+    ) { notification in
+      MainActor.assumeIsolated {
+        postedRowId = notification.object as? String
+      }
+    }
+    defer { NotificationCenter.default.removeObserver(token) }
+
+    var receivedOps: [ActionOperation] = []
+    EVYActionRunner.run(
+      actions: [rowAction(true: "{expand_text(text-expand-row)}"), rowAction(true: "{close()}")]
+    ) { receivedOps.append($0) }
+
+    XCTAssertEqual(postedRowId, "text-expand-row")
+    XCTAssertEqual(receivedOps, [.close])
+  }
+
+  func testExpandTextWithInvalidArgsPostsErrorAndStops() {
+    for branch in ["{expand_text()}", "{expand_text(a, b)}", "{expand_text( )}"] {
+      var receivedOps: [ActionOperation] = []
+      let errors = capturedErrors {
+        EVYActionRunner.run(
+          actions: [rowAction(true: branch), rowAction(true: "{close()}")]
+        ) { receivedOps.append($0) }
+      }
+      XCTAssertFalse(errors.isEmpty, "Expected error for \(branch)")
+      XCTAssertTrue(receivedOps.isEmpty, "Expected stop for \(branch)")
+    }
+  }
+
   func testNavigateWithBraceFunction() {
     var received: ActionOperation?
     let action = rowAction(true: "{navigate(flow-1,page-2)}")
@@ -602,48 +750,6 @@ final class EVYActionRunnerTests: XCTestCase {
     )
     EVYActionRunner.run(actions: [action]) { received = $0 }
     XCTAssertEqual(received, .highlightRequired("Postcode"))
-  }
-
-  func testPrepareRunsBeforeChain() throws {
-    let namespace = "test"
-    let resource = "prepare-create-actions"
-    let scopeId = "__test__:prepare-create"
-    let selectedTimeslot = "2026-06-03T11:00:00"
-    try? EVY.publicStore.deleteAll(namespace: namespace, resource: resource)
-    EVY.draftStore.deleteDrafts()
-    EVY.draftStore.activeScopeId = scopeId
-    defer {
-      try? EVY.publicStore.deleteAll(namespace: namespace, resource: resource)
-      EVY.draftStore.deleteDrafts()
-      EVY.draftStore.activeScopeId = nil
-    }
-
-    EVY.ensureDraftExists(variableName: "selected_pickup_timeslot", scopeId: scopeId)
-    var prepareRan = false
-    let prepare = {
-      prepareRan = true
-      try? EVY.updateValue(
-        selectedTimeslot,
-        destination: "{selected_pickup_timeslot}",
-        scopeId: scopeId
-      )
-    }
-    let action = rowAction(
-      true:
-        "{create(\(namespace),\(resource),{fk: item-1, archivedAt: null, data: {type: pickup, time: selected_pickup_timeslot}})}"
-    )
-    var received: ActionOperation?
-    EVYActionRunner.run(actions: [action], prepare: prepare) { received = $0 }
-
-    XCTAssertTrue(prepareRan)
-    XCTAssertNil(received)
-
-    let createdRows = try EVY.publicStore.getAll(namespace: namespace, resource: resource)
-    let createdPayload = try XCTUnwrap(createdRows.first?.decoded())
-    guard case .dictionary(let values) = createdPayload else {
-      return XCTFail("Expected inline create payload dictionary")
-    }
-    XCTAssertEqual(values["data"]?.parseProp(props: ["time"]), .string(selectedTimeslot))
   }
 
   func testCreateActionRunsImmediately() throws {

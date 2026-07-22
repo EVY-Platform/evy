@@ -1,3 +1,4 @@
+import type { UI_RowAction } from "evy-types";
 import { createElement, type ReactNode } from "react";
 
 import { useRowById } from "../hooks/useRowById";
@@ -15,6 +16,10 @@ type RowComponent = ((props: { rowId: string }) => ReactNode) & {
 	config: RowConfig;
 	name: string;
 };
+
+export function tapAction(branch: string): UI_RowAction {
+	return { condition: "", false: "", true: branch };
+}
 
 function UnknownRowContent(): ReactNode {
 	return (

@@ -355,3 +355,35 @@ Updates matching domain entities immediately. Filter and changes values resolve 
 ```
 
 Presents the row with ID `rowId` in a sheet overlay. Requires exactly one non-empty ID; targets may live on any synced page. Unresolved IDs are errors. See [sdui.md](./sdui.md) for sheet layout and builder defaults.
+
+#### select
+
+```
+{select(value)}
+```
+
+Asks the triggering row to select `value`. Usually `{select($datum)}` with the tapped unit as datum. Each row type defines what select means (toggle, write scalar, switch segment). Unsupported on rows without a select handler.
+
+#### select_photo
+
+```
+{select_photo()}
+```
+
+Asks the triggering `SelectPhoto` row to present the iOS photo picker. Does not upload by itself — upload still runs after the user picks photos.
+
+#### expand_photo
+
+```
+{expand_photo()}
+```
+
+Asks the triggering `PhotoGallery` row to present the currently selected photo full screen.
+
+#### expand_text
+
+```
+{expand_text(rowId)}
+```
+
+Expands the `TextExpand` row with ID `rowId`, wherever it is on screen. Requires exactly one non-empty row ID (same shape as `show`).

@@ -8,12 +8,18 @@ import SwiftUI
 struct EVYPhotoGallery: View {
   let title: String
   let imageIds: [String]
+  let onPhotoTapped: ((String) -> Void)?
 
   @State private var selectedImageIndex = 0
 
-  init(title: String, imageIds: [String] = []) {
+  init(
+    title: String,
+    imageIds: [String] = [],
+    onPhotoTapped: ((String) -> Void)? = nil
+  ) {
     self.title = title
     self.imageIds = imageIds
+    self.onPhotoTapped = onPhotoTapped
   }
 
   var body: some View {
@@ -29,6 +35,10 @@ struct EVYPhotoGallery: View {
             EVYRemoteFile(fileId: imageIds[index])
               .frame(maxWidth: .infinity, maxHeight: .infinity)
               .clipped()
+              .contentShape(Rectangle())
+              .onTapGesture {
+                onPhotoTapped?(imageIds[index])
+              }
               .tag(index)
           }
         }

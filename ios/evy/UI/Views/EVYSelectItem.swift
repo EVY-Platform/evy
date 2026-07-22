@@ -127,6 +127,7 @@ struct EVYSelectItem: View {
   let target: EVYSelectItemTarget
   let textStyle: EVYTextStyle
   let onSelect: (() -> Void)?
+  let onTap: ((@escaping () throws -> Void) -> Void)?
 
   private let displayLabel: String
   private var selected: EVYState<Bool>
@@ -139,7 +140,8 @@ struct EVYSelectItem: View {
     selectionStyle: EVYRadioStyle,
     target: EVYSelectItemTarget,
     textStyle: EVYTextStyle = .body,
-    onSelect: (() -> Void)? = nil
+    onSelect: (() -> Void)? = nil,
+    onTap: ((@escaping () throws -> Void) -> Void)? = nil
   ) {
     self.destination = destination
     self.value = value
@@ -148,6 +150,7 @@ struct EVYSelectItem: View {
     self.target = target
     self.textStyle = textStyle
     self.onSelect = onSelect
+    self.onTap = onTap
 
     self.displayLabel =
       displayLabel ?? (try? EVY.displayText(forDatum: value, valueTemplate: valueTemplate))
@@ -168,14 +171,21 @@ struct EVYSelectItem: View {
     }
     .contentShape(Rectangle())
     .onTapGesture {
-      do {
+      let performDefault: () throws -> Void = {
         try target.applySelection(
           value: value, currentlySelected: selected.value, destination: destination)
         onSelect?()
-      } catch {
-        #if DEBUG
-          print("[EVYSelectItem] Error updating selection: \(error)")
-        #endif
+      }
+      if let onTap {
+        onTap(performDefault)
+      } else {
+        do {
+          try performDefault()
+        } catch {
+          #if DEBUG
+            print("[EVYSelectItem] Error updating selection: \(error)")
+          #endif
+        }
       }
     }
   }

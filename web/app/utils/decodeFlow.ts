@@ -1,4 +1,4 @@
-import type { UI_Row as ServerRow } from "evy-types";
+import type { UI_Row as ServerRow, UI_RowAction } from "evy-types";
 import {
 	createRowElement,
 	getBaseRowForType,
@@ -278,5 +278,20 @@ export function buildRowForNewPageFromBase(
 		structuredClone(rowToServerRow(seed)),
 	);
 	assignFreshIdsInPlace(cloned, newRowId);
-	return decodeRow(cloned);
+	const row = decodeRow(cloned);
+	if (row.config.type === "TextExpand") {
+		const expandTextAction: UI_RowAction = {
+			condition: "",
+			true: `{expand_text(${newRowId})}`,
+			false: "",
+		};
+		return {
+			...row,
+			config: {
+				...row.config,
+				actions: [expandTextAction],
+			},
+		};
+	}
+	return row;
 }

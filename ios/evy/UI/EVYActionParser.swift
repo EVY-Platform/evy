@@ -103,16 +103,26 @@ enum EVYActionParser {
     return (name, args)
   }
 
-  /// Parses `{show(rowId)}` and returns the target row id when the branch is valid.
-  static func showRowId(from rawBranch: String) -> String? {
-    guard let parsed = functionCall(from: rawBranch), parsed.name == "show" else {
-      return nil
-    }
-    let args = EVY.splitFunctionArguments(parsed.args)
+  /// Parses already-split function args for a single non-empty id (e.g. args of `show(rowId)`).
+  static func singleIdArgument(fromArgs functionArgs: String) -> String? {
+    let args = EVY.splitFunctionArguments(functionArgs)
     guard args.count == 1 else { return nil }
     let rowId = EVY.stripOptionalSurroundingQuotes(args[0])
       .trimmingCharacters(in: .whitespacesAndNewlines)
     guard !rowId.isEmpty else { return nil }
     return rowId
+  }
+
+  /// Parses a function call with exactly one non-empty id argument (e.g. `{show(rowId)}`).
+  static func singleIdArgument(from rawBranch: String, function: String) -> String? {
+    guard let parsed = functionCall(from: rawBranch), parsed.name == function else {
+      return nil
+    }
+    return singleIdArgument(fromArgs: parsed.args)
+  }
+
+  /// Parses `{show(rowId)}` and returns the target row id when the branch is valid.
+  static func showRowId(from rawBranch: String) -> String? {
+    singleIdArgument(from: rawBranch, function: "show")
   }
 }

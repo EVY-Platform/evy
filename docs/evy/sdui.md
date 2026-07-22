@@ -177,7 +177,9 @@ Builder destinations (e.g. `{buildCurrency(item.price)}`) transform an `initial`
 
 ### Actions
 
-Each row has an `actions` attribute which is an array of `UI_RowAction` objects that can trigger various actions if a condition is met or not met. All action functions dispatch through a single client-side action channel; navigation (`navigate`, `close`) and non-navigation effects (`create`, `highlight_required`) are handled by the same runner.
+Each row has an `actions` attribute which is an array of `UI_RowAction` objects that can trigger various actions if a condition is met or not met. All action functions dispatch through a single client-side action channel; navigation (`navigate`, `close`) and non-navigation effects (`create`, `highlight_required`, `select`, `select_photo`, `expand_photo`, `expand_text`) are handled by the same runner.
+
+For row types that handle their own interactive elements (`SelectPhoto`, `TextExpand`, `TextSelect`, `PhotoGallery`, `TabContainer`, `TimeslotPicker`, `Calendar`, `InlinePicker`), behaviour on tap comes **only** from declared actions. An empty `actions` array means those taps do nothing.
 
 For destructive or important `create`/`update` actions, attach a `sheet` row to the triggering row and call `{show(sheetRowId)}` with that sheet row's ID (often the nested `sheet.id`). Put confirmation copy on the sheet root's `title` and message rows inside the sheet, then run the actual `create`/`update` followed by `{close()}` from a confirm button in the sheet.
 
@@ -185,7 +187,7 @@ Inside a sheet overlay, `{close()}` dismisses the sheet instead of popping navig
 
 #### Sequencing
 
-A row's `actions` array runs **in order**. For each entry: if its `condition` is empty or evaluates true, the `true` branch runs and the runner moves on to the next entry; if the condition evaluates false, the `false` branch runs and the array stops (no later entries execute). If a branch's function throws (e.g. malformed arguments), the error is surfaced and the array also stops — later entries do not run. This is what makes multi-step sequences like "create, then close" expressible as two separate action entries (see Submit below).
+A row's `actions` array runs **in order**. For each entry: if its `condition` is empty or evaluates true, the `true` branch runs and the runner moves on to the next entry; if the condition evaluates false, the `false` branch runs and the array stops (no later entries execute). If a branch's function throws (e.g. malformed arguments), the error is surfaced and the array also stops — later entries do not run. This is what makes multi-step sequences like "create, then close" or "select timeslot, then show confirmation sheet" expressible as separate action entries. When a sheet interpolates the new selection (e.g. `Request {formatDatetime(selected_pickup_timeslot, "HH:mm")}`), put `{select($datum)}` **before** `{show(...)}`.
 
 #### Conditions
 
@@ -219,6 +221,10 @@ Supported action functions:
 | `navigate(flowId, pageId, queryParams?)` | Go to a page within a flow, e.g. `{navigate(flowId, pageId)}`. Pass query params as the optional third argument using a plain-text query object, e.g. `{navigate(flowId, pageId, {id: $datum.id})}`. |
 | `show(rowId)` | Present the row with ID `rowId` in a sheet overlay, e.g. `{show(b8c7d6e5-f4a3-4b2c-9d1e-0f8a7b6c5d4e)}`. Requires exactly one non-empty row ID. The target may belong to any page in the synced flow data, not only the action row's nested `sheet`. If the ID is missing from the client row store, the action fails and later actions in the same array do not run. The presented row's `title` is the sheet header (live-interpolated when it contains expressions). |
 | `highlight_required(field)` | Mark a field as required / show validation, e.g. `{highlight_required(title)}` |
+| `select(value)` | Ask the triggering row to select `value`. The row defines semantics (toggle bool, toggle array membership, write a scalar, switch segment). Usually `{select($datum)}` where `$datum` is the tapped unit (timeslot ISO string, option object, segment index, etc.). Rows without a select handler treat this as an error. |
+| `select_photo()` | Ask the triggering `SelectPhoto` row to present the photo picker. |
+| `expand_photo()` | Ask the triggering `PhotoGallery` row to present the current photo full screen. |
+| `expand_text(rowId)` | Expand the `TextExpand` row with ID `rowId` (cross-row, like `show`). Requires exactly one non-empty row ID. |
 
 Note that the web builder does not execute actions; it only stores these strings and displays mocks.
 
@@ -281,13 +287,18 @@ Submit:
 ]
 ```
 
-Open a confirmation sheet (sheet row nested on the action row; Show uses the sheet row's ID):
+Open a confirmation sheet after selecting a timeslot (`select` must run first so sheet title interpolations see the new value):
 
 ```json
 {
 	"id": "timeslot-picker-row-id",
 	"type": "TimeslotPicker",
 	"actions": [
+		{
+			"condition": "",
+			"false": "",
+			"true": "{select($datum)}"
+		},
 		{
 			"condition": "",
 			"false": "",

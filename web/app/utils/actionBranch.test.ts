@@ -112,4 +112,87 @@ describe("action branch helpers", () => {
 			),
 		).toBe("navigate(flow-1, page-2, {items: [$datum.id]})");
 	});
+
+	it("parses and serializes select with datum", () => {
+		expect(parseBranch("{select($datum)}")).toEqual({
+			functionName: "select",
+			args: ["$datum"],
+		});
+		expect(serializeBranch("select", ["$datum"])).toBe("{select($datum)}");
+	});
+
+	it("parses and serializes zero-arg row actions", () => {
+		expect(parseBranch("{select_photo()}")).toEqual({
+			functionName: "select_photo",
+			args: [],
+		});
+		expect(serializeBranch("select_photo", [])).toBe("{select_photo()}");
+
+		expect(parseBranch("{expand_photo()}")).toEqual({
+			functionName: "expand_photo",
+			args: [],
+		});
+		expect(serializeBranch("expand_photo", [])).toBe("{expand_photo()}");
+	});
+
+	it("parses and serializes expand_text with row id", () => {
+		expect(parseBranch("{expand_text(row-expand)}")).toEqual({
+			functionName: "expand_text",
+			args: ["row-expand"],
+		});
+		expect(serializeBranch("expand_text", ["row-expand"])).toBe(
+			"{expand_text(row-expand)}",
+		);
+		expect(serializeBranch("expand_text", [])).toBe("");
+	});
+
+	it("resolves row labels for show and expand_text display", () => {
+		const now = "2024-01-01T00:00:00.000Z";
+		const flowsById = {
+			"flow-1": {
+				id: "flow-1",
+				name: "Main",
+				pageIds: ["page-1"],
+				createdAt: now,
+				updatedAt: now,
+			},
+		};
+		const pagesById = {
+			"page-1": {
+				id: "page-1",
+				name: "Home",
+				title: "",
+				rowIds: ["row-expand"],
+				createdAt: now,
+				updatedAt: now,
+			},
+		};
+		const rowsById = {
+			"row-expand": {
+				id: "row-expand",
+				name: "Expand target",
+				type: "TextExpand",
+				visible: "true",
+				data: {},
+				createdAt: now,
+				updatedAt: now,
+			},
+		};
+
+		const expandDisplay = formatBranchDisplay(
+			"{expand_text(row-expand)}",
+			flowsById,
+			pagesById,
+			rowsById,
+		);
+		const showDisplay = formatBranchDisplay(
+			"{show(row-expand)}",
+			flowsById,
+			pagesById,
+			rowsById,
+		);
+		const locationLabel = "Main / Home / Expand target";
+		expect(expandDisplay).toBe(`expand_text(${locationLabel})`);
+		expect(showDisplay).toBe(`show(${locationLabel})`);
+	});
 });

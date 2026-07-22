@@ -8,14 +8,31 @@ import SwiftUI
 struct EVYCalendarRow: View {
 
   private let view: CalendarRowViewData
+  private let onSlotTapped: EVYRowTapCallback<String>
 
-  init(view: CalendarRowViewData) {
+  init(
+    view: CalendarRowViewData,
+    onSlotTapped: @escaping EVYRowTapCallback<String>
+  ) {
     self.view = view
+    self.onSlotTapped = onSlotTapped
   }
 
   var body: some View {
-    EVYCalendar(content: view)
-      .titledRow(view.title)
+    EVYCalendar(
+      content: view,
+      onSlotTapped: { dateTimeISO in
+        onSlotTapped(
+          dateTimeISO,
+          EVYRowActionOperation.selectHandler { _ in
+            EVYCalendar.togglePrimarySelection(
+              dateTimeISO: dateTimeISO,
+              destination: view.destination
+            )
+          })
+      }
+    )
+    .titledRow(view.title)
   }
 }
 
@@ -54,7 +71,7 @@ private struct EVYCalendarRowPreview: View {
         "source": "\(EVYPreviewMockData.calendarPreviewSource)",
         "destination": "\(EVYPreviewMockData.calendarPreviewDestination)",
         "secondary": "\(EVYPreviewMockData.calendarPreviewSecondary)",
-        "actions": [],
+        "actions": [{"condition": "", "true": "{select($datum)}", "false": ""}],
         "title": "",
         "start_time": "07:00",
         "end_time": "19:00",

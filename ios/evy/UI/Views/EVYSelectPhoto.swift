@@ -81,9 +81,12 @@ struct EVYSelectPhoto: View {
   let icon: String?
   let content: String?
   let destination: String
+  let onAddPhotoTapped: ((@escaping EVYRowOperationHandler) -> Void)?
 
   @State private var photoTiles: [EVYPhotoTile] = []
   @State private var lastCommittedIds: [String] = []
+  @State private var isPickerPresented = false
+  @State private var selectedItem: PhotosPickerItem?
 
   init(
     title: String?,
@@ -91,13 +94,15 @@ struct EVYSelectPhoto: View {
     icon: String?,
     content: String?,
     data: String?,
-    destination: String
+    destination: String,
+    onAddPhotoTapped: ((@escaping EVYRowOperationHandler) -> Void)? = nil
   ) {
     self.title = title
     self.icon = icon
     self.content = content
     self.subtitle = subtitle
     self.destination = destination
+    self.onAddPhotoTapped = onAddPhotoTapped
 
     if let data,
       let props = try? EVY.getValueFromText(data),
@@ -122,7 +127,7 @@ struct EVYSelectPhoto: View {
           fullScreen: true,
           icon: icon,
           content: content,
-          photoTiles: $photoTiles)
+          onAddPhotoTapped: addPhotoTapped)
       } else {
         ScrollView(.horizontal, showsIndicators: false) {
           HStack {
@@ -137,7 +142,7 @@ struct EVYSelectPhoto: View {
               fullScreen: false,
               icon: icon,
               content: content,
-              photoTiles: $photoTiles)
+              onAddPhotoTapped: addPhotoTapped)
           }
         }
       }
@@ -145,6 +150,12 @@ struct EVYSelectPhoto: View {
       if let subtitle {
         EVYTextView(subtitle, style: .info)
           .padding(.vertical, Constants.padding)
+      }
+    }
+    .photosPicker(isPresented: $isPickerPresented, selection: $selectedItem, matching: .images)
+    .onChange(of: selectedItem) {
+      Task {
+        await uploadSelectedItem()
       }
     }
     .onChange(of: photoTiles) {
@@ -158,6 +169,17 @@ struct EVYSelectPhoto: View {
           print("[EVYSelectPhoto] Error updating photo ids: \(error)")
         #endif
       }
+    }
+  }
+
+  private func addPhotoTapped() {
+    if let onAddPhotoTapped {
+      onAddPhotoTapped(
+        EVYRowActionOperation.selectPhotoHandler {
+          isPickerPresented = true
+        })
+    } else {
+      isPickerPresented = true
     }
   }
 
@@ -184,47 +206,6 @@ struct EVYSelectPhoto: View {
           name: .evyErrorOccurred,
           object: EVYError.imageLoadFailed(name: imageId)
         )
-      }
-    }
-  }
-}
-
-private struct EVYSelectPhotoButton: View {
-  let fullScreen: Bool
-  let icon: String?
-  let content: String?
-
-  @State private var selectedItem: PhotosPickerItem?
-  @Binding var photoTiles: [EVYPhotoTile]
-
-  var body: some View {
-    PhotosPicker(
-      selection: $selectedItem,
-      label: {
-        let stack = VStack {
-          if let icon { EVYTextView(icon) }
-          if let content { EVYTextView(content) }
-        }
-        if fullScreen {
-          stack
-            .frame(maxWidth: .infinity)
-            .frame(height: carouselElementSize)
-            .background(
-              RoundedRectangle(cornerRadius: Constants.mainCornerRadius)
-                .strokeBorder(Constants.borderColor, lineWidth: Constants.borderWidth))
-        } else {
-          stack
-            .frame(width: carouselElementSize, height: carouselElementSize)
-            .background(
-              RoundedRectangle(cornerRadius: Constants.mainCornerRadius)
-                .strokeBorder(Constants.borderColor, lineWidth: Constants.borderWidth))
-        }
-      }
-    )
-    .buttonStyle(.plain)
-    .onChange(of: selectedItem) {
-      Task {
-        await uploadSelectedItem()
       }
     }
   }
@@ -291,6 +272,37 @@ private struct EVYSelectPhotoButton: View {
       photoTiles.removeAll { $0.id == tileId }
       selectedItem = nil
     }
+  }
+}
+
+private struct EVYSelectPhotoButton: View {
+  let fullScreen: Bool
+  let icon: String?
+  let content: String?
+  let onAddPhotoTapped: () -> Void
+
+  var body: some View {
+    Button(action: onAddPhotoTapped) {
+      let stack = VStack {
+        if let icon { EVYTextView(icon) }
+        if let content { EVYTextView(content) }
+      }
+      if fullScreen {
+        stack
+          .frame(maxWidth: .infinity)
+          .frame(height: carouselElementSize)
+          .background(
+            RoundedRectangle(cornerRadius: Constants.mainCornerRadius)
+              .strokeBorder(Constants.borderColor, lineWidth: Constants.borderWidth))
+      } else {
+        stack
+          .frame(width: carouselElementSize, height: carouselElementSize)
+          .background(
+            RoundedRectangle(cornerRadius: Constants.mainCornerRadius)
+              .strokeBorder(Constants.borderColor, lineWidth: Constants.borderWidth))
+      }
+    }
+    .buttonStyle(.plain)
   }
 }
 
