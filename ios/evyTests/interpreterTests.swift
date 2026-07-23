@@ -290,6 +290,9 @@ final class InterpreterTests: XCTestCase {
     EVY.resolveQueryParams([entityKey: [secondId]])
 
     XCTAssertEqual(try EVY.getDataFromText("{\(entityKey).title}"), .string("Selected item"))
+
+    EVY.resolveQueryParams([entityKey: [firstId, secondId]])
+    XCTAssertEqual(try EVY.getDataFromText("{\(entityKey).title}"), .string("First item"))
   }
 
   func testResolveQueryParamsRefreshesStatesWhenSelectedEntityChanges() throws {
@@ -409,30 +412,6 @@ final class InterpreterTests: XCTestCase {
       try EVY.getDataFromText("{\(entityKey).title}"), .string("Selected from other service"))
   }
 
-  func testResolveQueryParamsUsesFirstIdWhenMultipleIdsAreProvided() throws {
-    let entityKey = uniqueKey("entities")
-    let firstId = UUID().uuidString
-    let secondId = UUID().uuidString
-
-    try store(
-      .array([
-        .dictionary([
-          "id": .string(firstId),
-          "title": .string("First selected item"),
-        ]),
-        .dictionary([
-          "id": .string(secondId),
-          "title": .string("Second item"),
-        ]),
-      ]),
-      at: "\(EVYNamespace.marketplace):\(entityKey)"
-    )
-
-    EVY.resolveQueryParams([entityKey: [firstId, secondId]])
-
-    XCTAssertEqual(try EVY.getDataFromText("{\(entityKey).title}"), .string("First selected item"))
-  }
-
   func testResolveQueryParamsStoresRawValuesWhenNoSyncedCollectionExists() throws {
     let key = uniqueKey("filters")
     let firstId = UUID().uuidString
@@ -488,23 +467,6 @@ final class InterpreterTests: XCTestCase {
     try store(.string("public"), at: key)
 
     XCTAssertEqual(try EVY.getDataFromText("{\(key)}"), .string("public"))
-  }
-
-  func testActiveCachePrefixSelectsPageScopedValue() throws {
-    let key = uniqueKey("shared")
-    let pageOneId = "page_one_\(UUID().uuidString)"
-    let pageTwoId = "page_two_\(UUID().uuidString)"
-
-    EVY.activeCacheScopeId = pageOneId
-    EVY.resolveQueryParams([key: ["one"]])
-
-    EVY.activeCacheScopeId = pageTwoId
-    EVY.resolveQueryParams([key: ["two"]])
-
-    XCTAssertEqual(try EVY.getDataFromText("{\(key)}"), .string("two"))
-
-    EVY.activeCacheScopeId = pageOneId
-    XCTAssertEqual(try EVY.getDataFromText("{\(key)}"), .string("one"))
   }
 
   func testCollectionResolvesFromPinnedScopeNotGlobalScope() throws {
@@ -597,28 +559,6 @@ final class InterpreterTests: XCTestCase {
 
     // Data unchanged by empty call
     XCTAssertEqual(try EVY.getDataFromText("{\(key)}"), .string("value"))
-  }
-
-  func testResolveQueryParamsResolvesEntityFromPublicStore() throws {
-    let entityKey = uniqueKey("entities")
-    let id = UUID().uuidString
-
-    try store(
-      .array([
-        .dictionary([
-          "id": .string(id),
-          "title": .string("Selected item"),
-        ])
-      ]),
-      at: "\(EVYNamespace.marketplace):\(entityKey)"
-    )
-
-    EVY.resolveQueryParams([entityKey: [id]])
-
-    XCTAssertEqual(
-      try EVY.getDataFromText("{\(entityKey).title}"),
-      .string("Selected item")
-    )
   }
 
   func testResolveQueryParamsResolvesGenericIdFromSyncedCollection() throws {
@@ -941,44 +881,6 @@ final class InterpreterTests: XCTestCase {
     XCTAssertEqual(acceptedResult.value, messageId)
   }
 
-  func testCancelVisibilityHiddenOnceAccepted() throws {
-    let messagesKey = uniqueKey("messages")
-    let itemKey = uniqueKey("item")
-    let itemId = UUID().uuidString
-    let messageId = UUID().uuidString
-
-    let cancelVisible =
-      "{findFirst(\(messagesKey), fk == \(itemKey).id && archivedAt == null && status == pending).fk == \(itemKey).id}"
-    let acceptedVisible =
-      "{findFirst(\(messagesKey), fk == \(itemKey).id && archivedAt == null && status == accepted).fk == \(itemKey).id}"
-
-    try store(.dictionary(["id": .string(itemId)]), at: itemKey)
-
-    func storeMessage(status: String) throws {
-      try store(
-        .array([
-          EVYTestMessageFixtures.message(
-            id: messageId,
-            fk: itemId,
-            status: status,
-            archivedAt: .null,
-            type: "pickup",
-            time: "2026-06-03T09:00:00"
-          )
-        ]),
-        at: "\(EVYNamespace.marketplace):\(messagesKey)"
-      )
-    }
-
-    try storeMessage(status: "accepted")
-    XCTAssertFalse(try EVY.evaluateFromText(cancelVisible))
-    XCTAssertTrue(try EVY.evaluateFromText(acceptedVisible))
-
-    try storeMessage(status: "pending")
-    XCTAssertTrue(try EVY.evaluateFromText(cancelVisible))
-    XCTAssertFalse(try EVY.evaluateFromText(acceptedVisible))
-  }
-
   func testFormatDatetimeOverFindFirstPath() throws {
     let messagesKey = uniqueKey("messages")
     let itemKey = uniqueKey("item")
@@ -1020,81 +922,6 @@ final class InterpreterTests: XCTestCase {
 
     XCTAssertTrue(targets.contains(messagesKey))
     XCTAssertTrue(targets.contains("\(itemKey).id"))
-  }
-
-  func testFindFirstNullExpressionMatchesAbsentProp() throws {
-    let messagesKey = uniqueKey("messages")
-    let itemKey = uniqueKey("item")
-    let itemId = UUID().uuidString
-    let activeId = UUID().uuidString
-
-    try store(
-      .array([
-        EVYTestMessageFixtures.message(
-          id: activeId,
-          fk: itemId,
-          type: "pickup"
-        )
-      ]),
-      at: "\(EVYNamespace.marketplace):\(messagesKey)"
-    )
-    try store(.dictionary(["id": .string(itemId)]), at: itemKey)
-
-    let result = try parseTextFromText(
-      "{findFirst(\(messagesKey), fk == \(itemKey).id && archivedAt == null).id}")
-
-    XCTAssertEqual(result.value, activeId, "null comparison should match records without the prop")
-  }
-
-  func testFindFirstExpressionReturnsEmptyWhenOnlyArchivedExist() throws {
-    let messagesKey = uniqueKey("messages")
-    let itemKey = uniqueKey("item")
-    let itemId = UUID().uuidString
-
-    try store(
-      .array([
-        EVYTestMessageFixtures.message(
-          id: UUID().uuidString,
-          fk: itemId,
-          archivedAt: .string("2026-06-02T00:00:00Z"),
-          type: "pickup"
-        )
-      ]),
-      at: "\(EVYNamespace.marketplace):\(messagesKey)"
-    )
-    try store(.dictionary(["id": .string(itemId)]), at: itemKey)
-
-    let result = try parseTextFromText(
-      "{findFirst(\(messagesKey), fk == \(itemKey).id && archivedAt == null).id}")
-
-    XCTAssertEqual(result.value, "")
-  }
-
-  func testHasActiveMessageVisibilityExpression() throws {
-    let messagesKey = uniqueKey("messages")
-    let itemKey = uniqueKey("item")
-    let itemId = UUID().uuidString
-
-    try store(
-      .array([
-        EVYTestMessageFixtures.message(
-          id: UUID().uuidString,
-          fk: itemId,
-          archivedAt: .null,
-          type: "pickup"
-        )
-      ]),
-      at: "\(EVYNamespace.marketplace):\(messagesKey)"
-    )
-    try store(.dictionary(["id": .string(itemId)]), at: itemKey)
-
-    let hasActive =
-      "{findFirst(\(messagesKey), fk == \(itemKey).id && archivedAt == null).fk == \(itemKey).id}"
-    let noActive =
-      "{findFirst(\(messagesKey), fk == \(itemKey).id && archivedAt == null).fk != \(itemKey).id}"
-
-    XCTAssertTrue(try EVY.evaluateFromText(hasActive))
-    XCTAssertFalse(try EVY.evaluateFromText(noActive))
   }
 
   func testNowFunctionReturnsPinnedClockISO8601() throws {

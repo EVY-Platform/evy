@@ -14,6 +14,10 @@ extension EVY {
   }
 
   private static func syncMutation(method: String, params: MutationParams) {
+    if let syncTransport {
+      syncTransport(method, params)
+      return
+    }
     Task {
       do {
         _ = try await EVYAPIManager.shared.fetch(

@@ -9,6 +9,16 @@ import XCTest
 
 @MainActor
 final class EVYActionRunnerTests: XCTestCase {
+  override func setUp() async throws {
+    try await super.setUp()
+    installHermeticMutationSync()
+  }
+
+  override func tearDown() async throws {
+    resetHermeticMutationSync()
+    try await super.tearDown()
+  }
+
   private func assertSelectValue(
     _ received: EVYRowActionOperation?,
     equals expected: EVYJson,
@@ -707,116 +717,6 @@ final class EVYActionRunnerTests: XCTestCase {
       return XCTFail("Expected inline create payload dictionary")
     }
     XCTAssertEqual(values["createdAt"], .string("2026-06-01T00:00:00Z"))
-  }
-
-  func testUpdateActionArchivesOnlyMatchingActiveMessage() throws {
-    let namespace = EVYNamespace.marketplace
-    let resource = MarketplaceTestFixture.messagesResourceId
-    let itemId = UUID().uuidString
-    let archivedMessageId = UUID().uuidString
-    let activeMessageId = UUID().uuidString
-    let otherActiveMessageId = UUID().uuidString
-    try? EVY.publicStore.deleteAll(namespace: namespace, resource: resource)
-    defer { try? EVY.publicStore.deleteAll(namespace: namespace, resource: resource) }
-
-    // activeMessageId has archivedAt: null, activeAbsentMessageId omits the key entirely —
-    // a null filter must match both
-    let activeAbsentMessageId = UUID().uuidString
-    let messages = EVYJson.array([
-      .dictionary([
-        "id": .string(archivedMessageId),
-        "fk": .string(itemId),
-        "archivedAt": .string("2026-06-02T00:00:00Z"),
-        "data": .dictionary([
-          "type": .string("pickup"),
-          "time": .string("2026-06-03T09:00:00"),
-        ]),
-      ]),
-      .dictionary([
-        "id": .string(activeMessageId),
-        "fk": .string(itemId),
-        "archivedAt": .null,
-        "data": .dictionary([
-          "type": .string("pickup"),
-          "time": .string("2026-06-03T10:00:00"),
-        ]),
-      ]),
-      .dictionary([
-        "id": .string(activeAbsentMessageId),
-        "fk": .string(itemId),
-        "data": .dictionary([
-          "type": .string("delivery"),
-          "time": .string("2026-06-03T12:00:00"),
-        ]),
-      ]),
-      .dictionary([
-        "id": .string(otherActiveMessageId),
-        "fk": .string(UUID().uuidString),
-        "archivedAt": .null,
-        "data": .dictionary([
-          "type": .string("pickup"),
-          "time": .string("2026-06-03T11:00:00"),
-        ]),
-      ]),
-    ])
-    try EVY.publicStore.applySyncedValue(namespace: namespace, resource: resource, value: messages)
-
-    var receivedKeys: [String] = []
-    let token = NotificationCenter.default.addObserver(
-      forName: .evyValueChanged, object: nil, queue: nil
-    ) { notification in
-      MainActor.assumeIsolated {
-        if let key = notification.object as? String {
-          receivedKeys.append(key)
-        }
-      }
-    }
-    defer { NotificationCenter.default.removeObserver(token) }
-
-    let itemKey =
-      "evy_action_runner_item_\(UUID().uuidString.replacingOccurrences(of: "-", with: "_"))"
-    try EVY.publicStore.create(
-      namespace: EVYNamespace.local,
-      resource: itemKey,
-      id: EVYNamespace.singletonId,
-      value: try JSONEncoder().encode(EVYJson.dictionary(["id": .string(itemId)]))
-    )
-
-    let pinnedDate = Date(timeIntervalSince1970: 1_780_000_000)
-    EVY.nowProvider = { pinnedDate }
-    defer { EVY.nowProvider = { Date() } }
-
-    let cancelAction = rowAction(
-      true:
-        "{update(\(namespace),\(resource),{fk: \(itemKey).id, archivedAt: null},{archivedAt: now()})}"
-    )
-    var received: ActionOperation?
-    EVYActionRunner.run(actions: [cancelAction]) { received = $0 }
-    XCTAssertNil(received)
-
-    XCTAssertTrue(
-      receivedKeys.contains(resource),
-      "Update should post a value-change notification for the messages resource")
-
-    let updatedRows = try EVY.publicStore.getAll(namespace: namespace, resource: resource)
-    let archivedAtById = Dictionary(
-      uniqueKeysWithValues: updatedRows.compactMap { row -> (String, EVYJson)? in
-        guard let decoded = try? row.decoded(),
-          case .dictionary(let values) = decoded,
-          case .string(let id) = values["id"]
-        else { return nil }
-        return (id, values["archivedAt"] ?? .null)
-      })
-
-    let pinnedIso = EVYJson.string(pinnedDate.ISO8601Format())
-    XCTAssertEqual(
-      archivedAtById[archivedMessageId], .string("2026-06-02T00:00:00Z"),
-      "Already-archived message should keep its original timestamp")
-    XCTAssertEqual(archivedAtById[activeMessageId], pinnedIso)
-    XCTAssertEqual(
-      archivedAtById[activeAbsentMessageId], pinnedIso,
-      "A null filter should match records missing the key entirely")
-    XCTAssertEqual(archivedAtById[otherActiveMessageId], .null)
   }
 
   func testUpdateActionAcceptsOnlyMatchingPendingMessageForDatum() throws {

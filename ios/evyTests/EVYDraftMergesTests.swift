@@ -13,6 +13,7 @@ final class EVYCreateMergesDraftsTests: XCTestCase {
 
   override func setUp() async throws {
     try await super.setUp()
+    installHermeticMutationSync()
     try? EVY.publicStore.deleteAll(namespace: EVYNamespace.marketplace, resource: "items")
     EVY.draftStore.deleteDrafts()
     EVY.draftStore.activeScopeId = testDraftScope
@@ -22,6 +23,7 @@ final class EVYCreateMergesDraftsTests: XCTestCase {
     try? EVY.publicStore.deleteAll(namespace: EVYNamespace.marketplace, resource: "items")
     EVY.draftStore.deleteDrafts()
     EVY.draftStore.activeScopeId = nil
+    resetHermeticMutationSync()
     try await super.tearDown()
   }
 

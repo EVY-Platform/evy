@@ -185,7 +185,21 @@ describe("create/update real-time notifications", () => {
 		});
 
 		await notifyPromise;
-		await new Promise((resolve) => setTimeout(resolve, 200));
+		expect(unexpected).toBe(false);
+
+		const sentinelPromise = waitForNotification(subscribed, "dataChanged");
+		await caller.call("create", {
+			service: EVY_CORE_SERVICE,
+			resource: EVY_CORE_RESOURCE.FLOWS,
+			data: {
+				id: crypto.randomUUID(),
+				name: "Subscribed Only Again",
+				pageIds: [],
+				createdAt: new Date().toISOString(),
+				updatedAt: new Date().toISOString(),
+			},
+		});
+		await sentinelPromise;
 		expect(unexpected).toBe(false);
 
 		subscribed.close();

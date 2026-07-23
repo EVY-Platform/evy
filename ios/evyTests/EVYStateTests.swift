@@ -32,7 +32,7 @@ final class EVYStateTests: XCTestCase {
     XCTAssertEqual(state.value, 42)
   }
 
-  func testFirstWatchMatchTriggersRecompute() {
+  func testWatchMatchAtEitherIndexTriggersRecompute() {
     var callCount = 0
     let state = EVYState<Int>(
       watches: ["{watch1}", "{watch2}"],
@@ -43,19 +43,12 @@ final class EVYStateTests: XCTestCase {
     XCTAssertEqual(callCount, 1)
 
     postValueChange("watch1")
-
     XCTAssertEqual(callCount, 2)
     XCTAssertEqual(state.value, 2)
-  }
-
-  func testSecondWatchMatchTriggersRecompute() {
-    let (state, getCallCount) = makeCountingState(watches: ["{watch1}", "{watch2}"])
-    XCTAssertEqual(getCallCount(), 1)
 
     postValueChange("watch2")
-
-    XCTAssertEqual(getCallCount(), 2)
-    XCTAssertEqual(state.value, 2)
+    XCTAssertEqual(callCount, 3)
+    XCTAssertEqual(state.value, 3)
   }
 
   func testUnrelatedNotificationDoesNotTriggerRecompute() {
@@ -79,16 +72,19 @@ final class EVYStateTests: XCTestCase {
   }
 
   func testEmptyWatchesIgnoresKeyedNotifications() {
-    let (state, getCallCount) = makeCountingState(watches: [])
-    XCTAssertEqual(getCallCount(), 1)
-
+    let (emptyListState, emptyListCallCount) = makeCountingState(watches: [])
+    XCTAssertEqual(emptyListCallCount(), 1)
     postValueChange("anything")
-    XCTAssertEqual(getCallCount(), 1)
-    XCTAssertEqual(state.value, 1)
-
+    XCTAssertEqual(emptyListCallCount(), 1)
+    XCTAssertEqual(emptyListState.value, 1)
     postValueChange(nil)
-    XCTAssertEqual(getCallCount(), 1)
-    XCTAssertEqual(state.value, 1)
+    XCTAssertEqual(emptyListCallCount(), 1)
+
+    let (emptyStringState, emptyStringCallCount) = makeCountingState(watches: [""])
+    XCTAssertEqual(emptyStringCallCount(), 1)
+    postValueChange("conditions")
+    XCTAssertEqual(emptyStringCallCount(), 1)
+    XCTAssertEqual(emptyStringState.value, 1)
   }
 
   func testExactSourceNotificationTriggersRecompute() {
@@ -159,15 +155,5 @@ final class EVYStateTests: XCTestCase {
 
     XCTAssertEqual(getCallCount(), 2)
     XCTAssertEqual(state.value, 2)
-  }
-
-  func testEmptyWatchIgnoresKeyedNotifications() {
-    let (state, getCallCount) = makeCountingState(watches: [""])
-    XCTAssertEqual(getCallCount(), 1)
-
-    postValueChange("conditions")
-
-    XCTAssertEqual(getCallCount(), 1)
-    XCTAssertEqual(state.value, 1)
   }
 }

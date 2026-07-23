@@ -135,8 +135,23 @@ describe("service WebSocket adapters", () => {
 		);
 
 		stopTestWsServer();
-		await new Promise((resolve) => setTimeout(resolve, 1200));
 		testServer = await startTestWsServer(wsPort);
+
+		const reconnectDeadline = Date.now() + 3000;
+		let reconnected = false;
+		while (Date.now() < reconnectDeadline) {
+			try {
+				await forwardGet(MARKETPLACE_SERVICE, {
+					service: MARKETPLACE_SERVICE,
+					resource: MARKETPLACE_RESOURCE.CONDITIONS,
+				});
+				reconnected = true;
+				break;
+			} catch {
+				await new Promise((resolve) => setTimeout(resolve, 50));
+			}
+		}
+		expect(reconnected).toBe(true);
 
 		const row = { id: crypto.randomUUID(), value: "after-reconnect" };
 		const eventsBefore = receivedEvents.length;
