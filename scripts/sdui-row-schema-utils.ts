@@ -29,6 +29,7 @@ const ROW_TRIGGER_NAMES = [
 	"tap-row",
 	"tap-column",
 	"swipe-left",
+	"submit",
 ] as const;
 
 export type RowTriggerName = (typeof ROW_TRIGGER_NAMES)[number];

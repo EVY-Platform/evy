@@ -1107,6 +1107,7 @@ final class EVYActionRunnerTests: XCTestCase {
     let closeAction = rowAction(true: "{close()}")
     let actions = UI_RowActions(
       delete: [closeAction],
+      submit: [closeAction],
       swipeLeft: [closeAction],
       tap: [closeAction]
     )
@@ -1114,17 +1115,20 @@ final class EVYActionRunnerTests: XCTestCase {
       ("tap", actions.tap),
       ("delete", actions.delete),
       ("swipeLeft", actions.swipeLeft),
+      ("submit", actions.submit),
     ]
     for (name, onlyList) in lists {
       var tapReceived = false
       var deleteReceived = false
       var swipeLeftReceived = false
+      var submitReceived = false
       EVYActionRunner.run(actions: onlyList) { operation in
         guard case .close = operation else { return }
         switch name {
         case "tap": tapReceived = true
         case "delete": deleteReceived = true
         case "swipeLeft": swipeLeftReceived = true
+        case "submit": submitReceived = true
         default: break
         }
       }
@@ -1132,6 +1136,8 @@ final class EVYActionRunnerTests: XCTestCase {
       XCTAssertEqual(deleteReceived, name == "delete", "Only delete list should run delete actions")
       XCTAssertEqual(
         swipeLeftReceived, name == "swipeLeft", "Only swipeLeft list should run swipe-left actions")
+      XCTAssertEqual(
+        submitReceived, name == "submit", "Only submit list should run submit actions")
     }
   }
 

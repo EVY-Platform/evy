@@ -3,7 +3,8 @@
 	"$id": "sdui/definitions/TextArea",
 	"title": "TextArea_Row",
 	"triggers": {
-		"tap": "optional"
+		"tap": "optional",
+		"submit": "optional"
 	},
 	"allOf": [
 		{

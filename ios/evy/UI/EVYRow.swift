@@ -276,7 +276,6 @@ private struct EVYResolvedRow: View {
     .tabContainer,
     .inlinePicker,
     .search,
-    .input,
   ]
 
   private var shouldUseGenericActionTap: Bool {
@@ -388,9 +387,9 @@ private struct EVYResolvedRow: View {
       EVYInputRow(
         view: view,
         isInteractive: true,
-        onValueCommit: contentRow.actions.tap.isEmpty
+        onValueCommit: contentRow.actions.submit.isEmpty
           ? nil
-          : { runActions(contentRow: contentRow) }
+          : { runActions(trigger: .submit, contentRow: contentRow) }
       )
     case .verticalContainer(let view, _):
       EVYVerticalContainerRow(view: view, childRefs: childRefs)
@@ -439,7 +438,12 @@ private struct EVYResolvedRow: View {
         onExpandTapped: { runActions(contentRow: contentRow) }
       )
     case .textArea(let view, _):
-      EVYTextAreaRow(view: view)
+      EVYTextAreaRow(
+        view: view,
+        onValueCommit: contentRow.actions.submit.isEmpty
+          ? nil
+          : { runActions(trigger: .submit, contentRow: contentRow) }
+      )
     case .textSelect(let view, _):
       if let row = EVYTextSelectRow(
         view: view,

@@ -225,6 +225,35 @@ describe("rowTriggersFromDefinitions", () => {
 		});
 	});
 
+	test("maps optional tap and submit triggers", () => {
+		const input = extractSduiRowDefinition(
+			{
+				triggers: { tap: "optional", submit: "optional" },
+				allOf: [
+					{ $ref: "../evy.schema.json#/$defs/UI_RowBase" },
+					{
+						type: "object",
+						required: ["type", "source", "destination"],
+						properties: {
+							type: { const: "Input" },
+							source: { type: "string" },
+							destination: { type: "string" },
+						},
+					},
+				],
+			},
+			"Input.schema.json",
+		);
+
+		expect(input.triggers).toEqual({ tap: "optional", submit: "optional" });
+		expect(rowTriggersFromDefinitions([input])).toEqual({
+			Input: [
+				{ trigger: "submit", required: false },
+				{ trigger: "tap", required: false },
+			],
+		});
+	});
+
 	test("maps optional swipe-left trigger", () => {
 		const text = extractSduiRowDefinition(
 			{

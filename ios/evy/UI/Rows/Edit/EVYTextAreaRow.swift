@@ -10,9 +10,11 @@ import SwiftUI
 struct EVYTextAreaRow: View {
 
   private let view: TextAreaRowViewData
+  private let onValueCommit: (() -> Void)?
 
-  init(view: TextAreaRowViewData) {
+  init(view: TextAreaRowViewData, onValueCommit: (() -> Void)? = nil) {
     self.view = view
+    self.onValueCommit = onValueCommit
   }
 
   var body: some View {
@@ -21,7 +23,8 @@ struct EVYTextAreaRow: View {
       source: view.source,
       destination: view.destination ?? "",
       placeholder: view.placeholder,
-      multiLine: true
+      multiLine: true,
+      onValueCommit: onValueCommit
     )
   }
 }

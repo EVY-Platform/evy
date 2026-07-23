@@ -4,6 +4,7 @@
 	"title": "Input_Row",
 	"triggers": {
 		"tap": "optional",
+		"submit": "optional",
 		"swipe-left": "optional"
 	},
 	"allOf": [

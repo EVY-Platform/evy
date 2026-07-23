@@ -148,7 +148,7 @@ Every row may declare an optional nested `sheet` row. At runtime, `{show(rowId)}
 
 | Row type | `source` | `destination` | `secondary` | `value` | Notes |
 | --- | --- | --- | --- | --- | --- |
-| `Input`, `TextArea` | yes | yes | no | no | Display reads `source`; writes pass raw text to `destination`. Optional `initial` seeds literal text into the draft on activation. For `Input`, `actions.tap` (when present) runs after the user commits a value (blur / submit), not on every keystroke. |
+| `Input`, `TextArea` | yes | yes | no | no | Display reads `source`; writes pass raw text to `destination`. Optional `initial` seeds literal text into the draft on activation. For `Input` and `TextArea`, `actions.submit` (when present) runs after the user commits a value (return key or blur), after the destination write. Optional `actions.tap` runs on an actual row tap via the generic whole-row tap path (the embedded text field consumes taps on the field to begin editing). |
 | `Dropdown`, `InlinePicker` | yes | yes | no | yes | `source` = options; `value` = `$datum` display template; selection writes raw datum to `destination`. Optional `initial` seeds the default selection — a single option identifier for `Dropdown`, and a one-element identifier array for `InlinePicker`. |
 | `Search` | yes | yes | no | no | `destination` stores the selected raw datum (builder-aware), stripping external `id` and merging over any existing draft so omitted keys (e.g. instructions) are preserved. Optional `child` is the search **result template** only (not a sheet). Optional `sheet` uses the universal overlay relationship. On result select, iOS also runs `actions.tap` with `$datum` set to the selected result (after the destination write). |
 | `Calendar` | yes | yes | yes | no | `source` = main timeslots to display (same binding as `destination`); `destination` = edited selection; `secondary` = greyed background slots. |
@@ -179,11 +179,12 @@ Builder destinations (e.g. `{buildCurrency(item.price)}`) transform an `initial`
 
 ### Actions
 
-Each row has an `actions` attribute: an object keyed by **trigger** name. Each trigger maps to an ordered list of `UI_RowAction` objects (condition / `true` / `false` branches). Supported triggers in this release are `tap`, `delete`, `tap-row`, `tap-column`, and `swipe-left`; each row type declares which triggers it supports and whether a trigger is **required** (flow validation requires at least one action on that trigger) or **optional** (may be omitted or empty).
+Each row has an `actions` attribute: an object keyed by **trigger** name. Each trigger maps to an ordered list of `UI_RowAction` objects (condition / `true` / `false` branches). Supported triggers in this release are `tap`, `delete`, `tap-row`, `tap-column`, `swipe-left`, and `submit`; each row type declares which triggers it supports and whether a trigger is **required** (flow validation requires at least one action on that trigger) or **optional** (may be omitted or empty). The `submit` trigger runs when a row's typed value is committed (return key or blur, after the destination write). It is available on `Input` and `TextArea` only.
 
 ```jsonc
 "actions": {
   "tap": [{ "condition": "", "false": "", "true": "{close()}" }],
+  "submit": [{ "condition": "", "false": "", "true": "{close()}" }],
   "delete": [{ "condition": "", "false": "", "true": "{delete_photo()}" }],
   "tap-row": [{ "condition": "", "false": "", "true": "{select($datum)}" }],
   "tap-column": [{ "condition": "", "false": "", "true": "{select($datum)}" }],
@@ -195,35 +196,35 @@ An empty object `{}` is the canonical “no actions” state (do not use `{"tap"
 
 #### Trigger matrix
 
-| Row type | `tap` | `delete` | `tap-row` | `tap-column` | `swipe-left` |
-| --- | --- | --- | --- | --- | --- |
-| Button | **required** | — | — | — | — |
-| Calendar | **required** | — | **required** | **required** | — |
-| Dropdown | **required** | — | — | — | — |
-| InlinePicker | **required** | — | — | — | — |
-| InputList | **required** | — | — | — | — |
-| PhotoGallery | **required** | — | — | — | — |
-| SelectPhoto | **required** | **required** | — | — | — |
-| TextAction | **required** | — | — | — | — |
-| TextExpand | **required** | — | — | — | — |
-| TextSelect | **required** | — | — | — | — |
-| TimeslotPicker | **required** | — | — | — | — |
-| Heading | optional | — | — | — | optional |
-| HorizontalContainer | optional | — | — | — | — |
-| Input | optional | — | — | — | optional |
-| ListItem | optional | — | — | — | optional |
-| Map | optional | — | — | — | — |
-| Search | optional | — | — | — | — |
-| TabContainer | optional | — | — | — | — |
-| Text | optional | — | — | — | optional |
-| TextArea | optional | — | — | — | — |
-| VerticalContainer | optional | — | — | — | — |
+| Row type | `tap` | `submit` | `delete` | `tap-row` | `tap-column` | `swipe-left` |
+| --- | --- | --- | --- | --- | --- | --- |
+| Button | **required** | — | — | — | — | — |
+| Calendar | **required** | — | — | **required** | **required** | — |
+| Dropdown | **required** | — | — | — | — | — |
+| InlinePicker | **required** | — | — | — | — | — |
+| InputList | **required** | — | — | — | — | — |
+| PhotoGallery | **required** | — | — | — | — | — |
+| SelectPhoto | **required** | — | **required** | — | — | — |
+| TextAction | **required** | — | — | — | — | — |
+| TextExpand | **required** | — | — | — | — | — |
+| TextSelect | **required** | — | — | — | — | — |
+| TimeslotPicker | **required** | — | — | — | — | — |
+| Heading | optional | — | — | — | — | optional |
+| HorizontalContainer | optional | — | — | — | — | — |
+| Input | optional | optional | — | — | — | optional |
+| ListItem | optional | — | — | — | — | optional |
+| Map | optional | — | — | — | — | — |
+| Search | optional | — | — | — | — | — |
+| TabContainer | optional | — | — | — | — | — |
+| Text | optional | — | — | — | — | optional |
+| TextArea | optional | optional | — | — | — | — |
+| VerticalContainer | optional | — | — | — | — | — |
 
 Required triggers are enforced in `validateUiFlow` (fixtures, seed, tests). The web builder shows a required badge and warning when a required trigger has no actions but still allows saving.
 
-All action functions dispatch through a single client-side action channel; navigation (`navigate`, `close`) and non-navigation effects (`create`, `highlight_required`, `select`, `select_photo`, `delete_photo`, `expand_photo`, `expand_text`) are handled by the same runner. **Which list runs** depends on the trigger: row tap gestures and control-specific taps use `actions.tap`; the `SelectPhoto` remove control uses `actions.delete`; Calendar day headers use `actions.tap-column` and time-axis labels use `actions.tap-row`; swipe-to-reveal on Heading/Input/ListItem/Text uses `actions.swipe-left`.
+All action functions dispatch through a single client-side action channel; navigation (`navigate`, `close`) and non-navigation effects (`create`, `highlight_required`, `select`, `select_photo`, `delete_photo`, `expand_photo`, `expand_text`) are handled by the same runner. **Which list runs** depends on the trigger: row tap gestures and control-specific taps use `actions.tap`; value commit on `Input` and `TextArea` uses `actions.submit`; the `SelectPhoto` remove control uses `actions.delete`; Calendar day headers use `actions.tap-column` and time-axis labels use `actions.tap-row`; swipe-to-reveal on Heading/Input/ListItem/Text uses `actions.swipe-left`.
 
-For row types that handle their own interactive elements (`SelectPhoto`, `TextExpand`, `TextSelect`, `PhotoGallery`, `TabContainer`, `TimeslotPicker`, `Calendar`, `InlinePicker`), behaviour on **tap** comes only from `actions.tap`. An empty `tap` list means those taps do nothing. Calendar axis headings similarly run only `actions.tap-row` / `actions.tap-column`; empty axis triggers mean those headings do nothing.
+For row types that handle their own interactive elements (`SelectPhoto`, `TextExpand`, `TextSelect`, `PhotoGallery`, `TabContainer`, `TimeslotPicker`, `Calendar`, `InlinePicker`, `Search`), behaviour on **tap** comes only from `actions.tap`. An empty `tap` list means those taps do nothing. `Input` and `TextArea` use the generic whole-row tap path for `actions.tap` (the embedded text field still consumes taps on the field to begin editing). Calendar axis headings similarly run only `actions.tap-row` / `actions.tap-column`; empty axis triggers mean those headings do nothing.
 
 #### Swipe (`swipe-left`)
 

@@ -14,4 +14,5 @@ export const TRIGGER_LABELS: Record<RowTriggerName, string> = {
 	"tap-row": "Tap row",
 	"tap-column": "Tap column",
 	"swipe-left": "Swipe left",
+	submit: "Submit",
 };

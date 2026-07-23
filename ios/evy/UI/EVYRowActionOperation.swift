@@ -14,6 +14,7 @@ enum EVYRowActionTrigger {
   case tapRow
   case tapColumn
   case swipeLeft
+  case submit
 
   func actions(in rowActions: UI_RowActions) -> [UI_RowAction] {
     switch self {
@@ -27,6 +28,8 @@ enum EVYRowActionTrigger {
       return rowActions.tapColumn
     case .swipeLeft:
       return rowActions.swipeLeft
+    case .submit:
+      return rowActions.submit
     }
   }
 
@@ -37,6 +40,7 @@ enum EVYRowActionTrigger {
       rowActions.tapRow,
       rowActions.tapColumn,
       rowActions.swipeLeft,
+      rowActions.submit,
     ].flatMap { $0 }
   }
 }
