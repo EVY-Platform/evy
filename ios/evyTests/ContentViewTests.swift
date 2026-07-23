@@ -560,7 +560,7 @@ final class ContentViewTests: XCTestCase {
               "condition": "",
               "false": "",
               "true":
-                "{create(\(MarketplaceTestFixture.serviceId),\(MarketplaceTestFixture.itemsResourceId))}",
+                "{create(\(MarketplaceTestFixture.serviceId),\(MarketplaceTestFixture.itemsResourceId), submit)}",
             ]
           ]
         ],
@@ -606,7 +606,7 @@ final class ContentViewTests: XCTestCase {
             [
               "condition": "",
               "false": "",
-              "true": "{create(\(MarketplaceTestFixture.serviceId),\(itemsResource))}",
+              "true": "{create(\(MarketplaceTestFixture.serviceId),\(itemsResource), submit)}",
             ]
           ]
         ],
@@ -639,7 +639,7 @@ final class ContentViewTests: XCTestCase {
               "condition": "",
               "false": "",
               "true":
-                "{create(\(MarketplaceTestFixture.serviceId),\(MarketplaceTestFixture.itemsResourceId))}",
+                "{create(\(MarketplaceTestFixture.serviceId),\(MarketplaceTestFixture.itemsResourceId), submit)}",
             ]
           ]
         ],
@@ -690,7 +690,7 @@ final class ContentViewTests: XCTestCase {
               "condition": "",
               "false": "",
               "true":
-                "{create(\(MarketplaceTestFixture.serviceId),\(MarketplaceTestFixture.itemsResourceId))}",
+                "{create(\(MarketplaceTestFixture.serviceId),\(MarketplaceTestFixture.itemsResourceId), submit)}",
             ]
           ]
         ],
@@ -701,6 +701,83 @@ final class ContentViewTests: XCTestCase {
       EVYFlowStore.draftScopeId(for: route, from: store),
       EVYDraft.createMergeScopeId(
         flowId: "create-flow", entityKey: MarketplaceTestFixture.itemsResourceId)
+    )
+  }
+
+  func testExtractCreateKeysIgnoresUnparseableTwoArgCreate() throws {
+    let store = makeStore()
+
+    try seedFlow(store: store, id: "legacy-flow", pageIds: ["legacy-page"])
+    try seedPage(
+      store: store, id: "legacy-page", rowIds: [],
+      footerRowId: "submit-button")
+    try seedRow(
+      store: store, id: "submit-button", type: "Button",
+      data: [
+        "source": "", "title": "", "label": "Submit",
+        "actions": [
+          "tap": [
+            [
+              "condition": "",
+              "false": "",
+              "true":
+                "{create(\(MarketplaceTestFixture.serviceId),\(MarketplaceTestFixture.itemsResourceId))}",
+            ]
+          ]
+        ],
+      ])
+
+    let keys = EVYFlowStore.createKeys(flowId: "legacy-flow", from: store)
+    XCTAssertEqual(keys, [])
+    let route = Route(flowId: "legacy-flow", pageId: "legacy-page")
+    XCTAssertEqual(EVYFlowStore.draftScopeId(for: route, from: store), "legacy-flow:browse")
+  }
+
+  func testDraftScopeIdSurfacesErrorForMultipleSubmissionResources() throws {
+    let store = makeStore()
+    let secondResource = "fe000000-0000-0000-0000-000000000001"
+
+    try seedFlow(store: store, id: "multi-submit-flow", pageIds: ["multi-page"])
+    try seedPage(store: store, id: "multi-page", rowIds: ["row-a", "row-b"])
+    try seedRow(
+      store: store, id: "row-a", type: "Button",
+      data: [
+        "source": "", "title": "", "label": "A",
+        "actions": [
+          "tap": [
+            [
+              "condition": "",
+              "false": "",
+              "true":
+                "{create(\(MarketplaceTestFixture.serviceId),\(MarketplaceTestFixture.itemsResourceId), submit)}",
+            ]
+          ]
+        ],
+      ])
+    try seedRow(
+      store: store, id: "row-b", type: "Button",
+      data: [
+        "source": "", "title": "", "label": "B",
+        "actions": [
+          "tap": [
+            [
+              "condition": "",
+              "false": "",
+              "true": "{create(\(MarketplaceTestFixture.serviceId),\(secondResource), submit)}",
+            ]
+          ]
+        ],
+      ])
+
+    let route = Route(flowId: "multi-submit-flow", pageId: "multi-page")
+    let errors = capturedErrors {
+      _ = EVYFlowStore.draftScopeId(for: route, from: store)
+    }
+    XCTAssertFalse(errors.isEmpty)
+    XCTAssertEqual(
+      EVYFlowStore.draftScopeId(for: route, from: store),
+      EVYDraft.createMergeScopeId(
+        flowId: "multi-submit-flow", entityKey: MarketplaceTestFixture.itemsResourceId)
     )
   }
 
@@ -899,5 +976,19 @@ final class ContentViewTests: XCTestCase {
     let firstPageIdAfter = EVYFlowStore.firstPageId(inFlowId: flowId, from: store)
     XCTAssertEqual(firstPageIdBefore, firstPageIdAfter)
     XCTAssertEqual(firstPageIdAfter, pageId)
+  }
+
+  private func capturedErrors(during body: () -> Void) -> [Error] {
+    var errors: [Error] = []
+    let token = NotificationCenter.default.addObserver(
+      forName: .evyErrorOccurred, object: nil, queue: nil
+    ) { notification in
+      MainActor.assumeIsolated {
+        if let error = notification.object as? Error { errors.append(error) }
+      }
+    }
+    defer { NotificationCenter.default.removeObserver(token) }
+    body()
+    return errors
   }
 }

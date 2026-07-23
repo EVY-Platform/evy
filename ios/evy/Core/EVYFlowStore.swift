@@ -165,12 +165,9 @@ enum EVYFlowStore {
         guard let uiRow = storedRow.uiRow() else { return }
         for action in EVYRowActionTrigger.allActionLists(in: uiRow.actions) {
           for branch in [action.`true`, action.`false`] {
-            // Only draft-submission creates (no inline data) define the flow's entity
-            // scope. Inline creates (addresses, messages, …) must not steal it —
-            // otherwise sorted().first can pick "addresses" over the items resource id
-            // and item field drafts merge under the wrong root.
+            // Submission is declared with the `submit` marker on create actions.
             if let createAction = EVYActionParser.createAction(from: branch),
-              createAction.data == nil
+              createAction.isSubmission
             {
               keys.insert(createAction.resource)
             }
@@ -185,9 +182,17 @@ enum EVYFlowStore {
     for route: Route,
     from store: EVYDataStore = EVY.publicStore
   ) -> String? {
-    // TODO(simplify-if-and-shared-address#3): declare the flow submission entity in fixture/schema
-    // instead of sorted().first over create-action resource keys.
-    if let entityKey = createKeys(flowId: route.flowId, from: store).sorted().first {
+    let submissionResources = createKeys(flowId: route.flowId, from: store).sorted()
+    if submissionResources.count > 1 {
+      let resourceList = submissionResources.joined(separator: ", ")
+      NotificationCenter.default.post(
+        name: .evyErrorOccurred,
+        object: EVYError.invalidData(
+          context:
+            "flow \(route.flowId) declares multiple submission resources: \(resourceList)")
+      )
+    }
+    if let entityKey = submissionResources.first {
       return EVYDraft.createMergeScopeId(flowId: route.flowId, entityKey: entityKey)
     }
     return "\(route.flowId):browse"

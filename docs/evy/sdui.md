@@ -126,7 +126,7 @@ Rows are what are put into pages. They are the building block of the EVY server-
         "tap": [{
             "condition": "{length(title) > 0}",
             "false": "{highlight_required(title)}",
-            "true": "{create([service_id],[resource_id])}"
+            "true": "{create([service_id],[resource_id],submit)}"
         }]
     }
 }
@@ -267,8 +267,8 @@ Supported action functions:
 | Function | Meaning |
 | -------- | ------- |
 | `close()` | Close current UI, e.g. `{close()}`. Inside a sheet overlay, dismisses the sheet only. |
-| `create(service_id, resource_id, data?, id_destination?)` | Create a domain entity. **Never changes routes** — with a plain-text data object `{key: value, …}`, resolves its data-path or `$datum` values, preserves unresolved bare words as literals (bare `true`/`false` resolve as booleans, bare `null` resolves as JSON null, quoted `"…"` values stay literal strings, and `{…}` values resolve as nested objects), and creates that one entity immediately. Alternatively, pass a **data path** (bare identifier, e.g. `pickup_address`) as the third argument to send the whole resolved object from drafts or synced data. Optional fourth argument writes the generated uuid to a draft-aware destination path (e.g. `{pickup_address.id}`) — use this in **create flows** where the target record does not exist yet. When the target record already exists, link it with a follow-up `update` action instead of writing onto the live record path. With no data, it submits the active flow's drafts (merging them into the created entity) and cleans them up. Either way, a flow that should close after submitting must do so explicitly with a following `{close()}` action. |
-| `update(service_id, resource_id, filter, changes)` | Update matching domain entities immediately. Resolves filter and changes like inline `create` data (including boolean, `null`, quoted-string, and nested-object literals), or pass a **data path** as `changes` to merge a whole draft object (the client strips any `id` key from path-resolved changes before merging). Change keys may use dotted paths (e.g. `transfer_options.pickup.address_id`) to patch nested fields without clobbering siblings. A filter value of `null` matches records where the property is absent or JSON `null`. Locally finds rows where every filter property matches, merges changes, refreshes matching cache-scope entities, then syncs each match to the server with an `update` RPC. Filter is required and non-empty; `changes` is required as either a non-empty `{…}` object or a data path. |
+| `create(service_id, resource_id, submit \| data, id_destination?)` | Create a domain entity. **Never changes routes** — with `submit` as the third argument, merges the active flow's create drafts into the created entity and cleans them up (two-argument create is invalid). With a plain-text data object `{key: value, …}`, resolves its data-path or `$datum` values, preserves unresolved bare words as literals (bare `true`/`false` resolve as booleans, bare `null` resolves as JSON null, quoted `"…"` values stay literal strings, and `{…}` values resolve as nested objects), and creates that one entity immediately. Alternatively, pass a **data path** (bare identifier, e.g. `pickup_address`) as the third argument to send the whole resolved object from drafts or synced data. Optional fourth argument writes the generated uuid to a draft-aware destination path (e.g. `{pickup_address.id}`) — use this in **create flows** where the target record does not exist yet. When the target record already exists, link it with a follow-up store-mode `update` action instead of writing onto the live record path. Either way, a flow that should close after submitting must do so explicitly with a following `{close()}` action. |
+| `update(service_id, resource_id, filter, changes, draft?)` | Update matching domain entities immediately (store mode, default), or write into the active create draft (`draft` fifth argument with filter `{}`). Resolves filter and changes like inline `create` data (including boolean, `null`, quoted-string, and nested-object literals), or pass a **data path** as `changes` to merge a whole draft object (the client strips any `id` key from path-resolved changes before merging). Change keys may use dotted paths (e.g. `transfer_options.pickup.address_id`) to patch nested fields without clobbering siblings. A filter value of `null` matches records where the property is absent or JSON `null`. Locally finds rows where every filter property matches, merges changes, refreshes matching cache-scope entities, then syncs each match to the server with an `update` RPC. Store mode requires a non-empty filter; `changes` is required as either a non-empty `{…}` object or a data path. A store-mode update matching nothing is a no-op. |
 | `navigate(flowId, pageId, queryParams?)` | Go to a page within a flow, e.g. `{navigate(flowId, pageId)}`. Pass query params as the optional third argument using a plain-text query object, e.g. `{navigate(flowId, pageId, {id: $datum.id})}`. |
 | `show(rowId)` | Present the row with ID `rowId` in a sheet overlay, e.g. `{show(b8c7d6e5-f4a3-4b2c-9d1e-0f8a7b6c5d4e)}`. Requires exactly one non-empty row ID. The target may belong to any page in the synced flow data, not only the action row's nested `sheet`. If the ID is missing from the client row store, the action fails and later actions in the same array do not run. The presented row's `title` is the sheet header (live-interpolated when it contains expressions). |
 | `highlight_required(field)` | Mark a field as required / show validation, e.g. `{highlight_required(title)}` |
@@ -329,7 +329,7 @@ Submit:
 	{
 		"condition": "",
 		"false": "",
-		"true": "{create([service_id],[resource_id])}"
+		"true": "{create([service_id],[resource_id],submit)}"
 	},
 	{
 		"condition": "",
@@ -372,14 +372,12 @@ Search result template (`child` only on Search; separate from `sheet`).
 
 ### Address save pattern (create and edit flows)
 
-Use the same two-action `tap` array on the pickup Search row whether the marketplace item already exists or is still being created.
+Use the same two-action `tap` array on the pickup Search row for create and edit flows, but the **link** step differs by flow type.
 
 1. **Create or update the address** — if `address_id` is empty, `{create(core, addresses, pickup_address, {pickup_address.id})}` persists the address and writes the generated id to the page-local `pickup_address` buffer; otherwise `{update(core, addresses, {id: item.transfer_options.pickup.address_id}, pickup_address)}` updates the existing row.
-2. **Link the item** — `{update(marketplace, items, {id: item.id}, {transfer_options.pickup.address_id: pickup_address.id})}` sets `transfer_options.pickup.address_id` on the item.
+2. **Link the item** — on **edit** flows where the item row already exists: `{update(marketplace, items, {id: item.id}, {transfer_options.pickup.address_id: pickup_address.id})}` matches the row and syncs immediately. On **create** flows: `{update(marketplace, items, {}, {transfer_options.pickup.address_id: pickup_address.id}, draft)}` writes into the create draft (picked up by submit `create`). A page shared across both flow types needs condition-branched actions (store vs draft link) because one action string no longer serves both.
 
-On **edit** flows the item row exists: the second action matches that row and syncs immediately. On **create** flows there is no item row yet; when the filter matches nothing, the client routes the change into the create draft so the flow’s submit `create` includes `address_id`. The page-local `pickup_address` alias is not merged onto the item (`.aliasFlat`).
-
-When an address already exists, the first action’s `false` branch runs and **stops the action array** (runner semantics), so the link step does not run again on re-pick.
+When an address already exists, the first action's `false` branch runs and **stops the action array** (runner semantics), so the link step does not run again on re-pick.
 
 ```json
 {
@@ -396,7 +394,7 @@ When an address already exists, the first action’s `false` branch runs and **s
 			},
 			{
 				"condition": "",
-				"true": "{update(marketplace, items, {id: item.id}, {transfer_options.pickup.address_id: pickup_address.id})}",
+				"true": "{update(marketplace, items, {}, {transfer_options.pickup.address_id: pickup_address.id}, draft)}",
 				"false": ""
 			}
 		]

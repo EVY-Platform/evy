@@ -258,18 +258,6 @@ extension EVY {
         (rowId: row.id, recordId: recordId, updatedData: .dictionary(updatedRecord)))
     }
 
-    if matchedUpdates.isEmpty,
-      let scopeId = draftStore.activeScopeId,
-      EVYDraft.Scope.entityKey(fromScopeId: scopeId) == resource
-    {
-      // TODO(simplify-if-and-shared-address#4): replace inferred create-flow merge with an explicit
-      // fixture action mode instead of matched-row-count + entityKey string equality.
-      for (key, value) in changes {
-        try writeRawValue(value, to: "{\(resource).\(key)}")
-      }
-      return
-    }
-
     let cacheRowsForScope: [EVYData] =
       if let scopeId = activeCacheScopeId {
         (try? cacheStore.getAll(namespace: EVYNamespace.cache, resource: scopeId)) ?? []
@@ -309,6 +297,16 @@ extension EVY {
         data: update.updatedData
       )
       syncMutation(method: "update", params: params)
+    }
+  }
+
+  static func mergeIntoActiveDraft(resource: String, changes: [String: EVYJson]) throws {
+    guard EVYDraft.Scope.entityKey(fromScopeId: draftStore.activeScopeId) == resource else {
+      throw EVYError.invalidData(
+        context: "draft-mode update requires an active create scope for <resource>")
+    }
+    for (key, value) in changes {
+      try writeRawValue(value, to: "{\(resource).\(key)}")
     }
   }
 
@@ -396,14 +394,11 @@ extension EVY {
       return
     }
 
-    // Create-merge scopes must not fall through to findRowForUpdate for the entity being
-    // created: that helper returns the first existing row of the resource, so nested writes
-    // like `{items.transfer_options.pickup.address_id}` would patch a seeded listing instead
-    // of joining the create draft — and the new item would be submitted without address_id.
+    // Create-merge scopes must not fall through to findRowForUpdate for the entity declared
+    // via the flow's submit create: findRowForUpdate returns the first existing row of the
+    // resource, so nested writes would patch a seeded listing instead of the create draft.
     let createEntityKey = EVYDraft.Scope.entityKey(fromScopeId: resolvedScopeId)
     let writesIntoCreateEntity = createEntityKey != nil && rootVariable == createEntityKey
-    // TODO(simplify-if-and-shared-address#4): explicit merge/link action in fixtures instead of
-    // writesIntoCreateEntity inference (see update() create-flow fallback above).
 
     if !writesIntoCreateEntity,
       let existingRow = try? findRowForUpdate(store: store, rootVariable: rootVariable)

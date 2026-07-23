@@ -81,6 +81,7 @@ export function serializeBranch(
 ): string {
 	if (!functionName) return "";
 
+	// Draft-mode update uses an empty filter (`{}`); do not filter(Boolean) args or positions collapse.
 	const filteredArgs = args.filter(Boolean);
 
 	if (ZERO_ARG_FUNCTIONS.has(functionName)) {

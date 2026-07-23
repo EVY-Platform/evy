@@ -620,7 +620,7 @@ test.describe("Row configuration", () => {
 								{
 									condition: "",
 									false: "",
-									true: `{create(${MARKETPLACE_SERVICE},${MARKETPLACE_RESOURCE.ITEMS})}`,
+									true: `{create(${MARKETPLACE_SERVICE},${MARKETPLACE_RESOURCE.ITEMS},submit)}`,
 								},
 							],
 						},

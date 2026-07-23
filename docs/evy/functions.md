@@ -346,18 +346,18 @@ These run on the iOS client when a row action branch executes. See [sdui.md](./s
 #### create
 
 ```
-{create(service_id, resource_id, data?, id_destination?)}
+{create(service_id, resource_id, submit | data, id_destination?)}
 ```
 
-Creates a domain entity immediately. Inline `data` supports nested object values (e.g. `data: {type: pickup, time: selected_pickup_timeslot}`), quoted string literals (never resolved as data paths), bare `true`/`false` booleans, and `null`, or pass a whole-object data path (e.g. `pickup_address`). Optional fourth argument `id_destination` is a draft-aware write path; after create, the client writes the generated uuid string there (typically `{pickup_address.id}` on address pick). Linking the parent entity is a follow-up `update` action — same SDUI in create and edit flows; see the **Address save pattern** in [sdui.md](./sdui.md).
+Creates a domain entity immediately. The third argument is required: use the bare keyword `submit` to merge the active flow's create drafts into the new entity (and clean them up), or pass inline `data` / a whole-object data path for an immediate inline create. A two-argument `create(service_id, resource_id)` is invalid. Inline `data` supports nested object values (e.g. `data: {type: pickup, time: selected_pickup_timeslot}`), quoted string literals (never resolved as data paths), bare `true`/`false` booleans, and `null`, or pass a whole-object data path (e.g. `pickup_address`). Optional fourth argument `id_destination` is a draft-aware write path; after create, the client writes the generated uuid string there (typically `{pickup_address.id}` on address pick). Linking the parent entity is a follow-up `update` action — see the **Address save pattern** in [sdui.md](./sdui.md).
 
 #### update
 
 ```
-{update(service_id, resource_id, filter, changes)}
+{update(service_id, resource_id, filter, changes, draft?)}
 ```
 
-Updates matching domain entities immediately. Filter and changes values resolve like inline `create` data; `changes` may be a data path (whole draft object, with `id` stripped before merge) or a `{key: value}` object whose keys may use dotted nested paths (e.g. `transfer_options.pickup.address_id`). A filter value of `null` matches records where the property is absent or JSON `null`, and changes can call functions, e.g. `{archivedAt: now()}`. During a **create flow**, an `update` on the entity being created that matches no store row writes its changes into the create draft (picked up by submit `create`) instead of no-oping. For user confirmation, call `{show(a4b5c6d7-e8f9-4a0b-1c2d-3e4f5a6b7c8d)}` (or another sheet row ID) and run `update` from the sheet's confirm button.
+Updates matching domain entities immediately. Filter and changes values resolve like inline `create` data; `changes` may be a data path (whole draft object, with `id` stripped before merge) or a `{key: value}` object whose keys may use dotted nested paths (e.g. `transfer_options.pickup.address_id`). Store mode (default) requires a non-empty filter. Draft mode passes the bare keyword `draft` as the fifth argument with filter exactly `{}`; changes are written into the active create-merge scope for `resource_id` via `mergeIntoActiveDraft`. A filter value of `null` matches records where the property is absent or JSON `null`, and changes can call functions, e.g. `{archivedAt: now()}`. A store-mode update that matches no rows is a no-op. For user confirmation, call `{show(a4b5c6d7-e8f9-4a0b-1c2d-3e4f5a6b7c8d)}` (or another sheet row ID) and run `update` from the sheet's confirm button.
 
 #### show
 

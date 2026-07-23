@@ -94,7 +94,9 @@ enum EVYActionRunner {
       case "create":
         guard let createAction = EVYActionParser.createAction(from: branch) else {
           throw EVYError.invalidData(
-            context: "create requires namespace and resource, e.g. create(marketplace,item)")
+            context:
+              "create requires namespace, resource, and submit or data, e.g. create(marketplace,item,submit)"
+          )
         }
         let resolvedData = try createAction.data.map {
           try resolveObjectArgument($0, datum: datum, stripIdFromChanges: false)
@@ -114,15 +116,23 @@ enum EVYActionRunner {
               "update requires namespace, resource, filter, and changes, e.g. update(marketplace,messages,{id: abc},{archivedAt: now()})"
           )
         }
-        let resolvedFilter = resolvePlainTextValues(updateAction.filter, datum: datum)
         let resolvedChanges = try resolveObjectArgument(
           updateAction.changes, datum: datum, stripIdFromChanges: true)
-        try EVY.update(
-          namespace: updateAction.namespace,
-          resource: updateAction.resource,
-          matching: resolvedFilter,
-          changes: resolvedChanges
-        )
+        switch updateAction.mode {
+        case .store:
+          let resolvedFilter = resolvePlainTextValues(updateAction.filter, datum: datum)
+          try EVY.update(
+            namespace: updateAction.namespace,
+            resource: updateAction.resource,
+            matching: resolvedFilter,
+            changes: resolvedChanges
+          )
+        case .draft:
+          try EVY.mergeIntoActiveDraft(
+            resource: updateAction.resource,
+            changes: resolvedChanges
+          )
+        }
       case "close":
         try requireNoArguments(functionArgs, function: "close")
         action(.close)

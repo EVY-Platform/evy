@@ -428,7 +428,7 @@ class E2ETestBase: XCTestCase {
             ),
             "sheet": Self.submitListingSheetChild(
               createAction:
-                "{create(\(MARKETPLACE_SERVICE),\(MARKETPLACE_ITEMS_RESOURCE_ID))}"
+                "{create(\(MARKETPLACE_SERVICE),\(MARKETPLACE_ITEMS_RESOURCE_ID), submit)}"
             ),
           ] as [String: Any],
         ]
@@ -481,7 +481,7 @@ class E2ETestBase: XCTestCase {
             ),
             "sheet": Self.submitListingSheetChild(
               createAction:
-                "{create(\(MARKETPLACE_SERVICE),\(MARKETPLACE_ITEMS_RESOURCE_ID))}"
+                "{create(\(MARKETPLACE_SERVICE),\(MARKETPLACE_ITEMS_RESOURCE_ID), submit)}"
             ),
           ] as [String: Any],
         ]

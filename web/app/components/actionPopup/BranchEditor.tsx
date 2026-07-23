@@ -183,6 +183,24 @@ export function BranchEditor({
 		[selectedFunction, args, onChange],
 	);
 
+	const applyArgUpdates = useCallback(
+		(updates: Array<[number, string]>) => {
+			if (!selectedFunction) return;
+			const newArgs = [...args];
+			for (const [argIndex, argValue] of updates) {
+				while (newArgs.length <= argIndex) newArgs.push("");
+				newArgs[argIndex] = argValue;
+			}
+			onChange(
+				serializeBranch(selectedFunction as ActionFunction, newArgs),
+			);
+		},
+		[selectedFunction, args, onChange],
+	);
+
+	const createUsesSubmitMarker = args[2]?.trim() === "submit";
+	const updateUsesDraftMode = args[4]?.trim() === "draft";
+
 	const argDropdowns = buildArgDropdowns(
 		selectedFunction as ActionFunction | "",
 		args,
@@ -228,26 +246,51 @@ export function BranchEditor({
 
 			{selectedFunction === "create" && args[0] && args[1] && (
 				<>
-					<BuilderAssist
-						ariaLabel={`${branchId}-create-data`}
-						value={args[2] ?? ""}
-						onChange={(v) => handleArgChange(2, v)}
-						candidates={idCandidates}
-						getAttributeCandidatesForQualifier={
-							getAttributeCandidatesForQualifier
-						}
-						placeholder="Data path or inline object, e.g. pickup_address"
+					<PopoverSelect
+						ariaLabel={`${branchId}-create-data-kind`}
+						options={[
+							{ value: "submit", label: "Submit flow drafts" },
+							{ value: "inline", label: "Inline data…" },
+						]}
+						value={createUsesSubmitMarker ? "submit" : "inline"}
+						onChange={(kind) => {
+							if (kind === "submit") {
+								applyArgUpdates([
+									[2, "submit"],
+									[3, ""],
+								]);
+							} else {
+								applyArgUpdates([
+									[2, ""],
+									[3, ""],
+								]);
+							}
+						}}
 					/>
-					<BuilderAssist
-						ariaLabel={`${branchId}-create-id-destination`}
-						value={args[3] ?? ""}
-						onChange={(v) => handleArgChange(3, v)}
-						candidates={idCandidates}
-						getAttributeCandidatesForQualifier={
-							getAttributeCandidatesForQualifier
-						}
-						placeholder="Optional id destination, e.g. {item.transfer_options.pickup.address_id}"
-					/>
+					{!createUsesSubmitMarker && (
+						<>
+							<BuilderAssist
+								ariaLabel={`${branchId}-create-data`}
+								value={args[2] ?? ""}
+								onChange={(v) => handleArgChange(2, v)}
+								candidates={idCandidates}
+								getAttributeCandidatesForQualifier={
+									getAttributeCandidatesForQualifier
+								}
+								placeholder="Data path or inline object, e.g. pickup_address"
+							/>
+							<BuilderAssist
+								ariaLabel={`${branchId}-create-id-destination`}
+								value={args[3] ?? ""}
+								onChange={(v) => handleArgChange(3, v)}
+								candidates={idCandidates}
+								getAttributeCandidatesForQualifier={
+									getAttributeCandidatesForQualifier
+								}
+								placeholder="Optional id destination, e.g. {item.transfer_options.pickup.address_id}"
+							/>
+						</>
+					)}
 				</>
 			)}
 
@@ -266,17 +309,46 @@ export function BranchEditor({
 
 			{selectedFunction === "update" && args[0] && args[1] && (
 				<>
-					<BuilderAssist
-						ariaLabel={`${branchId}-update-filter`}
-						value={args[2] ?? ""}
-						onChange={(v) => handleArgChange(2, v)}
-						candidates={idCandidates}
-						getAttributeCandidatesForQualifier={
-							getAttributeCandidatesForQualifier
-						}
-						placeholder="Filter, e.g. {fk: $datum.id, archivedAt: null}"
-						multiline
+					<PopoverSelect
+						ariaLabel={`${branchId}-update-mode`}
+						options={[
+							{
+								value: "store",
+								label: "Update matching records",
+							},
+							{
+								value: "draft",
+								label: "Write into create draft",
+							},
+						]}
+						value={updateUsesDraftMode ? "draft" : "store"}
+						onChange={(mode) => {
+							if (mode === "draft") {
+								applyArgUpdates([
+									[2, "{}"],
+									[4, "draft"],
+								]);
+							} else {
+								applyArgUpdates([
+									[2, ""],
+									[4, ""],
+								]);
+							}
+						}}
 					/>
+					{!updateUsesDraftMode && (
+						<BuilderAssist
+							ariaLabel={`${branchId}-update-filter`}
+							value={args[2] ?? ""}
+							onChange={(v) => handleArgChange(2, v)}
+							candidates={idCandidates}
+							getAttributeCandidatesForQualifier={
+								getAttributeCandidatesForQualifier
+							}
+							placeholder="Filter, e.g. {fk: $datum.id, archivedAt: null}"
+							multiline
+						/>
+					)}
 					<BuilderAssist
 						ariaLabel={`${branchId}-update-changes`}
 						value={args[3] ?? ""}

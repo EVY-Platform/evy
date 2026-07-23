@@ -25,6 +25,52 @@ describe("action branch helpers", () => {
 		expect(serializeBranch("show", [])).toBe("");
 	});
 
+	it("parses create with submit marker", () => {
+		expect(
+			parseBranch(
+				`{create(${MARKETPLACE_SERVICE},${MARKETPLACE_RESOURCE.ITEMS},submit)}`,
+			),
+		).toEqual({
+			functionName: "create",
+			args: [MARKETPLACE_SERVICE, MARKETPLACE_RESOURCE.ITEMS, "submit"],
+		});
+	});
+
+	it("serializes create with submit marker", () => {
+		expect(
+			serializeBranch("create", [
+				MARKETPLACE_SERVICE,
+				MARKETPLACE_RESOURCE.ITEMS,
+				"submit",
+			]),
+		).toBe(
+			`{create(${MARKETPLACE_SERVICE},${MARKETPLACE_RESOURCE.ITEMS},submit)}`,
+		);
+	});
+
+	it("round-trips draft-mode update with empty filter", () => {
+		const branch = `{update(${MARKETPLACE_SERVICE},${MARKETPLACE_RESOURCE.ITEMS},{},{transfer_options.pickup.address_id: pickup_address.id},draft)}`;
+		expect(parseBranch(branch)).toEqual({
+			functionName: "update",
+			args: [
+				MARKETPLACE_SERVICE,
+				MARKETPLACE_RESOURCE.ITEMS,
+				"{}",
+				"{transfer_options.pickup.address_id: pickup_address.id}",
+				"draft",
+			],
+		});
+		expect(
+			serializeBranch("update", [
+				MARKETPLACE_SERVICE,
+				MARKETPLACE_RESOURCE.ITEMS,
+				"{}",
+				"{transfer_options.pickup.address_id: pickup_address.id}",
+				"draft",
+			]),
+		).toBe(branch);
+	});
+
 	it("parses create with namespace and resource", () => {
 		expect(
 			parseBranch(

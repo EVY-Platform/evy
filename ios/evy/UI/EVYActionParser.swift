@@ -13,15 +13,22 @@ enum EVYObjectArgument: Equatable {
 struct EVYCreateAction: Equatable {
   let namespace: String
   let resource: String
+  let isSubmission: Bool
   let data: EVYObjectArgument?
   let idDestination: String?
 }
 
 struct EVYUpdateAction: Equatable {
+  enum Mode: Equatable {
+    case store
+    case draft
+  }
+
   let namespace: String
   let resource: String
   let filter: [String: String]
   let changes: EVYObjectArgument
+  let mode: Mode
 }
 
 @MainActor
@@ -36,14 +43,20 @@ enum EVYActionParser {
     let resource = args[1].trimmingCharacters(in: .whitespacesAndNewlines)
     guard !namespace.isEmpty, !resource.isEmpty else { return nil }
 
-    let data: EVYObjectArgument?
-    if args.count > 2 {
-      guard let parsedData = try? objectArgument(from: args[2], context: "create data") else {
-        return nil
-      }
-      data = parsedData
-    } else {
-      data = nil
+    if args.count == 2 {
+      return nil
+    }
+
+    let thirdArg = args[2].trimmingCharacters(in: .whitespacesAndNewlines)
+    if thirdArg == "submit" {
+      guard args.count == 3 else { return nil }
+      return EVYCreateAction(
+        namespace: namespace, resource: resource, isSubmission: true, data: nil,
+        idDestination: nil)
+    }
+
+    guard let parsedData = try? objectArgument(from: args[2], context: "create data") else {
+      return nil
     }
 
     let idDestination: String?
@@ -56,7 +69,8 @@ enum EVYActionParser {
     }
 
     return EVYCreateAction(
-      namespace: namespace, resource: resource, data: data, idDestination: idDestination)
+      namespace: namespace, resource: resource, isSubmission: false, data: parsedData,
+      idDestination: idDestination)
   }
 
   static func updateAction(from rawBranch: String) -> EVYUpdateAction? {
@@ -64,14 +78,30 @@ enum EVYActionParser {
       return nil
     }
     let args = EVY.splitFunctionArguments(parsed.args)
-    guard args.count >= 4 else { return nil }
+    guard args.count >= 4, args.count <= 5 else { return nil }
     let namespace = args[0].trimmingCharacters(in: .whitespacesAndNewlines)
     let resource = args[1].trimmingCharacters(in: .whitespacesAndNewlines)
     guard !namespace.isEmpty, !resource.isEmpty else { return nil }
 
-    guard let filter = try? plainTextObject(from: args[2], context: "update filter"),
-      !filter.isEmpty
-    else { return nil }
+    let mode: EVYUpdateAction.Mode
+    if args.count == 5 {
+      let modeArg = args[4].trimmingCharacters(in: .whitespacesAndNewlines)
+      guard modeArg == "draft" else { return nil }
+      mode = .draft
+    } else {
+      mode = .store
+    }
+
+    guard let filter = try? plainTextObject(from: args[2], context: "update filter") else {
+      return nil
+    }
+    switch mode {
+    case .store:
+      guard !filter.isEmpty else { return nil }
+    case .draft:
+      guard filter.isEmpty else { return nil }
+    }
+
     guard let changes = try? objectArgument(from: args[3], context: "update changes") else {
       return nil
     }
@@ -80,7 +110,7 @@ enum EVYActionParser {
     }
 
     return EVYUpdateAction(
-      namespace: namespace, resource: resource, filter: filter, changes: changes)
+      namespace: namespace, resource: resource, filter: filter, changes: changes, mode: mode)
   }
 
   static func objectArgument(from text: String, context: String) throws -> EVYObjectArgument {

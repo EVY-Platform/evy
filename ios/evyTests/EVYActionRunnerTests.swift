@@ -88,7 +88,7 @@ final class EVYActionRunnerTests: XCTestCase {
       "Flow Submitted Title", destination: "{\(resource).title}", scopeId: scopeId)
 
     var received: ActionOperation?
-    let action = rowAction(true: "{create(\(namespace),\(resource))}")
+    let action = rowAction(true: "{create(\(namespace),\(resource), submit)}")
     EVYActionRunner.run(actions: [action]) { received = $0 }
 
     XCTAssertNil(received)
@@ -120,7 +120,7 @@ final class EVYActionRunnerTests: XCTestCase {
     try EVY.updateValue("Chained Title", destination: "{title}", scopeId: scopeId)
 
     var receivedOperations: [ActionOperation] = []
-    let createAction = rowAction(true: "{create(\(namespace),\(resource))}")
+    let createAction = rowAction(true: "{create(\(namespace),\(resource), submit)}")
     let closeAction = rowAction(true: "{close()}")
     EVYActionRunner.run(actions: [createAction, closeAction]) { receivedOperations.append($0) }
 
@@ -158,13 +158,24 @@ final class EVYActionRunnerTests: XCTestCase {
     )
   }
 
-  func testCreateActionParserKeepsTwoArgumentDataNil() {
-    let action = EVYActionParser.createAction(from: "{create(ns,res)}")
+  func testCreateActionParserRejectsTwoArgumentCreate() {
+    XCTAssertNil(EVYActionParser.createAction(from: "{create(ns,res)}"))
+  }
+
+  func testCreateActionParserParsesSubmitMarker() {
+    let action = EVYActionParser.createAction(from: "{create(ns,res,submit)}")
 
     XCTAssertEqual(action?.namespace, "ns")
     XCTAssertEqual(action?.resource, "res")
+    XCTAssertEqual(action?.isSubmission, true)
     XCTAssertNil(action?.data)
     XCTAssertNil(action?.idDestination)
+  }
+
+  func testCreateActionParserRejectsSubmitWithExtraArgs() {
+    XCTAssertNil(
+      EVYActionParser.createAction(
+        from: "{create(ns,res,submit,{pickup_address.id})}"))
   }
 
   func testCreateActionParserParsesIdDestination() {
@@ -342,13 +353,28 @@ final class EVYActionRunnerTests: XCTestCase {
     XCTAssertEqual(values["city"], .string("Rosebery"))
   }
 
+  private enum PickupLinkMode {
+    case store
+    case draft
+  }
+
   private func pickupAddressSaveActions(
     coreNamespace: String,
     addressesResource: String,
     itemsResource: String,
-    marketplaceNamespace: String = EVYNamespace.marketplace
+    marketplaceNamespace: String = EVYNamespace.marketplace,
+    linkMode: PickupLinkMode = .store
   ) -> [UI_RowAction] {
-    [
+    let linkAction: String
+    switch linkMode {
+    case .store:
+      linkAction =
+        "{update(\(marketplaceNamespace), \(itemsResource), {id: \(itemsResource).id}, {transfer_options.pickup.address_id: pickup_address.id})}"
+    case .draft:
+      linkAction =
+        "{update(\(marketplaceNamespace), \(itemsResource), {}, {transfer_options.pickup.address_id: pickup_address.id}, draft)}"
+    }
+    return [
       rowAction(
         condition: "{length(\(itemsResource).transfer_options.pickup.address_id) == 0}",
         true:
@@ -356,10 +382,7 @@ final class EVYActionRunnerTests: XCTestCase {
         false:
           "{update(\(coreNamespace), \(addressesResource), {id: \(itemsResource).transfer_options.pickup.address_id}, pickup_address)}"
       ),
-      rowAction(
-        true:
-          "{update(\(marketplaceNamespace), \(itemsResource), {id: \(itemsResource).id}, {transfer_options.pickup.address_id: pickup_address.id})}"
-      ),
+      rowAction(true: linkAction),
     ]
   }
 
@@ -471,7 +494,52 @@ final class EVYActionRunnerTests: XCTestCase {
     XCTAssertEqual(updatedAddress["instructions"], .string("Updated instructions"))
   }
 
-  func testUpdateInCreateScopeRoutesUnmatchedChangesIntoCreateDraft() throws {
+  func testDraftModeUpdateWritesChangesIntoCreateDraft() throws {
+    let marketplaceNamespace = EVYNamespace.marketplace
+    let itemsResource = MarketplaceTestFixture.itemsResourceId
+    let flowId = "create-flow"
+    let scopeId = EVYDraft.createMergeScopeId(flowId: flowId, entityKey: itemsResource)
+    let unrelatedItemId = UUID().uuidString
+
+    try? EVY.publicStore.deleteAll(namespace: marketplaceNamespace, resource: itemsResource)
+    EVY.draftStore.deleteDrafts()
+    EVY.draftStore.activeScopeId = scopeId
+    defer {
+      try? EVY.publicStore.deleteAll(namespace: marketplaceNamespace, resource: itemsResource)
+      EVY.draftStore.deleteDrafts(scopeId: scopeId)
+      EVY.draftStore.activeScopeId = nil
+    }
+
+    let unrelatedItem = EVYJson.dictionary([
+      "id": .string(unrelatedItemId),
+      "title": .string("Unrelated listing"),
+    ])
+    try EVY.publicStore.applySyncedValue(
+      namespace: marketplaceNamespace,
+      resource: itemsResource,
+      value: .array([unrelatedItem])
+    )
+
+    let linkAction = rowAction(
+      true:
+        "{update(\(marketplaceNamespace), \(itemsResource), {}, {transfer_options.pickup.address_id: \"some-address-uuid\"}, draft)}"
+    )
+    EVYActionRunner.run(actions: [linkAction]) { _ in }
+
+    XCTAssertEqual(
+      try EVY.getDataFromText("{\(itemsResource).transfer_options.pickup.address_id}"),
+      .string("some-address-uuid"))
+
+    let items = try EVY.publicStore.getAll(namespace: marketplaceNamespace, resource: itemsResource)
+    XCTAssertEqual(items.count, 1)
+    guard case .dictionary(let unchangedItem) = try items[0].decoded() else {
+      return XCTFail("expected unrelated item")
+    }
+    XCTAssertEqual(unchangedItem["title"], .string("Unrelated listing"))
+    XCTAssertEqual(unchangedItem["id"], .string(unrelatedItemId))
+  }
+
+  func testStoreModeUpdateMatchingNothingNoOpsInCreateScope() throws {
     let marketplaceNamespace = EVYNamespace.marketplace
     let itemsResource = MarketplaceTestFixture.itemsResourceId
     let flowId = "create-flow"
@@ -503,9 +571,7 @@ final class EVYActionRunnerTests: XCTestCase {
     )
     EVYActionRunner.run(actions: [linkAction]) { _ in }
 
-    XCTAssertEqual(
-      try EVY.getDataFromText("{\(itemsResource).transfer_options.pickup.address_id}"),
-      .string("some-address-uuid"))
+    XCTAssertEqual(try EVY.draftStore.drafts(forScopeId: scopeId).count, 0)
 
     let items = try EVY.publicStore.getAll(namespace: marketplaceNamespace, resource: itemsResource)
     XCTAssertEqual(items.count, 1)
@@ -514,6 +580,48 @@ final class EVYActionRunnerTests: XCTestCase {
     }
     XCTAssertEqual(unchangedItem["title"], .string("Unrelated listing"))
     XCTAssertEqual(unchangedItem["id"], .string(unrelatedItemId))
+  }
+
+  func testDraftModeUpdateOutsideMatchingCreateScopeErrors() throws {
+    let marketplaceNamespace = EVYNamespace.marketplace
+    let itemsResource = MarketplaceTestFixture.itemsResourceId
+    let browseScopeId = "create-flow:browse"
+
+    try? EVY.publicStore.deleteAll(namespace: marketplaceNamespace, resource: itemsResource)
+    EVY.draftStore.deleteDrafts()
+    EVY.draftStore.activeScopeId = browseScopeId
+    defer {
+      try? EVY.publicStore.deleteAll(namespace: marketplaceNamespace, resource: itemsResource)
+      EVY.draftStore.deleteDrafts()
+      EVY.draftStore.activeScopeId = nil
+    }
+
+    let itemId = UUID().uuidString
+    let itemRecord = EVYJson.dictionary([
+      "id": .string(itemId),
+      "title": .string("Listing"),
+    ])
+    try EVY.publicStore.applySyncedValue(
+      namespace: marketplaceNamespace,
+      resource: itemsResource,
+      value: .array([itemRecord])
+    )
+
+    let linkAction = rowAction(
+      true:
+        "{update(\(marketplaceNamespace), \(itemsResource), {}, {title: \"patched\"}, draft)}"
+    )
+    let errors = capturedErrors {
+      EVYActionRunner.run(actions: [linkAction]) { _ in }
+    }
+    XCTAssertFalse(errors.isEmpty)
+
+    let updated = try EVY.publicStore.get(
+      namespace: marketplaceNamespace, resource: itemsResource, id: itemId)
+    guard case .dictionary(let values) = try updated.decoded() else {
+      return XCTFail("expected item")
+    }
+    XCTAssertEqual(values["title"], .string("Listing"))
   }
 
   func testUpdateInCreateScopeWithMatchingRowStillUpdatesRow() throws {
@@ -587,7 +695,8 @@ final class EVYActionRunnerTests: XCTestCase {
     let saveActions = pickupAddressSaveActions(
       coreNamespace: coreNamespace,
       addressesResource: addressesResource,
-      itemsResource: itemsResource
+      itemsResource: itemsResource,
+      linkMode: .draft
     )
     EVYActionRunner.run(actions: saveActions) { _ in }
 
@@ -651,6 +760,37 @@ final class EVYActionRunnerTests: XCTestCase {
     XCTAssertEqual(action?.resource, "res")
     XCTAssertEqual(action?.filter, ["fk": "abc.id", "archivedAt": "null"])
     XCTAssertEqual(action?.changes, .literal(["archivedAt": "now()"]))
+    XCTAssertEqual(action?.mode, .store)
+  }
+
+  func testUpdateActionParserParsesDraftMode() {
+    let action = EVYActionParser.updateAction(
+      from: "{update(ns,res,{},{transfer_options.pickup.address_id: pickup_address.id},draft)}"
+    )
+
+    XCTAssertEqual(action?.mode, .draft)
+    XCTAssertEqual(action?.filter, [:])
+    XCTAssertEqual(
+      action?.changes,
+      .literal(["transfer_options.pickup.address_id": "pickup_address.id"]))
+  }
+
+  func testUpdateActionParserRejectsNonEmptyFilterWithDraftMode() {
+    XCTAssertNil(
+      EVYActionParser.updateAction(
+        from: "{update(ns,res,{id: abc},{title: x},draft)}"))
+  }
+
+  func testUpdateActionParserRejectsUnknownMode() {
+    XCTAssertNil(
+      EVYActionParser.updateAction(
+        from: "{update(ns,res,{},{title: x},store)}"))
+  }
+
+  func testUpdateActionParserRejectsSixArgs() {
+    XCTAssertNil(
+      EVYActionParser.updateAction(
+        from: "{update(ns,res,{},{title: x},draft,extra)}"))
   }
 
   func testUpdateActionParserRejectsMissingFilterOrChanges() {
