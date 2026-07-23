@@ -5,7 +5,13 @@ import {
 	type RowComponent,
 } from "../rows/rowElementFactory";
 import { getRowBindingFields, readBindingFields } from "../rows/rowFields";
+import { getRowTriggers } from "../rows/rowTriggers";
 import type { Row, RowConfig } from "../types/row";
+import {
+	compactRowActions,
+	normalizeStoredRowActions,
+	rowAction,
+} from "./rowActions";
 import { ROW_METADATA_KEYS } from "./rowConstants";
 
 function rowConfigAttributes(config: RowConfig): Record<string, unknown> {
@@ -50,7 +56,7 @@ function normalizeServerRowWithDefaultTitle(
 		id: row.id,
 		type: row.type,
 		...readBindingFields(row as Record<string, unknown>, row.type),
-		actions: row.actions ?? [],
+		actions: normalizeStoredRowActions(row.actions),
 		visible: row.visible ?? "true",
 		title: typeof row.title === "string" ? row.title : defaultTitle,
 	} as ServerRow;
@@ -106,7 +112,9 @@ function rowToServerRow(row: Row): ServerRow {
 	const serverRow: Record<string, unknown> = {
 		id: row.id,
 		type: row.config.type,
-		actions: row.config.actions ?? [],
+		actions: compactRowActions(
+			normalizeStoredRowActions(row.config.actions),
+		),
 		visible: row.config.visible ?? "true",
 	};
 
@@ -162,7 +170,7 @@ function decodeRow(row: ServerRow): Row {
 function decodeRowConfig(row: ServerRow, name?: string): RowConfig {
 	const config: Record<string, unknown> = {
 		type: row.type,
-		actions: row.actions,
+		actions: normalizeStoredRowActions(row.actions),
 		visible: row.visible,
 		...readBindingFields(row as Record<string, unknown>, row.type),
 	};
@@ -224,7 +232,7 @@ function resetRowAttributesForNewPage(row: ServerRow): ServerRow {
 	const resetRow: Record<string, unknown> = {
 		id: row.id,
 		type: row.type,
-		actions: row.actions ?? [],
+		actions: normalizeStoredRowActions(row.actions),
 		visible: row.visible ?? "true",
 	};
 
@@ -278,5 +286,38 @@ export function buildRowForNewPageFromBase(
 		structuredClone(rowToServerRow(seed)),
 	);
 	assignFreshIdsInPlace(cloned, newRowId);
-	return decodeRow(cloned);
+	const row = decodeRow(cloned);
+	let actions = normalizeStoredRowActions(row.config.actions);
+
+	if (row.config.type === "TextExpand") {
+		actions = {
+			...actions,
+			tap: [rowAction(`{expand_text(${newRowId})}`)],
+		};
+	}
+
+	let nextActions = { ...actions };
+	for (const triggerSpec of getRowTriggers(row.config.type)) {
+		const trigger = triggerSpec.trigger;
+		const existing = nextActions[trigger];
+		if (existing && existing.length > 0) {
+			continue;
+		}
+		if (!triggerSpec.required) {
+			continue;
+		}
+		nextActions = {
+			...nextActions,
+			[trigger]: [rowAction(`{show(${newRowId})}`)],
+		};
+	}
+	actions = nextActions;
+
+	return {
+		...row,
+		config: {
+			...row.config,
+			actions: compactRowActions(actions),
+		},
+	};
 }

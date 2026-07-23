@@ -6,7 +6,7 @@ import { RowLayout } from "../design-system/RowLayout";
 export default defineRow("InputListRow", {
 	config: {
 		type: "InputList",
-		actions: [],
+		actions: {},
 		source: "",
 		visible: "true",
 		title: "Input list row title",

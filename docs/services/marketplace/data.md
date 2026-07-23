@@ -27,7 +27,11 @@ value: string
 
 ## Messages
 
-Rows of the `messages` resource are core [`DATA_EVY_Message`](../../evy/data.md#data_evy_message) objects — the marketplace API persists them without payload validation. For item requests, `fk` is the item id and `service` / `resource` are the marketplace service and `items` resource ids. The free-form `data` object carries the transfer specifics:
+Rows of the `messages` resource are core [`DATA_EVY_Message`](../../evy/data.md#data_evy_message) objects — the marketplace API persists them without payload validation. For item requests, `fk` is the item id and `service` / `resource` are the marketplace service and `items` resource ids.
+
+Top-level `status` is `pending` or `accepted`. New messages are created `pending`; existing rows were backfilled to `pending` via marketplace migration `0003_message_status`. On the iOS homepage, accepting a message is authored as a `swipe-left` `{update(...)}` that sets `status` to `accepted` when the current value is `pending`.
+
+The free-form `data` object carries the transfer specifics:
 
 ```
 data.type: "pickup" | "delivery" | "shipping"

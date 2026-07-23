@@ -2,6 +2,10 @@
 	"$schema": "https://json-schema.org/draft/2020-12/schema",
 	"$id": "sdui/definitions/SelectPhoto",
 	"title": "SelectPhoto_Row",
+	"triggers": {
+		"tap": "required",
+		"delete": "required"
+	},
 	"allOf": [
 		{
 			"$ref": "../evy.schema.json#/$defs/UI_RowBase"

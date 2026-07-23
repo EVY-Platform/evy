@@ -4,7 +4,15 @@
 	"title": "DATA_EVY_Message",
 	"type": "object",
 	"additionalProperties": false,
-	"required": ["id", "fk", "service", "resource", "createdAt", "data"],
+	"required": [
+		"id",
+		"fk",
+		"service",
+		"resource",
+		"createdAt",
+		"status",
+		"data"
+	],
 	"properties": {
 		"id": { "type": "string", "format": "uuid" },
 		"fk": { "type": "string", "format": "uuid" },
@@ -15,6 +23,10 @@
 			"format": "date-time"
 		},
 		"createdAt": { "type": "string", "format": "date-time" },
+		"status": {
+			"type": "string",
+			"enum": ["pending", "accepted"]
+		},
 		"data": {
 			"type": "object",
 			"additionalProperties": {

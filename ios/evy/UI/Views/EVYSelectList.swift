@@ -44,7 +44,10 @@ struct EVYSelectList: View {
           displayLabel: optionLabels[index],
           selectionStyle: .single,
           target: target,
-          onSelect: { dismiss() }
+          onTap: { perform in
+            try? perform()
+            dismiss()
+          }
         )
         .frame(height: Constants.listRowHeight)
       }

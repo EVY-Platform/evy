@@ -22,7 +22,7 @@ function MapPreview() {
 export default defineRow("MapRow", {
 	config: {
 		type: "Map",
-		actions: [],
+		actions: {},
 		source: `{${MARKETPLACE_RESOURCE.ITEMS}.transfer_options.pickup.address}`,
 		visible: "true",
 		title: "Map row title",

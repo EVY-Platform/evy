@@ -54,24 +54,34 @@ Output: 2026-07-17T03:12:45Z
 
 #### findFirst
 
-Finds the first datum in a collection. With two arguments, matches on the record `id` field. With additional `(value, prop)` pairs, matches when every pair's `record.prop` equals the resolved value (data path first, literal fallback). The returned datum can be chained with a property accessor.
+Finds the first datum in a collection that matches. With two arguments and no comparison operators in the second, matches on the record `id` field (id shorthand). With a boolean expression as the second argument, evaluates that expression against each record and returns the first match. The returned datum can be chained with a property accessor (`.value`, `.fk`, `.data.time`, …).
 
 ```
-findFirst({_variable_type_string_collection_}, {_variable_type_string_id_})
-findFirst({_collection_}, {_value1_}, {_prop1_}, {_value2_}, {_prop2_}, ...)
+findFirst({_collection_}, {_id_})
+findFirst({_collection_}, {_expression_})
 ```
+
+**Operand resolution** (each side of an atomic comparison, first match wins):
+
+1. **Record path** — property on the candidate record, including nested paths (`data.type`)
+2. **Global data path** — `item.id`, resource UUIDs, etc.
+3. **Unquoted literal** — bare words like `pending` / `accepted` (quotes are forbidden inside `{…}` blocks)
+
+**`null`:** `archivedAt == null` / `archivedAt != null` match records where the path is **absent or JSON null**. Only `==` and `!=` are allowed with `null`. `null == null` is true.
+
+**Limitations:** string literals in expressions must be unquoted; grouping parentheses may nest only one level inside the `findFirst(...)` call (same as other functions); use `==` not `=`.
 
 Collection: `cc2e6c74-a53a-4ed1-97a7-14aa9b9a3e3f` = `[{ "id": "c1", "value": "Excellent" }, ...]`
 
 Id match: `{findFirst(cc2e6c74-a53a-4ed1-97a7-14aa9b9a3e3f, item.condition_id).value}` → `"Excellent"`
 
-Multi-pair match (active message exists for an item — self-comparison idiom):
+Expression match (active message exists for an item — self-comparison idiom):
 
 ```
-{findFirst(messages, item.id, fk, null, archivedAt).fk == item.id}
+{findFirst(messages, fk == item.id && archivedAt == null).fk == item.id}
 ```
 
-A pair value of `null` matches records where the property is absent or JSON `null` (e.g. `archivedAt` on active messages). Active match → its `fk` equals the item's id → `true`. No match (or all archived) → `""` → `false`.
+Active match → its `fk` equals the item's id → `true`. No match (or all archived) → `""` → `false`. Record-prop names that collide with global datum keys are theoretically possible but keys are UUIDs at runtime.
 
 ## Comparisons
 
@@ -355,3 +365,47 @@ Updates matching domain entities immediately. Filter and changes values resolve 
 ```
 
 Presents the row with ID `rowId` in a sheet overlay. Requires exactly one non-empty ID; targets may live on any synced page. Unresolved IDs are errors. See [sdui.md](./sdui.md) for sheet layout and builder defaults.
+
+#### select
+
+```
+{select(value)}
+```
+
+Asks the triggering row to select `value`. Usually `{select($datum)}` with the tapped unit as datum. Each row type defines what select means (toggle, write scalar, switch segment).
+
+When the resolved value is an **array**, Calendar treats it as a batch toggle-all: if every item is already in the destination selection, remove them all; otherwise add every missing item (one destination write). Axis taps (`tap-row` / `tap-column`) pass `$datum` as the array of ISO datetime strings for that row or column, e.g. `{select($datum)}` on `tap-column` selects or clears an entire day.
+
+Unsupported on rows without a select handler.
+
+#### select_photo
+
+```
+{select_photo()}
+```
+
+Asks the triggering `SelectPhoto` row to present the iOS photo picker. Does not upload by itself — upload still runs after the user picks photos.
+
+#### delete_photo
+
+```
+{delete_photo()}
+```
+
+Asks the triggering `SelectPhoto` row to delete the photo tile the user tapped. Typically wired to the row's `delete` trigger; authors can replace the default with a confirmation sheet before deleting.
+
+#### expand_photo
+
+```
+{expand_photo()}
+```
+
+Asks the triggering `PhotoGallery` row to present the currently selected photo full screen.
+
+#### expand_text
+
+```
+{expand_text(rowId)}
+```
+
+Expands the `TextExpand` row with ID `rowId`, wherever it is on screen. Requires exactly one non-empty row ID (same shape as `show`).

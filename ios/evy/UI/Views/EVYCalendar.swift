@@ -7,33 +7,13 @@ import SwiftUI
 
 private let animationDuration: CGFloat = 0.1
 
-enum EVYCalendarOperation {
-  case select(dateTime: String)
-  case unselect(dateTime: String)
-  case unselectRow(y: Int)
-  case selectRow(y: Int)
-  case unselectColumn(x: Int)
-  case selectColumn(x: Int)
-}
-
-struct EVYCalendarOperationKey: EnvironmentKey {
-  static let defaultValue: (EVYCalendarOperation) -> Void = { _ in }
-}
-
-extension EnvironmentValues {
-  var operate: (EVYCalendarOperation) -> Void {
-    get { self[EVYCalendarOperationKey.self] }
-    set { self[EVYCalendarOperationKey.self] = newValue }
-  }
-}
-
 private struct EVYCalendarTimeslots: View {
-  @Environment(\.operate) private var operate
   @Environment(\.colorScheme) var colorScheme
 
   let rows: Int
   let columns: Int
   let slots: [EVYCalendarSlot]
+  let onSlotTapped: (String) -> Void
 
   var body: some View {
     let actionColor = colorScheme == .light ? Constants.actionColor : .white
@@ -53,11 +33,7 @@ private struct EVYCalendarTimeslots: View {
               .frame(height: rowHeight)
               .frame(width: columnWidth)
               .onTapGesture {
-                if slot.isPrimarySelected {
-                  operate(EVYCalendarOperation.unselect(dateTime: slot.dateTimeISO))
-                } else {
-                  operate(EVYCalendarOperation.select(dateTime: slot.dateTimeISO))
-                }
+                onSlotTapped(slot.dateTimeISO)
               }
           }
         }.overlay(
@@ -90,11 +66,22 @@ private struct EVYCalendarViewState: Equatable {
 struct EVYCalendar: View {
   private let content: CalendarRowViewData
   private let calendarState: EVYState<EVYCalendarViewState>
+  private let onSlotTapped: (String) -> Void
+  private let onRowTapped: ([String]) -> Void
+  private let onColumnTapped: ([String]) -> Void
 
   @State private var scrollOffset = CGPoint.zero
 
-  init(content: CalendarRowViewData) {
+  init(
+    content: CalendarRowViewData,
+    onSlotTapped: @escaping (String) -> Void,
+    onRowTapped: @escaping ([String]) -> Void,
+    onColumnTapped: @escaping ([String]) -> Void
+  ) {
     self.content = content
+    self.onSlotTapped = onSlotTapped
+    self.onRowTapped = onRowTapped
+    self.onColumnTapped = onColumnTapped
     calendarState = EVYState(
       watches: [
         content.destination,
@@ -176,31 +163,6 @@ struct EVYCalendar: View {
     )
   }
 
-  private func handleOperation(_ operation: EVYCalendarOperation) {
-    var selections = readPrimarySelections()
-
-    switch operation {
-    case .select(let dateTime):
-      selections = adding([dateTime], to: selections)
-    case .unselect(let dateTime):
-      selections = removing([dateTime], from: selections)
-    case .selectRow(let y):
-      selections = adding(dateTimes(forRow: y), to: selections)
-    case .unselectRow(let y):
-      selections = removing(dateTimes(forRow: y), from: selections)
-    case .selectColumn(let x):
-      selections = adding(dateTimes(forColumn: x), to: selections)
-    case .unselectColumn(let x):
-      selections = removing(dateTimes(forColumn: x), from: selections)
-    }
-
-    // Wrap the write in `withAnimation` so the synchronous notification-driven
-    // `EVYState.value` mutation falls inside the animation transaction.
-    withAnimation(.linear(duration: animationDuration)) {
-      writePrimarySelections(selections)
-    }
-  }
-
   private func dateTimes(forRow y: Int) -> [String] {
     calendarState.value.slots.filter { $0.y == y }.map { $0.dateTimeISO }
   }
@@ -209,24 +171,7 @@ struct EVYCalendar: View {
     calendarState.value.slots.filter { $0.x == x }.map { $0.dateTimeISO }
   }
 
-  private func adding(_ values: [String], to selections: [String]) -> [String] {
-    var result = selections
-    let existing = Set(selections)
-    for v in values where !existing.contains(v) { result.append(v) }
-    return result
-  }
-
-  private func removing(_ values: [String], from selections: [String]) -> [String] {
-    let toRemove = Set(values)
-    return selections.filter { !toRemove.contains($0) }
-  }
-
-  private func readPrimarySelections() -> [String] {
-    EVYDatetime.readTimeslots(content.destination)
-  }
-
-  private func writePrimarySelections(_ selections: [String]) {
-    let destination = content.destination
+  private static func writePrimarySelections(_ selections: [String], to destination: String) {
     guard !destination.isEmpty else { return }
     try? EVY.writeRawValue(
       EVYJson.array(selections.map { .string($0) }),
@@ -234,17 +179,56 @@ struct EVYCalendar: View {
     )
   }
 
+  @MainActor
+  static func togglePrimarySelection(dateTimeISOs: [String], destination: String) {
+    guard !destination.isEmpty else { return }
+    let selections = EVYDatetime.readTimeslots(destination)
+    let updated = EVYSelectionHelpers.toggledIdentifiers(dateTimeISOs, in: selections)
+    withAnimation(.linear(duration: animationDuration)) {
+      writePrimarySelections(updated, to: destination)
+    }
+  }
+
+  @MainActor
+  static func applyPrimarySelection(value: EVYJson, destination: String) throws {
+    switch value {
+    case .string(let dateTimeISO):
+      togglePrimarySelection(dateTimeISOs: [dateTimeISO], destination: destination)
+    case .array(let elements):
+      let dateTimeISOs = try elements.map { element in
+        guard case .string(let dateTimeISO) = element else {
+          throw EVYError.invalidData(context: "calendar select expects string datums")
+        }
+        return dateTimeISO
+      }
+      togglePrimarySelection(dateTimeISOs: dateTimeISOs, destination: destination)
+    default:
+      throw EVYError.invalidData(context: "calendar select expects string or array datum")
+    }
+  }
+
   var body: some View {
     HStack(spacing: .zero) {
-      EVYCalendarAxisView(type: .y, labels: calendarState.value.yLabels, offset: $scrollOffset)
+      EVYCalendarAxisView(
+        type: .y,
+        labels: calendarState.value.yLabels,
+        offset: $scrollOffset,
+        onLabelTapped: { index in onRowTapped(dateTimes(forRow: index)) }
+      )
       VStack(spacing: .zero) {
-        EVYCalendarAxisView(type: .x, labels: calendarState.value.xLabels, offset: $scrollOffset)
+        EVYCalendarAxisView(
+          type: .x,
+          labels: calendarState.value.xLabels,
+          offset: $scrollOffset,
+          onLabelTapped: { index in onColumnTapped(dateTimes(forColumn: index)) }
+        )
         ScrollViewReader { _ in
           ScrollView([.vertical, .horizontal]) {
             EVYCalendarTimeslots(
               rows: calendarState.value.rows,
               columns: calendarState.value.columns,
-              slots: calendarState.value.slots
+              slots: calendarState.value.slots,
+              onSlotTapped: onSlotTapped
             )
             .background(
               GeometryReader { geo in
@@ -260,9 +244,6 @@ struct EVYCalendar: View {
           }.scrollIndicators(.hidden)
         }.coordinateSpace(name: "scroll")
       }
-    }
-    .environment(\.operate) { calendarOperation in
-      handleOperation(calendarOperation)
     }
   }
 }
@@ -296,7 +277,21 @@ private struct EVYCalendarPreview: View {
     if let data = EVYPreviewMockData.calendarPreviewContentJSON.data(using: .utf8),
       let content = try? JSONDecoder().decode(CalendarRowViewData.self, from: data)
     {
-      EVYCalendar(content: content)
+      EVYCalendar(
+        content: content,
+        onSlotTapped: { dateTimeISO in
+          EVYCalendar.togglePrimarySelection(
+            dateTimeISOs: [dateTimeISO], destination: content.destination)
+        },
+        onRowTapped: { dateTimeISOs in
+          EVYCalendar.togglePrimarySelection(
+            dateTimeISOs: dateTimeISOs, destination: content.destination)
+        },
+        onColumnTapped: { dateTimeISOs in
+          EVYCalendar.togglePrimarySelection(
+            dateTimeISOs: dateTimeISOs, destination: content.destination)
+        }
+      )
     } else {
       Text("Unable to build calendar preview")
     }

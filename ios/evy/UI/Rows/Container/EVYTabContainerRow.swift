@@ -11,23 +11,39 @@ struct EVYTabContainerRow: View {
 
   private let view: TabContainerRowViewData
   private let childRefs: [EVYRowRef]
+  private let onSegmentTapped: EVYRowTapCallback<Int>
   @State private var selected: Int = 0
 
   init(
     view: TabContainerRowViewData,
-    childRefs: [EVYRowRef]
+    childRefs: [EVYRowRef],
+    onSegmentTapped: @escaping EVYRowTapCallback<Int>
   ) {
     self.view = view
     self.childRefs = childRefs
+    self.onSegmentTapped = onSegmentTapped
   }
 
   private var tabCount: Int {
     min(view.segments.count, childRefs.count)
   }
 
+  private var segmentSelection: Binding<Int> {
+    Binding(
+      get: { selected },
+      set: { newIndex in
+        onSegmentTapped(
+          newIndex,
+          EVYRowActionOperation.selectHandler { _ in
+            selected = newIndex
+          })
+      }
+    )
+  }
+
   var body: some View {
     Group {
-      Picker("", selection: $selected) {
+      Picker("", selection: segmentSelection) {
         ForEach(0..<tabCount, id: \.self) { index in
           Text(view.segments[index]).tag(index)
         }
@@ -56,14 +72,14 @@ struct EVYTabContainerRow: View {
       {
         "id": "preview-tab-row",
         "type": "TabContainer",
-        "actions": [],
+        "actions": {"tap": [{"condition": "", "true": "{select($datum)}", "false": ""}]},
         "title": "Tab Container Preview",
         "segments": ["Tab One", "Tab Two"],
         "children": [
           {
             "id": "segment-tab-1",
             "type": "Text",
-            "actions": [],
+            "actions": {},
             "title": "First Tab Content",
             "subtitle": "Content for the first tab",
             "icon": ""
@@ -71,7 +87,7 @@ struct EVYTabContainerRow: View {
           {
             "id": "segment-tab-2",
             "type": "Text",
-            "actions": [],
+            "actions": {},
             "title": "Second Tab Content",
             "subtitle": "Content for the second tab",
             "icon": ""

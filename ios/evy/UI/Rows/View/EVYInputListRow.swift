@@ -32,7 +32,7 @@ struct EVYInputListRow: View {
         "id": "preview-inputlist-row",
         "type": "InputList",
         "source": "{tags}",
-        "actions": [],
+        "actions": {},
         "title": "Tags",
         "format": "{$datum}",
         "placeholder": "Add tags to improve search"

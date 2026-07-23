@@ -12,12 +12,15 @@ enum EVYActionRunner {
     actions: [UI_RowAction],
     datum: EVYJson? = nil,
     show: @escaping (String) throws -> Void = { _ in },
-    prepare: (() -> Void)? = nil,
+    rowOperation: EVYRowOperationHandler? = nil,
     action: @escaping (ActionOperation) -> Void
   ) {
     guard !actions.isEmpty else { return }
 
-    prepare?()
+    let resolvedRowOperation =
+      rowOperation ?? { _ in
+        throw EVYRowActionOperation.unsupportedError
+      }
 
     for rowAction in actions {
       let condition = rowAction.condition.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -30,12 +33,15 @@ enum EVYActionRunner {
       }
 
       if !executeTrueBranch {
-        runBranch(rowAction.`false`, datum: datum, show: show, action: action)
+        runBranch(
+          rowAction.`false`, datum: datum, show: show, rowOperation: resolvedRowOperation,
+          action: action)
         return
       }
 
       let succeeded = runBranch(
-        rowAction.`true`, datum: datum, show: show, action: action)
+        rowAction.`true`, datum: datum, show: show, rowOperation: resolvedRowOperation,
+        action: action)
       if !succeeded {
         return
       }
@@ -47,13 +53,14 @@ enum EVYActionRunner {
     _ rawBranch: String,
     datum: EVYJson?,
     show: @escaping (String) throws -> Void,
+    rowOperation: @escaping EVYRowOperationHandler,
     action: @escaping (ActionOperation) -> Void
   ) -> Bool {
     let trimmed = rawBranch.trimmingCharacters(in: .whitespacesAndNewlines)
     guard !trimmed.isEmpty else { return true }
     do {
       try execute(
-        branch: trimmed, datum: datum, action: action, show: show)
+        branch: trimmed, datum: datum, action: action, show: show, rowOperation: rowOperation)
       return true
     } catch {
       NotificationCenter.default.post(name: .evyErrorOccurred, object: error)
@@ -65,7 +72,8 @@ enum EVYActionRunner {
     branch: String,
     datum: EVYJson?,
     action: @escaping (ActionOperation) -> Void,
-    show: @escaping (String) throws -> Void
+    show: @escaping (String) throws -> Void,
+    rowOperation: @escaping EVYRowOperationHandler
   ) throws {
     guard branch.hasPrefix("{"), branch.hasSuffix("}") else { return }
 
@@ -110,9 +118,10 @@ enum EVYActionRunner {
           changes: resolvedChanges
         )
       case "close":
+        try requireNoArguments(functionArgs, function: "close")
         action(.close)
       case "show":
-        guard let rowId = EVYActionParser.showRowId(from: branch) else {
+        guard let rowId = EVYActionParser.singleIdArgument(fromArgs: functionArgs) else {
           throw EVYError.invalidData(
             context: "show requires exactly one non-empty row id, e.g. show(row-id)")
         }
@@ -127,6 +136,29 @@ enum EVYActionRunner {
           .trimmingCharacters(in: .whitespacesAndNewlines)
         let readableField = fieldName.isEmpty ? "Field" : fieldName.capitalized
         action(.highlightRequired(readableField))
+      case "select":
+        let args = EVY.splitFunctionArguments(functionArgs)
+        guard args.count == 1 else {
+          throw EVYError.invalidData(
+            context: "select requires exactly one argument, e.g. select($datum)")
+        }
+        let resolved = resolvePlainTextValue(args[0], datum: datum)
+        try rowOperation(.select(resolved))
+      case "select_photo":
+        try requireNoArguments(functionArgs, function: "select_photo")
+        try rowOperation(.selectPhoto)
+      case "expand_photo":
+        try requireNoArguments(functionArgs, function: "expand_photo")
+        try rowOperation(.expandPhoto)
+      case "delete_photo":
+        try requireNoArguments(functionArgs, function: "delete_photo")
+        try rowOperation(.deletePhoto)
+      case "expand_text":
+        guard let rowId = EVYActionParser.singleIdArgument(fromArgs: functionArgs) else {
+          throw EVYError.invalidData(
+            context: "expand_text requires exactly one non-empty row id, e.g. expand_text(row-id)")
+        }
+        NotificationCenter.default.post(name: .evyExpandTextRow, object: rowId)
       default:
         throw EVYError.invalidData(context: "Unsupported action function: \(functionName)")
       }
@@ -139,6 +171,12 @@ enum EVYActionRunner {
     let flowId: String
     let pageId: String
     let queryArgument: String
+  }
+
+  private static func requireNoArguments(_ functionArgs: String, function: String) throws {
+    guard functionArgs.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+      throw EVYError.invalidData(context: "\(function) takes no arguments")
+    }
   }
 
   private static func parseNavigateArguments(_ functionArgs: String) throws -> NavigateArguments {
@@ -167,8 +205,12 @@ enum EVYActionRunner {
     _ value: String,
     datum: EVYJson?
   ) -> EVYJson {
-    if value.hasPrefix(EVY.datumPrefix), let datum {
-      let props = String(value.dropFirst(EVY.datumPrefix.count)).split(separator: ".").map(
+    let trimmedValue = value.trimmingCharacters(in: .whitespacesAndNewlines)
+    if trimmedValue == EVY.datumToken, let datum {
+      return datum
+    }
+    if trimmedValue.hasPrefix(EVY.datumPrefix), let datum {
+      let props = String(trimmedValue.dropFirst(EVY.datumPrefix.count)).split(separator: ".").map(
         String.init)
       if let resolvedValue = datum.parsePropStrict(props: props) {
         return resolvedValue

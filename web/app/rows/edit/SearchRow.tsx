@@ -8,7 +8,7 @@ import { RowLayout } from "../design-system/RowLayout";
 export default defineRow("SearchRow", {
 	config: {
 		type: "Search",
-		actions: [],
+		actions: {},
 		source: "",
 		visible: "true",
 		title: "Search row title",

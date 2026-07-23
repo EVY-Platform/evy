@@ -633,11 +633,22 @@ private func evaluateBooleanExpression(
   _ input: String,
   resolver: (String) throws -> String
 ) throws -> Bool {
+  try _evaluateBooleanExpression(input) { left, comparisonOperator, right in
+    let resolvedLeft = try resolver(left)
+    let resolvedRight = try resolver(right)
+    return evyComparison(comparisonOperator, left: resolvedLeft, right: resolvedRight)
+  }
+}
+
+func _evaluateBooleanExpression(
+  _ input: String,
+  atom: (_ left: String, _ op: String, _ right: String) throws -> Bool
+) throws -> Bool {
   let trimmedInput = input.trimmingCharacters(in: .whitespacesAndNewlines)
   let orTerms = splitRespectingParens(trimmedInput, separator: "||")
   if orTerms.count > 1 {
     for term in orTerms {
-      if try evaluateBooleanExpression(term, resolver: resolver) {
+      if try _evaluateBooleanExpression(term, atom: atom) {
         return true
       }
     }
@@ -647,7 +658,7 @@ private func evaluateBooleanExpression(
   let andTerms = splitRespectingParens(trimmedInput, separator: "&&")
   if andTerms.count > 1 {
     for term in andTerms {
-      if try !evaluateBooleanExpression(term, resolver: resolver) {
+      if try !_evaluateBooleanExpression(term, atom: atom) {
         return false
       }
     }
@@ -656,7 +667,7 @@ private func evaluateBooleanExpression(
 
   if isWrappedInParentheses(trimmedInput) {
     let innerExpression = String(trimmedInput.dropFirst().dropLast())
-    return try evaluateBooleanExpression(innerExpression, resolver: resolver)
+    return try _evaluateBooleanExpression(innerExpression, atom: atom)
   }
 
   if trimmedInput == "true" {
@@ -670,9 +681,14 @@ private func evaluateBooleanExpression(
     throw EVYError.invalidData(context: "Invalid comparison expression: \(trimmedInput)")
   }
 
-  let resolvedLeft = try resolver(left)
-  let resolvedRight = try resolver(right)
-  return evyComparison(comparisonOperator, left: resolvedLeft, right: resolvedRight)
+  return try atom(left, comparisonOperator, right)
+}
+
+func _containsTopLevelBooleanSyntax(_ input: String) -> Bool {
+  findFirstTopLevelPrefix(
+    in: input,
+    prefixes: comparisonOperators + ["&&", "||"]
+  ) != nil
 }
 
 private func splitRespectingParens(_ input: String, separator: String) -> [String] {

@@ -8,14 +8,39 @@ import SwiftUI
 struct EVYCalendarRow: View {
 
   private let view: CalendarRowViewData
+  private let onSlotTapped: EVYRowTapCallback<String>
+  private let onRowTapped: EVYRowTapCallback<[String]>
+  private let onColumnTapped: EVYRowTapCallback<[String]>
 
-  init(view: CalendarRowViewData) {
+  init(
+    view: CalendarRowViewData,
+    onSlotTapped: @escaping EVYRowTapCallback<String>,
+    onRowTapped: @escaping EVYRowTapCallback<[String]>,
+    onColumnTapped: @escaping EVYRowTapCallback<[String]>
+  ) {
     self.view = view
+    self.onSlotTapped = onSlotTapped
+    self.onRowTapped = onRowTapped
+    self.onColumnTapped = onColumnTapped
   }
 
   var body: some View {
-    EVYCalendar(content: view)
-      .titledRow(view.title)
+    let selectHandler = EVYRowActionOperation.selectHandler { value in
+      try EVYCalendar.applyPrimarySelection(value: value, destination: view.destination)
+    }
+    EVYCalendar(
+      content: view,
+      onSlotTapped: { dateTimeISO in
+        onSlotTapped(dateTimeISO, selectHandler)
+      },
+      onRowTapped: { dateTimeISOs in
+        onRowTapped(dateTimeISOs, selectHandler)
+      },
+      onColumnTapped: { dateTimeISOs in
+        onColumnTapped(dateTimeISOs, selectHandler)
+      }
+    )
+    .titledRow(view.title)
   }
 }
 
@@ -54,7 +79,11 @@ private struct EVYCalendarRowPreview: View {
         "source": "\(EVYPreviewMockData.calendarPreviewSource)",
         "destination": "\(EVYPreviewMockData.calendarPreviewDestination)",
         "secondary": "\(EVYPreviewMockData.calendarPreviewSecondary)",
-        "actions": [],
+        "actions": {
+          "tap": [{"condition": "", "true": "{select($datum)}", "false": ""}],
+          "tap-row": [{"condition": "", "true": "{select($datum)}", "false": ""}],
+          "tap-column": [{"condition": "", "true": "{select($datum)}", "false": ""}]
+        },
         "title": "",
         "start_time": "07:00",
         "end_time": "19:00",

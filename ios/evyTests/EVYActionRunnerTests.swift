@@ -9,16 +9,34 @@ import XCTest
 
 @MainActor
 final class EVYActionRunnerTests: XCTestCase {
-  private func rowAction(
-    condition: String = "",
-    true trueBranch: String,
-    false falseBranch: String = ""
-  ) -> UI_RowAction {
-    UI_RowAction(
-      condition: condition,
-      false: falseBranch,
-      true: trueBranch
-    )
+  private func assertSelectValue(
+    _ received: EVYRowActionOperation?,
+    equals expected: EVYJson,
+    file: StaticString = #filePath,
+    line: UInt = #line
+  ) {
+    guard case .select(let value) = received else {
+      XCTFail("Expected select, got \(String(describing: received))", file: file, line: line)
+      return
+    }
+    XCTAssertEqual(value, expected, file: file, line: line)
+  }
+
+  private func assertRowPhotoOperationDispatchesAndContinues(
+    action: String,
+    expected: (EVYRowActionOperation) -> Bool
+  ) {
+    var received: EVYRowActionOperation?
+    var receivedOps: [ActionOperation] = []
+    EVYActionRunner.run(
+      actions: [rowAction(true: action), rowAction(true: "{close()}")],
+      rowOperation: { received = $0 }
+    ) { receivedOps.append($0) }
+    guard let received, expected(received) else {
+      XCTFail("Unexpected row operation \(String(describing: received))")
+      return
+    }
+    XCTAssertEqual(receivedOps, [.close])
   }
 
   func testCloseAction() {
@@ -329,6 +347,79 @@ final class EVYActionRunnerTests: XCTestCase {
     XCTAssertEqual(archivedAtById[otherActiveMessageId], .null)
   }
 
+  func testUpdateActionAcceptsOnlyMatchingPendingMessageForDatum() throws {
+    let namespace = EVYNamespace.marketplace
+    let resource = MarketplaceTestFixture.messagesResourceId
+    let itemId = UUID().uuidString
+    let pendingMessageId = UUID().uuidString
+    let otherPendingMessageId = UUID().uuidString
+    let acceptedMessageId = UUID().uuidString
+    try? EVY.publicStore.deleteAll(namespace: namespace, resource: resource)
+    defer { try? EVY.publicStore.deleteAll(namespace: namespace, resource: resource) }
+
+    let messages = EVYJson.array([
+      EVYTestMessageFixtures.message(
+        id: pendingMessageId,
+        fk: itemId,
+        status: "pending",
+        archivedAt: .null,
+        type: "pickup",
+        time: "2026-06-03T09:00:00"
+      ),
+      EVYTestMessageFixtures.message(
+        id: otherPendingMessageId,
+        fk: itemId,
+        status: "pending",
+        archivedAt: .null,
+        type: "delivery",
+        time: "2026-06-03T10:00:00"
+      ),
+      EVYTestMessageFixtures.message(
+        id: acceptedMessageId,
+        fk: itemId,
+        status: "accepted",
+        archivedAt: .null,
+        type: "shipping",
+        postalcode: "2018"
+      ),
+    ])
+    try EVY.publicStore.applySyncedValue(namespace: namespace, resource: resource, value: messages)
+
+    let acceptAction = rowAction(
+      true:
+        "{update(\(namespace),\(resource),{id: $datum.id, status: \"pending\"},{status: \"accepted\"})}"
+    )
+
+    let pendingDatum = EVYJson.dictionary(["id": .string(pendingMessageId)])
+    EVYActionRunner.run(actions: [acceptAction], datum: pendingDatum) { _ in }
+
+    let statusById = try statusByMessageId(namespace: namespace, resource: resource)
+    XCTAssertEqual(statusById[pendingMessageId], "accepted")
+    XCTAssertEqual(statusById[otherPendingMessageId], "pending")
+    XCTAssertEqual(statusById[acceptedMessageId], "accepted")
+
+    EVYActionRunner.run(
+      actions: [acceptAction],
+      datum: EVYJson.dictionary(["id": .string(acceptedMessageId)])
+    ) { _ in }
+
+    let afterNoOp = try statusByMessageId(namespace: namespace, resource: resource)
+    XCTAssertEqual(afterNoOp[acceptedMessageId], "accepted")
+  }
+
+  private func statusByMessageId(namespace: String, resource: String) throws -> [String: String] {
+    let rows = try EVY.publicStore.getAll(namespace: namespace, resource: resource)
+    return Dictionary(
+      uniqueKeysWithValues: rows.compactMap { row -> (String, String)? in
+        guard let decoded = try? row.decoded(),
+          case .dictionary(let values) = decoded,
+          case .string(let id) = values["id"],
+          case .string(let status) = values["status"]
+        else { return nil }
+        return (id, status)
+      })
+  }
+
   func testInlineCreateActionWritesResolvedPayloadWithoutNavigating() throws {
     let namespace = "test"
     let resource = "inline-create-actions"
@@ -434,11 +525,187 @@ final class EVYActionRunnerTests: XCTestCase {
     XCTAssertEqual(shownRowId, "sheet-row")
   }
 
-  func testShowRowIdParserRejectsInvalidBranches() {
-    XCTAssertNil(EVYActionParser.showRowId(from: "{show()}"))
-    XCTAssertNil(EVYActionParser.showRowId(from: "{show(a, b)}"))
-    XCTAssertNil(EVYActionParser.showRowId(from: "{navigate(flow,page)}"))
-    XCTAssertEqual(EVYActionParser.showRowId(from: "{show(target-id)}"), "target-id")
+  func testSingleIdArgumentRejectsInvalidArgs() {
+    XCTAssertNil(EVYActionParser.singleIdArgument(fromArgs: ""))
+    XCTAssertNil(EVYActionParser.singleIdArgument(fromArgs: "a, b"))
+    XCTAssertNil(EVYActionParser.singleIdArgument(fromArgs: "flow, page"))
+    XCTAssertEqual(EVYActionParser.singleIdArgument(fromArgs: "target-id"), "target-id")
+  }
+
+  func testSelectDispatchesBareDatum() {
+    let datum = EVYJson.dictionary([
+      "dateTimeISO": .string("2026-06-03T11:00:00"),
+      "label": .string("11:00"),
+    ])
+    var received: EVYRowActionOperation?
+    let selectAction = rowAction(true: "{select($datum)}")
+    let closeAction = rowAction(true: "{close()}")
+    var receivedOps: [ActionOperation] = []
+    EVYActionRunner.run(
+      actions: [selectAction, closeAction],
+      datum: datum,
+      rowOperation: { received = $0 }
+    ) { receivedOps.append($0) }
+    assertSelectValue(received, equals: datum)
+    XCTAssertEqual(receivedOps, [.close])
+  }
+
+  func testSelectDispatchesArrayDatum() {
+    let datum = EVYJson.array([
+      .string("2026-06-03T09:00:00"),
+      .string("2026-06-04T09:00:00"),
+    ])
+    var received: EVYRowActionOperation?
+    EVYActionRunner.run(
+      actions: [rowAction(true: "{select($datum)}")],
+      datum: datum,
+      rowOperation: { received = $0 }
+    ) { _ in }
+    assertSelectValue(received, equals: datum)
+  }
+
+  func testSelectResolvesDatumProperty() {
+    let datum = EVYJson.dictionary([
+      "dateTimeISO": .string("2026-06-03T11:00:00")
+    ])
+    var received: EVYRowActionOperation?
+    EVYActionRunner.run(
+      actions: [rowAction(true: "{select($datum.dateTimeISO)}")],
+      datum: datum,
+      rowOperation: { received = $0 }
+    ) { _ in }
+    assertSelectValue(received, equals: .string("2026-06-03T11:00:00"))
+  }
+
+  func testSelectPassesQuotedLiteral() {
+    var received: EVYRowActionOperation?
+    EVYActionRunner.run(
+      actions: [rowAction(true: "{select(\"literal\")}")],
+      rowOperation: { received = $0 }
+    ) { _ in }
+    assertSelectValue(received, equals: .string("literal"))
+  }
+
+  func testSelectWithInvalidArgumentPostsErrorAndStops() {
+    for branch in ["{select()}", "{select(a, b)}"] {
+      var receivedOps: [ActionOperation] = []
+      var rowOps: [EVYRowActionOperation] = []
+      let errors = capturedErrors {
+        EVYActionRunner.run(
+          actions: [rowAction(true: branch), rowAction(true: "{close()}")],
+          rowOperation: { rowOps.append($0) }
+        ) { receivedOps.append($0) }
+      }
+      XCTAssertFalse(errors.isEmpty, "Expected error for \(branch)")
+      XCTAssertTrue(rowOps.isEmpty, "Expected no row ops for \(branch)")
+      XCTAssertTrue(receivedOps.isEmpty, "Expected stop for \(branch)")
+    }
+  }
+
+  func testRowPhotoOperationsDispatchesAndContinues() {
+    let cases: [(String, (EVYRowActionOperation) -> Bool)] = [
+      (
+        "{delete_photo()}",
+        {
+          if case .deletePhoto = $0 { return true }
+          return false
+        }
+      ),
+      (
+        "{select_photo()}",
+        {
+          if case .selectPhoto = $0 { return true }
+          return false
+        }
+      ),
+      (
+        "{expand_photo()}",
+        {
+          if case .expandPhoto = $0 { return true }
+          return false
+        }
+      ),
+    ]
+    for (action, matcher) in cases {
+      assertRowPhotoOperationDispatchesAndContinues(action: action, expected: matcher)
+    }
+  }
+
+  func testTriggerIsolationRunsOnlyRequestedActionList() {
+    let closeAction = rowAction(true: "{close()}")
+    let actions = UI_RowActions(
+      delete: [closeAction],
+      swipeLeft: [closeAction],
+      tap: [closeAction]
+    )
+    let lists: [(String, [UI_RowAction])] = [
+      ("tap", actions.tap),
+      ("delete", actions.delete),
+      ("swipeLeft", actions.swipeLeft),
+    ]
+    for (name, onlyList) in lists {
+      var tapReceived = false
+      var deleteReceived = false
+      var swipeLeftReceived = false
+      EVYActionRunner.run(actions: onlyList) { operation in
+        guard case .close = operation else { return }
+        switch name {
+        case "tap": tapReceived = true
+        case "delete": deleteReceived = true
+        case "swipeLeft": swipeLeftReceived = true
+        default: break
+        }
+      }
+      XCTAssertEqual(tapReceived, name == "tap", "Only tap list should run tap actions")
+      XCTAssertEqual(deleteReceived, name == "delete", "Only delete list should run delete actions")
+      XCTAssertEqual(
+        swipeLeftReceived, name == "swipeLeft", "Only swipeLeft list should run swipe-left actions")
+    }
+  }
+
+  func testSelectWithDefaultRowOperationPostsErrorAndStops() {
+    var receivedOps: [ActionOperation] = []
+    let errors = capturedErrors {
+      EVYActionRunner.run(
+        actions: [rowAction(true: "{select($datum)}"), rowAction(true: "{close()}")],
+        datum: .string("slot")
+      ) { receivedOps.append($0) }
+    }
+    XCTAssertFalse(errors.isEmpty)
+    XCTAssertTrue(receivedOps.isEmpty)
+  }
+
+  func testExpandTextPostsNotificationWithRowId() {
+    var postedRowId: String?
+    let token = NotificationCenter.default.addObserver(
+      forName: .evyExpandTextRow, object: nil, queue: nil
+    ) { notification in
+      MainActor.assumeIsolated {
+        postedRowId = notification.object as? String
+      }
+    }
+    defer { NotificationCenter.default.removeObserver(token) }
+
+    var receivedOps: [ActionOperation] = []
+    EVYActionRunner.run(
+      actions: [rowAction(true: "{expand_text(text-expand-row)}"), rowAction(true: "{close()}")]
+    ) { receivedOps.append($0) }
+
+    XCTAssertEqual(postedRowId, "text-expand-row")
+    XCTAssertEqual(receivedOps, [.close])
+  }
+
+  func testExpandTextWithInvalidArgsPostsErrorAndStops() {
+    for branch in ["{expand_text()}", "{expand_text(a, b)}", "{expand_text( )}"] {
+      var receivedOps: [ActionOperation] = []
+      let errors = capturedErrors {
+        EVYActionRunner.run(
+          actions: [rowAction(true: branch), rowAction(true: "{close()}")]
+        ) { receivedOps.append($0) }
+      }
+      XCTAssertFalse(errors.isEmpty, "Expected error for \(branch)")
+      XCTAssertTrue(receivedOps.isEmpty, "Expected stop for \(branch)")
+    }
   }
 
   func testNavigateWithBraceFunction() {
@@ -604,48 +871,6 @@ final class EVYActionRunnerTests: XCTestCase {
     XCTAssertEqual(received, .highlightRequired("Postcode"))
   }
 
-  func testPrepareRunsBeforeChain() throws {
-    let namespace = "test"
-    let resource = "prepare-create-actions"
-    let scopeId = "__test__:prepare-create"
-    let selectedTimeslot = "2026-06-03T11:00:00"
-    try? EVY.publicStore.deleteAll(namespace: namespace, resource: resource)
-    EVY.draftStore.deleteDrafts()
-    EVY.draftStore.activeScopeId = scopeId
-    defer {
-      try? EVY.publicStore.deleteAll(namespace: namespace, resource: resource)
-      EVY.draftStore.deleteDrafts()
-      EVY.draftStore.activeScopeId = nil
-    }
-
-    EVY.ensureDraftExists(variableName: "selected_pickup_timeslot", scopeId: scopeId)
-    var prepareRan = false
-    let prepare = {
-      prepareRan = true
-      try? EVY.updateValue(
-        selectedTimeslot,
-        destination: "{selected_pickup_timeslot}",
-        scopeId: scopeId
-      )
-    }
-    let action = rowAction(
-      true:
-        "{create(\(namespace),\(resource),{fk: item-1, archivedAt: null, data: {type: pickup, time: selected_pickup_timeslot}})}"
-    )
-    var received: ActionOperation?
-    EVYActionRunner.run(actions: [action], prepare: prepare) { received = $0 }
-
-    XCTAssertTrue(prepareRan)
-    XCTAssertNil(received)
-
-    let createdRows = try EVY.publicStore.getAll(namespace: namespace, resource: resource)
-    let createdPayload = try XCTUnwrap(createdRows.first?.decoded())
-    guard case .dictionary(let values) = createdPayload else {
-      return XCTFail("Expected inline create payload dictionary")
-    }
-    XCTAssertEqual(values["data"]?.parseProp(props: ["time"]), .string(selectedTimeslot))
-  }
-
   func testCreateActionRunsImmediately() throws {
     let namespace = EVYNamespace.marketplace
     let resource = MarketplaceTestFixture.messagesResourceId
@@ -684,25 +909,82 @@ final class EVYActionRunnerTests: XCTestCase {
   }
 
   func testDatumRowFormatterResolvesDatumReferencesInActions() throws {
-    let actionString = "{navigate(flowX,pageY,{id: $datum.id})}"
+    let navigateAction = "{navigate(flowX,pageY,{id: $datum.id})}"
+    let updateAction =
+      "{update(66b092ae-7cd8-4d67-95b7-30b03568fd90, 000c2d05-851e-4456-8f22-bb1e54f17c8c, {id: $datum.id, status: \"pending\"}, {status: \"accepted\"})}"
     let row = try decodeRow(
       content: """
         {
-          "title": "{$datum.title}"
+          "title": "{$datum.title}",
+          "subtitle": "{$datum.status}"
         }
         """,
-      actions: [rowAction(true: actionString)]
+      actions: UI_RowActions(
+        swipeLeft: [rowAction(true: updateAction)],
+        tap: [rowAction(true: navigateAction)]
+      )
     )
     let formatter = try EVYDatumRowFormatter(template: row)
     let datum = EVYJson.dictionary([
       "id": .string("resolved-uuid"),
       "title": .string("Resolved Title"),
+      "status": .string("pending"),
     ])
 
     let formattedRow = try formatter.formattedResult(datum: datum).row
 
+    XCTAssertEqual(formattedRow.id, row.id)
     XCTAssertEqual(formattedRow.title, "Resolved Title")
-    XCTAssertEqual(formattedRow.actions.first?.true, actionString)
+    XCTAssertEqual(formattedRow.actions.tap.first?.true, navigateAction)
+    XCTAssertEqual(formattedRow.actions.swipeLeft.first?.true, updateAction)
+  }
+
+  func testSwipeLeftUpdateActionAcceptsPendingMessageFromFormattedSearchResult() throws {
+    let namespace = EVYNamespace.marketplace
+    let resource = MarketplaceTestFixture.messagesResourceId
+    let pendingMessageId = UUID().uuidString
+    try? EVY.publicStore.deleteAll(namespace: namespace, resource: resource)
+    defer { try? EVY.publicStore.deleteAll(namespace: namespace, resource: resource) }
+
+    let message = EVYTestMessageFixtures.message(
+      id: pendingMessageId,
+      status: "pending",
+      type: "pickup",
+      time: "2026-06-03T09:00:00"
+    )
+    try EVY.publicStore.applySyncedValue(
+      namespace: namespace, resource: resource, value: .array([message]))
+
+    let template = try decodeRow(
+      content: """
+        {
+          "title": "{$datum.data.type} request",
+          "subtitle": "{$datum.status}"
+        }
+        """,
+      actions: UI_RowActions(
+        swipeLeft: [
+          rowAction(
+            true:
+              "{update(\(namespace),\(resource),{id: $datum.id, status: \"pending\"},{status: \"accepted\"})}"
+          )
+        ]
+      )
+    )
+    let results = EVYSearchResult.makeResults(
+      from: .array([message]),
+      resultTemplate: template,
+      scopeId: nil
+    )
+    let result = try XCTUnwrap(results.first)
+
+    EVYActionRunner.run(
+      actions: result.displayRow.actions.swipeLeft,
+      datum: result.datum
+    ) { _ in }
+
+    let statusById = try statusByMessageId(namespace: namespace, resource: resource)
+    XCTAssertEqual(statusById[pendingMessageId], "accepted")
   }
 
   private func makeRowWithSheet() throws -> UI_Row {
@@ -718,7 +1000,7 @@ final class EVYActionRunnerTests: XCTestCase {
             "destination": "",
             "title": "Sheet",
             "text": "Body",
-            "actions": [],
+            "actions": {},
             "visible": "true"
           }
         }
@@ -742,7 +1024,7 @@ final class EVYActionRunnerTests: XCTestCase {
 
   private func decodeRow(
     content: String,
-    actions: [UI_RowAction] = []
+    actions: UI_RowActions = UI_RowActions()
   ) throws -> UI_Row {
     let actionsData = try JSONEncoder().encode(actions)
     let actionsJson = try XCTUnwrap(String(data: actionsData, encoding: .utf8))

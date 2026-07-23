@@ -8,14 +8,14 @@ import SwiftUI
 struct EVYTimeslotPickerRow: View {
 
   private let view: TimeslotPickerRowViewData
-  private let onTimeslotSelected: ((_ commit: @escaping () -> Void) -> Void)?
+  private let onTimeslotTapped: EVYRowTapCallback<EVYJson>
 
   init(
     view: TimeslotPickerRowViewData,
-    onTimeslotSelected: ((_ commit: @escaping () -> Void) -> Void)? = nil
+    onTimeslotTapped: @escaping EVYRowTapCallback<EVYJson>
   ) {
     self.view = view
-    self.onTimeslotSelected = onTimeslotSelected
+    self.onTimeslotTapped = onTimeslotTapped
   }
 
   var body: some View {
@@ -23,7 +23,7 @@ struct EVYTimeslotPickerRow: View {
       content: view,
       source: view.source,
       destination: view.destination,
-      onTimeslotSelected: onTimeslotSelected
+      onTimeslotTapped: onTimeslotTapped
     )
     .titledRow(view.title)
   }
@@ -63,7 +63,7 @@ private struct EVYTimeslotPickerRowPreview: View {
         "type": "TimeslotPicker",
         "source": "{pickup_selection}",
         "destination": "{selected_timeslot}",
-        "actions": [],
+        "actions": {"tap": [{"condition": "", "true": "{select($datum)}", "false": ""}]},
         "title": "",
         "start_time": "07:00",
         "end_time": "19:00",

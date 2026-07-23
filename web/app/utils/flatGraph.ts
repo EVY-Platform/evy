@@ -12,10 +12,11 @@ import type {
 	DATA_EVY_Page,
 	DATA_EVY_Row,
 	DATA_EVY_RowData,
-	UI_RowAction,
+	UI_RowActions,
 } from "evy-types";
 import { parseBranch } from "./actionBranch";
 import { collectSubtreeRowIds, type FlowEntityMaps } from "./flowEntities";
+import { compactRowActions, normalizeStoredRowActions } from "./rowActions";
 import {
 	ROW_CHILD_FIELD,
 	ROW_CHILDREN_FIELD,
@@ -494,21 +495,22 @@ export function updateRowField(
 }
 
 /**
- * Update the actions array of a row (stored in data.actions).
+ * Update row actions (stored in data.actions).
  */
 export function updateRowActions(
 	maps: FlowEntityMaps,
 	rowId: string,
-	actions: UI_RowAction[],
+	actions: UI_RowActions,
 ): FlowEntityMaps {
 	const row = maps.rowsById[rowId];
 	if (!row) return maps;
+	const nextActions = compactRowActions(actions);
 	return {
 		...maps,
 		rowsById: {
 			...maps.rowsById,
 			[rowId]: touchRow(
-				{ ...row, data: { ...row.data, actions } },
+				{ ...row, data: { ...row.data, actions: nextActions } },
 				now(),
 			),
 		},
@@ -702,9 +704,8 @@ export function ensureShowAction(
 ): FlowEntityMaps {
 	const row = maps.rowsById[containerRowId];
 	if (!row) return maps;
-	const existingActions = Array.isArray(row.data.actions)
-		? (row.data.actions as UI_RowAction[])
-		: [];
+	const existingActions =
+		normalizeStoredRowActions(row.data.actions).tap ?? [];
 	const showBranch = `{show(${sheetRowId})}`;
 
 	let updatedExisting = false;
@@ -741,5 +742,5 @@ export function ensureShowAction(
 		});
 	}
 
-	return updateRowActions(maps, containerRowId, nextActions);
+	return updateRowActions(maps, containerRowId, { tap: nextActions });
 }

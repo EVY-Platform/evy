@@ -8,7 +8,7 @@ const typeName = "HorizontalContainerRow";
 export default defineRow(typeName, {
 	config: {
 		type: "HorizontalContainer",
-		actions: [],
+		actions: {},
 		visible: "true",
 		title: "Horizontal container row title",
 		children: [],

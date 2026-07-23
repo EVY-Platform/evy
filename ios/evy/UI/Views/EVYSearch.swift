@@ -154,7 +154,7 @@ private struct EVYSearchPreview: View {
       {
         "id": "preview-search-result-template",
         "type": "Text",
-        "actions": [],
+        "actions": {},
         "title": "{$datum.title}",
         "subtitle": "{$datum.category}",
         "icon": ""

@@ -42,7 +42,7 @@ struct EVYMapRow: View {
         "id": "preview-map-row",
         "type": "Map",
         "source": "{user.address}",
-        "actions": [],
+        "actions": {},
         "title": "Pickup location",
         "subtitle": "Meet near the main entrance"
       }

@@ -12,18 +12,27 @@
 						"id": "8d5b9e32-ac4e-5f7b-b2d3-9e8f4a6c0b12",
 						"type": "Text",
 						"title": "{$datum.data.type} request",
-						"subtitle": "",
-						"actions": [],
+						"subtitle": "{$datum.status}",
+						"swipeLabel": "::check::",
 						"visible": "true",
-						"name": "Message search result"
+						"name": "Message search result",
+						"actions": {
+							"swipe-left": [
+								{
+									"condition": "",
+									"false": "",
+									"true": "{update(66b092ae-7cd8-4d67-95b7-30b03568fd90, 000c2d05-851e-4456-8f22-bb1e54f17c8c, {id: $datum.id, status: \"pending\"}, {status: \"accepted\"})}"
+								}
+							]
+						}
 					},
 					"title": "",
 					"placeholder": "Filter messages by type",
 					"source": "{000c2d05-851e-4456-8f22-bb1e54f17c8c}",
 					"destination": "",
-					"actions": [],
 					"visible": "true",
-					"name": "Search messages"
+					"name": "Search messages",
+					"actions": {}
 				},
 				{
 					"id": "96d3efe4-ea20-4a81-9ccb-64d6b57646e9",
@@ -34,13 +43,15 @@
 						"title": "{$datum.title}",
 						"subtitle": "{formatCurrency($datum.price)}",
 						"image": "{$datum.photo_ids.0}",
-						"actions": [
-							{
-								"true": "{navigate(74a49d4b-2176-4925-857a-e29e2991f1bd,82cae120-c7b1-4c29-bd42-e1521320b109,{id: $datum.id})}",
-								"false": "",
-								"condition": ""
-							}
-						],
+						"actions": {
+							"tap": [
+								{
+									"true": "{navigate(74a49d4b-2176-4925-857a-e29e2991f1bd,82cae120-c7b1-4c29-bd42-e1521320b109,{id: $datum.id})}",
+									"false": "",
+									"condition": ""
+								}
+							]
+						},
 						"visible": "true",
 						"name": "Item search result"
 					},
@@ -48,9 +59,9 @@
 					"placeholder": "Search anything",
 					"source": "{dc28ed59-298e-493c-8ff3-3e60f2ebccbd}",
 					"destination": "",
-					"actions": [],
 					"visible": "true",
-					"name": "Search items"
+					"name": "Search items",
+					"actions": {}
 				}
 			],
 			"title": "Home",
@@ -59,13 +70,15 @@
 				"type": "Button",
 				"label": "Sell something",
 				"title": "",
-				"actions": [
-					{
-						"true": "{navigate(ca47e6c5-da19-4491-8422-adb40d9e8a27,306ed62c-c2af-4652-a873-26c7a388972d)}",
-						"false": "",
-						"condition": ""
-					}
-				],
+				"actions": {
+					"tap": [
+						{
+							"true": "{navigate(ca47e6c5-da19-4491-8422-adb40d9e8a27,306ed62c-c2af-4652-a873-26c7a388972d)}",
+							"false": "",
+							"condition": ""
+						}
+					]
+				},
 				"visible": "true",
 				"name": "Sell something"
 			},

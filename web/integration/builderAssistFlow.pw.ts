@@ -88,14 +88,15 @@ function buildBuilderAssistFlow(
 							destination: "",
 							title: "Editable title",
 							placeholder: "Title",
-							actions: [],
 						},
 						{
 							id: "row-button",
 							type: "Button",
 							title: "",
 							label: "Open checkout",
-							actions: buttonActions,
+							...(buttonActions.length > 0
+								? { actions: { tap: buttonActions } }
+								: {}),
 						},
 					],
 				},

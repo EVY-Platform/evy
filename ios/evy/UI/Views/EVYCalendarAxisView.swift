@@ -17,11 +17,11 @@ struct EVYCalendarLabel: Equatable {
 private struct EVYAxisLabel: View {
   let label: String
   let full: Bool
-  let action: (_ full: Bool) -> Void
+  let action: () -> Void
 
   var body: some View {
     Button(
-      action: { action(full) },
+      action: action,
       label: {
         let labelText = label.count > 0 ? label : "-"
         EVYTextView(labelText, style: full ? .action : .info)
@@ -38,10 +38,10 @@ enum EVYAxisType {
 }
 
 struct EVYCalendarAxisView: View {
-  @Environment(\.operate) private var operate
   let type: EVYAxisType
   let labels: [EVYCalendarLabel]
   @Binding var offset: CGPoint
+  let onLabelTapped: (Int) -> Void
 
   var body: some View {
     switch type {
@@ -66,7 +66,7 @@ struct EVYCalendarAxisView: View {
         EVYAxisLabel(
           label: labels[index].value,
           full: labels[index].full,
-          action: { full in handleLabelTap(index: index, full: full) }
+          action: { onLabelTapped(index) }
         )
       }
     }
@@ -75,23 +75,6 @@ struct EVYCalendarAxisView: View {
       HStack(spacing: .zero) { stack }.offset(x: axisOffset)
     case .vertical:
       VStack(spacing: .zero) { stack }.offset(y: axisOffset)
-    }
-  }
-
-  private func handleLabelTap(index: Int, full: Bool) {
-    switch type {
-    case .x:
-      if full {
-        operate(EVYCalendarOperation.unselectColumn(x: index))
-      } else {
-        operate(EVYCalendarOperation.selectColumn(x: index))
-      }
-    case .y:
-      if full {
-        operate(EVYCalendarOperation.unselectRow(y: index))
-      } else {
-        operate(EVYCalendarOperation.selectRow(y: index))
-      }
     }
   }
 }

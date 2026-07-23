@@ -2,6 +2,10 @@
 	"$schema": "https://json-schema.org/draft/2020-12/schema",
 	"$id": "sdui/definitions/ListItem",
 	"title": "ListItem_Row",
+	"triggers": {
+		"tap": "optional",
+		"swipe-left": "optional"
+	},
 	"allOf": [
 		{
 			"$ref": "../evy.schema.json#/$defs/UI_RowBase"
@@ -20,6 +24,9 @@
 					"type": "string"
 				},
 				"image": {
+					"type": "string"
+				},
+				"swipeLabel": {
 					"type": "string"
 				}
 			}

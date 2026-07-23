@@ -1,7 +1,9 @@
+import type { RowTriggerName, UI_RowActions } from "evy-types";
 import { createElement, type ReactNode } from "react";
 
 import { useRowById } from "../hooks/useRowById";
 import type { Row, RowConfig } from "../types/row";
+import { rowAction } from "../utils/rowActions";
 import { RowLayout } from "./design-system/RowLayout";
 
 type RowDefinition =
@@ -15,6 +17,23 @@ type RowComponent = ((props: { rowId: string }) => ReactNode) & {
 	config: RowConfig;
 	name: string;
 };
+
+type DefaultRowActionsInput = Partial<Record<RowTriggerName, string>>;
+
+export function defaultRowActions(
+	options: DefaultRowActionsInput,
+): UI_RowActions {
+	const actions: UI_RowActions = {};
+	for (const [trigger, branch] of Object.entries(options) as [
+		RowTriggerName,
+		string | undefined,
+	][]) {
+		if (branch !== undefined) {
+			actions[trigger] = [rowAction(branch)];
+		}
+	}
+	return actions;
+}
 
 function UnknownRowContent(): ReactNode {
 	return (

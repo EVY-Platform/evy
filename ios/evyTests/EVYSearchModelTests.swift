@@ -98,12 +98,76 @@ final class EVYSearchModelTests: XCTestCase {
     XCTAssertEqual(Set(results.map(\.id)), Set(["id-1", "id-2"]))
   }
 
+  func testLoadLocalResultsRefreshWhenMessageResourceChanges() throws {
+    let resource = MarketplaceTestFixture.messagesResourceId
+    let pendingId = UUID().uuidString
+    let message = EVYTestMessageFixtures.message(
+      id: pendingId,
+      status: "pending",
+      type: "pickup",
+      time: "2026-06-03T09:00:00"
+    )
+    try EVY.publicStore.applySyncedValue(
+      namespace: EVYNamespace.marketplace,
+      resource: resource,
+      value: .array([message])
+    )
+    defer {
+      try? EVY.publicStore.deleteAll(namespace: EVYNamespace.marketplace, resource: resource)
+    }
+
+    let template = Self.makeMessageStatusTemplate()
+    let source = "{\(resource)}"
+    let state = EVYState(
+      textToWatch: source,
+      setter: {
+        EVYSearchResult.loadLocalResults(
+          source: source,
+          resultTemplate: template,
+          scopeId: nil
+        )
+      }
+    )
+
+    XCTAssertEqual(state.value.first?.displayRow.subtitle, "pending")
+
+    try EVY.update(
+      namespace: EVYNamespace.marketplace,
+      resource: resource,
+      matching: [
+        "id": .string(pendingId),
+        "status": .string("pending"),
+      ],
+      changes: ["status": .string("accepted")]
+    )
+
+    XCTAssertEqual(state.value.first?.displayRow.subtitle, "accepted")
+  }
+
+  private static func makeMessageStatusTemplate() -> UI_Row? {
+    let resultTemplateJSON = """
+      {
+        "id": "message-status-template",
+        "type": "Text",
+        "actions": {},
+        "title": "{$datum.data.type} request",
+        "subtitle": "{$datum.status}",
+        "visible": "true",
+        "name": "Message"
+      }
+      """
+    guard let resultTemplateData = resultTemplateJSON.data(using: .utf8) else {
+      return nil
+    }
+    return try? JSONDecoder().decode(UI_Row.self, from: resultTemplateData)
+  }
+
   private static func makeListItemTemplate() -> UI_Row? {
     let resultTemplateJSON = """
       {
         "id": "search-list-item-template",
         "type": "ListItem",
-        "actions": [],
+        "actions": {},
         "title": "{$datum.title}",
         "subtitle": "",
         "image": ""
@@ -120,7 +184,7 @@ final class EVYSearchModelTests: XCTestCase {
       {
         "id": "search-result-template",
         "type": "Text",
-        "actions": [],
+        "actions": {},
         "title": "{$datum.street}",
         "subtitle": "{$datum.city}",
         "icon": ""

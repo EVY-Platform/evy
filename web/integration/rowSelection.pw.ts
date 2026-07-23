@@ -18,7 +18,6 @@ test.describe("Row Selection", () => {
 						type: "Text",
 						title: "First Text Row",
 						subtitle: "First row subtitle content",
-						actions: [],
 					},
 				],
 			},
@@ -53,13 +52,11 @@ test.describe("Row Selection", () => {
 						type: "Text",
 						title: "First Text Row",
 						subtitle: "First row subtitle content",
-						actions: [],
 					},
 					{
 						type: "Text",
 						title: "Second Text Row",
 						subtitle: "Second row subtitle content",
-						actions: [],
 					},
 				],
 			},
@@ -99,13 +96,11 @@ test.describe("Row Selection", () => {
 						type: "Text",
 						title: "First Text Row",
 						subtitle: "First row subtitle content",
-						actions: [],
 					},
 					{
 						type: "Text",
 						title: "Text Row",
 						text: "Text row content",
-						actions: [],
 					},
 				],
 			},
@@ -164,7 +159,6 @@ test.describe("Row Selection", () => {
 						type: "Text",
 						title: "First Text Row",
 						subtitle: "First row subtitle content",
-						actions: [],
 					},
 				],
 			},
@@ -203,7 +197,6 @@ test.describe("Row Selection", () => {
 						type: "Text",
 						title: "First Text Row",
 						subtitle: "First row subtitle content",
-						actions: [],
 					},
 				],
 			},
@@ -240,14 +233,12 @@ test.describe("Row Selection with Containers", () => {
 				rows: [
 					{
 						type: "VerticalContainer",
-						actions: [],
 						title: "Container Row",
 						children: [
 							{
 								type: "Text",
 								title: "Child Text Row",
 								text: "Child row text",
-								actions: [],
 							},
 						],
 					},
@@ -275,14 +266,12 @@ test.describe("Row Selection with Containers", () => {
 				rows: [
 					{
 						type: "VerticalContainer",
-						actions: [],
 						title: "Container Row",
 						children: [
 							{
 								type: "Text",
 								title: "Child Text Row",
 								text: "Child row text",
-								actions: [],
 							},
 						],
 					},
@@ -311,14 +300,12 @@ test.describe("Row Selection with Containers", () => {
 				rows: [
 					{
 						type: "VerticalContainer",
-						actions: [],
 						title: "Container Row",
 						children: [
 							{
 								type: "Text",
 								title: "Child Text Row",
 								text: "Child row text",
-								actions: [],
 							},
 						],
 					},

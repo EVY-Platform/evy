@@ -10,6 +10,11 @@ export const ACTION_FUNCTIONS = [
 	"navigate",
 	"show",
 	"highlight_required",
+	"select",
+	"select_photo",
+	"expand_photo",
+	"expand_text",
+	"delete_photo",
 ] as const;
 export type ActionFunction = (typeof ACTION_FUNCTIONS)[number];
 
@@ -20,7 +25,24 @@ export const FUNCTION_LABELS: Record<ActionFunction, string> = {
 	navigate: "Navigate",
 	show: "Show row",
 	highlight_required: "Highlight required",
+	select: "Select",
+	select_photo: "Select photo",
+	expand_photo: "Expand photo",
+	expand_text: "Expand text",
+	delete_photo: "Delete photo",
 };
+
+export const ROW_ID_ARG_FUNCTIONS = new Set<ActionFunction>([
+	"show",
+	"expand_text",
+]);
+
+export const ZERO_ARG_FUNCTIONS = new Set<ActionFunction>([
+	"close",
+	"select_photo",
+	"expand_photo",
+	"delete_photo",
+]);
 
 type ParsedBranch = {
 	functionName: ActionFunction;
@@ -61,11 +83,13 @@ export function serializeBranch(
 
 	const filteredArgs = args.filter(Boolean);
 
-	if (functionName === "close") return "{close()}";
+	if (ZERO_ARG_FUNCTIONS.has(functionName)) {
+		return `{${functionName}()}`;
+	}
 
-	if (functionName === "show") {
+	if (ROW_ID_ARG_FUNCTIONS.has(functionName)) {
 		const rowId = filteredArgs[0]?.trim();
-		return rowId ? `{show(${rowId})}` : "";
+		return rowId ? `{${functionName}(${rowId})}` : "";
 	}
 
 	if (filteredArgs.length === 0) return `{${functionName}()}`;
@@ -82,7 +106,7 @@ export function formatBranchDisplay(
 	if (!parsed) return "None";
 
 	if (
-		parsed.functionName === "show" &&
+		ROW_ID_ARG_FUNCTIONS.has(parsed.functionName) &&
 		rowsById &&
 		flowsById &&
 		pagesById &&
@@ -90,7 +114,7 @@ export function formatBranchDisplay(
 	) {
 		const rowId = parsed.args[0].trim();
 		const label = formatShowRowLabel(rowId, flowsById, pagesById, rowsById);
-		return `show(${label})`;
+		return `${parsed.functionName}(${label})`;
 	}
 
 	if (

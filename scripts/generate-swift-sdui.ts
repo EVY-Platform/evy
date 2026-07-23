@@ -30,8 +30,6 @@ function swiftTypeForSpecType(s: string, required = true): string {
 			return "UI_Row?"; // always optional: single-row reference
 		case "[String]":
 			return required ? "[String]" : "[String]?";
-		case "[UI_RowAction]":
-			return required ? "[UI_RowAction]" : "[UI_RowAction]?";
 		default:
 			return required ? "String" : "String?";
 	}
@@ -47,7 +45,18 @@ function rowTypeToEnumCase(rowType: string): string {
 }
 
 function swiftIdentifier(name: string): string {
-	return name === "true" || name === "false" ? `\`${name}\`` : name;
+	if (name === "true" || name === "false") {
+		return `\`${name}\``;
+	}
+	if (!name.includes("-")) {
+		return name;
+	}
+	return name
+		.split("-")
+		.map((part, index) =>
+			index === 0 ? part : part.charAt(0).toUpperCase() + part.slice(1),
+		)
+		.join("");
 }
 
 function getRowTypesFromSpec(rowSpec: RowSpec): string[] {
@@ -185,13 +194,64 @@ function swiftDefaultValueForSpecType(specType: string): string {
 	switch (specType) {
 		case "[UI_Row]":
 		case "[String]":
-		case "[UI_RowAction]":
 			return "[]";
 		case "UI_Row":
 			return "nil";
 		default:
 			return '""';
 	}
+}
+
+function emitUIRowActionsStruct(actionsDef: SchemaObject): string {
+	const props = (actionsDef.properties ?? {}) as Record<string, unknown>;
+	const triggerKeys = Object.keys(props).sort();
+	const fieldLines = triggerKeys.map(
+		(key) => `    public var ${swiftIdentifier(key)}: [UI_RowAction]`,
+	);
+	const initParams = triggerKeys.map(
+		(key) => `${swiftIdentifier(key)}: [UI_RowAction] = []`,
+	);
+	const assignLines = triggerKeys.map(
+		(key) =>
+			`        self.${swiftIdentifier(key)} = ${swiftIdentifier(key)}`,
+	);
+	const codingCases = triggerKeys.map((key) => {
+		const swiftName = swiftIdentifier(key);
+		return key === swiftName
+			? `        case ${swiftName}`
+			: `        case ${swiftName} = "${key}"`;
+	});
+	const decodeLines = triggerKeys.map(
+		(key) =>
+			`        ${swiftIdentifier(key)} = try c.decodeIfPresent([UI_RowAction].self, forKey: .${swiftIdentifier(key)}) ?? []`,
+	);
+	const encodeLines = triggerKeys.map(
+		(key) =>
+			`        try c.encode(${swiftIdentifier(key)}, forKey: .${swiftIdentifier(key)})`,
+	);
+	return `// MARK: - UI_RowActions
+public struct UI_RowActions: Codable, Equatable {
+${fieldLines.join("\n")}
+
+    public init(${initParams.join(", ")}) {
+${assignLines.join("\n")}
+    }
+
+    private enum CodingKeys: String, CodingKey {
+${codingCases.join("\n")}
+    }
+
+    public init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+${decodeLines.join("\n")}
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var c = encoder.container(keyedBy: CodingKeys.self)
+${encodeLines.join("\n")}
+    }
+}
+`;
 }
 
 function emitUIRowClass(rowSpec: RowSpec): string {
@@ -203,7 +263,7 @@ function emitUIRowClass(rowSpec: RowSpec): string {
 	const initParams = [
 		"id: String",
 		"type: EVYRowType",
-		"actions: [UI_RowAction] = []",
+		"actions: UI_RowActions = UI_RowActions()",
 		'visible: String = ""',
 		"name: String? = nil",
 		...entries.map(
@@ -245,7 +305,7 @@ function emitUIRowClass(rowSpec: RowSpec): string {
 public final class UI_Row: Codable {
     public let id: String
     public let type: EVYRowType
-    public let actions: [UI_RowAction]
+    public let actions: UI_RowActions
     public let visible: String
     public let name: String?
 ${attributeFields.join("\n")}
@@ -267,7 +327,16 @@ ${codingKeyCases.join("\n")}
         let c = try decoder.container(keyedBy: CodingKeys.self)
         id = try c.decode(String.self, forKey: .id)
         type = try c.decode(EVYRowType.self, forKey: .type)
-        actions = try c.decodeIfPresent([UI_RowAction].self, forKey: .actions) ?? []
+        if c.contains(.actions) {
+            if (try? c.decode([UI_RowAction].self, forKey: .actions)) != nil {
+                throw DecodingError.dataCorruptedError(
+                    forKey: .actions,
+                    in: c,
+                    debugDescription: "actions must be a trigger-keyed object, not an array"
+                )
+            }
+        }
+        actions = try c.decodeIfPresent(UI_RowActions.self, forKey: .actions) ?? UI_RowActions()
         visible = try c.decodeIfPresent(String.self, forKey: .visible) ?? ""
         name = try c.decodeIfPresent(String.self, forKey: .name)
 ${decodeLines.join("\n")}
@@ -319,8 +388,10 @@ function emitShapeFromDef(
 	const lines = Object.entries(props).map(([propName, propSchema]) =>
 		emitPropertyLine(defName, propName, propSchema, required, overrides),
 	);
+	const protocols =
+		defName === "UI_RowAction" ? "Codable, Equatable" : "Codable";
 	return `// MARK: - ${defName}
-public struct ${defName}: Codable {
+public struct ${defName}: ${protocols} {
 ${lines.join("\n")}
 }
 `;
@@ -351,6 +422,7 @@ ${flowLines.join("\n")}
 `;
 	const defBlocks = [
 		emitShapeFromDef("UI_Page", defs.UI_Page as SchemaObject, overrides),
+		emitUIRowActionsStruct(defs.UI_RowActions as SchemaObject),
 		emitUIRowClass(rowSpec),
 		emitShapeFromDef("UI_RowAction", actionSchema, overrides),
 	];
@@ -490,7 +562,7 @@ function emitUIRowPayloads(rowSpec: RowSpec): string {
 		if (!spec) return [];
 		const viewDataName = `${rowType}RowViewData`;
 		return [
-			`    case ${rowTypeToEnumCase(rowType)}(${viewDataName}, [UI_RowAction])`,
+			`    case ${rowTypeToEnumCase(rowType)}(${viewDataName}, UI_RowActions)`,
 		];
 	});
 	const fromRowCases = rowTypes.flatMap((rowType) => {

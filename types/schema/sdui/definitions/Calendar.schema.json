@@ -2,6 +2,11 @@
 	"$schema": "https://json-schema.org/draft/2020-12/schema",
 	"$id": "sdui/definitions/Calendar",
 	"title": "Calendar_Row",
+	"triggers": {
+		"tap": "required",
+		"tap-row": "required",
+		"tap-column": "required"
+	},
 	"allOf": [
 		{
 			"$ref": "../evy.schema.json#/$defs/UI_RowBase"

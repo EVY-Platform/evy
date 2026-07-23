@@ -6,7 +6,7 @@ import { lineClampStyle } from "../design-system/lineClamp";
 export default defineRow("ListItemRow", {
 	config: {
 		type: "ListItem",
-		actions: [],
+		actions: {},
 		visible: "true",
 		title: "List item title",
 		subtitle: "Subtitle",

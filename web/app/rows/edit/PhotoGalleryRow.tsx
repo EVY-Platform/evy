@@ -1,13 +1,13 @@
 import { MARKETPLACE_RESOURCE } from "evy-types/marketplaceResources";
 import type { RowConfig } from "../../types/row";
-import { defineRow } from "../defineRow";
+import { defaultRowActions, defineRow } from "../defineRow";
 import CarouselIndicator from "../design-system/CarouselIndicator";
 import { RowLayout } from "../design-system/RowLayout";
 
 export default defineRow("PhotoGalleryRow", {
 	config: {
 		type: "PhotoGallery",
-		actions: [],
+		actions: defaultRowActions({ tap: "{expand_photo()}" }),
 		source: `{${MARKETPLACE_RESOURCE.ITEMS}.photo_ids}`,
 		visible: "true",
 		title: "Photo gallery row title",

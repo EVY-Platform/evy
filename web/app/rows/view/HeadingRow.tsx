@@ -6,7 +6,7 @@ import { TitleSubtitleRow } from "../design-system/TitleSubtitleRow";
 export default defineRow("HeadingRow", {
 	config: {
 		type: "Heading",
-		actions: [],
+		actions: {},
 		visible: "true",
 		title: "Heading row title",
 		label: "Label",

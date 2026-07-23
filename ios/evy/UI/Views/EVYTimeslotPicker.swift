@@ -32,7 +32,7 @@ struct EVYTimeslotDate: Equatable {
 private struct EVYTimeslotColumn: View {
   let timeslotDate: EVYTimeslotDate
   let numberOfTimeslotsPerDay: Int
-  let onSelect: ((String) -> Void)?
+  let onSelect: (String) -> Void
 
   var body: some View {
     VStack {
@@ -53,7 +53,7 @@ private struct EVYTimeslotColumn: View {
           )
           .contentShape(Rectangle())
           .onTapGesture {
-            onSelect?(t.dateTimeISO)
+            onSelect(t.dateTimeISO)
           }
         }
       }
@@ -67,7 +67,8 @@ struct EVYTimeslotPicker: View {
   private static let columnStackSpacing: CGFloat = 8
 
   private let destination: String
-  private let onTimeslotSelected: ((_ commit: @escaping () -> Void) -> Void)?
+  private let onTimeslotTapped: EVYRowTapCallback<EVYJson>
+
   private let timeslotDates: EVYState<[EVYTimeslotDate]>
 
   @State private var selectedGroupIndex: Int = 0
@@ -76,10 +77,10 @@ struct EVYTimeslotPicker: View {
     content: TimeslotPickerRowViewData,
     source: String,
     destination: String,
-    onTimeslotSelected: ((_ commit: @escaping () -> Void) -> Void)? = nil
+    onTimeslotTapped: @escaping EVYRowTapCallback<EVYJson>
   ) {
     self.destination = destination
-    self.onTimeslotSelected = onTimeslotSelected
+    self.onTimeslotTapped = onTimeslotTapped
     timeslotDates = EVYState(
       watches: [source, destination],
       setter: { Self.buildDates(content: content, source: source, destination: destination) }
@@ -100,9 +101,11 @@ struct EVYTimeslotPicker: View {
   }
 
   private func selectTimeslot(_ dateTimeISO: String) {
-    onTimeslotSelected? {
-      Self.commitSelection(dateTimeISO, to: destination)
-    }
+    onTimeslotTapped(
+      .string(dateTimeISO),
+      EVYRowActionOperation.selectHandler { value in
+        Self.commitSelection(value.toString(), to: destination)
+      })
   }
 
   static func commitSelection(
@@ -186,7 +189,10 @@ private struct EVYTimeslotPickerPreview: View {
       EVYTimeslotPicker(
         content: content,
         source: "{pickup_selection}",
-        destination: "{selected_timeslot}")
+        destination: "{selected_timeslot}",
+        onTimeslotTapped: { value, handler in
+          try? handler(.select(value))
+        })
     }
   }
 }

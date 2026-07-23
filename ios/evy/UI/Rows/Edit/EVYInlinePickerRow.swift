@@ -10,9 +10,14 @@ import SwiftUI
 struct EVYInlinePickerRow: View {
 
   private let view: InlinePickerRowViewData
+  private let onOptionTapped: EVYRowTapCallback<EVYJson>
 
-  init(view: InlinePickerRowViewData) {
+  init(
+    view: InlinePickerRowViewData,
+    onOptionTapped: @escaping EVYRowTapCallback<EVYJson>
+  ) {
     self.view = view
+    self.onOptionTapped = onOptionTapped
   }
 
   var body: some View {
@@ -20,7 +25,8 @@ struct EVYInlinePickerRow: View {
       title: view.title ?? "",
       data: view.source ?? "",
       valueTemplate: view.value,
-      destination: view.destination ?? ""
+      destination: view.destination ?? "",
+      onOptionTapped: onOptionTapped
     )
     .titledRow(view.title)
   }
@@ -34,7 +40,7 @@ struct EVYInlinePickerRow: View {
         "type": "InlinePicker",
         "source": "{durations}",
         "destination": "{item.duration}",
-        "actions": [],
+        "actions": {"tap": [{"condition": "", "true": "{select($datum)}", "false": ""}]},
         "title": "Duration",
         "value": "{$datum.value}"
       }

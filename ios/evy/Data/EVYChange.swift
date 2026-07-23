@@ -9,6 +9,7 @@ extension Notification.Name {
   static let evyRecordChanged = Notification.Name("EVYRecordChanged")
   static let evyValueChanged = Notification.Name("EVYValueChanged")
   static let evyErrorOccurred = Notification.Name("EVYErrorOccurred")
+  static let evyExpandTextRow = Notification.Name("EVYExpandTextRow")
 }
 
 struct EVYRecordChange: Equatable {

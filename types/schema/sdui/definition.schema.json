@@ -5,7 +5,14 @@
 	"description": "Convention schema for standard JSON Schema files that define an SDUI row type.",
 	"type": "object",
 	"additionalProperties": true,
-	"required": ["$schema", "$id", "title", "allOf", "unevaluatedProperties"],
+	"required": [
+		"$schema",
+		"$id",
+		"title",
+		"triggers",
+		"allOf",
+		"unevaluatedProperties"
+	],
 	"properties": {
 		"$schema": {
 			"const": "https://json-schema.org/draft/2020-12/schema"
@@ -17,6 +24,16 @@
 		"title": {
 			"type": "string",
 			"pattern": "^[A-Za-z0-9]+_Row$"
+		},
+		"triggers": {
+			"type": "object",
+			"propertyNames": {
+				"enum": ["tap", "delete", "tap-row", "tap-column", "swipe-left"]
+			},
+			"additionalProperties": {
+				"type": "string",
+				"enum": ["required", "optional"]
+			}
 		},
 		"allOf": {
 			"type": "array",

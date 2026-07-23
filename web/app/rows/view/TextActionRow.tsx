@@ -6,7 +6,7 @@ import { TitleSubtitleRow } from "../design-system/TitleSubtitleRow";
 export default defineRow("TextActionRow", {
 	config: {
 		type: "TextAction",
-		actions: [],
+		actions: {},
 		visible: "true",
 		title: "Text action title",
 		subtitle: "Subtitle",

@@ -194,4 +194,65 @@ final class EVYCalendarTests: XCTestCase {
     XCTAssertTrue(displayDateSlots.allSatisfy { !$0.isPrimarySelected && !$0.isSecondarySelected })
   }
 
+  func testTogglePrimarySelectionBatchAddsMissing() throws {
+    let scopeId = "__test__:calendar-batch-add"
+    let destination = "{pickup_selection}"
+    EVY.draftStore.deleteDrafts()
+    EVY.draftStore.activeScopeId = scopeId
+    defer {
+      EVY.draftStore.deleteDrafts()
+      EVY.draftStore.activeScopeId = nil
+    }
+    EVY.ensureDraftExists(
+      variableName: "pickup_selection",
+      initialData: "[\"2026-06-03T09:00:00\"]".data(using: .utf8),
+      scopeId: scopeId
+    )
+
+    EVYCalendar.togglePrimarySelection(
+      dateTimeISOs: ["2026-06-03T09:00:00", "2026-06-03T10:00:00"],
+      destination: destination
+    )
+
+    let stored = EVYDatetime.readTimeslots(destination)
+    XCTAssertEqual(Set(stored), Set(["2026-06-03T09:00:00", "2026-06-03T10:00:00"]))
+  }
+
+  func testTapRowSelectActionUsesTapRowTriggerList() throws {
+    let scopeId = "__test__:calendar-tap-row-routing"
+    let destination = "{pickup_selection}"
+    EVY.draftStore.deleteDrafts()
+    EVY.draftStore.activeScopeId = scopeId
+    defer {
+      EVY.draftStore.deleteDrafts()
+      EVY.draftStore.activeScopeId = nil
+    }
+    EVY.ensureDraftExists(variableName: "pickup_selection", scopeId: scopeId)
+
+    let datum = EVYJson.array([
+      .string("2026-06-03T09:00:00"),
+      .string("2026-06-04T09:00:00"),
+    ])
+    let actions = UI_RowActions(
+      tap: [rowAction(true: "{close()}")],
+      tapRow: [rowAction(true: "{select($datum)}")]
+    )
+
+    EVYActionRunner.run(
+      actions: actions.tapRow,
+      datum: datum,
+      rowOperation: { operation in
+        guard case .select(let value) = operation else {
+          throw EVYError.invalidData(context: "expected select")
+        }
+        try EVYCalendar.applyPrimarySelection(value: value, destination: destination)
+      }
+    ) { _ in }
+
+    XCTAssertEqual(
+      Set(EVYDatetime.readTimeslots(destination)),
+      Set(["2026-06-03T09:00:00", "2026-06-04T09:00:00"])
+    )
+  }
+
 }

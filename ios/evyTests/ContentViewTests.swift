@@ -158,7 +158,7 @@ final class ContentViewTests: XCTestCase {
     try seedPage(store: store, id: pageId, rowIds: [rowId])
     try seedRow(
       store: store, id: rowId, type: "Text",
-      data: ["source": "", "title": "Hello", "text": "World", "actions": []])
+      data: ["source": "", "title": "Hello", "text": "World", "actions": [:]])
 
     let firstPageId = EVYFlowStore.firstPageId(inFlowId: flowId, from: store)
     XCTAssertEqual(firstPageId, pageId)
@@ -226,12 +226,12 @@ final class ContentViewTests: XCTestCase {
     try seedRow(
       store: store, id: parentId, type: "Search",
       data: [
-        "source": "{items}", "destination": "{query}", "title": "", "actions": [],
+        "source": "{items}", "destination": "{query}", "title": "", "actions": [:],
         "child_row_id": childId,
       ])
     try seedRow(
       store: store, id: childId, type: "Text",
-      data: ["source": "", "title": "Child title", "text": "Body", "actions": []])
+      data: ["source": "", "title": "Child title", "text": "Body", "actions": [:]])
 
     let storedParent = try XCTUnwrap(EVYRowStore.row(id: parentId, from: store))
     XCTAssertEqual(storedParent.childRowId, childId)
@@ -249,12 +249,12 @@ final class ContentViewTests: XCTestCase {
     try seedRow(
       store: store, id: parentId, type: "Button",
       data: [
-        "source": "", "title": "", "label": "Parent", "actions": [],
+        "source": "", "title": "", "label": "Parent", "actions": [:],
         "sheet_row_id": sheetId,
       ])
     try seedRow(
       store: store, id: sheetId, type: "Text",
-      data: ["source": "", "title": "Sheet title", "text": "Body", "actions": []])
+      data: ["source": "", "title": "Sheet title", "text": "Body", "actions": [:]])
 
     let storedParent = try XCTUnwrap(EVYRowStore.row(id: parentId, from: store))
     XCTAssertEqual(storedParent.sheetRowId, sheetId)
@@ -270,7 +270,7 @@ final class ContentViewTests: XCTestCase {
     try seedRow(
       store: store, id: searchId, type: "Search",
       data: [
-        "source": "{items}", "destination": "{query}", "title": "", "actions": [],
+        "source": "{items}", "destination": "{query}", "title": "", "actions": [:],
         "child_row_id": childId,
         "sheet_row_id": sheetId,
       ])
@@ -289,7 +289,7 @@ final class ContentViewTests: XCTestCase {
     try seedRow(
       store: store, id: containerId, type: "HorizontalContainer",
       data: [
-        "source": "", "title": "", "actions": [],
+        "source": "", "title": "", "actions": [:],
         "children_row_ids": [childOneId, childTwoId],
       ])
 
@@ -306,10 +306,10 @@ final class ContentViewTests: XCTestCase {
     try seedPage(store: store, id: pageId, rowIds: [rowOneId, rowTwoId])
     try seedRow(
       store: store, id: rowOneId, type: "Text",
-      data: ["source": "", "title": "One", "actions": []])
+      data: ["source": "", "title": "One", "actions": [:]])
     try seedRow(
       store: store, id: rowTwoId, type: "Text",
-      data: ["source": "", "title": "Two", "actions": []])
+      data: ["source": "", "title": "Two", "actions": [:]])
 
     var visitedIds: [String] = []
     forEachStoredRow(inPageId: pageId, from: store) { row in visitedIds.append(row.id) }
@@ -326,12 +326,12 @@ final class ContentViewTests: XCTestCase {
     try seedRow(
       store: store, id: parentId, type: "Search",
       data: [
-        "source": "{items}", "destination": "{query}", "title": "", "actions": [],
+        "source": "{items}", "destination": "{query}", "title": "", "actions": [:],
         "child_row_id": childId,
       ])
     try seedRow(
       store: store, id: childId, type: "Text",
-      data: ["source": "", "title": "Child title", "actions": []])
+      data: ["source": "", "title": "Child title", "actions": [:]])
 
     var visitedIds: [String] = []
     forEachStoredRow(inPageId: pageId, from: store) { row in visitedIds.append(row.id) }
@@ -348,12 +348,12 @@ final class ContentViewTests: XCTestCase {
     try seedRow(
       store: store, id: parentId, type: "Button",
       data: [
-        "source": "", "title": "", "label": "Parent", "actions": [],
+        "source": "", "title": "", "label": "Parent", "actions": [:],
         "sheet_row_id": sheetId,
       ])
     try seedRow(
       store: store, id: sheetId, type: "Text",
-      data: ["source": "", "title": "Sheet title", "actions": []])
+      data: ["source": "", "title": "Sheet title", "actions": [:]])
 
     var visitedIds: [String] = []
     forEachStoredRow(inPageId: pageId, from: store) { row in visitedIds.append(row.id) }
@@ -371,16 +371,16 @@ final class ContentViewTests: XCTestCase {
     try seedRow(
       store: store, id: searchId, type: "Search",
       data: [
-        "source": "{items}", "destination": "{query}", "title": "", "actions": [],
+        "source": "{items}", "destination": "{query}", "title": "", "actions": [:],
         "child_row_id": childId,
         "sheet_row_id": sheetId,
       ])
     try seedRow(
       store: store, id: childId, type: "Text",
-      data: ["source": "", "title": "Child", "actions": []])
+      data: ["source": "", "title": "Child", "actions": [:]])
     try seedRow(
       store: store, id: sheetId, type: "Text",
-      data: ["source": "", "title": "Sheet", "actions": []])
+      data: ["source": "", "title": "Sheet", "actions": [:]])
 
     var visitedIds: [String] = []
     forEachStoredRow(inPageId: pageId, from: store) { row in visitedIds.append(row.id) }
@@ -396,13 +396,13 @@ final class ContentViewTests: XCTestCase {
     try seedRow(
       store: store, id: rowOneId, type: "Button",
       data: [
-        "source": "", "title": "", "label": "", "actions": [],
+        "source": "", "title": "", "label": "", "actions": [:],
         "sheet_row_id": rowTwoId,
       ])
     try seedRow(
       store: store, id: rowTwoId, type: "Button",
       data: [
-        "source": "", "title": "", "label": "", "actions": [],
+        "source": "", "title": "", "label": "", "actions": [:],
         "sheet_row_id": rowOneId,
       ])
 
@@ -422,15 +422,15 @@ final class ContentViewTests: XCTestCase {
     try seedRow(
       store: store, id: containerId, type: "HorizontalContainer",
       data: [
-        "source": "", "title": "", "actions": [],
+        "source": "", "title": "", "actions": [:],
         "children_row_ids": [childOneId, childTwoId],
       ])
     try seedRow(
       store: store, id: childOneId, type: "Text",
-      data: ["source": "", "title": "One", "actions": []])
+      data: ["source": "", "title": "One", "actions": [:]])
     try seedRow(
       store: store, id: childTwoId, type: "Text",
-      data: ["source": "", "title": "Two", "actions": []])
+      data: ["source": "", "title": "Two", "actions": [:]])
 
     var visitedIds: [String] = []
     forEachStoredRow(inPageId: pageId, from: store) { row in visitedIds.append(row.id) }
@@ -446,13 +446,13 @@ final class ContentViewTests: XCTestCase {
     try seedRow(
       store: store, id: rowOneId, type: "Search",
       data: [
-        "source": "{items}", "destination": "{query}", "title": "", "actions": [],
+        "source": "{items}", "destination": "{query}", "title": "", "actions": [:],
         "child_row_id": rowTwoId,
       ])
     try seedRow(
       store: store, id: rowTwoId, type: "Search",
       data: [
-        "source": "{items}", "destination": "{query}", "title": "", "actions": [],
+        "source": "{items}", "destination": "{query}", "title": "", "actions": [:],
         "child_row_id": rowOneId,
       ])
 
@@ -470,10 +470,10 @@ final class ContentViewTests: XCTestCase {
     try seedPage(store: store, id: pageId, rowIds: [rowId], footerRowId: footerId)
     try seedRow(
       store: store, id: rowId, type: "Text",
-      data: ["source": "", "title": "Body", "actions": []])
+      data: ["source": "", "title": "Body", "actions": [:]])
     try seedRow(
       store: store, id: footerId, type: "Button",
-      data: ["source": "", "title": "", "label": "Footer", "actions": []])
+      data: ["source": "", "title": "", "label": "Footer", "actions": [:]])
 
     var visitedIds: [String] = []
     forEachStoredRow(inPageId: pageId, from: store) { row in visitedIds.append(row.id) }
@@ -490,7 +490,7 @@ final class ContentViewTests: XCTestCase {
       store: store, id: parentId, type: "Search",
       data: [
         "source": "{items}", "destination": "{query}", "title": "",
-        "actions": [], "child_row_id": childId, "sheet_row_id": sheetId,
+        "actions": [:], "child_row_id": childId, "sheet_row_id": sheetId,
       ])
 
     let storedRow = try XCTUnwrap(EVYRowStore.row(id: parentId, from: store))
@@ -511,7 +511,7 @@ final class ContentViewTests: XCTestCase {
 
     try seedRow(
       store: store, id: templateId, type: "Text",
-      data: ["source": "", "title": "{$datum.title}", "actions": []])
+      data: ["source": "", "title": "{$datum.title}", "actions": [:]])
 
     let ref = EVYRowRef.id(templateId)
     let templateRow = ref.templateRow(from: store)
@@ -548,23 +548,51 @@ final class ContentViewTests: XCTestCase {
         "value": "",
         "placeholder": "Enter a title",
         "destination": "{\(MarketplaceTestFixture.itemsResourceId).title}",
-        "actions": [],
+        "actions": [:],
       ])
     try seedRow(
       store: store, id: "submit-button", type: "Button",
       data: [
         "source": "", "title": "", "label": "Submit",
         "actions": [
-          [
-            "condition": "",
-            "false": "",
-            "true":
-              "{create(\(MarketplaceTestFixture.serviceId),\(MarketplaceTestFixture.itemsResourceId))}",
+          "tap": [
+            [
+              "condition": "",
+              "false": "",
+              "true":
+                "{create(\(MarketplaceTestFixture.serviceId),\(MarketplaceTestFixture.itemsResourceId))}",
+            ]
           ]
         ],
       ])
 
     let keys = EVYFlowStore.createKeys(flowId: "create-flow", from: store)
+    XCTAssertEqual(keys, Set([MarketplaceTestFixture.itemsResourceId]))
+  }
+
+  func testExtractCreateKeysIncludesSwipeLeftActions() throws {
+    let store = makeStore()
+
+    try seedFlow(store: store, id: "swipe-flow", pageIds: ["swipe-page"])
+    try seedPage(store: store, id: "swipe-page", rowIds: ["swipe-row"])
+    try seedRow(
+      store: store, id: "swipe-row", type: "Text",
+      data: [
+        "title": "Swipe",
+        "text": "Hello",
+        "actions": [
+          "swipe-left": [
+            [
+              "condition": "",
+              "false": "",
+              "true":
+                "{create(\(MarketplaceTestFixture.serviceId),\(MarketplaceTestFixture.itemsResourceId))}",
+            ]
+          ]
+        ],
+      ])
+
+    let keys = EVYFlowStore.createKeys(flowId: "swipe-flow", from: store)
     XCTAssertEqual(keys, Set([MarketplaceTestFixture.itemsResourceId]))
   }
 
@@ -578,10 +606,12 @@ final class ContentViewTests: XCTestCase {
       data: [
         "source": "", "title": "", "label": "Go",
         "actions": [
-          [
-            "condition": "",
-            "false": "",
-            "true": "{navigate(another-flow,another-page)}",
+          "tap": [
+            [
+              "condition": "",
+              "false": "",
+              "true": "{navigate(another-flow,another-page)}",
+            ]
           ]
         ],
       ])
@@ -602,11 +632,13 @@ final class ContentViewTests: XCTestCase {
       data: [
         "source": "", "title": "", "label": "Submit",
         "actions": [
-          [
-            "condition": "",
-            "false": "",
-            "true":
-              "{create(\(MarketplaceTestFixture.serviceId),\(MarketplaceTestFixture.itemsResourceId))}",
+          "tap": [
+            [
+              "condition": "",
+              "false": "",
+              "true":
+                "{create(\(MarketplaceTestFixture.serviceId),\(MarketplaceTestFixture.itemsResourceId))}",
+            ]
           ]
         ],
       ])
@@ -658,7 +690,7 @@ final class ContentViewTests: XCTestCase {
     let json: [String: Any] = [
       "id": "list-item-row-id",
       "type": "ListItem",
-      "actions": [],
+      "actions": [:],
       "title": "Test title",
       "subtitle": "Test subtitle",
       "image": "",
@@ -677,7 +709,7 @@ final class ContentViewTests: XCTestCase {
     let flatRow = try decodeRow([
       "id": "search-result-template",
       "type": "ListItem",
-      "actions": [],
+      "actions": [:],
       "title": "Item title",
       "subtitle": "Sydney",
     ])
@@ -690,14 +722,14 @@ final class ContentViewTests: XCTestCase {
     let nestedRow = try decodeRow([
       "id": "search-result-template",
       "type": "Search",
-      "actions": [],
+      "actions": [:],
       "title": "Item title",
       "source": "{items}",
       "destination": "{query}",
       "child": [
         "id": "search-result-child",
         "type": "Button",
-        "actions": [],
+        "actions": [:],
         "title": "",
         "label": "Inner label",
       ],
@@ -713,7 +745,7 @@ final class ContentViewTests: XCTestCase {
     let row = try decodeRow([
       "id": "homepage-search-result-template",
       "type": "ListItem",
-      "actions": [],
+      "actions": [:],
       "title": "{$datum.title}",
       "subtitle": "{formatCurrency($datum.price)}",
       "image": "{$datum.photo_ids.0}",
@@ -740,7 +772,7 @@ final class ContentViewTests: XCTestCase {
     let row = try decodeRow([
       "id": "place-search-result-template",
       "type": "Text",
-      "actions": [],
+      "actions": [:],
       "title": "{$datum.unit} {$datum.street}",
       "subtitle": "{$datum.postcode} {$datum.city}, {$datum.state}",
     ])
@@ -765,7 +797,7 @@ final class ContentViewTests: XCTestCase {
     let row = try decodeRow([
       "id": "place-search-result-address-lines",
       "type": "Text",
-      "actions": [],
+      "actions": [:],
       "title": "{formatAddressLine1($datum)}",
       "subtitle": "{formatAddressLine2($datum)}",
     ])
@@ -803,13 +835,13 @@ final class ContentViewTests: XCTestCase {
     try seedPage(store: store, id: pageId, rowIds: [rowId])
     try seedRow(
       store: store, id: rowId, type: "Button",
-      data: ["source": "", "title": "", "label": "Before", "actions": []])
+      data: ["source": "", "title": "", "label": "Before", "actions": [:]])
 
     let firstPageIdBefore = EVYFlowStore.firstPageId(inFlowId: flowId, from: store)
 
     try seedRow(
       store: store, id: rowId, type: "Button",
-      data: ["source": "", "title": "", "label": "After", "actions": []])
+      data: ["source": "", "title": "", "label": "After", "actions": [:]])
 
     let firstPageIdAfter = EVYFlowStore.firstPageId(inFlowId: flowId, from: store)
     XCTAssertEqual(firstPageIdBefore, firstPageIdAfter)

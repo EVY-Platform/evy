@@ -1,6 +1,6 @@
 import { MARKETPLACE_RESOURCE } from "evy-types/marketplaceResources";
 import type { RowConfig } from "../../types/row";
-import { defineRow } from "../defineRow";
+import { defaultRowActions, defineRow } from "../defineRow";
 import Checkbox from "../design-system/Checkbox";
 import EVYText from "../design-system/EVYText";
 import { RowLayout } from "../design-system/RowLayout";
@@ -8,7 +8,7 @@ import { RowLayout } from "../design-system/RowLayout";
 export default defineRow("TextSelectRow", {
 	config: {
 		type: "TextSelect",
-		actions: [],
+		actions: defaultRowActions({ tap: "{select($datum)}" }),
 		source: `{${MARKETPLACE_RESOURCE.ITEMS}.payment_cash}`,
 		visible: "true",
 		title: "Text select row title",

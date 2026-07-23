@@ -73,7 +73,7 @@ struct EVYTitledTextFieldRow: View {
         "type": "Input",
         "source": "{item.title}",
         "destination": "{item.title}",
-        "actions": [],
+        "actions": {},
         "title": "Item title",
         "placeholder": "Enter a title"
       }

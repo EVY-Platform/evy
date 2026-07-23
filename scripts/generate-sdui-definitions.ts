@@ -7,6 +7,8 @@ import {
 	rowFieldSpecTsSource,
 	rowFieldsFromDefinitions,
 	rowSpecificAttributesTsSource,
+	rowTriggersFromDefinitions,
+	rowTriggersTsSource,
 	type SduiRowDefinition,
 } from "./sdui-row-schema-utils.js";
 import {
@@ -70,6 +72,7 @@ function emitSduiDefinitions(definitions: SduiRowDefinition[]): {
 		definitions.map((definition) => [definition.type, definition.schema]),
 	);
 	const rowFields = rowFieldsFromDefinitions(definitions);
+	const rowTriggers = rowTriggersFromDefinitions(definitions);
 	const tsLines: string[] = [];
 	tsLines.push(...generatedFileHeader(SOURCE_LABEL));
 	tsLines.push(
@@ -80,6 +83,12 @@ function emitSduiDefinitions(definitions: SduiRowDefinition[]): {
 	tsLines.push("");
 	tsLines.push(
 		`export const SDUI_ROW_FIELDS: Record<string, RowFieldSpec[]> = ${JSON.stringify(rowFields, null, "\t")};`,
+	);
+	tsLines.push("");
+	tsLines.push(...rowTriggersTsSource());
+	tsLines.push("");
+	tsLines.push(
+		`export const SDUI_ROW_TRIGGERS: Record<string, RowTriggerSpec[]> = ${JSON.stringify(rowTriggers, null, "\t")};`,
 	);
 	tsLines.push("");
 	tsLines.push(...rowSpecificAttributesTsSource(definitions));

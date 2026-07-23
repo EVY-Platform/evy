@@ -3,22 +3,11 @@ import { basename, join } from "node:path";
 import { loadJson, SDUI_DEFINITIONS_DIR } from "./types-generation-utils.js";
 
 const UI_ROW_REF = "../evy.schema.json#/$defs/UI_Row";
-const ACTION_REF = "../action.schema.json";
 const UI_ROW_BASE_REF = "../evy.schema.json#/$defs/UI_RowBase";
 
-type SduiRowSpecType =
-	| "string"
-	| "[String]"
-	| "UI_Row"
-	| "[UI_Row]"
-	| "[UI_RowAction]";
+type SduiRowSpecType = "string" | "[String]" | "UI_Row" | "[UI_Row]";
 
-type SduiRowAttributeType =
-	| "string"
-	| "string[]"
-	| "Row"
-	| "Row[]"
-	| "Action[]";
+type SduiRowAttributeType = "string" | "string[]" | "Row" | "Row[]";
 
 export type SduiRowSpecField = {
 	type: SduiRowSpecType;
@@ -34,8 +23,27 @@ export type SduiRowSpec = Record<
 
 type SduiRowDefinitionSchema = Record<string, unknown>;
 
+const ROW_TRIGGER_NAMES = [
+	"tap",
+	"delete",
+	"tap-row",
+	"tap-column",
+	"swipe-left",
+] as const;
+
+export type RowTriggerName = (typeof ROW_TRIGGER_NAMES)[number];
+
+export type RowTriggerSpec = {
+	trigger: RowTriggerName;
+	required: boolean;
+};
+
+const ROW_TRIGGER_NAME_SET = new Set<string>(ROW_TRIGGER_NAMES);
+const ROW_TRIGGER_REQUIREMENTS = new Set(["required", "optional"]);
+
 export interface SduiRowDefinition {
 	type: string;
+	triggers: Partial<Record<RowTriggerName, "required" | "optional">>;
 	attributes: Record<
 		string,
 		{ required: boolean; type: SduiRowAttributeType; enum?: string[] }
@@ -121,7 +129,6 @@ function attributeTypeForProperty(
 		const items = getObject(schema.items, `${label}.items`);
 		if (items.type === "string") return "string[]";
 		if (items.$ref === UI_ROW_REF) return "Row[]";
-		if (items.$ref === ACTION_REF) return "Action[]";
 	}
 
 	throw new Error(`${label} uses an unsupported SDUI row property schema`);
@@ -148,15 +155,40 @@ function specTypeForAttributeType(type: SduiRowAttributeType): SduiRowSpecType {
 			return "UI_Row";
 		case "Row[]":
 			return "[UI_Row]";
-		case "Action[]":
-			return "[UI_RowAction]";
 	}
+}
+
+function parseTriggersFromSchema(
+	schema: SduiRowDefinitionSchema,
+	sourceLabel: string,
+): SduiRowDefinition["triggers"] {
+	const raw = schema.triggers;
+	if (!isSchemaObject(raw)) {
+		throw new Error(`${sourceLabel}: triggers must be an object`);
+	}
+	const triggers: Partial<Record<RowTriggerName, "required" | "optional">> =
+		{};
+	for (const [name, value] of Object.entries(raw)) {
+		if (!ROW_TRIGGER_NAME_SET.has(name)) {
+			throw new Error(
+				`${sourceLabel}: unknown trigger name "${name}" (allowed: ${ROW_TRIGGER_NAMES.join(", ")})`,
+			);
+		}
+		if (typeof value !== "string" || !ROW_TRIGGER_REQUIREMENTS.has(value)) {
+			throw new Error(
+				`${sourceLabel}: trigger "${name}" must be "required" or "optional"`,
+			);
+		}
+		triggers[name as RowTriggerName] = value;
+	}
+	return triggers;
 }
 
 export function extractSduiRowDefinition(
 	schema: SduiRowDefinitionSchema,
 	sourceLabel: string,
 ): SduiRowDefinition {
+	const triggers = parseTriggersFromSchema(schema, sourceLabel);
 	const body = getRowSchemaBody(schema, sourceLabel);
 	const properties = getObject(body.properties, `${sourceLabel}: properties`);
 	const typeProperty = getObject(
@@ -183,7 +215,7 @@ export function extractSduiRowDefinition(
 		};
 	}
 
-	return { type, attributes, schema };
+	return { type, triggers, attributes, schema };
 }
 
 export function rowSpecFromDefinitions(
@@ -367,8 +399,6 @@ function rowFieldSpecFromAttribute(
 		case "Row[]":
 			kind = "children";
 			break;
-		case "Action[]":
-			return null;
 	}
 
 	return {
@@ -400,7 +430,6 @@ export function rowSpecificAttributesTsSource(
 			// Bindings and title are base attributes typed by consumers' own
 			// base-attribute types; actions are base too.
 			if (ROW_BINDING_FIELD_NAMES.has(name) || name === "title") continue;
-			if (attribute.type === "Action[]") continue;
 			const tsType = {
 				string: "string",
 				"string[]": "string[]",
@@ -438,6 +467,36 @@ export function rowFieldsFromDefinitions(
 		rowFields[definition.type] = fields;
 	}
 	return rowFields;
+}
+
+export function rowTriggersFromDefinitions(
+	definitions: SduiRowDefinition[],
+): Record<string, RowTriggerSpec[]> {
+	const rowTriggers: Record<string, RowTriggerSpec[]> = {};
+	for (const definition of definitions) {
+		const specs: RowTriggerSpec[] = Object.entries(definition.triggers)
+			.sort(([a], [b]) => a.localeCompare(b))
+			.map(([trigger, requirement]) => ({
+				trigger: trigger as RowTriggerName,
+				required: requirement === "required",
+			}));
+		rowTriggers[definition.type] = specs;
+	}
+	return rowTriggers;
+}
+
+export function rowTriggersTsSource(): string[] {
+	const rowTriggerNameUnion = ROW_TRIGGER_NAMES.map((n) =>
+		JSON.stringify(n),
+	).join(" | ");
+	return [
+		`export type RowTriggerName = ${rowTriggerNameUnion};`,
+		``,
+		`export type RowTriggerSpec = {`,
+		`\ttrigger: RowTriggerName;`,
+		`\trequired: boolean;`,
+		`};`,
+	];
 }
 
 export function extractSduiRowTypeEnum(

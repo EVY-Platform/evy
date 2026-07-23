@@ -8,13 +8,21 @@ import SwiftUI
 struct EVYTextExpandRow: View {
 
   private let view: TextExpandRowViewData
+  private let rowId: String
+  private let onExpandTapped: () -> Void
   private let collapsedLineCount = 3
 
   @State private var expanded = false
   @State private var canExpand = false
 
-  init(view: TextExpandRowViewData) {
+  init(
+    view: TextExpandRowViewData,
+    rowId: String,
+    onExpandTapped: @escaping () -> Void
+  ) {
     self.view = view
+    self.rowId = rowId
+    self.onExpandTapped = onExpandTapped
   }
 
   private var isCollapsible: Bool {
@@ -55,7 +63,7 @@ struct EVYTextExpandRow: View {
 
       if canExpand && !isExpanded, let expandLabel = view.expandLabel {
         Button {
-          expanded = true
+          onExpandTapped()
         } label: {
           EVYTextView(expandLabel, style: .action)
         }
@@ -63,6 +71,10 @@ struct EVYTextExpandRow: View {
       }
     }
     .padding(.horizontal, Constants.majorPadding)
+    .onReceive(NotificationCenter.default.publisher(for: .evyExpandTextRow)) { notification in
+      guard let targetRowId = notification.object as? String, targetRowId == rowId else { return }
+      expanded = true
+    }
   }
 }
 
@@ -72,7 +84,7 @@ struct EVYTextExpandRow: View {
       {
         "id": "preview-text-expand-row",
         "type": "TextExpand",
-        "actions": [],
+        "actions": {"tap": [{"condition": "", "true": "{expand_text(preview-text-expand-row)}", "false": ""}]},
         "visible": "true",
         "title": "About this item",
         "text": "This is a longer description that may be truncated when it exceeds the maximum number of lines configured for this row.",

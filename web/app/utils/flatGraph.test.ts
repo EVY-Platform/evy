@@ -446,8 +446,8 @@ describe("updateRowActions", () => {
 		const row = makeRow("r1");
 		const maps = makeMaps([], [], [row]);
 		const actions = [{ condition: "", true: "{close()}", false: "" }];
-		const next = updateRowActions(maps, "r1", actions);
-		expect(next.rowsById.r1?.data.actions).toEqual(actions);
+		const next = updateRowActions(maps, "r1", { tap: actions });
+		expect(next.rowsById.r1?.data.actions).toEqual({ tap: actions });
 	});
 });
 
@@ -585,15 +585,15 @@ describe("pageRootIds", () => {
 
 describe("ensureShowAction", () => {
 	it("adds {show(sheetId)} action when missing", () => {
-		const row = makeRow("r1", { actions: [] });
+		const row = makeRow("r1", { actions: {} });
 		const maps = makeMaps([], [], [row]);
 		const next = ensureShowAction(maps, "r1", "sheet-1");
 		const actions = next.rowsById.r1?.data.actions as {
-			condition: string;
-			true: string;
-			false: string;
-		}[];
-		expect(actions.some((a) => a.true === "{show(sheet-1)}")).toBe(true);
+			tap?: { condition: string; true: string; false: string }[];
+		};
+		expect(actions.tap?.some((a) => a.true === "{show(sheet-1)}")).toBe(
+			true,
+		);
 	});
 
 	it("does not duplicate {show(sheetId)} action", () => {
@@ -602,13 +602,15 @@ describe("ensureShowAction", () => {
 			true: "{show(sheet-1)}",
 			false: "",
 		};
-		const row = makeRow("r1", { actions: [showAction] });
+		const row = makeRow("r1", { actions: { tap: [showAction] } });
 		const maps = makeMaps([], [], [row]);
 		const next = ensureShowAction(maps, "r1", "sheet-1");
-		const actions = next.rowsById.r1?.data.actions as (typeof showAction)[];
-		expect(actions.filter((a) => a.true === "{show(sheet-1)}").length).toBe(
-			1,
-		);
+		const actions = next.rowsById.r1?.data.actions as {
+			tap?: (typeof showAction)[];
+		};
+		expect(
+			actions.tap?.filter((a) => a.true === "{show(sheet-1)}").length,
+		).toBe(1);
 	});
 
 	it("updates unconditional show when sheet is replaced", () => {
@@ -617,11 +619,17 @@ describe("ensureShowAction", () => {
 			true: "{show(old-sheet)}",
 			false: "",
 		};
-		const row = makeRow("r1", { actions: [showAction] });
+		const row = makeRow("r1", { actions: { tap: [showAction] } });
 		const maps = makeMaps([], [], [row]);
 		const next = ensureShowAction(maps, "r1", "new-sheet", "old-sheet");
-		const actions = next.rowsById.r1?.data.actions as (typeof showAction)[];
-		expect(actions.some((a) => a.true === "{show(new-sheet)}")).toBe(true);
-		expect(actions.some((a) => a.true === "{show(old-sheet)}")).toBe(false);
+		const actions = next.rowsById.r1?.data.actions as {
+			tap?: (typeof showAction)[];
+		};
+		expect(actions.tap?.some((a) => a.true === "{show(new-sheet)}")).toBe(
+			true,
+		);
+		expect(actions.tap?.some((a) => a.true === "{show(old-sheet)}")).toBe(
+			false,
+		);
 	});
 });

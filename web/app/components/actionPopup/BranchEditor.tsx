@@ -6,7 +6,9 @@ import type { ServiceResource } from "../../types/resources";
 import {
 	type ActionFunction,
 	parseBranch,
+	ROW_ID_ARG_FUNCTIONS,
 	serializeBranch,
+	ZERO_ARG_FUNCTIONS,
 } from "../../utils/actionBranch";
 import {
 	getAllRowOptions,
@@ -62,16 +64,16 @@ function buildArgDropdowns(
 		return [];
 	}
 
-	if (functionName === "show") {
+	if (ROW_ID_ARG_FUNCTIONS.has(functionName)) {
 		return [
 			{
-				slotId: "show-row",
+				slotId: `${functionName}-row`,
 				options: getAllRowOptions(flowsById, pagesById, rowsById),
 			},
 		];
 	}
 
-	if (functionName === "close") {
+	if (ZERO_ARG_FUNCTIONS.has(functionName)) {
 		return [];
 	}
 
@@ -148,6 +150,10 @@ export function BranchEditor({
 			}
 			if (functionName === "show" && defaultSheetRowId) {
 				onChange(serializeBranch("show", [defaultSheetRowId]));
+				return;
+			}
+			if (functionName === "select") {
+				onChange(serializeBranch("select", ["$datum"]));
 				return;
 			}
 			onChange(serializeBranch(functionName as ActionFunction, []));
@@ -231,6 +237,19 @@ export function BranchEditor({
 					}
 					placeholder="Optional inline data, e.g. {fk: $datum.id, data: {type: pickup}}"
 					multiline
+				/>
+			)}
+
+			{selectedFunction === "select" && (
+				<BuilderAssist
+					ariaLabel={`${branchId}-select-value`}
+					value={args[0] ?? "$datum"}
+					onChange={(v) => handleArgChange(0, v)}
+					candidates={idCandidates}
+					getAttributeCandidatesForQualifier={
+						getAttributeCandidatesForQualifier
+					}
+					placeholder="Value, e.g. $datum"
 				/>
 			)}
 

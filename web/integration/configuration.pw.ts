@@ -1,10 +1,17 @@
 import { expect, test } from "@playwright/test";
+import type { UI_RowActions } from "evy-types";
 import {
 	MARKETPLACE_RESOURCE,
 	MARKETPLACE_SERVICE,
 } from "evy-types/marketplaceResources";
-import { initFullFlows, openAppWithTestFlows } from "./flowFixtures";
-import { getConfigPanel, popoverSelect } from "./utils";
+import { initFullFlows, openAppWithTestFlows, tapAction } from "./flowFixtures";
+import {
+	getConfigPanel,
+	getPageContent,
+	getSidebarRow,
+	popoverSelect,
+	setupTwoEmptyTestPages,
+} from "./utils";
 
 const TEST_SERVICE_RESOURCES = [
 	{
@@ -31,10 +38,8 @@ test.describe("Row configuration", () => {
 								type: "Input",
 								title: "Input Row",
 								placeholder: "First placeholder",
-								actions: [],
 							},
 						],
-						actions: [],
 					},
 				],
 			},
@@ -82,7 +87,6 @@ test.describe("Row configuration", () => {
 						type: "Text",
 						title: "Test Text Row",
 						subtitle: "Initial subtitle content",
-						actions: [],
 					},
 				],
 			},
@@ -120,7 +124,6 @@ test.describe("Row configuration", () => {
 						source: "{initial}",
 						title: "Binding row",
 						placeholder: "Enter value",
-						actions: [],
 					},
 				],
 			},
@@ -151,7 +154,6 @@ test.describe("Row configuration", () => {
 						title: "Tags",
 						placeholder: "Search for tags",
 						format: "{$datum.value}",
-						actions: [],
 					},
 				],
 			},
@@ -179,9 +181,7 @@ test.describe("Row configuration", () => {
 						type: "Button",
 						title: "",
 						label: "Test Button",
-						actions: [
-							{ condition: "", false: "", true: "{close()}" },
-						],
+						actions: tapAction("{close()}"),
 					},
 				],
 			},
@@ -194,7 +194,7 @@ test.describe("Row configuration", () => {
 
 		const configPanel = getConfigPanel(page);
 
-		await expect(configPanel.getByText("Actions")).toBeVisible();
+		await expect(configPanel.getByText("Tap")).toBeVisible();
 		await expect(configPanel.getByText("If true")).toBeVisible();
 		await expect(configPanel.getByText("Close")).toBeVisible();
 
@@ -231,9 +231,7 @@ test.describe("Row configuration", () => {
 						type: "Button",
 						title: "",
 						label: "Nav Button",
-						actions: [
-							{ condition: "", false: "", true: "{close()}" },
-						],
+						actions: tapAction("{close()}"),
 					},
 				],
 			},
@@ -286,7 +284,6 @@ test.describe("Row configuration", () => {
 									value: `{${MARKETPLACE_RESOURCE.ITEMS}.name}`,
 									placeholder: "Enter name",
 									destination: `{${MARKETPLACE_RESOURCE.ITEMS}.name}`,
-									actions: [],
 								},
 								{
 									id: "submit_button",
@@ -294,13 +291,15 @@ test.describe("Row configuration", () => {
 									source: "",
 									title: "",
 									label: "Submit",
-									actions: [
-										{
-											condition: "",
-											false: "",
-											true: "{close()}",
-										},
-									],
+									actions: {
+										tap: [
+											{
+												condition: "",
+												false: "",
+												true: "{close()}",
+											},
+										],
+									},
 								},
 							],
 						},
@@ -376,7 +375,6 @@ test.describe("Row configuration", () => {
 						type: "Text",
 						title: "No Action Row",
 						subtitle: "Some subtitle",
-						actions: [],
 					},
 				],
 			},
@@ -390,9 +388,9 @@ test.describe("Row configuration", () => {
 		const configPanel = getConfigPanel(page);
 
 		await expect(
-			configPanel.getByText("Actions", { exact: true }),
+			configPanel.getByText("Tap", { exact: true }),
 		).toBeVisible();
-		await expect(configPanel.getByText("Row has no actions")).toBeVisible();
+		await expect(configPanel.getByText("No tap actions")).toBeVisible();
 	});
 
 	test("should use number operand in condition", async ({ page }) => {
@@ -407,15 +405,12 @@ test.describe("Row configuration", () => {
 						value: "{price}",
 						placeholder: "",
 						destination: "{price}",
-						actions: [],
 					},
 					{
 						type: "Button",
 						title: "",
 						label: "Check",
-						actions: [
-							{ condition: "", false: "", true: "{close()}" },
-						],
+						actions: tapAction("{close()}"),
 					},
 				],
 			},
@@ -461,15 +456,12 @@ test.describe("Row configuration", () => {
 						value: "{items}",
 						placeholder: "",
 						destination: "{items}",
-						actions: [],
 					},
 					{
 						type: "Button",
 						title: "",
 						label: "Validate",
-						actions: [
-							{ condition: "", false: "", true: "{close()}" },
-						],
+						actions: tapAction("{close()}"),
 					},
 				],
 			},
@@ -517,7 +509,6 @@ test.describe("Row configuration", () => {
 						value: "{name}",
 						placeholder: "",
 						destination: "{name}",
-						actions: [],
 					},
 					{
 						type: "Input",
@@ -525,15 +516,12 @@ test.describe("Row configuration", () => {
 						value: "{email}",
 						placeholder: "",
 						destination: "{email}",
-						actions: [],
 					},
 					{
 						type: "Button",
 						title: "",
 						label: "Send",
-						actions: [
-							{ condition: "", false: "", true: "{close()}" },
-						],
+						actions: tapAction("{close()}"),
 					},
 				],
 			},
@@ -584,9 +572,7 @@ test.describe("Row configuration", () => {
 						type: "Button",
 						title: "",
 						label: "Cancel Test",
-						actions: [
-							{ condition: "", false: "", true: "{close()}" },
-						],
+						actions: tapAction("{close()}"),
 					},
 				],
 			},
@@ -628,14 +614,16 @@ test.describe("Row configuration", () => {
 						type: "Button",
 						title: "",
 						label: "Multi Action",
-						actions: [
-							{ condition: "", false: "", true: "{close()}" },
-							{
-								condition: "",
-								false: "",
-								true: `{create(${MARKETPLACE_SERVICE},${MARKETPLACE_RESOURCE.ITEMS})}`,
-							},
-						],
+						actions: {
+							tap: [
+								{ condition: "", false: "", true: "{close()}" },
+								{
+									condition: "",
+									false: "",
+									true: `{create(${MARKETPLACE_SERVICE},${MARKETPLACE_RESOURCE.ITEMS})}`,
+								},
+							],
+						},
 					},
 				],
 			},
@@ -677,7 +665,6 @@ test.describe("Row configuration", () => {
 								value: "{name}",
 								placeholder: "",
 								destination: "{name}",
-								actions: [],
 							},
 							{
 								id: "row_btn",
@@ -685,13 +672,15 @@ test.describe("Row configuration", () => {
 								source: "",
 								title: "",
 								label: "Prefilled",
-								actions: [
-									{
-										condition: "{name == true}",
-										true: "{navigate(flow_x,page_x)}",
-										false: "{close()}",
-									},
-								],
+								actions: {
+									tap: [
+										{
+											condition: "{name == true}",
+											true: "{navigate(flow_x,page_x)}",
+											false: "{close()}",
+										},
+									],
+								},
 							},
 						],
 					},
@@ -762,13 +751,15 @@ test.describe("Row configuration", () => {
 									source: "",
 									title: "",
 									label: "OR Test",
-									actions: [
-										{
-											condition: `{count(${MARKETPLACE_RESOURCE.ITEMS}.pickup_timeslots) > 0 || count(${MARKETPLACE_RESOURCE.ITEMS}.delivery_timeslots) > 0}`,
-											false: "",
-											true: "{close()}",
-										},
-									],
+									actions: {
+										tap: [
+											{
+												condition: `{count(${MARKETPLACE_RESOURCE.ITEMS}.pickup_timeslots) > 0 || count(${MARKETPLACE_RESOURCE.ITEMS}.delivery_timeslots) > 0}`,
+												false: "",
+												true: "{close()}",
+											},
+										],
+									},
 								},
 							],
 						},
@@ -812,13 +803,15 @@ test.describe("Row configuration", () => {
 									source: "",
 									title: "",
 									label: "Nested Test",
-									actions: [
-										{
-											condition: `{count(${MARKETPLACE_RESOURCE.ITEMS}.pickup_timeslots) > 0 && (count(${MARKETPLACE_RESOURCE.ITEMS}.delivery_timeslots) > 0 || count(${MARKETPLACE_RESOURCE.ITEMS}.shipping_destination_areas) > 0)}`,
-											false: "",
-											true: "{close()}",
-										},
-									],
+									actions: {
+										tap: [
+											{
+												condition: `{count(${MARKETPLACE_RESOURCE.ITEMS}.pickup_timeslots) > 0 && (count(${MARKETPLACE_RESOURCE.ITEMS}.delivery_timeslots) > 0 || count(${MARKETPLACE_RESOURCE.ITEMS}.shipping_destination_areas) > 0)}`,
+												false: "",
+												true: "{close()}",
+											},
+										],
+									},
 								},
 							],
 						},
@@ -858,7 +851,6 @@ test.describe("Row configuration", () => {
 						value: "{name}",
 						placeholder: "",
 						destination: "{name}",
-						actions: [],
 					},
 					{
 						type: "Input",
@@ -866,19 +858,21 @@ test.describe("Row configuration", () => {
 						value: "{email}",
 						placeholder: "",
 						destination: "{email}",
-						actions: [],
 					},
 					{
 						type: "Button",
 						title: "",
 						label: "Toggle Test",
-						actions: [
-							{
-								condition: "{name == true || email == true}",
-								false: "",
-								true: "{close()}",
-							},
-						],
+						actions: {
+							tap: [
+								{
+									condition:
+										"{name == true || email == true}",
+									false: "",
+									true: "{close()}",
+								},
+							],
+						},
 					},
 				],
 			},
@@ -930,7 +924,6 @@ test.describe("Row configuration", () => {
 						value: "{name}",
 						placeholder: "",
 						destination: "{name}",
-						actions: [],
 					},
 					{
 						type: "Input",
@@ -938,19 +931,21 @@ test.describe("Row configuration", () => {
 						value: "{email}",
 						placeholder: "",
 						destination: "{email}",
-						actions: [],
 					},
 					{
 						type: "Button",
 						title: "",
 						label: "Nest Test",
-						actions: [
-							{
-								condition: "{name == true || email == true}",
-								false: "",
-								true: "{close()}",
-							},
-						],
+						actions: {
+							tap: [
+								{
+									condition:
+										"{name == true || email == true}",
+									false: "",
+									true: "{close()}",
+								},
+							],
+						},
 					},
 				],
 			},
@@ -1001,7 +996,7 @@ test.describe("Row configuration", () => {
 			placeholder?: string;
 			value?: string;
 			children?: DeepNestRow[];
-			actions: [];
+			actions: UI_RowActions;
 		};
 
 		function deepNest(level: number): DeepNestRow {
@@ -1011,14 +1006,12 @@ test.describe("Row configuration", () => {
 					title: "Deep leaf",
 					placeholder: "",
 					value: "",
-					actions: [],
 				};
 			}
 			return {
 				type: "HorizontalContainer",
 				title: `Nest level ${level}`,
 				children: [deepNest(level - 1)],
-				actions: [],
 			};
 		}
 
@@ -1079,9 +1072,7 @@ test.describe("Row configuration", () => {
 						type: "Button",
 						title: "",
 						label: "Clear Branch",
-						actions: [
-							{ condition: "", false: "", true: "{close()}" },
-						],
+						actions: tapAction("{close()}"),
 					},
 				],
 			},
@@ -1144,9 +1135,7 @@ test.describe("Row configuration", () => {
 						type: "Button",
 						title: "",
 						label: "Cancel Clear",
-						actions: [
-							{ condition: "", false: "", true: "{close()}" },
-						],
+						actions: tapAction("{close()}"),
 					},
 				],
 			},
@@ -1208,7 +1197,6 @@ test.describe("Row configuration", () => {
 						title: "Initial value row",
 						placeholder: "Enter a title",
 						initial: "Default title",
-						actions: [],
 					},
 				],
 			},
@@ -1244,9 +1232,7 @@ test.describe("Row configuration", () => {
 							type: "Text",
 							title: "Sheet Content",
 							text: "Inside sheet",
-							actions: [],
 						},
-						actions: [],
 					},
 				],
 			},
@@ -1282,9 +1268,7 @@ test.describe("Row configuration", () => {
 							type: "Text",
 							title: "Local Sheet",
 							text: "Local",
-							actions: [],
 						},
-						actions: [],
 					},
 				],
 			},
@@ -1296,7 +1280,6 @@ test.describe("Row configuration", () => {
 						type: "Text",
 						title: "Remote Target Row",
 						text: "Remote",
-						actions: [],
 					},
 				],
 			},
@@ -1320,5 +1303,178 @@ test.describe("Row configuration", () => {
 		await popup.getByRole("button", { name: "Save" }).click();
 		await expect(configPanel.getByText(/show\(/)).toBeVisible();
 		await expect(configPanel.getByText(/Remote Target Row/)).toBeVisible();
+	});
+
+	test("shows Tap only for Button and Tap plus Delete for SelectPhoto", async ({
+		page,
+	}) => {
+		await openAppWithTestFlows(page, [
+			{
+				id: "step_1",
+				title: "Test Page",
+				rows: [
+					{
+						type: "Button",
+						title: "",
+						label: "Trigger Button",
+						actions: tapAction("{close()}"),
+					},
+					{
+						type: "SelectPhoto",
+						title: "Photos",
+						subtitle: "0/10",
+						icon: "::image-plus::",
+						content: "Add",
+						actions: {
+							tap: [
+								{
+									condition: "",
+									false: "",
+									true: "{select_photo()}",
+								},
+							],
+							delete: [
+								{
+									condition: "",
+									false: "",
+									true: "{delete_photo()}",
+								},
+							],
+						},
+					},
+				],
+			},
+		]);
+
+		const configPanel = getConfigPanel(page);
+		await page.getByText("Trigger Button", { exact: true }).click();
+		await expect(
+			configPanel.getByText("Tap", { exact: true }),
+		).toBeVisible();
+		await expect(
+			configPanel.getByText("Delete", { exact: true }),
+		).not.toBeVisible();
+
+		await page.getByText("Photos", { exact: true }).click();
+		await expect(
+			configPanel.getByText("Tap", { exact: true }),
+		).toBeVisible();
+		await expect(
+			configPanel.getByText("Delete", { exact: true }),
+		).toBeVisible();
+	});
+
+	test("shows required warning after removing the last tap action", async ({
+		page,
+	}) => {
+		await openAppWithTestFlows(page, [
+			{
+				id: "step_1",
+				title: "Test Page",
+				rows: [
+					{
+						type: "Button",
+						title: "",
+						label: "Warn Button",
+						actions: tapAction("{close()}"),
+					},
+				],
+			},
+		]);
+		await page.getByText("Warn Button", { exact: true }).click();
+		const configPanel = getConfigPanel(page);
+		await expect(configPanel.getByText("(required)")).toBeVisible();
+		await configPanel
+			.getByRole("button", { name: "Remove action 1" })
+			.click();
+		await expect(
+			configPanel.getByText("This trigger needs at least one action."),
+		).toBeVisible();
+		await expect(configPanel.getByText("No tap actions")).toBeVisible();
+	});
+
+	test("injects show-self tap default when dropping a Dropdown row", async ({
+		page,
+	}) => {
+		await setupTwoEmptyTestPages(page);
+		const sidebarRow = await getSidebarRow(page, "Dropdown row title");
+		const pageContent = getPageContent(page);
+		await sidebarRow.dragTo(pageContent);
+
+		const configPanel = getConfigPanel(page);
+		await expect(
+			configPanel.getByLabel("title", { exact: true }),
+		).toHaveText("Dropdown row title");
+		await expect(
+			configPanel.getByText("Tap", { exact: true }),
+		).toBeVisible();
+		await expect(configPanel.getByText("No tap actions")).not.toBeVisible();
+		await expect(
+			configPanel.getByText(/show\(.*Dropdown row title/),
+		).toBeVisible();
+	});
+
+	test("shows Tap, Tap row, and Tap column for Calendar with required badges", async ({
+		page,
+	}) => {
+		await setupTwoEmptyTestPages(page);
+		const sidebarRow = await getSidebarRow(page, "Calendar row title");
+		const pageContent = getPageContent(page);
+		await sidebarRow.dragTo(pageContent);
+
+		const configPanel = getConfigPanel(page);
+		await expect(
+			configPanel.getByLabel("title", { exact: true }),
+		).toHaveText("Calendar row title");
+		await expect(
+			configPanel.getByText("Tap", { exact: true }),
+		).toBeVisible();
+		await expect(
+			configPanel.getByText("Tap row", { exact: true }),
+		).toBeVisible();
+		await expect(
+			configPanel.getByText("Tap column", { exact: true }),
+		).toBeVisible();
+		await expect(configPanel.getByText("(required)")).toHaveCount(3);
+		await expect(configPanel.getByText(/select\(\$datum\)/)).toHaveCount(3);
+	});
+
+	test("shows Swipe left for Text without required badge, not for Button", async ({
+		page,
+	}) => {
+		await openAppWithTestFlows(page, [
+			{
+				id: "step_1",
+				title: "Test Page",
+				rows: [
+					{
+						type: "Text",
+						title: "Slide Text",
+						subtitle: "",
+					},
+					{
+						type: "Button",
+						title: "",
+						label: "Slide Button",
+						actions: tapAction("{close()}"),
+					},
+				],
+			},
+		]);
+
+		const configPanel = getConfigPanel(page);
+		await page.getByText("Slide Text", { exact: true }).click();
+		await expect(
+			configPanel.getByText("Swipe left", { exact: true }),
+		).toBeVisible();
+		await expect(configPanel.getByText("(required)")).toHaveCount(0);
+		await expect(
+			configPanel.getByText("No swipe left actions"),
+		).toBeVisible();
+
+		await page.getByText("Slide Button", { exact: true }).click();
+		await expect(
+			configPanel.getByText("Swipe left", { exact: true }),
+		).not.toBeVisible();
 	});
 });

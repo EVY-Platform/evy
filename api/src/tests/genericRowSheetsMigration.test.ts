@@ -1,60 +1,11 @@
-import {
-	afterAll,
-	beforeAll,
-	beforeEach,
-	describe,
-	expect,
-	it,
-} from "bun:test";
-import { readFileSync } from "node:fs";
-import { join } from "node:path";
+import { describe, expect, it } from "bun:test";
 import { eq } from "drizzle-orm";
-import { migrate } from "drizzle-orm/pglite/migrator";
 import * as schema from "evy-types/db/schema.generated";
-import { clearAllTestTables, createPgliteTestDatabase } from "./wsTestHelpers";
+import { insertRow, nowIso, setupMigrationTest } from "./wsTestHelpers";
 
-const { pgliteClient, testDb } = createPgliteTestDatabase();
-
-const MIGRATION_SQL = readFileSync(
-	join(import.meta.dir, "../../drizzle/0008_generic_row_sheets.sql"),
-	"utf8",
+const { testDb, runMigration } = setupMigrationTest(
+	"0008_generic_row_sheets.sql",
 );
-
-function nowIso(): string {
-	return new Date().toISOString();
-}
-
-async function insertRow(row: {
-	id: string;
-	name: string;
-	type: string;
-	visible?: string;
-	data: Record<string, unknown>;
-}): Promise<void> {
-	const iso = nowIso();
-	await testDb.insert(schema.row).values({
-		id: row.id,
-		name: row.name,
-		type: row.type,
-		visible: row.visible ?? "true",
-		data: row.data,
-		createdAt: iso,
-		updatedAt: iso,
-	});
-}
-
-beforeAll(async () => {
-	await migrate(testDb, { migrationsFolder: "./drizzle" });
-	await clearAllTestTables(testDb);
-});
-
-afterAll(async () => {
-	await pgliteClient.close();
-});
-
-beforeEach(async () => {
-	await clearAllTestTables(testDb);
-});
 
 describe("0008_generic_row_sheets", () => {
 	it("migrates sheet owners, rewrites show(), removes container templates, and keeps shared templates", async () => {
@@ -68,13 +19,13 @@ describe("0008_generic_row_sheets", () => {
 		const orphanContainerId = "88888888-8888-4888-8888-888888888888";
 		const pageId = "99999999-9999-4999-8999-999999999999";
 
-		await insertRow({
+		await insertRow(testDb, {
 			id: buttonSheetId,
 			name: "Confirm sheet",
 			type: "VerticalContainer",
 			data: { title: "Confirm", children_row_ids: [] },
 		});
-		await insertRow({
+		await insertRow(testDb, {
 			id: buttonId,
 			name: "Submit",
 			type: "Button",
@@ -87,13 +38,13 @@ describe("0008_generic_row_sheets", () => {
 				],
 			},
 		});
-		await insertRow({
+		await insertRow(testDb, {
 			id: searchChildId,
 			name: "Search result",
 			type: "Text",
 			data: { title: "{$datum.title}", text: "" },
 		});
-		await insertRow({
+		await insertRow(testDb, {
 			id: searchId,
 			name: "Place search",
 			type: "Search",
@@ -103,13 +54,13 @@ describe("0008_generic_row_sheets", () => {
 				child_row_id: searchChildId,
 			},
 		});
-		await insertRow({
+		await insertRow(testDb, {
 			id: sharedTemplateId,
 			name: "Shared template",
 			type: "Text",
 			data: { title: "Shared", text: "keep me" },
 		});
-		await insertRow({
+		await insertRow(testDb, {
 			id: containerId,
 			name: "Photos",
 			type: "VerticalContainer",
@@ -119,13 +70,13 @@ describe("0008_generic_row_sheets", () => {
 				children_row_ids: [searchId, sharedTemplateId],
 			},
 		});
-		await insertRow({
+		await insertRow(testDb, {
 			id: orphanTemplateId,
 			name: "Orphan template",
 			type: "Text",
 			data: { title: "Orphan", text: "delete me" },
 		});
-		await insertRow({
+		await insertRow(testDb, {
 			id: orphanContainerId,
 			name: "Orphan container",
 			type: "HorizontalContainer",
@@ -146,7 +97,7 @@ describe("0008_generic_row_sheets", () => {
 			updatedAt: iso,
 		});
 
-		await pgliteClient.exec(MIGRATION_SQL);
+		await runMigration();
 
 		const button = await testDb.query.row.findFirst({
 			where: eq(schema.row.id, buttonId),
@@ -199,7 +150,7 @@ describe("0008_generic_row_sheets", () => {
 
 	it("fails when unsupported {show()} branches remain", async () => {
 		const strayId = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
-		await insertRow({
+		await insertRow(testDb, {
 			id: strayId,
 			name: "Stray",
 			type: "Input",
@@ -209,7 +160,7 @@ describe("0008_generic_row_sheets", () => {
 			},
 		});
 
-		await expect(pgliteClient.exec(MIGRATION_SQL)).rejects.toThrow(
+		await expect(runMigration()).rejects.toThrow(
 			/unsupported \{show\(\)\}/,
 		);
 	});

@@ -64,6 +64,27 @@
 			"when": 1784505600000,
 			"tag": "0008_generic_row_sheets",
 			"breakpoints": true
+		},
+		{
+			"idx": 9,
+			"version": "7",
+			"when": 1784592000000,
+			"tag": "0009_actions_by_trigger",
+			"breakpoints": true
+		},
+		{
+			"idx": 10,
+			"version": "7",
+			"when": 1784678400000,
+			"tag": "0010_calendar_axis_triggers",
+			"breakpoints": true
+		},
+		{
+			"idx": 11,
+			"version": "7",
+			"when": 1784764800000,
+			"tag": "0011_swipe_left_rename",
+			"breakpoints": true
 		}
 	]
 }

@@ -10,7 +10,6 @@ private let carouselElementSize: CGFloat = 150.0
 
 private enum EVYPhotoTileStatus: Equatable {
   case uploading
-  case uploaded
   case ready
   case deleting
 }
@@ -27,7 +26,7 @@ private struct EVYPhotoTile: Identifiable, Equatable {
   var status: EVYPhotoTileStatus
 
   static func == (lhs: EVYPhotoTile, rhs: EVYPhotoTile) -> Bool {
-    lhs.id == rhs.id && lhs.status == rhs.status
+    lhs.id == rhs.id && lhs.imageId == rhs.imageId && lhs.status == rhs.status
   }
 }
 
@@ -50,27 +49,17 @@ private struct EVYPhotoTileView: View {
     .overlay(alignment: .bottomTrailing) {
       Group {
         switch tile.status {
-        case .uploading:
+        case .uploading, .deleting:
           EVYLoadingIndicator(tint: .white)
-        case .uploaded:
-          Image(systemName: "checkmark.square.fill")
-            .foregroundStyle(.white)
-        case .ready, .deleting:
-          EmptyView()
+        case .ready:
+          Button(action: onRemove) {
+            Image(systemName: "xmark.square.fill")
+              .foregroundStyle(.white)
+          }
+          .buttonStyle(.plain)
         }
       }
       .padding(Constants.minorPadding)
-    }
-    .overlay(alignment: .topLeading) {
-      if tile.status != .uploading {
-        Button(action: onRemove) {
-          Image(systemName: "xmark.square.fill")
-            .foregroundStyle(.white)
-        }
-        .buttonStyle(.plain)
-        .disabled(tile.status == .deleting)
-        .padding(Constants.minorPadding)
-      }
     }
   }
 }
@@ -81,6 +70,8 @@ struct EVYSelectPhoto: View {
   let icon: String?
   let content: String?
   let destination: String
+  let onAddPhotoTapped: (@escaping EVYRowOperationHandler) -> Void
+  let onDeletePhotoTapped: (@escaping EVYRowOperationHandler) -> Void
 
   @State private var photoTiles: [EVYPhotoTile] = []
   @State private var lastCommittedIds: [String] = []
@@ -91,13 +82,17 @@ struct EVYSelectPhoto: View {
     icon: String?,
     content: String?,
     data: String?,
-    destination: String
+    destination: String,
+    onAddPhotoTapped: @escaping (@escaping EVYRowOperationHandler) -> Void,
+    onDeletePhotoTapped: @escaping (@escaping EVYRowOperationHandler) -> Void
   ) {
     self.title = title
     self.icon = icon
     self.content = content
     self.subtitle = subtitle
     self.destination = destination
+    self.onAddPhotoTapped = onAddPhotoTapped
+    self.onDeletePhotoTapped = onDeletePhotoTapped
 
     if let data,
       let props = try? EVY.getValueFromText(data),
@@ -108,6 +103,7 @@ struct EVYSelectPhoto: View {
         EVYPhotoTile(id: UUID(), localImage: nil, imageId: id, status: .ready)
       }
       _photoTiles = State(initialValue: tiles)
+      _lastCommittedIds = State(initialValue: ids)
     }
   }
 
@@ -122,6 +118,7 @@ struct EVYSelectPhoto: View {
           fullScreen: true,
           icon: icon,
           content: content,
+          onAddPhotoTapped: onAddPhotoTapped,
           photoTiles: $photoTiles)
       } else {
         ScrollView(.horizontal, showsIndicators: false) {
@@ -129,7 +126,7 @@ struct EVYSelectPhoto: View {
             ForEach(photoTiles) { tile in
               EVYPhotoTileView(
                 tile: tile,
-                onRemove: { removePhoto(tileId: tile.id) }
+                onRemove: { deletePhotoTapped(tileId: tile.id) }
               )
               .padding(.horizontal, 2)
             }
@@ -137,6 +134,7 @@ struct EVYSelectPhoto: View {
               fullScreen: false,
               icon: icon,
               content: content,
+              onAddPhotoTapped: onAddPhotoTapped,
               photoTiles: $photoTiles)
           }
         }
@@ -159,6 +157,13 @@ struct EVYSelectPhoto: View {
         #endif
       }
     }
+  }
+
+  private func deletePhotoTapped(tileId: UUID) {
+    onDeletePhotoTapped(
+      EVYRowActionOperation.handler(for: .deletePhoto) {
+        removePhoto(tileId: tileId)
+      })
   }
 
   @MainActor
@@ -193,6 +198,7 @@ private struct EVYSelectPhotoButton: View {
   let fullScreen: Bool
   let icon: String?
   let content: String?
+  let onAddPhotoTapped: (@escaping EVYRowOperationHandler) -> Void
 
   @State private var selectedItem: PhotosPickerItem?
   @Binding var photoTiles: [EVYPhotoTile]
@@ -200,6 +206,7 @@ private struct EVYSelectPhotoButton: View {
   var body: some View {
     PhotosPicker(
       selection: $selectedItem,
+      matching: .images,
       label: {
         let stack = VStack {
           if let icon { EVYTextView(icon) }
@@ -223,9 +230,20 @@ private struct EVYSelectPhotoButton: View {
     )
     .buttonStyle(.plain)
     .onChange(of: selectedItem) {
-      Task {
-        await uploadSelectedItem()
-      }
+      guard selectedItem != nil else { return }
+      startUploadThroughActions()
+    }
+  }
+
+  private func startUploadThroughActions() {
+    var didHandleSelectPhoto = false
+    onAddPhotoTapped(
+      EVYRowActionOperation.handler(for: .selectPhoto) {
+        didHandleSelectPhoto = true
+        Task { await uploadSelectedItem() }
+      })
+    if !didHandleSelectPhoto {
+      selectedItem = nil
     }
   }
 
@@ -271,17 +289,11 @@ private struct EVYSelectPhotoButton: View {
 
       if let index = photoTiles.firstIndex(where: { $0.id == tileId }) {
         photoTiles[index].imageId = imageId
-        photoTiles[index].status = .uploaded
-      }
-
-      try await Task.sleep(for: .seconds(1))
-
-      if let index = photoTiles.firstIndex(where: { $0.id == tileId }),
-        photoTiles[index].status == .uploaded
-      {
         photoTiles[index].status = .ready
       }
 
+      selectedItem = nil
+    } catch is CancellationError {
       selectedItem = nil
     } catch {
       NotificationCenter.default.post(
@@ -310,6 +322,8 @@ private struct EVYSelectPhotoPreview: View {
       icon: "::image-plus::",
       content: "A great subtitle",
       data: "{photo_ids}",
-      destination: "{photo_ids}")
+      destination: "{photo_ids}",
+      onAddPhotoTapped: { handler in try? handler(.selectPhoto) },
+      onDeletePhotoTapped: { handler in try? handler(.deletePhoto) })
   }
 }

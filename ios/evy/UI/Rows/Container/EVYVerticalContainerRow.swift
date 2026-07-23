@@ -37,13 +37,13 @@ struct EVYVerticalContainerRow: View {
       {
         "id": "preview-vertical-row",
         "type": "VerticalContainer",
-        "actions": [],
+        "actions": {},
         "title": "Vertical Container Preview",
         "children": [
           {
             "id": "vertical-extra-child",
             "type": "Text",
-            "actions": [],
+            "actions": {},
             "title": "Static row",
             "subtitle": "Static child content",
             "icon": ""

@@ -263,24 +263,43 @@ private struct EVYResolvedRow: View {
     return EVYState(watches: watchTargets, setter: evaluateVisibility)
   }
 
+  // Keep in sync with `rowView(for:)` cases that wire their own tap callbacks.
+  // Omitting a type here causes the generic whole-row tap to double-fire with the row's tap.
+  private static let selfHandlingRowTypes: Set<EVYRowType> = [
+    .button,
+    .timeslotPicker,
+    .calendar,
+    .selectPhoto,
+    .textSelect,
+    .textExpand,
+    .photoGallery,
+    .tabContainer,
+    .inlinePicker,
+  ]
+
   private var shouldUseGenericActionTap: Bool {
     guard let contentRow else { return false }
-    return !contentRow.actions.isEmpty
-      && contentRow.type != .button
-      && contentRow.type != .timeslotPicker
+    return !contentRow.actions.tap.isEmpty
+      && !Self.selfHandlingRowTypes.contains(contentRow.type)
   }
 
-  private func runActions(contentRow: UI_Row, prepare: (() -> Void)? = nil) {
+  private func runActions(
+    trigger: EVYRowActionTrigger = .tap,
+    contentRow: UI_Row,
+    datum: EVYJson? = nil,
+    rowOperation: EVYRowOperationHandler? = nil
+  ) {
+    let actions = trigger.actions(in: contentRow.actions)
     EVYActionRunner.run(
-      actions: contentRow.actions,
-      datum: datum,
+      actions: actions,
+      datum: datum ?? self.datum,
       show: { rowId in
         guard EVYRowStore.row(id: rowId) != nil else {
           throw EVYError.invalidData(context: "show could not resolve row id \(rowId)")
         }
         presentedSheetRef = .id(rowId)
       },
-      prepare: prepare,
+      rowOperation: rowOperation,
       action: { operation in
         if case .close = operation, let sheetDismiss {
           sheetDismiss()
@@ -293,6 +312,23 @@ private struct EVYResolvedRow: View {
 
   @ViewBuilder
   private func renderedRow(for payload: UI_RowPayload, contentRow: UI_Row) -> some View {
+    if !contentRow.actions.swipeLeft.isEmpty {
+      EVYSwipeableRow(
+        swipeIdentity: EVYSwipeRowIdentity.make(rowId: contentRow.id, datum: datum),
+        swipeLabel: contentRow.swipeLabel,
+        onExecute: {
+          runActions(trigger: .swipeLeft, contentRow: contentRow)
+        }
+      ) {
+        tappedOrPlainRow(for: payload, contentRow: contentRow)
+      }
+    } else {
+      tappedOrPlainRow(for: payload, contentRow: contentRow)
+    }
+  }
+
+  @ViewBuilder
+  private func tappedOrPlainRow(for payload: UI_RowPayload, contentRow: UI_Row) -> some View {
     if shouldUseGenericActionTap {
       rowView(for: payload, contentRow: contentRow)
         .contentShape(Rectangle())
@@ -308,7 +344,32 @@ private struct EVYResolvedRow: View {
     case .button(let view, _):
       EVYButtonRow(view: view, action: { runActions(contentRow: contentRow) })
     case .calendar(let view, _):
-      EVYCalendarRow(view: view)
+      EVYCalendarRow(
+        view: view,
+        onSlotTapped: { tappedSlot, rowOperation in
+          runActions(
+            contentRow: contentRow,
+            datum: .string(tappedSlot),
+            rowOperation: rowOperation
+          )
+        },
+        onRowTapped: { dateTimeISOs, rowOperation in
+          runActions(
+            trigger: .tapRow,
+            contentRow: contentRow,
+            datum: .array(dateTimeISOs.map { .string($0) }),
+            rowOperation: rowOperation
+          )
+        },
+        onColumnTapped: { dateTimeISOs, rowOperation in
+          runActions(
+            trigger: .tapColumn,
+            contentRow: contentRow,
+            datum: .array(dateTimeISOs.map { .string($0) }),
+            rowOperation: rowOperation
+          )
+        }
+      )
     case .horizontalContainer(let view, _):
       EVYHorizontalContainerRow(view: view, childRefs: childRefs)
     case .dropdown(let view, _):
@@ -316,11 +377,13 @@ private struct EVYResolvedRow: View {
     case .heading(let view, _):
       EVYHeadingRow(view: view)
     case .inlinePicker(let view, _):
-      EVYInlinePickerRow(view: view)
+      EVYInlinePickerRow(view: view) { option, rowOperation in
+        runActions(contentRow: contentRow, datum: option, rowOperation: rowOperation)
+      }
     case .inputList(let view, _):
       EVYInputListRow(view: view)
     case .input(let view, _):
-      EVYInputRow(view: view, isInteractive: contentRow.actions.isEmpty)
+      EVYInputRow(view: view, isInteractive: contentRow.actions.tap.isEmpty)
     case .verticalContainer(let view, _):
       EVYVerticalContainerRow(view: view, childRefs: childRefs)
     case .listItem(let view, _):
@@ -330,28 +393,50 @@ private struct EVYResolvedRow: View {
     case .search(let view, _):
       EVYSearchRow(view: view, childRef: childRef)
     case .photoGallery(let view, _):
-      EVYPhotoGalleryRow(view: view)
+      EVYPhotoGalleryRow(view: view) { imageId, rowOperation in
+        runActions(
+          contentRow: contentRow,
+          datum: .string(imageId),
+          rowOperation: rowOperation
+        )
+      }
     case .selectPhoto(let view, _):
-      EVYSelectPhotoRow(view: view)
+      EVYSelectPhotoRow(view: view) { rowOperation in
+        runActions(contentRow: contentRow, rowOperation: rowOperation)
+      } onDeletePhotoTapped: { rowOperation in
+        runActions(trigger: .delete, contentRow: contentRow, rowOperation: rowOperation)
+      }
     case .tabContainer(let view, _):
-      EVYTabContainerRow(view: view, childRefs: childRefs)
+      EVYTabContainerRow(view: view, childRefs: childRefs) { segmentIndex, rowOperation in
+        runActions(
+          contentRow: contentRow,
+          datum: .string(String(segmentIndex)),
+          rowOperation: rowOperation
+        )
+      }
     case .timeslotPicker(let view, _):
-      EVYTimeslotPickerRow(
-        view: view,
-        onTimeslotSelected: { commit in
-          runActions(contentRow: contentRow, prepare: commit)
-        }
-      )
+      EVYTimeslotPickerRow(view: view) { tappedSlot, rowOperation in
+        runActions(contentRow: contentRow, datum: tappedSlot, rowOperation: rowOperation)
+      }
     case .text(let view, _):
       EVYTextRow(view: view)
     case .textAction(let view, _):
       EVYTextActionRow(view: view)
     case .textExpand(let view, _):
-      EVYTextExpandRow(view: view)
+      EVYTextExpandRow(
+        view: view,
+        rowId: contentRow.id,
+        onExpandTapped: { runActions(contentRow: contentRow) }
+      )
     case .textArea(let view, _):
       EVYTextAreaRow(view: view)
     case .textSelect(let view, _):
-      if let row = EVYTextSelectRow(view: view) {
+      if let row = EVYTextSelectRow(
+        view: view,
+        onTap: { value, rowOperation in
+          runActions(contentRow: contentRow, datum: value, rowOperation: rowOperation)
+        })
+      {
         row
       } else {
         EmptyView()

@@ -2,11 +2,13 @@ import type {
 	DATA_EVY_Flow,
 	DATA_EVY_Page,
 	DATA_EVY_Row,
+	RowTriggerName,
 	UI_RowAction,
 } from "evy-types";
 import { Trash2 } from "lucide-react";
 import { useCallback, useMemo, useState } from "react";
 import { LUCIDE_STROKE_WIDTH } from "../icons/iconSyntax";
+import { TRIGGER_LABELS } from "../rows/rowTriggers";
 import type { ServiceResource } from "../types/resources";
 import { formatBranchDisplay, parseBranch } from "../utils/actionBranch";
 import {
@@ -21,6 +23,8 @@ import {
 import { ActionPopup } from "./ActionPopup";
 
 type ActionEditorProps = {
+	trigger: RowTriggerName;
+	required: boolean;
 	actions: UI_RowAction[];
 	flowsById: Record<string, DATA_EVY_Flow>;
 	pagesById: Record<string, DATA_EVY_Page>;
@@ -31,6 +35,8 @@ type ActionEditorProps = {
 };
 
 export function ActionEditor({
+	trigger,
+	required,
 	actions,
 	flowsById,
 	pagesById,
@@ -84,10 +90,21 @@ export function ActionEditor({
 			? { action: actions[editingIndex], index: editingIndex }
 			: undefined;
 
+	const triggerLabel = TRIGGER_LABELS[trigger];
+
 	return (
 		<div>
-			<div className="evy-flex evy-items-center evy-justify-between evy-mb-4">
-				<p className="evy-text-lg evy-font-semibold">Actions</p>
+			<div className="evy-flex evy-items-center evy-justify-between evy-mb-2">
+				<div className="evy-flex evy-items-center evy-gap-2">
+					<p className="evy-text-lg evy-font-semibold">
+						{triggerLabel}
+					</p>
+					{required ? (
+						<span className="evy-text-xs evy-font-normal evy-text-gray">
+							(required)
+						</span>
+					) : null}
+				</div>
 				<button
 					type="button"
 					className="evy-text-sm evy-bg-transparent evy-border-none evy-rounded-sm evy-text-blue evy-cursor-pointer evy-hover:bg-gray-light"
@@ -96,6 +113,11 @@ export function ActionEditor({
 					Add action
 				</button>
 			</div>
+			{required && actions.length === 0 ? (
+				<p className="evy-text-sm evy-text-amber-700 evy-mb-2">
+					This trigger needs at least one action.
+				</p>
+			) : null}
 			{actions.length > 0 ? (
 				<div className="evy-flex evy-flex-col evy-gap-4">
 					{actions.map((action, index) => (
@@ -115,7 +137,7 @@ export function ActionEditor({
 				</div>
 			) : (
 				<div className="evy-text-sm evy-text-gray">
-					Row has no actions
+					No {triggerLabel.toLowerCase()} actions
 				</div>
 			)}
 

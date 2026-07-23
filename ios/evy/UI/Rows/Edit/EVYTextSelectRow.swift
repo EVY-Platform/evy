@@ -13,12 +13,17 @@ struct EVYTextSelectRow: View {
   private let destination: String
   private let value: EVYJson
   private let selected: EVYState<Bool>
+  private let onTap: EVYRowTapCallback<EVYJson>
 
-  init?(view: TextSelectRowViewData) {
+  init?(
+    view: TextSelectRowViewData,
+    onTap: @escaping EVYRowTapCallback<EVYJson>
+  ) {
     let destination = view.destination.trimmingCharacters(in: .whitespacesAndNewlines)
     guard !destination.isEmpty else { return nil }
     self.view = view
     self.destination = destination
+    self.onTap = onTap
     let sourceExpression = view.source
     self.selected = EVYState(
       textToWatch: sourceExpression,
@@ -50,7 +55,14 @@ struct EVYTextSelectRow: View {
       valueTemplate: nil,
       selectionStyle: .multi,
       target: .single_bool,
-      textStyle: .info
+      textStyle: .info,
+      onTap: { performDefault in
+        onTap(
+          value,
+          EVYRowActionOperation.selectHandler { _ in
+            try performDefault()
+          })
+      }
     )
     .frame(maxWidth: .infinity, alignment: .leading)
     .titledRow(view.title)
@@ -65,7 +77,7 @@ struct EVYTextSelectRow: View {
         "type": "TextSelect",
         "source": "{item.condition}",
         "destination": "{item.condition}",
-        "actions": [],
+        "actions": {"tap": [{"condition": "", "true": "{select($datum)}", "false": ""}]},
         "title": "Selling reason",
         "text": "reason-1"
       }
