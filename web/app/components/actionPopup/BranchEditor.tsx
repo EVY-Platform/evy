@@ -227,17 +227,28 @@ export function BranchEditor({
 			)}
 
 			{selectedFunction === "create" && args[0] && args[1] && (
-				<BuilderAssist
-					ariaLabel={`${branchId}-create-data`}
-					value={args[2] ?? ""}
-					onChange={(v) => handleArgChange(2, v)}
-					candidates={idCandidates}
-					getAttributeCandidatesForQualifier={
-						getAttributeCandidatesForQualifier
-					}
-					placeholder="Optional inline data, e.g. {fk: $datum.id, data: {type: pickup}}"
-					multiline
-				/>
+				<>
+					<BuilderAssist
+						ariaLabel={`${branchId}-create-data`}
+						value={args[2] ?? ""}
+						onChange={(v) => handleArgChange(2, v)}
+						candidates={idCandidates}
+						getAttributeCandidatesForQualifier={
+							getAttributeCandidatesForQualifier
+						}
+						placeholder="Data path or inline object, e.g. pickup_address"
+					/>
+					<BuilderAssist
+						ariaLabel={`${branchId}-create-id-destination`}
+						value={args[3] ?? ""}
+						onChange={(v) => handleArgChange(3, v)}
+						candidates={idCandidates}
+						getAttributeCandidatesForQualifier={
+							getAttributeCandidatesForQualifier
+						}
+						placeholder="Optional id destination, e.g. {item.transfer_options.pickup.address_id}"
+					/>
+				</>
 			)}
 
 			{selectedFunction === "select" && (

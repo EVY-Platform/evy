@@ -15,7 +15,9 @@ struct EVYFunctionOutput {
 
 @MainActor
 func evyCount(_ args: String) throws -> EVYFunctionOutput {
-  let res = try EVY.getDataFromProps(args)
+  guard let res = _getDataFromPropsStrict(args) else {
+    return EVYFunctionOutput(value: "0", prefix: nil, suffix: nil)
+  }
   switch res {
   case .string(let stringValue):
     return EVYFunctionOutput(value: String(stringValue.count), prefix: nil, suffix: nil)
@@ -26,7 +28,7 @@ func evyCount(_ args: String) throws -> EVYFunctionOutput {
   case .decimal(let decimalValue):
     return EVYFunctionOutput(value: "\(decimalValue)", prefix: nil, suffix: nil)
   default:
-    return EVYFunctionOutput(value: args, prefix: nil, suffix: nil)
+    return EVYFunctionOutput(value: "0", prefix: nil, suffix: nil)
   }
 }
 
@@ -155,7 +157,7 @@ func evyIf(_ args: String) throws -> EVYFunctionOutput {
 @MainActor
 private func evyIfResolveBranch(_ branch: String) throws -> String {
   let trimmed = branch.trimmingCharacters(in: .whitespacesAndNewlines)
-  if trimmed.isEmpty || trimmed == "\"\"" {
+  if trimmed.isEmpty {
     return ""
   }
   if trimmed.first == "\"", trimmed.last == "\"", trimmed.count >= 2 {

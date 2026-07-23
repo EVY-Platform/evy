@@ -247,51 +247,39 @@ type SeedAddressRow = {
 	updatedAt: string;
 };
 
-function optionalStringField(
-	item: SeedDataItem,
-	key: string,
-): string | undefined {
-	const value = item[key];
-	return typeof value === "string" ? value : undefined;
-}
-
-function optionalNumberField(
-	item: SeedDataItem,
-	key: string,
-): number | undefined {
-	const value = item[key];
-	return typeof value === "number" ? value : undefined;
-}
-
 function buildAddressRows(
 	addresses: SeedDataItem[],
 	now: string,
 ): SeedAddressRow[] {
+	const stringKeys = [
+		"unit",
+		"street",
+		"city",
+		"postcode",
+		"state",
+		"country",
+		"instructions",
+	] as const;
+	const numberKeys = ["latitude", "longitude"] as const;
 	return addresses.map((item) => {
 		const createdAt =
 			typeof item.createdAt === "string" ? item.createdAt : now;
 		const updatedAt =
 			typeof item.updatedAt === "string" ? item.updatedAt : now;
-		const unit = optionalStringField(item, "unit");
-		const street = optionalStringField(item, "street");
-		const city = optionalStringField(item, "city");
-		const postcode = optionalStringField(item, "postcode");
-		const state = optionalStringField(item, "state");
-		const country = optionalStringField(item, "country");
-		const latitude = optionalNumberField(item, "latitude");
-		const longitude = optionalNumberField(item, "longitude");
-		const instructions = optionalStringField(item, "instructions");
+		const optionalStrings = Object.fromEntries(
+			stringKeys
+				.filter((key) => typeof item[key] === "string")
+				.map((key) => [key, item[key] as string]),
+		);
+		const optionalNumbers = Object.fromEntries(
+			numberKeys
+				.filter((key) => typeof item[key] === "number")
+				.map((key) => [key, item[key] as number]),
+		);
 		return {
 			id: item.id,
-			...(unit !== undefined ? { unit } : {}),
-			...(street !== undefined ? { street } : {}),
-			...(city !== undefined ? { city } : {}),
-			...(postcode !== undefined ? { postcode } : {}),
-			...(state !== undefined ? { state } : {}),
-			...(country !== undefined ? { country } : {}),
-			...(latitude !== undefined ? { latitude } : {}),
-			...(longitude !== undefined ? { longitude } : {}),
-			...(instructions !== undefined ? { instructions } : {}),
+			...optionalStrings,
+			...optionalNumbers,
 			createdAt,
 			updatedAt,
 		};

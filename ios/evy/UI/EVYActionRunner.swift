@@ -96,7 +96,9 @@ enum EVYActionRunner {
           throw EVYError.invalidData(
             context: "create requires namespace and resource, e.g. create(marketplace,item)")
         }
-        let resolvedData = createAction.data.map { resolvePlainTextValues($0, datum: datum) }
+        let resolvedData = try createAction.data.map {
+          try resolveObjectArgument($0, datum: datum, stripIdFromChanges: false)
+        }
         let createdId = try EVY.create(
           namespace: createAction.namespace,
           resource: createAction.resource,
@@ -113,7 +115,8 @@ enum EVYActionRunner {
           )
         }
         let resolvedFilter = resolvePlainTextValues(updateAction.filter, datum: datum)
-        let resolvedChanges = resolvePlainTextValues(updateAction.changes, datum: datum)
+        let resolvedChanges = try resolveObjectArgument(
+          updateAction.changes, datum: datum, stripIdFromChanges: true)
         try EVY.update(
           namespace: updateAction.namespace,
           resource: updateAction.resource,
@@ -202,6 +205,26 @@ enum EVYActionRunner {
     datum: EVYJson?
   ) -> [String: EVYJson] {
     data.mapValues { resolvePlainTextValue($0, datum: datum) }
+  }
+
+  private static func resolveObjectArgument(
+    _ argument: EVYObjectArgument,
+    datum: EVYJson?,
+    stripIdFromChanges: Bool
+  ) throws -> [String: EVYJson] {
+    switch argument {
+    case .literal(let object):
+      return resolvePlainTextValues(object, datum: datum)
+    case .path(let path):
+      let resolved = resolvePlainTextValue(path, datum: datum)
+      guard case .dictionary(var dictionary) = resolved else {
+        throw EVYError.invalidData(context: "data path must resolve to an object: \(path)")
+      }
+      if stripIdFromChanges {
+        dictionary.removeValue(forKey: "id")
+      }
+      return dictionary
+    }
   }
 
   private static func resolvePlainTextValue(

@@ -130,6 +130,12 @@ extension EVY {
       guard let binding = EVYDraft.Binding.parseDraftKey(draftEntry.id) else {
         continue
       }
+      // Flow submission only merges entity-field drafts (`{resource.field}` → explicitPath).
+      // Page-local aliases like `{pickup_address}` stay off the item — the address lives in
+      // core `addresses`, linked via `transfer_options.pickup.address_id`.
+      if isFlowSubmission, case .aliasFlat = binding.mergeMode {
+        continue
+      }
       mergedPayload = EVYDraft.merge(binding: binding, value: draftValue, into: mergedPayload)
     }
 
@@ -180,6 +186,30 @@ extension EVY {
     return newId
   }
 
+  private static func applyChange(
+    key: String,
+    value: EVYJson,
+    to record: [String: EVYJson]
+  ) throws -> [String: EVYJson]? {
+    if !key.contains(".") {
+      var updated = record
+      updated[key] = value
+      return updated
+    }
+    let props = key.split(separator: ".").map(String.init)
+    let encodedRecord = try JSONEncoder().encode(EVYJson.dictionary(record))
+    let encodedValue = try JSONEncoder().encode(value)
+    let patched = try EVYDataPatcher.patch(
+      encodedData: encodedRecord, newData: encodedValue, props: props)
+    guard
+      case .dictionary(let patchedRecord) = try JSONDecoder().decode(
+        EVYJson.self, from: patched)
+    else {
+      return nil
+    }
+    return patchedRecord
+  }
+
   static func update(
     namespace: String,
     resource: String,
@@ -206,10 +236,23 @@ extension EVY {
 
       var updatedRecord = record
       for (key, value) in changes {
-        updatedRecord[key] = value
+        guard let patched = try applyChange(key: key, value: value, to: updatedRecord) else {
+          continue
+        }
+        updatedRecord = patched
       }
       matchedUpdates.append(
         (rowId: row.id, recordId: recordId, updatedData: .dictionary(updatedRecord)))
+    }
+
+    if matchedUpdates.isEmpty,
+      let scopeId = draftStore.activeScopeId,
+      EVYDraft.Scope.entityKey(fromScopeId: scopeId) == resource
+    {
+      for (key, value) in changes {
+        try writeRawValue(value, to: "{\(resource).\(key)}")
+      }
+      return
     }
 
     for update in matchedUpdates {
@@ -220,6 +263,24 @@ extension EVY {
         id: update.rowId,
         value: encodedData
       )
+
+      if let scopeId = activeCacheScopeId {
+        let cacheRows =
+          (try? cacheStore.getAll(namespace: EVYNamespace.cache, resource: scopeId)) ?? []
+        for cacheRow in cacheRows {
+          guard case .dictionary(let cachedRecord) = try? cacheRow.decoded(),
+            case .string(let cachedId) = cachedRecord["id"],
+            cachedId == update.recordId
+          else { continue }
+          try cacheStore.update(
+            namespace: EVYNamespace.cache,
+            resource: scopeId,
+            id: cacheRow.id,
+            value: encodedData
+          )
+          cacheStore.postValueChanged(key: cacheRow.id)
+        }
+      }
 
       let params = MutationParams(
         service: namespace,
@@ -301,25 +362,30 @@ extension EVY {
     let splitProps = try splitPropsFromText(cleanVariableName)
     let rootVariable = splitProps.first!
     let resolvedScopeId = scopeId ?? draftStore.activeScopeId
-    let draftBinding = try resolvedScopeId.map {
-      try draftStore.binding(fromParsedProps: cleanVariableName, scopeId: $0)
+
+    if let resolvedScopeId,
+      let match = try draftStore.draftMatch(splitProps: splitProps, scopeId: resolvedScopeId)
+    {
+      if match.remainingProps.isEmpty {
+        match.draft.data = newData
+      } else {
+        match.draft.data = try EVYDataPatcher.patch(
+          encodedData: match.draft.data, newData: newData, props: match.remainingProps)
+      }
+      draftStore.notifyUpdate(binding: match.binding)
+      return
     }
 
-    if let draftBinding,
-      let existingDraft = draftStore.draftIfPresent(binding: draftBinding)
+    // Create-merge scopes must not fall through to findRowForUpdate for the entity being
+    // created: that helper returns the first existing row of the resource, so nested writes
+    // like `{items.transfer_options.pickup.address_id}` would patch a seeded listing instead
+    // of joining the create draft — and the new item would be submitted without address_id.
+    let createEntityKey = EVYDraft.Scope.entityKey(fromScopeId: resolvedScopeId)
+    let writesIntoCreateEntity = createEntityKey != nil && rootVariable == createEntityKey
+
+    if !writesIntoCreateEntity,
+      let existingRow = try? findRowForUpdate(store: store, rootVariable: rootVariable)
     {
-      let remainingProps = EVYDraft.remainingPropsAfterDraftPrefix(
-        splitProps: splitProps,
-        binding: draftBinding
-      )
-      if remainingProps.isEmpty {
-        existingDraft.data = newData
-      } else {
-        existingDraft.data = try EVYDataPatcher.patch(
-          encodedData: existingDraft.data, newData: newData, props: remainingProps)
-      }
-      draftStore.notifyUpdate(binding: draftBinding)
-    } else if let existingRow = try? findRowForUpdate(store: store, rootVariable: rootVariable) {
       let remainingProps = Array(splitProps.dropFirst())
       if remainingProps.isEmpty {
         existingRow.data = newData
@@ -329,18 +395,21 @@ extension EVY {
       }
       try store.persistChanges()
       store.postValueChanged(key: splitProps.joined(separator: PROP_SEPARATOR))
-    } else {
-      guard let draftBinding else {
-        throw EVYDataError.keyNotFound
-      }
-      try cacheStore.create(
-        namespace: EVYNamespace.draft,
-        resource: draftBinding.scopeId,
-        id: draftBinding.draftKey,
-        value: newData
-      )
-      draftStore.notifyUpdate(binding: draftBinding)
+      return
     }
+
+    guard let resolvedScopeId else {
+      throw EVYDataError.keyNotFound
+    }
+    let draftBinding = try draftStore.binding(
+      fromParsedProps: cleanVariableName, scopeId: resolvedScopeId)
+    try cacheStore.create(
+      namespace: EVYNamespace.draft,
+      resource: draftBinding.scopeId,
+      id: draftBinding.draftKey,
+      value: newData
+    )
+    draftStore.notifyUpdate(binding: draftBinding)
   }
 
   private static func findRowForUpdate(store: EVYDataStore, rootVariable: String) throws -> EVYData

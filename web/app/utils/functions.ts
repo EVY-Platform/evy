@@ -126,7 +126,8 @@ const evyFormatDurationStub = (): EVYFunctionOutput => ({
 	value: "15 minutes",
 });
 
-function evyIf(args: string): EVYFunctionOutput {
+// Web preview does not evaluate if conditions; branch choice is a display heuristic only.
+function evyIfStub(args: string): EVYFunctionOutput {
 	const parts = splitFunctionArguments(args);
 	if (parts.length !== 3) {
 		return { value: "" };
@@ -137,7 +138,7 @@ function evyIf(args: string): EVYFunctionOutput {
 		trimmedCondition.includes("== 0") || trimmedCondition.includes("==0");
 	const selected = conditionMet ? trueBranch : falseBranch;
 	const trimmed = selected.trim();
-	if (trimmed === '""' || trimmed === "") {
+	if (trimmed === "") {
 		return { value: "" };
 	}
 	if (trimmed.startsWith('"') && trimmed.endsWith('"')) {
@@ -161,7 +162,7 @@ const functionHandlers: Record<string, EVYFunctionHandler> = {
 	formatImperialLength: evyFormatImperialLengthStub,
 	formatDuration: evyFormatDurationStub,
 	formatDatetime: evyFormatDatetime,
-	if: evyIf,
+	if: evyIfStub,
 };
 
 export function callFunction(

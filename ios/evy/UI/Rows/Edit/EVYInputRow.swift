@@ -11,10 +11,16 @@ struct EVYInputRow: View {
 
   private let view: InputRowViewData
   private let isInteractive: Bool
+  private let onValueCommit: (() -> Void)?
 
-  init(view: InputRowViewData, isInteractive: Bool = true) {
+  init(
+    view: InputRowViewData,
+    isInteractive: Bool = true,
+    onValueCommit: (() -> Void)? = nil
+  ) {
     self.view = view
     self.isInteractive = isInteractive
+    self.onValueCommit = onValueCommit
   }
 
   var body: some View {
@@ -23,7 +29,8 @@ struct EVYInputRow: View {
       source: view.source,
       destination: view.destination,
       placeholder: view.placeholder,
-      isInteractive: isInteractive
+      isInteractive: isInteractive,
+      onValueCommit: onValueCommit
     )
   }
 }
@@ -36,6 +43,7 @@ struct EVYTitledTextFieldRow: View {
   let placeholder: String?
   let multiLine: Bool
   let isInteractive: Bool
+  let onValueCommit: (() -> Void)?
 
   init(
     title: String?,
@@ -43,7 +51,8 @@ struct EVYTitledTextFieldRow: View {
     destination: String,
     placeholder: String?,
     multiLine: Bool = false,
-    isInteractive: Bool = true
+    isInteractive: Bool = true,
+    onValueCommit: (() -> Void)? = nil
   ) {
     self.title = title
     self.source = source
@@ -51,6 +60,7 @@ struct EVYTitledTextFieldRow: View {
     self.placeholder = placeholder
     self.multiLine = multiLine
     self.isInteractive = isInteractive
+    self.onValueCommit = onValueCommit
   }
 
   var body: some View {
@@ -59,7 +69,8 @@ struct EVYTitledTextFieldRow: View {
       destination: destination,
       placeholder: placeholder,
       multiLine: multiLine,
-      isInteractive: isInteractive
+      isInteractive: isInteractive,
+      onValueCommit: onValueCommit
     )
     .titledRow(title)
   }

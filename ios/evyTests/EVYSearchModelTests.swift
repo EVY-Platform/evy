@@ -101,6 +101,7 @@ final class EVYSearchModelTests: XCTestCase {
   func testLoadLocalResultsRefreshWhenMessageResourceChanges() throws {
     let resource = MarketplaceTestFixture.messagesResourceId
     let pendingId = UUID().uuidString
+    try? EVY.publicStore.deleteAll(namespace: EVYNamespace.marketplace, resource: resource)
     let message = EVYTestMessageFixtures.message(
       id: pendingId,
       status: "pending",

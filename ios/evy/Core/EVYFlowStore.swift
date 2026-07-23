@@ -165,7 +165,13 @@ enum EVYFlowStore {
         guard let uiRow = storedRow.uiRow() else { return }
         for action in EVYRowActionTrigger.allActionLists(in: uiRow.actions) {
           for branch in [action.`true`, action.`false`] {
-            if let createAction = EVYActionParser.createAction(from: branch) {
+            // Only draft-submission creates (no inline data) define the flow's entity
+            // scope. Inline creates (addresses, messages, …) must not steal it —
+            // otherwise sorted().first can pick "addresses" over the items resource id
+            // and item field drafts merge under the wrong root.
+            if let createAction = EVYActionParser.createAction(from: branch),
+              createAction.data == nil
+            {
               keys.insert(createAction.resource)
             }
           }

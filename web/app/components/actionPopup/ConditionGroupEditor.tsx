@@ -9,6 +9,7 @@ import {
 	emptyLeaf,
 	type LogicalOperator,
 } from "../../utils/conditionExpression";
+import type { IdCandidate } from "../../utils/idCandidates";
 import { PopoverSelect } from "../PopoverSelect";
 import {
 	ensureGroup,
@@ -22,6 +23,8 @@ type ConditionGroupEditorProps = {
 	expression: ConditionExpression | null;
 	draftVariables: string[];
 	serviceResources: ServiceResource[];
+	idCandidates: IdCandidate[];
+	getAttributeCandidatesForQualifier: (qualifier: string) => IdCandidate[];
 	onChange: (expression: ConditionExpression | null) => void;
 	idPrefix: string;
 	isTopLevel?: boolean;
@@ -31,6 +34,8 @@ export function ConditionGroupEditor({
 	expression,
 	draftVariables,
 	serviceResources,
+	idCandidates,
+	getAttributeCandidatesForQualifier,
 	onChange,
 	idPrefix,
 	isTopLevel = false,
@@ -147,6 +152,10 @@ export function ConditionGroupEditor({
 								expression={child}
 								draftVariables={draftVariables}
 								serviceResources={serviceResources}
+								idCandidates={idCandidates}
+								getAttributeCandidatesForQualifier={
+									getAttributeCandidatesForQualifier
+								}
 								onChange={(nested) =>
 									handleNestedGroupChange(rowIndex, nested)
 								}
@@ -171,6 +180,10 @@ export function ConditionGroupEditor({
 								value={child.left}
 								draftVariables={draftVariables}
 								serviceResources={serviceResources}
+								idCandidates={idCandidates}
+								getAttributeCandidatesForQualifier={
+									getAttributeCandidatesForQualifier
+								}
 								onChange={(v) =>
 									handleLeafChange(rowIndex, "left", false, v)
 								}
@@ -195,6 +208,10 @@ export function ConditionGroupEditor({
 								value={child.right}
 								draftVariables={draftVariables}
 								serviceResources={serviceResources}
+								idCandidates={idCandidates}
+								getAttributeCandidatesForQualifier={
+									getAttributeCandidatesForQualifier
+								}
 								onChange={(v) =>
 									handleLeafChange(
 										rowIndex,
@@ -250,6 +267,10 @@ export function ConditionGroupEditor({
 						value={draft.left}
 						draftVariables={draftVariables}
 						serviceResources={serviceResources}
+						idCandidates={idCandidates}
+						getAttributeCandidatesForQualifier={
+							getAttributeCandidatesForQualifier
+						}
 						onChange={(v) =>
 							handleLeafChange(leafRows.length, "left", true, v)
 						}
@@ -274,6 +295,10 @@ export function ConditionGroupEditor({
 						value={draft.right}
 						draftVariables={draftVariables}
 						serviceResources={serviceResources}
+						idCandidates={idCandidates}
+						getAttributeCandidatesForQualifier={
+							getAttributeCandidatesForQualifier
+						}
 						onChange={(v) =>
 							handleLeafChange(leafRows.length, "right", true, v)
 						}

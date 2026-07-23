@@ -59,6 +59,7 @@ services:
             - MARKETPLACE_WS_HOST=marketplace
             - MARKETPLACE_WS_PORT=${MARKETPLACE_WS_PORT}
             - GOOGLE_PLACES_API_KEY=${GOOGLE_PLACES_API_KEY}
+            - GOOGLE_PLACES_MOCK=${GOOGLE_PLACES_MOCK:-}
         depends_on:
             postgres:
                 condition: service_healthy

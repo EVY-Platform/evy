@@ -570,6 +570,59 @@ final class ContentViewTests: XCTestCase {
     XCTAssertEqual(keys, Set([MarketplaceTestFixture.itemsResourceId]))
   }
 
+  func testExtractCreateKeysIgnoresInlineDataCreatesLikeAddresses() throws {
+    let store = makeStore()
+    let coreService = "475731ac-31aa-4d65-94d2-7032782ae359"
+    let itemsResource = MarketplaceTestFixture.itemsResourceId
+
+    try seedFlow(store: store, id: "create-flow", pageIds: ["create-page"])
+    try seedPage(
+      store: store, id: "create-page", rowIds: ["search-row"],
+      footerRowId: "submit-button")
+    try seedRow(
+      store: store, id: "search-row", type: "Search",
+      data: [
+        "source": "{$api:place_search}",
+        "destination": "{pickup_address}",
+        "placeholder": "Search",
+        "title": "",
+        "actions": [
+          "tap": [
+            [
+              "condition": "",
+              "false": "",
+              "true":
+                "{create(\(coreService), addresses, {street: $datum.street}, {\(itemsResource).transfer_options.pickup.address_id})}",
+            ]
+          ]
+        ],
+      ])
+    try seedRow(
+      store: store, id: "submit-button", type: "Button",
+      data: [
+        "source": "", "title": "", "label": "Submit",
+        "actions": [
+          "tap": [
+            [
+              "condition": "",
+              "false": "",
+              "true": "{create(\(MarketplaceTestFixture.serviceId),\(itemsResource))}",
+            ]
+          ]
+        ],
+      ])
+
+    let keys = EVYFlowStore.createKeys(flowId: "create-flow", from: store)
+    XCTAssertEqual(
+      keys, Set([itemsResource]),
+      "Inline address create must not join createKeys or it steals draft scope from items")
+    let route = Route(flowId: "create-flow", pageId: "create-page")
+    XCTAssertEqual(
+      EVYFlowStore.draftScopeId(for: route, from: store),
+      EVYDraft.createMergeScopeId(flowId: "create-flow", entityKey: itemsResource)
+    )
+  }
+
   func testExtractCreateKeysIncludesSwipeLeftActions() throws {
     let store = makeStore()
 

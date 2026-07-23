@@ -246,7 +246,9 @@ func _getDataFromText(_ input: String) throws -> EVYJson {
 }
 
 @MainActor
-func _getDataFromProps(_ props: String) throws -> EVYJson {
+private func _resolveBindingRoot(_ props: String) throws -> (
+  root: EVYJson, remainingProps: [String]
+) {
   let (store, cleanProps) = EVY.store(for: props)
   let splitProps = try splitPropsFromText(cleanProps)
   guard let firstProp = splitProps.first else {
@@ -257,39 +259,51 @@ func _getDataFromProps(_ props: String) throws -> EVYJson {
 
   if let (funcName, funcArgs) = _parseFunctionCall(firstProp) {
     if funcName == "findFirst" {
-      return try evyFindFirst(funcArgs, remainingProps: remainingProps)
+      return (try evyFindFirst(funcArgs, remainingProps: remainingProps), [])
     }
     if funcName == "now" {
-      return .string(EVY.nowISO8601())
+      return (.string(EVY.nowISO8601()), [])
     }
   }
 
   if let ephemeralDatum = ephemeralDatumRegistry[firstProp] {
-    return ephemeralDatum.parseProp(props: remainingProps)
+    return (ephemeralDatum, remainingProps)
   }
 
-  // 1. Check draft store — user's unsaved edits
+  // 1. Check draft store — user's unsaved edits (exact path, then parent prefixes)
   if let scopeId = EVY.draftStore.activeScopeId,
-    let draftBinding = try? EVY.draftStore.binding(fromParsedProps: cleanProps, scopeId: scopeId),
-    let draftRow = EVY.draftStore.draftIfPresent(binding: draftBinding)
+    let match = try? EVY.draftStore.draftMatch(splitProps: splitProps, scopeId: scopeId)
   {
-    let remaining = EVYDraft.remainingPropsAfterDraftPrefix(
-      splitProps: splitProps,
-      binding: draftBinding
-    )
-    return try draftRow.decoded().parseProp(props: remaining)
+    return (try match.draft.decoded(), match.remainingProps)
   }
 
   if let scopeId = EVY.activeCacheScopeId,
     let cachedRow = try? EVY.cacheStore.get(
       namespace: EVYNamespace.cache, resource: scopeId, id: firstProp)
   {
-    return try cachedRow.decoded().parseProp(props: remainingProps)
+    return (try cachedRow.decoded(), remainingProps)
   }
 
   // 2. Fall back to persistent store — synced API data
   let json = try store.getJsonForBinding(key: firstProp, cacheScopeId: EVY.activeCacheScopeId)
-  return json.parseProp(props: remainingProps)
+  return (json, remainingProps)
+}
+
+@MainActor
+func _getDataFromProps(_ props: String) throws -> EVYJson {
+  let resolved = try _resolveBindingRoot(props)
+  return resolved.root.parseProp(props: resolved.remainingProps)
+}
+
+@MainActor
+func _getDataFromPropsStrict(_ props: String) -> EVYJson? {
+  guard let resolved = try? _resolveBindingRoot(props) else {
+    return nil
+  }
+  if resolved.remainingProps.isEmpty {
+    return resolved.root
+  }
+  return resolved.root.parsePropStrict(props: resolved.remainingProps)
 }
 
 @MainActor

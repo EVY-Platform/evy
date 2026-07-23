@@ -148,9 +148,9 @@ Every row may declare an optional nested `sheet` row. At runtime, `{show(rowId)}
 
 | Row type | `source` | `destination` | `secondary` | `value` | Notes |
 | --- | --- | --- | --- | --- | --- |
-| `Input`, `TextArea` | yes | yes | no | no | Display reads `source`; writes pass raw text to `destination`. Optional `initial` seeds literal text into the draft on activation. |
+| `Input`, `TextArea` | yes | yes | no | no | Display reads `source`; writes pass raw text to `destination`. Optional `initial` seeds literal text into the draft on activation. For `Input`, `actions.tap` (when present) runs after the user commits a value (blur / submit), not on every keystroke. |
 | `Dropdown`, `InlinePicker` | yes | yes | no | yes | `source` = options; `value` = `$datum` display template; selection writes raw datum to `destination`. Optional `initial` seeds the default selection — a single option identifier for `Dropdown`, and a one-element identifier array for `InlinePicker`. |
-| `Search` | yes | yes | no | no | `destination` stores the selected raw datum (builder-aware). Optional `child` is the search **result template** only (not a sheet). Optional `sheet` uses the universal overlay relationship. |
+| `Search` | yes | yes | no | no | `destination` stores the selected raw datum (builder-aware), stripping external `id` and merging over any existing draft so omitted keys (e.g. instructions) are preserved. Optional `child` is the search **result template** only (not a sheet). Optional `sheet` uses the universal overlay relationship. On result select, iOS also runs `actions.tap` with `$datum` set to the selected result (after the destination write). |
 | `Calendar` | yes | yes | yes | no | `source` = main timeslots to display (same binding as `destination`); `destination` = edited selection; `secondary` = greyed background slots. |
 | `TimeslotPicker` | yes | yes | no | no | Single selected timeslot string in `destination`. Optional `sheet` for confirmation overlays via `{show(sheetRowId)}`. |
 | `SelectPhoto` | yes | yes | no | no | `source` = shown images; `destination` = written image IDs. |
@@ -266,8 +266,8 @@ Supported action functions:
 | Function | Meaning |
 | -------- | ------- |
 | `close()` | Close current UI, e.g. `{close()}`. Inside a sheet overlay, dismisses the sheet only. |
-| `create(service_id, resource_id, data?, id_destination?)` | Create a domain entity. **Never changes routes** — with a plain-text data object, resolves its data-path or `$datum` values, preserves unresolved bare words as literals (bare `true`/`false` resolve as booleans, bare `null` resolves as JSON null, quoted `"…"` values stay literal strings, and `{…}` values resolve as nested objects), and creates that one entity immediately, e.g. `{create([service_id],[resource_id],{fk: $datum.id, service: "[service_id]", resource: "[items_resource_id]", archivedAt: null, data: {type: pickup, time: selected_pickup_timeslot}})}`. Optional fourth argument writes the generated uuid to a draft-aware destination path (e.g. `{create([core_service], addresses, {street: pickup_address.street}, {item.transfer_options.pickup.address_id})}`). The client stamps `createdAt` on the payload when absent. With no data, it submits the active flow's drafts (merging them into the created entity) and cleans them up — the client decides this by comparing the active draft scope to the target resource. Either way, a flow that should close after submitting must do so explicitly with a following `{close()}` action. For user confirmation, call `{show(sheetRowId)}` then run `create` from the sheet's confirm button. |
-| `update(service_id, resource_id, filter, changes)` | Update matching domain entities immediately. Resolves filter and changes like inline `create` data (including boolean, `null`, quoted-string, and nested-object literals); a filter value of `null` matches records where the property is absent or JSON `null`. Locally finds rows where every filter property matches, merges changes, then syncs each match to the server with an `update` RPC. Filter and changes objects are required and non-empty, e.g. `{update([service_id],[resource_id],{fk: [items_resource].id, archivedAt: null},{archivedAt: now()})}`. For user confirmation, call `{show(sheetRowId)}` then run `update` from the sheet's confirm button. |
+| `create(service_id, resource_id, data?, id_destination?)` | Create a domain entity. **Never changes routes** — with a plain-text data object `{key: value, …}`, resolves its data-path or `$datum` values, preserves unresolved bare words as literals (bare `true`/`false` resolve as booleans, bare `null` resolves as JSON null, quoted `"…"` values stay literal strings, and `{…}` values resolve as nested objects), and creates that one entity immediately. Alternatively, pass a **data path** (bare identifier, e.g. `pickup_address`) as the third argument to send the whole resolved object from drafts or synced data. Optional fourth argument writes the generated uuid to a draft-aware destination path (e.g. `{pickup_address.id}`) — use this in **create flows** where the target record does not exist yet. When the target record already exists, link it with a follow-up `update` action instead of writing onto the live record path. With no data, it submits the active flow's drafts (merging them into the created entity) and cleans them up. Either way, a flow that should close after submitting must do so explicitly with a following `{close()}` action. |
+| `update(service_id, resource_id, filter, changes)` | Update matching domain entities immediately. Resolves filter and changes like inline `create` data (including boolean, `null`, quoted-string, and nested-object literals), or pass a **data path** as `changes` to merge a whole draft object (the client strips any `id` key from path-resolved changes before merging). Change keys may use dotted paths (e.g. `transfer_options.pickup.address_id`) to patch nested fields without clobbering siblings. A filter value of `null` matches records where the property is absent or JSON `null`. Locally finds rows where every filter property matches, merges changes, refreshes matching cache-scope entities, then syncs each match to the server with an `update` RPC. Filter is required and non-empty; `changes` is required as either a non-empty `{…}` object or a data path. |
 | `navigate(flowId, pageId, queryParams?)` | Go to a page within a flow, e.g. `{navigate(flowId, pageId)}`. Pass query params as the optional third argument using a plain-text query object, e.g. `{navigate(flowId, pageId, {id: $datum.id})}`. |
 | `show(rowId)` | Present the row with ID `rowId` in a sheet overlay, e.g. `{show(b8c7d6e5-f4a3-4b2c-9d1e-0f8a7b6c5d4e)}`. Requires exactly one non-empty row ID. The target may belong to any page in the synced flow data, not only the action row's nested `sheet`. If the ID is missing from the client row store, the action fails and later actions in the same array do not run. The presented row's `title` is the sheet header (live-interpolated when it contains expressions). |
 | `highlight_required(field)` | Mark a field as required / show validation, e.g. `{highlight_required(title)}` |
@@ -367,7 +367,18 @@ Open a confirmation sheet after selecting a timeslot (`select` must run first so
 }
 ```
 
-Search result template (`child` only on Search; separate from `sheet`):
+Search result template (`child` only on Search; separate from `sheet`).
+
+### Address save pattern (create and edit flows)
+
+Use the same two-action `tap` array on the pickup Search row whether the marketplace item already exists or is still being created.
+
+1. **Create or update the address** — if `address_id` is empty, `{create(core, addresses, pickup_address, {pickup_address.id})}` persists the address and writes the generated id to the page-local `pickup_address` buffer; otherwise `{update(core, addresses, {id: item.transfer_options.pickup.address_id}, pickup_address)}` updates the existing row.
+2. **Link the item** — `{update(marketplace, items, {id: item.id}, {transfer_options.pickup.address_id: pickup_address.id})}` sets `transfer_options.pickup.address_id` on the item.
+
+On **edit** flows the item row exists: the second action matches that row and syncs immediately. On **create** flows there is no item row yet; when the filter matches nothing, the client routes the change into the create draft so the flow’s submit `create` includes `address_id`. The page-local `pickup_address` alias is not merged onto the item (`.aliasFlat`).
+
+When an address already exists, the first action’s `false` branch runs and **stops the action array** (runner semantics), so the link step does not run again on re-pick.
 
 ```json
 {
@@ -375,6 +386,20 @@ Search result template (`child` only on Search; separate from `sheet`):
 	"type": "Search",
 	"source": "{$api:place_search}",
 	"destination": "{pickup_address}",
+	"actions": {
+		"tap": [
+			{
+				"condition": "{length(item.transfer_options.pickup.address_id) == 0}",
+				"true": "{create(core, addresses, pickup_address, {pickup_address.id})}",
+				"false": "{update(core, addresses, {id: item.transfer_options.pickup.address_id}, pickup_address)}"
+			},
+			{
+				"condition": "",
+				"true": "{update(marketplace, items, {id: item.id}, {transfer_options.pickup.address_id: pickup_address.id})}",
+				"false": ""
+			}
+		]
+	},
 	"child": {
 		"id": "387ebe5b-b5b5-4be9-b5db-918bb9db706f",
 		"type": "Text",

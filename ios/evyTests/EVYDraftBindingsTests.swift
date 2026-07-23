@@ -37,6 +37,26 @@ final class EVYDraftBindingTests: XCTestCase {
     XCTAssertFalse(binding.scopeId.hasPrefix("ephemeral:"))
   }
 
+  func testBindingPageLocalAliasOnEntityScopeUsesAliasFlat() throws {
+    let itemsResource = "dc28ed59-298e-493c-8ff3-3e60f2ebccbd"
+    let scopeId = EVYDraft.createMergeScopeId(flowId: "create-flow", entityKey: itemsResource)
+    let pageLocal = try EVYDraft.binding(parsedProps: "pickup_address", scopeId: scopeId)
+    XCTAssertEqual(pageLocal.scopeId, scopeId)
+    guard case .aliasFlat(let pageLocalSegs) = pageLocal.mergeMode else {
+      return XCTFail("page-local pickup_address must be aliasFlat so create omits it")
+    }
+    XCTAssertEqual(pageLocalSegs, ["pickup_address"])
+
+    let entityField = try EVYDraft.binding(
+      parsedProps: "\(itemsResource).transfer_options.pickup.address_id",
+      scopeId: scopeId
+    )
+    guard case .explicitPath(let entitySegs) = entityField.mergeMode else {
+      return XCTFail("entity-prefixed paths must be explicitPath so create merges them")
+    }
+    XCTAssertEqual(entitySegs, ["transfer_options", "pickup", "address_id"])
+  }
+
   func testBindingUUIDWithMoreSegmentsIsNotEphemeralShortcut() throws {
     let uuid = "09f07052-c27c-4116-a508-a2bcb074c827"
     let binding = try EVYDraft.binding(
@@ -256,6 +276,38 @@ final class EVYDraftBindingTests: XCTestCase {
       try EVY.getDataFromText("{pickup_address}"),
       address
     )
+  }
+
+  func testNestedPickupAddressPropsResolveFromParentDraft() throws {
+    let scopeId = "flow:items"
+    EVY.draftStore.activeScopeId = scopeId
+    defer {
+      EVY.draftStore.deleteDrafts()
+      EVY.draftStore.activeScopeId = nil
+    }
+
+    let address = samplePickupAddress()
+    try EVY.writeRawValue(address, to: "{pickup_address}", scopeId: scopeId)
+
+    XCTAssertEqual(
+      try EVY.getDataFromText("{pickup_address.street}"),
+      .string("28 Rothschild Avenue")
+    )
+    XCTAssertEqual(
+      try EVY.getDataFromText("{pickup_address.city}"),
+      .string("Rosebery")
+    )
+
+    try EVY.writeRawStringValue(
+      "Leave at side gate",
+      to: "{pickup_address.instructions}",
+      scopeId: scopeId
+    )
+    guard case .dictionary(let updated) = try EVY.getDataFromText("{pickup_address}") else {
+      return XCTFail("expected pickup_address dictionary after nested write")
+    }
+    XCTAssertEqual(updated["street"], .string("28 Rothschild Avenue"))
+    XCTAssertEqual(updated["instructions"], .string("Leave at side gate"))
   }
 
   func testWriteRawValueUpdatesPageCacheNotFirstSyncedCollectionItem() throws {

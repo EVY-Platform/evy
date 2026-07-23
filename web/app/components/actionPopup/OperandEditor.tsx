@@ -7,6 +7,8 @@ import {
 	parseOperand,
 	serializeOperand,
 } from "../../utils/actionOperands";
+import type { IdCandidate } from "../../utils/idCandidates";
+import { BuilderAssist } from "../BuilderAssist";
 import { type PopoverOption, PopoverSelect } from "../PopoverSelect";
 import { BOOLEAN_OPTIONS } from "./actionPopupConstants";
 
@@ -15,12 +17,16 @@ export function OperandEditor({
 	value,
 	draftVariables,
 	serviceResources,
+	idCandidates,
+	getAttributeCandidatesForQualifier,
 	onChange,
 }: {
 	ariaLabel: string;
 	value: string;
 	draftVariables: string[];
 	serviceResources: ServiceResource[];
+	idCandidates: IdCandidate[];
+	getAttributeCandidatesForQualifier: (qualifier: string) => IdCandidate[];
 	onChange: (value: string) => void;
 }) {
 	const parsed = useMemo(() => parseOperand(value), [value]);
@@ -40,7 +46,7 @@ export function OperandEditor({
 		);
 		const functions: PopoverOption[] = CONDITION_FUNCTIONS.map((fn, i) => ({
 			value: `__fn__${fn}`,
-			label: `${fn}(...)`,
+			label: fn,
 			...(i === 0 ? { separator: "Functions" } : {}),
 		}));
 		return [...values, ...variables, ...functions];
@@ -87,6 +93,16 @@ export function OperandEditor({
 		[parsed, onChange],
 	);
 
+	const valueMatchesVariableOption = variableOptions.some(
+		(option) => option.value === parsed.value,
+	);
+	const showValueBuilderAssist =
+		parsed.type === "value" &&
+		parsed.value !== "" &&
+		!isBooleanValue &&
+		!isNumericValue &&
+		!valueMatchesVariableOption;
+
 	return (
 		<div className="evy-flex evy-flex-col evy-gap-1 evy-flex-1">
 			<PopoverSelect
@@ -114,12 +130,27 @@ export function OperandEditor({
 				/>
 			)}
 			{parsed.type === "function" && (
-				<PopoverSelect
+				<BuilderAssist
 					ariaLabel={`${ariaLabel}-arg`}
-					options={variableOptions}
 					value={parsed.arg}
 					onChange={handleArgChange}
-					placeholder="argument..."
+					candidates={idCandidates}
+					getAttributeCandidatesForQualifier={
+						getAttributeCandidatesForQualifier
+					}
+					placeholder="Argument, e.g. item.transfer_options.pickup.address_id"
+				/>
+			)}
+			{showValueBuilderAssist && (
+				<BuilderAssist
+					ariaLabel={`${ariaLabel}-expression`}
+					value={parsed.value}
+					onChange={onChange}
+					candidates={idCandidates}
+					getAttributeCandidatesForQualifier={
+						getAttributeCandidatesForQualifier
+					}
+					placeholder="Expression or data path"
 				/>
 			)}
 		</div>

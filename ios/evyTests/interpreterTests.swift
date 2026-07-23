@@ -198,6 +198,28 @@ final class InterpreterTests: XCTestCase {
     XCTAssertEqual(two.value, "n: 2")
   }
 
+  func testCountAndLengthReturnZeroForMissingPaths() throws {
+    XCTAssertTrue(try EVY.evaluateFromText("{length(missing_draft_key) == 0}"))
+    XCTAssertTrue(try EVY.evaluateFromText("{count(missing_draft_key) == 0}"))
+
+    let itemKey = uniqueKey("item")
+    try store(
+      .dictionary([
+        "transfer_options": .dictionary([
+          "pickup": .dictionary([:])
+        ])
+      ]),
+      at: itemKey
+    )
+    XCTAssertTrue(
+      try EVY.evaluateFromText(
+        "{length(\(itemKey).transfer_options.pickup.address_id) == 0}"))
+
+    let nullKey = uniqueKey("null_value")
+    try store(.null, at: nullKey)
+    XCTAssertTrue(try EVY.evaluateFromText("{length(\(nullKey)) == 0}"))
+  }
+
   func testFormatDecimalRoundsToPlaces() throws {
     let key = uniqueKey("amount")
     try store(.string("20.0423"), at: key)

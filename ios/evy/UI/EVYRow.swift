@@ -275,6 +275,8 @@ private struct EVYResolvedRow: View {
     .photoGallery,
     .tabContainer,
     .inlinePicker,
+    .search,
+    .input,
   ]
 
   private var shouldUseGenericActionTap: Bool {
@@ -383,7 +385,13 @@ private struct EVYResolvedRow: View {
     case .inputList(let view, _):
       EVYInputListRow(view: view)
     case .input(let view, _):
-      EVYInputRow(view: view, isInteractive: contentRow.actions.tap.isEmpty)
+      EVYInputRow(
+        view: view,
+        isInteractive: true,
+        onValueCommit: contentRow.actions.tap.isEmpty
+          ? nil
+          : { runActions(contentRow: contentRow) }
+      )
     case .verticalContainer(let view, _):
       EVYVerticalContainerRow(view: view, childRefs: childRefs)
     case .listItem(let view, _):
@@ -391,7 +399,9 @@ private struct EVYResolvedRow: View {
     case .map(let view, _):
       EVYMapRow(view: view)
     case .search(let view, _):
-      EVYSearchRow(view: view, childRef: childRef)
+      EVYSearchRow(view: view, childRef: childRef) { selectedDatum in
+        runActions(contentRow: contentRow, datum: selectedDatum)
+      }
     case .photoGallery(let view, _):
       EVYPhotoGalleryRow(view: view) { imageId, rowOperation in
         runActions(

@@ -111,6 +111,10 @@ export function ActionPopup({
 							expression={expression}
 							draftVariables={draftVariables}
 							serviceResources={serviceResources}
+							idCandidates={idCandidates}
+							getAttributeCandidatesForQualifier={
+								getAttributeCandidatesForQualifier
+							}
 							onChange={setExpression}
 							idPrefix={`condition-${actionIndex}`}
 							isTopLevel
