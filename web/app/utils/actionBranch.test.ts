@@ -5,11 +5,60 @@ import {
 } from "evy-types/marketplaceResources";
 import {
 	formatBranchDisplay,
+	getCreateSubmitWithFlow,
 	parseBranch,
 	serializeBranch,
+	setCreateSubmitWithFlow,
 } from "./actionBranch";
 
 describe("action branch helpers", () => {
+	const serviceId = MARKETPLACE_SERVICE;
+	const resourceId = MARKETPLACE_RESOURCE.ITEMS;
+
+	describe("create submitWithFlow helpers", () => {
+		it("reads submit-with-flow ON for empty args", () => {
+			expect(getCreateSubmitWithFlow([])).toBe(true);
+		});
+
+		it("reads submit-with-flow ON when third arg is missing", () => {
+			expect(getCreateSubmitWithFlow([serviceId, resourceId])).toBe(true);
+		});
+
+		it("reads submit-with-flow ON when third arg is submit", () => {
+			expect(
+				getCreateSubmitWithFlow([serviceId, resourceId, "submit"]),
+			).toBe(true);
+		});
+
+		it("reads submit-with-flow OFF for inline data path", () => {
+			expect(
+				getCreateSubmitWithFlow([
+					serviceId,
+					resourceId,
+					"pickup_address",
+				]),
+			).toBe(false);
+		});
+
+		it("enabling submit-with-flow writes submit and clears id destination", () => {
+			expect(
+				setCreateSubmitWithFlow(
+					[serviceId, resourceId, "pickup_address", "dest"],
+					true,
+				),
+			).toEqual([serviceId, resourceId, "submit", ""]);
+		});
+
+		it("disabling submit-with-flow clears inline slots", () => {
+			expect(
+				setCreateSubmitWithFlow(
+					[serviceId, resourceId, "submit"],
+					false,
+				),
+			).toEqual([serviceId, resourceId, "", ""]);
+		});
+	});
+
 	it("parses show action with row id", () => {
 		expect(parseBranch("{show(row-abc)}")).toEqual({
 			functionName: "show",

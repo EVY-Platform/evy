@@ -97,6 +97,30 @@ export function serializeBranch(
 	return `{${functionName}(${filteredArgs.join(",")})}`;
 }
 
+export function getCreateSubmitWithFlow(args: string[]): boolean {
+	const thirdArg = args[2]?.trim() ?? "";
+	if (!thirdArg) return true;
+	return thirdArg === "submit";
+}
+
+export function setCreateSubmitWithFlow(
+	args: string[],
+	enabled: boolean,
+): string[] {
+	const newArgs = [...args];
+	while (newArgs.length < 4) {
+		newArgs.push("");
+	}
+	if (enabled) {
+		newArgs[2] = "submit";
+		newArgs[3] = "";
+	} else {
+		newArgs[2] = "";
+		newArgs[3] = "";
+	}
+	return newArgs;
+}
+
 export function formatBranchDisplay(
 	branchString: string,
 	flowsById?: Record<string, DATA_EVY_Flow>,

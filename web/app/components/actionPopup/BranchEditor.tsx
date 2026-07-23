@@ -1,13 +1,15 @@
 import type { DATA_EVY_Flow, DATA_EVY_Page, DATA_EVY_Row } from "evy-types";
 import { EVY_CORE_SERVICE } from "evy-types/coreResources";
 import { MARKETPLACE_SERVICE } from "evy-types/marketplaceResources";
-import { useCallback, useMemo } from "react";
+import { useCallback, useMemo, useState } from "react";
 import type { ServiceResource } from "../../types/resources";
 import {
 	type ActionFunction,
+	getCreateSubmitWithFlow,
 	parseBranch,
 	ROW_ID_ARG_FUNCTIONS,
 	serializeBranch,
+	setCreateSubmitWithFlow,
 	ZERO_ARG_FUNCTIONS,
 } from "../../utils/actionBranch";
 import {
@@ -20,6 +22,7 @@ import type { IdCandidate } from "../../utils/idCandidates";
 import { displayLabel } from "../../utils/labelFormatting";
 import { BuilderAssist } from "../BuilderAssist";
 import { type PopoverOption, PopoverSelect } from "../PopoverSelect";
+import { Toggle } from "../Toggle";
 import { BRANCH_FUNCTION_OPTIONS } from "./actionPopupConstants";
 
 type BranchEditorProps = {
@@ -198,7 +201,15 @@ export function BranchEditor({
 		[selectedFunction, args, onChange],
 	);
 
-	const createUsesSubmitMarker = args[2]?.trim() === "submit";
+	const createHasInlineData =
+		Boolean(args[2]?.trim()) && args[2]?.trim() !== "submit";
+	const [createAwaitingInlineData, setCreateAwaitingInlineData] =
+		useState(false);
+
+	const submitWithFlow =
+		createHasInlineData || createAwaitingInlineData
+			? false
+			: getCreateSubmitWithFlow(args);
 	const updateUsesDraftMode = args[4]?.trim() === "draft";
 
 	const argDropdowns = buildArgDropdowns(
@@ -246,28 +257,21 @@ export function BranchEditor({
 
 			{selectedFunction === "create" && args[0] && args[1] && (
 				<>
-					<PopoverSelect
-						ariaLabel={`${branchId}-create-data-kind`}
-						options={[
-							{ value: "submit", label: "Submit flow drafts" },
-							{ value: "inline", label: "Inline data…" },
-						]}
-						value={createUsesSubmitMarker ? "submit" : "inline"}
-						onChange={(kind) => {
-							if (kind === "submit") {
-								applyArgUpdates([
-									[2, "submit"],
-									[3, ""],
-								]);
-							} else {
-								applyArgUpdates([
-									[2, ""],
-									[3, ""],
-								]);
-							}
+					<Toggle
+						ariaLabel={`${branchId}-create-submit-with-flow`}
+						label="Submit later with flow"
+						checked={submitWithFlow}
+						onChange={(checked) => {
+							setCreateAwaitingInlineData(!checked);
+							applyArgUpdates(
+								setCreateSubmitWithFlow(args, checked).map(
+									(value, index) =>
+										[index, value] as [number, string],
+								),
+							);
 						}}
 					/>
-					{!createUsesSubmitMarker && (
+					{!submitWithFlow && (
 						<>
 							<BuilderAssist
 								ariaLabel={`${branchId}-create-data`}

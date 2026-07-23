@@ -646,6 +646,101 @@ test.describe("Row configuration", () => {
 		await expect(configPanel.getByText("Action 2")).not.toBeVisible();
 	});
 
+	test("should toggle create submit-with-flow and persist inline data", async ({
+		page,
+	}) => {
+		await initFullFlows(
+			page,
+			[
+				{
+					id: "flow_create_toggle",
+					name: "Create Toggle Flow",
+					pages: [
+						{
+							id: "page_create_toggle",
+							title: "Create Page",
+							rows: [
+								{
+									id: "row_create_toggle_btn",
+									type: "Button",
+									source: "",
+									title: "",
+									label: "Create Toggle",
+									actions: {
+										tap: [
+											{
+												condition: "",
+												false: "",
+												true: `{create(${MARKETPLACE_SERVICE},${MARKETPLACE_RESOURCE.ITEMS},submit)}`,
+											},
+										],
+									},
+								},
+							],
+						},
+					],
+				},
+			],
+			TEST_SERVICE_RESOURCES,
+		);
+		await page.goto("/");
+
+		const buttonRow = page
+			.getByText("Create Toggle", { exact: true })
+			.first();
+		await expect(buttonRow).toBeVisible();
+		await buttonRow.click();
+
+		const configPanel = getConfigPanel(page);
+		await configPanel.getByLabel("Edit action 1").click();
+
+		const popup = page.getByRole("dialog", { name: "Edit action 1" });
+		await expect(popup).toBeVisible();
+
+		const submitWithFlowSwitch = popup.getByRole("switch", {
+			name: "true-0-create-submit-with-flow",
+		});
+		await expect(submitWithFlowSwitch).toHaveAttribute(
+			"aria-checked",
+			"true",
+		);
+
+		await submitWithFlowSwitch.click();
+		await expect(submitWithFlowSwitch).toHaveAttribute(
+			"aria-checked",
+			"false",
+		);
+
+		const createDataField = popup.getByLabel("true-0-create-data");
+		await expect(createDataField).toBeVisible();
+		await createDataField.fill("pickup_address");
+
+		await popup.getByRole("button", { name: "Save" }).click();
+		await expect(popup).not.toBeVisible();
+
+		await expect(
+			configPanel.getByText("create(Marketplace, item, submit)", {
+				exact: true,
+			}),
+		).not.toBeVisible();
+		await expect(
+			configPanel.getByText("create(Marketplace, item, pickup_address)", {
+				exact: true,
+			}),
+		).toBeVisible();
+
+		await configPanel.getByLabel("Edit action 1").click();
+		const reopenedPopup = page.getByRole("dialog", {
+			name: "Edit action 1",
+		});
+		await expect(reopenedPopup).toBeVisible();
+		await expect(
+			reopenedPopup.getByRole("switch", {
+				name: "true-0-create-submit-with-flow",
+			}),
+		).toHaveAttribute("aria-checked", "false");
+	});
+
 	test("should load pre-populated action fields correctly in popup", async ({
 		page,
 	}) => {
