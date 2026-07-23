@@ -1,5 +1,4 @@
 import { mock } from "bun:test";
-import { fuzzystrmatch } from "@electric-sql/pglite/contrib/fuzzystrmatch";
 import { createPgliteTestDatabase as createPgliteTestDatabaseWithSchema } from "evy-types/wsTestHelpers";
 
 import { schema } from "../db";
@@ -9,7 +8,7 @@ export type PgliteTestDb = ReturnType<
 >["testDb"];
 
 export function createPgliteTestDatabase() {
-	return createPgliteTestDatabaseWithSchema(schema, { fuzzystrmatch });
+	return createPgliteTestDatabaseWithSchema(schema);
 }
 
 /** Replaces `../db` with an in-memory PGlite instance for the importing test file. */

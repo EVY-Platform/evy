@@ -168,7 +168,7 @@ Variable: "2024-01-19T12:42:52.000Z"
 Outputs: Jan
 ```
 
-Input is an ISO 8601 / RFC 3339 string or a local ISO datetime string without a timezone (e.g. `"2024-01-19T12:42:52"`). TimeslotPicker row content uses parser format strings such as `{formatDatetime($datum, "EEE d")}` and `{formatDatetime($datum, "HH:mm")}`. Calendar row content uses plain date/time patterns such as `EEE d` and `HH:mm`; legacy parser format strings remain supported during migration.
+Input is an ISO 8601 / RFC 3339 string or a local ISO datetime string without a timezone (e.g. `"2024-01-19T12:42:52"`). TimeslotPicker row content uses parser format strings such as `{formatDatetime($datum, "EEE d")}` and `{formatDatetime($datum, "HH:mm")}`. Calendar row content uses plain date/time patterns such as `EEE d` and `HH:mm`.
 
 Supported format tokens:
 

@@ -13,10 +13,6 @@ enum EVYDatetime {
 
   static func formatCalendarValue(_ value: String, patternOrExpression: String?) -> String {
     guard let patternOrExpression else { return value }
-    // TODO: remove after migration
-    if patternOrExpression.contains("$datum") {
-      return format(value, format: patternOrExpression)
-    }
     let expression = "{formatDatetime($datum, \"\(patternOrExpression)\")}"
     return format(value, format: expression)
   }
