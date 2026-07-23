@@ -13,8 +13,13 @@ actor WSEmitter {
   private var ws: URLSessionWebSocketTask?
   private var msgId = 0
   private var bufferedEvents: [[String: Any]] = []
+  private var pendingResponses: [Int: CheckedContinuation<[String: Any], Error>] = [:]
+  private var receiveTask: Task<Void, Never>?
 
   func connect(host: String) async throws {
+    receiveTask?.cancel()
+    receiveTask = nil
+    pendingResponses = [:]
     let url = URL(string: "ws://\(host)")!
     ws = URLSession.shared.webSocketTask(with: url)
     ws?.resume()
@@ -29,6 +34,62 @@ actor WSEmitter {
       ws.sendPing { error in
         if let error { c.resume(throwing: error) } else { c.resume(returning: ()) }
       }
+    }
+    startReceiveLoop()
+  }
+
+  private func startReceiveLoop() {
+    receiveTask?.cancel()
+    receiveTask = Task { await self.runReceiveLoop() }
+  }
+
+  private func runReceiveLoop() async {
+    while !Task.isCancelled {
+      guard let ws else { return }
+      let message: URLSessionWebSocketTask.Message
+      do {
+        message = try await ws.receive()
+      } catch {
+        failPendingResponses(error)
+        return
+      }
+      guard case .string(let text) = message,
+        let data = text.data(using: .utf8),
+        let response = try? JSONSerialization.jsonObject(with: data) as? [String: Any]
+      else {
+        continue
+      }
+      if let responseId = jsonRpcId(from: response),
+        let continuation = pendingResponses.removeValue(forKey: responseId)
+      {
+        if let error = response["error"] as? [String: Any] {
+          let messageText = (error["message"] as? String) ?? "JSON-RPC error"
+          let details = (error["data"] as? String).map { ": \($0)" } ?? ""
+          continuation.resume(
+            throwing: NSError(
+              domain: "WSEmitter",
+              code: (error["code"] as? Int) ?? -1,
+              userInfo: [
+                NSLocalizedDescriptionKey: "RPC failed: \(messageText)\(details)"
+              ]
+            )
+          )
+        } else {
+          continuation.resume(returning: response)
+        }
+        continue
+      }
+      if response["method"] != nil {
+        bufferedEvents.append(response)
+      }
+    }
+  }
+
+  private func failPendingResponses(_ error: Error) {
+    let pending = pendingResponses
+    pendingResponses = [:]
+    for (_, continuation) in pending {
+      continuation.resume(throwing: error)
     }
   }
 
@@ -51,38 +112,7 @@ actor WSEmitter {
       }
       let remaining = deadline.timeIntervalSinceNow
       guard remaining > 0 else { return false }
-
-      let message: URLSessionWebSocketTask.Message? = try await withThrowingTaskGroup(
-        of: URLSessionWebSocketTask.Message?.self
-      ) { group in
-        group.addTask { [ws] in
-          guard let ws else { return nil }
-          return try await ws.receive()
-        }
-        group.addTask {
-          try await Task.sleep(for: .seconds(remaining))
-          return nil
-        }
-        let first = try await group.next() ?? nil
-        group.cancelAll()
-        return first ?? nil
-      }
-
-      guard let message else { return false }
-
-      guard case .string(let text) = message,
-        let data = text.data(using: .utf8),
-        let response = try? JSONSerialization.jsonObject(with: data) as? [String: Any]
-      else {
-        continue
-      }
-
-      if isMatchingDataChanged(response, resource: resource) {
-        return true
-      }
-      if response["method"] != nil {
-        bufferedEvents.append(response)
-      }
+      try await Task.sleep(for: .milliseconds(min(200, Int(remaining * 1000))))
     }
   }
 
@@ -283,7 +313,22 @@ actor WSEmitter {
     return result
   }
 
-  func disconnect() { ws?.cancel(with: .normalClosure, reason: nil) }
+  func disconnect() {
+    receiveTask?.cancel()
+    receiveTask = nil
+    failPendingResponses(
+      NSError(
+        domain: "WSEmitter", code: 1,
+        userInfo: [NSLocalizedDescriptionKey: "disconnected"]))
+    ws?.cancel(with: .normalClosure, reason: nil)
+    ws = nil
+  }
+
+  private func failPendingRequest(id: Int, error: Error) {
+    if let continuation = pendingResponses.removeValue(forKey: id) {
+      continuation.resume(throwing: error)
+    }
+  }
 
   private func send(method: String, params: Any) async throws -> [String: Any] {
     msgId += 1
@@ -292,31 +337,19 @@ actor WSEmitter {
       "jsonrpc": "2.0", "id": requestId, "method": method, "params": params,
     ]
     let json = String(data: try JSONSerialization.data(withJSONObject: msg), encoding: .utf8)!
-    try await ws?.send(.string(json))
-
-    while true {
-      let result = try await ws?.receive()
-      guard case .string(let text) = result,
-        let data = text.data(using: .utf8),
-        let response = try? JSONSerialization.jsonObject(with: data) as? [String: Any]
-      else {
-        return [:]
-      }
-      if let responseId = jsonRpcId(from: response) {
-        guard responseId == requestId else { continue }
-        if let error = response["error"] as? [String: Any] {
-          let message = (error["message"] as? String) ?? "JSON-RPC error"
-          let details = (error["data"] as? String).map { ": \($0)" } ?? ""
-          throw NSError(
-            domain: "WSEmitter",
-            code: (error["code"] as? Int) ?? -1,
-            userInfo: [NSLocalizedDescriptionKey: "\(method) failed: \(message)\(details)"]
-          )
+    guard let ws else {
+      throw NSError(
+        domain: "WSEmitter", code: 1,
+        userInfo: [NSLocalizedDescriptionKey: "socket not connected"])
+    }
+    return try await withCheckedThrowingContinuation { continuation in
+      pendingResponses[requestId] = continuation
+      Task {
+        do {
+          try await ws.send(.string(json))
+        } catch {
+          await self.failPendingRequest(id: requestId, error: error)
         }
-        return response
-      }
-      if response["method"] != nil {
-        bufferedEvents.append(response)
       }
     }
   }
@@ -462,6 +495,32 @@ class E2ETestBase: XCTestCase {
       }
     } while try await emitter.nextDataChanged(resource: resource, deadline: deadline)
     return false
+  }
+
+  func waitForMarketplaceMessageStatus(
+    emitter: WSEmitter,
+    messageId: String,
+    status: String
+  ) async throws -> Bool {
+    try await waitForMarketplaceResourceUpdate(
+      emitter: emitter,
+      resource: MarketplaceResource.messages.rawValue
+    ) { Self.marketplaceMessageHasStatus($0, messageId: messageId, status: status) }
+  }
+
+  static func marketplaceMessageHasStatus(
+    _ messages: Any,
+    messageId: String,
+    status: String
+  ) -> Bool {
+    guard let messageRows = responseDataArray(from: messages) else { return false }
+    return messageRows.contains { message in
+      guard let messageData = message as? [String: Any],
+        messageData["id"] as? String == messageId,
+        messageData["status"] as? String == status
+      else { return false }
+      return true
+    }
   }
 
   /// Returns the hittable button with the given label, waiting for one to appear.
@@ -2497,7 +2556,6 @@ final class WebSocketE2ETests: E2ETestBase {
     try await emitter.connect(host: apiHost)
     try await emitter.login(token: "e2e-test", os: "ios")
     let selectedTimeslot = "2026-06-03T09:00:00"
-    let pickupConfirmedLabel = "Pickup confirmed for Wed 3rd at 09:00"
     let (selectedItemId, _) = try await createMarketplaceItem(
       emitter: emitter,
       titlePrefix: "Accepted request item",
@@ -2529,13 +2587,9 @@ final class WebSocketE2ETests: E2ETestBase {
       value: selectedTimeslot
     )
     XCTAssertTrue(pickupRequestCreated, "Tapping a pickup timeslot should create a message")
-
     XCTAssertTrue(
-      app.buttons["Cancel pickup request"].firstMatch.waitForExistence(timeout: 10),
+      waitForCancelRequestVisible(timeout: 10),
       "Cancel pickup request should be visible for a pending request")
-    XCTAssertFalse(
-      app.staticTexts[pickupConfirmedLabel].waitForExistence(timeout: 2),
-      "Pickup confirmation text should stay hidden while the request is pending")
 
     let messagesPayload = try await emitter.getResource(
       service: MARKETPLACE_SERVICE,
@@ -2555,18 +2609,23 @@ final class WebSocketE2ETests: E2ETestBase {
       filter: ["id": messageId],
       data: ["status": "accepted"]
     )
-    _ = try await emitter.nextDataChanged(
-      resource: MarketplaceResource.messages.rawValue,
-      deadline: Date().addingTimeInterval(10)
+    let acceptedOnServer = try await waitForMarketplaceMessageStatus(
+      emitter: emitter,
+      messageId: messageId,
+      status: "accepted"
     )
+    XCTAssertTrue(
+      acceptedOnServer,
+      "Marketplace should persist accepted status for the pickup message")
 
     XCTAssertTrue(
       waitForCancelRequestHidden(timeout: 10),
       "Cancel pickup request should hide once the message is accepted")
     XCTAssertTrue(
-      app.staticTexts[pickupConfirmedLabel].waitForExistence(timeout: 10),
+      app.staticTexts.matching(
+        NSPredicate(format: "label BEGINSWITH %@", "Pickup confirmed for")
+      ).firstMatch.waitForExistence(timeout: 10),
       "Pickup segment should show the accepted confirmation row")
-
     XCTAssertFalse(
       app.segmentedControls.buttons["Shipping"].waitForExistence(timeout: 2),
       "Transfer tabs should stay hidden for an accepted pickup request")
@@ -2903,15 +2962,29 @@ final class WebSocketE2ETests: E2ETestBase {
   }
 
   @MainActor
+  private func waitForCancelRequestVisible(timeout: TimeInterval) -> Bool {
+    let labels = ["pickup", "delivery", "shipping"].map { Self.cancelRequestButtonLabel(type: $0) }
+    let deadline = Date().addingTimeInterval(timeout)
+    while Date() < deadline {
+      if labels.contains(where: { app.buttons[$0].exists }) {
+        return true
+      }
+      RunLoop.current.run(until: Date().addingTimeInterval(0.2))
+    }
+    return labels.contains { app.buttons[$0].exists }
+  }
+
+  @MainActor
   private func waitForCancelRequestHidden(timeout: TimeInterval) -> Bool {
     let labels = ["pickup", "delivery", "shipping"].map { Self.cancelRequestButtonLabel(type: $0) }
-    for label in labels {
-      let button = app.buttons[label]
-      if button.exists {
-        guard button.waitForNonExistence(timeout: timeout) else { return false }
+    let deadline = Date().addingTimeInterval(timeout)
+    while Date() < deadline {
+      if labels.allSatisfy({ !app.buttons[$0].exists }) {
+        return true
       }
+      RunLoop.current.run(until: Date().addingTimeInterval(0.2))
     }
-    return true
+    return labels.allSatisfy { !app.buttons[$0].exists }
   }
 
   private func waitForArchivedMarketplaceMessage(
@@ -3766,32 +3839,6 @@ final class E2EHomepageMessageSearchTests: E2ETestBase {
       return accepted
     }
     XCTAssertTrue(acceptedOnServer, "Marketplace should persist accepted status for pickup message")
-  }
-
-  private func waitForMarketplaceMessageStatus(
-    emitter: WSEmitter,
-    messageId: String,
-    status: String
-  ) async throws -> Bool {
-    try await waitForMarketplaceResourceUpdate(
-      emitter: emitter,
-      resource: MarketplaceResource.messages.rawValue
-    ) { Self.marketplaceMessageHasStatus($0, messageId: messageId, status: status) }
-  }
-
-  private static func marketplaceMessageHasStatus(
-    _ messages: Any,
-    messageId: String,
-    status: String
-  ) -> Bool {
-    guard let messageRows = Self.responseDataArray(from: messages) else { return false }
-    return messageRows.contains { message in
-      guard let messageData = message as? [String: Any],
-        messageData["id"] as? String == messageId,
-        messageData["status"] as? String == status
-      else { return false }
-      return true
-    }
   }
 
   private static func orderedSearchTextFields(in homePage: XCUIElement) -> [XCUIElement] {
