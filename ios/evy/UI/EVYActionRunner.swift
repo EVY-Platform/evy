@@ -104,7 +104,8 @@ enum EVYActionRunner {
         let createdId = try EVY.create(
           namespace: createAction.namespace,
           resource: createAction.resource,
-          data: resolvedData
+          data: resolvedData,
+          isSubmission: createAction.isSubmission
         )
         if let idDestination = createAction.idDestination {
           try EVY.writeRawStringValue(createdId, to: idDestination)

@@ -106,6 +106,13 @@ enum EVYDraft {
       splitScopeId(scopeId)?.key
     }
 
+    static func isActiveCreateScope(
+      for resource: String,
+      activeScopeId: String?
+    ) -> Bool {
+      entityKey(fromScopeId: activeScopeId) == resource
+    }
+
     static func flowId(fromScopeId scopeId: String?) -> String? {
       splitScopeId(scopeId)?.flowId
     }

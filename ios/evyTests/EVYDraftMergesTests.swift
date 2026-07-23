@@ -31,7 +31,7 @@ final class EVYCreateMergesDraftsTests: XCTestCase {
     EVY.ensureDraftExists(variableName: "items.title", scopeId: testDraftScope)
     try EVY.updateValue("User Title", destination: "{items.title}", scopeId: testDraftScope)
 
-    try EVY.create(namespace: EVYNamespace.marketplace, resource: "items")
+    try EVY.create(namespace: EVYNamespace.marketplace, resource: "items", isSubmission: true)
 
     let instances = try EVY.publicStore.getAll(
       namespace: EVYNamespace.marketplace, resource: "items")
@@ -65,7 +65,7 @@ final class EVYCreateMergesDraftsTests: XCTestCase {
     )
     EVY.draftStore.notifyUpdate(binding: priceBinding)
 
-    try EVY.create(namespace: EVYNamespace.marketplace, resource: "items")
+    try EVY.create(namespace: EVYNamespace.marketplace, resource: "items", isSubmission: true)
 
     let instances = try EVY.publicStore.getAll(
       namespace: EVYNamespace.marketplace, resource: "items")
@@ -101,7 +101,7 @@ final class EVYCreateMergesDraftsTests: XCTestCase {
 
     EVY.ensureDraftExists(variableName: "items.title", scopeId: testDraftScope)
     try EVY.updateValue("New Item", destination: "{items.title}", scopeId: testDraftScope)
-    try EVY.create(namespace: EVYNamespace.marketplace, resource: "items")
+    try EVY.create(namespace: EVYNamespace.marketplace, resource: "items", isSubmission: true)
 
     let instances = try EVY.publicStore.getAll(
       namespace: EVYNamespace.marketplace, resource: "items")
@@ -127,7 +127,7 @@ final class EVYCreateMergesDraftsTests: XCTestCase {
     try EVY.updateValue(
       "500", destination: "{items.dimensions.width}", scopeId: testDraftScope)
 
-    try EVY.create(namespace: EVYNamespace.marketplace, resource: "items")
+    try EVY.create(namespace: EVYNamespace.marketplace, resource: "items", isSubmission: true)
 
     let instances = try EVY.publicStore.getAll(
       namespace: EVYNamespace.marketplace, resource: "items")
@@ -207,7 +207,7 @@ final class EVYCreateMergesDraftsTests: XCTestCase {
       to: "{pickup_address}"
     )
 
-    _ = try EVY.create(namespace: EVYNamespace.marketplace, resource: itemsResource)
+    _ = try EVY.create(namespace: EVYNamespace.marketplace, resource: itemsResource, isSubmission: true)
 
     let items = try EVY.publicStore.getAll(
       namespace: EVYNamespace.marketplace, resource: itemsResource)
@@ -271,7 +271,7 @@ final class EVYCreateMergesDraftsTests: XCTestCase {
       existingDict["transfer_options"],
       "address_id must not patch the first existing row of the items resource")
 
-    _ = try EVY.create(namespace: EVYNamespace.marketplace, resource: itemsResource)
+    _ = try EVY.create(namespace: EVYNamespace.marketplace, resource: itemsResource, isSubmission: true)
 
     let items = try EVY.publicStore.getAll(
       namespace: EVYNamespace.marketplace, resource: itemsResource)
@@ -292,7 +292,7 @@ final class EVYCreateMergesDraftsTests: XCTestCase {
     XCTAssertEqual(pickup["address_id"], .string(linkedAddressId))
   }
 
-  func testCreateFallsBackToMergingActiveScopeWhenNotAFlowSubmissionScope() throws {
+  func testSubmitCreateThrowsWhenActiveScopeIsNotCreateScopeForResource() throws {
     let browseScope = "flow-1:browse"
     EVY.draftStore.activeScopeId = browseScope
     defer {
@@ -303,21 +303,22 @@ final class EVYCreateMergesDraftsTests: XCTestCase {
     EVY.ensureDraftExists(variableName: "title", scopeId: browseScope)
     try EVY.updateValue("Stray Title", destination: "{title}", scopeId: browseScope)
 
-    try EVY.create(namespace: EVYNamespace.marketplace, resource: "items")
-
-    let instances = try EVY.publicStore.getAll(
-      namespace: EVYNamespace.marketplace, resource: "items")
-    XCTAssertEqual(instances.count, 1, "Expected one created item")
-
-    let created = try instances[0].decoded()
-    guard case .dictionary(let dict) = created else {
-      XCTFail("expected dictionary")
-      return
+    XCTAssertThrowsError(
+      try EVY.create(
+        namespace: EVYNamespace.marketplace, resource: "items", isSubmission: true)
+    ) { error in
+      guard let evyError = error as? EVYError else {
+        return XCTFail("expected EVYError, got \(error)")
+      }
+      if case .invalidData(let context) = evyError {
+        XCTAssertTrue(context.contains("active create scope"))
+      } else {
+        XCTFail("expected invalidData, got \(evyError)")
+      }
     }
-    XCTAssertEqual(dict["title"], .string("Stray Title"))
 
     XCTAssertEqual(
       try EVY.draftStore.drafts(forScopeId: browseScope).count, 1,
-      "Fallback create should not clean up drafts outside a flow-submission scope")
+      "Failed submit create should not clean up browse-scope drafts")
   }
 }

@@ -7,9 +7,12 @@ import {
 	applyCreateModeForDraftSignals,
 	createHasInlineDataArg,
 	createUsesSubmitMarker,
+	finalizeCreateBranchForSave,
 	formatBranchDisplay,
+	isValidCreateBranchForSave,
 	parseBranch,
 	serializeBranch,
+	updateUsesDraftMarker,
 } from "./actionBranch";
 
 describe("action branch helpers", () => {
@@ -40,7 +43,7 @@ describe("action branch helpers", () => {
 		it("writes submit when draft signals are offered", () => {
 			expect(
 				applyCreateModeForDraftSignals([serviceId, resourceId], true),
-			).toEqual([serviceId, resourceId, "submit", ""]);
+			).toEqual([serviceId, resourceId, "submit"]);
 		});
 
 		it("clears submit when draft signals are not offered", () => {
@@ -49,7 +52,77 @@ describe("action branch helpers", () => {
 					[serviceId, resourceId, "submit"],
 					false,
 				),
-			).toEqual([serviceId, resourceId, "", ""]);
+			).toEqual([serviceId, resourceId, ""]);
+		});
+
+		it("returns the same reference when submit mode is already correct", () => {
+			const args = [serviceId, resourceId, "submit"];
+			expect(applyCreateModeForDraftSignals(args, true)).toBe(args);
+		});
+
+		it("detects draft-mode update marker", () => {
+			expect(
+				updateUsesDraftMarker([
+					serviceId,
+					resourceId,
+					"{}",
+					"{title: x}",
+					"draft",
+				]),
+			).toBe(true);
+			expect(
+				updateUsesDraftMarker([
+					serviceId,
+					resourceId,
+					"{}",
+					"{title: x}",
+				]),
+			).toBe(false);
+		});
+
+		it("validates create branches for save", () => {
+			expect(
+				isValidCreateBranchForSave(
+					[serviceId, resourceId, "submit"],
+					true,
+				),
+			).toBe(true);
+			expect(
+				isValidCreateBranchForSave(
+					[serviceId, resourceId, "pickup_address"],
+					false,
+				),
+			).toBe(true);
+			expect(
+				isValidCreateBranchForSave([serviceId, resourceId], false),
+			).toBe(false);
+			expect(
+				isValidCreateBranchForSave(
+					[serviceId, resourceId, "submit"],
+					false,
+				),
+			).toBe(false);
+		});
+
+		it("finalizes create branches for save", () => {
+			expect(
+				finalizeCreateBranchForSave(
+					`{create(${serviceId},${resourceId})}`,
+					true,
+				),
+			).toBe(`{create(${serviceId},${resourceId},submit)}`);
+			expect(
+				finalizeCreateBranchForSave(
+					`{create(${serviceId},${resourceId},submit)}`,
+					false,
+				),
+			).toBeNull();
+			expect(
+				finalizeCreateBranchForSave(
+					`{create(${serviceId},${resourceId},pickup_address)}`,
+					true,
+				),
+			).toBe(`{create(${serviceId},${resourceId},pickup_address)}`);
 		});
 
 		it("preserves inline data when draft signals change", () => {

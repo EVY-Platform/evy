@@ -3,46 +3,10 @@ import {
 	MARKETPLACE_RESOURCE,
 	MARKETPLACE_SERVICE,
 } from "evy-types/marketplaceResources";
-import {
-	destinationDraftsTargetResource,
-	flowHasDraftUpdateForResource,
-	shouldOfferCreateSubmitWithFlow,
-} from "./createDraftSignals";
+import { shouldOfferCreateSubmitWithFlow } from "./createDraftSignals";
 
 describe("createDraftSignals", () => {
 	const itemResourceId = MARKETPLACE_RESOURCE.ITEMS;
-
-	it("detects destinations scoped to a resource id", () => {
-		expect(
-			destinationDraftsTargetResource(
-				[`${itemResourceId}.title`, "pickup_address"],
-				itemResourceId,
-			),
-		).toBe(true);
-		expect(
-			destinationDraftsTargetResource(["pickup_address"], itemResourceId),
-		).toBe(false);
-	});
-
-	it("detects draft-mode update actions for a service and resource", () => {
-		const branches = [
-			`{update(${MARKETPLACE_SERVICE},${itemResourceId},{},{title: x},draft)}`,
-		];
-		expect(
-			flowHasDraftUpdateForResource(
-				branches,
-				MARKETPLACE_SERVICE,
-				itemResourceId,
-			),
-		).toBe(true);
-		expect(
-			flowHasDraftUpdateForResource(
-				["{close()}"],
-				MARKETPLACE_SERVICE,
-				itemResourceId,
-			),
-		).toBe(false);
-	});
 
 	it("offers submit create when destinations target the resource", () => {
 		expect(
@@ -50,7 +14,18 @@ describe("createDraftSignals", () => {
 				MARKETPLACE_SERVICE,
 				itemResourceId,
 				[`${itemResourceId}.price`],
+				new Set(),
+			),
+		).toBe(true);
+	});
+
+	it("offers submit create when a draft-mode update targets the resource", () => {
+		expect(
+			shouldOfferCreateSubmitWithFlow(
+				MARKETPLACE_SERVICE,
+				itemResourceId,
 				[],
+				new Set([`${MARKETPLACE_SERVICE}/${itemResourceId}`]),
 			),
 		).toBe(true);
 	});
@@ -61,7 +36,7 @@ describe("createDraftSignals", () => {
 				MARKETPLACE_SERVICE,
 				itemResourceId,
 				["pickup_address"],
-				[],
+				new Set(),
 			),
 		).toBe(false);
 	});

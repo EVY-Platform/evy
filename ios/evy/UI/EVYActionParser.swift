@@ -38,14 +38,10 @@ enum EVYActionParser {
       return nil
     }
     let args = EVY.splitFunctionArguments(parsed.args)
-    guard args.count >= 2 else { return nil }
+    guard args.count >= 3 else { return nil }
     let namespace = args[0].trimmingCharacters(in: .whitespacesAndNewlines)
     let resource = args[1].trimmingCharacters(in: .whitespacesAndNewlines)
     guard !namespace.isEmpty, !resource.isEmpty else { return nil }
-
-    if args.count == 2 {
-      return nil
-    }
 
     let thirdArg = args[2].trimmingCharacters(in: .whitespacesAndNewlines)
     if thirdArg == "submit" {

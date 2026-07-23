@@ -180,6 +180,8 @@ struct ContentView: View {
         return
       }
 
+      EVYFlowStore.validateSubmissionResources(flowId: newFlowId)
+
       for key in EVYFlowStore.createKeys(flowId: previousFlowId) {
         EVY.draftStore.deleteDrafts(
           scopeId: EVYDraft.createMergeScopeId(

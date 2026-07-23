@@ -88,6 +88,25 @@ export function rowLocationLabel(
 }
 
 /**
+ * Visits every row reachable from every page of a single flow.
+ */
+export function forEachRowInFlow(
+	flow: DATA_EVY_Flow,
+	pagesById: Record<string, DATA_EVY_Page>,
+	rowsById: Record<string, DATA_EVY_Row>,
+	visit: (id: string, row: DATA_EVY_Row) => void,
+): void {
+	for (const pageId of flow.pageIds) {
+		const page = pagesById[pageId];
+		if (!page) continue;
+		walkRows(rowsById, pageRootIds(page), (id, row) => {
+			visit(id, row);
+			return null;
+		});
+	}
+}
+
+/**
  * Visits every row reachable from every page of every flow. Returns the first
  * non-null value produced by visit (early exit), or null after visiting all.
  */

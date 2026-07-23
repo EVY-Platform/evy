@@ -736,7 +736,7 @@ final class EVYActionRunnerTests: XCTestCase {
     XCTAssertEqual(updatedId, addressId)
     XCTAssertEqual(updatedAddress["street"], .string("99 George Street"))
 
-    _ = try EVY.create(namespace: marketplaceNamespace, resource: itemsResource)
+    _ = try EVY.create(namespace: marketplaceNamespace, resource: itemsResource, isSubmission: true)
     let items = try EVY.publicStore.getAll(
       namespace: marketplaceNamespace, resource: itemsResource)
     XCTAssertEqual(items.count, 1)

@@ -115,14 +115,29 @@ extension EVY {
   static func create(
     namespace: String,
     resource: String,
-    data: [String: EVYJson]? = nil
+    data: [String: EVYJson]? = nil,
+    isSubmission: Bool = false
   ) throws -> String {
     if let data {
+      if isSubmission {
+        throw EVYError.invalidData(
+          context: "submit create cannot include inline data")
+      }
       return try createWithGeneratedId(namespace: namespace, resource: resource, payload: data)
     }
 
+    guard isSubmission else {
+      throw EVYError.invalidData(
+        context:
+          "create requires namespace, resource, and submit or data, e.g. create(marketplace,item,submit)"
+      )
+    }
+
     let scopeForMerge = draftStore.activeScopeId
-    let isFlowSubmission = EVYDraft.Scope.entityKey(fromScopeId: scopeForMerge) == resource
+    guard EVYDraft.Scope.isActiveCreateScope(for: resource, activeScopeId: scopeForMerge) else {
+      throw EVYError.invalidData(
+        context: "submit create requires an active create scope for \(resource)")
+    }
 
     var mergedPayload: EVYJson = .dictionary([:])
     let draftEntries = scopeForMerge.flatMap { try? draftStore.drafts(forScopeId: $0) } ?? []
@@ -137,7 +152,7 @@ extension EVY {
       // Flow submission only merges entity-field drafts (`{resource.field}` → explicitPath).
       // Page-local aliases like `{pickup_address}` stay off the item — the address lives in
       // core `addresses`, linked via `transfer_options.pickup.address_id`.
-      if isFlowSubmission, case .aliasFlat = binding.mergeMode {
+      if case .aliasFlat = binding.mergeMode {
         continue
       }
       mergedPayload = EVYDraft.merge(binding: binding, value: draftValue, into: mergedPayload)
@@ -149,7 +164,7 @@ extension EVY {
     let createdId = try createWithGeneratedId(
       namespace: namespace, resource: resource, payload: payload)
 
-    if isFlowSubmission, let scopeForMerge {
+    if let scopeForMerge {
       draftStore.deleteDrafts(scopeId: scopeForMerge)
       if let flowId = EVYDraft.Scope.flowId(fromScopeId: scopeForMerge) {
         resetEphemeralDrafts(forFlowId: flowId)
@@ -265,6 +280,14 @@ extension EVY {
         []
       }
 
+    let decodedCacheRows: [(row: EVYData, recordId: String)] = cacheRowsForScope.compactMap {
+      cacheRow in
+      guard case .dictionary(let cachedRecord) = try? cacheRow.decoded(),
+        case .string(let cachedId) = cachedRecord["id"]
+      else { return nil }
+      return (cacheRow, cachedId)
+    }
+
     for update in matchedUpdates {
       let encodedData = try JSONEncoder().encode(update.updatedData)
       try publicStore.update(
@@ -274,12 +297,8 @@ extension EVY {
         value: encodedData
       )
 
-      if let scopeId = activeCacheScopeId, !cacheRowsForScope.isEmpty {
-        for cacheRow in cacheRowsForScope {
-          guard case .dictionary(let cachedRecord) = try? cacheRow.decoded(),
-            case .string(let cachedId) = cachedRecord["id"],
-            cachedId == update.recordId
-          else { continue }
+      if let scopeId = activeCacheScopeId, !decodedCacheRows.isEmpty {
+        for (cacheRow, cachedId) in decodedCacheRows where cachedId == update.recordId {
           try cacheStore.update(
             namespace: EVYNamespace.cache,
             resource: scopeId,
@@ -301,9 +320,14 @@ extension EVY {
   }
 
   static func mergeIntoActiveDraft(resource: String, changes: [String: EVYJson]) throws {
-    guard EVYDraft.Scope.entityKey(fromScopeId: draftStore.activeScopeId) == resource else {
+    guard
+      EVYDraft.Scope.isActiveCreateScope(
+        for: resource,
+        activeScopeId: draftStore.activeScopeId
+      )
+    else {
       throw EVYError.invalidData(
-        context: "draft-mode update requires an active create scope for <resource>")
+        context: "draft-mode update requires an active create scope for \(resource)")
     }
     for (key, value) in changes {
       try writeRawValue(value, to: "{\(resource).\(key)}")
@@ -397,8 +421,10 @@ extension EVY {
     // Create-merge scopes must not fall through to findRowForUpdate for the entity declared
     // via the flow's submit create: findRowForUpdate returns the first existing row of the
     // resource, so nested writes would patch a seeded listing instead of the create draft.
-    let createEntityKey = EVYDraft.Scope.entityKey(fromScopeId: resolvedScopeId)
-    let writesIntoCreateEntity = createEntityKey != nil && rootVariable == createEntityKey
+    let writesIntoCreateEntity = EVYDraft.Scope.isActiveCreateScope(
+      for: rootVariable,
+      activeScopeId: resolvedScopeId
+    )
 
     if !writesIntoCreateEntity,
       let existingRow = try? findRowForUpdate(store: store, rootVariable: rootVariable)

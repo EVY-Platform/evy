@@ -1,9 +1,29 @@
 import type { DATA_EVY_Flow, DATA_EVY_Page, DATA_EVY_Row } from "evy-types";
-import { parseBranch } from "./actionBranch";
+import {
+	finalizeCreateBranchForSave,
+	parseBranch,
+	updateUsesDraftMarker,
+} from "./actionBranch";
 import { allRowActions, normalizeStoredRowActions } from "./rowActions";
-import { pageRootIds, walkRows } from "./rowTraversal";
+import { forEachRowInFlow } from "./rowTraversal";
+import { unwrapOptionalBraces } from "./unwrapBraces";
 
-export function destinationDraftsTargetResource(
+function extractVariableFromDestination(destination: string): string | null {
+	const trimmed = destination.trim();
+	if (!trimmed.startsWith("{") || !trimmed.endsWith("}")) return null;
+	const inner = unwrapOptionalBraces(trimmed);
+
+	const parenIndex = inner.indexOf("(");
+	if (parenIndex !== -1) {
+		const closeIndex = inner.lastIndexOf(")");
+		if (closeIndex > parenIndex) {
+			return inner.slice(parenIndex + 1, closeIndex).trim();
+		}
+	}
+	return inner;
+}
+
+function destinationDraftsTargetResource(
 	draftVariables: string[],
 	resourceId: string,
 ): boolean {
@@ -12,63 +32,88 @@ export function destinationDraftsTargetResource(
 	);
 }
 
-export function flowHasDraftUpdateForResource(
-	flowActionBranches: string[],
-	serviceId: string,
-	resourceId: string,
-): boolean {
-	for (const branchString of flowActionBranches) {
-		const parsed = parseBranch(branchString);
-		if (parsed?.functionName !== "update") continue;
-		if (parsed.args[0]?.trim() !== serviceId) continue;
-		if (parsed.args[1]?.trim() !== resourceId) continue;
-		if (parsed.args[4]?.trim() !== "draft") continue;
-		return true;
+export type DraftSignals = {
+	draftVariables: string[];
+	draftUpdateTargets: Set<string>;
+};
+
+export function collectDraftSignals(
+	flowsById: Record<string, DATA_EVY_Flow>,
+	pagesById: Record<string, DATA_EVY_Page>,
+	rowsById: Record<string, DATA_EVY_Row>,
+	activeFlowId: string | undefined,
+): DraftSignals {
+	const flow = activeFlowId ? flowsById[activeFlowId] : undefined;
+	if (!flow) {
+		return { draftVariables: [], draftUpdateTargets: new Set() };
 	}
-	return false;
+
+	const variables = new Set<string>();
+	const draftUpdateTargets = new Set<string>();
+
+	forEachRowInFlow(flow, pagesById, rowsById, (_id, row) => {
+		const destination = row.data.destination;
+		if (typeof destination === "string" && destination) {
+			const variable = extractVariableFromDestination(destination);
+			if (variable) variables.add(variable);
+		}
+
+		const actions = normalizeStoredRowActions(row.data.actions);
+		for (const action of allRowActions(actions)) {
+			for (const branchString of [action.true, action.false]) {
+				const trimmed = branchString.trim();
+				if (!trimmed) continue;
+				const parsed = parseBranch(trimmed);
+				if (parsed?.functionName !== "update") continue;
+				const serviceId = parsed.args[0]?.trim();
+				const resourceId = parsed.args[1]?.trim();
+				if (!serviceId || !resourceId) continue;
+				if (!updateUsesDraftMarker(parsed.args)) continue;
+				draftUpdateTargets.add(`${serviceId}/${resourceId}`);
+			}
+		}
+	});
+
+	return {
+		draftVariables: Array.from(variables).sort(),
+		draftUpdateTargets,
+	};
 }
 
 export function shouldOfferCreateSubmitWithFlow(
 	serviceId: string,
 	resourceId: string,
 	draftVariables: string[],
-	flowActionBranches: string[],
+	draftUpdateTargets: Set<string>,
 ): boolean {
 	if (!serviceId || !resourceId) return false;
 	if (destinationDraftsTargetResource(draftVariables, resourceId)) {
 		return true;
 	}
-	return flowHasDraftUpdateForResource(
-		flowActionBranches,
-		serviceId,
-		resourceId,
-	);
+	return draftUpdateTargets.has(`${serviceId}/${resourceId}`);
 }
 
-export function collectFlowActionBranches(
-	flowsById: Record<string, DATA_EVY_Flow>,
-	pagesById: Record<string, DATA_EVY_Page>,
-	rowsById: Record<string, DATA_EVY_Row>,
-	activeFlowId: string | undefined,
-): string[] {
-	const flow = activeFlowId ? flowsById[activeFlowId] : undefined;
-	if (!flow) return [];
+export function finalizeBranchForSave(
+	branchString: string,
+	draftVariables: string[],
+	draftUpdateTargets: Set<string>,
+): string | null {
+	const trimmed = branchString.trim();
+	if (!trimmed) return branchString;
 
-	const branches: string[] = [];
-	for (const pageId of flow.pageIds) {
-		const page = pagesById[pageId];
-		if (!page) continue;
-
-		walkRows(rowsById, pageRootIds(page), (_id, row) => {
-			const actions = normalizeStoredRowActions(row.data.actions);
-			for (const action of allRowActions(actions)) {
-				const trueBranch = action.true.trim();
-				const falseBranch = action.false.trim();
-				if (trueBranch) branches.push(trueBranch);
-				if (falseBranch) branches.push(falseBranch);
-			}
-			return null;
-		});
+	const parsed = parseBranch(trimmed);
+	if (parsed?.functionName !== "create") {
+		return branchString;
 	}
-	return branches;
+
+	const serviceId = parsed.args[0]?.trim() ?? "";
+	const resourceId = parsed.args[1]?.trim() ?? "";
+	const offerSubmit = shouldOfferCreateSubmitWithFlow(
+		serviceId,
+		resourceId,
+		draftVariables,
+		draftUpdateTargets,
+	);
+
+	return finalizeCreateBranchForSave(trimmed, offerSubmit);
 }

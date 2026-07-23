@@ -8,6 +8,7 @@
 import Foundation
 
 private let comparisonBlockPattern = "\\{[^{}\"]+\\}"
+private let comparisonBlockRegex = try! Regex(comparisonBlockPattern)
 private let comparisonOperators = [">=", "<=", "==", "!=", ">", "<"]
 private let propsPattern = "\\{(?!\")[^}^\"]*(?!\")\\}"
 /// Args may contain one level of nested calls, e.g. update(..., {archivedAt: now()})
@@ -628,10 +629,7 @@ private func interpolations(in input: String) -> [(fullMatch: String, inner: Str
 }
 
 private func parseComparisonFromText(_ input: String) -> (fullMatch: String, content: String)? {
-  guard let regex = try? Regex(comparisonBlockPattern) else {
-    return nil
-  }
-  for match in input.matches(of: regex) {
+  for match in input.matches(of: comparisonBlockRegex) {
     let block = String(match.0)
     let comparison = String(block.dropFirst().dropLast())
       .trimmingCharacters(in: .whitespacesAndNewlines)

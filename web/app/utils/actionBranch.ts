@@ -75,26 +75,33 @@ export function parseBranch(branchString: string): ParsedBranch | null {
 	return null;
 }
 
+function trimTrailingEmptyArgs(args: string[]): string[] {
+	let end = args.length;
+	while (end > 0 && !args[end - 1]?.trim()) {
+		end--;
+	}
+	return args.slice(0, end);
+}
+
 export function serializeBranch(
 	functionName: ActionFunction | "",
 	args: string[],
 ): string {
 	if (!functionName) return "";
 
-	// Draft-mode update uses an empty filter (`{}`); do not filter(Boolean) args or positions collapse.
-	const filteredArgs = args.filter(Boolean);
+	const trimmedArgs = trimTrailingEmptyArgs(args);
 
 	if (ZERO_ARG_FUNCTIONS.has(functionName)) {
 		return `{${functionName}()}`;
 	}
 
 	if (ROW_ID_ARG_FUNCTIONS.has(functionName)) {
-		const rowId = filteredArgs[0]?.trim();
+		const rowId = trimmedArgs[0]?.trim();
 		return rowId ? `{${functionName}(${rowId})}` : "";
 	}
 
-	if (filteredArgs.length === 0) return `{${functionName}()}`;
-	return `{${functionName}(${filteredArgs.join(",")})}`;
+	if (trimmedArgs.length === 0) return `{${functionName}()}`;
+	return `{${functionName}(${trimmedArgs.join(",")})}`;
 }
 
 export function createUsesSubmitMarker(args: string[]): boolean {
@@ -106,25 +113,76 @@ export function createHasInlineDataArg(args: string[]): boolean {
 	return Boolean(thirdArg) && thirdArg !== "submit";
 }
 
+export function updateUsesDraftMarker(args: string[]): boolean {
+	return args[4]?.trim() === "draft";
+}
+
 export function applyCreateModeForDraftSignals(
 	args: string[],
 	offerSubmitWithFlow: boolean,
 ): string[] {
-	const newArgs = [...args];
-	while (newArgs.length < 4) {
-		newArgs.push("");
-	}
-	if (createHasInlineDataArg(newArgs)) {
-		return newArgs;
+	if (createHasInlineDataArg(args)) {
+		return args;
 	}
 	if (offerSubmitWithFlow) {
+		if (createUsesSubmitMarker(args) && !args[3]?.trim()) {
+			return args;
+		}
+		const newArgs = [...args];
 		newArgs[2] = "submit";
-		newArgs[3] = "";
-	} else if (createUsesSubmitMarker(newArgs)) {
-		newArgs[2] = "";
-		newArgs[3] = "";
+		if (newArgs.length > 3) {
+			newArgs[3] = "";
+		}
+		return newArgs;
 	}
-	return newArgs;
+	if (createUsesSubmitMarker(args)) {
+		const newArgs = [...args];
+		newArgs[2] = "";
+		if (newArgs.length > 3) {
+			newArgs[3] = "";
+		}
+		return newArgs;
+	}
+	return args;
+}
+
+export function isValidCreateBranchForSave(
+	args: string[],
+	offerSubmitWithFlow: boolean,
+): boolean {
+	const serviceId = args[0]?.trim() ?? "";
+	const resourceId = args[1]?.trim() ?? "";
+	if (!serviceId || !resourceId) return false;
+	if (createHasInlineDataArg(args)) return true;
+	if (offerSubmitWithFlow && createUsesSubmitMarker(args)) return true;
+	return false;
+}
+
+export function finalizeCreateBranchForSave(
+	branchString: string,
+	offerSubmitWithFlow: boolean,
+): string | null {
+	const parsed = parseBranch(branchString);
+	if (parsed?.functionName !== "create") {
+		return branchString;
+	}
+
+	const serviceId = parsed.args[0]?.trim() ?? "";
+	const resourceId = parsed.args[1]?.trim() ?? "";
+	if (!serviceId || !resourceId) {
+		return branchString;
+	}
+
+	const nextArgs = applyCreateModeForDraftSignals(
+		parsed.args,
+		offerSubmitWithFlow,
+	);
+	if (!isValidCreateBranchForSave(nextArgs, offerSubmitWithFlow)) {
+		return null;
+	}
+
+	const nextBranch = serializeBranch("create", nextArgs);
+	return nextBranch === branchString ? branchString : nextBranch;
 }
 
 export function formatBranchDisplay(

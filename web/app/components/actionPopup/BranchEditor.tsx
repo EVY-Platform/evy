@@ -1,15 +1,15 @@
 import type { DATA_EVY_Flow, DATA_EVY_Page, DATA_EVY_Row } from "evy-types";
 import { EVY_CORE_SERVICE } from "evy-types/coreResources";
 import { MARKETPLACE_SERVICE } from "evy-types/marketplaceResources";
-import { useCallback, useLayoutEffect, useMemo } from "react";
+import { useCallback, useMemo } from "react";
 import type { ServiceResource } from "../../types/resources";
 import {
 	type ActionFunction,
-	applyCreateModeForDraftSignals,
-	createUsesSubmitMarker,
+	createHasInlineDataArg,
 	parseBranch,
 	ROW_ID_ARG_FUNCTIONS,
 	serializeBranch,
+	updateUsesDraftMarker,
 	ZERO_ARG_FUNCTIONS,
 } from "../../utils/actionBranch";
 import {
@@ -35,7 +35,7 @@ type BranchEditorProps = {
 	idCandidates: IdCandidate[];
 	rowsById: Record<string, DATA_EVY_Row>;
 	defaultSheetRowId?: string;
-	flowActionBranches: string[];
+	draftUpdateTargets: Set<string>;
 	getAttributeCandidatesForQualifier: (qualifier: string) => IdCandidate[];
 	onChange: (value: string) => void;
 };
@@ -139,7 +139,7 @@ export function BranchEditor({
 	idCandidates,
 	rowsById,
 	defaultSheetRowId,
-	flowActionBranches,
+	draftUpdateTargets,
 	getAttributeCandidatesForQualifier,
 	onChange,
 }: BranchEditorProps) {
@@ -178,52 +178,31 @@ export function BranchEditor({
 			) {
 				return;
 			}
-			let newArgs = [...args];
+			const newArgs = [...args];
 			while (newArgs.length <= argIndex) newArgs.push("");
 			newArgs[argIndex] = argValue;
-			if (
-				selectedFunction === "create" &&
-				(argIndex === 0 || argIndex === 1)
-			) {
-				const serviceId = newArgs[0]?.trim() ?? "";
-				const resourceId = newArgs[1]?.trim() ?? "";
-				const offerSubmit = shouldOfferCreateSubmitWithFlow(
-					serviceId,
-					resourceId,
-					draftVariables,
-					flowActionBranches,
-				);
-				newArgs = applyCreateModeForDraftSignals(newArgs, offerSubmit);
-			}
 			onChange(
 				serializeBranch(selectedFunction as ActionFunction, newArgs),
 			);
 		},
-		[selectedFunction, args, onChange, draftVariables, flowActionBranches],
+		[selectedFunction, args, onChange],
 	);
 
-	useLayoutEffect(() => {
-		if (selectedFunction !== "create") return;
+	const offerSubmitCreate = useMemo(() => {
+		if (selectedFunction !== "create") return false;
 		const serviceId = args[0]?.trim() ?? "";
 		const resourceId = args[1]?.trim() ?? "";
-		if (!serviceId || !resourceId) return;
-
-		const offerSubmit = shouldOfferCreateSubmitWithFlow(
+		return shouldOfferCreateSubmitWithFlow(
 			serviceId,
 			resourceId,
 			draftVariables,
-			flowActionBranches,
+			draftUpdateTargets,
 		);
-		const nextArgs = applyCreateModeForDraftSignals(args, offerSubmit);
-		const currentBranch = serializeBranch("create", args);
-		const nextBranch = serializeBranch("create", nextArgs);
-		if (nextBranch !== currentBranch) {
-			onChange(nextBranch);
-		}
-	}, [selectedFunction, args, draftVariables, flowActionBranches, onChange]);
+	}, [selectedFunction, args, draftVariables, draftUpdateTargets]);
 
-	const createUsesSubmit = createUsesSubmitMarker(args);
-	const updateUsesDraftMode = args[4]?.trim() === "draft";
+	const showSubmitCreateHint =
+		offerSubmitCreate && !createHasInlineDataArg(args);
+	const updateUsesDraftMode = updateUsesDraftMarker(args);
 
 	const applyArgUpdates = useCallback(
 		(updates: Array<[number, string]>) => {
@@ -286,7 +265,7 @@ export function BranchEditor({
 			{selectedFunction === "create" &&
 				args[0] &&
 				args[1] &&
-				(createUsesSubmit ? (
+				(showSubmitCreateHint ? (
 					<p className="evy-create-draft-hint">
 						Creates from row destinations and draft updates
 					</p>

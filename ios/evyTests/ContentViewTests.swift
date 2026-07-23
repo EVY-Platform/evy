@@ -771,7 +771,7 @@ final class ContentViewTests: XCTestCase {
 
     let route = Route(flowId: "multi-submit-flow", pageId: "multi-page")
     let errors = capturedErrors {
-      _ = EVYFlowStore.draftScopeId(for: route, from: store)
+      EVYFlowStore.validateSubmissionResources(flowId: route.flowId, from: store)
     }
     XCTAssertFalse(errors.isEmpty)
     XCTAssertEqual(
