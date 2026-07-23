@@ -479,11 +479,12 @@ test.describe("Row configuration", () => {
 		const leftOperand = popup.getByLabel("condition-0-0-left");
 		const rightOperand = popup.getByLabel("condition-0-0-right");
 
-		await popoverSelect(page, leftOperand, "count(...)");
+		await popoverSelect(page, leftOperand, "count");
 
-		const fnArgDropdown = popup.getByLabel("condition-0-0-left-arg");
-		await expect(fnArgDropdown).toBeVisible();
-		await popoverSelect(page, fnArgDropdown, "Items");
+		const fnArgField = popup.getByLabel("condition-0-0-left-arg");
+		await expect(fnArgField).toBeVisible();
+		await fnArgField.click();
+		await fnArgField.pressSequentially("items");
 
 		await popoverSelect(page, rightOperand, "Items");
 
