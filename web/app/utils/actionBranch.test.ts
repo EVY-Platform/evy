@@ -4,58 +4,61 @@ import {
 	MARKETPLACE_SERVICE,
 } from "evy-types/marketplaceResources";
 import {
+	applyCreateModeForDraftSignals,
+	createHasInlineDataArg,
+	createUsesSubmitMarker,
 	formatBranchDisplay,
-	getCreateSubmitWithFlow,
 	parseBranch,
 	serializeBranch,
-	setCreateSubmitWithFlow,
 } from "./actionBranch";
 
 describe("action branch helpers", () => {
 	const serviceId = MARKETPLACE_SERVICE;
 	const resourceId = MARKETPLACE_RESOURCE.ITEMS;
 
-	describe("create submitWithFlow helpers", () => {
-		it("reads submit-with-flow ON for empty args", () => {
-			expect(getCreateSubmitWithFlow([])).toBe(true);
-		});
-
-		it("reads submit-with-flow ON when third arg is missing", () => {
-			expect(getCreateSubmitWithFlow([serviceId, resourceId])).toBe(true);
-		});
-
-		it("reads submit-with-flow ON when third arg is submit", () => {
+	describe("create mode helpers", () => {
+		it("detects explicit submit marker", () => {
 			expect(
-				getCreateSubmitWithFlow([serviceId, resourceId, "submit"]),
+				createUsesSubmitMarker([serviceId, resourceId, "submit"]),
 			).toBe(true);
+			expect(createUsesSubmitMarker([serviceId, resourceId])).toBe(false);
 		});
 
-		it("reads submit-with-flow OFF for inline data path", () => {
+		it("detects inline data third argument", () => {
 			expect(
-				getCreateSubmitWithFlow([
+				createHasInlineDataArg([
 					serviceId,
 					resourceId,
 					"pickup_address",
 				]),
+			).toBe(true);
+			expect(
+				createHasInlineDataArg([serviceId, resourceId, "submit"]),
 			).toBe(false);
 		});
 
-		it("enabling submit-with-flow writes submit and clears id destination", () => {
+		it("writes submit when draft signals are offered", () => {
 			expect(
-				setCreateSubmitWithFlow(
-					[serviceId, resourceId, "pickup_address", "dest"],
-					true,
-				),
+				applyCreateModeForDraftSignals([serviceId, resourceId], true),
 			).toEqual([serviceId, resourceId, "submit", ""]);
 		});
 
-		it("disabling submit-with-flow clears inline slots", () => {
+		it("clears submit when draft signals are not offered", () => {
 			expect(
-				setCreateSubmitWithFlow(
+				applyCreateModeForDraftSignals(
 					[serviceId, resourceId, "submit"],
 					false,
 				),
 			).toEqual([serviceId, resourceId, "", ""]);
+		});
+
+		it("preserves inline data when draft signals change", () => {
+			expect(
+				applyCreateModeForDraftSignals(
+					[serviceId, resourceId, "pickup_address", "dest"],
+					true,
+				),
+			).toEqual([serviceId, resourceId, "pickup_address", "dest"]);
 		});
 	});
 

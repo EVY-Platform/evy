@@ -10,6 +10,7 @@ import {
 	parseCondition,
 	serializeCondition,
 } from "../utils/conditionExpression";
+import { collectFlowActionBranches } from "../utils/createDraftSignals";
 import {
 	buildDatumCandidate,
 	buildFunctionCandidates,
@@ -52,6 +53,17 @@ export function ActionPopup({
 	const draftVariables = useMemo(
 		() =>
 			extractDraftVariables(flowsById, pagesById, rowsById, activeFlowId),
+		[flowsById, pagesById, rowsById, activeFlowId],
+	);
+
+	const flowActionBranches = useMemo(
+		() =>
+			collectFlowActionBranches(
+				flowsById,
+				pagesById,
+				rowsById,
+				activeFlowId,
+			),
 		[flowsById, pagesById, rowsById, activeFlowId],
 	);
 
@@ -136,6 +148,7 @@ export function ActionPopup({
 								idCandidates={idCandidates}
 								rowsById={rowsById}
 								defaultSheetRowId={defaultSheetRowId}
+								flowActionBranches={flowActionBranches}
 								getAttributeCandidatesForQualifier={
 									getAttributeCandidatesForQualifier
 								}
@@ -157,6 +170,7 @@ export function ActionPopup({
 								idCandidates={idCandidates}
 								rowsById={rowsById}
 								defaultSheetRowId={defaultSheetRowId}
+								flowActionBranches={flowActionBranches}
 								getAttributeCandidatesForQualifier={
 									getAttributeCandidatesForQualifier
 								}

@@ -97,24 +97,30 @@ export function serializeBranch(
 	return `{${functionName}(${filteredArgs.join(",")})}`;
 }
 
-export function getCreateSubmitWithFlow(args: string[]): boolean {
-	const thirdArg = args[2]?.trim() ?? "";
-	if (!thirdArg) return true;
-	return thirdArg === "submit";
+export function createUsesSubmitMarker(args: string[]): boolean {
+	return args[2]?.trim() === "submit";
 }
 
-export function setCreateSubmitWithFlow(
+export function createHasInlineDataArg(args: string[]): boolean {
+	const thirdArg = args[2]?.trim() ?? "";
+	return Boolean(thirdArg) && thirdArg !== "submit";
+}
+
+export function applyCreateModeForDraftSignals(
 	args: string[],
-	enabled: boolean,
+	offerSubmitWithFlow: boolean,
 ): string[] {
 	const newArgs = [...args];
 	while (newArgs.length < 4) {
 		newArgs.push("");
 	}
-	if (enabled) {
+	if (createHasInlineDataArg(newArgs)) {
+		return newArgs;
+	}
+	if (offerSubmitWithFlow) {
 		newArgs[2] = "submit";
 		newArgs[3] = "";
-	} else {
+	} else if (createUsesSubmitMarker(newArgs)) {
 		newArgs[2] = "";
 		newArgs[3] = "";
 	}

@@ -1,15 +1,15 @@
 import type { DATA_EVY_Flow, DATA_EVY_Page, DATA_EVY_Row } from "evy-types";
 import { EVY_CORE_SERVICE } from "evy-types/coreResources";
 import { MARKETPLACE_SERVICE } from "evy-types/marketplaceResources";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useLayoutEffect, useMemo } from "react";
 import type { ServiceResource } from "../../types/resources";
 import {
 	type ActionFunction,
-	getCreateSubmitWithFlow,
+	applyCreateModeForDraftSignals,
+	createUsesSubmitMarker,
 	parseBranch,
 	ROW_ID_ARG_FUNCTIONS,
 	serializeBranch,
-	setCreateSubmitWithFlow,
 	ZERO_ARG_FUNCTIONS,
 } from "../../utils/actionBranch";
 import {
@@ -18,11 +18,11 @@ import {
 	getPageOptions,
 	toVariableOptions,
 } from "../../utils/actionFlowOptions";
+import { shouldOfferCreateSubmitWithFlow } from "../../utils/createDraftSignals";
 import type { IdCandidate } from "../../utils/idCandidates";
 import { displayLabel } from "../../utils/labelFormatting";
 import { BuilderAssist } from "../BuilderAssist";
 import { type PopoverOption, PopoverSelect } from "../PopoverSelect";
-import { Toggle } from "../Toggle";
 import { BRANCH_FUNCTION_OPTIONS } from "./actionPopupConstants";
 
 type BranchEditorProps = {
@@ -35,6 +35,7 @@ type BranchEditorProps = {
 	idCandidates: IdCandidate[];
 	rowsById: Record<string, DATA_EVY_Row>;
 	defaultSheetRowId?: string;
+	flowActionBranches: string[];
 	getAttributeCandidatesForQualifier: (qualifier: string) => IdCandidate[];
 	onChange: (value: string) => void;
 };
@@ -138,6 +139,7 @@ export function BranchEditor({
 	idCandidates,
 	rowsById,
 	defaultSheetRowId,
+	flowActionBranches,
 	getAttributeCandidatesForQualifier,
 	onChange,
 }: BranchEditorProps) {
@@ -176,15 +178,52 @@ export function BranchEditor({
 			) {
 				return;
 			}
-			const newArgs = [...args];
+			let newArgs = [...args];
 			while (newArgs.length <= argIndex) newArgs.push("");
 			newArgs[argIndex] = argValue;
+			if (
+				selectedFunction === "create" &&
+				(argIndex === 0 || argIndex === 1)
+			) {
+				const serviceId = newArgs[0]?.trim() ?? "";
+				const resourceId = newArgs[1]?.trim() ?? "";
+				const offerSubmit = shouldOfferCreateSubmitWithFlow(
+					serviceId,
+					resourceId,
+					draftVariables,
+					flowActionBranches,
+				);
+				newArgs = applyCreateModeForDraftSignals(newArgs, offerSubmit);
+			}
 			onChange(
 				serializeBranch(selectedFunction as ActionFunction, newArgs),
 			);
 		},
-		[selectedFunction, args, onChange],
+		[selectedFunction, args, onChange, draftVariables, flowActionBranches],
 	);
+
+	useLayoutEffect(() => {
+		if (selectedFunction !== "create") return;
+		const serviceId = args[0]?.trim() ?? "";
+		const resourceId = args[1]?.trim() ?? "";
+		if (!serviceId || !resourceId) return;
+
+		const offerSubmit = shouldOfferCreateSubmitWithFlow(
+			serviceId,
+			resourceId,
+			draftVariables,
+			flowActionBranches,
+		);
+		const nextArgs = applyCreateModeForDraftSignals(args, offerSubmit);
+		const currentBranch = serializeBranch("create", args);
+		const nextBranch = serializeBranch("create", nextArgs);
+		if (nextBranch !== currentBranch) {
+			onChange(nextBranch);
+		}
+	}, [selectedFunction, args, draftVariables, flowActionBranches, onChange]);
+
+	const createUsesSubmit = createUsesSubmitMarker(args);
+	const updateUsesDraftMode = args[4]?.trim() === "draft";
 
 	const applyArgUpdates = useCallback(
 		(updates: Array<[number, string]>) => {
@@ -200,17 +239,6 @@ export function BranchEditor({
 		},
 		[selectedFunction, args, onChange],
 	);
-
-	const createHasInlineData =
-		Boolean(args[2]?.trim()) && args[2]?.trim() !== "submit";
-	const [createAwaitingInlineData, setCreateAwaitingInlineData] =
-		useState(false);
-
-	const submitWithFlow =
-		createHasInlineData || createAwaitingInlineData
-			? false
-			: getCreateSubmitWithFlow(args);
-	const updateUsesDraftMode = args[4]?.trim() === "draft";
 
 	const argDropdowns = buildArgDropdowns(
 		selectedFunction as ActionFunction | "",
@@ -255,48 +283,37 @@ export function BranchEditor({
 				/>
 			)}
 
-			{selectedFunction === "create" && args[0] && args[1] && (
-				<>
-					<Toggle
-						ariaLabel={`${branchId}-create-submit-with-flow`}
-						label="Submit later with flow"
-						checked={submitWithFlow}
-						onChange={(checked) => {
-							setCreateAwaitingInlineData(!checked);
-							applyArgUpdates(
-								setCreateSubmitWithFlow(args, checked).map(
-									(value, index) =>
-										[index, value] as [number, string],
-								),
-							);
-						}}
-					/>
-					{!submitWithFlow && (
-						<>
-							<BuilderAssist
-								ariaLabel={`${branchId}-create-data`}
-								value={args[2] ?? ""}
-								onChange={(v) => handleArgChange(2, v)}
-								candidates={idCandidates}
-								getAttributeCandidatesForQualifier={
-									getAttributeCandidatesForQualifier
-								}
-								placeholder="Data path or inline object, e.g. pickup_address"
-							/>
-							<BuilderAssist
-								ariaLabel={`${branchId}-create-id-destination`}
-								value={args[3] ?? ""}
-								onChange={(v) => handleArgChange(3, v)}
-								candidates={idCandidates}
-								getAttributeCandidatesForQualifier={
-									getAttributeCandidatesForQualifier
-								}
-								placeholder="Optional id destination, e.g. {item.transfer_options.pickup.address_id}"
-							/>
-						</>
-					)}
-				</>
-			)}
+			{selectedFunction === "create" &&
+				args[0] &&
+				args[1] &&
+				(createUsesSubmit ? (
+					<p className="evy-create-draft-hint">
+						Creates from row destinations and draft updates
+					</p>
+				) : (
+					<>
+						<BuilderAssist
+							ariaLabel={`${branchId}-create-data`}
+							value={args[2] ?? ""}
+							onChange={(v) => handleArgChange(2, v)}
+							candidates={idCandidates}
+							getAttributeCandidatesForQualifier={
+								getAttributeCandidatesForQualifier
+							}
+							placeholder="Data path or inline object, e.g. pickup_address"
+						/>
+						<BuilderAssist
+							ariaLabel={`${branchId}-create-id-destination`}
+							value={args[3] ?? ""}
+							onChange={(v) => handleArgChange(3, v)}
+							candidates={idCandidates}
+							getAttributeCandidatesForQualifier={
+								getAttributeCandidatesForQualifier
+							}
+							placeholder="Optional id destination, e.g. {item.transfer_options.pickup.address_id}"
+						/>
+					</>
+				))}
 
 			{selectedFunction === "select" && (
 				<BuilderAssist
