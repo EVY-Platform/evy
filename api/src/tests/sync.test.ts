@@ -110,8 +110,18 @@ describe("sync", () => {
 		expect(evyResourceNames).toContain("organisations");
 		expect(evyResourceNames).toContain("providers");
 		expect(evyResourceNames).toContain("files");
+		expect(evyResourceNames).toContain("addresses");
 		expect(evyResourceNames).toContain("serviceResources");
 		expect(evyResourceNames).not.toContain("devices");
+
+		const addressesRow = evyRows.find(
+			(row) => row.resource === "addresses",
+		);
+		expect(addressesRow).toEqual({
+			service: EVY_CORE_SERVICE,
+			resource: "addresses",
+			value: [{ id: "addresses-mock-1" }],
+		});
 
 		const serviceResourcesRow = evyRows.find(
 			(row) => row.resource === "serviceResources",

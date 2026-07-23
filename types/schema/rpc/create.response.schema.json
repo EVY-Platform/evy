@@ -29,6 +29,9 @@
 			"$ref": "../data/data.schema.json#/$defs/DATA_EVY_File"
 		},
 		{
+			"$ref": "../data/data.schema.json#/$defs/DATA_EVY_Address"
+		},
+		{
 			"$ref": "../data/primitive.schema.json"
 		}
 	]

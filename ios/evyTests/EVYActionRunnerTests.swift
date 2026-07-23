@@ -153,10 +153,74 @@ final class EVYActionRunnerTests: XCTestCase {
     XCTAssertEqual(action?.namespace, "ns")
     XCTAssertEqual(action?.resource, "res")
     XCTAssertNil(action?.data)
+    XCTAssertNil(action?.idDestination)
+  }
+
+  func testCreateActionParserParsesIdDestination() {
+    let action = EVYActionParser.createAction(
+      from: "{create(ns,res,{street: Main},item.transfer_options.pickup.address_id)}"
+    )
+
+    XCTAssertEqual(action?.namespace, "ns")
+    XCTAssertEqual(action?.resource, "res")
+    XCTAssertEqual(action?.data, ["street": "Main"])
+    XCTAssertEqual(action?.idDestination, "item.transfer_options.pickup.address_id")
   }
 
   func testCreateActionParserRejectsMalformedInlineData() {
     XCTAssertNil(EVYActionParser.createAction(from: "{create(ns,res,{type: pickup, fk})}"))
+  }
+
+  func testCreateWithIdDestinationWritesGeneratedId() throws {
+    let namespace = UUID().uuidString
+    let resource = "addresses"
+    let entityId = UUID().uuidString
+    let scopeId = EVYDraft.ephemeralScopeId(forPageId: UUID().uuidString)
+    EVY.draftStore.activeScopeId = scopeId
+    defer {
+      try? EVY.publicStore.deleteAll(namespace: namespace, resource: resource)
+      try? EVY.publicStore.delete(
+        namespace: EVYNamespace.local, resource: entityId, id: EVYNamespace.singletonId)
+      EVY.draftStore.deleteDrafts()
+      EVY.draftStore.activeScopeId = nil
+    }
+
+    try EVY.publicStore.create(
+      namespace: EVYNamespace.local,
+      resource: entityId,
+      id: EVYNamespace.singletonId,
+      value: #"{"transfer_options":{"pickup":{}}}"#.data(using: .utf8)!
+    )
+
+    let createAction = rowAction(
+      true:
+        "{create(\(namespace),\(resource),{street: Rothschild Avenue},{\(entityId).transfer_options.pickup.address_id})}"
+    )
+    var errors: [Error] = []
+    let observer = NotificationCenter.default.addObserver(
+      forName: .evyErrorOccurred, object: nil, queue: nil
+    ) { note in
+      if let error = note.object as? Error {
+        errors.append(error)
+      }
+    }
+    defer { NotificationCenter.default.removeObserver(observer) }
+
+    EVYActionRunner.run(actions: [createAction]) { _ in }
+
+    XCTAssertTrue(errors.isEmpty, "create with id destination should not error: \(errors)")
+    let createdRows = try EVY.publicStore.getAll(namespace: namespace, resource: resource)
+    XCTAssertEqual(createdRows.count, 1)
+    let created = try createdRows[0].decoded()
+    guard case .dictionary(let record) = created,
+      case .string(let createdId) = record["id"]
+    else {
+      return XCTFail("expected created address dictionary with id")
+    }
+
+    let writtenId = try EVY.getDataFromText(
+      "{\(entityId).transfer_options.pickup.address_id}")
+    XCTAssertEqual(writtenId, .string(createdId))
   }
 
   func testUpdateActionParserParsesFilterAndChanges() {

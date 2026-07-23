@@ -9,6 +9,7 @@ struct EVYCreateAction: Equatable {
   let namespace: String
   let resource: String
   let data: [String: String]?
+  let idDestination: String?
 }
 
 struct EVYUpdateAction: Equatable {
@@ -38,7 +39,17 @@ enum EVYActionParser {
       data = nil
     }
 
-    return EVYCreateAction(namespace: namespace, resource: resource, data: data)
+    let idDestination: String?
+    if args.count > 3 {
+      let destination = args[3].trimmingCharacters(in: .whitespacesAndNewlines)
+      guard !destination.isEmpty else { return nil }
+      idDestination = destination
+    } else {
+      idDestination = nil
+    }
+
+    return EVYCreateAction(
+      namespace: namespace, resource: resource, data: data, idDestination: idDestination)
   }
 
   static func updateAction(from rawBranch: String) -> EVYUpdateAction? {

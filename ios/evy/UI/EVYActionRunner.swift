@@ -97,11 +97,14 @@ enum EVYActionRunner {
             context: "create requires namespace and resource, e.g. create(marketplace,item)")
         }
         let resolvedData = createAction.data.map { resolvePlainTextValues($0, datum: datum) }
-        try EVY.create(
+        let createdId = try EVY.create(
           namespace: createAction.namespace,
           resource: createAction.resource,
           data: resolvedData
         )
+        if let idDestination = createAction.idDestination {
+          try EVY.writeRawStringValue(createdId, to: idDestination)
+        }
       case "update":
         guard let updateAction = EVYActionParser.updateAction(from: branch) else {
           throw EVYError.invalidData(

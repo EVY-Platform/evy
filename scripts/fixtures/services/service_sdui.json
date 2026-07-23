@@ -131,10 +131,10 @@
 									{
 										"id": "0b02c2c0-6e19-49d5-9138-f60062a1f6d4",
 										"type": "Map",
-										"source": "{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.transfer_options.pickup.address}",
+										"source": "{findFirst(addresses, dc28ed59-298e-493c-8ff3-3e60f2ebccbd.transfer_options.pickup.address_id)}",
 										"visible": "true",
 										"title": "",
-										"subtitle": "{formatAddress(dc28ed59-298e-493c-8ff3-3e60f2ebccbd.transfer_options.pickup.address)}",
+										"subtitle": "{formatAddress(findFirst(addresses, dc28ed59-298e-493c-8ff3-3e60f2ebccbd.transfer_options.pickup.address_id))}",
 										"name": "Pickup location",
 										"actions": {}
 									},
@@ -428,10 +428,10 @@
 							{
 								"id": "a2f59e42-ffea-41d1-b4dc-9a8fda4423c9",
 								"type": "Map",
-								"source": "{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.transfer_options.pickup.address}",
+								"source": "{findFirst(addresses, dc28ed59-298e-493c-8ff3-3e60f2ebccbd.transfer_options.pickup.address_id)}",
 								"visible": "true",
 								"title": "",
-								"subtitle": "{formatAddress(dc28ed59-298e-493c-8ff3-3e60f2ebccbd.transfer_options.pickup.address)}",
+								"subtitle": "{formatAddress(findFirst(addresses, dc28ed59-298e-493c-8ff3-3e60f2ebccbd.transfer_options.pickup.address_id))}",
 								"name": "Pickup location",
 								"actions": {}
 							},
@@ -963,7 +963,7 @@
 											]
 										},
 										"title": "Where",
-										"subtitle": "{formatAddress(dc28ed59-298e-493c-8ff3-3e60f2ebccbd.transfer_options.pickup.address)}",
+										"subtitle": "{formatAddress(findFirst(addresses, dc28ed59-298e-493c-8ff3-3e60f2ebccbd.transfer_options.pickup.address_id))}",
 										"action": "Change",
 										"visible": "true",
 										"name": "Pickup address",
@@ -984,21 +984,38 @@
 											"source": "{$api:place_search}",
 											"visible": "true",
 											"name": "Find pickup address",
-											"destination": "{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.transfer_options.pickup.address}",
+											"destination": "{pickup_address}",
 											"actions": {}
 										}
 									},
 									{
 										"id": "22222222-2222-4222-8222-222222222206",
 										"type": "Input",
-										"destination": "{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.transfer_options.pickup.address.instructions}",
+										"destination": "{pickup_address.instructions}",
 										"title": "",
 										"placeholder": "Additional information",
 										"visible": "true",
 										"name": "Pickup instructions",
-										"source": "{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.transfer_options.pickup.address.instructions}",
+										"source": "{pickup_address.instructions}",
 										"initial": "Leave at front door",
 										"actions": {}
+									},
+									{
+										"id": "4415df29-309c-4905-8975-38915ef2c92d",
+										"type": "Button",
+										"actions": {
+											"tap": [
+												{
+													"condition": "{length(dc28ed59-298e-493c-8ff3-3e60f2ebccbd.transfer_options.pickup.address_id) > 0}",
+													"true": "{update(475731ac-31aa-4d65-94d2-7032782ae359, addresses, {id: dc28ed59-298e-493c-8ff3-3e60f2ebccbd.transfer_options.pickup.address_id}, {unit: pickup_address.unit, street: pickup_address.street, city: pickup_address.city, postcode: pickup_address.postcode, state: pickup_address.state, country: pickup_address.country, latitude: pickup_address.latitude, longitude: pickup_address.longitude, instructions: pickup_address.instructions})}",
+													"false": "{create(475731ac-31aa-4d65-94d2-7032782ae359, addresses, {unit: pickup_address.unit, street: pickup_address.street, city: pickup_address.city, postcode: pickup_address.postcode, state: pickup_address.state, country: pickup_address.country, latitude: pickup_address.latitude, longitude: pickup_address.longitude, instructions: pickup_address.instructions}, {dc28ed59-298e-493c-8ff3-3e60f2ebccbd.transfer_options.pickup.address_id})}"
+												}
+											]
+										},
+										"visible": "true",
+										"title": "",
+										"label": "Save address",
+										"name": "Save pickup address"
 									},
 									{
 										"id": "92890469-10f3-43d3-9895-fb419425baf9",

@@ -274,17 +274,25 @@ final class InterpreterTests: XCTestCase {
     let entityKey = uniqueKey("entities")
     let firstId = UUID().uuidString
     let secondId = UUID().uuidString
+    let firstAddressId = UUID().uuidString
+    let secondAddressId = UUID().uuidString
     let firstAddress = EVYJson.dictionary([
+      "id": .string(firstAddressId),
       "street": .string("1 First Street"),
       "latitude": .decimal(-33.86),
       "longitude": .decimal(151.20),
     ])
     let secondAddress = EVYJson.dictionary([
+      "id": .string(secondAddressId),
       "street": .string("28 Rothschild Avenue"),
       "latitude": .decimal(-33.9135576),
       "longitude": .decimal(151.2052514),
     ])
 
+    try store(
+      .array([firstAddress, secondAddress]),
+      at: "\(EVYNamespace.evy):\(EVYCoreResource.addresses.rawValue)"
+    )
     try store(
       .array([
         .dictionary([
@@ -292,7 +300,7 @@ final class InterpreterTests: XCTestCase {
           "pickup_selection": .array([.string("2026-07-19T07:00:00")]),
           "delivery_selection": .array([.string("2026-07-21T07:00:00")]),
           "transfer_options": .dictionary([
-            "pickup": .dictionary(["address": firstAddress])
+            "pickup": .dictionary(["address_id": .string(firstAddressId)])
           ]),
         ]),
         .dictionary([
@@ -300,7 +308,7 @@ final class InterpreterTests: XCTestCase {
           "pickup_selection": .array([.string("2026-07-20T07:00:00")]),
           "delivery_selection": .array([.string("2026-07-22T07:00:00")]),
           "transfer_options": .dictionary([
-            "pickup": .dictionary(["address": secondAddress])
+            "pickup": .dictionary(["address_id": .string(secondAddressId)])
           ]),
         ]),
       ]),
@@ -314,10 +322,12 @@ final class InterpreterTests: XCTestCase {
       watches: ["{\(entityKey).delivery_selection}"],
       setter: { EVYDatetime.readTimeslots("{\(entityKey).delivery_selection}") }
     )
+    let pickupAddressExpression =
+      "{findFirst(\(EVYCoreResource.addresses.rawValue), \(entityKey).transfer_options.pickup.address_id)}"
     let pickupAddress = EVYState<EVYJson>(
-      watches: ["{\(entityKey).transfer_options.pickup.address}"],
+      watches: EVY.watchTargets(for: pickupAddressExpression),
       setter: {
-        (try? EVY.getDataFromText("{\(entityKey).transfer_options.pickup.address}")) ?? .null
+        (try? EVY.getDataFromText(pickupAddressExpression)) ?? .null
       }
     )
 

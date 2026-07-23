@@ -13,6 +13,36 @@
 			"updatedAt": "2026-05-20T22:56:17.000Z"
 		}
 	],
+	"addresses": [
+		{
+			"id": "c81e85dd-f7fb-4310-8fc6-7c018aeaf82a",
+			"unit": "C509",
+			"street": "28 Rothschild Avenue",
+			"city": "Rosebery",
+			"postcode": "2018",
+			"state": "NSW",
+			"country": "Australia",
+			"latitude": -33.9172075,
+			"longitude": 151.1985883,
+			"instructions": "",
+			"createdAt": "2026-05-20T22:56:17.000Z",
+			"updatedAt": "2026-05-20T22:56:17.000Z"
+		},
+		{
+			"id": "9d04047d-cd13-4dc6-82e6-85a3e4ef0d6b",
+			"unit": "C509",
+			"street": "28 Rothschild Avenue",
+			"city": "Rosebery",
+			"postcode": "2018",
+			"state": "NSW",
+			"country": "Australia",
+			"latitude": -33.9172075,
+			"longitude": 151.1985883,
+			"instructions": "",
+			"createdAt": "2026-05-22T22:56:17.000Z",
+			"updatedAt": "2026-05-22T22:56:17.000Z"
+		}
+	],
 	"selling_reasons": [
 		{
 			"id": "76d781c6-7ab1-4b5e-99d5-60d417e3c382",
@@ -116,17 +146,7 @@
 				"pickup": {
 					"selection": ["2026-06-03T09:00:00", "2026-06-03T09:30:00"],
 					"lead_time_hours": "24",
-					"address": {
-						"unit": "C509",
-						"street": "28 Rothschild Avenue",
-						"city": "Rosebery",
-						"postcode": "2018",
-						"state": "NSW",
-						"country": "Australia",
-						"latitude": -33.9172075,
-						"longitude": 151.1985883,
-						"instructions": ""
-					}
+					"address_id": "c81e85dd-f7fb-4310-8fc6-7c018aeaf82a"
 				},
 				"delivery": {
 					"selection": ["2026-06-03T14:00:00"],
@@ -183,17 +203,7 @@
 				"pickup": {
 					"selection": ["2026-06-03T10:00:00"],
 					"lead_time_hours": "24",
-					"address": {
-						"unit": "C509",
-						"street": "28 Rothschild Avenue",
-						"city": "Rosebery",
-						"postcode": "2018",
-						"state": "NSW",
-						"country": "Australia",
-						"latitude": -33.9172075,
-						"longitude": 151.1985883,
-						"instructions": ""
-					}
+					"address_id": "9d04047d-cd13-4dc6-82e6-85a3e4ef0d6b"
 				},
 				"delivery": {
 					"selection": ["2026-06-03T15:00:00", "2026-06-03T15:30:00"],

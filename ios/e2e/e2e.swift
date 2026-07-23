@@ -3511,7 +3511,6 @@ final class E2EErrorStateTests: XCTestCase {
 final class E2EPlaceSearchTests: E2ETestBase {
   private static let placeSearchHomeFlowId = "d1e2f3a4-b5c6-4d7e-8f9a-0b1c2d3e4f5a"
   private static let placeSearchPageId = "e2f3a4b5-c6d7-4e8f-9a0b-1c2d3e4f5a6b"
-  private static let placeSearchEntityId = "f47ac10b-58cc-4372-a567-0e02b2c3d479"
   private static let placeSearchQuery = "Sydney"
 
   override var homeFlowId: String? { Self.placeSearchHomeFlowId }
@@ -3559,12 +3558,25 @@ final class E2EPlaceSearchTests: E2ETestBase {
     ).firstMatch
     XCTAssertTrue(
       formattedAddress.waitForExistence(timeout: 10),
-      "Pickup subtitle should reflect the written address")
+      "Pickup subtitle should reflect the pickup_address draft after selecting a result")
+
+    app.buttons["Save address"].tap()
+    XCTAssertTrue(
+      whereLabel.waitForExistence(timeout: 5),
+      "Save address should commit without dismissing the pickup page")
   }
 
   private static func placeSearchFlowData() -> [String: Any] {
-    let destination = "{\(placeSearchEntityId).transfer_options.pickup.address}"
-    let subtitle = "{formatAddress(\(placeSearchEntityId).transfer_options.pickup.address)}"
+    let destination = "{pickup_address}"
+    // Isolated e2e page has no marketplace item entity; subtitle reads the local draft
+    // written by Search. Fixture SDUI + unit tests cover findFirst(addresses, address_id).
+    let subtitle = "{formatAddress(pickup_address)}"
+    let addressFields =
+      "unit: pickup_address.unit, street: pickup_address.street, city: pickup_address.city, postcode: pickup_address.postcode, state: pickup_address.state, country: pickup_address.country, latitude: pickup_address.latitude, longitude: pickup_address.longitude, instructions: pickup_address.instructions"
+    let saveUpdate =
+      "{update(\(EVY_CORE_SERVICE), addresses, {id: pickup_address_id}, {\(addressFields)})}"
+    let saveCreate =
+      "{create(\(EVY_CORE_SERVICE), addresses, {\(addressFields)}, {pickup_address_id})}"
     return [
       "id": placeSearchHomeFlowId,
       "name": "E2E Place Search",
@@ -3591,7 +3603,14 @@ final class E2EPlaceSearchTests: E2ETestBase {
                   "visible": "true",
                 ]
               )
-            )
+            ),
+            buttonRow(
+              id: "d4e5f6a7-b8c9-4d0e-1f2a-3b4c5d6e7f8a",
+              label: "Save address",
+              action: saveUpdate,
+              condition: "{length(pickup_address_id) > 0}",
+              falseAction: saveCreate
+            ),
           ],
         ]
       ],

@@ -345,10 +345,10 @@ These run on the iOS client when a row action branch executes. See [sdui.md](./s
 #### create
 
 ```
-{create(service_id, resource_id, data?)}
+{create(service_id, resource_id, data?, id_destination?)}
 ```
 
-Creates a domain entity immediately. Inline `data` supports nested object values (e.g. `data: {type: pickup, time: selected_pickup_timeslot}`), quoted string literals (never resolved as data paths), bare `true`/`false` booleans, and `null`. For user confirmation, call `{show(a4b5c6d7-e8f9-4a0b-1c2d-3e4f5a6b7c8d)}` (or another sheet row ID) and run `create` from the sheet's confirm button.
+Creates a domain entity immediately. Inline `data` supports nested object values (e.g. `data: {type: pickup, time: selected_pickup_timeslot}`), quoted string literals (never resolved as data paths), bare `true`/`false` booleans, and `null`. Optional fourth argument `id_destination` is a draft-aware write path; after create, the client writes the generated uuid string there (same write path as row destinations). Use this to link a freshly created record to another record, e.g. `{create([core_service], addresses, {street: pickup_address.street, …}, {item.transfer_options.pickup.address_id})}`. For user confirmation, call `{show(a4b5c6d7-e8f9-4a0b-1c2d-3e4f5a6b7c8d)}` (or another sheet row ID) and run `create` from the sheet's confirm button.
 
 #### update
 

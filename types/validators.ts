@@ -12,6 +12,7 @@ import Ajv2020 from "ajv/dist/2020";
 import addFormats from "ajv-formats";
 
 import type {
+	DATA_EVY_Address,
 	DATA_EVY_File,
 	DATA_EVY_Flow,
 	DATA_EVY_Organization,
@@ -374,6 +375,10 @@ const getValidateUiFlow = lazyValidator<UI_Flow>(
 	getEntityAjv,
 	fileId("sdui/evy.schema.json"),
 );
+const getValidateDataEvyAddress = lazyValidator<DATA_EVY_Address>(
+	getEntityAjv,
+	`${fileId("data/data.schema.json")}#/$defs/DATA_EVY_Address`,
+);
 const getValidateDataEvyFlow = lazyValidator<DATA_EVY_Flow>(
 	getEntityAjv,
 	`${fileId("data/data.schema.json")}#/$defs/DATA_EVY_Flow`,
@@ -565,6 +570,10 @@ export function validateUiFlow(data: unknown): UI_Flow {
 	assertUiFlowRowTriggers(flow);
 	return flow;
 }
+export const validateDataEvyAddress = makeValidator<DATA_EVY_Address>(
+	"Address",
+	getValidateDataEvyAddress,
+);
 export const validateDataEvyFlow = makeValidator<DATA_EVY_Flow>(
 	"Flow",
 	getValidateDataEvyFlow,

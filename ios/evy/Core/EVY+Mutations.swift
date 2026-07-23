@@ -112,10 +112,9 @@ extension EVY {
     namespace: String,
     resource: String,
     data: [String: EVYJson]? = nil
-  ) throws {
+  ) throws -> String {
     if let data {
-      try createWithGeneratedId(namespace: namespace, resource: resource, payload: data)
-      return
+      return try createWithGeneratedId(namespace: namespace, resource: resource, payload: data)
     }
 
     let scopeForMerge = draftStore.activeScopeId
@@ -137,7 +136,8 @@ extension EVY {
     guard case .dictionary(let payload) = mergedPayload else {
       throw EVYParamError.invalidProps
     }
-    try createWithGeneratedId(namespace: namespace, resource: resource, payload: payload)
+    let createdId = try createWithGeneratedId(
+      namespace: namespace, resource: resource, payload: payload)
 
     if isFlowSubmission, let scopeForMerge {
       draftStore.deleteDrafts(scopeId: scopeForMerge)
@@ -145,13 +145,14 @@ extension EVY {
         resetEphemeralDrafts(forFlowId: flowId)
       }
     }
+    return createdId
   }
 
   private static func createWithGeneratedId(
     namespace: String,
     resource: String,
     payload: [String: EVYJson]
-  ) throws {
+  ) throws -> String {
     let newId = UUID().uuidString
     var payloadWithId = payload
     payloadWithId["id"] = .string(newId)
@@ -176,6 +177,7 @@ extension EVY {
     )
 
     syncMutation(method: "create", params: params)
+    return newId
   }
 
   static func update(

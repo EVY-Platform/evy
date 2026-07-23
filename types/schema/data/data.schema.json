@@ -30,9 +30,58 @@
 		},
 		{
 			"$ref": "#/$defs/DATA_EVY_File"
+		},
+		{
+			"$ref": "#/$defs/DATA_EVY_Address"
 		}
 	],
 	"$defs": {
+		"DATA_EVY_Address": {
+			"type": "object",
+			"additionalProperties": false,
+			"required": ["id", "createdAt", "updatedAt"],
+			"properties": {
+				"id": {
+					"type": "string",
+					"format": "uuid"
+				},
+				"unit": {
+					"type": "string"
+				},
+				"street": {
+					"type": "string"
+				},
+				"city": {
+					"type": "string"
+				},
+				"postcode": {
+					"type": "string"
+				},
+				"state": {
+					"type": "string"
+				},
+				"country": {
+					"type": "string"
+				},
+				"latitude": {
+					"type": "number"
+				},
+				"longitude": {
+					"type": "number"
+				},
+				"instructions": {
+					"type": "string"
+				},
+				"createdAt": {
+					"type": "string",
+					"format": "date-time"
+				},
+				"updatedAt": {
+					"type": "string",
+					"format": "date-time"
+				}
+			}
+		},
 		"DATA_EVY_Flow": {
 			"type": "object",
 			"additionalProperties": false,

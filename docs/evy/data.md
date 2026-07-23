@@ -185,7 +185,28 @@ updatedAt: string (date-time)
 
 On the wire this is accessed with `service: "475731ac-31aa-4d65-94d2-7032782ae359"` and `resource: "rows"`.
 
-There is no `DATA_EVY_Data` type in [`data.schema.json`](../../../types/schema/data/data.schema.json). Core non-SDUI EVY data uses typed tables and `DATA_EVY_Service`, `DATA_EVY_Organization`, `DATA_EVY_ServiceProvider`, and `DATA_EVY_Device` as above (`resource` values `services`, `organisations`, `providers`, `devices` on `get`, `create`, or `update`).
+#### DATA_EVY_Address
+
+First-class pickup/location address row in the core database. Marketplace items reference an address by id (`transfer_options.pickup.address_id`) rather than embedding the object. SDUI reads use `findFirst(addresses, <item>.transfer_options.pickup.address_id)`.
+
+```
+id: uuid
+unit: string (optional)
+street: string (optional)
+city: string (optional)
+postcode: string (optional)
+state: string (optional)
+country: string (optional)
+latitude: number (optional)
+longitude: number (optional)
+instructions: string (optional)
+createdAt: string (date-time)
+updatedAt: string (date-time)
+```
+
+On the wire this is accessed with `service: "475731ac-31aa-4d65-94d2-7032782ae359"` and `resource: "addresses"`. Optional-by-default so manual text entry (`buildAddress`) can produce partial drafts; place search fills more fields but never writes a Google place id into this row.
+
+There is no `DATA_EVY_Data` type in [`data.schema.json`](../../../types/schema/data/data.schema.json). Core non-SDUI EVY data uses typed tables and `DATA_EVY_Service`, `DATA_EVY_Organization`, `DATA_EVY_ServiceProvider`, `DATA_EVY_Address`, and `DATA_EVY_Device` as above (`resource` values `services`, `organisations`, `providers`, `addresses`, `devices` on `get`, `create`, or `update`).
 
 #### DATA_EVY_Message
 
@@ -218,6 +239,8 @@ value: decimal
 ```
 
 #### address
+
+Address field shape shared by `DATA_EVY_Address` rows and place-search RPC results (minus Google place `id` on stored rows). Prefer the core `addresses` resource for persistence; do not embed this object on marketplace items.
 
 ```
 unit: string
@@ -260,7 +283,7 @@ Calendar rows use three bindings: `source` supplies the main timeslots to displa
 ```
 pickup: {
     selection: [string]   (ISO date-time strings)
-    address: address
+    address_id: uuid      (references a core addresses row)
     lead_time_hours: string   (hours of notice required before pickup)
 }
 delivery: {

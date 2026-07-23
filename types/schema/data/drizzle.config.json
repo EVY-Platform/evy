@@ -87,6 +87,12 @@
 			"primaryKey": "id",
 			"defaultRandom": [],
 			"uniqueIndexes": []
+		},
+		"DATA_EVY_Address": {
+			"tableName": "Address",
+			"primaryKey": "id",
+			"defaultRandom": ["id"],
+			"uniqueIndexes": []
 		}
 	},
 	"relations": [

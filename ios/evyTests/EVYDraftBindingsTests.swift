@@ -239,33 +239,21 @@ final class EVYDraftBindingTests: XCTestCase {
     )
   }
 
-  func testWriteRawValueCreatesNestedPickupAddressOnBackingRow() throws {
-    let entityId = UUID().uuidString
+  func testWriteRawValueCreatesPickupAddressLocalDraftOnBackingRow() throws {
     let scopeId = "flow:items"
     let pageId = "page_\(UUID().uuidString)"
     EVY.activeCacheScopeId = pageId
     EVY.draftStore.activeScopeId = scopeId
 
-    let entity = EVYJson.dictionary([
-      "id": .string(entityId),
-      "title": .string("Test item"),
-    ])
-    try EVY.cacheStore.create(
-      namespace: EVYNamespace.cache,
-      resource: pageId,
-      id: entityId,
-      value: try JSONEncoder().encode(entity)
-    )
-
     let address = samplePickupAddress()
     try EVY.writeRawValue(
       address,
-      to: "{\(entityId).transfer_options.pickup.address}",
+      to: "{pickup_address}",
       scopeId: scopeId
     )
 
     XCTAssertEqual(
-      try EVY.getDataFromText("{\(entityId).transfer_options.pickup.address}"),
+      try EVY.getDataFromText("{pickup_address}"),
       address
     )
   }
@@ -354,20 +342,19 @@ final class EVYDraftBindingTests: XCTestCase {
     )
   }
 
-  func testWriteRawValueCreatesNestedPickupAddressAsFreshDraft() throws {
-    let entityId = UUID().uuidString
+  func testWriteRawValueCreatesPickupAddressAsFreshDraft() throws {
     let scopeId = "flow:items"
     EVY.draftStore.activeScopeId = scopeId
 
     let address = samplePickupAddress()
     try EVY.writeRawValue(
       address,
-      to: "{\(entityId).transfer_options.pickup.address}",
+      to: "{pickup_address}",
       scopeId: scopeId
     )
 
     XCTAssertEqual(
-      try EVY.getDataFromText("{\(entityId).transfer_options.pickup.address}"),
+      try EVY.getDataFromText("{pickup_address}"),
       address
     )
   }

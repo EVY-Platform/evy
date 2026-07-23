@@ -18,6 +18,7 @@ import type {
 } from "../types/generated/ts";
 import { EVY_CORE_SERVICE } from "../types/generated/ts/coreResources";
 import {
+	address as addressTable,
 	file as fileTable,
 	flow as flowTable,
 	organization as organizationTable,
@@ -82,6 +83,7 @@ const coreSchema = {
 	page: pageTable,
 	row: rowTable,
 	file: fileTable,
+	address: addressTable,
 };
 const marketplaceSchema = { data: marketplaceDataTable };
 
@@ -109,6 +111,7 @@ const SEED_IDS = {
 	coreProvidersResource: "136d5d53-af3b-4fe1-954c-46df6c9f9ec3",
 	coreServiceResourcesResource: "58e2e69d-78ba-4657-b991-cc6a5e0c80c9",
 	coreFilesResource: "996738e6-15eb-4f3e-8f97-7538a1e2635c",
+	coreAddressesResource: "eef0b91c-f8f6-4603-b082-1211650af931",
 } as const;
 
 // Fixture keys are the lowercase forms of the generated resource constants
@@ -226,6 +229,72 @@ function buildFileRows(files: SeedDataItem[], now: string): SeedFileRow[] {
 		const updatedAt =
 			typeof item.updatedAt === "string" ? item.updatedAt : now;
 		return { id: item.id, type: item.type, createdAt, updatedAt };
+	});
+}
+
+type SeedAddressRow = {
+	id: string;
+	unit?: string;
+	street?: string;
+	city?: string;
+	postcode?: string;
+	state?: string;
+	country?: string;
+	latitude?: number;
+	longitude?: number;
+	instructions?: string;
+	createdAt: string;
+	updatedAt: string;
+};
+
+function optionalStringField(
+	item: SeedDataItem,
+	key: string,
+): string | undefined {
+	const value = item[key];
+	return typeof value === "string" ? value : undefined;
+}
+
+function optionalNumberField(
+	item: SeedDataItem,
+	key: string,
+): number | undefined {
+	const value = item[key];
+	return typeof value === "number" ? value : undefined;
+}
+
+function buildAddressRows(
+	addresses: SeedDataItem[],
+	now: string,
+): SeedAddressRow[] {
+	return addresses.map((item) => {
+		const createdAt =
+			typeof item.createdAt === "string" ? item.createdAt : now;
+		const updatedAt =
+			typeof item.updatedAt === "string" ? item.updatedAt : now;
+		const unit = optionalStringField(item, "unit");
+		const street = optionalStringField(item, "street");
+		const city = optionalStringField(item, "city");
+		const postcode = optionalStringField(item, "postcode");
+		const state = optionalStringField(item, "state");
+		const country = optionalStringField(item, "country");
+		const latitude = optionalNumberField(item, "latitude");
+		const longitude = optionalNumberField(item, "longitude");
+		const instructions = optionalStringField(item, "instructions");
+		return {
+			id: item.id,
+			...(unit !== undefined ? { unit } : {}),
+			...(street !== undefined ? { street } : {}),
+			...(city !== undefined ? { city } : {}),
+			...(postcode !== undefined ? { postcode } : {}),
+			...(state !== undefined ? { state } : {}),
+			...(country !== undefined ? { country } : {}),
+			...(latitude !== undefined ? { latitude } : {}),
+			...(longitude !== undefined ? { longitude } : {}),
+			...(instructions !== undefined ? { instructions } : {}),
+			createdAt,
+			updatedAt,
+		};
 	});
 }
 
@@ -372,6 +441,7 @@ const SERVICE_RESOURCE_SPECS: [string, string, string][] = [
 		"service_resource",
 	],
 	[SEED_IDS.coreFilesResource, EVY_CORE_SERVICE, "file"],
+	[SEED_IDS.coreAddressesResource, EVY_CORE_SERVICE, "address"],
 	[
 		MARKETPLACE_RESOURCE.SELLING_REASONS,
 		MARKETPLACE_SERVICE,
@@ -478,7 +548,11 @@ async function seedDatabase({
 	marketplaceDataJson: SeedDataMap;
 	now?: string;
 }) {
-	const { files: evyFiles = [], ...unsupportedEvy } = evyDataJson;
+	const {
+		files: evyFiles = [],
+		addresses: evyAddresses = [],
+		...unsupportedEvy
+	} = evyDataJson;
 	const unsupportedResources = Object.keys(unsupportedEvy);
 	if (unsupportedResources.length > 0) {
 		throw new Error(
@@ -487,6 +561,7 @@ async function seedDatabase({
 	}
 
 	const fileRows = buildFileRows(evyFiles, now);
+	const addressRows = buildAddressRows(evyAddresses, now);
 	await copySeedFileBinaries({
 		files: fileRows,
 		repoRoot: REPO_ROOT,
@@ -569,6 +644,11 @@ async function seedDatabase({
 		await tx.delete(coreSchema.file);
 		if (fileRows.length > 0) {
 			await tx.insert(coreSchema.file).values(fileRows);
+		}
+
+		await tx.delete(coreSchema.address);
+		if (addressRows.length > 0) {
+			await tx.insert(coreSchema.address).values(addressRows);
 		}
 	});
 
