@@ -5,29 +5,8 @@
 		{
 			"idx": 0,
 			"version": "7",
-			"when": 1776685264188,
+			"when": 1784772101156,
 			"tag": "0000_baseline",
-			"breakpoints": true
-		},
-		{
-			"idx": 1,
-			"version": "7",
-			"when": 1777385709420,
-			"tag": "0001_enable_fuzzystrmatch",
-			"breakpoints": true
-		},
-		{
-			"idx": 2,
-			"version": "7",
-			"when": 1778000000000,
-			"tag": "0002_pluralize_resources",
-			"breakpoints": true
-		},
-		{
-			"idx": 3,
-			"version": "7",
-			"when": 1778100000000,
-			"tag": "0003_message_status",
 			"breakpoints": true
 		}
 	]

@@ -5,85 +5,8 @@
 		{
 			"idx": 0,
 			"version": "7",
-			"when": 1776685262241,
+			"when": 1784772096231,
 			"tag": "0000_baseline",
-			"breakpoints": true
-		},
-		{
-			"idx": 1,
-			"version": "7",
-			"when": 1779887413126,
-			"tag": "0001_mushy_spiral",
-			"breakpoints": true
-		},
-		{
-			"idx": 2,
-			"version": "7",
-			"when": 1780272000000,
-			"tag": "0002_files",
-			"breakpoints": true
-		},
-		{
-			"idx": 3,
-			"version": "7",
-			"when": 1780228970287,
-			"tag": "0003_amused_christian_walker",
-			"breakpoints": true
-		},
-		{
-			"idx": 4,
-			"version": "7",
-			"when": 1781695798071,
-			"tag": "0004_remove_service_default_weight_kg",
-			"breakpoints": true
-		},
-		{
-			"idx": 5,
-			"version": "7",
-			"when": 1781783482228,
-			"tag": "0005_curved_loki",
-			"breakpoints": true
-		},
-		{
-			"idx": 6,
-			"version": "7",
-			"when": 1781870400000,
-			"tag": "0006_simplify_service_resources",
-			"breakpoints": true
-		},
-		{
-			"idx": 7,
-			"version": "7",
-			"when": 1782604800000,
-			"tag": "0007_decompose_sdui_flows",
-			"breakpoints": true
-		},
-		{
-			"idx": 8,
-			"version": "7",
-			"when": 1784505600000,
-			"tag": "0008_generic_row_sheets",
-			"breakpoints": true
-		},
-		{
-			"idx": 9,
-			"version": "7",
-			"when": 1784592000000,
-			"tag": "0009_actions_by_trigger",
-			"breakpoints": true
-		},
-		{
-			"idx": 10,
-			"version": "7",
-			"when": 1784678400000,
-			"tag": "0010_calendar_axis_triggers",
-			"breakpoints": true
-		},
-		{
-			"idx": 11,
-			"version": "7",
-			"when": 1784764800000,
-			"tag": "0011_swipe_left_rename",
 			"breakpoints": true
 		}
 	]

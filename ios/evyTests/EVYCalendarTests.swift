@@ -88,15 +88,6 @@ final class EVYCalendarTests: XCTestCase {
     XCTAssertEqual(labelledSlots.map { $0.timeLabel }, ["9:00 AM", "10:00 AM"])
   }
 
-  // TODO: remove after migration
-  func testCalendarFormatValueSupportsLegacyExpression() {
-    let formatted = EVYDatetime.formatCalendarValue(
-      "2026-06-03T09:00:00",
-      patternOrExpression: "{formatDatetime($datum, \"EEE d\")}"
-    )
-    XCTAssertEqual(formatted, "Wed 3")
-  }
-
   func testPrimarySelectionIsDetectedCorrectly() {
     let slots = EVYDatetime.buildCalendarSlots(
       row: calendarRow(startTime: "09:00", endTime: "11:00", timeslotIntervalMinutes: "60"),
