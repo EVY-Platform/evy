@@ -3379,6 +3379,14 @@ final class WebSocketE2ETests: E2ETestBase {
     marketplaceItemPickupAddressId(title: title, items: items) != nil
   }
 
+  fileprivate static func itemMatchesTitle(_ item: [String: Any], title: String) -> Bool {
+    let needle = title.trimmingCharacters(in: .whitespacesAndNewlines)
+    let topTitle = (item["title"] as? String)?.trimmingCharacters(in: .whitespacesAndNewlines)
+    let nestedTitle = (item[MARKETPLACE_ITEMS_RESOURCE_ID] as? [String: Any])?["title"] as? String
+    let nestedNormalized = nestedTitle?.trimmingCharacters(in: .whitespacesAndNewlines)
+    return topTitle == needle || nestedNormalized == needle
+  }
+
   fileprivate static func marketplaceItemsMatchingTitleSummary(title: String, items: Any) -> String
   {
     guard let itemsArray = responseDataArray(from: items) else {
@@ -3386,11 +3394,9 @@ final class WebSocketE2ETests: E2ETestBase {
     }
     let needle = title.trimmingCharacters(in: .whitespacesAndNewlines)
     let matches = itemsArray.compactMap { entry -> [String: Any]? in
-      guard let item = entry as? [String: Any] else { return nil }
-      let topTitle = (item["title"] as? String)?.trimmingCharacters(in: .whitespacesAndNewlines)
-      let nestedTitle = (item[MARKETPLACE_ITEMS_RESOURCE_ID] as? [String: Any])?["title"] as? String
-      let nestedNormalized = nestedTitle?.trimmingCharacters(in: .whitespacesAndNewlines)
-      guard topTitle == needle || nestedNormalized == needle else { return nil }
+      guard let item = entry as? [String: Any], itemMatchesTitle(item, title: needle) else {
+        return nil
+      }
       return item
     }
     if matches.isEmpty {
@@ -3412,15 +3418,8 @@ final class WebSocketE2ETests: E2ETestBase {
     guard let itemsArray = responseDataArray(from: items) else { return nil }
     let normalizedExpectedTitle = title.trimmingCharacters(in: .whitespacesAndNewlines)
     for case let item as [String: Any] in itemsArray {
-      let topTitle = item["title"] as? String
-      let nested = item[MARKETPLACE_ITEMS_RESOURCE_ID] as? [String: Any]
-      let nestedTitle = nested?["title"] as? String
-      let titleMatchesTop =
-        topTitle?.trimmingCharacters(in: .whitespacesAndNewlines) == normalizedExpectedTitle
-      let titleMatchesNested =
-        nestedTitle?.trimmingCharacters(in: .whitespacesAndNewlines) == normalizedExpectedTitle
-      guard titleMatchesTop || titleMatchesNested else { continue }
-      if nested != nil { return nil }
+      guard itemMatchesTitle(item, title: normalizedExpectedTitle) else { continue }
+      if item[MARKETPLACE_ITEMS_RESOURCE_ID] != nil { return nil }
       guard let transfer = item["transfer_options"] as? [String: Any],
         let pickup = transfer["pickup"] as? [String: Any],
         let addressId = pickup["address_id"] as? String,

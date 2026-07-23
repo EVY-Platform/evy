@@ -22,6 +22,7 @@ import type {
 } from "evy-types";
 import { EVY_CORE_RESOURCE, EVY_CORE_SERVICE } from "evy-types/coreResources";
 import * as schema from "evy-types/db/schema.generated";
+import { ROTHCHILD_CANONICAL_ADDRESS } from "../../../scripts/fixtures/canonicalAddresses";
 import { useFileStorageDirsForTest } from "./fileStorageTestHelpers";
 import {
 	asEvyDb,
@@ -94,16 +95,8 @@ function addressRow(
 	overrides: Partial<DATA_EVY_Address> = {},
 ): DATA_EVY_Address {
 	return {
+		...ROTHCHILD_CANONICAL_ADDRESS,
 		id: crypto.randomUUID(),
-		unit: "C509",
-		street: "28 Rothschild Avenue",
-		city: "Rosebery",
-		postcode: "2018",
-		state: "NSW",
-		country: "Australia",
-		latitude: -33.9172075,
-		longitude: 151.1985883,
-		instructions: "",
 		...timestamps(),
 		...overrides,
 	};

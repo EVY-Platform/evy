@@ -185,6 +185,8 @@ enum EVYFlowStore {
     for route: Route,
     from store: EVYDataStore = EVY.publicStore
   ) -> String? {
+    // TODO(simplify-if-and-shared-address#3): declare the flow submission entity in fixture/schema
+    // instead of sorted().first over create-action resource keys.
     if let entityKey = createKeys(flowId: route.flowId, from: store).sorted().first {
       return EVYDraft.createMergeScopeId(flowId: route.flowId, entityKey: entityKey)
     }

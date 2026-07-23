@@ -30,7 +30,7 @@ export function setPlacesClientForTests(
 	placesClient = client;
 }
 
-const PLACEHOLDER_GOOGLE_PLACES_API_KEY = "googlekey";
+export const PLACEHOLDER_GOOGLE_PLACES_API_KEY = "googlekey";
 
 export function isGooglePlacesMockEnabled(): boolean {
 	const mockFlag = process.env.GOOGLE_PLACES_MOCK;

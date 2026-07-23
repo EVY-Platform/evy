@@ -31,10 +31,13 @@ final class EVYDraftStore {
     scopeId: String
   ) throws -> (binding: EVYDraft.Binding, draft: EVYData, remainingProps: [String])? {
     guard !splitProps.isEmpty else { return nil }
+    let draftsByKey = Dictionary(
+      uniqueKeysWithValues: try drafts(forScopeId: scopeId).map { ($0.id, $0) }
+    )
     for prefixLength in stride(from: splitProps.count, through: 1, by: -1) {
       let prefixProps = Array(splitProps.prefix(prefixLength)).joined(separator: PROP_SEPARATOR)
       let binding = try binding(fromParsedProps: prefixProps, scopeId: scopeId)
-      guard let draft = draftIfPresent(binding: binding) else { continue }
+      guard let draft = draftsByKey[binding.draftKey] else { continue }
       let remainingProps = EVYDraft.remainingPropsAfterDraftPrefix(
         splitProps: splitProps,
         binding: binding

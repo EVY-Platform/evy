@@ -14,7 +14,7 @@ struct EVYFunctionOutput {
 }
 
 @MainActor
-func evyCount(_ args: String) throws -> EVYFunctionOutput {
+func evyCount(_ args: String) -> EVYFunctionOutput {
   guard let res = _getDataFromPropsStrict(args) else {
     return EVYFunctionOutput(value: "0", prefix: nil, suffix: nil)
   }
@@ -147,7 +147,7 @@ func evyIf(_ args: String) throws -> EVYFunctionOutput {
   let trueBranch = parts[1].trimmingCharacters(in: .whitespacesAndNewlines)
   let falseBranch = parts[2].trimmingCharacters(in: .whitespacesAndNewlines)
 
-  let conditionExpression = condition.hasPrefix("{") ? condition : "{\(condition)}"
+  let conditionExpression = wrappedExpression(condition)
   let isTrue = try _evaluateFromText(conditionExpression)
   let selectedBranch = isTrue ? trueBranch : falseBranch
   let resolved = try evyIfResolveBranch(selectedBranch)
@@ -163,7 +163,7 @@ private func evyIfResolveBranch(_ branch: String) throws -> String {
   if trimmed.first == "\"", trimmed.last == "\"", trimmed.count >= 2 {
     return _stripOptionalSurroundingQuotes(trimmed)
   }
-  let expression = trimmed.hasPrefix("{") ? trimmed : "{\(trimmed)}"
+  let expression = wrappedExpression(trimmed)
   return try _getValueFromText(expression).toString()
 }
 

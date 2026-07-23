@@ -36,7 +36,7 @@ const monthAbbreviations = [
 	"Dec",
 ];
 
-function stripOptionalSurroundingQuotes(value: string): string {
+export function stripOptionalSurroundingQuotes(value: string): string {
 	const trimmed = value.trim();
 	const first = trimmed.at(0);
 	const last = trimmed.at(-1);

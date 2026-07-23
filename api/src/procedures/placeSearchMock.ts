@@ -1,4 +1,5 @@
 import type { protos } from "@googlemaps/places";
+import { ROTHCHILD_CANONICAL_ADDRESS } from "../../../scripts/fixtures/canonicalAddresses";
 import type { PlacesClientLike } from "./placeSearch";
 
 type PlacesAutocompleteResponse =
@@ -26,25 +27,44 @@ const MOCK_SYDNEY_PLACE: PlacesPlace = {
 };
 
 const MOCK_ROTHSCHILD_PLACE: PlacesPlace = {
-	id: "ChIJRothschild",
+	id: ROTHCHILD_CANONICAL_ADDRESS.id,
 	addressComponents: [
-		{ longText: "C509", shortText: "C509", types: ["subpremise"] },
+		{
+			longText: ROTHCHILD_CANONICAL_ADDRESS.unit,
+			shortText: ROTHCHILD_CANONICAL_ADDRESS.unit,
+			types: ["subpremise"],
+		},
 		{ longText: "28", shortText: "28", types: ["street_number"] },
 		{
-			longText: "Rothschild Avenue",
+			longText: ROTHCHILD_CANONICAL_ADDRESS.street,
 			shortText: "Rothschild Ave",
 			types: ["route"],
 		},
-		{ longText: "Rosebery", shortText: "Rosebery", types: ["locality"] },
+		{
+			longText: ROTHCHILD_CANONICAL_ADDRESS.city,
+			shortText: ROTHCHILD_CANONICAL_ADDRESS.city,
+			types: ["locality"],
+		},
 		{
 			longText: "New South Wales",
-			shortText: "NSW",
+			shortText: ROTHCHILD_CANONICAL_ADDRESS.state,
 			types: ["administrative_area_level_1"],
 		},
-		{ longText: "2018", shortText: "2018", types: ["postal_code"] },
-		{ longText: "Australia", shortText: "AU", types: ["country"] },
+		{
+			longText: ROTHCHILD_CANONICAL_ADDRESS.postcode,
+			shortText: ROTHCHILD_CANONICAL_ADDRESS.postcode,
+			types: ["postal_code"],
+		},
+		{
+			longText: ROTHCHILD_CANONICAL_ADDRESS.country,
+			shortText: "AU",
+			types: ["country"],
+		},
 	],
-	location: { latitude: -33.9172075, longitude: 151.1985883 },
+	location: {
+		latitude: ROTHCHILD_CANONICAL_ADDRESS.latitude,
+		longitude: ROTHCHILD_CANONICAL_ADDRESS.longitude,
+	},
 };
 
 const MOCK_PLACES_BY_ID: Record<string, PlacesPlace> = {

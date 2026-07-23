@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it } from "bun:test";
 import {
 	isGooglePlacesMockEnabled,
+	PLACEHOLDER_GOOGLE_PLACES_API_KEY,
 	placeSearch,
 	setPlacesClientForTests,
 } from "../procedures/placeSearch";
@@ -31,13 +32,13 @@ describe("placeSearch mock client", () => {
 
 	it("is disabled when GOOGLE_PLACES_MOCK is false", () => {
 		process.env.GOOGLE_PLACES_MOCK = "false";
-		process.env.GOOGLE_PLACES_API_KEY = "googlekey";
+		process.env.GOOGLE_PLACES_API_KEY = PLACEHOLDER_GOOGLE_PLACES_API_KEY;
 		expect(isGooglePlacesMockEnabled()).toBe(false);
 	});
 
 	it("returns Sydney fixtures for sydney queries", async () => {
 		process.env.GOOGLE_PLACES_MOCK = "true";
-		process.env.GOOGLE_PLACES_API_KEY = "googlekey";
+		process.env.GOOGLE_PLACES_API_KEY = PLACEHOLDER_GOOGLE_PLACES_API_KEY;
 
 		const result = await placeSearch({ input: "Sydney" });
 

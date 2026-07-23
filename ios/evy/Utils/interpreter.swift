@@ -300,9 +300,6 @@ func _getDataFromPropsStrict(_ props: String) -> EVYJson? {
   guard let resolved = try? _resolveBindingRoot(props) else {
     return nil
   }
-  if resolved.remainingProps.isEmpty {
-    return resolved.root
-  }
   return resolved.root.parsePropStrict(props: resolved.remainingProps)
 }
 
@@ -323,7 +320,7 @@ private let formatFunctionsByBuildFunction = [
   "buildAddress": "formatAddress",
 ]
 
-private func wrappedExpression(_ raw: String) -> String {
+func wrappedExpression(_ raw: String) -> String {
   raw.hasPrefix("{") ? raw : "{\(raw)}"
 }
 
@@ -466,9 +463,9 @@ private func parseText(
 
     switch funcName {
     case "count":
-      value = try evyCount(funcArgs)
+      value = evyCount(funcArgs)
     case "length":
-      value = try evyCount(funcArgs)
+      value = evyCount(funcArgs)
     case "earliestDatetime":
       value = try evyEarliestDatetime(funcArgs)
     case "if":

@@ -186,24 +186,35 @@ extension EVY {
     return newId
   }
 
-  private static func applyChange(
-    key: String,
-    value: EVYJson,
+  private static func applyChanges(
+    _ changes: [String: EVYJson],
     to record: [String: EVYJson]
   ) throws -> [String: EVYJson]? {
-    if !key.contains(".") {
-      var updated = record
-      updated[key] = value
-      return updated
+    var updatedRecord = record
+    var dottedChanges: [(key: String, value: EVYJson)] = []
+
+    for (key, value) in changes {
+      if !key.contains(".") {
+        updatedRecord[key] = value
+      } else {
+        dottedChanges.append((key, value))
+      }
     }
-    let props = key.split(separator: ".").map(String.init)
-    let encodedRecord = try JSONEncoder().encode(EVYJson.dictionary(record))
-    let encodedValue = try JSONEncoder().encode(value)
-    let patched = try EVYDataPatcher.patch(
-      encodedData: encodedRecord, newData: encodedValue, props: props)
+
+    guard !dottedChanges.isEmpty else {
+      return updatedRecord
+    }
+
+    var encodedRecord = try JSONEncoder().encode(EVYJson.dictionary(updatedRecord))
+    for (key, value) in dottedChanges {
+      let props = key.split(separator: ".").map(String.init)
+      let encodedValue = try JSONEncoder().encode(value)
+      encodedRecord = try EVYDataPatcher.patch(
+        encodedData: encodedRecord, newData: encodedValue, props: props)
+    }
     guard
       case .dictionary(let patchedRecord) = try JSONDecoder().decode(
-        EVYJson.self, from: patched)
+        EVYJson.self, from: encodedRecord)
     else {
       return nil
     }
@@ -235,12 +246,10 @@ extension EVY {
       guard matches else { continue }
 
       var updatedRecord = record
-      for (key, value) in changes {
-        guard let patched = try applyChange(key: key, value: value, to: updatedRecord) else {
-          continue
-        }
-        updatedRecord = patched
+      guard let patched = try applyChanges(changes, to: updatedRecord) else {
+        continue
       }
+      updatedRecord = patched
       matchedUpdates.append(
         (rowId: row.id, recordId: recordId, updatedData: .dictionary(updatedRecord)))
     }
@@ -249,11 +258,20 @@ extension EVY {
       let scopeId = draftStore.activeScopeId,
       EVYDraft.Scope.entityKey(fromScopeId: scopeId) == resource
     {
+      // TODO(simplify-if-and-shared-address#4): replace inferred create-flow merge with an explicit
+      // fixture action mode instead of matched-row-count + entityKey string equality.
       for (key, value) in changes {
         try writeRawValue(value, to: "{\(resource).\(key)}")
       }
       return
     }
+
+    let cacheRowsForScope: [EVYData] =
+      if let scopeId = activeCacheScopeId {
+        (try? cacheStore.getAll(namespace: EVYNamespace.cache, resource: scopeId)) ?? []
+      } else {
+        []
+      }
 
     for update in matchedUpdates {
       let encodedData = try JSONEncoder().encode(update.updatedData)
@@ -264,10 +282,8 @@ extension EVY {
         value: encodedData
       )
 
-      if let scopeId = activeCacheScopeId {
-        let cacheRows =
-          (try? cacheStore.getAll(namespace: EVYNamespace.cache, resource: scopeId)) ?? []
-        for cacheRow in cacheRows {
+      if let scopeId = activeCacheScopeId, !cacheRowsForScope.isEmpty {
+        for cacheRow in cacheRowsForScope {
           guard case .dictionary(let cachedRecord) = try? cacheRow.decoded(),
             case .string(let cachedId) = cachedRecord["id"],
             cachedId == update.recordId
@@ -382,6 +398,8 @@ extension EVY {
     // of joining the create draft — and the new item would be submitted without address_id.
     let createEntityKey = EVYDraft.Scope.entityKey(fromScopeId: resolvedScopeId)
     let writesIntoCreateEntity = createEntityKey != nil && rootVariable == createEntityKey
+    // TODO(simplify-if-and-shared-address#4): explicit merge/link action in fixtures instead of
+    // writesIntoCreateEntity inference (see update() create-flow fallback above).
 
     if !writesIntoCreateEntity,
       let existingRow = try? findRowForUpdate(store: store, rootVariable: rootVariable)

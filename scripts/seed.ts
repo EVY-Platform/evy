@@ -224,10 +224,7 @@ function buildFileRows(files: SeedDataItem[], now: string): SeedFileRow[] {
 				`Seed file "${item.id}" must have a non-empty string "type" field`,
 			);
 		}
-		const createdAt =
-			typeof item.createdAt === "string" ? item.createdAt : now;
-		const updatedAt =
-			typeof item.updatedAt === "string" ? item.updatedAt : now;
+		const { createdAt, updatedAt } = seedTimestamps(item, now);
 		return { id: item.id, type: item.type, createdAt, updatedAt };
 	});
 }
@@ -262,10 +259,7 @@ function buildAddressRows(
 	] as const;
 	const numberKeys = ["latitude", "longitude"] as const;
 	return addresses.map((item) => {
-		const createdAt =
-			typeof item.createdAt === "string" ? item.createdAt : now;
-		const updatedAt =
-			typeof item.updatedAt === "string" ? item.updatedAt : now;
+		const { createdAt, updatedAt } = seedTimestamps(item, now);
 		const optionalStrings = Object.fromEntries(
 			stringKeys
 				.filter((key) => typeof item[key] === "string")
@@ -284,6 +278,16 @@ function buildAddressRows(
 			updatedAt,
 		};
 	});
+}
+
+function seedTimestamps(
+	item: SeedDataItem,
+	now: string,
+): { createdAt: string; updatedAt: string } {
+	return {
+		createdAt: typeof item.createdAt === "string" ? item.createdAt : now,
+		updatedAt: typeof item.updatedAt === "string" ? item.updatedAt : now,
+	};
 }
 
 function timestamped(now: string): { createdAt: string; updatedAt: string } {
