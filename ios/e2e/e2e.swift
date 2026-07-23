@@ -344,12 +344,9 @@ actor WSEmitter {
     }
     return try await withCheckedThrowingContinuation { continuation in
       pendingResponses[requestId] = continuation
-      Task {
-        do {
-          try await ws.send(.string(json))
-        } catch {
-          await self.failPendingRequest(id: requestId, error: error)
-        }
+      ws.send(.string(json)) { error in
+        guard let error else { return }
+        Task { await self.failPendingRequest(id: requestId, error: error) }
       }
     }
   }
@@ -2595,19 +2592,28 @@ final class WebSocketE2ETests: E2ETestBase {
       service: MARKETPLACE_SERVICE,
       resource: MarketplaceResource.messages.rawValue
     )
-    let messageId = try XCTUnwrap(
-      Self.marketplaceMessageId(
-        messagesPayload,
-        itemId: selectedItemId,
-        type: "pickup"
-      ),
+    let messageRows = try XCTUnwrap(
+      Self.responseDataArray(from: messagesPayload),
+      "Messages payload should be an array"
+    )
+    var acceptedMessage = try XCTUnwrap(
+      messageRows.compactMap { $0 as? [String: Any] }.first {
+        $0["id"] as? String != nil
+          && ($0["data"] as? [String: Any])?["type"] as? String == "pickup"
+          && $0["fk"] as? String == selectedItemId
+      },
       "Created pickup message should be readable from the API"
     )
+    let messageId = try XCTUnwrap(
+      acceptedMessage["id"] as? String,
+      "Created pickup message should include an id"
+    )
+    acceptedMessage["status"] = "accepted"
     _ = try await emitter.updateResource(
       service: MARKETPLACE_SERVICE,
       resource: MarketplaceResource.messages.rawValue,
       filter: ["id": messageId],
-      data: ["status": "accepted"]
+      data: acceptedMessage
     )
     let acceptedOnServer = try await waitForMarketplaceMessageStatus(
       emitter: emitter,
@@ -2995,26 +3001,6 @@ final class WebSocketE2ETests: E2ETestBase {
       emitter: emitter,
       resource: MarketplaceResource.messages.rawValue
     ) { Self.marketplaceMessagesArchived($0, itemId: itemId) }
-  }
-
-  private static func marketplaceMessageId(
-    _ messages: Any,
-    itemId: String,
-    type: String
-  ) -> String? {
-    guard let messageRows = responseDataArray(from: messages) else { return nil }
-    for message in messageRows {
-      guard let messageData = message as? [String: Any],
-        messageData["fk"] as? String == itemId,
-        let messageId = messageData["id"] as? String,
-        let messageDetails = messageData["data"] as? [String: Any],
-        messageDetails["type"] as? String == type
-      else {
-        continue
-      }
-      return messageId
-    }
-    return nil
   }
 
   private static func marketplaceMessagesArchived(
