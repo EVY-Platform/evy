@@ -457,6 +457,8 @@ private func parseText(
       value = try evyCount(funcArgs)
     case "earliestDatetime":
       value = try evyEarliestDatetime(funcArgs)
+    case "if":
+      value = try evyIf(funcArgs)
     case "now":
       value = evyNow()
     case "formatCurrency":

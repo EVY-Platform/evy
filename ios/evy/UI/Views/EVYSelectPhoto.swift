@@ -318,7 +318,8 @@ private struct EVYSelectPhotoPreview: View {
   var body: some View {
     EVYSelectPhoto(
       title: "Photos Title",
-      subtitle: "{count(photo_ids)}/10 - Choose your listing's main photo first.",
+      subtitle:
+        "{count(photo_ids)}/10{if(count(photo_ids) == 0, \" - Choose your listing's main photo first.\", \"\")}",
       icon: "::image-plus::",
       content: "A great subtitle",
       data: "{photo_ids}",

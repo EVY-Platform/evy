@@ -709,7 +709,7 @@
 							]
 						},
 						"title": "",
-						"subtitle": "{count(dc28ed59-298e-493c-8ff3-3e60f2ebccbd.photo_ids)}/10 - Choose your listing's main photo first.",
+						"subtitle": "{count(dc28ed59-298e-493c-8ff3-3e60f2ebccbd.photo_ids)}/10{if(count(dc28ed59-298e-493c-8ff3-3e60f2ebccbd.photo_ids) == 0, \" - Choose your listing's main photo first.\", \"\")}",
 						"icon": "::image-plus::",
 						"content": "Add photos",
 						"visible": "true",

@@ -96,6 +96,23 @@ final class InterpreterTests: XCTestCase {
     )
   }
 
+  func testIfSelectsSubtitleSuffixOnlyWhenPhotoListIsEmpty() throws {
+    let key = uniqueKey("photo_ids")
+    let template =
+      "{count(\(key))}/10{if(count(\(key)) == 0, \" - Choose your listing's main photo first.\", \"\")}"
+
+    try store(.array([]), at: key)
+    XCTAssertEqual(
+      try parseTextFromText(template).value,
+      "0/10 - Choose your listing's main photo first.")
+
+    let encoded = try JSONEncoder().encode(EVYJson.array([.string("photo-1")]))
+    if let existing = try EVY.publicStore.getAll().first(where: { $0.resource == key }) {
+      existing.data = encoded
+    }
+    XCTAssertEqual(try parseTextFromText(template).value, "1/10")
+  }
+
   func testWatchTargetsIgnoresLiteralFunctionArguments() {
     XCTAssertEqual(
       EVY.watchTargets(for: "{formatDecimal(item.price, 2)}"),

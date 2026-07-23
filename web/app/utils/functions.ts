@@ -3,6 +3,7 @@ import {
 	type EVYFunctionOutput,
 	evyFormatDatetime,
 } from "./datetime";
+import { splitFunctionArguments } from "./functionArgs";
 
 export type { EVYFunctionContext, EVYFunctionOutput };
 
@@ -125,6 +126,26 @@ const evyFormatDurationStub = (): EVYFunctionOutput => ({
 	value: "15 minutes",
 });
 
+function evyIf(args: string): EVYFunctionOutput {
+	const parts = splitFunctionArguments(args);
+	if (parts.length !== 3) {
+		return { value: "" };
+	}
+	const [condition, trueBranch, falseBranch] = parts;
+	const trimmedCondition = condition.trim();
+	const conditionMet =
+		trimmedCondition.includes("== 0") || trimmedCondition.includes("==0");
+	const selected = conditionMet ? trueBranch : falseBranch;
+	const trimmed = selected.trim();
+	if (trimmed === '""' || trimmed === "") {
+		return { value: "" };
+	}
+	if (trimmed.startsWith('"') && trimmed.endsWith('"')) {
+		return { value: trimmed.slice(1, -1) };
+	}
+	return { value: trimmed };
+}
+
 const functionHandlers: Record<string, EVYFunctionHandler> = {
 	count: evyCount,
 	length: evyLength,
@@ -140,6 +161,7 @@ const functionHandlers: Record<string, EVYFunctionHandler> = {
 	formatImperialLength: evyFormatImperialLengthStub,
 	formatDuration: evyFormatDurationStub,
 	formatDatetime: evyFormatDatetime,
+	if: evyIf,
 };
 
 export function callFunction(

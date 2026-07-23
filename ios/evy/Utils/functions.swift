@@ -138,6 +138,34 @@ func evyFindFirst(_ args: String, remainingProps: [String] = []) throws -> EVYJs
 }
 
 @MainActor
+func evyIf(_ args: String) throws -> EVYFunctionOutput {
+  let parts = _splitFunctionArguments(args)
+  guard parts.count == 3 else { throw EVYParamError.invalidProps }
+  let condition = parts[0].trimmingCharacters(in: .whitespacesAndNewlines)
+  let trueBranch = parts[1].trimmingCharacters(in: .whitespacesAndNewlines)
+  let falseBranch = parts[2].trimmingCharacters(in: .whitespacesAndNewlines)
+
+  let conditionExpression = condition.hasPrefix("{") ? condition : "{\(condition)}"
+  let isTrue = try _evaluateFromText(conditionExpression)
+  let selectedBranch = isTrue ? trueBranch : falseBranch
+  let resolved = try evyIfResolveBranch(selectedBranch)
+  return EVYFunctionOutput(value: resolved, prefix: nil, suffix: nil)
+}
+
+@MainActor
+private func evyIfResolveBranch(_ branch: String) throws -> String {
+  let trimmed = branch.trimmingCharacters(in: .whitespacesAndNewlines)
+  if trimmed.isEmpty || trimmed == "\"\"" {
+    return ""
+  }
+  if trimmed.first == "\"", trimmed.last == "\"", trimmed.count >= 2 {
+    return _stripOptionalSurroundingQuotes(trimmed)
+  }
+  let expression = trimmed.hasPrefix("{") ? trimmed : "{\(trimmed)}"
+  return try _getValueFromText(expression).toString()
+}
+
+@MainActor
 func evyFormatCurrency(
   _ args: String,
   _ editing: Bool = false
