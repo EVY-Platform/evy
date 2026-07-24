@@ -32,6 +32,9 @@
 			"$ref": "../data/data.schema.json#/$defs/DATA_EVY_Address"
 		},
 		{
+			"$ref": "../data/data.schema.json#/$defs/DATA_EVY_Message"
+		},
+		{
 			"$ref": "../data/primitive.schema.json"
 		}
 	]

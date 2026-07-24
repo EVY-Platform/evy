@@ -12,6 +12,7 @@ import type {
 	CreateRequest,
 	DATA_EVY_Address,
 	DATA_EVY_Flow,
+	DATA_EVY_Message,
 	DATA_EVY_Page,
 	DATA_EVY_Row,
 	DATA_EVY_Service,
@@ -48,6 +49,7 @@ const FLOW_RESOURCE = EVY_CORE_RESOURCE.FLOWS;
 const PAGE_RESOURCE = EVY_CORE_RESOURCE.PAGES;
 const ROW_RESOURCE = EVY_CORE_RESOURCE.ROWS;
 const ADDRESS_RESOURCE = EVY_CORE_RESOURCE.ADDRESSES;
+const MESSAGE_RESOURCE = EVY_CORE_RESOURCE.MESSAGES;
 
 function nowIso(): string {
 	return new Date().toISOString();
@@ -63,6 +65,7 @@ function flowRow(overrides: Partial<DATA_EVY_Flow> = {}): DATA_EVY_Flow {
 		id: crypto.randomUUID(),
 		name: "Flow",
 		pageIds: [],
+		visibility: "public",
 		...timestamps(),
 		...overrides,
 	};
@@ -74,6 +77,7 @@ function pageRow(overrides: Partial<DATA_EVY_Page> = {}): DATA_EVY_Page {
 		name: "Page",
 		title: "Page",
 		rowIds: [],
+		visibility: "public",
 		...timestamps(),
 		...overrides,
 	};
@@ -86,6 +90,7 @@ function rowRow(overrides: Partial<DATA_EVY_Row> = {}): DATA_EVY_Row {
 		type: "Text",
 		visible: "true",
 		data: { title: "", text: "Hello" },
+		visibility: "public",
 		...timestamps(),
 		...overrides,
 	};
@@ -329,6 +334,7 @@ describe("address resources", () => {
 		expect(created.id).toBe(payload.id);
 		expect(created.street).toBe("28 Rothschild Avenue");
 		expect(created.latitude).toBe(-33.9172075);
+		expect(created.visibility).toBe("private");
 
 		const listed = (await get(dataDb, {
 			service: EVY_CORE_SERVICE,
@@ -345,6 +351,7 @@ describe("address resources", () => {
 		})) as DATA_EVY_Address;
 		expect(updated.unit).toBe("C510");
 		expect(updated.instructions).toBe("Buzz 509");
+		expect(updated.visibility).toBe("private");
 		expect(updated.createdAt).toBe(payload.createdAt);
 
 		const deleted = (await deleteCore(dataDb, {
@@ -379,8 +386,127 @@ describe("address resources", () => {
 			},
 		})) as DATA_EVY_Address;
 		expect(created.street).toBe("Manual Street");
+		expect(created.visibility).toBe("private");
 		expect(created.city).toBeUndefined();
 		expect(created.latitude).toBeUndefined();
+	});
+});
+
+describe("visibility defaults", () => {
+	beforeEach(async () => {
+		await clearAllTestTables(testDb);
+	});
+
+	it("defaults flow visibility to public when omitted from payload", async () => {
+		const created = (await create(dataDb, {
+			service: EVY_CORE_SERVICE,
+			resource: FLOW_RESOURCE,
+			data: {
+				id: crypto.randomUUID(),
+				name: "Public Flow",
+				pageIds: [],
+			},
+		})) as DATA_EVY_Flow;
+		expect(created.visibility).toBe("public");
+	});
+
+	it("round-trips explicit private visibility on flows", async () => {
+		const flowId = crypto.randomUUID();
+		const created = (await create(dataDb, {
+			service: EVY_CORE_SERVICE,
+			resource: FLOW_RESOURCE,
+			data: {
+				id: flowId,
+				name: "Private Flow",
+				pageIds: [],
+				visibility: "private",
+			},
+		})) as DATA_EVY_Flow;
+		expect(created.visibility).toBe("private");
+
+		const listed = (await get(dataDb, {
+			service: EVY_CORE_SERVICE,
+			resource: FLOW_RESOURCE,
+		})) as DATA_EVY_Flow[];
+		expect(listed[0].visibility).toBe("private");
+	});
+});
+
+describe("message resources", () => {
+	beforeEach(async () => {
+		await clearAllTestTables(testDb);
+	});
+
+	it("lists empty then creates, lists, updates, and deletes messages", async () => {
+		const empty = (await get(dataDb, {
+			service: EVY_CORE_SERVICE,
+			resource: MESSAGE_RESOURCE,
+		})) as DATA_EVY_Message[];
+		expect(empty).toEqual([]);
+
+		const payload = {
+			fk: crypto.randomUUID(),
+			service: crypto.randomUUID(),
+			resource: crypto.randomUUID(),
+			status: "pending" as const,
+			data: { type: "pickup", time: "2026-06-03T09:00:00" },
+		};
+		const created = (await create(dataDb, {
+			service: EVY_CORE_SERVICE,
+			resource: MESSAGE_RESOURCE,
+			data: payload,
+		})) as DATA_EVY_Message;
+		expect(created.id).toBeDefined();
+		expect(created.updatedAt).toBeDefined();
+		expect(created.status).toBe("pending");
+		expect(created.visibility).toBe("public");
+
+		const listed = (await get(dataDb, {
+			service: EVY_CORE_SERVICE,
+			resource: MESSAGE_RESOURCE,
+		})) as DATA_EVY_Message[];
+		expect(listed).toHaveLength(1);
+
+		const updated = (await update(dataDb, {
+			service: EVY_CORE_SERVICE,
+			resource: MESSAGE_RESOURCE,
+			filter: { id: created.id },
+			data: { ...created, status: "accepted" },
+		})) as DATA_EVY_Message;
+		expect(updated.status).toBe("accepted");
+
+		const archived = (await update(dataDb, {
+			service: EVY_CORE_SERVICE,
+			resource: MESSAGE_RESOURCE,
+			filter: { id: created.id },
+			data: { ...updated, archivedAt: nowIso() },
+		})) as DATA_EVY_Message;
+		expect(archived.archivedAt).toBeDefined();
+
+		const deleted = (await deleteCore(dataDb, {
+			service: EVY_CORE_SERVICE,
+			resource: MESSAGE_RESOURCE,
+			filter: { id: created.id },
+		})) as DATA_EVY_Message;
+		expect(deleted.id).toBe(created.id);
+		expect(await testDb.select().from(schema.message)).toHaveLength(0);
+	});
+
+	it("rejects invalid message payloads", async () => {
+		await expect(
+			create(dataDb, {
+				service: EVY_CORE_SERVICE,
+				resource: MESSAGE_RESOURCE,
+				data: {
+					id: crypto.randomUUID(),
+					fk: crypto.randomUUID(),
+					service: crypto.randomUUID(),
+					resource: crypto.randomUUID(),
+					status: "invalid",
+					data: {},
+				},
+			}),
+		).rejects.toThrow("Message validation failed");
 	});
 });
 

@@ -14,5 +14,6 @@ export const providersResource = makeCoreResource<DATA_EVY_ServiceProvider>({
 		logo: validated.logo,
 		url: validated.url,
 		retired: validated.retired,
+		visibility: validated.visibility,
 	}),
 });

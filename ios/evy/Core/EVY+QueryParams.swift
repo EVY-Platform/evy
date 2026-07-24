@@ -30,7 +30,7 @@ extension EVY {
         continue
       }
 
-      if publicStore.namespace(forSyncedResource: queryKey) == nil {
+      if namespaceForSyncedResource(queryKey) == nil {
         _ = storeRawQueryParam(scopeId: scopeId, queryKey: queryKey, ids: ids)
       }
     }
@@ -78,9 +78,8 @@ extension EVY {
     cacheKey: String, collection: EVYJson
   )] {
     if let queryKey {
-      if let namespace = publicStore.namespace(forSyncedResource: queryKey),
-        let collection = try? publicStore.getCollectionJson(
-          namespace: namespace, resource: queryKey)
+      if let namespace = namespaceForSyncedResource(queryKey),
+        let collection = try? getSyncedCollectionJson(namespace: namespace, resource: queryKey)
       {
         return [(queryKey, collection)]
       }
@@ -88,17 +87,23 @@ extension EVY {
       return []
     }
 
-    let syncedRows = (try? publicStore.getAll()) ?? []
-    let resourceNames = Set(
-      syncedRows.filter { $0.namespace != EVYNamespace.cache && $0.namespace != EVYNamespace.draft }
+    var results: [(cacheKey: String, collection: EVYJson)] = []
+    var seenResources = Set<String>()
+    for store in syncedStores() {
+      let syncedRows = (try? store.getAll()) ?? []
+      let resourceNames = Set(
+        syncedRows.filter {
+          $0.namespace != EVYNamespace.cache && $0.namespace != EVYNamespace.draft
+        }
         .map { $0.resource })
-    return resourceNames.compactMap { resource in
-      guard let namespace = publicStore.namespace(forSyncedResource: resource),
-        let collection = try? publicStore.getCollectionJson(
-          namespace: namespace, resource: resource)
-      else { return nil }
-      return (resource, collection)
+      for resource in resourceNames where seenResources.insert(resource).inserted {
+        guard let namespace = store.namespace(forSyncedResource: resource),
+          let collection = try? store.getCollectionJson(namespace: namespace, resource: resource)
+        else { continue }
+        results.append((resource, collection))
+      }
     }
+    return results
   }
 
   private static func storeRawQueryParam(scopeId: String, queryKey: String, ids: [String]) -> Bool {

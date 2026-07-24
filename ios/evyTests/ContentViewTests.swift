@@ -9,7 +9,7 @@ import XCTest
 
 enum MarketplaceTestFixture {
   static let itemsResourceId = MarketplaceResource.items.rawValue
-  static let messagesResourceId = MarketplaceResource.messages.rawValue
+  static let messagesResourceId = EVYCoreResource.messages.rawValue
   static let serviceId = MARKETPLACE_SERVICE
 }
 

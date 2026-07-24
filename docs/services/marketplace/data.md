@@ -1,8 +1,12 @@
 # Marketplace data models
 
-Clients talk to marketplace through the EVY api, in order to access the `items`, `selling_reasons`, `conditions`, and `messages` resources.
+Clients talk to marketplace through the EVY api, in order to access the `items`, `selling_reasons`, `conditions`, and `durations` resources.
+
+Service-owned resource payload shapes are conventions defined only in SDUI — there are no code-side JSON schemas or TypeScript types for marketplace data rows. Only resource ids are declared in `marketplace.resources.json`.
 
 Shared value objects (`location`, `price`, `address`, `area`, `photo`, `timeslot`, `transfer_options`, `duration`) are documented in [EVY data models](../../evy/data.md).
+
+Item requests and seller/buyer messages are core [`DATA_EVY_Message`](../../evy/data.md#data_evy_message) rows (resource `messages` on the EVY core service), not marketplace blobs.
 
 ## DATA_MARKETPLACE_Tag
 
@@ -24,22 +28,6 @@ value: string
 id: uuid
 value: string
 ```
-
-## Messages
-
-Rows of the `messages` resource are core [`DATA_EVY_Message`](../../evy/data.md#data_evy_message) objects — the marketplace API persists them without payload validation. For item requests, `fk` is the item id and `service` / `resource` are the marketplace service and `items` resource ids.
-
-Top-level `status` is `pending` or `accepted`. New messages are created `pending`. On the iOS homepage, accepting a message is authored as a `swipe-left` `{update(...)}` that sets `status` to `accepted` when the current value is `pending`.
-
-The free-form `data` object carries the transfer specifics:
-
-```
-data.type: "pickup" | "delivery" | "shipping"
-data.time: string (local ISO time, `YYYY-MM-DDTHH:mm:ss`; pickup/delivery)
-data.postalcode: string (shipping)
-```
-
-Cancelling a message sets `archivedAt` via an update — records are not hard-deleted.
 
 ## DATA_MARKETPLACE_Item
 

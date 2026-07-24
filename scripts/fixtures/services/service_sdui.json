@@ -118,7 +118,7 @@
 								}
 							]
 						},
-						"visible": "{findFirst(000c2d05-851e-4456-8f22-bb1e54f17c8c, fk == dc28ed59-298e-493c-8ff3-3e60f2ebccbd.id && archivedAt == null).fk != dc28ed59-298e-493c-8ff3-3e60f2ebccbd.id}",
+						"visible": "{findFirst(messages, fk == dc28ed59-298e-493c-8ff3-3e60f2ebccbd.id && archivedAt == null).fk != dc28ed59-298e-493c-8ff3-3e60f2ebccbd.id}",
 						"title": "",
 						"segments": ["Pickup", "Delivery", "Shipping"],
 						"children": [
@@ -156,7 +156,7 @@
 												}
 											]
 										},
-										"visible": "{findFirst(000c2d05-851e-4456-8f22-bb1e54f17c8c, fk == dc28ed59-298e-493c-8ff3-3e60f2ebccbd.id && archivedAt == null).fk != dc28ed59-298e-493c-8ff3-3e60f2ebccbd.id}",
+										"visible": "{findFirst(messages, fk == dc28ed59-298e-493c-8ff3-3e60f2ebccbd.id && archivedAt == null).fk != dc28ed59-298e-493c-8ff3-3e60f2ebccbd.id}",
 										"title": "",
 										"start_time": "07:00",
 										"end_time": "19:00",
@@ -198,7 +198,7 @@
 														"tap": [
 															{
 																"condition": "",
-																"true": "{create(66b092ae-7cd8-4d67-95b7-30b03568fd90, 000c2d05-851e-4456-8f22-bb1e54f17c8c, {fk: dc28ed59-298e-493c-8ff3-3e60f2ebccbd.id, service: \"66b092ae-7cd8-4d67-95b7-30b03568fd90\", resource: \"dc28ed59-298e-493c-8ff3-3e60f2ebccbd\", archivedAt: null, status: \"pending\", data: {type: pickup, time: selected_pickup_timeslot}})}",
+																"true": "{create(475731ac-31aa-4d65-94d2-7032782ae359, messages, {fk: dc28ed59-298e-493c-8ff3-3e60f2ebccbd.id, service: \"66b092ae-7cd8-4d67-95b7-30b03568fd90\", resource: \"dc28ed59-298e-493c-8ff3-3e60f2ebccbd\", archivedAt: null, status: \"pending\", data: {type: pickup, time: selected_pickup_timeslot}})}",
 																"false": ""
 															},
 															{
@@ -255,7 +255,7 @@
 												}
 											]
 										},
-										"visible": "{findFirst(000c2d05-851e-4456-8f22-bb1e54f17c8c, fk == dc28ed59-298e-493c-8ff3-3e60f2ebccbd.id && archivedAt == null).fk != dc28ed59-298e-493c-8ff3-3e60f2ebccbd.id}",
+										"visible": "{findFirst(messages, fk == dc28ed59-298e-493c-8ff3-3e60f2ebccbd.id && archivedAt == null).fk != dc28ed59-298e-493c-8ff3-3e60f2ebccbd.id}",
 										"title": "",
 										"start_time": "07:00",
 										"end_time": "19:00",
@@ -288,7 +288,7 @@
 														"tap": [
 															{
 																"condition": "",
-																"true": "{create(66b092ae-7cd8-4d67-95b7-30b03568fd90, 000c2d05-851e-4456-8f22-bb1e54f17c8c, {fk: dc28ed59-298e-493c-8ff3-3e60f2ebccbd.id, service: \"66b092ae-7cd8-4d67-95b7-30b03568fd90\", resource: \"dc28ed59-298e-493c-8ff3-3e60f2ebccbd\", archivedAt: null, status: \"pending\", data: {type: delivery, time: selected_delivery_timeslot}})}",
+																"true": "{create(475731ac-31aa-4d65-94d2-7032782ae359, messages, {fk: dc28ed59-298e-493c-8ff3-3e60f2ebccbd.id, service: \"66b092ae-7cd8-4d67-95b7-30b03568fd90\", resource: \"dc28ed59-298e-493c-8ff3-3e60f2ebccbd\", archivedAt: null, status: \"pending\", data: {type: delivery, time: selected_delivery_timeslot}})}",
 																"false": ""
 															},
 															{
@@ -339,7 +339,7 @@
 												}
 											]
 										},
-										"visible": "{findFirst(000c2d05-851e-4456-8f22-bb1e54f17c8c, fk == dc28ed59-298e-493c-8ff3-3e60f2ebccbd.id && archivedAt == null).fk != dc28ed59-298e-493c-8ff3-3e60f2ebccbd.id}",
+										"visible": "{findFirst(messages, fk == dc28ed59-298e-493c-8ff3-3e60f2ebccbd.id && archivedAt == null).fk != dc28ed59-298e-493c-8ff3-3e60f2ebccbd.id}",
 										"title": "",
 										"label": "Ask to buy",
 										"name": "Ask to buy",
@@ -383,7 +383,7 @@
 														"tap": [
 															{
 																"condition": "",
-																"true": "{create(66b092ae-7cd8-4d67-95b7-30b03568fd90, 000c2d05-851e-4456-8f22-bb1e54f17c8c, {fk: dc28ed59-298e-493c-8ff3-3e60f2ebccbd.id, service: \"66b092ae-7cd8-4d67-95b7-30b03568fd90\", resource: \"dc28ed59-298e-493c-8ff3-3e60f2ebccbd\", archivedAt: null, status: \"pending\", data: {type: shipping, postalcode: shipping_address.postcode}})}",
+																"true": "{create(475731ac-31aa-4d65-94d2-7032782ae359, messages, {fk: dc28ed59-298e-493c-8ff3-3e60f2ebccbd.id, service: \"66b092ae-7cd8-4d67-95b7-30b03568fd90\", resource: \"dc28ed59-298e-493c-8ff3-3e60f2ebccbd\", archivedAt: null, status: \"pending\", data: {type: shipping, postalcode: shipping_address.postcode}})}",
 																"false": ""
 															},
 															{
@@ -413,15 +413,15 @@
 					{
 						"id": "f9a8b7c6-d5e4-4f3a-9b8c-7d6e5f4a3b2c",
 						"type": "VerticalContainer",
-						"visible": "{findFirst(000c2d05-851e-4456-8f22-bb1e54f17c8c, fk == dc28ed59-298e-493c-8ff3-3e60f2ebccbd.id && archivedAt == null && data.type == pickup).fk == dc28ed59-298e-493c-8ff3-3e60f2ebccbd.id}",
+						"visible": "{findFirst(messages, fk == dc28ed59-298e-493c-8ff3-3e60f2ebccbd.id && archivedAt == null && data.type == pickup).fk == dc28ed59-298e-493c-8ff3-3e60f2ebccbd.id}",
 						"title": "",
 						"children": [
 							{
 								"id": "1a713180-a4a4-4f23-98cf-f3e79140c832",
 								"type": "Text",
-								"visible": "{findFirst(000c2d05-851e-4456-8f22-bb1e54f17c8c, fk == dc28ed59-298e-493c-8ff3-3e60f2ebccbd.id && archivedAt == null && status == accepted && data.type == pickup).fk == dc28ed59-298e-493c-8ff3-3e60f2ebccbd.id}",
+								"visible": "{findFirst(messages, fk == dc28ed59-298e-493c-8ff3-3e60f2ebccbd.id && archivedAt == null && status == accepted && data.type == pickup).fk == dc28ed59-298e-493c-8ff3-3e60f2ebccbd.id}",
 								"title": "",
-								"subtitle": "Pickup confirmed for {formatDatetime(findFirst(000c2d05-851e-4456-8f22-bb1e54f17c8c, fk == dc28ed59-298e-493c-8ff3-3e60f2ebccbd.id && archivedAt == null && status == accepted && data.type == pickup).data.time, \"EEE do\")} at {formatDatetime(findFirst(000c2d05-851e-4456-8f22-bb1e54f17c8c, fk == dc28ed59-298e-493c-8ff3-3e60f2ebccbd.id && archivedAt == null && status == accepted && data.type == pickup).data.time, \"HH:mm\")}",
+								"subtitle": "Pickup confirmed for {formatDatetime(findFirst(messages, fk == dc28ed59-298e-493c-8ff3-3e60f2ebccbd.id && archivedAt == null && status == accepted && data.type == pickup).data.time, \"EEE do\")} at {formatDatetime(findFirst(messages, fk == dc28ed59-298e-493c-8ff3-3e60f2ebccbd.id && archivedAt == null && status == accepted && data.type == pickup).data.time, \"HH:mm\")}",
 								"name": "Pickup accepted confirmation",
 								"actions": {}
 							},
@@ -447,7 +447,7 @@
 										}
 									]
 								},
-								"visible": "{findFirst(000c2d05-851e-4456-8f22-bb1e54f17c8c, fk == dc28ed59-298e-493c-8ff3-3e60f2ebccbd.id && archivedAt == null && status == pending && data.type == pickup).fk == dc28ed59-298e-493c-8ff3-3e60f2ebccbd.id}",
+								"visible": "{findFirst(messages, fk == dc28ed59-298e-493c-8ff3-3e60f2ebccbd.id && archivedAt == null && status == pending && data.type == pickup).fk == dc28ed59-298e-493c-8ff3-3e60f2ebccbd.id}",
 								"title": "",
 								"label": "Cancel pickup request",
 								"style": "danger",
@@ -474,7 +474,7 @@
 												"tap": [
 													{
 														"condition": "",
-														"true": "{update(66b092ae-7cd8-4d67-95b7-30b03568fd90, 000c2d05-851e-4456-8f22-bb1e54f17c8c, {fk: dc28ed59-298e-493c-8ff3-3e60f2ebccbd.id, archivedAt: null, status: \"pending\"}, {archivedAt: now()})}",
+														"true": "{update(475731ac-31aa-4d65-94d2-7032782ae359, messages, {fk: dc28ed59-298e-493c-8ff3-3e60f2ebccbd.id, archivedAt: null, status: \"pending\"}, {archivedAt: now()})}",
 														"false": ""
 													},
 													{
@@ -502,22 +502,22 @@
 					{
 						"id": "e8a7b6c5-d4e3-4f2a-8b9c-6d5e4f3a2b1c",
 						"type": "VerticalContainer",
-						"visible": "{findFirst(000c2d05-851e-4456-8f22-bb1e54f17c8c, fk == dc28ed59-298e-493c-8ff3-3e60f2ebccbd.id && archivedAt == null && data.type == delivery).fk == dc28ed59-298e-493c-8ff3-3e60f2ebccbd.id}",
+						"visible": "{findFirst(messages, fk == dc28ed59-298e-493c-8ff3-3e60f2ebccbd.id && archivedAt == null && data.type == delivery).fk == dc28ed59-298e-493c-8ff3-3e60f2ebccbd.id}",
 						"title": "",
 						"children": [
 							{
 								"id": "0fa0adba-aab4-4a0e-a8a4-fa1236f7dd9c",
 								"type": "Text",
-								"visible": "{findFirst(000c2d05-851e-4456-8f22-bb1e54f17c8c, fk == dc28ed59-298e-493c-8ff3-3e60f2ebccbd.id && archivedAt == null && status == accepted && data.type == delivery).fk == dc28ed59-298e-493c-8ff3-3e60f2ebccbd.id}",
+								"visible": "{findFirst(messages, fk == dc28ed59-298e-493c-8ff3-3e60f2ebccbd.id && archivedAt == null && status == accepted && data.type == delivery).fk == dc28ed59-298e-493c-8ff3-3e60f2ebccbd.id}",
 								"title": "",
-								"subtitle": "Delivery confirmed for {formatDatetime(findFirst(000c2d05-851e-4456-8f22-bb1e54f17c8c, fk == dc28ed59-298e-493c-8ff3-3e60f2ebccbd.id && archivedAt == null && status == accepted && data.type == delivery).data.time, \"EEE do\")} at {formatDatetime(findFirst(000c2d05-851e-4456-8f22-bb1e54f17c8c, fk == dc28ed59-298e-493c-8ff3-3e60f2ebccbd.id && archivedAt == null && status == accepted && data.type == delivery).data.time, \"HH:mm\")}",
+								"subtitle": "Delivery confirmed for {formatDatetime(findFirst(messages, fk == dc28ed59-298e-493c-8ff3-3e60f2ebccbd.id && archivedAt == null && status == accepted && data.type == delivery).data.time, \"EEE do\")} at {formatDatetime(findFirst(messages, fk == dc28ed59-298e-493c-8ff3-3e60f2ebccbd.id && archivedAt == null && status == accepted && data.type == delivery).data.time, \"HH:mm\")}",
 								"name": "Delivery accepted confirmation",
 								"actions": {}
 							},
 							{
 								"id": "be5f9dc0-22dc-4d09-8d1f-47297b1ccb07",
 								"type": "Text",
-								"visible": "{findFirst(000c2d05-851e-4456-8f22-bb1e54f17c8c, fk == dc28ed59-298e-493c-8ff3-3e60f2ebccbd.id && archivedAt == null && status == accepted && data.type == delivery).fk != dc28ed59-298e-493c-8ff3-3e60f2ebccbd.id}",
+								"visible": "{findFirst(messages, fk == dc28ed59-298e-493c-8ff3-3e60f2ebccbd.id && archivedAt == null && status == accepted && data.type == delivery).fk != dc28ed59-298e-493c-8ff3-3e60f2ebccbd.id}",
 								"title": "",
 								"subtitle": "Buyer will drop off",
 								"name": "Drop-off note",
@@ -535,7 +535,7 @@
 										}
 									]
 								},
-								"visible": "{findFirst(000c2d05-851e-4456-8f22-bb1e54f17c8c, fk == dc28ed59-298e-493c-8ff3-3e60f2ebccbd.id && archivedAt == null && status == pending && data.type == delivery).fk == dc28ed59-298e-493c-8ff3-3e60f2ebccbd.id}",
+								"visible": "{findFirst(messages, fk == dc28ed59-298e-493c-8ff3-3e60f2ebccbd.id && archivedAt == null && status == pending && data.type == delivery).fk == dc28ed59-298e-493c-8ff3-3e60f2ebccbd.id}",
 								"title": "",
 								"label": "Cancel delivery request",
 								"style": "danger",
@@ -562,7 +562,7 @@
 												"tap": [
 													{
 														"condition": "",
-														"true": "{update(66b092ae-7cd8-4d67-95b7-30b03568fd90, 000c2d05-851e-4456-8f22-bb1e54f17c8c, {fk: dc28ed59-298e-493c-8ff3-3e60f2ebccbd.id, archivedAt: null, status: \"pending\"}, {archivedAt: now()})}",
+														"true": "{update(475731ac-31aa-4d65-94d2-7032782ae359, messages, {fk: dc28ed59-298e-493c-8ff3-3e60f2ebccbd.id, archivedAt: null, status: \"pending\"}, {archivedAt: now()})}",
 														"false": ""
 													},
 													{
@@ -590,22 +590,22 @@
 					{
 						"id": "d7b6a5c4-e3f2-4a1b-9c8d-5e4f3a2b1c0d",
 						"type": "VerticalContainer",
-						"visible": "{findFirst(000c2d05-851e-4456-8f22-bb1e54f17c8c, fk == dc28ed59-298e-493c-8ff3-3e60f2ebccbd.id && archivedAt == null && data.type == shipping).fk == dc28ed59-298e-493c-8ff3-3e60f2ebccbd.id}",
+						"visible": "{findFirst(messages, fk == dc28ed59-298e-493c-8ff3-3e60f2ebccbd.id && archivedAt == null && data.type == shipping).fk == dc28ed59-298e-493c-8ff3-3e60f2ebccbd.id}",
 						"title": "",
 						"children": [
 							{
 								"id": "ba000cfa-6a3b-4817-8296-0c14f77bc199",
 								"type": "Text",
-								"visible": "{findFirst(000c2d05-851e-4456-8f22-bb1e54f17c8c, fk == dc28ed59-298e-493c-8ff3-3e60f2ebccbd.id && archivedAt == null && status == accepted && data.type == shipping).fk == dc28ed59-298e-493c-8ff3-3e60f2ebccbd.id}",
+								"visible": "{findFirst(messages, fk == dc28ed59-298e-493c-8ff3-3e60f2ebccbd.id && archivedAt == null && status == accepted && data.type == shipping).fk == dc28ed59-298e-493c-8ff3-3e60f2ebccbd.id}",
 								"title": "",
-								"subtitle": "Shipping confirmed to postcode {findFirst(000c2d05-851e-4456-8f22-bb1e54f17c8c, fk == dc28ed59-298e-493c-8ff3-3e60f2ebccbd.id && archivedAt == null && status == accepted && data.type == shipping).data.postalcode}",
+								"subtitle": "Shipping confirmed to postcode {findFirst(messages, fk == dc28ed59-298e-493c-8ff3-3e60f2ebccbd.id && archivedAt == null && status == accepted && data.type == shipping).data.postalcode}",
 								"name": "Shipping accepted confirmation",
 								"actions": {}
 							},
 							{
 								"id": "e0c7eb86-9e21-4aba-9248-22e97f56c604",
 								"type": "Text",
-								"visible": "{findFirst(000c2d05-851e-4456-8f22-bb1e54f17c8c, fk == dc28ed59-298e-493c-8ff3-3e60f2ebccbd.id && archivedAt == null && status == accepted && data.type == shipping).fk != dc28ed59-298e-493c-8ff3-3e60f2ebccbd.id}",
+								"visible": "{findFirst(messages, fk == dc28ed59-298e-493c-8ff3-3e60f2ebccbd.id && archivedAt == null && status == accepted && data.type == shipping).fk != dc28ed59-298e-493c-8ff3-3e60f2ebccbd.id}",
 								"title": "",
 								"subtitle": "Delivered to your door",
 								"name": "Shipping note",
@@ -623,7 +623,7 @@
 										}
 									]
 								},
-								"visible": "{findFirst(000c2d05-851e-4456-8f22-bb1e54f17c8c, fk == dc28ed59-298e-493c-8ff3-3e60f2ebccbd.id && archivedAt == null && status == pending && data.type == shipping).fk == dc28ed59-298e-493c-8ff3-3e60f2ebccbd.id}",
+								"visible": "{findFirst(messages, fk == dc28ed59-298e-493c-8ff3-3e60f2ebccbd.id && archivedAt == null && status == pending && data.type == shipping).fk == dc28ed59-298e-493c-8ff3-3e60f2ebccbd.id}",
 								"title": "",
 								"label": "Cancel shipping request",
 								"style": "danger",
@@ -650,7 +650,7 @@
 												"tap": [
 													{
 														"condition": "",
-														"true": "{update(66b092ae-7cd8-4d67-95b7-30b03568fd90, 000c2d05-851e-4456-8f22-bb1e54f17c8c, {fk: dc28ed59-298e-493c-8ff3-3e60f2ebccbd.id, archivedAt: null, status: \"pending\"}, {archivedAt: now()})}",
+														"true": "{update(475731ac-31aa-4d65-94d2-7032782ae359, messages, {fk: dc28ed59-298e-493c-8ff3-3e60f2ebccbd.id, archivedAt: null, status: \"pending\"}, {archivedAt: now()})}",
 														"false": ""
 													},
 													{

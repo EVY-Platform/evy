@@ -207,7 +207,8 @@ final class EVYCreateMergesDraftsTests: XCTestCase {
       to: "{pickup_address}"
     )
 
-    _ = try EVY.create(namespace: EVYNamespace.marketplace, resource: itemsResource, isSubmission: true)
+    _ = try EVY.create(
+      namespace: EVYNamespace.marketplace, resource: itemsResource, isSubmission: true)
 
     let items = try EVY.publicStore.getAll(
       namespace: EVYNamespace.marketplace, resource: itemsResource)
@@ -271,7 +272,8 @@ final class EVYCreateMergesDraftsTests: XCTestCase {
       existingDict["transfer_options"],
       "address_id must not patch the first existing row of the items resource")
 
-    _ = try EVY.create(namespace: EVYNamespace.marketplace, resource: itemsResource, isSubmission: true)
+    _ = try EVY.create(
+      namespace: EVYNamespace.marketplace, resource: itemsResource, isSubmission: true)
 
     let items = try EVY.publicStore.getAll(
       namespace: EVYNamespace.marketplace, resource: itemsResource)

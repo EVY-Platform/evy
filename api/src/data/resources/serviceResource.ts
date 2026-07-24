@@ -10,5 +10,6 @@ export const serviceResourcesResource =
 		toUpdateSet: (validated) => ({
 			fkServiceId: validated.fkServiceId,
 			name: validated.name,
+			visibility: validated.visibility,
 		}),
 	});

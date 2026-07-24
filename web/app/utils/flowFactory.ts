@@ -11,6 +11,7 @@ export function buildNewPageRecord(): DATA_EVY_Page {
 		rowIds: [],
 		createdAt: ts,
 		updatedAt: ts,
+		visibility: "public",
 	};
 }
 
@@ -26,6 +27,7 @@ export function buildNewFlowRecords(name: string): {
 		pageIds: [page.id],
 		createdAt: ts,
 		updatedAt: ts,
+		visibility: "public",
 	};
 	return { flow, page };
 }

@@ -44,6 +44,7 @@ async function insertFileMetadata(id: string): Promise<void> {
 	await testDb.insert(schema.file).values({
 		id,
 		type: fileType,
+		visibility: "public",
 		createdAt: now,
 		updatedAt: now,
 	});
@@ -64,6 +65,7 @@ describe("get files", () => {
 			{
 				id,
 				type: fileType,
+				visibility: "public",
 				createdAt: now,
 				updatedAt: now,
 				dataBase64: opaqueBytes.toString("base64"),

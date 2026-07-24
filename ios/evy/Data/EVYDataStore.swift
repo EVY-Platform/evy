@@ -144,6 +144,14 @@ final class EVYDataStore {
     try persistChanges()
   }
 
+  func wipeAll() throws {
+    let rows = try getAll()
+    for row in rows {
+      context.delete(row)
+    }
+    try persistChanges()
+  }
+
   func upsert(namespace: String, resource: String, id: String, value: Data, sortIndex: Int = 0)
     throws
   {

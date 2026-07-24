@@ -15,6 +15,7 @@ export const pagesResource = makeCoreResource<DATA_EVY_Page>({
 		title: v.title,
 		rowIds: v.rowIds,
 		footerRowId: v.footerRowId,
+		visibility: v.visibility,
 	}),
 	normalize: normalizePageRow,
 });

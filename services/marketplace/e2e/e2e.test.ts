@@ -1,4 +1,5 @@
 import { afterAll, beforeAll, describe, expect, it } from "bun:test";
+import { EVY_CORE_RESOURCE, EVY_CORE_SERVICE } from "evy-types/coreResources";
 import {
 	MARKETPLACE_RESOURCE,
 	MARKETPLACE_SERVICE,
@@ -10,7 +11,7 @@ type WSClient = InstanceType<typeof Client>;
 
 const MARKETPLACE_SERVICE_ID = MARKETPLACE_SERVICE;
 const MARKETPLACE_ITEMS_RESOURCE_ID = MARKETPLACE_RESOURCE.ITEMS;
-const MARKETPLACE_MESSAGES_RESOURCE_ID = MARKETPLACE_RESOURCE.MESSAGES;
+const EVY_MESSAGES_RESOURCE = EVY_CORE_RESOURCE.MESSAGES;
 
 const API_URL = process.env.API_URL;
 if (!API_URL) {
@@ -80,31 +81,39 @@ describe("Marketplace E2E (via API WebSocket)", () => {
 		expect(isRecord(matchingRecord)).toBe(true);
 	});
 
-	it("creates generic marketplace messages", async () => {
+	it("creates core messages via the EVY API", async () => {
 		const messageId = crypto.randomUUID();
 		const message = {
-			id: messageId,
 			fk: crypto.randomUUID(),
 			service: MARKETPLACE_SERVICE_ID,
 			resource: MARKETPLACE_ITEMS_RESOURCE_ID,
 			archivedAt: null,
-			createdAt: "2026-06-01T00:00:00.000Z",
+			status: "pending",
 			data: { type: "pickup", time: "2026-06-03T10:00:00" },
 		};
 
-		await client.call("create", {
-			service: MARKETPLACE_SERVICE_ID,
-			resource: MARKETPLACE_MESSAGES_RESOURCE_ID,
+		const created = await client.call("create", {
+			service: EVY_CORE_SERVICE,
+			resource: EVY_MESSAGES_RESOURCE,
 			filter: { id: messageId },
 			data: message,
 		});
 
+		expect(isRecord(created)).toBe(true);
+		expect(created).toMatchObject({
+			id: messageId,
+			status: "pending",
+			visibility: "public",
+		});
+		expect(created.updatedAt).toBeDefined();
+
 		const rows = await client.call("get", {
-			service: MARKETPLACE_SERVICE_ID,
-			resource: MARKETPLACE_MESSAGES_RESOURCE_ID,
+			service: EVY_CORE_SERVICE,
+			resource: EVY_MESSAGES_RESOURCE,
 			filter: { id: messageId },
 		});
-		expect(rows).toEqual([message]);
+		expect(rows).toHaveLength(1);
+		expect(rows[0]).toMatchObject({ id: messageId, status: "pending" });
 	});
 
 	it("create marketplace item with transfer_options.pickup.address_id round-trips", async () => {
