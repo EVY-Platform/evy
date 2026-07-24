@@ -204,6 +204,12 @@
 					"items": {
 						"$ref": "action.schema.json"
 					}
+				},
+				"submit": {
+					"type": "array",
+					"items": {
+						"$ref": "action.schema.json"
+					}
 				}
 			}
 		}

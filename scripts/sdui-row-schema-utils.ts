@@ -1,6 +1,11 @@
+import { readFileSync } from "node:fs";
 import { readdir } from "node:fs/promises";
 import { basename, join } from "node:path";
-import { loadJson, SDUI_DEFINITIONS_DIR } from "./types-generation-utils.js";
+import {
+	loadJson,
+	REPO_ROOT,
+	SDUI_DEFINITIONS_DIR,
+} from "./types-generation-utils.js";
 
 const UI_ROW_REF = "../evy.schema.json#/$defs/UI_Row";
 const UI_ROW_BASE_REF = "../evy.schema.json#/$defs/UI_RowBase";
@@ -23,13 +28,28 @@ export type SduiRowSpec = Record<
 
 type SduiRowDefinitionSchema = Record<string, unknown>;
 
-const ROW_TRIGGER_NAMES = [
-	"tap",
-	"delete",
-	"tap-row",
-	"tap-column",
-	"swipe-left",
-] as const;
+function loadRowTriggerNamesFromDefinitionSchema(): readonly string[] {
+	const schemaPath = join(
+		REPO_ROOT,
+		"types/schema/sdui/definition.schema.json",
+	);
+	const schema = JSON.parse(readFileSync(schemaPath, "utf8")) as SchemaObject;
+	const properties = getObject(
+		schema.properties,
+		"definition.schema properties",
+	);
+	const triggers = getObject(
+		properties.triggers,
+		"definition.schema triggers",
+	);
+	const propertyNames = getObject(
+		triggers.propertyNames,
+		"definition.schema triggers.propertyNames",
+	);
+	return getStringArray(propertyNames.enum, "triggers.propertyNames.enum");
+}
+
+const ROW_TRIGGER_NAMES = loadRowTriggerNamesFromDefinitionSchema();
 
 export type RowTriggerName = (typeof ROW_TRIGGER_NAMES)[number];
 

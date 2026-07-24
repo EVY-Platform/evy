@@ -14,8 +14,10 @@ struct EVYFunctionOutput {
 }
 
 @MainActor
-func evyCount(_ args: String) throws -> EVYFunctionOutput {
-  let res = try EVY.getDataFromProps(args)
+func evyCount(_ args: String) -> EVYFunctionOutput {
+  guard let res = _getDataFromPropsStrict(args) else {
+    return EVYFunctionOutput(value: "0", prefix: nil, suffix: nil)
+  }
   switch res {
   case .string(let stringValue):
     return EVYFunctionOutput(value: String(stringValue.count), prefix: nil, suffix: nil)
@@ -26,7 +28,7 @@ func evyCount(_ args: String) throws -> EVYFunctionOutput {
   case .decimal(let decimalValue):
     return EVYFunctionOutput(value: "\(decimalValue)", prefix: nil, suffix: nil)
   default:
-    return EVYFunctionOutput(value: args, prefix: nil, suffix: nil)
+    return EVYFunctionOutput(value: "0", prefix: nil, suffix: nil)
   }
 }
 
@@ -135,6 +137,34 @@ func evyFindFirst(_ args: String, remainingProps: [String] = []) throws -> EVYJs
     return .string("")
   }
   return match.parseProp(props: remainingProps)
+}
+
+@MainActor
+func evyIf(_ args: String) throws -> EVYFunctionOutput {
+  let parts = _splitFunctionArguments(args)
+  guard parts.count == 3 else { throw EVYParamError.invalidProps }
+  let condition = parts[0].trimmingCharacters(in: .whitespacesAndNewlines)
+  let trueBranch = parts[1].trimmingCharacters(in: .whitespacesAndNewlines)
+  let falseBranch = parts[2].trimmingCharacters(in: .whitespacesAndNewlines)
+
+  let conditionExpression = wrappedExpression(condition)
+  let isTrue = try _evaluateFromText(conditionExpression)
+  let selectedBranch = isTrue ? trueBranch : falseBranch
+  let resolved = try evyIfResolveBranch(selectedBranch)
+  return EVYFunctionOutput(value: resolved, prefix: nil, suffix: nil)
+}
+
+@MainActor
+private func evyIfResolveBranch(_ branch: String) throws -> String {
+  let trimmed = branch.trimmingCharacters(in: .whitespacesAndNewlines)
+  if trimmed.isEmpty {
+    return ""
+  }
+  if trimmed.first == "\"", trimmed.last == "\"", trimmed.count >= 2 {
+    return _stripOptionalSurroundingQuotes(trimmed)
+  }
+  let expression = wrappedExpression(trimmed)
+  return try _getValueFromText(expression).toString()
 }
 
 @MainActor

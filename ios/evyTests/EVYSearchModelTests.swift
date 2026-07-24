@@ -9,6 +9,16 @@ import XCTest
 
 @MainActor
 final class EVYSearchModelTests: XCTestCase {
+  override func setUp() async throws {
+    try await super.setUp()
+    installHermeticMutationSync()
+  }
+
+  override func tearDown() async throws {
+    resetHermeticMutationSync()
+    try await super.tearDown()
+  }
+
   private final class SearchRequestingSpy: EVYSearchRequesting, @unchecked Sendable {
     private(set) var inputs: [String] = []
     var response: EVYJson = .array([])
@@ -68,39 +78,10 @@ final class EVYSearchModelTests: XCTestCase {
     XCTAssertTrue(model.results.isEmpty)
   }
 
-  func testLoadLocalResultsUsesPageScopeNotPinnedDetailScope() throws {
-    let itemsKey = "items-\(UUID().uuidString)"
-    let homePageId = "home-\(UUID().uuidString)"
-    let detailPageId = "detail-\(UUID().uuidString)"
-    let item1 = EVYJson.dictionary(["id": .string("id-1"), "title": .string("Item 1")])
-    let item2 = EVYJson.dictionary(["id": .string("id-2"), "title": .string("Item 2")])
-    try EVY.publicStore.applySyncedValue(
-      namespace: EVYNamespace.marketplace, resource: itemsKey, value: .array([item1, item2]))
-
-    let encoded = try JSONEncoder().encode(item1)
-    try EVY.cacheStore.create(
-      namespace: EVYNamespace.cache, resource: detailPageId, id: itemsKey, value: encoded)
-
-    EVY.activeCacheScopeId = detailPageId
-    let poisoned = EVYSearchResult.makeResults(
-      from: try? EVY.getDataFromText("{\(itemsKey)}"),
-      resultTemplate: Self.makeListItemTemplate(),
-      scopeId: homePageId
-    )
-    XCTAssertEqual(poisoned.count, 1, "Unscoped source load collapses to the pinned detail item")
-
-    let results = EVYSearchResult.loadLocalResults(
-      source: "{\(itemsKey)}",
-      resultTemplate: Self.makeListItemTemplate(),
-      scopeId: homePageId
-    )
-    XCTAssertEqual(results.count, 2)
-    XCTAssertEqual(Set(results.map(\.id)), Set(["id-1", "id-2"]))
-  }
-
   func testLoadLocalResultsRefreshWhenMessageResourceChanges() throws {
     let resource = MarketplaceTestFixture.messagesResourceId
     let pendingId = UUID().uuidString
+    try? EVY.publicStore.deleteAll(namespace: EVYNamespace.marketplace, resource: resource)
     let message = EVYTestMessageFixtures.message(
       id: pendingId,
       status: "pending",

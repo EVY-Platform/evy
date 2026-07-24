@@ -5,9 +5,11 @@ import { useCallback, useMemo } from "react";
 import type { ServiceResource } from "../../types/resources";
 import {
 	type ActionFunction,
+	createHasInlineDataArg,
 	parseBranch,
 	ROW_ID_ARG_FUNCTIONS,
 	serializeBranch,
+	updateUsesDraftMarker,
 	ZERO_ARG_FUNCTIONS,
 } from "../../utils/actionBranch";
 import {
@@ -16,6 +18,7 @@ import {
 	getPageOptions,
 	toVariableOptions,
 } from "../../utils/actionFlowOptions";
+import { shouldOfferCreateSubmitWithFlow } from "../../utils/createDraftSignals";
 import type { IdCandidate } from "../../utils/idCandidates";
 import { displayLabel } from "../../utils/labelFormatting";
 import { BuilderAssist } from "../BuilderAssist";
@@ -32,6 +35,7 @@ type BranchEditorProps = {
 	idCandidates: IdCandidate[];
 	rowsById: Record<string, DATA_EVY_Row>;
 	defaultSheetRowId?: string;
+	draftUpdateTargets: Set<string>;
 	getAttributeCandidatesForQualifier: (qualifier: string) => IdCandidate[];
 	onChange: (value: string) => void;
 };
@@ -135,6 +139,7 @@ export function BranchEditor({
 	idCandidates,
 	rowsById,
 	defaultSheetRowId,
+	draftUpdateTargets,
 	getAttributeCandidatesForQualifier,
 	onChange,
 }: BranchEditorProps) {
@@ -176,6 +181,37 @@ export function BranchEditor({
 			const newArgs = [...args];
 			while (newArgs.length <= argIndex) newArgs.push("");
 			newArgs[argIndex] = argValue;
+			onChange(
+				serializeBranch(selectedFunction as ActionFunction, newArgs),
+			);
+		},
+		[selectedFunction, args, onChange],
+	);
+
+	const offerSubmitCreate = useMemo(() => {
+		if (selectedFunction !== "create") return false;
+		const serviceId = args[0]?.trim() ?? "";
+		const resourceId = args[1]?.trim() ?? "";
+		return shouldOfferCreateSubmitWithFlow(
+			serviceId,
+			resourceId,
+			draftVariables,
+			draftUpdateTargets,
+		);
+	}, [selectedFunction, args, draftVariables, draftUpdateTargets]);
+
+	const showSubmitCreateHint =
+		offerSubmitCreate && !createHasInlineDataArg(args);
+	const updateUsesDraftMode = updateUsesDraftMarker(args);
+
+	const applyArgUpdates = useCallback(
+		(updates: Array<[number, string]>) => {
+			if (!selectedFunction) return;
+			const newArgs = [...args];
+			for (const [argIndex, argValue] of updates) {
+				while (newArgs.length <= argIndex) newArgs.push("");
+				newArgs[argIndex] = argValue;
+			}
 			onChange(
 				serializeBranch(selectedFunction as ActionFunction, newArgs),
 			);
@@ -226,19 +262,37 @@ export function BranchEditor({
 				/>
 			)}
 
-			{selectedFunction === "create" && args[0] && args[1] && (
-				<BuilderAssist
-					ariaLabel={`${branchId}-create-data`}
-					value={args[2] ?? ""}
-					onChange={(v) => handleArgChange(2, v)}
-					candidates={idCandidates}
-					getAttributeCandidatesForQualifier={
-						getAttributeCandidatesForQualifier
-					}
-					placeholder="Optional inline data, e.g. {fk: $datum.id, data: {type: pickup}}"
-					multiline
-				/>
-			)}
+			{selectedFunction === "create" &&
+				args[0] &&
+				args[1] &&
+				(showSubmitCreateHint ? (
+					<p className="evy-create-draft-hint">
+						Creates from row destinations and draft updates
+					</p>
+				) : (
+					<>
+						<BuilderAssist
+							ariaLabel={`${branchId}-create-data`}
+							value={args[2] ?? ""}
+							onChange={(v) => handleArgChange(2, v)}
+							candidates={idCandidates}
+							getAttributeCandidatesForQualifier={
+								getAttributeCandidatesForQualifier
+							}
+							placeholder="Data path or inline object, e.g. pickup_address"
+						/>
+						<BuilderAssist
+							ariaLabel={`${branchId}-create-id-destination`}
+							value={args[3] ?? ""}
+							onChange={(v) => handleArgChange(3, v)}
+							candidates={idCandidates}
+							getAttributeCandidatesForQualifier={
+								getAttributeCandidatesForQualifier
+							}
+							placeholder="Optional id destination, e.g. {item.transfer_options.pickup.address_id}"
+						/>
+					</>
+				))}
 
 			{selectedFunction === "select" && (
 				<BuilderAssist
@@ -255,17 +309,46 @@ export function BranchEditor({
 
 			{selectedFunction === "update" && args[0] && args[1] && (
 				<>
-					<BuilderAssist
-						ariaLabel={`${branchId}-update-filter`}
-						value={args[2] ?? ""}
-						onChange={(v) => handleArgChange(2, v)}
-						candidates={idCandidates}
-						getAttributeCandidatesForQualifier={
-							getAttributeCandidatesForQualifier
-						}
-						placeholder="Filter, e.g. {fk: $datum.id, archivedAt: null}"
-						multiline
+					<PopoverSelect
+						ariaLabel={`${branchId}-update-mode`}
+						options={[
+							{
+								value: "store",
+								label: "Update matching records",
+							},
+							{
+								value: "draft",
+								label: "Write into create draft",
+							},
+						]}
+						value={updateUsesDraftMode ? "draft" : "store"}
+						onChange={(mode) => {
+							if (mode === "draft") {
+								applyArgUpdates([
+									[2, "{}"],
+									[4, "draft"],
+								]);
+							} else {
+								applyArgUpdates([
+									[2, ""],
+									[4, ""],
+								]);
+							}
+						}}
 					/>
+					{!updateUsesDraftMode && (
+						<BuilderAssist
+							ariaLabel={`${branchId}-update-filter`}
+							value={args[2] ?? ""}
+							onChange={(v) => handleArgChange(2, v)}
+							candidates={idCandidates}
+							getAttributeCandidatesForQualifier={
+								getAttributeCandidatesForQualifier
+							}
+							placeholder="Filter, e.g. {fk: $datum.id, archivedAt: null}"
+							multiline
+						/>
+					)}
 					<BuilderAssist
 						ariaLabel={`${branchId}-update-changes`}
 						value={args[3] ?? ""}

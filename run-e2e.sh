@@ -41,10 +41,10 @@ _PRESET_WEB_PORT="${WEB_PORT-}"
 _PRESET_API_PORT="${API_PORT-}"
 _PRESET_MARKETPLACE_WS_HOST="${MARKETPLACE_WS_HOST-}"
 _PRESET_MARKETPLACE_WS_PORT="${MARKETPLACE_WS_PORT-}"
-_PRESET_GOOGLE_PLACES_API_KEY="${GOOGLE_PLACES_API_KEY-}"
 set -a
 source .env
 set +a
+export GOOGLE_PLACES_MOCK=true
 if [ -n "${_PRESET_WEB_PORT}" ]; then
 	export WEB_PORT="${_PRESET_WEB_PORT}"
 fi
@@ -56,11 +56,6 @@ if [ -n "${_PRESET_MARKETPLACE_WS_HOST}" ]; then
 fi
 if [ -n "${_PRESET_MARKETPLACE_WS_PORT}" ]; then
 	export MARKETPLACE_WS_PORT="${_PRESET_MARKETPLACE_WS_PORT}"
-fi
-# Prefer a real Google Places key supplied by the environment (e.g. CI secret)
-# over the placeholder in `.env`, so place search hits the live API.
-if [ -n "${_PRESET_GOOGLE_PLACES_API_KEY}" ]; then
-	export GOOGLE_PLACES_API_KEY="${_PRESET_GOOGLE_PLACES_API_KEY}"
 fi
 
 echo -e "${YELLOW}========================================${NC}"
@@ -332,43 +327,35 @@ if [ "$SKIP_IOS" = true ]; then
     IOS_SKIPPED=true
 else
     echo -e "\n${YELLOW}Running iOS e2e tests...${NC}"
-    if [ -z "${GOOGLE_PLACES_API_KEY:-}" ] || [ "${GOOGLE_PLACES_API_KEY}" = "googlekey" ]; then
-        echo -e "${RED}GOOGLE_PLACES_API_KEY is missing or set to the '.env.example' placeholder.${NC}"
-        echo -e "${RED}The iOS place search e2e test calls the live Google Places API and cannot pass without a real key.${NC}"
-        echo -e "${RED}Expose the secret to this job: use a repository secret, or an Environment secret with 'environment:' set on the workflow job.${NC}"
-        echo -e "${RED}Also confirm the key has no HTTP-referrer/IP restrictions that would block CI runners.${NC}"
+    echo -e "${GREEN}GOOGLE_PLACES_MOCK=true; place search uses API fixtures (no live Google calls)${NC}"
+    seed_database
+    cd ios
+    IOS_DESTINATION="$(resolve_ios_simulator_destination)"
+    if [ -z "$IOS_DESTINATION" ]; then
+        echo -e "${RED}Unable to resolve an available iOS simulator destination${NC}"
+        echo "Available destinations:"
+        xcodebuild -showdestinations -project evy.xcodeproj -scheme evy || true
         IOS_RESULT=1
     else
-        echo -e "${GREEN}Real GOOGLE_PLACES_API_KEY detected; place search e2e will hit the live API${NC}"
-        seed_database
-        cd ios
-        IOS_DESTINATION="$(resolve_ios_simulator_destination)"
-        if [ -z "$IOS_DESTINATION" ]; then
-            echo -e "${RED}Unable to resolve an available iOS simulator destination${NC}"
-            echo "Available destinations:"
-            xcodebuild -showdestinations -project evy.xcodeproj -scheme evy || true
-            IOS_RESULT=1
+        echo "Using iOS simulator destination: $IOS_DESTINATION"
+        # Clean simulator to prevent stale data (e.g. SwiftData schema) from crashing the app
+        IOS_SIM_UDID="${IOS_DESTINATION#*id=}"
+        xcrun simctl shutdown "$IOS_SIM_UDID" 2>/dev/null || true
+        xcrun simctl erase "$IOS_SIM_UDID" 2>/dev/null || true
+        if xcodebuild test \
+            -project evy.xcodeproj \
+            -scheme evy \
+            -destination "$IOS_DESTINATION" \
+            -only-testing:evyUITests \
+            -parallel-testing-enabled NO \
+            -quiet; then
+            echo -e "${GREEN}iOS e2e tests passed${NC}"
         else
-            echo "Using iOS simulator destination: $IOS_DESTINATION"
-            # Clean simulator to prevent stale data (e.g. SwiftData schema) from crashing the app
-            IOS_SIM_UDID="${IOS_DESTINATION#*id=}"
-            xcrun simctl shutdown "$IOS_SIM_UDID" 2>/dev/null || true
-            xcrun simctl erase "$IOS_SIM_UDID" 2>/dev/null || true
-            if xcodebuild test \
-                -project evy.xcodeproj \
-                -scheme evy \
-                -destination "$IOS_DESTINATION" \
-                -only-testing:evyUITests \
-                -parallel-testing-enabled NO \
-                -quiet; then
-                echo -e "${GREEN}iOS e2e tests passed${NC}"
-            else
-                echo -e "${RED}iOS e2e tests failed${NC}"
-                IOS_RESULT=1
-            fi
+            echo -e "${RED}iOS e2e tests failed${NC}"
+            IOS_RESULT=1
         fi
-        cd ..
     fi
+    cd ..
 fi
 
 echo -e "\n${YELLOW}========================================${NC}"

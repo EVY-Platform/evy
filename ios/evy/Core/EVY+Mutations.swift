@@ -14,6 +14,10 @@ extension EVY {
   }
 
   private static func syncMutation(method: String, params: MutationParams) {
+    if let syncTransport {
+      syncTransport(method, params)
+      return
+    }
     Task {
       do {
         _ = try await EVYAPIManager.shared.fetch(
@@ -111,15 +115,29 @@ extension EVY {
   static func create(
     namespace: String,
     resource: String,
-    data: [String: EVYJson]? = nil
-  ) throws {
+    data: [String: EVYJson]? = nil,
+    isSubmission: Bool = false
+  ) throws -> String {
     if let data {
-      try createWithGeneratedId(namespace: namespace, resource: resource, payload: data)
-      return
+      if isSubmission {
+        throw EVYError.invalidData(
+          context: "submit create cannot include inline data")
+      }
+      return try createWithGeneratedId(namespace: namespace, resource: resource, payload: data)
+    }
+
+    guard isSubmission else {
+      throw EVYError.invalidData(
+        context:
+          "create requires namespace, resource, and submit or data, e.g. create(marketplace,item,submit)"
+      )
     }
 
     let scopeForMerge = draftStore.activeScopeId
-    let isFlowSubmission = EVYDraft.Scope.entityKey(fromScopeId: scopeForMerge) == resource
+    guard EVYDraft.Scope.isActiveCreateScope(for: resource, activeScopeId: scopeForMerge) else {
+      throw EVYError.invalidData(
+        context: "submit create requires an active create scope for \(resource)")
+    }
 
     var mergedPayload: EVYJson = .dictionary([:])
     let draftEntries = scopeForMerge.flatMap { try? draftStore.drafts(forScopeId: $0) } ?? []
@@ -131,27 +149,35 @@ extension EVY {
       guard let binding = EVYDraft.Binding.parseDraftKey(draftEntry.id) else {
         continue
       }
+      // Flow submission only merges entity-field drafts (`{resource.field}` → explicitPath).
+      // Page-local aliases like `{pickup_address}` stay off the item — the address lives in
+      // core `addresses`, linked via `transfer_options.pickup.address_id`.
+      if case .aliasFlat = binding.mergeMode {
+        continue
+      }
       mergedPayload = EVYDraft.merge(binding: binding, value: draftValue, into: mergedPayload)
     }
 
     guard case .dictionary(let payload) = mergedPayload else {
       throw EVYParamError.invalidProps
     }
-    try createWithGeneratedId(namespace: namespace, resource: resource, payload: payload)
+    let createdId = try createWithGeneratedId(
+      namespace: namespace, resource: resource, payload: payload)
 
-    if isFlowSubmission, let scopeForMerge {
+    if let scopeForMerge {
       draftStore.deleteDrafts(scopeId: scopeForMerge)
       if let flowId = EVYDraft.Scope.flowId(fromScopeId: scopeForMerge) {
         resetEphemeralDrafts(forFlowId: flowId)
       }
     }
+    return createdId
   }
 
   private static func createWithGeneratedId(
     namespace: String,
     resource: String,
     payload: [String: EVYJson]
-  ) throws {
+  ) throws -> String {
     let newId = UUID().uuidString
     var payloadWithId = payload
     payloadWithId["id"] = .string(newId)
@@ -176,6 +202,42 @@ extension EVY {
     )
 
     syncMutation(method: "create", params: params)
+    return newId
+  }
+
+  private static func applyChanges(
+    _ changes: [String: EVYJson],
+    to record: [String: EVYJson]
+  ) throws -> [String: EVYJson]? {
+    var updatedRecord = record
+    var dottedChanges: [(key: String, value: EVYJson)] = []
+
+    for (key, value) in changes {
+      if !key.contains(".") {
+        updatedRecord[key] = value
+      } else {
+        dottedChanges.append((key, value))
+      }
+    }
+
+    guard !dottedChanges.isEmpty else {
+      return updatedRecord
+    }
+
+    var encodedRecord = try JSONEncoder().encode(EVYJson.dictionary(updatedRecord))
+    for (key, value) in dottedChanges {
+      let props = key.split(separator: ".").map(String.init)
+      let encodedValue = try JSONEncoder().encode(value)
+      encodedRecord = try EVYDataPatcher.patch(
+        encodedData: encodedRecord, newData: encodedValue, props: props)
+    }
+    guard
+      case .dictionary(let patchedRecord) = try JSONDecoder().decode(
+        EVYJson.self, from: encodedRecord)
+    else {
+      return nil
+    }
+    return patchedRecord
   }
 
   static func update(
@@ -203,11 +265,27 @@ extension EVY {
       guard matches else { continue }
 
       var updatedRecord = record
-      for (key, value) in changes {
-        updatedRecord[key] = value
+      guard let patched = try applyChanges(changes, to: updatedRecord) else {
+        continue
       }
+      updatedRecord = patched
       matchedUpdates.append(
         (rowId: row.id, recordId: recordId, updatedData: .dictionary(updatedRecord)))
+    }
+
+    let cacheRowsForScope: [EVYData] =
+      if let scopeId = activeCacheScopeId {
+        (try? cacheStore.getAll(namespace: EVYNamespace.cache, resource: scopeId)) ?? []
+      } else {
+        []
+      }
+
+    let decodedCacheRows: [(row: EVYData, recordId: String)] = cacheRowsForScope.compactMap {
+      cacheRow in
+      guard case .dictionary(let cachedRecord) = try? cacheRow.decoded(),
+        case .string(let cachedId) = cachedRecord["id"]
+      else { return nil }
+      return (cacheRow, cachedId)
     }
 
     for update in matchedUpdates {
@@ -219,6 +297,18 @@ extension EVY {
         value: encodedData
       )
 
+      if let scopeId = activeCacheScopeId, !decodedCacheRows.isEmpty {
+        for (cacheRow, cachedId) in decodedCacheRows where cachedId == update.recordId {
+          try cacheStore.update(
+            namespace: EVYNamespace.cache,
+            resource: scopeId,
+            id: cacheRow.id,
+            value: encodedData
+          )
+          cacheStore.postValueChanged(key: cacheRow.id)
+        }
+      }
+
       let params = MutationParams(
         service: namespace,
         resource: resource,
@@ -226,6 +316,21 @@ extension EVY {
         data: update.updatedData
       )
       syncMutation(method: "update", params: params)
+    }
+  }
+
+  static func mergeIntoActiveDraft(resource: String, changes: [String: EVYJson]) throws {
+    guard
+      EVYDraft.Scope.isActiveCreateScope(
+        for: resource,
+        activeScopeId: draftStore.activeScopeId
+      )
+    else {
+      throw EVYError.invalidData(
+        context: "draft-mode update requires an active create scope for \(resource)")
+    }
+    for (key, value) in changes {
+      try writeRawValue(value, to: "{\(resource).\(key)}")
     }
   }
 
@@ -299,25 +404,31 @@ extension EVY {
     let splitProps = try splitPropsFromText(cleanVariableName)
     let rootVariable = splitProps.first!
     let resolvedScopeId = scopeId ?? draftStore.activeScopeId
-    let draftBinding = try resolvedScopeId.map {
-      try draftStore.binding(fromParsedProps: cleanVariableName, scopeId: $0)
+
+    if let resolvedScopeId,
+      let match = try draftStore.draftMatch(splitProps: splitProps, scopeId: resolvedScopeId)
+    {
+      if match.remainingProps.isEmpty {
+        match.draft.data = newData
+      } else {
+        match.draft.data = try EVYDataPatcher.patch(
+          encodedData: match.draft.data, newData: newData, props: match.remainingProps)
+      }
+      draftStore.notifyUpdate(binding: match.binding)
+      return
     }
 
-    if let draftBinding,
-      let existingDraft = draftStore.draftIfPresent(binding: draftBinding)
+    // Create-merge scopes must not fall through to findRowForUpdate for the entity declared
+    // via the flow's submit create: findRowForUpdate returns the first existing row of the
+    // resource, so nested writes would patch a seeded listing instead of the create draft.
+    let writesIntoCreateEntity = EVYDraft.Scope.isActiveCreateScope(
+      for: rootVariable,
+      activeScopeId: resolvedScopeId
+    )
+
+    if !writesIntoCreateEntity,
+      let existingRow = try? findRowForUpdate(store: store, rootVariable: rootVariable)
     {
-      let remainingProps = EVYDraft.remainingPropsAfterDraftPrefix(
-        splitProps: splitProps,
-        binding: draftBinding
-      )
-      if remainingProps.isEmpty {
-        existingDraft.data = newData
-      } else {
-        existingDraft.data = try EVYDataPatcher.patch(
-          encodedData: existingDraft.data, newData: newData, props: remainingProps)
-      }
-      draftStore.notifyUpdate(binding: draftBinding)
-    } else if let existingRow = try? findRowForUpdate(store: store, rootVariable: rootVariable) {
       let remainingProps = Array(splitProps.dropFirst())
       if remainingProps.isEmpty {
         existingRow.data = newData
@@ -327,18 +438,21 @@ extension EVY {
       }
       try store.persistChanges()
       store.postValueChanged(key: splitProps.joined(separator: PROP_SEPARATOR))
-    } else {
-      guard let draftBinding else {
-        throw EVYDataError.keyNotFound
-      }
-      try cacheStore.create(
-        namespace: EVYNamespace.draft,
-        resource: draftBinding.scopeId,
-        id: draftBinding.draftKey,
-        value: newData
-      )
-      draftStore.notifyUpdate(binding: draftBinding)
+      return
     }
+
+    guard let resolvedScopeId else {
+      throw EVYDataError.keyNotFound
+    }
+    let draftBinding = try draftStore.binding(
+      fromParsedProps: cleanVariableName, scopeId: resolvedScopeId)
+    try cacheStore.create(
+      namespace: EVYNamespace.draft,
+      resource: draftBinding.scopeId,
+      id: draftBinding.draftKey,
+      value: newData
+    )
+    draftStore.notifyUpdate(binding: draftBinding)
   }
 
   private static func findRowForUpdate(store: EVYDataStore, rootVariable: String) throws -> EVYData

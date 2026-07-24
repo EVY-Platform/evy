@@ -126,7 +126,7 @@ Rows are what are put into pages. They are the building block of the EVY server-
         "tap": [{
             "condition": "{length(title) > 0}",
             "false": "{highlight_required(title)}",
-            "true": "{create([service_id],[resource_id])}"
+            "true": "{create([service_id],[resource_id],submit)}"
         }]
     }
 }
@@ -148,9 +148,9 @@ Every row may declare an optional nested `sheet` row. At runtime, `{show(rowId)}
 
 | Row type | `source` | `destination` | `secondary` | `value` | Notes |
 | --- | --- | --- | --- | --- | --- |
-| `Input`, `TextArea` | yes | yes | no | no | Display reads `source`; writes pass raw text to `destination`. Optional `initial` seeds literal text into the draft on activation. |
+| `Input`, `TextArea` | yes | yes | no | no | Display reads `source`; writes pass raw text to `destination`. Optional `initial` seeds literal text into the draft on activation. For `Input` and `TextArea`, `actions.submit` (when present) runs after the user commits a value (return key or blur), after the destination write. Optional `actions.tap` runs on an actual row tap via the generic whole-row tap path (the embedded text field consumes taps on the field to begin editing). |
 | `Dropdown`, `InlinePicker` | yes | yes | no | yes | `source` = options; `value` = `$datum` display template; selection writes raw datum to `destination`. Optional `initial` seeds the default selection — a single option identifier for `Dropdown`, and a one-element identifier array for `InlinePicker`. |
-| `Search` | yes | yes | no | no | `destination` stores the selected raw datum (builder-aware). Optional `child` is the search **result template** only (not a sheet). Optional `sheet` uses the universal overlay relationship. |
+| `Search` | yes | yes | no | no | `destination` stores the selected raw datum (builder-aware), stripping external `id` and merging over any existing draft so omitted keys (e.g. instructions) are preserved. Optional `child` is the search **result template** only (not a sheet). Optional `sheet` uses the universal overlay relationship. On result select, iOS also runs `actions.tap` with `$datum` set to the selected result (after the destination write). |
 | `Calendar` | yes | yes | yes | no | `source` = main timeslots to display (same binding as `destination`); `destination` = edited selection; `secondary` = greyed background slots. |
 | `TimeslotPicker` | yes | yes | no | no | Single selected timeslot string in `destination`. Optional `sheet` for confirmation overlays via `{show(sheetRowId)}`. |
 | `SelectPhoto` | yes | yes | no | no | `source` = shown images; `destination` = written image IDs. |
@@ -179,11 +179,12 @@ Builder destinations (e.g. `{buildCurrency(item.price)}`) transform an `initial`
 
 ### Actions
 
-Each row has an `actions` attribute: an object keyed by **trigger** name. Each trigger maps to an ordered list of `UI_RowAction` objects (condition / `true` / `false` branches). Supported triggers in this release are `tap`, `delete`, `tap-row`, `tap-column`, and `swipe-left`; each row type declares which triggers it supports and whether a trigger is **required** (flow validation requires at least one action on that trigger) or **optional** (may be omitted or empty).
+Each row has an `actions` attribute: an object keyed by **trigger** name. Each trigger maps to an ordered list of `UI_RowAction` objects (condition / `true` / `false` branches). Supported triggers in this release are `tap`, `delete`, `tap-row`, `tap-column`, `swipe-left`, and `submit`; each row type declares which triggers it supports and whether a trigger is **required** (flow validation requires at least one action on that trigger) or **optional** (may be omitted or empty). The `submit` trigger runs when a row's typed value is committed (return key or blur, after the destination write). It is available on `Input` and `TextArea` only.
 
 ```jsonc
 "actions": {
   "tap": [{ "condition": "", "false": "", "true": "{close()}" }],
+  "submit": [{ "condition": "", "false": "", "true": "{close()}" }],
   "delete": [{ "condition": "", "false": "", "true": "{delete_photo()}" }],
   "tap-row": [{ "condition": "", "false": "", "true": "{select($datum)}" }],
   "tap-column": [{ "condition": "", "false": "", "true": "{select($datum)}" }],
@@ -195,35 +196,35 @@ An empty object `{}` is the canonical “no actions” state (do not use `{"tap"
 
 #### Trigger matrix
 
-| Row type | `tap` | `delete` | `tap-row` | `tap-column` | `swipe-left` |
-| --- | --- | --- | --- | --- | --- |
-| Button | **required** | — | — | — | — |
-| Calendar | **required** | — | **required** | **required** | — |
-| Dropdown | **required** | — | — | — | — |
-| InlinePicker | **required** | — | — | — | — |
-| InputList | **required** | — | — | — | — |
-| PhotoGallery | **required** | — | — | — | — |
-| SelectPhoto | **required** | **required** | — | — | — |
-| TextAction | **required** | — | — | — | — |
-| TextExpand | **required** | — | — | — | — |
-| TextSelect | **required** | — | — | — | — |
-| TimeslotPicker | **required** | — | — | — | — |
-| Heading | optional | — | — | — | optional |
-| HorizontalContainer | optional | — | — | — | — |
-| Input | optional | — | — | — | optional |
-| ListItem | optional | — | — | — | optional |
-| Map | optional | — | — | — | — |
-| Search | optional | — | — | — | — |
-| TabContainer | optional | — | — | — | — |
-| Text | optional | — | — | — | optional |
-| TextArea | optional | — | — | — | — |
-| VerticalContainer | optional | — | — | — | — |
+| Row type | `tap` | `submit` | `delete` | `tap-row` | `tap-column` | `swipe-left` |
+| --- | --- | --- | --- | --- | --- | --- |
+| Button | **required** | — | — | — | — | — |
+| Calendar | **required** | — | — | **required** | **required** | — |
+| Dropdown | **required** | — | — | — | — | — |
+| InlinePicker | **required** | — | — | — | — | — |
+| InputList | **required** | — | — | — | — | — |
+| PhotoGallery | **required** | — | — | — | — | — |
+| SelectPhoto | **required** | — | **required** | — | — | — |
+| TextAction | **required** | — | — | — | — | — |
+| TextExpand | **required** | — | — | — | — | — |
+| TextSelect | **required** | — | — | — | — | — |
+| TimeslotPicker | **required** | — | — | — | — | — |
+| Heading | optional | — | — | — | — | optional |
+| HorizontalContainer | optional | — | — | — | — | — |
+| Input | optional | optional | — | — | — | optional |
+| ListItem | optional | — | — | — | — | optional |
+| Map | optional | — | — | — | — | — |
+| Search | optional | — | — | — | — | — |
+| TabContainer | optional | — | — | — | — | — |
+| Text | optional | — | — | — | — | optional |
+| TextArea | optional | optional | — | — | — | — |
+| VerticalContainer | optional | — | — | — | — | — |
 
 Required triggers are enforced in `validateUiFlow` (fixtures, seed, tests). The web builder shows a required badge and warning when a required trigger has no actions but still allows saving.
 
-All action functions dispatch through a single client-side action channel; navigation (`navigate`, `close`) and non-navigation effects (`create`, `highlight_required`, `select`, `select_photo`, `delete_photo`, `expand_photo`, `expand_text`) are handled by the same runner. **Which list runs** depends on the trigger: row tap gestures and control-specific taps use `actions.tap`; the `SelectPhoto` remove control uses `actions.delete`; Calendar day headers use `actions.tap-column` and time-axis labels use `actions.tap-row`; swipe-to-reveal on Heading/Input/ListItem/Text uses `actions.swipe-left`.
+All action functions dispatch through a single client-side action channel; navigation (`navigate`, `close`) and non-navigation effects (`create`, `highlight_required`, `select`, `select_photo`, `delete_photo`, `expand_photo`, `expand_text`) are handled by the same runner. **Which list runs** depends on the trigger: row tap gestures and control-specific taps use `actions.tap`; value commit on `Input` and `TextArea` uses `actions.submit`; the `SelectPhoto` remove control uses `actions.delete`; Calendar day headers use `actions.tap-column` and time-axis labels use `actions.tap-row`; swipe-to-reveal on Heading/Input/ListItem/Text uses `actions.swipe-left`.
 
-For row types that handle their own interactive elements (`SelectPhoto`, `TextExpand`, `TextSelect`, `PhotoGallery`, `TabContainer`, `TimeslotPicker`, `Calendar`, `InlinePicker`), behaviour on **tap** comes only from `actions.tap`. An empty `tap` list means those taps do nothing. Calendar axis headings similarly run only `actions.tap-row` / `actions.tap-column`; empty axis triggers mean those headings do nothing.
+For row types that handle their own interactive elements (`SelectPhoto`, `TextExpand`, `TextSelect`, `PhotoGallery`, `TabContainer`, `TimeslotPicker`, `Calendar`, `InlinePicker`, `Search`), behaviour on **tap** comes only from `actions.tap`. An empty `tap` list means those taps do nothing. `Input` and `TextArea` use the generic whole-row tap path for `actions.tap` (the embedded text field still consumes taps on the field to begin editing). Calendar axis headings similarly run only `actions.tap-row` / `actions.tap-column`; empty axis triggers mean those headings do nothing.
 
 #### Swipe (`swipe-left`)
 
@@ -266,8 +267,8 @@ Supported action functions:
 | Function | Meaning |
 | -------- | ------- |
 | `close()` | Close current UI, e.g. `{close()}`. Inside a sheet overlay, dismisses the sheet only. |
-| `create(service_id, resource_id, data?)` | Create a domain entity. **Never changes routes** — with a plain-text data object, resolves its data-path or `$datum` values, preserves unresolved bare words as literals (bare `true`/`false` resolve as booleans, bare `null` resolves as JSON null, quoted `"…"` values stay literal strings, and `{…}` values resolve as nested objects), and creates that one entity immediately, e.g. `{create([service_id],[resource_id],{fk: $datum.id, service: "[service_id]", resource: "[items_resource_id]", archivedAt: null, data: {type: pickup, time: selected_pickup_timeslot}})}`. The client stamps `createdAt` on the payload when absent. With no data, it submits the active flow's drafts (merging them into the created entity) and cleans them up — the client decides this by comparing the active draft scope to the target resource. Either way, a flow that should close after submitting must do so explicitly with a following `{close()}` action. For user confirmation, call `{show(sheetRowId)}` then run `create` from the sheet's confirm button. |
-| `update(service_id, resource_id, filter, changes)` | Update matching domain entities immediately. Resolves filter and changes like inline `create` data (including boolean, `null`, quoted-string, and nested-object literals); a filter value of `null` matches records where the property is absent or JSON `null`. Locally finds rows where every filter property matches, merges changes, then syncs each match to the server with an `update` RPC. Filter and changes objects are required and non-empty, e.g. `{update([service_id],[resource_id],{fk: [items_resource].id, archivedAt: null},{archivedAt: now()})}`. For user confirmation, call `{show(sheetRowId)}` then run `update` from the sheet's confirm button. |
+| `create(service_id, resource_id, submit \| data, id_destination?)` | Create a domain entity. **Never changes routes** — with `submit` as the third argument, merges the active flow's create drafts into the created entity and cleans them up (two-argument create is invalid). With a plain-text data object `{key: value, …}`, resolves its data-path or `$datum` values, preserves unresolved bare words as literals (bare `true`/`false` resolve as booleans, bare `null` resolves as JSON null, quoted `"…"` values stay literal strings, and `{…}` values resolve as nested objects), and creates that one entity immediately. Alternatively, pass a **data path** (bare identifier, e.g. `pickup_address`) as the third argument to send the whole resolved object from drafts or synced data. Optional fourth argument writes the generated uuid to a draft-aware destination path (e.g. `{pickup_address.id}`) — use this in **create flows** where the target record does not exist yet. When the target record already exists, link it with a follow-up store-mode `update` action instead of writing onto the live record path. Either way, a flow that should close after submitting must do so explicitly with a following `{close()}` action. |
+| `update(service_id, resource_id, filter, changes, draft?)` | Update matching domain entities immediately (store mode, default), or write into the active create draft (`draft` fifth argument with filter `{}`). Resolves filter and changes like inline `create` data (including boolean, `null`, quoted-string, and nested-object literals), or pass a **data path** as `changes` to merge a whole draft object (the client strips any `id` key from path-resolved changes before merging). Change keys may use dotted paths (e.g. `transfer_options.pickup.address_id`) to patch nested fields without clobbering siblings. A filter value of `null` matches records where the property is absent or JSON `null`. Locally finds rows where every filter property matches, merges changes, refreshes matching cache-scope entities, then syncs each match to the server with an `update` RPC. Store mode requires a non-empty filter; `changes` is required as either a non-empty `{…}` object or a data path. A store-mode update matching nothing is a no-op. |
 | `navigate(flowId, pageId, queryParams?)` | Go to a page within a flow, e.g. `{navigate(flowId, pageId)}`. Pass query params as the optional third argument using a plain-text query object, e.g. `{navigate(flowId, pageId, {id: $datum.id})}`. |
 | `show(rowId)` | Present the row with ID `rowId` in a sheet overlay, e.g. `{show(b8c7d6e5-f4a3-4b2c-9d1e-0f8a7b6c5d4e)}`. Requires exactly one non-empty row ID. The target may belong to any page in the synced flow data, not only the action row's nested `sheet`. If the ID is missing from the client row store, the action fails and later actions in the same array do not run. The presented row's `title` is the sheet header (live-interpolated when it contains expressions). |
 | `highlight_required(field)` | Mark a field as required / show validation, e.g. `{highlight_required(title)}` |
@@ -328,7 +329,7 @@ Submit:
 	{
 		"condition": "",
 		"false": "",
-		"true": "{create([service_id],[resource_id])}"
+		"true": "{create([service_id],[resource_id],submit)}"
 	},
 	{
 		"condition": "",
@@ -367,7 +368,16 @@ Open a confirmation sheet after selecting a timeslot (`select` must run first so
 }
 ```
 
-Search result template (`child` only on Search; separate from `sheet`):
+Search result template (`child` only on Search; separate from `sheet`).
+
+### Address save pattern (create and edit flows)
+
+Use the same two-action `tap` array on the pickup Search row for create and edit flows, but the **link** step differs by flow type.
+
+1. **Create or update the address** — if `address_id` is empty, `{create(core, addresses, pickup_address, {pickup_address.id})}` persists the address and writes the generated id to the page-local `pickup_address` buffer; otherwise `{update(core, addresses, {id: item.transfer_options.pickup.address_id}, pickup_address)}` updates the existing row.
+2. **Link the item** — on **edit** flows where the item row already exists: `{update(marketplace, items, {id: item.id}, {transfer_options.pickup.address_id: pickup_address.id})}` matches the row and syncs immediately. On **create** flows: `{update(marketplace, items, {}, {transfer_options.pickup.address_id: pickup_address.id}, draft)}` writes into the create draft (picked up by submit `create`). A page shared across both flow types needs condition-branched actions (store vs draft link) because one action string no longer serves both.
+
+When an address already exists, the first action's `false` branch runs and **stops the action array** (runner semantics), so the link step does not run again on re-pick.
 
 ```json
 {
@@ -375,6 +385,20 @@ Search result template (`child` only on Search; separate from `sheet`):
 	"type": "Search",
 	"source": "{$api:place_search}",
 	"destination": "{pickup_address}",
+	"actions": {
+		"tap": [
+			{
+				"condition": "{length(item.transfer_options.pickup.address_id) == 0}",
+				"true": "{create(core, addresses, pickup_address, {pickup_address.id})}",
+				"false": "{update(core, addresses, {id: item.transfer_options.pickup.address_id}, pickup_address)}"
+			},
+			{
+				"condition": "",
+				"true": "{update(marketplace, items, {}, {transfer_options.pickup.address_id: pickup_address.id}, draft)}",
+				"false": ""
+			}
+		]
+	},
 	"child": {
 		"id": "387ebe5b-b5b5-4be9-b5db-918bb9db706f",
 		"type": "Text",

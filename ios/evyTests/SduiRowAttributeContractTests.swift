@@ -124,7 +124,7 @@ final class SduiRowAttributeContractTests: XCTestCase {
 
   func testSduiDefinitionsIncludeTriggersMetadata() throws {
     let allowedTriggers: Set<String> = [
-      "tap", "delete", "tap-row", "tap-column", "swipe-left",
+      "tap", "delete", "tap-row", "tap-column", "swipe-left", "submit",
     ]
     let catalog = try loadCatalog()
     for (rowType, schemaDef) in catalog {
@@ -159,6 +159,22 @@ final class SduiRowAttributeContractTests: XCTestCase {
     XCTAssertEqual(calendarTriggers["tap"], "required")
     XCTAssertEqual(calendarTriggers["tap-row"], "required")
     XCTAssertEqual(calendarTriggers["tap-column"], "required")
+    let inputTriggers = try XCTUnwrap(
+      (catalog["Input"] as? [String: Any])?["triggers"] as? [String: String]
+    )
+    XCTAssertEqual(inputTriggers["tap"], "optional")
+    XCTAssertEqual(inputTriggers["submit"], "optional")
+    XCTAssertEqual(inputTriggers["swipe-left"], "optional")
+    let textAreaTriggers = try XCTUnwrap(
+      (catalog["TextArea"] as? [String: Any])?["triggers"] as? [String: String]
+    )
+    XCTAssertEqual(textAreaTriggers["tap"], "optional")
+    XCTAssertEqual(textAreaTriggers["submit"], "optional")
+    let searchTriggers = try XCTUnwrap(
+      (catalog["Search"] as? [String: Any])?["triggers"] as? [String: String]
+    )
+    XCTAssertEqual(searchTriggers["tap"], "optional")
+    XCTAssertNil(searchTriggers["submit"])
   }
 
   func testUIRowDecodesOptionalSheetForEveryRowType() throws {

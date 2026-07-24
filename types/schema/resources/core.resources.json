@@ -27,6 +27,9 @@
 		},
 		"files": {
 			"singular": "file"
+		},
+		"addresses": {
+			"singular": "address"
 		}
 	}
 }

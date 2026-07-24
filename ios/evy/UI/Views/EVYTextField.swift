@@ -13,6 +13,7 @@ struct EVYTextField: View {
   let multiLine: Bool
   let source: String?
   let isInteractive: Bool
+  let onValueCommit: (() -> Void)?
 
   let displayValue: EVYState<EVYValue>
   let placeholderValue: EVYState<EVYValue>
@@ -26,13 +27,15 @@ struct EVYTextField: View {
     destination: String,
     placeholder: String?,
     multiLine: Bool = false,
-    isInteractive: Bool = true
+    isInteractive: Bool = true,
+    onValueCommit: (() -> Void)? = nil
   ) {
     self.source = source
     self.placeholder = placeholder
     self.destination = destination
     self.multiLine = multiLine
     self.isInteractive = isInteractive
+    self.onValueCommit = onValueCommit
 
     let watchTargets = EVY.watchTargets(forSource: source, destination: destination)
     self.displayValue = EVYState(
@@ -78,6 +81,7 @@ struct EVYTextField: View {
         .onChange(of: focused) { oldValue, newValue in
           if oldValue == true && newValue == false {
             editing = false
+            onValueCommit?()
           }
         }
         .onChange(of: localEditText) { _, newValue in

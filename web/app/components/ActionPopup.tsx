@@ -4,12 +4,15 @@ import { createPortal } from "react-dom";
 
 import { useEscapeKey } from "../hooks/useEscapeKey";
 import { useFlowsContext } from "../state/contexts/FlowsContext";
-import { extractDraftVariables } from "../utils/actionVariables";
 import {
 	type ConditionExpression,
 	parseCondition,
 	serializeCondition,
 } from "../utils/conditionExpression";
+import {
+	collectDraftSignals,
+	finalizeBranchForSave,
+} from "../utils/createDraftSignals";
 import {
 	buildDatumCandidate,
 	buildFunctionCandidates,
@@ -49,11 +52,11 @@ export function ActionPopup({
 	const [trueBranch, setTrueBranch] = useState(action.true);
 	const [falseBranch, setFalseBranch] = useState(action.false);
 
-	const draftVariables = useMemo(
-		() =>
-			extractDraftVariables(flowsById, pagesById, rowsById, activeFlowId),
+	const draftSignals = useMemo(
+		() => collectDraftSignals(flowsById, pagesById, rowsById, activeFlowId),
 		[flowsById, pagesById, rowsById, activeFlowId],
 	);
+	const { draftVariables, draftUpdateTargets } = draftSignals;
 
 	const idCandidates = useMemo(
 		() => [
@@ -73,13 +76,45 @@ export function ActionPopup({
 		[serviceResources, resourceAttributeMetadata],
 	);
 
+	const canSave = useMemo(() => {
+		const finalizedTrue = finalizeBranchForSave(
+			trueBranch,
+			draftVariables,
+			draftUpdateTargets,
+		);
+		const finalizedFalse = finalizeBranchForSave(
+			falseBranch,
+			draftVariables,
+			draftUpdateTargets,
+		);
+		return finalizedTrue !== null && finalizedFalse !== null;
+	}, [trueBranch, falseBranch, draftVariables, draftUpdateTargets]);
+
 	const handleSave = useCallback(() => {
+		const finalizedTrue = finalizeBranchForSave(
+			trueBranch,
+			draftVariables,
+			draftUpdateTargets,
+		);
+		const finalizedFalse = finalizeBranchForSave(
+			falseBranch,
+			draftVariables,
+			draftUpdateTargets,
+		);
+		if (finalizedTrue === null || finalizedFalse === null) return;
 		onSave({
 			condition: serializeCondition(expression),
-			true: trueBranch,
-			false: falseBranch,
+			true: finalizedTrue,
+			false: finalizedFalse,
 		});
-	}, [expression, trueBranch, falseBranch, onSave]);
+	}, [
+		expression,
+		trueBranch,
+		falseBranch,
+		draftVariables,
+		draftUpdateTargets,
+		onSave,
+	]);
 
 	useEscapeKey(onCancel);
 
@@ -111,6 +146,10 @@ export function ActionPopup({
 							expression={expression}
 							draftVariables={draftVariables}
 							serviceResources={serviceResources}
+							idCandidates={idCandidates}
+							getAttributeCandidatesForQualifier={
+								getAttributeCandidatesForQualifier
+							}
 							onChange={setExpression}
 							idPrefix={`condition-${actionIndex}`}
 							isTopLevel
@@ -132,6 +171,7 @@ export function ActionPopup({
 								idCandidates={idCandidates}
 								rowsById={rowsById}
 								defaultSheetRowId={defaultSheetRowId}
+								draftUpdateTargets={draftUpdateTargets}
 								getAttributeCandidatesForQualifier={
 									getAttributeCandidatesForQualifier
 								}
@@ -153,6 +193,7 @@ export function ActionPopup({
 								idCandidates={idCandidates}
 								rowsById={rowsById}
 								defaultSheetRowId={defaultSheetRowId}
+								draftUpdateTargets={draftUpdateTargets}
 								getAttributeCandidatesForQualifier={
 									getAttributeCandidatesForQualifier
 								}
@@ -174,6 +215,7 @@ export function ActionPopup({
 						type="button"
 						className="evy-modal-btn evy-modal-btn--md evy-modal-btn-primary"
 						onClick={handleSave}
+						disabled={!canSave}
 					>
 						Save
 					</button>

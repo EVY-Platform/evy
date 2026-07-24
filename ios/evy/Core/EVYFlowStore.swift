@@ -154,6 +154,28 @@ enum EVYFlowStore {
     return pageId
   }
 
+  static func submissionResources(
+    flowId: String,
+    from store: EVYDataStore = EVY.publicStore
+  ) -> [String] {
+    Array(createKeys(flowId: flowId, from: store)).sorted()
+  }
+
+  static func validateSubmissionResources(
+    flowId: String,
+    from store: EVYDataStore = EVY.publicStore
+  ) {
+    let resources = submissionResources(flowId: flowId, from: store)
+    guard resources.count > 1 else { return }
+    let resourceList = resources.joined(separator: ", ")
+    NotificationCenter.default.post(
+      name: .evyErrorOccurred,
+      object: EVYError.invalidData(
+        context:
+          "flow \(flowId) declares multiple submission resources: \(resourceList)")
+    )
+  }
+
   static func createKeys(
     flowId: String,
     from store: EVYDataStore = EVY.publicStore
@@ -165,8 +187,24 @@ enum EVYFlowStore {
         guard let uiRow = storedRow.uiRow() else { return }
         for action in EVYRowActionTrigger.allActionLists(in: uiRow.actions) {
           for branch in [action.`true`, action.`false`] {
-            if let createAction = EVYActionParser.createAction(from: branch) {
-              keys.insert(createAction.resource)
+            let trimmed = branch.trimmingCharacters(in: .whitespacesAndNewlines)
+            guard !trimmed.isEmpty else { continue }
+            if let createAction = EVYActionParser.createAction(from: trimmed) {
+              if createAction.isSubmission {
+                keys.insert(createAction.resource)
+              }
+              continue
+            }
+            if let parsed = EVYActionParser.functionCall(from: trimmed),
+              parsed.name == "create"
+            {
+              NotificationCenter.default.post(
+                name: .evyErrorOccurred,
+                object: EVYError.invalidData(
+                  context:
+                    "create requires namespace, resource, and submit or data, e.g. create(marketplace,item,submit)"
+                )
+              )
             }
           }
         }
@@ -179,7 +217,8 @@ enum EVYFlowStore {
     for route: Route,
     from store: EVYDataStore = EVY.publicStore
   ) -> String? {
-    if let entityKey = createKeys(flowId: route.flowId, from: store).sorted().first {
+    let submissionResources = submissionResources(flowId: route.flowId, from: store)
+    if let entityKey = submissionResources.first {
       return EVYDraft.createMergeScopeId(flowId: route.flowId, entityKey: entityKey)
     }
     return "\(route.flowId):browse"

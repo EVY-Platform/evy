@@ -85,4 +85,3 @@ jobs:
                   DB_PORT: 5432
                   DB_DOMAIN: localhost
                   DB_EVY_DATABASE: test
-                  GOOGLE_PLACES_API_KEY: ${{ secrets.GOOGLE_PLACES_API_KEY }}

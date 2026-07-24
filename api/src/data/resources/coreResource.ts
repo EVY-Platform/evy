@@ -21,6 +21,12 @@ import type { EvyDb } from "../../database/db";
 
 type ResourceTable = AnyPgTable & { id: AnyPgColumn; updatedAt: AnyPgColumn };
 
+export function omitNulls<T extends Record<string, unknown>>(row: T): T {
+	return Object.fromEntries(
+		Object.entries(row).filter(([, value]) => value !== null),
+	) as T;
+}
+
 export function makeCoreResource<
 	T extends { id: string; createdAt: string; updatedAt: string },
 >(config: {

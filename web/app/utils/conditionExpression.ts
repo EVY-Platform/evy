@@ -216,6 +216,79 @@ function parseAtomicComparison(
 	return { type: "leaf", left, operator, right };
 }
 
+function compareOperandValues(
+	operator: ComparisonOperator,
+	left: string,
+	right: string,
+): boolean {
+	const leftTrimmed = left.trim();
+	const rightTrimmed = right.trim();
+	const leftNumber = Number(leftTrimmed);
+	const rightNumber = Number(rightTrimmed);
+	const bothNumeric =
+		leftTrimmed.length > 0 &&
+		rightTrimmed.length > 0 &&
+		!Number.isNaN(leftNumber) &&
+		!Number.isNaN(rightNumber);
+
+	if (bothNumeric) {
+		switch (operator) {
+			case "==":
+				return leftNumber === rightNumber;
+			case "!=":
+				return leftNumber !== rightNumber;
+			case ">":
+				return leftNumber > rightNumber;
+			case "<":
+				return leftNumber < rightNumber;
+			case ">=":
+				return leftNumber >= rightNumber;
+			case "<=":
+				return leftNumber <= rightNumber;
+		}
+	}
+
+	switch (operator) {
+		case "==":
+			return leftTrimmed === rightTrimmed;
+		case "!=":
+			return leftTrimmed !== rightTrimmed;
+		default:
+			return false;
+	}
+}
+
+function evaluateConditionExpression(
+	expression: ConditionExpression,
+	resolveOperand: (operand: string) => string,
+): boolean {
+	if (expression.type === "leaf") {
+		const left = resolveOperand(expression.left);
+		const right = resolveOperand(expression.right);
+		return compareOperandValues(expression.operator, left, right);
+	}
+
+	const results = expression.children.map((child) =>
+		evaluateConditionExpression(child, resolveOperand),
+	);
+	if (expression.logicalOperator === "and") {
+		return results.every(Boolean);
+	}
+	return results.some(Boolean);
+}
+
+/** Minimal boolean evaluation for web preview (not full iOS interpreter semantics). */
+export function evaluateConditionForPreview(
+	conditionString: string,
+	resolveOperand: (operand: string) => string,
+): boolean {
+	const expression = parseCondition(conditionString);
+	if (!expression) {
+		return false;
+	}
+	return evaluateConditionExpression(expression, resolveOperand);
+}
+
 export function serializeCondition(
 	expression: ConditionExpression | null,
 ): string {

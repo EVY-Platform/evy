@@ -22,10 +22,11 @@ count({_variable_type_list_})
 | String | `"Hello"` | `5` | Character count |
 | Int | `42` | `42` | Returns the number itself |
 | Decimal | `3.14` | `3.14` | Returns the decimal itself |
+| Missing / unresolvable path | `missing.key` | `0` | Strict resolution; `null` values also count as `0` |
 
 #### length
 
-Returns the number of characters in a string argument. Non-strings fall through to the raw argument text (no numeric “length”).
+Returns the number of characters in a string argument. Missing paths and JSON `null` count as `0`; other non-strings count as `0` (no raw-argument echo).
 
 ```
 length({_variable_type_string_})
@@ -345,18 +346,18 @@ These run on the iOS client when a row action branch executes. See [sdui.md](./s
 #### create
 
 ```
-{create(service_id, resource_id, data?)}
+{create(service_id, resource_id, submit | data, id_destination?)}
 ```
 
-Creates a domain entity immediately. Inline `data` supports nested object values (e.g. `data: {type: pickup, time: selected_pickup_timeslot}`), quoted string literals (never resolved as data paths), bare `true`/`false` booleans, and `null`. For user confirmation, call `{show(a4b5c6d7-e8f9-4a0b-1c2d-3e4f5a6b7c8d)}` (or another sheet row ID) and run `create` from the sheet's confirm button.
+Creates a domain entity immediately. The third argument is required: use the bare keyword `submit` to merge the active flow's create drafts into the new entity (and clean them up), or pass inline `data` / a whole-object data path for an immediate inline create. In the web builder, `submit` is chosen automatically when the flow has row **destinations** or **draft** `update` actions targeting that service and resource; otherwise the builder configures inline data only. The on-disk keyword `submit` is unchanged. A two-argument `create(service_id, resource_id)` is invalid. Inline `data` supports nested object values (e.g. `data: {type: pickup, time: selected_pickup_timeslot}`), quoted string literals (never resolved as data paths), bare `true`/`false` booleans, and `null`, or pass a whole-object data path (e.g. `pickup_address`). Optional fourth argument `id_destination` is a draft-aware write path; after create, the client writes the generated uuid string there (typically `{pickup_address.id}` on address pick). Linking the parent entity is a follow-up `update` action — see the **Address save pattern** in [sdui.md](./sdui.md).
 
 #### update
 
 ```
-{update(service_id, resource_id, filter, changes)}
+{update(service_id, resource_id, filter, changes, draft?)}
 ```
 
-Updates matching domain entities immediately. Filter and changes values resolve like inline `create` data; a filter value of `null` matches records where the property is absent or JSON `null`, and changes can call functions, e.g. `{archivedAt: now()}`. For user confirmation, call `{show(a4b5c6d7-e8f9-4a0b-1c2d-3e4f5a6b7c8d)}` (or another sheet row ID) and run `update` from the sheet's confirm button.
+Updates matching domain entities immediately. Filter and changes values resolve like inline `create` data; `changes` may be a data path (whole draft object, with `id` stripped before merge) or a `{key: value}` object whose keys may use dotted nested paths (e.g. `transfer_options.pickup.address_id`). Store mode (default) requires a non-empty filter. Draft mode passes the bare keyword `draft` as the fifth argument with filter exactly `{}`; changes are written into the active create-merge scope for `resource_id` via `mergeIntoActiveDraft`. A filter value of `null` matches records where the property is absent or JSON `null`, and changes can call functions, e.g. `{archivedAt: now()}`. A store-mode update that matches no rows is a no-op. For user confirmation, call `{show(a4b5c6d7-e8f9-4a0b-1c2d-3e4f5a6b7c8d)}` (or another sheet row ID) and run `update` from the sheet's confirm button.
 
 #### show
 

@@ -1,10 +1,13 @@
 import { describe, expect, it } from "bun:test";
-import type { UI_Row as ServerRow } from "evy-types";
+import type { UI_Flow as ServerFlow, UI_Row as ServerRow } from "evy-types";
 import CalendarRow from "../rows/edit/CalendarRow";
 import DropdownRow from "../rows/edit/DropdownRow";
 import SearchRow from "../rows/edit/SearchRow";
 import TextExpandRow from "../rows/view/TextExpandRow";
 import { buildRowForNewPageFromBase, normalizeServerRow } from "./decodeFlow";
+import { decomposeServerFlow } from "./serverFlowDecompose";
+
+const NOW = "2024-01-01T00:00:00.000Z";
 
 const ROW_A = "a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d";
 const ROW_B = "b2c3d4e5-f6a7-4b8c-9d0e-1f2a3b4c5d6e";
@@ -178,6 +181,53 @@ describe("buildRowForNewPageFromBase", () => {
 			"tap-row": [selectDatum],
 			"tap-column": [selectDatum],
 		});
+	});
+});
+
+describe("decomposeServerFlow", () => {
+	it("decomposes nested sheet and Search child into distinct keys", () => {
+		const flow: ServerFlow = {
+			id: "flow-1",
+			name: "Flow",
+			pages: [
+				{
+					id: "page-1",
+					name: "Page",
+					title: "Page",
+					rows: [
+						{
+							id: "search-1",
+							type: "Search",
+							visible: "true",
+							title: "Search",
+							actions: {},
+							child: {
+								id: "child-1",
+								type: "Text",
+								visible: "true",
+								title: "Result",
+								actions: {},
+							},
+							sheet: {
+								id: "sheet-1",
+								type: "Text",
+								visible: "true",
+								title: "Sheet",
+								actions: {},
+							},
+						},
+					],
+				},
+			],
+		};
+
+		const graph = decomposeServerFlow(flow, NOW);
+		const searchRecord = graph.rowRows.find((r) => r.id === "search-1");
+		expect(searchRecord?.data.child_row_id).toBe("child-1");
+		expect(searchRecord?.data.sheet_row_id).toBe("sheet-1");
+		expect(graph.rowRows.map((r) => r.id).sort()).toEqual(
+			["child-1", "search-1", "sheet-1"].sort(),
+		);
 	});
 });
 

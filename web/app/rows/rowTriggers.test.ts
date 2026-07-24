@@ -31,12 +31,33 @@ describe("rowTriggers", () => {
 		]);
 	});
 
-	test("Heading, Input, ListItem, and Text declare optional swipe-left", () => {
-		for (const type of ["Heading", "Input", "ListItem", "Text"]) {
+	test("Heading, ListItem, and Text declare optional swipe-left", () => {
+		for (const type of ["Heading", "ListItem", "Text"]) {
 			expect(getRowTriggers(type)).toEqual([
 				{ trigger: "swipe-left", required: false },
 				{ trigger: "tap", required: false },
 			]);
 		}
+	});
+
+	test("Input declares optional submit, swipe-left, and tap", () => {
+		expect(getRowTriggers("Input")).toEqual([
+			{ trigger: "submit", required: false },
+			{ trigger: "swipe-left", required: false },
+			{ trigger: "tap", required: false },
+		]);
+	});
+
+	test("TextArea declares optional submit and tap", () => {
+		expect(getRowTriggers("TextArea")).toEqual([
+			{ trigger: "submit", required: false },
+			{ trigger: "tap", required: false },
+		]);
+	});
+
+	test("Search declares optional tap only", () => {
+		expect(getRowTriggers("Search")).toEqual([
+			{ trigger: "tap", required: false },
+		]);
 	});
 });

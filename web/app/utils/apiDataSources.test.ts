@@ -1,7 +1,18 @@
 import { describe, expect, test } from "bun:test";
 import { getApiDataSourceAttributeCandidates } from "./apiDataSources";
+import { parseApiSourceMethod } from "./sourceBinding";
 
 describe("apiDataSources", () => {
+	test("parseApiSourceMethod resolves API-backed search sources", () => {
+		expect(parseApiSourceMethod("{$api:place_search}")).toBe(
+			"place_search",
+		);
+	});
+
+	test("parseApiSourceMethod returns null for non-API sources", () => {
+		expect(parseApiSourceMethod("{items.title}")).toBeNull();
+	});
+
 	test("getApiDataSourceAttributeCandidates returns place search attributes", () => {
 		const attributeNames = getApiDataSourceAttributeCandidates(
 			"place_search",

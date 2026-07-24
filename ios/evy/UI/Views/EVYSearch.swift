@@ -11,6 +11,7 @@ struct EVYSearch: View {
   let destination: String
   let placeholder: String?
   let draftScopeId: String?
+  let onSelect: ((EVYJson) -> Void)?
 
   @Environment(\.dismiss) private var dismiss
   @State private var searchText = ""
@@ -24,11 +25,13 @@ struct EVYSearch: View {
   init(
     source: String, destination: String, placeholder: String?, resultTemplate: UI_Row?,
     scopeId: String? = nil,
-    draftScopeId: String? = nil
+    draftScopeId: String? = nil,
+    onSelect: ((EVYJson) -> Void)? = nil
   ) {
     self.destination = destination
     self.placeholder = placeholder
     self.draftScopeId = draftScopeId
+    self.onSelect = onSelect
     searchSource = EVY.classifySource(source)
 
     switch searchSource {
@@ -90,14 +93,7 @@ struct EVYSearch: View {
           .contentShape(Rectangle())
           .simultaneousGesture(
             TapGesture().onEnded {
-              guard !destination.isEmpty else { return }
-              do {
-                try EVY.writeRawValue(
-                  result.datum, to: destination, scopeId: draftScopeId)
-                dismiss()
-              } catch {
-                // Invalid destination writes are non-fatal here.
-              }
+              selectResult(result.datum)
             }
           )
       }
@@ -113,6 +109,39 @@ struct EVYSearch: View {
       guard !Task.isCancelled else { return }
       await apiSearchModel?.search(query: trimmedQuery)
     }
+  }
+
+  private func selectResult(_ datum: EVYJson) {
+    guard !destination.isEmpty else { return }
+    do {
+      try EVY.writeRawValue(
+        EVY.searchDestinationValue(from: datum, destination: destination),
+        to: destination,
+        scopeId: draftScopeId
+      )
+      onSelect?(datum)
+      dismiss()
+    } catch {
+      // Invalid destination writes are non-fatal here.
+    }
+  }
+}
+
+extension EVY {
+  /// Value written when a Search result is selected: strips external `id` (e.g. Google place
+  /// id) and preserves keys already on the destination draft that the selection omits
+  /// (e.g. instructions).
+  static func searchDestinationValue(from datum: EVYJson, destination: String) -> EVYJson {
+    guard case .dictionary(var fields) = datum else { return datum }
+    fields.removeValue(forKey: "id")
+    if let existing = try? getDataFromText(destination),
+      case .dictionary(let existingFields) = existing
+    {
+      for (key, value) in existingFields where fields[key] == nil {
+        fields[key] = value
+      }
+    }
+    return .dictionary(fields)
   }
 }
 

@@ -95,7 +95,7 @@ function makeSearchRow(
 		visible: "true",
 		data: {
 			source: "{$api:place_search}",
-			destination: "{item.address}",
+			destination: "{pickup_address}",
 			...extra,
 		},
 		createdAt: NOW,

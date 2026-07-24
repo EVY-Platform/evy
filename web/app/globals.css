@@ -791,6 +791,12 @@ label {
 	background-color: var(--color-evy-gray-light);
 }
 
+.evy-create-draft-hint {
+	margin: 0;
+	font-size: var(--text-xs);
+	color: var(--color-evy-gray-dark);
+}
+
 .evy-condition-remove,
 .evy-condition-nest-btn {
 	display: flex;

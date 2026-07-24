@@ -107,11 +107,18 @@ describe("Marketplace E2E (via API WebSocket)", () => {
 		expect(rows).toEqual([message]);
 	});
 
-	it("create marketplace items resource with filter.id creates row keyed by client UUID (iOS shape)", async () => {
+	it("create marketplace item with transfer_options.pickup.address_id round-trips", async () => {
 		const clientId = crypto.randomUUID();
+		const addressId = crypto.randomUUID();
 		const itemPayload = {
 			id: clientId,
-			title: "from-ios",
+			title: "item-with-address",
+			transfer_options: {
+				pickup: {
+					address_id: addressId,
+					lead_time_hours: "24",
+				},
+			},
 		};
 
 		const created = await client.call("create", {
@@ -125,8 +132,12 @@ describe("Marketplace E2E (via API WebSocket)", () => {
 		expect(created).toHaveProperty("id", clientId);
 		expect(created.data).toMatchObject({
 			id: clientId,
-			title: "from-ios",
+			title: "item-with-address",
+			transfer_options: {
+				pickup: { address_id: addressId, lead_time_hours: "24" },
+			},
 		});
+		expect(created.data).not.toHaveProperty("pickup_address");
 
 		const got = await client.call("get", {
 			service: MARKETPLACE_SERVICE_ID,
@@ -138,7 +149,11 @@ describe("Marketplace E2E (via API WebSocket)", () => {
 		expect(got).toHaveLength(1);
 		expect(got[0]).toMatchObject({
 			id: clientId,
-			title: "from-ios",
+			title: "item-with-address",
+			transfer_options: {
+				pickup: { address_id: addressId },
+			},
 		});
+		expect(got[0]).not.toHaveProperty("pickup_address");
 	});
 });

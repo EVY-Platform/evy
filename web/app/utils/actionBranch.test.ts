@@ -4,12 +4,137 @@ import {
 	MARKETPLACE_SERVICE,
 } from "evy-types/marketplaceResources";
 import {
+	applyCreateModeForDraftSignals,
+	createHasInlineDataArg,
+	createUsesSubmitMarker,
+	finalizeCreateBranchForSave,
 	formatBranchDisplay,
+	isValidCreateBranchForSave,
 	parseBranch,
 	serializeBranch,
+	updateUsesDraftMarker,
 } from "./actionBranch";
 
 describe("action branch helpers", () => {
+	const serviceId = MARKETPLACE_SERVICE;
+	const resourceId = MARKETPLACE_RESOURCE.ITEMS;
+
+	describe("create mode helpers", () => {
+		it("detects explicit submit marker", () => {
+			expect(
+				createUsesSubmitMarker([serviceId, resourceId, "submit"]),
+			).toBe(true);
+			expect(createUsesSubmitMarker([serviceId, resourceId])).toBe(false);
+		});
+
+		it("detects inline data third argument", () => {
+			expect(
+				createHasInlineDataArg([
+					serviceId,
+					resourceId,
+					"pickup_address",
+				]),
+			).toBe(true);
+			expect(
+				createHasInlineDataArg([serviceId, resourceId, "submit"]),
+			).toBe(false);
+		});
+
+		it("writes submit when draft signals are offered", () => {
+			expect(
+				applyCreateModeForDraftSignals([serviceId, resourceId], true),
+			).toEqual([serviceId, resourceId, "submit"]);
+		});
+
+		it("clears submit when draft signals are not offered", () => {
+			expect(
+				applyCreateModeForDraftSignals(
+					[serviceId, resourceId, "submit"],
+					false,
+				),
+			).toEqual([serviceId, resourceId, ""]);
+		});
+
+		it("returns the same reference when submit mode is already correct", () => {
+			const args = [serviceId, resourceId, "submit"];
+			expect(applyCreateModeForDraftSignals(args, true)).toBe(args);
+		});
+
+		it("detects draft-mode update marker", () => {
+			expect(
+				updateUsesDraftMarker([
+					serviceId,
+					resourceId,
+					"{}",
+					"{title: x}",
+					"draft",
+				]),
+			).toBe(true);
+			expect(
+				updateUsesDraftMarker([
+					serviceId,
+					resourceId,
+					"{}",
+					"{title: x}",
+				]),
+			).toBe(false);
+		});
+
+		it("validates create branches for save", () => {
+			expect(
+				isValidCreateBranchForSave(
+					[serviceId, resourceId, "submit"],
+					true,
+				),
+			).toBe(true);
+			expect(
+				isValidCreateBranchForSave(
+					[serviceId, resourceId, "pickup_address"],
+					false,
+				),
+			).toBe(true);
+			expect(
+				isValidCreateBranchForSave([serviceId, resourceId], false),
+			).toBe(false);
+			expect(
+				isValidCreateBranchForSave(
+					[serviceId, resourceId, "submit"],
+					false,
+				),
+			).toBe(false);
+		});
+
+		it("finalizes create branches for save", () => {
+			expect(
+				finalizeCreateBranchForSave(
+					`{create(${serviceId},${resourceId})}`,
+					true,
+				),
+			).toBe(`{create(${serviceId},${resourceId},submit)}`);
+			expect(
+				finalizeCreateBranchForSave(
+					`{create(${serviceId},${resourceId},submit)}`,
+					false,
+				),
+			).toBeNull();
+			expect(
+				finalizeCreateBranchForSave(
+					`{create(${serviceId},${resourceId},pickup_address)}`,
+					true,
+				),
+			).toBe(`{create(${serviceId},${resourceId},pickup_address)}`);
+		});
+
+		it("preserves inline data when draft signals change", () => {
+			expect(
+				applyCreateModeForDraftSignals(
+					[serviceId, resourceId, "pickup_address", "dest"],
+					true,
+				),
+			).toEqual([serviceId, resourceId, "pickup_address", "dest"]);
+		});
+	});
+
 	it("parses show action with row id", () => {
 		expect(parseBranch("{show(row-abc)}")).toEqual({
 			functionName: "show",
@@ -23,6 +148,52 @@ describe("action branch helpers", () => {
 
 	it("does not serialize show without a row id", () => {
 		expect(serializeBranch("show", [])).toBe("");
+	});
+
+	it("parses create with submit marker", () => {
+		expect(
+			parseBranch(
+				`{create(${MARKETPLACE_SERVICE},${MARKETPLACE_RESOURCE.ITEMS},submit)}`,
+			),
+		).toEqual({
+			functionName: "create",
+			args: [MARKETPLACE_SERVICE, MARKETPLACE_RESOURCE.ITEMS, "submit"],
+		});
+	});
+
+	it("serializes create with submit marker", () => {
+		expect(
+			serializeBranch("create", [
+				MARKETPLACE_SERVICE,
+				MARKETPLACE_RESOURCE.ITEMS,
+				"submit",
+			]),
+		).toBe(
+			`{create(${MARKETPLACE_SERVICE},${MARKETPLACE_RESOURCE.ITEMS},submit)}`,
+		);
+	});
+
+	it("round-trips draft-mode update with empty filter", () => {
+		const branch = `{update(${MARKETPLACE_SERVICE},${MARKETPLACE_RESOURCE.ITEMS},{},{transfer_options.pickup.address_id: pickup_address.id},draft)}`;
+		expect(parseBranch(branch)).toEqual({
+			functionName: "update",
+			args: [
+				MARKETPLACE_SERVICE,
+				MARKETPLACE_RESOURCE.ITEMS,
+				"{}",
+				"{transfer_options.pickup.address_id: pickup_address.id}",
+				"draft",
+			],
+		});
+		expect(
+			serializeBranch("update", [
+				MARKETPLACE_SERVICE,
+				MARKETPLACE_RESOURCE.ITEMS,
+				"{}",
+				"{transfer_options.pickup.address_id: pickup_address.id}",
+				"draft",
+			]),
+		).toBe(branch);
 	});
 
 	it("parses create with namespace and resource", () => {

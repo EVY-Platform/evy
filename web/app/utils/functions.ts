@@ -1,8 +1,11 @@
+import { evaluateConditionForPreview } from "./conditionExpression";
 import {
 	type EVYFunctionContext,
 	type EVYFunctionOutput,
 	evyFormatDatetime,
+	stripOptionalSurroundingQuotes,
 } from "./datetime";
+import { splitFunctionArguments } from "./functionArgs";
 
 export type { EVYFunctionContext, EVYFunctionOutput };
 
@@ -125,6 +128,53 @@ const evyFormatDurationStub = (): EVYFunctionOutput => ({
 	value: "15 minutes",
 });
 
+// Web preview uses a minimal condition evaluator; unknown bindings resolve as empty/zero.
+function resolvePreviewConditionOperand(operand: string): string {
+	const trimmed = operand.trim();
+	const countMatch = /^count\((.*)\)$/.exec(trimmed);
+	if (countMatch) {
+		const inner = countMatch[1].trim();
+		const value = resolveMockPath(inner);
+		if (Array.isArray(value)) {
+			return String(value.length);
+		}
+		return "0";
+	}
+	const unquoted = stripOptionalSurroundingQuotes(trimmed);
+	const mockValue = resolveMockPath(unquoted);
+	if (Array.isArray(mockValue)) {
+		return String(mockValue.length);
+	}
+	if (mockValue !== undefined && mockValue !== null) {
+		return String(mockValue);
+	}
+	return unquoted;
+}
+
+function evyIfStub(args: string): EVYFunctionOutput {
+	const parts = splitFunctionArguments(args);
+	if (parts.length !== 3) {
+		return { value: "" };
+	}
+	const [condition, trueBranch, falseBranch] = parts;
+	const conditionMet = evaluateConditionForPreview(
+		condition.trim(),
+		resolvePreviewConditionOperand,
+	);
+	const selected = conditionMet ? trueBranch : falseBranch;
+	const trimmed = selected.trim();
+	if (trimmed === "") {
+		return { value: "" };
+	}
+	if (
+		(trimmed.startsWith('"') && trimmed.endsWith('"')) ||
+		(trimmed.startsWith("'") && trimmed.endsWith("'"))
+	) {
+		return { value: stripOptionalSurroundingQuotes(trimmed) };
+	}
+	return { value: trimmed };
+}
+
 const functionHandlers: Record<string, EVYFunctionHandler> = {
 	count: evyCount,
 	length: evyLength,
@@ -140,6 +190,7 @@ const functionHandlers: Record<string, EVYFunctionHandler> = {
 	formatImperialLength: evyFormatImperialLengthStub,
 	formatDuration: evyFormatDurationStub,
 	formatDatetime: evyFormatDatetime,
+	if: evyIfStub,
 };
 
 export function callFunction(

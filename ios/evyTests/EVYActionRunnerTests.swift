@@ -9,6 +9,16 @@ import XCTest
 
 @MainActor
 final class EVYActionRunnerTests: XCTestCase {
+  override func setUp() async throws {
+    try await super.setUp()
+    installHermeticMutationSync()
+  }
+
+  override func tearDown() async throws {
+    resetHermeticMutationSync()
+    try await super.tearDown()
+  }
+
   private func assertSelectValue(
     _ received: EVYRowActionOperation?,
     equals expected: EVYJson,
@@ -73,11 +83,12 @@ final class EVYActionRunnerTests: XCTestCase {
       EVY.draftStore.activeScopeId = nil
     }
 
-    EVY.ensureDraftExists(variableName: "title", scopeId: scopeId)
-    try EVY.updateValue("Flow Submitted Title", destination: "{title}", scopeId: scopeId)
+    EVY.ensureDraftExists(variableName: "\(resource).title", scopeId: scopeId)
+    try EVY.updateValue(
+      "Flow Submitted Title", destination: "{\(resource).title}", scopeId: scopeId)
 
     var received: ActionOperation?
-    let action = rowAction(true: "{create(\(namespace),\(resource))}")
+    let action = rowAction(true: "{create(\(namespace),\(resource), submit)}")
     EVYActionRunner.run(actions: [action]) { received = $0 }
 
     XCTAssertNil(received)
@@ -109,7 +120,7 @@ final class EVYActionRunnerTests: XCTestCase {
     try EVY.updateValue("Chained Title", destination: "{title}", scopeId: scopeId)
 
     var receivedOperations: [ActionOperation] = []
-    let createAction = rowAction(true: "{create(\(namespace),\(resource))}")
+    let createAction = rowAction(true: "{create(\(namespace),\(resource), submit)}")
     let closeAction = rowAction(true: "{close()}")
     EVYActionRunner.run(actions: [createAction, closeAction]) { receivedOperations.append($0) }
 
@@ -139,24 +150,604 @@ final class EVYActionRunnerTests: XCTestCase {
     XCTAssertEqual(action?.resource, "res")
     XCTAssertEqual(
       action?.data,
-      [
+      .literal([
         "fk": "abc.id",
         "archivedAt": "null",
         "data": "{type: pickup, time: selected_pickup_timeslot}",
-      ]
+      ])
     )
   }
 
-  func testCreateActionParserKeepsTwoArgumentDataNil() {
-    let action = EVYActionParser.createAction(from: "{create(ns,res)}")
+  func testCreateActionParserRejectsTwoArgumentCreate() {
+    XCTAssertNil(EVYActionParser.createAction(from: "{create(ns,res)}"))
+  }
+
+  func testCreateActionParserParsesSubmitMarker() {
+    let action = EVYActionParser.createAction(from: "{create(ns,res,submit)}")
 
     XCTAssertEqual(action?.namespace, "ns")
     XCTAssertEqual(action?.resource, "res")
+    XCTAssertEqual(action?.isSubmission, true)
     XCTAssertNil(action?.data)
+    XCTAssertNil(action?.idDestination)
+  }
+
+  func testCreateActionParserRejectsSubmitWithExtraArgs() {
+    XCTAssertNil(
+      EVYActionParser.createAction(
+        from: "{create(ns,res,submit,{pickup_address.id})}"))
+  }
+
+  func testCreateActionParserParsesIdDestination() {
+    let action = EVYActionParser.createAction(
+      from: "{create(ns,res,{street: Main},item.transfer_options.pickup.address_id)}"
+    )
+
+    XCTAssertEqual(action?.namespace, "ns")
+    XCTAssertEqual(action?.resource, "res")
+    XCTAssertEqual(action?.data, .literal(["street": "Main"]))
+    XCTAssertEqual(action?.idDestination, "item.transfer_options.pickup.address_id")
+  }
+
+  func testCreateActionParserParsesDataPath() {
+    let action = EVYActionParser.createAction(
+      from: "{create(ns,res,pickup_address,{pickup_address.id})}"
+    )
+
+    XCTAssertEqual(action?.namespace, "ns")
+    XCTAssertEqual(action?.resource, "res")
+    XCTAssertEqual(action?.data, .path("pickup_address"))
+    XCTAssertEqual(action?.idDestination, "{pickup_address.id}")
+  }
+
+  func testCreateActionParserRejectsEmptyDataPath() {
+    XCTAssertNil(EVYActionParser.createAction(from: "{create(ns,res, ,{pickup_address.id})}"))
+  }
+
+  func testUpdateActionParserParsesChangesPath() {
+    let action = EVYActionParser.updateAction(
+      from: "{update(ns,res,{id: abc},pickup_address)}"
+    )
+
+    XCTAssertEqual(action?.namespace, "ns")
+    XCTAssertEqual(action?.resource, "res")
+    XCTAssertEqual(action?.filter, ["id": "abc"])
+    XCTAssertEqual(action?.changes, .path("pickup_address"))
   }
 
   func testCreateActionParserRejectsMalformedInlineData() {
     XCTAssertNil(EVYActionParser.createAction(from: "{create(ns,res,{type: pickup, fk})}"))
+  }
+
+  func testCreateWithIdDestinationWritesGeneratedId() throws {
+    let namespace = UUID().uuidString
+    let resource = "addresses"
+    let entityId = UUID().uuidString
+    let scopeId = EVYDraft.ephemeralScopeId(forPageId: UUID().uuidString)
+    EVY.draftStore.activeScopeId = scopeId
+    defer {
+      try? EVY.publicStore.deleteAll(namespace: namespace, resource: resource)
+      try? EVY.publicStore.delete(
+        namespace: EVYNamespace.local, resource: entityId, id: EVYNamespace.singletonId)
+      EVY.draftStore.deleteDrafts()
+      EVY.draftStore.activeScopeId = nil
+    }
+
+    try EVY.publicStore.create(
+      namespace: EVYNamespace.local,
+      resource: entityId,
+      id: EVYNamespace.singletonId,
+      value: #"{"transfer_options":{"pickup":{}}}"#.data(using: .utf8)!
+    )
+
+    let createAction = rowAction(
+      true:
+        "{create(\(namespace),\(resource),{street: Rothschild Avenue},{\(entityId).transfer_options.pickup.address_id})}"
+    )
+    var errors: [Error] = []
+    let observer = NotificationCenter.default.addObserver(
+      forName: .evyErrorOccurred, object: nil, queue: nil
+    ) { note in
+      if let error = note.object as? Error {
+        errors.append(error)
+      }
+    }
+    defer { NotificationCenter.default.removeObserver(observer) }
+
+    EVYActionRunner.run(actions: [createAction]) { _ in }
+
+    XCTAssertTrue(errors.isEmpty, "create with id destination should not error: \(errors)")
+    let createdRows = try EVY.publicStore.getAll(namespace: namespace, resource: resource)
+    XCTAssertEqual(createdRows.count, 1)
+    let created = try createdRows[0].decoded()
+    guard case .dictionary(let record) = created,
+      case .string(let createdId) = record["id"]
+    else {
+      return XCTFail("expected created address dictionary with id")
+    }
+
+    let writtenId = try EVY.getDataFromText(
+      "{\(entityId).transfer_options.pickup.address_id}")
+    XCTAssertEqual(writtenId, .string(createdId))
+  }
+
+  func testCreateWithDataPathWritesGeneratedIdToDraft() throws {
+    let namespace = UUID().uuidString
+    let resource = "addresses"
+    let scopeId = EVYDraft.ephemeralScopeId(forPageId: UUID().uuidString)
+    EVY.draftStore.activeScopeId = scopeId
+    defer {
+      try? EVY.publicStore.deleteAll(namespace: namespace, resource: resource)
+      EVY.draftStore.deleteDrafts()
+      EVY.draftStore.activeScopeId = nil
+    }
+
+    let address = EVYJson.dictionary([
+      "street": .string("28 Rothschild Avenue"),
+      "city": .string("Rosebery"),
+      "instructions": .string("Leave at door"),
+    ])
+    try EVY.writeRawValue(address, to: "{pickup_address}", scopeId: scopeId)
+
+    let createAction = rowAction(
+      true: "{create(\(namespace),\(resource),pickup_address,{pickup_address.id})}"
+    )
+    EVYActionRunner.run(actions: [createAction]) { _ in }
+
+    let createdRows = try EVY.publicStore.getAll(namespace: namespace, resource: resource)
+    XCTAssertEqual(createdRows.count, 1)
+    let created = try createdRows[0].decoded()
+    guard case .dictionary(let record) = created,
+      case .string(let createdId) = record["id"]
+    else {
+      return XCTFail("expected created address dictionary with id")
+    }
+    XCTAssertEqual(record["street"], .string("28 Rothschild Avenue"))
+    XCTAssertEqual(record["instructions"], .string("Leave at door"))
+
+    XCTAssertEqual(try EVY.getDataFromText("{pickup_address.id}"), .string(createdId))
+  }
+
+  func testUpdateWithDataPathStripsForeignIdFromChanges() throws {
+    let namespace = UUID().uuidString
+    let resource = "addresses"
+    let recordId = UUID().uuidString
+    let scopeId = EVYDraft.ephemeralScopeId(forPageId: UUID().uuidString)
+    EVY.draftStore.activeScopeId = scopeId
+    defer {
+      try? EVY.publicStore.deleteAll(namespace: namespace, resource: resource)
+      EVY.draftStore.deleteDrafts()
+      EVY.draftStore.activeScopeId = nil
+    }
+
+    let seed = EVYJson.dictionary([
+      "id": .string(recordId),
+      "street": .string("Old Street"),
+      "city": .string("Sydney"),
+    ])
+    try EVY.publicStore.create(
+      namespace: namespace,
+      resource: resource,
+      id: recordId,
+      value: try JSONEncoder().encode(seed)
+    )
+
+    let draft = EVYJson.dictionary([
+      "id": .string(UUID().uuidString),
+      "street": .string("New Street"),
+      "city": .string("Rosebery"),
+    ])
+    try EVY.writeRawValue(draft, to: "{pickup_address}", scopeId: scopeId)
+
+    let updateAction = rowAction(
+      true: "{update(\(namespace),\(resource),{id: \(recordId)},pickup_address)}"
+    )
+    EVYActionRunner.run(actions: [updateAction]) { _ in }
+
+    let updated = try EVY.publicStore.get(namespace: namespace, resource: resource, id: recordId)
+    guard case .dictionary(let values) = try updated.decoded() else {
+      return XCTFail("expected updated dictionary")
+    }
+    XCTAssertEqual(values["id"], .string(recordId))
+    XCTAssertEqual(values["street"], .string("New Street"))
+    XCTAssertEqual(values["city"], .string("Rosebery"))
+  }
+
+  private enum PickupLinkMode {
+    case store
+    case draft
+  }
+
+  private func pickupAddressSaveActions(
+    coreNamespace: String,
+    addressesResource: String,
+    itemsResource: String,
+    marketplaceNamespace: String = EVYNamespace.marketplace,
+    linkMode: PickupLinkMode = .store
+  ) -> [UI_RowAction] {
+    let linkAction: String
+    switch linkMode {
+    case .store:
+      linkAction =
+        "{update(\(marketplaceNamespace), \(itemsResource), {id: \(itemsResource).id}, {transfer_options.pickup.address_id: pickup_address.id})}"
+    case .draft:
+      linkAction =
+        "{update(\(marketplaceNamespace), \(itemsResource), {}, {transfer_options.pickup.address_id: pickup_address.id}, draft)}"
+    }
+    return [
+      rowAction(
+        condition: "{length(\(itemsResource).transfer_options.pickup.address_id) == 0}",
+        true:
+          "{create(\(coreNamespace), \(addressesResource), pickup_address, {pickup_address.id})}",
+        false:
+          "{update(\(coreNamespace), \(addressesResource), {id: \(itemsResource).transfer_options.pickup.address_id}, pickup_address)}"
+      ),
+      rowAction(true: linkAction),
+    ]
+  }
+
+  func testTwoActionPickupAddressSaveSequence() throws {
+    let coreNamespace = "475731ac-31aa-4d65-94d2-7032782ae359"
+    let marketplaceNamespace = EVYNamespace.marketplace
+    let itemsResource = MarketplaceTestFixture.itemsResourceId
+    let addressesResource = "addresses"
+    let itemId = UUID().uuidString
+    let pageId = "pickup-page-\(UUID().uuidString)"
+    let scopeId = EVYDraft.ephemeralScopeId(forPageId: pageId)
+
+    try? EVY.publicStore.deleteAll(namespace: coreNamespace, resource: addressesResource)
+    try? EVY.publicStore.deleteAll(namespace: marketplaceNamespace, resource: itemsResource)
+    EVY.draftStore.deleteDrafts()
+    EVY.draftStore.activeScopeId = scopeId
+    EVY.activeCacheScopeId = pageId
+    defer {
+      try? EVY.publicStore.deleteAll(namespace: coreNamespace, resource: addressesResource)
+      try? EVY.publicStore.deleteAll(namespace: marketplaceNamespace, resource: itemsResource)
+      EVY.draftStore.deleteDrafts()
+      EVY.draftStore.activeScopeId = nil
+      EVY.activeCacheScopeId = nil
+      try? EVY.cacheStore.deleteAll(namespace: EVYNamespace.cache, resource: pageId)
+    }
+
+    let itemRecord = EVYJson.dictionary([
+      "id": .string(itemId),
+      "title": .string("Listing"),
+      "transfer_options": .dictionary([
+        "pickup": .dictionary([
+          "selection": .array([.string("2026-06-03T09:00:00")]),
+          "lead_time_hours": .int(24),
+        ])
+      ]),
+    ])
+    try EVY.publicStore.applySyncedValue(
+      namespace: marketplaceNamespace,
+      resource: itemsResource,
+      value: .array([itemRecord])
+    )
+    try EVY.cacheStore.create(
+      namespace: EVYNamespace.cache,
+      resource: pageId,
+      id: itemsResource,
+      value: try JSONEncoder().encode(itemRecord)
+    )
+
+    let pickupDraft = EVYJson.dictionary([
+      "street": .string("28 Rothschild Avenue"),
+      "city": .string("Rosebery"),
+      "instructions": .string("Ring bell"),
+    ])
+    try EVY.writeRawValue(pickupDraft, to: "{pickup_address}", scopeId: scopeId)
+
+    let saveActions = pickupAddressSaveActions(
+      coreNamespace: coreNamespace,
+      addressesResource: addressesResource,
+      itemsResource: itemsResource
+    )
+    EVYActionRunner.run(actions: saveActions) { _ in }
+
+    let addresses = try EVY.publicStore.getAll(
+      namespace: coreNamespace, resource: addressesResource)
+    XCTAssertEqual(addresses.count, 1)
+    guard case .dictionary(let createdAddress) = try addresses[0].decoded(),
+      case .string(let addressId) = createdAddress["id"]
+    else {
+      return XCTFail("expected created address")
+    }
+    XCTAssertEqual(try EVY.getDataFromText("{pickup_address.id}"), .string(addressId))
+
+    let publicItem = try EVY.publicStore.getAll(
+      namespace: marketplaceNamespace, resource: itemsResource
+    )
+    .first
+    guard case .dictionary(let publicValues) = try publicItem?.decoded() else {
+      return XCTFail("expected public item")
+    }
+    guard case .dictionary(let pickupOptions) = publicValues["transfer_options"],
+      case .dictionary(let pickup) = pickupOptions["pickup"]
+    else {
+      return XCTFail("expected pickup options")
+    }
+    XCTAssertEqual(pickup["address_id"], .string(addressId))
+    XCTAssertEqual(pickup["lead_time_hours"], .int(24))
+
+    let cachedItem = try EVY.cacheStore.get(
+      namespace: EVYNamespace.cache, resource: pageId, id: itemsResource)
+    guard case .dictionary(let cachedValues) = try cachedItem.decoded(),
+      case .dictionary(let cachedPickupOptions) = cachedValues["transfer_options"],
+      case .dictionary(let cachedPickup) = cachedPickupOptions["pickup"]
+    else {
+      return XCTFail("expected cached item pickup options")
+    }
+    XCTAssertEqual(cachedPickup["address_id"], .string(addressId))
+
+    try EVY.writeRawStringValue(
+      "Updated instructions", to: "{pickup_address.instructions}", scopeId: scopeId)
+    EVYActionRunner.run(actions: saveActions) { _ in }
+
+    XCTAssertEqual(
+      try EVY.publicStore.getAll(namespace: coreNamespace, resource: addressesResource).count, 1)
+    let updatedRows = try EVY.publicStore.getAll(
+      namespace: coreNamespace, resource: addressesResource)
+    guard case .dictionary(let updatedAddress) = try updatedRows[0].decoded() else {
+      return XCTFail("expected address after second save")
+    }
+    XCTAssertEqual(updatedAddress["instructions"], .string("Updated instructions"))
+  }
+
+  func testDraftModeUpdateWritesChangesIntoCreateDraft() throws {
+    let marketplaceNamespace = EVYNamespace.marketplace
+    let itemsResource = MarketplaceTestFixture.itemsResourceId
+    let flowId = "create-flow"
+    let scopeId = EVYDraft.createMergeScopeId(flowId: flowId, entityKey: itemsResource)
+    let unrelatedItemId = UUID().uuidString
+
+    try? EVY.publicStore.deleteAll(namespace: marketplaceNamespace, resource: itemsResource)
+    EVY.draftStore.deleteDrafts()
+    EVY.draftStore.activeScopeId = scopeId
+    defer {
+      try? EVY.publicStore.deleteAll(namespace: marketplaceNamespace, resource: itemsResource)
+      EVY.draftStore.deleteDrafts(scopeId: scopeId)
+      EVY.draftStore.activeScopeId = nil
+    }
+
+    let unrelatedItem = EVYJson.dictionary([
+      "id": .string(unrelatedItemId),
+      "title": .string("Unrelated listing"),
+    ])
+    try EVY.publicStore.applySyncedValue(
+      namespace: marketplaceNamespace,
+      resource: itemsResource,
+      value: .array([unrelatedItem])
+    )
+
+    let linkAction = rowAction(
+      true:
+        "{update(\(marketplaceNamespace), \(itemsResource), {}, {transfer_options.pickup.address_id: \"some-address-uuid\"}, draft)}"
+    )
+    EVYActionRunner.run(actions: [linkAction]) { _ in }
+
+    XCTAssertEqual(
+      try EVY.getDataFromText("{\(itemsResource).transfer_options.pickup.address_id}"),
+      .string("some-address-uuid"))
+
+    let items = try EVY.publicStore.getAll(namespace: marketplaceNamespace, resource: itemsResource)
+    XCTAssertEqual(items.count, 1)
+    guard case .dictionary(let unchangedItem) = try items[0].decoded() else {
+      return XCTFail("expected unrelated item")
+    }
+    XCTAssertEqual(unchangedItem["title"], .string("Unrelated listing"))
+    XCTAssertEqual(unchangedItem["id"], .string(unrelatedItemId))
+  }
+
+  func testStoreModeUpdateMatchingNothingNoOpsInCreateScope() throws {
+    let marketplaceNamespace = EVYNamespace.marketplace
+    let itemsResource = MarketplaceTestFixture.itemsResourceId
+    let flowId = "create-flow"
+    let scopeId = EVYDraft.createMergeScopeId(flowId: flowId, entityKey: itemsResource)
+    let unrelatedItemId = UUID().uuidString
+
+    try? EVY.publicStore.deleteAll(namespace: marketplaceNamespace, resource: itemsResource)
+    EVY.draftStore.deleteDrafts()
+    EVY.draftStore.activeScopeId = scopeId
+    defer {
+      try? EVY.publicStore.deleteAll(namespace: marketplaceNamespace, resource: itemsResource)
+      EVY.draftStore.deleteDrafts(scopeId: scopeId)
+      EVY.draftStore.activeScopeId = nil
+    }
+
+    let unrelatedItem = EVYJson.dictionary([
+      "id": .string(unrelatedItemId),
+      "title": .string("Unrelated listing"),
+    ])
+    try EVY.publicStore.applySyncedValue(
+      namespace: marketplaceNamespace,
+      resource: itemsResource,
+      value: .array([unrelatedItem])
+    )
+
+    let linkAction = rowAction(
+      true:
+        "{update(\(marketplaceNamespace), \(itemsResource), {id: \(itemsResource).id}, {transfer_options.pickup.address_id: \"some-address-uuid\"})}"
+    )
+    EVYActionRunner.run(actions: [linkAction]) { _ in }
+
+    XCTAssertEqual(try EVY.draftStore.drafts(forScopeId: scopeId).count, 0)
+
+    let items = try EVY.publicStore.getAll(namespace: marketplaceNamespace, resource: itemsResource)
+    XCTAssertEqual(items.count, 1)
+    guard case .dictionary(let unchangedItem) = try items[0].decoded() else {
+      return XCTFail("expected unrelated item")
+    }
+    XCTAssertEqual(unchangedItem["title"], .string("Unrelated listing"))
+    XCTAssertEqual(unchangedItem["id"], .string(unrelatedItemId))
+  }
+
+  func testDraftModeUpdateOutsideMatchingCreateScopeErrors() throws {
+    let marketplaceNamespace = EVYNamespace.marketplace
+    let itemsResource = MarketplaceTestFixture.itemsResourceId
+    let browseScopeId = "create-flow:browse"
+
+    try? EVY.publicStore.deleteAll(namespace: marketplaceNamespace, resource: itemsResource)
+    EVY.draftStore.deleteDrafts()
+    EVY.draftStore.activeScopeId = browseScopeId
+    defer {
+      try? EVY.publicStore.deleteAll(namespace: marketplaceNamespace, resource: itemsResource)
+      EVY.draftStore.deleteDrafts()
+      EVY.draftStore.activeScopeId = nil
+    }
+
+    let itemId = UUID().uuidString
+    let itemRecord = EVYJson.dictionary([
+      "id": .string(itemId),
+      "title": .string("Listing"),
+    ])
+    try EVY.publicStore.applySyncedValue(
+      namespace: marketplaceNamespace,
+      resource: itemsResource,
+      value: .array([itemRecord])
+    )
+
+    let linkAction = rowAction(
+      true:
+        "{update(\(marketplaceNamespace), \(itemsResource), {}, {title: \"patched\"}, draft)}"
+    )
+    let errors = capturedErrors {
+      EVYActionRunner.run(actions: [linkAction]) { _ in }
+    }
+    XCTAssertFalse(errors.isEmpty)
+
+    let updated = try EVY.publicStore.get(
+      namespace: marketplaceNamespace, resource: itemsResource, id: itemId)
+    guard case .dictionary(let values) = try updated.decoded() else {
+      return XCTFail("expected item")
+    }
+    XCTAssertEqual(values["title"], .string("Listing"))
+  }
+
+  func testUpdateInCreateScopeWithMatchingRowStillUpdatesRow() throws {
+    let marketplaceNamespace = EVYNamespace.marketplace
+    let itemsResource = MarketplaceTestFixture.itemsResourceId
+    let flowId = "create-flow"
+    let scopeId = EVYDraft.createMergeScopeId(flowId: flowId, entityKey: itemsResource)
+    let itemId = UUID().uuidString
+
+    try? EVY.publicStore.deleteAll(namespace: marketplaceNamespace, resource: itemsResource)
+    EVY.draftStore.deleteDrafts()
+    EVY.draftStore.activeScopeId = scopeId
+    defer {
+      try? EVY.publicStore.deleteAll(namespace: marketplaceNamespace, resource: itemsResource)
+      EVY.draftStore.deleteDrafts(scopeId: scopeId)
+      EVY.draftStore.activeScopeId = nil
+    }
+
+    let itemRecord = EVYJson.dictionary([
+      "id": .string(itemId),
+      "title": .string("Original title"),
+    ])
+    try EVY.publicStore.applySyncedValue(
+      namespace: marketplaceNamespace,
+      resource: itemsResource,
+      value: .array([itemRecord])
+    )
+
+    let updateAction = rowAction(
+      true:
+        "{update(\(marketplaceNamespace), \(itemsResource), {id: \"\(itemId)\"}, {title: \"Archived title\"})}"
+    )
+    EVYActionRunner.run(actions: [updateAction]) { _ in }
+
+    let updated = try EVY.publicStore.get(
+      namespace: marketplaceNamespace, resource: itemsResource, id: itemId)
+    guard case .dictionary(let values) = try updated.decoded() else {
+      return XCTFail("expected updated item")
+    }
+    XCTAssertEqual(values["title"], .string("Archived title"))
+
+    XCTAssertEqual(try EVY.draftStore.drafts(forScopeId: scopeId).count, 0)
+  }
+
+  func testCreateFlowTwoActionAddressSaveLinksItemDraftAndRepickUpdates() throws {
+    let coreNamespace = "475731ac-31aa-4d65-94d2-7032782ae359"
+    let marketplaceNamespace = EVYNamespace.marketplace
+    let itemsResource = MarketplaceTestFixture.itemsResourceId
+    let addressesResource = "addresses"
+    let flowId = "create-flow"
+    let scopeId = EVYDraft.createMergeScopeId(flowId: flowId, entityKey: itemsResource)
+
+    try? EVY.publicStore.deleteAll(namespace: coreNamespace, resource: addressesResource)
+    try? EVY.publicStore.deleteAll(namespace: marketplaceNamespace, resource: itemsResource)
+    EVY.draftStore.deleteDrafts()
+    EVY.draftStore.activeScopeId = scopeId
+    defer {
+      try? EVY.publicStore.deleteAll(namespace: coreNamespace, resource: addressesResource)
+      try? EVY.publicStore.deleteAll(namespace: marketplaceNamespace, resource: itemsResource)
+      EVY.draftStore.deleteDrafts(scopeId: scopeId)
+      EVY.draftStore.activeScopeId = nil
+    }
+
+    let pickupDraft = EVYJson.dictionary([
+      "street": .string("28 Rothschild Avenue"),
+      "city": .string("Rosebery"),
+      "instructions": .string("Ring bell"),
+    ])
+    try EVY.writeRawValue(pickupDraft, to: "{pickup_address}", scopeId: scopeId)
+
+    let saveActions = pickupAddressSaveActions(
+      coreNamespace: coreNamespace,
+      addressesResource: addressesResource,
+      itemsResource: itemsResource,
+      linkMode: .draft
+    )
+    EVYActionRunner.run(actions: saveActions) { _ in }
+
+    let addresses = try EVY.publicStore.getAll(
+      namespace: coreNamespace, resource: addressesResource)
+    XCTAssertEqual(addresses.count, 1)
+    guard case .dictionary(let createdAddress) = try addresses[0].decoded(),
+      case .string(let addressId) = createdAddress["id"]
+    else {
+      return XCTFail("expected created address")
+    }
+    XCTAssertEqual(try EVY.getDataFromText("{pickup_address.id}"), .string(addressId))
+    XCTAssertEqual(
+      try EVY.getDataFromText("{\(itemsResource).transfer_options.pickup.address_id}"),
+      .string(addressId))
+
+    try EVY.writeRawValue(
+      EVYJson.dictionary([
+        "street": .string("99 George Street"),
+        "city": .string("Sydney"),
+        "instructions": .string("Ring bell"),
+      ]),
+      to: "{pickup_address}",
+      scopeId: scopeId
+    )
+    EVYActionRunner.run(actions: saveActions) { _ in }
+
+    XCTAssertEqual(
+      try EVY.publicStore.getAll(namespace: coreNamespace, resource: addressesResource).count, 1)
+    let updatedRows = try EVY.publicStore.getAll(
+      namespace: coreNamespace, resource: addressesResource)
+    guard case .dictionary(let updatedAddress) = try updatedRows[0].decoded(),
+      case .string(let updatedId) = updatedAddress["id"]
+    else {
+      return XCTFail("expected address after re-pick")
+    }
+    XCTAssertEqual(updatedId, addressId)
+    XCTAssertEqual(updatedAddress["street"], .string("99 George Street"))
+
+    _ = try EVY.create(namespace: marketplaceNamespace, resource: itemsResource, isSubmission: true)
+    let items = try EVY.publicStore.getAll(
+      namespace: marketplaceNamespace, resource: itemsResource)
+    XCTAssertEqual(items.count, 1)
+    guard case .dictionary(let itemDict) = try items[0].decoded(),
+      case .dictionary(let transfer)? = itemDict["transfer_options"],
+      case .dictionary(let pickup)? = transfer["pickup"]
+    else {
+      return XCTFail("expected item with pickup options")
+    }
+    XCTAssertEqual(pickup["address_id"], .string(addressId))
+    XCTAssertNil(itemDict["pickup_address"])
   }
 
   func testUpdateActionParserParsesFilterAndChanges() {
@@ -168,7 +759,38 @@ final class EVYActionRunnerTests: XCTestCase {
     XCTAssertEqual(action?.namespace, "ns")
     XCTAssertEqual(action?.resource, "res")
     XCTAssertEqual(action?.filter, ["fk": "abc.id", "archivedAt": "null"])
-    XCTAssertEqual(action?.changes, ["archivedAt": "now()"])
+    XCTAssertEqual(action?.changes, .literal(["archivedAt": "now()"]))
+    XCTAssertEqual(action?.mode, .store)
+  }
+
+  func testUpdateActionParserParsesDraftMode() {
+    let action = EVYActionParser.updateAction(
+      from: "{update(ns,res,{},{transfer_options.pickup.address_id: pickup_address.id},draft)}"
+    )
+
+    XCTAssertEqual(action?.mode, .draft)
+    XCTAssertEqual(action?.filter, [:])
+    XCTAssertEqual(
+      action?.changes,
+      .literal(["transfer_options.pickup.address_id": "pickup_address.id"]))
+  }
+
+  func testUpdateActionParserRejectsNonEmptyFilterWithDraftMode() {
+    XCTAssertNil(
+      EVYActionParser.updateAction(
+        from: "{update(ns,res,{id: abc},{title: x},draft)}"))
+  }
+
+  func testUpdateActionParserRejectsUnknownMode() {
+    XCTAssertNil(
+      EVYActionParser.updateAction(
+        from: "{update(ns,res,{},{title: x},store)}"))
+  }
+
+  func testUpdateActionParserRejectsSixArgs() {
+    XCTAssertNil(
+      EVYActionParser.updateAction(
+        from: "{update(ns,res,{},{title: x},draft,extra)}"))
   }
 
   func testUpdateActionParserRejectsMissingFilterOrChanges() {
@@ -235,116 +857,6 @@ final class EVYActionRunnerTests: XCTestCase {
       return XCTFail("Expected inline create payload dictionary")
     }
     XCTAssertEqual(values["createdAt"], .string("2026-06-01T00:00:00Z"))
-  }
-
-  func testUpdateActionArchivesOnlyMatchingActiveMessage() throws {
-    let namespace = EVYNamespace.marketplace
-    let resource = MarketplaceTestFixture.messagesResourceId
-    let itemId = UUID().uuidString
-    let archivedMessageId = UUID().uuidString
-    let activeMessageId = UUID().uuidString
-    let otherActiveMessageId = UUID().uuidString
-    try? EVY.publicStore.deleteAll(namespace: namespace, resource: resource)
-    defer { try? EVY.publicStore.deleteAll(namespace: namespace, resource: resource) }
-
-    // activeMessageId has archivedAt: null, activeAbsentMessageId omits the key entirely —
-    // a null filter must match both
-    let activeAbsentMessageId = UUID().uuidString
-    let messages = EVYJson.array([
-      .dictionary([
-        "id": .string(archivedMessageId),
-        "fk": .string(itemId),
-        "archivedAt": .string("2026-06-02T00:00:00Z"),
-        "data": .dictionary([
-          "type": .string("pickup"),
-          "time": .string("2026-06-03T09:00:00"),
-        ]),
-      ]),
-      .dictionary([
-        "id": .string(activeMessageId),
-        "fk": .string(itemId),
-        "archivedAt": .null,
-        "data": .dictionary([
-          "type": .string("pickup"),
-          "time": .string("2026-06-03T10:00:00"),
-        ]),
-      ]),
-      .dictionary([
-        "id": .string(activeAbsentMessageId),
-        "fk": .string(itemId),
-        "data": .dictionary([
-          "type": .string("delivery"),
-          "time": .string("2026-06-03T12:00:00"),
-        ]),
-      ]),
-      .dictionary([
-        "id": .string(otherActiveMessageId),
-        "fk": .string(UUID().uuidString),
-        "archivedAt": .null,
-        "data": .dictionary([
-          "type": .string("pickup"),
-          "time": .string("2026-06-03T11:00:00"),
-        ]),
-      ]),
-    ])
-    try EVY.publicStore.applySyncedValue(namespace: namespace, resource: resource, value: messages)
-
-    var receivedKeys: [String] = []
-    let token = NotificationCenter.default.addObserver(
-      forName: .evyValueChanged, object: nil, queue: nil
-    ) { notification in
-      MainActor.assumeIsolated {
-        if let key = notification.object as? String {
-          receivedKeys.append(key)
-        }
-      }
-    }
-    defer { NotificationCenter.default.removeObserver(token) }
-
-    let itemKey =
-      "evy_action_runner_item_\(UUID().uuidString.replacingOccurrences(of: "-", with: "_"))"
-    try EVY.publicStore.create(
-      namespace: EVYNamespace.local,
-      resource: itemKey,
-      id: EVYNamespace.singletonId,
-      value: try JSONEncoder().encode(EVYJson.dictionary(["id": .string(itemId)]))
-    )
-
-    let pinnedDate = Date(timeIntervalSince1970: 1_780_000_000)
-    EVY.nowProvider = { pinnedDate }
-    defer { EVY.nowProvider = { Date() } }
-
-    let cancelAction = rowAction(
-      true:
-        "{update(\(namespace),\(resource),{fk: \(itemKey).id, archivedAt: null},{archivedAt: now()})}"
-    )
-    var received: ActionOperation?
-    EVYActionRunner.run(actions: [cancelAction]) { received = $0 }
-    XCTAssertNil(received)
-
-    XCTAssertTrue(
-      receivedKeys.contains(resource),
-      "Update should post a value-change notification for the messages resource")
-
-    let updatedRows = try EVY.publicStore.getAll(namespace: namespace, resource: resource)
-    let archivedAtById = Dictionary(
-      uniqueKeysWithValues: updatedRows.compactMap { row -> (String, EVYJson)? in
-        guard let decoded = try? row.decoded(),
-          case .dictionary(let values) = decoded,
-          case .string(let id) = values["id"]
-        else { return nil }
-        return (id, values["archivedAt"] ?? .null)
-      })
-
-    let pinnedIso = EVYJson.string(pinnedDate.ISO8601Format())
-    XCTAssertEqual(
-      archivedAtById[archivedMessageId], .string("2026-06-02T00:00:00Z"),
-      "Already-archived message should keep its original timestamp")
-    XCTAssertEqual(archivedAtById[activeMessageId], pinnedIso)
-    XCTAssertEqual(
-      archivedAtById[activeAbsentMessageId], pinnedIso,
-      "A null filter should match records missing the key entirely")
-    XCTAssertEqual(archivedAtById[otherActiveMessageId], .null)
   }
 
   func testUpdateActionAcceptsOnlyMatchingPendingMessageForDatum() throws {
@@ -635,6 +1147,7 @@ final class EVYActionRunnerTests: XCTestCase {
     let closeAction = rowAction(true: "{close()}")
     let actions = UI_RowActions(
       delete: [closeAction],
+      submit: [closeAction],
       swipeLeft: [closeAction],
       tap: [closeAction]
     )
@@ -642,17 +1155,20 @@ final class EVYActionRunnerTests: XCTestCase {
       ("tap", actions.tap),
       ("delete", actions.delete),
       ("swipeLeft", actions.swipeLeft),
+      ("submit", actions.submit),
     ]
     for (name, onlyList) in lists {
       var tapReceived = false
       var deleteReceived = false
       var swipeLeftReceived = false
+      var submitReceived = false
       EVYActionRunner.run(actions: onlyList) { operation in
         guard case .close = operation else { return }
         switch name {
         case "tap": tapReceived = true
         case "delete": deleteReceived = true
         case "swipeLeft": swipeLeftReceived = true
+        case "submit": submitReceived = true
         default: break
         }
       }
@@ -660,6 +1176,8 @@ final class EVYActionRunnerTests: XCTestCase {
       XCTAssertEqual(deleteReceived, name == "delete", "Only delete list should run delete actions")
       XCTAssertEqual(
         swipeLeftReceived, name == "swipeLeft", "Only swipeLeft list should run swipe-left actions")
+      XCTAssertEqual(
+        submitReceived, name == "submit", "Only submit list should run submit actions")
     }
   }
 

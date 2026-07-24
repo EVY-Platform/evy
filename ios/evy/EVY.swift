@@ -89,6 +89,9 @@ struct EVY {
   /// Injectable clock so tests can pin `now()` and generated `createdAt` values
   static var nowProvider: () -> Date = { Date() }
 
+  /// When set (e.g. in unit tests), skips fire-and-forget create/update JSON-RPC.
+  static var syncTransport: ((_ method: String, _ params: any Encodable) -> Void)?
+
   static func nowISO8601(fractional: Bool = false) -> String {
     if fractional {
       let formatter = ISO8601DateFormatter()

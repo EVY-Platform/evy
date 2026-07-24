@@ -257,6 +257,58 @@ describe("validateFlowData", () => {
 		).toThrow('trigger "delete" is not declared');
 	});
 
+	it("accepts submit trigger on Input rows", () => {
+		const out = validateFlowData(
+			flowWithRow({
+				name: "Field",
+				type: "Input",
+				source: "{item.title}",
+				destination: "{item.title}",
+				actions: {
+					tap: [
+						{
+							condition: "",
+							false: "",
+							true: "{close()}",
+						},
+					],
+					submit: [
+						{
+							condition: "",
+							false: "",
+							true: "{close()}",
+						},
+					],
+				},
+				visible: "true",
+			}),
+		);
+		expect(out.pages[0]?.rows[0]?.type).toBe("Input");
+	});
+
+	it("rejects submit trigger on Search rows", () => {
+		expect(() =>
+			validateFlowData(
+				flowWithRow({
+					name: "Search",
+					type: "Search",
+					source: "{search}",
+					destination: "{result}",
+					actions: {
+						submit: [
+							{
+								condition: "",
+								false: "",
+								true: "{close()}",
+							},
+						],
+					},
+					visible: "true",
+				}),
+			),
+		).toThrow('trigger "submit" is not declared');
+	});
+
 	it("accepts optional tap trigger when absent", () => {
 		const out = validateFlowData(
 			flowWithRow({

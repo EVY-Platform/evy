@@ -10,6 +10,7 @@ import { migrate } from "drizzle-orm/pglite/migrator";
 
 import type {
 	CreateRequest,
+	DATA_EVY_Address,
 	DATA_EVY_Flow,
 	DATA_EVY_Page,
 	DATA_EVY_Row,
@@ -21,6 +22,7 @@ import type {
 } from "evy-types";
 import { EVY_CORE_RESOURCE, EVY_CORE_SERVICE } from "evy-types/coreResources";
 import * as schema from "evy-types/db/schema.generated";
+import { ROTHCHILD_CANONICAL_ADDRESS } from "../../../scripts/fixtures/canonicalAddresses";
 import { useFileStorageDirsForTest } from "./fileStorageTestHelpers";
 import {
 	asEvyDb,
@@ -45,6 +47,7 @@ const { clearUploadsForTest, handleUploadChunk } = uploadModule;
 const FLOW_RESOURCE = EVY_CORE_RESOURCE.FLOWS;
 const PAGE_RESOURCE = EVY_CORE_RESOURCE.PAGES;
 const ROW_RESOURCE = EVY_CORE_RESOURCE.ROWS;
+const ADDRESS_RESOURCE = EVY_CORE_RESOURCE.ADDRESSES;
 
 function nowIso(): string {
 	return new Date().toISOString();
@@ -83,6 +86,17 @@ function rowRow(overrides: Partial<DATA_EVY_Row> = {}): DATA_EVY_Row {
 		type: "Text",
 		visible: "true",
 		data: { title: "", text: "Hello" },
+		...timestamps(),
+		...overrides,
+	};
+}
+
+function addressRow(
+	overrides: Partial<DATA_EVY_Address> = {},
+): DATA_EVY_Address {
+	return {
+		...ROTHCHILD_CANONICAL_ADDRESS,
+		id: crypto.randomUUID(),
 		...timestamps(),
 		...overrides,
 	};
@@ -291,6 +305,82 @@ describe("flat flow resources", () => {
 				data: { id: crypto.randomUUID(), name: "Missing page ids" },
 			}),
 		).rejects.toThrow("Flow validation failed");
+	});
+});
+
+describe("address resources", () => {
+	beforeEach(async () => {
+		await clearAllTestTables(testDb);
+	});
+
+	it("lists empty then creates, lists, updates, and deletes addresses", async () => {
+		const empty = (await get(dataDb, {
+			service: EVY_CORE_SERVICE,
+			resource: ADDRESS_RESOURCE,
+		})) as DATA_EVY_Address[];
+		expect(empty).toEqual([]);
+
+		const payload = addressRow();
+		const created = (await create(dataDb, {
+			service: EVY_CORE_SERVICE,
+			resource: ADDRESS_RESOURCE,
+			data: payload,
+		})) as DATA_EVY_Address;
+		expect(created.id).toBe(payload.id);
+		expect(created.street).toBe("28 Rothschild Avenue");
+		expect(created.latitude).toBe(-33.9172075);
+
+		const listed = (await get(dataDb, {
+			service: EVY_CORE_SERVICE,
+			resource: ADDRESS_RESOURCE,
+		})) as DATA_EVY_Address[];
+		expect(listed).toHaveLength(1);
+		expect(listed[0].id).toBe(payload.id);
+
+		const updated = (await update(dataDb, {
+			service: EVY_CORE_SERVICE,
+			resource: ADDRESS_RESOURCE,
+			filter: { id: payload.id },
+			data: { ...payload, unit: "C510", instructions: "Buzz 509" },
+		})) as DATA_EVY_Address;
+		expect(updated.unit).toBe("C510");
+		expect(updated.instructions).toBe("Buzz 509");
+		expect(updated.createdAt).toBe(payload.createdAt);
+
+		const deleted = (await deleteCore(dataDb, {
+			service: EVY_CORE_SERVICE,
+			resource: ADDRESS_RESOURCE,
+			filter: { id: payload.id },
+		})) as DATA_EVY_Address;
+		expect(deleted.id).toBe(payload.id);
+		expect(await testDb.select().from(schema.address)).toHaveLength(0);
+	});
+
+	it("rejects invalid address payloads", async () => {
+		await expect(
+			create(dataDb, {
+				service: EVY_CORE_SERVICE,
+				resource: ADDRESS_RESOURCE,
+				data: {
+					id: "not-a-uuid",
+					street: "Somewhere",
+				},
+			}),
+		).rejects.toThrow("Address validation failed");
+	});
+
+	it("accepts partial address payloads", async () => {
+		const created = (await create(dataDb, {
+			service: EVY_CORE_SERVICE,
+			resource: ADDRESS_RESOURCE,
+			data: {
+				id: crypto.randomUUID(),
+				street: "Manual Street",
+			},
+		})) as DATA_EVY_Address;
+		expect(created.street).toBe("Manual Street");
+		expect(created.city).toBeUndefined();
+		expect(created.latitude).toBeUndefined();
 	});
 });
 

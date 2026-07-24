@@ -13,6 +13,7 @@ final class EVYCreateMergesDraftsTests: XCTestCase {
 
   override func setUp() async throws {
     try await super.setUp()
+    installHermeticMutationSync()
     try? EVY.publicStore.deleteAll(namespace: EVYNamespace.marketplace, resource: "items")
     EVY.draftStore.deleteDrafts()
     EVY.draftStore.activeScopeId = testDraftScope
@@ -22,14 +23,15 @@ final class EVYCreateMergesDraftsTests: XCTestCase {
     try? EVY.publicStore.deleteAll(namespace: EVYNamespace.marketplace, resource: "items")
     EVY.draftStore.deleteDrafts()
     EVY.draftStore.activeScopeId = nil
+    resetHermeticMutationSync()
     try await super.tearDown()
   }
 
   func testCreateMergesScalarTitleFromDraft() throws {
-    EVY.ensureDraftExists(variableName: "title", scopeId: testDraftScope)
-    try EVY.updateValue("User Title", destination: "{title}", scopeId: testDraftScope)
+    EVY.ensureDraftExists(variableName: "items.title", scopeId: testDraftScope)
+    try EVY.updateValue("User Title", destination: "{items.title}", scopeId: testDraftScope)
 
-    try EVY.create(namespace: EVYNamespace.marketplace, resource: "items")
+    try EVY.create(namespace: EVYNamespace.marketplace, resource: "items", isSubmission: true)
 
     let instances = try EVY.publicStore.getAll(
       namespace: EVYNamespace.marketplace, resource: "items")
@@ -48,12 +50,13 @@ final class EVYCreateMergesDraftsTests: XCTestCase {
   }
 
   func testCreateMergesStructuredPriceFromDraft() throws {
-    EVY.ensureDraftExists(variableName: "price", scopeId: testDraftScope)
+    EVY.ensureDraftExists(variableName: "items.price", scopeId: testDraftScope)
     let newPrice = EVYJson.dictionary([
       "currency": .string("AUD"),
       "value": .decimal(99),
     ])
-    let priceBinding = try EVY.draftStore.binding(fromParsedProps: "price", scopeId: testDraftScope)
+    let priceBinding = try EVY.draftStore.binding(
+      fromParsedProps: "items.price", scopeId: testDraftScope)
     try EVY.cacheStore.update(
       namespace: EVYNamespace.draft,
       resource: priceBinding.scopeId,
@@ -62,7 +65,7 @@ final class EVYCreateMergesDraftsTests: XCTestCase {
     )
     EVY.draftStore.notifyUpdate(binding: priceBinding)
 
-    try EVY.create(namespace: EVYNamespace.marketplace, resource: "items")
+    try EVY.create(namespace: EVYNamespace.marketplace, resource: "items", isSubmission: true)
 
     let instances = try EVY.publicStore.getAll(
       namespace: EVYNamespace.marketplace, resource: "items")
@@ -96,9 +99,9 @@ final class EVYCreateMergesDraftsTests: XCTestCase {
       namespace: EVYNamespace.marketplace, resource: "items", id: "seed-2", value: seed2Data,
       sortIndex: 1)
 
-    EVY.ensureDraftExists(variableName: "title", scopeId: testDraftScope)
-    try EVY.updateValue("New Item", destination: "{title}", scopeId: testDraftScope)
-    try EVY.create(namespace: EVYNamespace.marketplace, resource: "items")
+    EVY.ensureDraftExists(variableName: "items.title", scopeId: testDraftScope)
+    try EVY.updateValue("New Item", destination: "{items.title}", scopeId: testDraftScope)
+    try EVY.create(namespace: EVYNamespace.marketplace, resource: "items", isSubmission: true)
 
     let instances = try EVY.publicStore.getAll(
       namespace: EVYNamespace.marketplace, resource: "items")
@@ -112,17 +115,19 @@ final class EVYCreateMergesDraftsTests: XCTestCase {
     let conditionId = UUID().uuidString
     let sellingReasonId = UUID().uuidString
 
-    EVY.ensureDraftExists(variableName: "condition_id", scopeId: testDraftScope)
-    try EVY.updateValue(conditionId, destination: "{condition_id}", scopeId: testDraftScope)
-
-    EVY.ensureDraftExists(variableName: "selling_reason_id", scopeId: testDraftScope)
+    EVY.ensureDraftExists(variableName: "items.condition_id", scopeId: testDraftScope)
     try EVY.updateValue(
-      sellingReasonId, destination: "{selling_reason_id}", scopeId: testDraftScope)
+      conditionId, destination: "{items.condition_id}", scopeId: testDraftScope)
 
-    EVY.ensureDraftExists(variableName: "dimensions.width", scopeId: testDraftScope)
-    try EVY.updateValue("500", destination: "{dimensions.width}", scopeId: testDraftScope)
+    EVY.ensureDraftExists(variableName: "items.selling_reason_id", scopeId: testDraftScope)
+    try EVY.updateValue(
+      sellingReasonId, destination: "{items.selling_reason_id}", scopeId: testDraftScope)
 
-    try EVY.create(namespace: EVYNamespace.marketplace, resource: "items")
+    EVY.ensureDraftExists(variableName: "items.dimensions.width", scopeId: testDraftScope)
+    try EVY.updateValue(
+      "500", destination: "{items.dimensions.width}", scopeId: testDraftScope)
+
+    try EVY.create(namespace: EVYNamespace.marketplace, resource: "items", isSubmission: true)
 
     let instances = try EVY.publicStore.getAll(
       namespace: EVYNamespace.marketplace, resource: "items")
@@ -151,8 +156,8 @@ final class EVYCreateMergesDraftsTests: XCTestCase {
   }
 
   func testCreateWithDataPersistsPayloadWithoutTouchingDrafts() throws {
-    EVY.ensureDraftExists(variableName: "title", scopeId: testDraftScope)
-    try EVY.updateValue("Draft Title", destination: "{title}", scopeId: testDraftScope)
+    EVY.ensureDraftExists(variableName: "items.title", scopeId: testDraftScope)
+    try EVY.updateValue("Draft Title", destination: "{items.title}", scopeId: testDraftScope)
 
     let payload: [String: EVYJson] = [
       "title": .string("Datum Title"),
@@ -177,7 +182,117 @@ final class EVYCreateMergesDraftsTests: XCTestCase {
       "Datum create should not merge or clean up drafts in the active scope")
   }
 
-  func testCreateFallsBackToMergingActiveScopeWhenNotAFlowSubmissionScope() throws {
+  func testCreateMergesAddressIdAndKeepsItemFieldsFlatWhenScopeIsItems() throws {
+    let flowId = "create-flow"
+    let itemsResource = uniqueKey("items")
+    let scopeId = EVYDraft.createMergeScopeId(flowId: flowId, entityKey: itemsResource)
+    let linkedAddressId = UUID().uuidString
+    EVY.draftStore.activeScopeId = scopeId
+    defer {
+      try? EVY.publicStore.deleteAll(namespace: EVYNamespace.marketplace, resource: itemsResource)
+      EVY.draftStore.deleteDrafts(scopeId: scopeId)
+      EVY.draftStore.activeScopeId = testDraftScope
+    }
+
+    try EVY.writeRawStringValue("Listed with address", to: "{\(itemsResource).title}")
+    try EVY.writeRawStringValue(
+      linkedAddressId,
+      to: "{\(itemsResource).transfer_options.pickup.address_id}"
+    )
+    try EVY.writeRawValue(
+      .dictionary([
+        "street": .string("25 Rosebery Avenue"),
+        "city": .string("Rosebery"),
+      ]),
+      to: "{pickup_address}"
+    )
+
+    _ = try EVY.create(namespace: EVYNamespace.marketplace, resource: itemsResource, isSubmission: true)
+
+    let items = try EVY.publicStore.getAll(
+      namespace: EVYNamespace.marketplace, resource: itemsResource)
+    XCTAssertEqual(items.count, 1)
+    let merged = try items[0].decoded()
+    guard case .dictionary(let dict) = merged else {
+      return XCTFail("expected item dictionary")
+    }
+    XCTAssertEqual(dict["title"], .string("Listed with address"))
+    XCTAssertNil(
+      dict[itemsResource],
+      "item fields must stay flat; nested resource-id root means draft scope was stolen")
+    XCTAssertNil(
+      dict["pickup_address"],
+      "page-local pickup_address draft must not be stored on the item; only address_id links")
+    guard case .dictionary(let transfer)? = dict["transfer_options"],
+      case .dictionary(let pickup)? = transfer["pickup"]
+    else {
+      return XCTFail("expected transfer_options.pickup on created item: \(dict)")
+    }
+    XCTAssertEqual(pickup["address_id"], .string(linkedAddressId))
+  }
+
+  func testNestedAddressIdWriteGoesToCreateDraftNotExistingItemRow() throws {
+    let flowId = "create-flow"
+    let itemsResource = uniqueKey("items")
+    let scopeId = EVYDraft.createMergeScopeId(flowId: flowId, entityKey: itemsResource)
+    let existingItemId = UUID().uuidString
+    let linkedAddressId = UUID().uuidString
+    let existingPayload = try JSONEncoder().encode(
+      EVYJson.dictionary([
+        "id": .string(existingItemId),
+        "title": .string("Already listed"),
+      ]))
+    try EVY.publicStore.create(
+      namespace: EVYNamespace.marketplace,
+      resource: itemsResource,
+      id: existingItemId,
+      value: existingPayload
+    )
+    EVY.draftStore.activeScopeId = scopeId
+    defer {
+      try? EVY.publicStore.deleteAll(namespace: EVYNamespace.marketplace, resource: itemsResource)
+      EVY.draftStore.deleteDrafts(scopeId: scopeId)
+      EVY.draftStore.activeScopeId = testDraftScope
+    }
+
+    try EVY.writeRawStringValue("Listed with address", to: "{\(itemsResource).title}")
+    try EVY.writeRawStringValue(
+      linkedAddressId,
+      to: "{\(itemsResource).transfer_options.pickup.address_id}"
+    )
+
+    let existingAfterWrite = try EVY.publicStore.get(
+      namespace: EVYNamespace.marketplace, resource: itemsResource, id: existingItemId)
+    let existingDecoded = try existingAfterWrite.decoded()
+    guard case .dictionary(let existingDict) = existingDecoded else {
+      return XCTFail("expected existing item dictionary")
+    }
+    XCTAssertNil(
+      existingDict["transfer_options"],
+      "address_id must not patch the first existing row of the items resource")
+
+    _ = try EVY.create(namespace: EVYNamespace.marketplace, resource: itemsResource, isSubmission: true)
+
+    let items = try EVY.publicStore.getAll(
+      namespace: EVYNamespace.marketplace, resource: itemsResource)
+    XCTAssertEqual(items.count, 2)
+    let created = try XCTUnwrap(
+      items.first { row in
+        guard case .dictionary(let dict) = try? row.decoded() else { return false }
+        return dict["title"] == .string("Listed with address")
+      })
+    guard case .dictionary(let dict) = try created.decoded() else {
+      return XCTFail("expected created item dictionary")
+    }
+    guard case .dictionary(let transfer)? = dict["transfer_options"],
+      case .dictionary(let pickup)? = transfer["pickup"]
+    else {
+      return XCTFail("expected transfer_options.pickup on created item: \(dict)")
+    }
+    XCTAssertEqual(pickup["address_id"], .string(linkedAddressId))
+  }
+
+  func testSubmitCreateThrowsWhenActiveScopeIsNotCreateScopeForResource() throws {
     let browseScope = "flow-1:browse"
     EVY.draftStore.activeScopeId = browseScope
     defer {
@@ -188,21 +303,22 @@ final class EVYCreateMergesDraftsTests: XCTestCase {
     EVY.ensureDraftExists(variableName: "title", scopeId: browseScope)
     try EVY.updateValue("Stray Title", destination: "{title}", scopeId: browseScope)
 
-    try EVY.create(namespace: EVYNamespace.marketplace, resource: "items")
-
-    let instances = try EVY.publicStore.getAll(
-      namespace: EVYNamespace.marketplace, resource: "items")
-    XCTAssertEqual(instances.count, 1, "Expected one created item")
-
-    let created = try instances[0].decoded()
-    guard case .dictionary(let dict) = created else {
-      XCTFail("expected dictionary")
-      return
+    XCTAssertThrowsError(
+      try EVY.create(
+        namespace: EVYNamespace.marketplace, resource: "items", isSubmission: true)
+    ) { error in
+      guard let evyError = error as? EVYError else {
+        return XCTFail("expected EVYError, got \(error)")
+      }
+      if case .invalidData(let context) = evyError {
+        XCTAssertTrue(context.contains("active create scope"))
+      } else {
+        XCTFail("expected invalidData, got \(evyError)")
+      }
     }
-    XCTAssertEqual(dict["title"], .string("Stray Title"))
 
     XCTAssertEqual(
       try EVY.draftStore.drafts(forScopeId: browseScope).count, 1,
-      "Fallback create should not clean up drafts outside a flow-submission scope")
+      "Failed submit create should not clean up browse-scope drafts")
   }
 }

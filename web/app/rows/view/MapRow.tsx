@@ -23,7 +23,7 @@ export default defineRow("MapRow", {
 	config: {
 		type: "Map",
 		actions: {},
-		source: `{${MARKETPLACE_RESOURCE.ITEMS}.transfer_options.pickup.address}`,
+		source: `{findFirst(addresses, ${MARKETPLACE_RESOURCE.ITEMS}.transfer_options.pickup.address_id)}`,
 		visible: "true",
 		title: "Map row title",
 		subtitle: "Map row subtitle",

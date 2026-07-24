@@ -11,12 +11,18 @@ struct EVYSearchRow: View {
 
   private let view: SearchRowViewData
   private let childRef: EVYRowRef?
+  private let onSelect: ((EVYJson) -> Void)?
 
   @Environment(\.evyScope) private var evyScope
 
-  init(view: SearchRowViewData, childRef: EVYRowRef?) {
+  init(
+    view: SearchRowViewData,
+    childRef: EVYRowRef?,
+    onSelect: ((EVYJson) -> Void)? = nil
+  ) {
     self.view = view
     self.childRef = childRef
+    self.onSelect = onSelect
   }
 
   var body: some View {
@@ -26,7 +32,8 @@ struct EVYSearchRow: View {
       placeholder: view.placeholder,
       resultTemplate: childRef?.templateRow(),
       scopeId: evyScope.cacheScopeId,
-      draftScopeId: evyScope.draftScopeId
+      draftScopeId: evyScope.draftScopeId,
+      onSelect: onSelect
     )
     .titledRow(view.title, spacing: 0)
   }

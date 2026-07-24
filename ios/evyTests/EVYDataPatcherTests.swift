@@ -10,17 +10,12 @@ import XCTest
 final class EVYDataPatcherTests: XCTestCase {
   func testPatchCreatesMissingIntermediateDictionaries() throws {
     let current = EVYJson.dictionary(["title": .string("x")])
-    let address = EVYJson.dictionary([
-      "street": .string("28 Rothschild Avenue"),
-      "city": .string("Rosebery"),
-      "latitude": .decimal(-33.9172075),
-      "longitude": .decimal(151.1985883),
-    ])
+    let addressId = EVYJson.string(UUID().uuidString)
 
     let patchedData = try EVYDataPatcher.patch(
       encodedData: try JSONEncoder().encode(current),
-      newData: try JSONEncoder().encode(address),
-      props: ["transfer_options", "pickup", "address"]
+      newData: try JSONEncoder().encode(addressId),
+      props: ["transfer_options", "pickup", "address_id"]
     )
 
     let result = try JSONDecoder().decode(EVYJson.self, from: patchedData)
@@ -37,7 +32,7 @@ final class EVYDataPatcherTests: XCTestCase {
       XCTFail("expected pickup dictionary")
       return
     }
-    XCTAssertEqual(pickup["address"], address)
+    XCTAssertEqual(pickup["address_id"], addressId)
   }
 
   /// Regression: a JSON `null` anywhere in a synced payload used to fail EVYJson

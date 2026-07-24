@@ -18,6 +18,7 @@ import {
 } from "evy-types/ws";
 import type { EvyDb } from "../database/db";
 
+import { addressesResource } from "./resources/addresses";
 import {
 	createFileResource,
 	deleteFileResource,
@@ -66,6 +67,7 @@ const CORE_RESOURCE_REGISTRY: Record<string, CoreResourceOps> = {
 	[EVY_CORE_RESOURCE.FLOWS]: flowsResource,
 	[EVY_CORE_RESOURCE.PAGES]: pagesResource,
 	[EVY_CORE_RESOURCE.ROWS]: rowsResource,
+	[EVY_CORE_RESOURCE.ADDRESSES]: addressesResource,
 	[EVY_CORE_RESOURCE.SERVICES]: {
 		list: servicesResource.list,
 		create: servicesResource.create,

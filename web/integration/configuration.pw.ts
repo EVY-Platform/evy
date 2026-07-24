@@ -479,11 +479,12 @@ test.describe("Row configuration", () => {
 		const leftOperand = popup.getByLabel("condition-0-0-left");
 		const rightOperand = popup.getByLabel("condition-0-0-right");
 
-		await popoverSelect(page, leftOperand, "count(...)");
+		await popoverSelect(page, leftOperand, "count");
 
-		const fnArgDropdown = popup.getByLabel("condition-0-0-left-arg");
-		await expect(fnArgDropdown).toBeVisible();
-		await popoverSelect(page, fnArgDropdown, "Items");
+		const fnArgField = popup.getByLabel("condition-0-0-left-arg");
+		await expect(fnArgField).toBeVisible();
+		await fnArgField.click();
+		await fnArgField.pressSequentially("items");
 
 		await popoverSelect(page, rightOperand, "Items");
 
@@ -620,7 +621,7 @@ test.describe("Row configuration", () => {
 								{
 									condition: "",
 									false: "",
-									true: `{create(${MARKETPLACE_SERVICE},${MARKETPLACE_RESOURCE.ITEMS})}`,
+									true: `{create(${MARKETPLACE_SERVICE},${MARKETPLACE_RESOURCE.ITEMS},submit)}`,
 								},
 							],
 						},
@@ -643,6 +644,144 @@ test.describe("Row configuration", () => {
 
 		await expect(configPanel.getByText("Action 1")).toBeVisible();
 		await expect(configPanel.getByText("Action 2")).not.toBeVisible();
+	});
+
+	test("should use inline create when the flow has no draft signals", async ({
+		page,
+	}) => {
+		await openAppWithTestFlows(
+			page,
+			[
+				{
+					title: "Create Page",
+					rows: [
+						{
+							type: "Button",
+							title: "",
+							label: "Inline Create",
+							actions: tapAction(
+								`{create(${MARKETPLACE_SERVICE},${MARKETPLACE_RESOURCE.ITEMS},submit)}`,
+							),
+						},
+					],
+				},
+			],
+			TEST_SERVICE_RESOURCES,
+		);
+
+		await page.getByText("Inline Create", { exact: true }).first().click();
+		const configPanel = getConfigPanel(page);
+		await configPanel.getByLabel("Edit action 1").click();
+
+		const popup = page.getByRole("dialog", { name: "Edit action 1" });
+		await expect(popup).toBeVisible();
+
+		const createDataField = popup.getByLabel("true-0-create-data");
+		await expect(createDataField).toBeVisible();
+		await createDataField.fill("pickup_address");
+
+		await popup.getByRole("button", { name: "Save" }).click();
+		await expect(popup).not.toBeVisible();
+
+		await expect(
+			configPanel.getByText("create(Marketplace, item, pickup_address)", {
+				exact: true,
+			}),
+		).toBeVisible();
+	});
+
+	test("should not save submit create without inline data when draft signals are absent", async ({
+		page,
+	}) => {
+		await openAppWithTestFlows(
+			page,
+			[
+				{
+					title: "Create Page",
+					rows: [
+						{
+							type: "Button",
+							title: "",
+							label: "Inline Create",
+							actions: tapAction(
+								`{create(${MARKETPLACE_SERVICE},${MARKETPLACE_RESOURCE.ITEMS},submit)}`,
+							),
+						},
+					],
+				},
+			],
+			TEST_SERVICE_RESOURCES,
+		);
+
+		await page.getByText("Inline Create", { exact: true }).first().click();
+		const configPanel = getConfigPanel(page);
+		await configPanel.getByLabel("Edit action 1").click();
+
+		const popup = page.getByRole("dialog", { name: "Edit action 1" });
+		await expect(popup).toBeVisible();
+		await expect(
+			popup.getByRole("button", { name: "Save" }),
+		).toBeDisabled();
+
+		await popup.getByRole("button", { name: "Cancel" }).click();
+		await expect(popup).not.toBeVisible();
+
+		await expect(
+			configPanel.getByText("create(Marketplace, item, submit)", {
+				exact: true,
+			}),
+		).toBeVisible();
+	});
+
+	test("should use submit create when row destinations target the resource", async ({
+		page,
+	}) => {
+		await openAppWithTestFlows(
+			page,
+			[
+				{
+					title: "Create Page",
+					rows: [
+						{
+							type: "Input",
+							title: "Title",
+							value: "",
+							placeholder: "",
+							destination: `{${MARKETPLACE_RESOURCE.ITEMS}.title}`,
+						},
+						{
+							type: "Button",
+							title: "",
+							label: "Submit Create",
+							actions: tapAction(
+								`{create(${MARKETPLACE_SERVICE},${MARKETPLACE_RESOURCE.ITEMS})}`,
+							),
+						},
+					],
+				},
+			],
+			TEST_SERVICE_RESOURCES,
+		);
+
+		await page.getByText("Submit Create", { exact: true }).first().click();
+		const configPanel = getConfigPanel(page);
+		await configPanel.getByLabel("Edit action 1").click();
+
+		const popup = page.getByRole("dialog", { name: "Edit action 1" });
+		await expect(popup).toBeVisible();
+		await expect(
+			popup.getByText("Creates from row destinations and draft updates"),
+		).toBeVisible();
+		await expect(popup.getByLabel("true-0-create-data")).not.toBeVisible();
+
+		await popup.getByRole("button", { name: "Save" }).click();
+		await expect(popup).not.toBeVisible();
+
+		await expect(
+			configPanel.getByText("create(Marketplace, item, submit)", {
+				exact: true,
+			}),
+		).toBeVisible();
 	});
 
 	test("should load pre-populated action fields correctly in popup", async ({

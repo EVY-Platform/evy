@@ -106,6 +106,13 @@ enum EVYDraft {
       splitScopeId(scopeId)?.key
     }
 
+    static func isActiveCreateScope(
+      for resource: String,
+      activeScopeId: String?
+    ) -> Bool {
+      entityKey(fromScopeId: activeScopeId) == resource
+    }
+
     static func flowId(fromScopeId scopeId: String?) -> String? {
       splitScopeId(scopeId)?.flowId
     }
@@ -139,7 +146,18 @@ enum EVYDraft {
       )
     }
 
-    if segments.count > 1 || entityKey != nil {
+    // Page-local aliases on an entity create/edit scope (e.g. `{pickup_address}`) stay in
+    // the same scope for reads, but use aliasFlat so create() can omit them from the
+    // submitted entity — only `{entityKey.*}` paths become item fields.
+    if let ek = entityKey, segments.first != ek {
+      return Binding(
+        scopeId: effectiveScope,
+        pathSegments: segments,
+        mergeMode: .aliasFlat(pathSegments: segments)
+      )
+    }
+
+    if segments.count > 1 {
       return Binding(
         scopeId: effectiveScope,
         pathSegments: segments,

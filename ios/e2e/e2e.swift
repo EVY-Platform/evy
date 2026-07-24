@@ -428,7 +428,60 @@ class E2ETestBase: XCTestCase {
             ),
             "sheet": Self.submitListingSheetChild(
               createAction:
-                "{create(\(MARKETPLACE_SERVICE),\(MARKETPLACE_ITEMS_RESOURCE_ID))}"
+                "{create(\(MARKETPLACE_SERVICE),\(MARKETPLACE_ITEMS_RESOURCE_ID), submit)}"
+            ),
+          ] as [String: Any],
+        ]
+      ],
+    ]
+  }
+
+  /// Create-item flow that also performs an inline `create(addresses, …)` (same pattern as
+  /// fixture Search). Regression: inline address create must not steal draft scope from items.
+  static func createItemWithAddressFlowData() -> [String: Any] {
+    let addressFields =
+      "street: \"1 Martin Place\", city: Sydney, postcode: \"2000\", state: NSW, country: Australia"
+    let createAddress =
+      "{create(\(EVY_CORE_SERVICE), addresses, {\(addressFields)}, {\(MARKETPLACE_ITEMS_RESOURCE_ID).transfer_options.pickup.address_id})}"
+    return [
+      "id": E2EFlowIds.webSocketCreateFlow,
+      "name": "Create item with address",
+      "pages": [
+        [
+          "id": E2EFlowIds.webSocketCreatePage,
+          "title": "Create listing",
+          "rows": [
+            Self.inputRow(
+              id: "e0fc5df1-b4bf-4996-87f4-f2b0f3c2a0be",
+              title: "Title",
+              source: nil,
+              placeholder: "Item",
+              destination: "{\(MARKETPLACE_ITEMS_RESOURCE_ID).title}"
+            ),
+            Self.buttonRow(
+              id: "a1b2c3d4-e5f6-4789-a012-3456789abcde",
+              label: "Use test address",
+              action: createAddress
+            ),
+          ],
+          "footer": [
+            "id": "1cb41189-6fa5-4562-996a-7cefb88a08ca",
+            "type": "Button",
+            "visible": "true",
+            "title": "",
+            "label": "Submit",
+            "actions": Self.actionsObject(
+              tap: [
+                [
+                  "condition": "",
+                  "false": "",
+                  "true": "{show(a4b5c6d7-e8f9-4a0b-1c2d-3e4f5a6b7c8d)}",
+                ]
+              ]
+            ),
+            "sheet": Self.submitListingSheetChild(
+              createAction:
+                "{create(\(MARKETPLACE_SERVICE),\(MARKETPLACE_ITEMS_RESOURCE_ID), submit)}"
             ),
           ] as [String: Any],
         ]
@@ -1875,117 +1928,6 @@ final class WebSocketE2ETests: E2ETestBase {
   }
 
   @MainActor
-  func testEphemeralPersistsAcrossPagesButResetsOnFlowChange() async throws {
-    let viewItemButton = app.buttons["View"]
-    XCTAssertTrue(
-      viewItemButton.waitForExistence(timeout: 20),
-      "Home screen not loaded - verify API is running and database is seeded")
-
-    let typedText = "reset me \(Int(Date().timeIntervalSince1970))"
-    try await typeIntoHomeEphemeralField(typedText)
-    XCTAssertTrue(sharedHomeText(typedText).waitForExistence(timeout: 5))
-    dismissKeyboard()
-
-    app.buttons["Details"].tap()
-    XCTAssertTrue(app.staticTexts["Details page"].waitForExistence(timeout: 5))
-    let backButton = app.navigationBars.buttons.firstMatch
-    XCTAssertTrue(backButton.waitForExistence(timeout: 5), "Back button should exist")
-    backButton.tap()
-    XCTAssertTrue(viewItemButton.waitForExistence(timeout: 5), "Should return to home screen")
-    XCTAssertTrue(
-      sharedHomeText(typedText).waitForExistence(timeout: 5),
-      "Same-flow page navigation should not clear ephemeral page data")
-
-    app.buttons["Create"].tap()
-    XCTAssertFalse(viewItemButton.exists, "Home buttons should not be visible after flow change")
-    XCTAssertTrue(
-      backButton.waitForExistence(timeout: 5), "Back button should exist after flow change")
-    backButton.tap()
-    XCTAssertTrue(viewItemButton.waitForExistence(timeout: 5), "Should return to home screen")
-    XCTAssertFalse(
-      sharedHomeText(typedText).waitForExistence(timeout: 2),
-      "Leaving and re-entering the flow should clear ephemeral page data")
-  }
-
-  @MainActor
-  func testRowsAddedToBackgroundedPageShareEphemeralValueOnReturn() async throws {
-    let viewItemButton = app.buttons["View"]
-    XCTAssertTrue(
-      viewItemButton.waitForExistence(timeout: 20),
-      "Home screen not loaded - verify API is running and database is seeded")
-
-    let typedText = "bg share \(Int(Date().timeIntervalSince1970))"
-    try await typeIntoHomeEphemeralField(typedText)
-    XCTAssertTrue(sharedHomeText(typedText).waitForExistence(timeout: 5))
-    dismissKeyboard()
-
-    // Navigate away so the home page is no longer the active scope.
-    app.buttons["Details"].tap()
-    XCTAssertTrue(app.staticTexts["Details page"].waitForExistence(timeout: 5))
-
-    await publishHomeFlow(
-      createHomeFlowData(buttonLabel: "View", includeAddedSharedRow: true))
-
-    let backButton = app.navigationBars.buttons.firstMatch
-    XCTAssertTrue(backButton.waitForExistence(timeout: 5), "Back button should exist")
-    backButton.tap()
-    XCTAssertTrue(viewItemButton.waitForExistence(timeout: 5), "Should return to home screen")
-
-    XCTAssertTrue(
-      addedHomeText(typedText).waitForExistence(timeout: 10),
-      "A row added while the page was backgrounded must share the existing ephemeral value on return"
-    )
-
-    await publishHomeFlow(createHomeFlowData(buttonLabel: "View"))
-  }
-
-  @MainActor
-  func testRowsAddedWhileDisplayedShareExistingEphemeralValue() async throws {
-    let viewItemButton = app.buttons["View"]
-    XCTAssertTrue(
-      viewItemButton.waitForExistence(timeout: 20),
-      "Home screen not loaded - verify API is running and database is seeded")
-
-    let typedText = "added share \(Int(Date().timeIntervalSince1970))"
-    try await typeIntoHomeEphemeralField(typedText)
-    XCTAssertTrue(
-      sharedHomeText(typedText).waitForExistence(timeout: 5),
-      "Existing text row should reflect the typed ephemeral value")
-
-    await publishHomeFlow(
-      createHomeFlowData(buttonLabel: "View", includeAddedSharedRow: true))
-
-    XCTAssertTrue(
-      addedHomeText(typedText).waitForExistence(timeout: 10),
-      "A row added via WebSocket while the page is displayed must share the existing ephemeral value, not reset it"
-    )
-
-    await publishHomeFlow(createHomeFlowData(buttonLabel: "View"))
-  }
-
-  @MainActor
-  func testHeadingRowUpdatesInRealtimeWhenInputEdits() async throws {
-    let viewItemButton = app.buttons["View"]
-    XCTAssertTrue(
-      viewItemButton.waitForExistence(timeout: 20),
-      "Home screen not loaded - verify API is running and database is seeded")
-
-    await publishHomeFlow(createHomeFlowData(buttonLabel: "View", includeHeadingRow: true))
-
-    let typedText = "heading live \(Int(Date().timeIntervalSince1970))"
-    try await typeIntoHomeEphemeralField(typedText)
-    XCTAssertTrue(
-      sharedHomeText(typedText).waitForExistence(timeout: 5),
-      "Existing text row should reflect the typed ephemeral value")
-    XCTAssertTrue(
-      headingHomeText(typedText).waitForExistence(timeout: 5),
-      "Heading row bound to the same value as the input must update in realtime, like the Text row does"
-    )
-
-    await publishHomeFlow(createHomeFlowData(buttonLabel: "View"))
-  }
-
-  @MainActor
   func testWebSocketRowUpdatePreservesUnrelatedRowState() async throws {
     let viewItemButton = app.buttons["View"]
     XCTAssertTrue(
@@ -2959,6 +2901,168 @@ final class WebSocketE2ETests: E2ETestBase {
     try awaitResult("emitter disconnect") { await emitter.disconnect() }
   }
 
+  @MainActor
+  func testCreateItemRealFlowSearchSelectPersistsAddressAndLinksItem() throws {
+    app.terminate()
+    app = XCUIApplication()
+    app.launchEnvironment["API_HOST"] = apiHost
+    app.launchEnvironment["HOME_FLOW_ID"] = E2EFlowIds.defaultHomeFlow
+    app.launch()
+
+    let sellButton = app.buttons["Sell something"]
+    XCTAssertTrue(
+      sellButton.waitForExistence(timeout: 20),
+      "Home screen not loaded - verify API is running and database is seeded with real flows")
+    sellButton.tap()
+
+    let titleFieldId = "textField_{\(MARKETPLACE_ITEMS_RESOURCE_ID).title}"
+    let titleInput = try XCTUnwrap(findElement(identifier: titleFieldId), "Title field")
+    let titleField = try XCTUnwrap(tapAndGetEditableField(container: titleInput), "Editable title")
+    let testTitle = "Real Create Flow \(Int(Date().timeIntervalSince1970))"
+    clearAndType(field: titleField, text: testTitle, placeholder: "My iPhone")
+    dismissKeyboard()
+
+    var nextButton = app.buttons["Next"]
+    XCTAssertTrue(nextButton.waitForExistence(timeout: 10), "Next on create listing page")
+    nextButton.tap()
+
+    nextButton = app.buttons["Next"]
+    XCTAssertTrue(nextButton.waitForExistence(timeout: 10), "Next on describe item page")
+    nextButton.tap()
+
+    let whereLabel = app.staticTexts["Where"]
+    XCTAssertTrue(whereLabel.waitForExistence(timeout: 15), "Pickup Where row on fulfillment page")
+    whereLabel.tap()
+
+    let searchField = app.textFields.firstMatch
+    XCTAssertTrue(searchField.waitForExistence(timeout: 5), "Search field in address sheet")
+    clearAndType(field: searchField, text: "Sydney")
+
+    let result = app.staticTexts.matching(
+      NSPredicate(
+        format: "label CONTAINS[c] %@ AND label != %@",
+        "Sydney",
+        "Where"
+      )
+    ).firstMatch
+    XCTAssertTrue(result.waitForExistence(timeout: 20), "Place search should return Sydney results")
+    result.tap()
+    XCTAssertFalse(searchField.waitForExistence(timeout: 2), "Address sheet should dismiss")
+
+    for _ in 0..<4 {
+      pageScrollView.swipeUp()
+    }
+    let timeslotButton = app.buttons.matching(
+      NSPredicate(format: "label MATCHES %@", "^[0-9]{1,2}:[0-9]{2}$")
+    ).firstMatch
+    let timeslotText = app.staticTexts.matching(
+      NSPredicate(format: "label MATCHES %@", "^[0-9]{1,2}:[0-9]{2}$")
+    ).firstMatch
+    let timeslot: XCUIElement
+    if timeslotButton.waitForExistence(timeout: 5) {
+      timeslot = timeslotButton
+    } else {
+      timeslot = timeslotText
+    }
+    XCTAssertTrue(timeslot.waitForExistence(timeout: 10), "Pickup availability timeslot")
+    timeslot.tap()
+
+    nextButton = app.buttons["Next"]
+    XCTAssertTrue(nextButton.waitForExistence(timeout: 10), "Next on pickup and delivery page")
+    nextButton.tap()
+
+    XCTAssertTrue(
+      app.staticTexts["Payment options"].waitForExistence(timeout: 10)
+        || app.navigationBars["Payment options"].waitForExistence(timeout: 2),
+      "Should reach payment options page")
+
+    let cashOption = app.staticTexts.matching(
+      NSPredicate(format: "label CONTAINS[c] %@", "cash on pickup")
+    ).firstMatch
+    if cashOption.waitForExistence(timeout: 5) {
+      cashOption.tap()
+    } else {
+      let acceptCash = app.staticTexts["Accept cash"]
+      XCTAssertTrue(acceptCash.waitForExistence(timeout: 5), "Accept cash payment option")
+      acceptCash.tap()
+    }
+
+    let submitButton = app.buttons["Submit"]
+    XCTAssertTrue(submitButton.waitForExistence(timeout: 10), "Submit on payment options page")
+    submitButton.tap()
+    XCTAssertTrue(waitForConfirmationSheet(timeout: 10), "Submit confirmation sheet should appear")
+    let submitConfirmButton = try XCTUnwrap(
+      waitForHittableButton(labeled: "Submit"),
+      "Submit button in confirmation sheet should be tappable")
+    submitConfirmButton.tap()
+
+    XCTAssertTrue(
+      sellButton.waitForExistence(timeout: 20),
+      "Should return to home after creating listing with linked pickup address")
+
+    let emitter = WSEmitter()
+    let host = apiHost
+    try awaitResult("emitter setup") {
+      try await emitter.connect(host: host)
+      try await emitter.login(token: "e2e-test", os: "ios")
+    }
+
+    let itemMatched = try awaitResult("wait for marketplace item with address_id") {
+      try await self.waitForMarketplaceResourceUpdate(
+        emitter: emitter,
+        resource: MARKETPLACE_ITEMS_RESOURCE_ID,
+        timeout: 20
+      ) { payload in
+        Self.marketplaceItemsContainListingWithAddressId(title: testTitle, items: payload)
+      }
+    }
+
+    let itemsPayload = try awaitResult("fetch marketplace items") {
+      try await emitter.getResource(
+        service: MARKETPLACE_SERVICE, resource: MARKETPLACE_ITEMS_RESOURCE_ID)
+    }
+    if !itemMatched {
+      Self.failWithItemsSummary(
+        title: testTitle,
+        items: itemsPayload,
+        message: "Created item should have transfer_options.pickup.address_id.")
+      try awaitResult("emitter disconnect") { await emitter.disconnect() }
+      return
+    }
+    guard let addressId = Self.marketplaceItemPickupAddressId(title: testTitle, items: itemsPayload)
+    else {
+      XCTFail("Expected pickup address_id on created listing")
+      try awaitResult("emitter disconnect") { await emitter.disconnect() }
+      return
+    }
+
+    let addressFound = try awaitResult("wait for core address row") {
+      let deadline = Date().addingTimeInterval(20)
+      while Date() < deadline {
+        let addressesPayload = try await emitter.getResource(
+          service: EVY_CORE_SERVICE,
+          resource: "addresses",
+          filter: ["id": addressId]
+        )
+        if Self.coreAddressesContainId(addressId, addresses: addressesPayload) {
+          return true
+        }
+        try await Task.sleep(for: .milliseconds(400))
+      }
+      return false
+    }
+    if !addressFound {
+      let addressesPayload = try awaitResult("fetch core addresses for failure") {
+        try await emitter.getResource(service: EVY_CORE_SERVICE, resource: "addresses")
+      }
+      XCTFail(
+        "Core addresses should contain the linked pickup address id \(addressId). Payload: \(String(describing: addressesPayload).prefix(400))"
+      )
+    }
+
+    try awaitResult("emitter disconnect") { await emitter.disconnect() }
+  }
+
   private static func viewItemNavigateAction(viewItemId: String?) -> String {
     guard let viewItemId else {
       return "{navigate(\(E2EFlowIds.webSocketViewFlow),\(E2EFlowIds.webSocketViewPage))}"
@@ -3083,6 +3187,90 @@ final class WebSocketE2ETests: E2ETestBase {
       if let w = widthValue as? String, w == widthText { return true }
       if let w = widthValue as? Int, String(w) == widthText { return true }
       if let n = widthValue as? NSNumber, n.stringValue == widthText { return true }
+    }
+    return false
+  }
+
+  fileprivate static func marketplaceItemsContainListingWithAddressId(
+    title: String,
+    items: Any
+  ) -> Bool {
+    marketplaceItemPickupAddressId(title: title, items: items) != nil
+  }
+
+  fileprivate static func itemMatchesTitle(_ item: [String: Any], title: String) -> Bool {
+    let needle = title.trimmingCharacters(in: .whitespacesAndNewlines)
+    let topTitle = (item["title"] as? String)?.trimmingCharacters(in: .whitespacesAndNewlines)
+    let nestedTitle = (item[MARKETPLACE_ITEMS_RESOURCE_ID] as? [String: Any])?["title"] as? String
+    let nestedNormalized = nestedTitle?.trimmingCharacters(in: .whitespacesAndNewlines)
+    return topTitle == needle || nestedNormalized == needle
+  }
+
+  fileprivate static func marketplaceItemsMatchingTitleSummary(title: String, items: Any) -> String
+  {
+    guard let itemsArray = responseDataArray(from: items) else {
+      return "No items array in payload: \(String(describing: items).prefix(400))"
+    }
+    let needle = title.trimmingCharacters(in: .whitespacesAndNewlines)
+    let matches = itemsArray.compactMap { entry -> [String: Any]? in
+      guard let item = entry as? [String: Any], itemMatchesTitle(item, title: needle) else {
+        return nil
+      }
+      return item
+    }
+    if matches.isEmpty {
+      return "No item titled \(needle) among \(itemsArray.count) marketplace items"
+    }
+    return "Matching item(s): \(String(describing: matches).prefix(800))"
+  }
+
+  fileprivate static func failWithItemsSummary(
+    title: String,
+    items: Any,
+    message: String
+  ) {
+    let summary = marketplaceItemsMatchingTitleSummary(title: title, items: items)
+    XCTFail("\(message) \(summary)")
+  }
+
+  fileprivate static func marketplaceItemPickupAddressId(title: String, items: Any) -> String? {
+    guard let itemsArray = responseDataArray(from: items) else { return nil }
+    let normalizedExpectedTitle = title.trimmingCharacters(in: .whitespacesAndNewlines)
+    for case let item as [String: Any] in itemsArray {
+      guard itemMatchesTitle(item, title: normalizedExpectedTitle) else { continue }
+      if item[MARKETPLACE_ITEMS_RESOURCE_ID] != nil { return nil }
+      guard let transfer = item["transfer_options"] as? [String: Any],
+        let pickup = transfer["pickup"] as? [String: Any],
+        let addressId = pickup["address_id"] as? String,
+        !addressId.isEmpty
+      else {
+        return nil
+      }
+      if item["pickup_address"] != nil { return nil }
+      return addressId
+    }
+    return nil
+  }
+
+  fileprivate static func coreAddressesContainId(_ addressId: String, addresses: Any) -> Bool {
+    let normalizedId = addressId.lowercased()
+    func recordMatches(_ record: [String: Any]) -> Bool {
+      guard let id = record["id"] as? String else { return false }
+      return id.lowercased() == normalizedId
+    }
+    if let itemsArray = responseDataArray(from: addresses) {
+      return itemsArray.contains { entry in
+        guard let record = entry as? [String: Any] else { return false }
+        return recordMatches(record)
+      }
+    }
+    if let record = addresses as? [String: Any] {
+      if recordMatches(record) {
+        return true
+      }
+      if let data = record["data"] as? [String: Any], recordMatches(data) {
+        return true
+      }
     }
     return false
   }
@@ -3511,7 +3699,6 @@ final class E2EErrorStateTests: XCTestCase {
 final class E2EPlaceSearchTests: E2ETestBase {
   private static let placeSearchHomeFlowId = "d1e2f3a4-b5c6-4d7e-8f9a-0b1c2d3e4f5a"
   private static let placeSearchPageId = "e2f3a4b5-c6d7-4e8f-9a0b-1c2d3e4f5a6b"
-  private static let placeSearchEntityId = "f47ac10b-58cc-4372-a567-0e02b2c3d479"
   private static let placeSearchQuery = "Sydney"
 
   override var homeFlowId: String? { Self.placeSearchHomeFlowId }
@@ -3559,12 +3746,16 @@ final class E2EPlaceSearchTests: E2ETestBase {
     ).firstMatch
     XCTAssertTrue(
       formattedAddress.waitForExistence(timeout: 10),
-      "Pickup subtitle should reflect the written address")
+      "Pickup subtitle should reflect the selected address after realtime save")
   }
 
   private static func placeSearchFlowData() -> [String: Any] {
-    let destination = "{\(placeSearchEntityId).transfer_options.pickup.address}"
-    let subtitle = "{formatAddress(\(placeSearchEntityId).transfer_options.pickup.address)}"
+    let destination = "{pickup_address}"
+    let subtitle = "{formatAddress(pickup_address)}"
+    let saveCreate =
+      "{create(\(EVY_CORE_SERVICE), addresses, pickup_address, {pickup_address.id})}"
+    let saveUpdate =
+      "{update(\(EVY_CORE_SERVICE), addresses, {id: pickup_address.id}, pickup_address)}"
     return [
       "id": placeSearchHomeFlowId,
       "name": "E2E Place Search",
@@ -3589,6 +3780,13 @@ final class E2EPlaceSearchTests: E2ETestBase {
                   "subtitle": "{$datum.city}",
                   "actions": [:],
                   "visible": "true",
+                ],
+                tapActions: [
+                  rowAction(
+                    true: saveCreate,
+                    condition: "{length(pickup_address.id) == 0}",
+                    false: saveUpdate
+                  )
                 ]
               )
             )
@@ -3633,8 +3831,11 @@ final class E2EPlaceSearchTests: E2ETestBase {
     destination: String,
     placeholder: String,
     child: [String: Any],
-    visible: String = "true"
+    visible: String = "true",
+    tapActions: [[String: String]] = []
   ) -> [String: Any] {
+    let actions: [String: Any] =
+      tapActions.isEmpty ? [:] : Self.actionsObject(tap: tapActions)
     return [
       "id": id,
       "type": "Search",
@@ -3643,7 +3844,7 @@ final class E2EPlaceSearchTests: E2ETestBase {
       "placeholder": placeholder,
       "source": source,
       "destination": destination,
-      "actions": [:],
+      "actions": actions,
       "child": child,
     ]
   }

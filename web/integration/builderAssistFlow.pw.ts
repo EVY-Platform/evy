@@ -85,7 +85,7 @@ function buildBuilderAssistFlow(
 							id: "row-title",
 							type: "Input",
 							source: `{${ITEM_RESOURCE_ID}}`,
-							destination: "",
+							destination: `{${ITEM_RESOURCE_ID}.title}`,
 							title: "Editable title",
 							placeholder: "Title",
 						},
@@ -297,7 +297,9 @@ test.describe("Builder Assist flows", () => {
 			),
 		).toBeVisible();
 		await expect(
-			configPanel.getByText("create(Marketplace, item)", { exact: true }),
+			configPanel.getByText("create(Marketplace, item, submit)", {
+				exact: true,
+			}),
 		).toBeVisible();
 
 		await configPanel.getByLabel("Edit action 1").click();

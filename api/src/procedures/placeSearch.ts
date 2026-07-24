@@ -1,5 +1,6 @@
 import { PlacesClient, type protos } from "@googlemaps/places";
 import type { PlaceSearchRequest, PlaceSearchResponse } from "evy-types";
+import { createMockPlacesClient } from "./placeSearchMock";
 
 type PlacesAutocompleteResponse =
 	protos.google.maps.places.v1.IAutocompletePlacesResponse;
@@ -16,7 +17,10 @@ const placesLocale = {
 	regionCode: "au",
 };
 
-type PlacesClientLike = Pick<PlacesClient, "autocompletePlaces" | "getPlace">;
+export type PlacesClientLike = Pick<
+	PlacesClient,
+	"autocompletePlaces" | "getPlace"
+>;
 
 let placesClient: PlacesClientLike | undefined;
 
@@ -26,8 +30,26 @@ export function setPlacesClientForTests(
 	placesClient = client;
 }
 
+export const PLACEHOLDER_GOOGLE_PLACES_API_KEY = "googlekey";
+
+export function isGooglePlacesMockEnabled(): boolean {
+	const mockFlag = process.env.GOOGLE_PLACES_MOCK;
+	if (mockFlag === "true") {
+		return true;
+	}
+	if (mockFlag === "false") {
+		return false;
+	}
+	const apiKey = process.env.GOOGLE_PLACES_API_KEY;
+	return !apiKey || apiKey === PLACEHOLDER_GOOGLE_PLACES_API_KEY;
+}
+
 function getPlacesClient(): PlacesClientLike {
 	if (placesClient) {
+		return placesClient;
+	}
+	if (isGooglePlacesMockEnabled()) {
+		placesClient = createMockPlacesClient();
 		return placesClient;
 	}
 	const apiKey = process.env.GOOGLE_PLACES_API_KEY;

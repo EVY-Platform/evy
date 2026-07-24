@@ -1,6 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it } from "bun:test";
 import type { protos } from "@googlemaps/places";
 import {
+	isGooglePlacesMockEnabled,
+	PLACEHOLDER_GOOGLE_PLACES_API_KEY,
 	placeSearch,
 	setPlacesClientForTests,
 } from "../procedures/placeSearch";
@@ -129,5 +131,32 @@ describe("placeSearch", () => {
 		const result = await placeSearch({ input: "28 Rothschild" });
 
 		expect(result).toEqual([]);
+	});
+
+	it("toggles mock mode from GOOGLE_PLACES_MOCK", () => {
+		const previousMockFlag = process.env.GOOGLE_PLACES_MOCK;
+		const previousApiKey = process.env.GOOGLE_PLACES_API_KEY;
+
+		try {
+			process.env.GOOGLE_PLACES_MOCK = "true";
+			process.env.GOOGLE_PLACES_API_KEY = "real-key";
+			expect(isGooglePlacesMockEnabled()).toBe(true);
+
+			process.env.GOOGLE_PLACES_MOCK = "false";
+			process.env.GOOGLE_PLACES_API_KEY =
+				PLACEHOLDER_GOOGLE_PLACES_API_KEY;
+			expect(isGooglePlacesMockEnabled()).toBe(false);
+		} finally {
+			if (previousMockFlag === undefined) {
+				delete process.env.GOOGLE_PLACES_MOCK;
+			} else {
+				process.env.GOOGLE_PLACES_MOCK = previousMockFlag;
+			}
+			if (previousApiKey === undefined) {
+				delete process.env.GOOGLE_PLACES_API_KEY;
+			} else {
+				process.env.GOOGLE_PLACES_API_KEY = previousApiKey;
+			}
+		}
 	});
 });
