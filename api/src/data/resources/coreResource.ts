@@ -28,14 +28,26 @@ export function omitNulls<T extends Record<string, unknown>>(row: T): T {
 }
 
 export function makeCoreResource<
-	T extends { id: string; createdAt: string; updatedAt: string },
+	T extends {
+		id: string;
+		createdAt: string;
+		updatedAt: string;
+		visibility: "public" | "private";
+	},
 >(config: {
 	table: ResourceTable;
 	validate: (raw: unknown) => T;
 	toUpdateSet: (validated: T, nowIso: string) => Record<string, unknown>;
 	normalize?: (raw: unknown) => T;
+	defaultVisibility?: "public" | "private";
 }) {
-	const { table, validate, toUpdateSet, normalize } = config;
+	const {
+		table,
+		validate,
+		toUpdateSet,
+		normalize,
+		defaultVisibility = "public",
+	} = config;
 	const norm = normalize ?? validate;
 
 	function validatePayload(
@@ -50,9 +62,12 @@ export function makeCoreResource<
 				: {};
 		return validate({
 			...record,
-			id: idOverride ?? record.id,
+			id: idOverride ?? record.id ?? crypto.randomUUID(),
 			createdAt: createdAtOverride ?? record.createdAt ?? nowIso,
 			updatedAt: nowIso,
+			visibility:
+				(record.visibility as "public" | "private" | undefined) ??
+				defaultVisibility,
 		});
 	}
 

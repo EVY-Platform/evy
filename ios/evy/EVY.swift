@@ -23,7 +23,8 @@ struct Filter: Encodable {
 enum EVYSyncState {
   private static let lastSyncTimestampKey = "lastSyncTimestamp"
   private static let storageVersionKey = "syncStorageVersion"
-  private static let currentStorageVersion = 2
+  private static let currentStorageVersion = 3
+  static var storageVersionDidChange = false
 
   static var lastSyncTimestamp: String {
     ensureCurrentStorageVersion()
@@ -46,6 +47,7 @@ enum EVYSyncState {
     guard UserDefaults.standard.integer(forKey: storageVersionKey) != currentStorageVersion else {
       return
     }
+    storageVersionDidChange = true
     UserDefaults.standard.removeObject(forKey: lastSyncTimestampKey)
     UserDefaults.standard.set(currentStorageVersion, forKey: storageVersionKey)
   }

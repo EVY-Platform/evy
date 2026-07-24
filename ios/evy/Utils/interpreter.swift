@@ -286,7 +286,13 @@ private func _resolveBindingRoot(_ props: String) throws -> (
   }
 
   // 2. Fall back to persistent store — synced API data
-  let json = try store.getJsonForBinding(key: firstProp, cacheScopeId: EVY.activeCacheScopeId)
+  let json: EVYJson
+  do {
+    json = try store.getJsonForBinding(key: firstProp, cacheScopeId: EVY.activeCacheScopeId)
+  } catch EVYDataError.keyNotFound {
+    json = try EVY.getSyncedJsonForBinding(
+      key: firstProp, cacheScopeId: EVY.activeCacheScopeId)
+  }
   return (json, remainingProps)
 }
 

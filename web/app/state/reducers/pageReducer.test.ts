@@ -28,7 +28,14 @@ const { pageReducer } = await import("./pageReducer");
 const NOW = "2024-01-01T00:00:00.000Z";
 
 function makeFlow(id: string, pageIds: string[]): DATA_EVY_Flow {
-	return { id, name: "Flow", pageIds, createdAt: NOW, updatedAt: NOW };
+	return {
+		id,
+		name: "Flow",
+		pageIds,
+		visibility: "public",
+		createdAt: NOW,
+		updatedAt: NOW,
+	};
 }
 
 function makePage(
@@ -44,6 +51,7 @@ function makePage(
 		footerRowId,
 		createdAt: NOW,
 		updatedAt: NOW,
+		visibility: "public",
 	};
 }
 
@@ -57,6 +65,7 @@ function makeTextRow(
 		type: "Text",
 		visible: "true",
 		data: { title: "T", text: "hello", ...extra },
+		visibility: "public",
 		createdAt: NOW,
 		updatedAt: NOW,
 	};
@@ -79,6 +88,7 @@ function makeContainerRow(
 				? { children_row_ids: childrenRowIds }
 				: {}),
 		},
+		visibility: "public",
 		createdAt: NOW,
 		updatedAt: NOW,
 	};
@@ -98,6 +108,7 @@ function makeSearchRow(
 			destination: "{pickup_address}",
 			...extra,
 		},
+		visibility: "public",
 		createdAt: NOW,
 		updatedAt: NOW,
 	};
@@ -117,6 +128,7 @@ function makeButtonRow(
 			actions: {},
 			...extra,
 		},
+		visibility: "public",
 		createdAt: NOW,
 		updatedAt: NOW,
 	};

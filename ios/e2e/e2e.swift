@@ -554,7 +554,7 @@ class E2ETestBase: XCTestCase {
   ) async throws -> Bool {
     try await waitForMarketplaceResourceUpdate(
       emitter: emitter,
-      resource: MarketplaceResource.messages.rawValue
+      resource: EVYCoreResource.messages.rawValue
     ) { Self.marketplaceMessageHasStatus($0, messageId: messageId, status: status) }
   }
 
@@ -995,7 +995,7 @@ class E2ETestBase: XCTestCase {
   static func cancelRequestVisibilityExpressions() -> (
     hasActive: String, noActive: String
   ) {
-    let messagesResourceId = MarketplaceResource.messages.rawValue
+    let messagesResourceId = EVYCoreResource.messages.rawValue
     let itemId = MARKETPLACE_ITEMS_RESOURCE_ID
     let hasActive =
       "{findFirst(\(messagesResourceId), fk == \(itemId).id && archivedAt == null && status == pending).fk == \(itemId).id}"
@@ -1005,7 +1005,7 @@ class E2ETestBase: XCTestCase {
   }
 
   static func acceptedRequestFindFirstExpression(type: String) -> String {
-    let messagesResourceId = MarketplaceResource.messages.rawValue
+    let messagesResourceId = EVYCoreResource.messages.rawValue
     let itemId = MARKETPLACE_ITEMS_RESOURCE_ID
     return
       "findFirst(\(messagesResourceId), fk == \(itemId).id && archivedAt == null && status == accepted && data.type == \(type))"
@@ -1022,7 +1022,7 @@ class E2ETestBase: XCTestCase {
   }
 
   static func activeRequestFindFirstExpression(type: String) -> String {
-    let messagesResourceId = MarketplaceResource.messages.rawValue
+    let messagesResourceId = EVYCoreResource.messages.rawValue
     let itemId = MARKETPLACE_ITEMS_RESOURCE_ID
     return
       "findFirst(\(messagesResourceId), fk == \(itemId).id && archivedAt == null && data.type == \(type))"
@@ -1034,7 +1034,7 @@ class E2ETestBase: XCTestCase {
   }
 
   static func pendingRequestVisibilityExpression(type: String) -> String {
-    let messagesResourceId = MarketplaceResource.messages.rawValue
+    let messagesResourceId = EVYCoreResource.messages.rawValue
     let itemId = MARKETPLACE_ITEMS_RESOURCE_ID
     return
       "{findFirst(\(messagesResourceId), fk == \(itemId).id && archivedAt == null && status == pending && data.type == \(type)).fk == \(itemId).id}"
@@ -1074,18 +1074,18 @@ class E2ETestBase: XCTestCase {
   }
 
   static func viewItemCancelRequestFlowData(flowId: String, pageId: String) -> [String: Any] {
-    let messagesResourceId = MarketplaceResource.messages.rawValue
+    let messagesResourceId = EVYCoreResource.messages.rawValue
     let visibility = cancelRequestVisibilityExpressions()
     let messageEnvelope =
       "fk: \(MARKETPLACE_ITEMS_RESOURCE_ID).id, service: \"\(MARKETPLACE_SERVICE)\", resource: \"\(MARKETPLACE_ITEMS_RESOURCE_ID)\", archivedAt: null, status: \"pending\""
     let pickupCreateAction =
-      "{create(\(MARKETPLACE_SERVICE),\(messagesResourceId),{\(messageEnvelope), data: {type: pickup, time: selected_pickup_timeslot}})}"
+      "{create(\(EVY_CORE_SERVICE),\(messagesResourceId),{\(messageEnvelope), data: {type: pickup, time: selected_pickup_timeslot}})}"
     let deliveryCreateAction =
-      "{create(\(MARKETPLACE_SERVICE),\(messagesResourceId),{\(messageEnvelope), data: {type: delivery, time: selected_delivery_timeslot}})}"
+      "{create(\(EVY_CORE_SERVICE),\(messagesResourceId),{\(messageEnvelope), data: {type: delivery, time: selected_delivery_timeslot}})}"
     let shippingCreateAction =
-      "{create(\(MARKETPLACE_SERVICE),\(messagesResourceId),{\(messageEnvelope), data: {type: shipping, postalcode: shipping_address.postcode}})}"
+      "{create(\(EVY_CORE_SERVICE),\(messagesResourceId),{\(messageEnvelope), data: {type: shipping, postalcode: shipping_address.postcode}})}"
     let cancelAction =
-      "{update(\(MARKETPLACE_SERVICE),\(messagesResourceId),{fk: \(MARKETPLACE_ITEMS_RESOURCE_ID).id, archivedAt: null, status: \"pending\"},{archivedAt: now()})}"
+      "{update(\(EVY_CORE_SERVICE),\(messagesResourceId),{fk: \(MARKETPLACE_ITEMS_RESOURCE_ID).id, archivedAt: null, status: \"pending\"},{archivedAt: now()})}"
 
     return [
       "id": flowId,
@@ -1561,13 +1561,13 @@ class E2ETestBase: XCTestCase {
   }
 
   static func viewItemRequestFlowData(flowId: String, pageId: String) -> [String: Any] {
-    let messagesResourceId = MarketplaceResource.messages.rawValue
+    let messagesResourceId = EVYCoreResource.messages.rawValue
     let messageEnvelope =
       "fk: \(MARKETPLACE_ITEMS_RESOURCE_ID).id, service: \"\(MARKETPLACE_SERVICE)\", resource: \"\(MARKETPLACE_ITEMS_RESOURCE_ID)\", archivedAt: null"
     let pickupCreateAction =
-      "{create(\(MARKETPLACE_SERVICE),\(messagesResourceId),{\(messageEnvelope), data: {type: pickup, time: selected_pickup_timeslot}})}"
+      "{create(\(EVY_CORE_SERVICE),\(messagesResourceId),{\(messageEnvelope), data: {type: pickup, time: selected_pickup_timeslot}})}"
     let shippingCreateAction =
-      "{create(\(MARKETPLACE_SERVICE),\(messagesResourceId),{\(messageEnvelope), data: {type: shipping, postalcode: shipping_address.postcode}})}"
+      "{create(\(EVY_CORE_SERVICE),\(messagesResourceId),{\(messageEnvelope), data: {type: shipping, postalcode: shipping_address.postcode}})}"
 
     return [
       "id": flowId,
@@ -2322,7 +2322,7 @@ final class WebSocketE2ETests: E2ETestBase {
 
     let messagesAfterCancel = try await emitter.getResource(
       service: MARKETPLACE_SERVICE,
-      resource: MarketplaceResource.messages.rawValue
+      resource: EVYCoreResource.messages.rawValue
     )
     XCTAssertFalse(
       Self.marketplaceMessagesContain(
@@ -2532,7 +2532,7 @@ final class WebSocketE2ETests: E2ETestBase {
 
     let messagesPayload = try await emitter.getResource(
       service: MARKETPLACE_SERVICE,
-      resource: MarketplaceResource.messages.rawValue
+      resource: EVYCoreResource.messages.rawValue
     )
     let messageRows = try XCTUnwrap(
       Self.responseDataArray(from: messagesPayload),
@@ -2553,7 +2553,7 @@ final class WebSocketE2ETests: E2ETestBase {
     acceptedMessage["status"] = "accepted"
     _ = try await emitter.updateResource(
       service: MARKETPLACE_SERVICE,
-      resource: MarketplaceResource.messages.rawValue,
+      resource: EVYCoreResource.messages.rawValue,
       filter: ["id": messageId],
       data: acceptedMessage
     )
@@ -2624,7 +2624,7 @@ final class WebSocketE2ETests: E2ETestBase {
     )
     let messagesAfterEmptyPostcode = try await emitter.getResource(
       service: MARKETPLACE_SERVICE,
-      resource: MarketplaceResource.messages.rawValue
+      resource: EVYCoreResource.messages.rawValue
     )
     XCTAssertFalse(
       Self.marketplaceMessagesContain(
@@ -3103,7 +3103,7 @@ final class WebSocketE2ETests: E2ETestBase {
   ) async throws -> Bool {
     try await waitForMarketplaceResourceUpdate(
       emitter: emitter,
-      resource: MarketplaceResource.messages.rawValue
+      resource: EVYCoreResource.messages.rawValue
     ) { Self.marketplaceMessagesArchived($0, itemId: itemId) }
   }
 
@@ -3131,7 +3131,7 @@ final class WebSocketE2ETests: E2ETestBase {
   ) async throws -> Bool {
     try await waitForMarketplaceResourceUpdate(
       emitter: emitter,
-      resource: MarketplaceResource.messages.rawValue
+      resource: EVYCoreResource.messages.rawValue
     ) {
       Self.marketplaceMessagesContain(
         $0,
@@ -3890,7 +3890,7 @@ final class E2EHomepageMessageSearchTests: E2ETestBase {
           swipeLeft: [
             Self.rowAction(
               true:
-                "{update(\(MARKETPLACE_SERVICE),\(MarketplaceResource.messages.rawValue),{id: $datum.id, status: \"pending\"},{status: \"accepted\"})}"
+                "{update(\(EVY_CORE_SERVICE),\(EVYCoreResource.messages.rawValue),{id: $datum.id, status: \"pending\"},{status: \"accepted\"})}"
             )
           ]
         ),
@@ -3899,7 +3899,7 @@ final class E2EHomepageMessageSearchTests: E2ETestBase {
       ],
       "title": "",
       "placeholder": "Filter messages by type",
-      "source": "{\(MarketplaceResource.messages.rawValue)}",
+      "source": "{\(EVYCoreResource.messages.rawValue)}",
       "destination": "",
       "actions": [:],
       "visible": "true",

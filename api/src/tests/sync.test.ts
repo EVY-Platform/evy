@@ -40,26 +40,48 @@ const externalResources = [
 		serviceId: MARKETPLACE_SERVICE_ID,
 		resourceId: MARKETPLACE_RESOURCE.ITEMS,
 	},
-	{
-		serviceId: MARKETPLACE_SERVICE_ID,
-		resourceId: MARKETPLACE_RESOURCE.MESSAGES,
-	},
 ];
 
 let getImpl = async (params: GetRequest): Promise<GetResponse> =>
-	buildMockGetResponse([{ id: `${params.resource}-mock-1` }]);
+	buildMockGetResponse([
+		{
+			id: `${params.resource}-mock-1`,
+			visibility:
+				params.resource === "addresses"
+					? ("private" as const)
+					: ("public" as const),
+		},
+	]);
 
 let forwardGetImpl = async (
 	_serviceName: string,
 	params: GetRequest,
 ): Promise<GetResponse> =>
-	buildMockGetResponse([{ id: `${params.resource}-mock-1` }]);
+	buildMockGetResponse([
+		{
+			id: `${params.resource}-mock-1`,
+			visibility: "public" as const,
+		},
+	]);
 
 function resetSyncMocks(): void {
 	getImpl = async (params) =>
-		buildMockGetResponse([{ id: `${params.resource}-mock-1` }]);
+		buildMockGetResponse([
+			{
+				id: `${params.resource}-mock-1`,
+				visibility:
+					params.resource === "addresses"
+						? ("private" as const)
+						: ("public" as const),
+			},
+		]);
 	forwardGetImpl = async (_serviceName, params) =>
-		buildMockGetResponse([{ id: `${params.resource}-mock-1` }]);
+		buildMockGetResponse([
+			{
+				id: `${params.resource}-mock-1`,
+				visibility: "public" as const,
+			},
+		]);
 }
 
 describe("sync", () => {
@@ -111,6 +133,7 @@ describe("sync", () => {
 		expect(evyResourceNames).toContain("providers");
 		expect(evyResourceNames).toContain("files");
 		expect(evyResourceNames).toContain("addresses");
+		expect(evyResourceNames).toContain("messages");
 		expect(evyResourceNames).toContain("serviceResources");
 		expect(evyResourceNames).not.toContain("devices");
 
@@ -120,7 +143,7 @@ describe("sync", () => {
 		expect(addressesRow).toEqual({
 			service: EVY_CORE_SERVICE,
 			resource: "addresses",
-			value: [{ id: "addresses-mock-1" }],
+			value: [{ id: "addresses-mock-1", visibility: "private" }],
 		});
 
 		const serviceResourcesRow = evyRows.find(
@@ -129,7 +152,7 @@ describe("sync", () => {
 		expect(serviceResourcesRow).toEqual({
 			service: EVY_CORE_SERVICE,
 			resource: "serviceResources",
-			value: [{ id: "serviceResources-mock-1" }],
+			value: [{ id: "serviceResources-mock-1", visibility: "public" }],
 		});
 	});
 
@@ -146,7 +169,7 @@ describe("sync", () => {
 		expect(rowResources).toContain(MARKETPLACE_RESOURCE.DURATIONS);
 		expect(rowResources).toContain(MARKETPLACE_RESOURCE.AREAS);
 		expect(rowResources).toContain(MARKETPLACE_RESOURCE.ITEMS);
-		expect(rowResources).toContain(MARKETPLACE_RESOURCE.MESSAGES);
+		expect(rowResources).not.toContain("messages");
 	});
 
 	it("passes updatedAfter to getCore", async () => {
@@ -196,7 +219,13 @@ describe("sync", () => {
 			expect(row.resource.length).toBeGreaterThan(0);
 			expect(row.value).toBeDefined();
 			expect(row.value).toHaveLength(1);
-			expect(row.value).toEqual([{ id: `${row.resource}-mock-1` }]);
+			expect(row.value).toEqual([
+				{
+					id: `${row.resource}-mock-1`,
+					visibility:
+						row.resource === "addresses" ? "private" : "public",
+				},
+			]);
 		}
 	});
 });

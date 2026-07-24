@@ -81,20 +81,22 @@ final class EVYSearchModelTests: XCTestCase {
   func testLoadLocalResultsRefreshWhenMessageResourceChanges() throws {
     let resource = MarketplaceTestFixture.messagesResourceId
     let pendingId = UUID().uuidString
-    try? EVY.publicStore.deleteAll(namespace: EVYNamespace.marketplace, resource: resource)
+    try? EVY.publicStore.deleteAll(namespace: EVYNamespace.evy, resource: resource)
+    try? EVY.privateStore.deleteAll(namespace: EVYNamespace.evy, resource: resource)
     let message = EVYTestMessageFixtures.message(
       id: pendingId,
       status: "pending",
       type: "pickup",
       time: "2026-06-03T09:00:00"
     )
-    try EVY.publicStore.applySyncedValue(
-      namespace: EVYNamespace.marketplace,
+    try EVY.applySyncedValue(
+      namespace: EVYNamespace.evy,
       resource: resource,
       value: .array([message])
     )
     defer {
-      try? EVY.publicStore.deleteAll(namespace: EVYNamespace.marketplace, resource: resource)
+      try? EVY.publicStore.deleteAll(namespace: EVYNamespace.evy, resource: resource)
+      try? EVY.privateStore.deleteAll(namespace: EVYNamespace.evy, resource: resource)
     }
 
     let template = Self.makeMessageStatusTemplate()

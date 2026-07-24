@@ -25,6 +25,7 @@ import {
 	listFileRowsWithBinary,
 } from "./resources/files";
 import { flowsResource } from "./resources/flows";
+import { messagesResource } from "./resources/messages";
 import { organisationsResource } from "./resources/organisation";
 import { pagesResource } from "./resources/pages";
 import { rowsResource } from "./resources/rows";
@@ -68,6 +69,7 @@ const CORE_RESOURCE_REGISTRY: Record<string, CoreResourceOps> = {
 	[EVY_CORE_RESOURCE.PAGES]: pagesResource,
 	[EVY_CORE_RESOURCE.ROWS]: rowsResource,
 	[EVY_CORE_RESOURCE.ADDRESSES]: addressesResource,
+	[EVY_CORE_RESOURCE.MESSAGES]: messagesResource,
 	[EVY_CORE_RESOURCE.SERVICES]: {
 		list: servicesResource.list,
 		create: servicesResource.create,

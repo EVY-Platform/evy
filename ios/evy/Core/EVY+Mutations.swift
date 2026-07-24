@@ -93,7 +93,7 @@ extension EVY {
       return true
     }
 
-    if let json = try? store.getJsonForBinding(
+    if let json = try? EVY.getSyncedJsonForBinding(
       key: firstProp, cacheScopeId: activeCacheScopeId),
       json.parsePropStrict(props: remainingProps) != nil
     {
@@ -184,6 +184,9 @@ extension EVY {
     if payloadWithId["createdAt"] == nil {
       payloadWithId["createdAt"] = .string(EVY.nowISO8601())
     }
+    if payloadWithId["visibility"] == nil {
+      payloadWithId["visibility"] = .string("public")
+    }
     let dataWithId = EVYJson.dictionary(payloadWithId)
     let params = MutationParams(
       service: namespace,
@@ -192,8 +195,9 @@ extension EVY {
       data: dataWithId
     )
     let encodedData = try JSONEncoder().encode(dataWithId)
-    let nextSortIndex = publicStore.nextSortIndex(namespace: namespace, resource: resource)
-    try publicStore.create(
+    let targetStore = storeForSyncedRecord(dataWithId)
+    let nextSortIndex = targetStore.nextSortIndex(namespace: namespace, resource: resource)
+    try targetStore.create(
       namespace: namespace,
       resource: resource,
       id: newId,
@@ -246,10 +250,16 @@ extension EVY {
     matching filter: [String: EVYJson],
     changes: [String: EVYJson]
   ) throws {
-    let allRows = try publicStore.getAll(namespace: namespace, resource: resource)
-    var matchedUpdates: [(rowId: String, recordId: String, updatedData: EVYJson)] = []
+    var allRows: [(row: EVYData, store: EVYDataStore)] = []
+    for store in syncedStores() {
+      let rows = (try? store.getAll(namespace: namespace, resource: resource)) ?? []
+      allRows.append(contentsOf: rows.map { ($0, store) })
+    }
+    var matchedUpdates:
+      [(rowId: String, recordId: String, updatedData: EVYJson, store: EVYDataStore)] =
+        []
 
-    for row in allRows {
+    for (row, rowStore) in allRows {
       let decoded = try row.decoded()
       guard case .dictionary(let record) = decoded else { continue }
       guard case .string(let recordId) = record["id"] else { continue }
@@ -270,7 +280,10 @@ extension EVY {
       }
       updatedRecord = patched
       matchedUpdates.append(
-        (rowId: row.id, recordId: recordId, updatedData: .dictionary(updatedRecord)))
+        (
+          rowId: row.id, recordId: recordId, updatedData: .dictionary(updatedRecord),
+          store: rowStore
+        ))
     }
 
     let cacheRowsForScope: [EVYData] =
@@ -290,7 +303,7 @@ extension EVY {
 
     for update in matchedUpdates {
       let encodedData = try JSONEncoder().encode(update.updatedData)
-      try publicStore.update(
+      try update.store.update(
         namespace: namespace,
         resource: resource,
         id: update.rowId,
@@ -427,17 +440,17 @@ extension EVY {
     )
 
     if !writesIntoCreateEntity,
-      let existingRow = try? findRowForUpdate(store: store, rootVariable: rootVariable)
+      let existingRow = try? findRowForUpdate(rootVariable: rootVariable)
     {
       let remainingProps = Array(splitProps.dropFirst())
       if remainingProps.isEmpty {
-        existingRow.data = newData
+        existingRow.row.data = newData
       } else {
-        existingRow.data = try EVYDataPatcher.patch(
-          encodedData: existingRow.data, newData: newData, props: remainingProps)
+        existingRow.row.data = try EVYDataPatcher.patch(
+          encodedData: existingRow.row.data, newData: newData, props: remainingProps)
       }
-      try store.persistChanges()
-      store.postValueChanged(key: splitProps.joined(separator: PROP_SEPARATOR))
+      try existingRow.store.persistChanges()
+      existingRow.store.postValueChanged(key: splitProps.joined(separator: PROP_SEPARATOR))
       return
     }
 
@@ -455,24 +468,23 @@ extension EVY {
     draftStore.notifyUpdate(binding: draftBinding)
   }
 
-  private static func findRowForUpdate(store: EVYDataStore, rootVariable: String) throws -> EVYData
-  {
-    if let localRow = try? store.get(
-      namespace: EVYNamespace.local, resource: rootVariable, id: EVYNamespace.singletonId)
-    {
-      return localRow
+  private static func findRowForUpdate(rootVariable: String) throws -> (
+    row: EVYData, store: EVYDataStore
+  ) {
+    for store in syncedStores() {
+      if let localRow = try? store.get(
+        namespace: EVYNamespace.local, resource: rootVariable, id: EVYNamespace.singletonId)
+      {
+        return (localRow, store)
+      }
     }
     if let scopeId = activeCacheScopeId,
       let cachedRow = try? cacheStore.get(
         namespace: EVYNamespace.cache, resource: scopeId, id: rootVariable)
     {
-      return cachedRow
+      return (cachedRow, publicStore)
     }
-    let allRows = (try? store.getAll()) ?? []
-    guard let matched = allRows.first(where: { $0.resource == rootVariable }) else {
-      throw EVYDataError.keyNotFound
-    }
-    return matched
+    return try findSyncedRow(matching: rootVariable)
   }
 
 }

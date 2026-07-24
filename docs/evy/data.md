@@ -200,17 +200,22 @@ country: string (optional)
 latitude: number (optional)
 longitude: number (optional)
 instructions: string (optional)
+visibility: "public" | "private" (defaults to private)
 createdAt: string (date-time)
 updatedAt: string (date-time)
 ```
 
-On the wire this is accessed with `service: "475731ac-31aa-4d65-94d2-7032782ae359"` and `resource: "addresses"`. Optional-by-default so manual text entry (`buildAddress`) can produce partial drafts; place search fills more fields but never writes a Google place id into this row.
+On the wire this is accessed with `service: "475731ac-31aa-4d65-94d2-7032782ae359"` and `resource: "addresses"`. Addresses are private by policy — iOS routes them to `privateStore`.
 
-There is no `DATA_EVY_Data` type in [`data.schema.json`](../../../types/schema/data/data.schema.json). Core non-SDUI EVY data uses typed tables and `DATA_EVY_Service`, `DATA_EVY_Organization`, `DATA_EVY_ServiceProvider`, `DATA_EVY_Address`, and `DATA_EVY_Device` as above (`resource` values `services`, `organisations`, `providers`, `addresses`, `devices` on `get`, `create`, or `update`).
+There is no `DATA_EVY_Data` type in [`data.schema.json`](../../../types/schema/data/data.schema.json). Core non-SDUI EVY data uses typed tables and `DATA_EVY_Service`, `DATA_EVY_Organization`, `DATA_EVY_ServiceProvider`, `DATA_EVY_Address`, `DATA_EVY_Message`, and `DATA_EVY_Device` as above (`resource` values `services`, `organisations`, `providers`, `addresses`, `messages`, `devices` on `get`, `create`, or `update`).
+
+#### Visibility
+
+Every `DATA_EVY_*` row carries a required `visibility` attribute: `"public"` or `"private"`. Clients may omit it in create/update payloads; the server defaults omitted values to `"public"` (`"private"` for addresses). On iOS, public rows sync into `publicStore` and private rows into `privateStore`; web keeps a single data path and treats `visibility` as an ordinary field.
 
 #### DATA_EVY_Message
 
-Generic message record, defined in [`message.schema.json`](../../../types/schema/data/message.schema.json). A message always relates to one record of another resource: `fk` is that record's id, and `service` / `resource` identify which service and resource the `fk` belongs to. Use-case-specific fields (e.g. `type`, `time`, `postalcode`, `address`) live in the free-form `data` object; no service validates its contents.
+Core message record in [`data.schema.json`](../../../types/schema/data/data.schema.json) (`$defs.DATA_EVY_Message`, Postgres table `Message`). A message always relates to one record of another resource: `fk` is that record's id, and `service` / `resource` identify which service and resource the `fk` belongs to. Use-case-specific fields (e.g. `type`, `time`, `postalcode`) live in the free-form `data` object.
 
 ```
 id: uuid
@@ -218,12 +223,14 @@ fk: uuid (the related record, e.g. a marketplace item id)
 service: uuid (service the fk belongs to)
 resource: uuid (resource the fk belongs to)
 archivedAt: string (date-time) | null (null/absent while active)
-status: "pending" | "accepted" (new messages start pending; accept via swipe-left `{update(...)}` on the homepage)
-createdAt: string (date-time, set by the client at creation)
+status: "pending" | "accepted"
+createdAt: string (date-time)
+updatedAt: string (date-time, server-stamped)
+visibility: "public" | "private" (defaults to public)
 data: object (free-form, use-case specific)
 ```
 
-Cancelling a message sets `archivedAt` to the current timestamp via an update — records are not hard-deleted. Accepting a pending message sets `status` to `accepted` (also via `{update(...)}`, often wired to the `swipe-left` trigger on message search rows). Message rows are currently stored by the marketplace service under its `messages` resource (see [marketplace data models](../services/marketplace/data.md)).
+On the wire this is accessed with `service: "475731ac-31aa-4d65-94d2-7032782ae359"` and `resource: "messages"`. Cancelling sets `archivedAt`; accepting sets `status` to `accepted` via `{update(...)}`.
 
 ---
 

@@ -2,6 +2,9 @@
 	"enums": {
 		"OS": {
 			"name": "OS"
+		},
+		"Visibility": {
+			"name": "Visibility"
 		}
 	},
 	"tables": {
@@ -90,6 +93,12 @@
 		},
 		"DATA_EVY_Address": {
 			"tableName": "Address",
+			"primaryKey": "id",
+			"defaultRandom": ["id"],
+			"uniqueIndexes": []
+		},
+		"DATA_EVY_Message": {
+			"tableName": "Message",
 			"primaryKey": "id",
 			"defaultRandom": ["id"],
 			"uniqueIndexes": []

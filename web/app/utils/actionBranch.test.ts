@@ -1,4 +1,5 @@
 import { describe, expect, it } from "bun:test";
+import { EVY_CORE_RESOURCE, EVY_CORE_SERVICE } from "evy-types/coreResources";
 import {
 	MARKETPLACE_RESOURCE,
 	MARKETPLACE_SERVICE,
@@ -221,13 +222,13 @@ describe("action branch helpers", () => {
 	it("parses update with filter and changes objects", () => {
 		expect(
 			parseBranch(
-				`{update(${MARKETPLACE_SERVICE},${MARKETPLACE_RESOURCE.MESSAGES},{fk: $datum.id, archivedAt: null},{archivedAt: now()})}`,
+				`{update(${EVY_CORE_SERVICE},${EVY_CORE_RESOURCE.MESSAGES},{fk: $datum.id, archivedAt: null},{archivedAt: now()})}`,
 			),
 		).toEqual({
 			functionName: "update",
 			args: [
-				MARKETPLACE_SERVICE,
-				MARKETPLACE_RESOURCE.MESSAGES,
+				EVY_CORE_SERVICE,
+				EVY_CORE_RESOURCE.MESSAGES,
 				"{fk: $datum.id, archivedAt: null}",
 				"{archivedAt: now()}",
 			],
@@ -237,13 +238,13 @@ describe("action branch helpers", () => {
 	it("serializes update with filter and changes objects", () => {
 		expect(
 			serializeBranch("update", [
-				MARKETPLACE_SERVICE,
-				MARKETPLACE_RESOURCE.MESSAGES,
+				EVY_CORE_SERVICE,
+				EVY_CORE_RESOURCE.MESSAGES,
 				"{fk: $datum.id, archivedAt: null}",
 				"{archivedAt: now()}",
 			]),
 		).toBe(
-			`{update(${MARKETPLACE_SERVICE},${MARKETPLACE_RESOURCE.MESSAGES},{fk: $datum.id, archivedAt: null},{archivedAt: now()})}`,
+			`{update(${EVY_CORE_SERVICE},${EVY_CORE_RESOURCE.MESSAGES},{fk: $datum.id, archivedAt: null},{archivedAt: now()})}`,
 		);
 	});
 

@@ -36,6 +36,7 @@ describe("extractDraftVariables", () => {
 			id: "f1",
 			name: "Flow",
 			pageIds: ["p1"],
+			visibility: "public",
 			createdAt: "",
 			updatedAt: "",
 		};
@@ -44,6 +45,7 @@ describe("extractDraftVariables", () => {
 			name: "Page",
 			title: "Page",
 			rowIds: ["root"],
+			visibility: "public",
 			createdAt: "",
 			updatedAt: "",
 		};

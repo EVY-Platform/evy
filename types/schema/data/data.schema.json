@@ -33,13 +33,16 @@
 		},
 		{
 			"$ref": "#/$defs/DATA_EVY_Address"
+		},
+		{
+			"$ref": "#/$defs/DATA_EVY_Message"
 		}
 	],
 	"$defs": {
 		"DATA_EVY_Address": {
 			"type": "object",
 			"additionalProperties": false,
-			"required": ["id", "createdAt", "updatedAt"],
+			"required": ["id", "createdAt", "updatedAt", "visibility"],
 			"properties": {
 				"id": {
 					"type": "string",
@@ -72,6 +75,10 @@
 				"instructions": {
 					"type": "string"
 				},
+				"visibility": {
+					"$ref": "#/$defs/Visibility",
+					"default": "private"
+				},
 				"createdAt": {
 					"type": "string",
 					"format": "date-time"
@@ -82,10 +89,62 @@
 				}
 			}
 		},
+		"Visibility": {
+			"type": "string",
+			"enum": ["public", "private"]
+		},
+		"DATA_EVY_Message": {
+			"type": "object",
+			"additionalProperties": false,
+			"required": [
+				"id",
+				"fk",
+				"service",
+				"resource",
+				"createdAt",
+				"updatedAt",
+				"status",
+				"data",
+				"visibility"
+			],
+			"properties": {
+				"id": { "type": "string", "format": "uuid" },
+				"fk": { "type": "string", "format": "uuid" },
+				"service": { "type": "string", "format": "uuid" },
+				"resource": { "type": "string", "format": "uuid" },
+				"archivedAt": {
+					"type": ["string", "null"],
+					"format": "date-time"
+				},
+				"createdAt": { "type": "string", "format": "date-time" },
+				"updatedAt": { "type": "string", "format": "date-time" },
+				"status": {
+					"type": "string",
+					"enum": ["pending", "accepted"]
+				},
+				"data": {
+					"type": "object",
+					"additionalProperties": {
+						"$ref": "../common/json.schema.json#/$defs/JSONValue"
+					}
+				},
+				"visibility": {
+					"$ref": "#/$defs/Visibility",
+					"default": "public"
+				}
+			}
+		},
 		"DATA_EVY_Flow": {
 			"type": "object",
 			"additionalProperties": false,
-			"required": ["id", "name", "pageIds", "createdAt", "updatedAt"],
+			"required": [
+				"id",
+				"name",
+				"pageIds",
+				"createdAt",
+				"updatedAt",
+				"visibility"
+			],
 			"properties": {
 				"id": {
 					"type": "string",
@@ -101,6 +160,10 @@
 						"type": "string",
 						"format": "uuid"
 					}
+				},
+				"visibility": {
+					"$ref": "#/$defs/Visibility",
+					"default": "public"
 				},
 				"createdAt": {
 					"type": "string",
@@ -119,7 +182,7 @@
 		"DATA_EVY_Device": {
 			"type": "object",
 			"additionalProperties": false,
-			"required": ["token", "os", "createdAt"],
+			"required": ["token", "os", "createdAt", "visibility"],
 			"properties": {
 				"token": {
 					"type": "string",
@@ -127,6 +190,10 @@
 				},
 				"os": {
 					"$ref": "#/$defs/OS"
+				},
+				"visibility": {
+					"$ref": "#/$defs/Visibility",
+					"default": "public"
 				},
 				"createdAt": {
 					"type": "string",
@@ -137,7 +204,14 @@
 		"DATA_EVY_Service": {
 			"type": "object",
 			"additionalProperties": false,
-			"required": ["id", "name", "description", "createdAt", "updatedAt"],
+			"required": [
+				"id",
+				"name",
+				"description",
+				"createdAt",
+				"updatedAt",
+				"visibility"
+			],
 			"properties": {
 				"id": {
 					"type": "string",
@@ -152,6 +226,10 @@
 				},
 				"sortOrder": {
 					"type": "integer"
+				},
+				"visibility": {
+					"$ref": "#/$defs/Visibility",
+					"default": "public"
 				},
 				"createdAt": {
 					"type": "string",
@@ -174,7 +252,8 @@
 				"url",
 				"supportEmail",
 				"createdAt",
-				"updatedAt"
+				"updatedAt",
+				"visibility"
 			],
 			"properties": {
 				"id": {
@@ -200,6 +279,10 @@
 					"type": "string",
 					"maxLength": 50
 				},
+				"visibility": {
+					"$ref": "#/$defs/Visibility",
+					"default": "public"
+				},
 				"createdAt": {
 					"type": "string",
 					"format": "date-time"
@@ -223,7 +306,8 @@
 				"url",
 				"createdAt",
 				"updatedAt",
-				"retired"
+				"retired",
+				"visibility"
 			],
 			"properties": {
 				"id": {
@@ -253,6 +337,10 @@
 					"type": "string",
 					"maxLength": 50
 				},
+				"visibility": {
+					"$ref": "#/$defs/Visibility",
+					"default": "public"
+				},
 				"createdAt": {
 					"type": "string",
 					"format": "date-time"
@@ -270,7 +358,14 @@
 		"DATA_EVY_ServiceResource": {
 			"type": "object",
 			"additionalProperties": false,
-			"required": ["id", "fkServiceId", "name", "createdAt", "updatedAt"],
+			"required": [
+				"id",
+				"fkServiceId",
+				"name",
+				"createdAt",
+				"updatedAt",
+				"visibility"
+			],
 			"properties": {
 				"id": {
 					"type": "string",
@@ -283,6 +378,10 @@
 				"name": {
 					"type": "string",
 					"maxLength": 50
+				},
+				"visibility": {
+					"$ref": "#/$defs/Visibility",
+					"default": "public"
 				},
 				"createdAt": {
 					"type": "string",
@@ -297,7 +396,7 @@
 		"DATA_EVY_File": {
 			"type": "object",
 			"additionalProperties": false,
-			"required": ["id", "type", "createdAt", "updatedAt"],
+			"required": ["id", "type", "createdAt", "updatedAt", "visibility"],
 			"properties": {
 				"id": {
 					"type": "string",
@@ -306,6 +405,10 @@
 				"type": {
 					"type": "string",
 					"minLength": 1
+				},
+				"visibility": {
+					"$ref": "#/$defs/Visibility",
+					"default": "public"
 				},
 				"createdAt": {
 					"type": "string",
@@ -320,7 +423,14 @@
 		"DATA_EVY_Page": {
 			"type": "object",
 			"additionalProperties": false,
-			"required": ["id", "name", "rowIds", "createdAt", "updatedAt"],
+			"required": [
+				"id",
+				"name",
+				"rowIds",
+				"createdAt",
+				"updatedAt",
+				"visibility"
+			],
 			"properties": {
 				"id": {
 					"type": "string",
@@ -343,6 +453,10 @@
 				"footerRowId": {
 					"type": "string",
 					"format": "uuid"
+				},
+				"visibility": {
+					"$ref": "#/$defs/Visibility",
+					"default": "public"
 				},
 				"createdAt": {
 					"type": "string",
@@ -388,7 +502,8 @@
 				"visible",
 				"data",
 				"createdAt",
-				"updatedAt"
+				"updatedAt",
+				"visibility"
 			],
 			"properties": {
 				"id": {
@@ -430,6 +545,10 @@
 				},
 				"data": {
 					"$ref": "#/$defs/DATA_EVY_RowData"
+				},
+				"visibility": {
+					"$ref": "#/$defs/Visibility",
+					"default": "public"
 				},
 				"createdAt": {
 					"type": "string",

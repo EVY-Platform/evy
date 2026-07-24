@@ -12,5 +12,6 @@ export const organisationsResource = makeCoreResource<DATA_EVY_Organization>({
 		logo: validated.logo,
 		url: validated.url,
 		supportEmail: validated.supportEmail,
+		visibility: validated.visibility,
 	}),
 });

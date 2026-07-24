@@ -190,7 +190,7 @@ actor EVYWebsocket {
 
     Task { @MainActor in
       do {
-        try EVY.publicStore.applySyncedValue(
+        try EVY.applySyncedValue(
           namespace: notification.service,
           resource: notification.resource,
           value: notification.value

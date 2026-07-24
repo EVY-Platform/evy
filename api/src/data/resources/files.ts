@@ -127,6 +127,7 @@ async function insertFileMetadata(
 			type: validated.type,
 			createdAt: nowIso,
 			updatedAt: nowIso,
+			visibility: validated.visibility ?? "public",
 		})
 		.returning()
 		.catch((err: unknown) => {
@@ -166,7 +167,15 @@ async function createFileFromUpload(params: {
 	dataPayload: unknown;
 	nowIso: string;
 }): Promise<PreparedFileUpload> {
-	const validated = validateFilePayload(params.dataPayload);
+	const record =
+		typeof params.dataPayload === "object" && params.dataPayload !== null
+			? (params.dataPayload as Record<string, unknown>)
+			: {};
+	const validated = validateFilePayload({
+		...record,
+		visibility:
+			(record.visibility as "public" | "private" | undefined) ?? "public",
+	});
 	const fileId = params.filter?.id ?? validated.id;
 	const uploadSession = getUploadSession(fileId);
 
@@ -188,6 +197,7 @@ async function createFileFromUpload(params: {
 			type: validated.type,
 			createdAt: params.nowIso,
 			updatedAt: params.nowIso,
+			visibility: validated.visibility ?? "public",
 		},
 	};
 }
@@ -209,6 +219,7 @@ async function fileRowToGetFileResponse(
 		type: metadata.type,
 		createdAt: metadata.createdAt,
 		updatedAt: metadata.updatedAt,
+		visibility: metadata.visibility,
 		dataBase64: fileData.toString("base64"),
 	};
 }

@@ -356,13 +356,27 @@ function buildObjectColumn(
 	return col;
 }
 
+function enumKeyToConstName(enumKey: string): string {
+	if (enumKey === "OS") return "osEnum";
+	return `${enumKey.charAt(0).toLowerCase()}${enumKey.slice(1)}Enum`;
+}
+
 function buildRefColumn(
 	dbCol: string,
 	ref: string,
 	{ isPk, hasDefaultRandom }: ColumnSuffixes,
+	enumKeys: string[],
+	defaultVal: unknown,
 ): string {
-	if (ref.includes("OS")) {
-		return `osEnum("${dbCol}").notNull()`;
+	for (const enumKey of enumKeys) {
+		if (ref.includes(enumKey)) {
+			const constName = enumKeyToConstName(enumKey);
+			let col = `${constName}("${dbCol}").notNull()`;
+			if (typeof defaultVal === "string") {
+				col += `.default("${defaultVal}")`;
+			}
+			return col;
+		}
 	}
 	const typeArg = resolveJsonbTypeAnnotation(ref);
 	let col = `jsonb("${dbCol}").$type<${typeArg}>().notNull()`;
@@ -374,7 +388,7 @@ function buildRefColumn(
 function applyNullabilityFallback(
 	col: string,
 	type: string | undefined,
-	format: string | undefined,
+	_format: string | undefined,
 	ref: string | undefined,
 	isRequired: boolean,
 ): string {
@@ -397,6 +411,8 @@ function applyNullabilityFallback(
  * Emit a Drizzle column definition string from a JSON Schema property.
  * Rule order: string → integer → number → boolean → object → $ref → fallback text.
  */
+let emitColumnEnumKeys: string[] = [];
+
 function emitColumn(
 	propName: string,
 	prop: JsonSchemaProp,
@@ -425,7 +441,13 @@ function emitColumn(
 	} else if (type === "object") {
 		col = buildObjectColumn(dbCol, prop, suffixes);
 	} else if (ref) {
-		col = buildRefColumn(dbCol, ref, suffixes);
+		col = buildRefColumn(
+			dbCol,
+			ref,
+			suffixes,
+			emitColumnEnumKeys,
+			defaultVal,
+		);
 	} else {
 		col = `text("${dbCol}")`;
 	}
@@ -446,6 +468,7 @@ async function main(): Promise<void> {
 	validateConfigSemantic(schema, config);
 
 	const defs = schema.$defs ?? {};
+	emitColumnEnumKeys = Object.keys(config.enums ?? {});
 	// Emission order follows the config's key order (JSON preserves it).
 	const tableOrder = Object.keys(config.tables ?? {});
 	const hasNumberColumns = tableOrder.some((defKey) => {
@@ -488,8 +511,9 @@ async function main(): Promise<void> {
 				"data/os.schema.json enum does not match data.schema.json $defs.OS.enum",
 			);
 		}
+		const constName = enumKeyToConstName(enumKey);
 		lines.push(
-			`export const osEnum = pgEnum("${enumConfig.name}", [${values.map((v) => `"${v}"`).join(", ")}]);`,
+			`export const ${constName} = pgEnum("${enumConfig.name}", [${values.map((v) => `"${v}"`).join(", ")}]);`,
 		);
 		lines.push("");
 	}

@@ -21,6 +21,7 @@ import {
 	address as addressTable,
 	file as fileTable,
 	flow as flowTable,
+	message as messageTable,
 	organization as organizationTable,
 	page as pageTable,
 	row as rowTable,
@@ -84,6 +85,7 @@ const coreSchema = {
 	row: rowTable,
 	file: fileTable,
 	address: addressTable,
+	message: messageTable,
 };
 const marketplaceSchema = { data: marketplaceDataTable };
 
@@ -112,6 +114,7 @@ const SEED_IDS = {
 	coreServiceResourcesResource: "58e2e69d-78ba-4657-b991-cc6a5e0c80c9",
 	coreFilesResource: "996738e6-15eb-4f3e-8f97-7538a1e2635c",
 	coreAddressesResource: "eef0b91c-f8f6-4603-b082-1211650af931",
+	coreMessagesResource: "7c8d9e0f-1a2b-3c4d-5e6f-7a8b9c0d1e2f",
 } as const;
 
 // Fixture keys are the lowercase forms of the generated resource constants
@@ -213,6 +216,7 @@ function buildDataRows(
 type SeedFileRow = {
 	id: string;
 	type: string;
+	visibility: "public" | "private";
 	createdAt: string;
 	updatedAt: string;
 };
@@ -225,7 +229,13 @@ function buildFileRows(files: SeedDataItem[], now: string): SeedFileRow[] {
 			);
 		}
 		const { createdAt, updatedAt } = seedTimestamps(item, now);
-		return { id: item.id, type: item.type, createdAt, updatedAt };
+		return {
+			id: item.id,
+			type: item.type,
+			visibility: "public",
+			createdAt,
+			updatedAt,
+		};
 	});
 }
 
@@ -240,6 +250,7 @@ type SeedAddressRow = {
 	latitude?: number;
 	longitude?: number;
 	instructions?: string;
+	visibility: "public" | "private";
 	createdAt: string;
 	updatedAt: string;
 };
@@ -274,6 +285,10 @@ function buildAddressRows(
 			id: item.id,
 			...optionalStrings,
 			...optionalNumbers,
+			visibility:
+				item.visibility === "private" || item.visibility === "public"
+					? item.visibility
+					: "private",
 			createdAt,
 			updatedAt,
 		};
@@ -294,6 +309,69 @@ function timestamped(now: string): { createdAt: string; updatedAt: string } {
 	return { createdAt: now, updatedAt: now };
 }
 
+type SeedMessageRow = {
+	id: string;
+	fk: string;
+	service: string;
+	resource: string;
+	archivedAt: string | null;
+	createdAt: string;
+	updatedAt: string;
+	status: "pending" | "accepted";
+	data: Record<string, unknown>;
+	visibility: "public" | "private";
+};
+
+function buildMessageRows(
+	messages: SeedDataItem[],
+	now: string,
+): SeedMessageRow[] {
+	return messages.map((item) => {
+		const { createdAt, updatedAt } = seedTimestamps(item, now);
+		if (typeof item.fk !== "string") {
+			throw new Error(
+				`Seed message "${item.id}" must have a string "fk" field`,
+			);
+		}
+		if (typeof item.service !== "string") {
+			throw new Error(
+				`Seed message "${item.id}" must have a string "service" field`,
+			);
+		}
+		if (typeof item.resource !== "string") {
+			throw new Error(
+				`Seed message "${item.id}" must have a string "resource" field`,
+			);
+		}
+		if (item.status !== "pending" && item.status !== "accepted") {
+			throw new Error(
+				`Seed message "${item.id}" must have status "pending" or "accepted"`,
+			);
+		}
+		const data =
+			item.data !== null &&
+			typeof item.data === "object" &&
+			!Array.isArray(item.data)
+				? (item.data as Record<string, unknown>)
+				: {};
+		return {
+			id: item.id,
+			fk: item.fk,
+			service: item.service,
+			resource: item.resource,
+			archivedAt:
+				item.archivedAt === null || typeof item.archivedAt === "string"
+					? (item.archivedAt ?? null)
+					: null,
+			createdAt,
+			updatedAt,
+			status: item.status,
+			data,
+			visibility: "public",
+		};
+	});
+}
+
 type DecomposedFlow = {
 	flowRow: DATA_EVY_Flow;
 	pageRows: DATA_EVY_Page[];
@@ -310,6 +388,7 @@ function decomposeFlow(flow: SeedFlow, now: string): DecomposedFlow {
 			id: flow.id,
 			name: flow.name,
 			pageIds: pageRows.map((page) => page.id),
+			visibility: "public",
 			...timestamped(now),
 		},
 		pageRows,
@@ -330,6 +409,7 @@ function decomposePage(
 		footerRowId: page.footer
 			? decomposeRow(page.footer, rowRows, now)
 			: undefined,
+		visibility: "public",
 		...timestamped(now),
 	};
 }
@@ -410,6 +490,7 @@ function decomposeRow(
 		type: uiRow.type,
 		visible: uiRow.visible || "true",
 		data,
+		visibility: "public",
 		...timestamped(now),
 	});
 	return uiRow.id;
@@ -434,6 +515,7 @@ const SERVICE_RESOURCE_SPECS: [string, string, string][] = [
 	],
 	[SEED_IDS.coreFilesResource, EVY_CORE_SERVICE, "file"],
 	[SEED_IDS.coreAddressesResource, EVY_CORE_SERVICE, "address"],
+	[SEED_IDS.coreMessagesResource, EVY_CORE_SERVICE, "message"],
 	[
 		MARKETPLACE_RESOURCE.SELLING_REASONS,
 		MARKETPLACE_SERVICE,
@@ -443,7 +525,6 @@ const SERVICE_RESOURCE_SPECS: [string, string, string][] = [
 	[MARKETPLACE_RESOURCE.DURATIONS, MARKETPLACE_SERVICE, "duration"],
 	[MARKETPLACE_RESOURCE.AREAS, MARKETPLACE_SERVICE, "area"],
 	[MARKETPLACE_RESOURCE.ITEMS, MARKETPLACE_SERVICE, "item"],
-	[MARKETPLACE_RESOURCE.MESSAGES, MARKETPLACE_SERVICE, "message"],
 ];
 
 function buildServiceResourceRows(now: string) {
@@ -451,6 +532,7 @@ function buildServiceResourceRows(now: string) {
 		id,
 		fkServiceId,
 		name,
+		visibility: "public" as const,
 		...timestamped(now),
 	}));
 }
@@ -543,6 +625,7 @@ async function seedDatabase({
 	const {
 		files: evyFiles = [],
 		addresses: evyAddresses = [],
+		messages: evyMessages = [],
 		...unsupportedEvy
 	} = evyDataJson;
 	const unsupportedResources = Object.keys(unsupportedEvy);
@@ -554,6 +637,7 @@ async function seedDatabase({
 
 	const fileRows = buildFileRows(evyFiles, now);
 	const addressRows = buildAddressRows(evyAddresses, now);
+	const messageRows = buildMessageRows(evyMessages, now);
 	await copySeedFileBinaries({
 		files: fileRows,
 		repoRoot: REPO_ROOT,
@@ -576,6 +660,7 @@ async function seedDatabase({
 			logo: SEED_IDS.logo,
 			url: "evy.local",
 			supportEmail: "support@evy.local",
+			visibility: "public",
 			...timestamped(now),
 		});
 
@@ -585,6 +670,7 @@ async function seedDatabase({
 				name: "evy",
 				description: "EVY core service",
 				sortOrder: 0,
+				visibility: "public",
 				...timestamped(now),
 			},
 			{
@@ -592,6 +678,7 @@ async function seedDatabase({
 				name: "marketplace",
 				description: "Marketplace service",
 				sortOrder: 1,
+				visibility: "public",
 				...timestamped(now),
 			},
 		]);
@@ -605,6 +692,7 @@ async function seedDatabase({
 			logo: SEED_IDS.logo,
 			url: "evy.local",
 			retired: false,
+			visibility: "public",
 			...timestamped(now),
 		});
 
@@ -641,6 +729,11 @@ async function seedDatabase({
 		await tx.delete(coreSchema.address);
 		if (addressRows.length > 0) {
 			await tx.insert(coreSchema.address).values(addressRows);
+		}
+
+		await tx.delete(coreSchema.message);
+		if (messageRows.length > 0) {
+			await tx.insert(coreSchema.message).values(messageRows);
 		}
 	});
 

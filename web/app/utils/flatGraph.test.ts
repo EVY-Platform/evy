@@ -28,7 +28,14 @@ import { pageRootIds } from "./rowTraversal";
 const NOW = "2024-01-01T00:00:00.000Z";
 
 function makeFlow(id: string, pageIds: string[]): DATA_EVY_Flow {
-	return { id, name: "Flow", pageIds, createdAt: NOW, updatedAt: NOW };
+	return {
+		id,
+		name: "Flow",
+		pageIds,
+		visibility: "public",
+		createdAt: NOW,
+		updatedAt: NOW,
+	};
 }
 
 function makePage(
@@ -44,6 +51,7 @@ function makePage(
 		footerRowId,
 		createdAt: NOW,
 		updatedAt: NOW,
+		visibility: "public",
 	};
 }
 
@@ -54,6 +62,7 @@ function makeRow(id: string, data: Record<string, unknown> = {}): DATA_EVY_Row {
 		type: "Text",
 		visible: "true",
 		data,
+		visibility: "public",
 		createdAt: NOW,
 		updatedAt: NOW,
 	};

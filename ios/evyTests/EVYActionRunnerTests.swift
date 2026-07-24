@@ -860,7 +860,7 @@ final class EVYActionRunnerTests: XCTestCase {
   }
 
   func testUpdateActionAcceptsOnlyMatchingPendingMessageForDatum() throws {
-    let namespace = EVYNamespace.marketplace
+    let namespace = EVYNamespace.evy
     let resource = MarketplaceTestFixture.messagesResourceId
     let itemId = UUID().uuidString
     let pendingMessageId = UUID().uuidString
@@ -895,7 +895,7 @@ final class EVYActionRunnerTests: XCTestCase {
         postalcode: "2018"
       ),
     ])
-    try EVY.publicStore.applySyncedValue(namespace: namespace, resource: resource, value: messages)
+    try EVY.applySyncedValue(namespace: namespace, resource: resource, value: messages)
 
     let acceptAction = rowAction(
       true:
@@ -1382,7 +1382,7 @@ final class EVYActionRunnerTests: XCTestCase {
     let action = rowAction(
       condition: "{length(shipping_address.postcode) > 0}",
       true:
-        "{create(\(EVYNamespace.marketplace),\(messagesResourceId),{fk: \(itemResourceId).id, archivedAt: null, data: {type: shipping, postalcode: shipping_address.postcode}})}",
+        "{create(\(EVYNamespace.evy),\(messagesResourceId),{fk: \(itemResourceId).id, archivedAt: null, data: {type: shipping, postalcode: shipping_address.postcode}})}",
       false: "{highlight_required(postcode)}"
     )
     EVYActionRunner.run(actions: [action]) { received = $0 }
@@ -1390,7 +1390,7 @@ final class EVYActionRunnerTests: XCTestCase {
   }
 
   func testCreateActionRunsImmediately() throws {
-    let namespace = EVYNamespace.marketplace
+    let namespace = EVYNamespace.evy
     let resource = MarketplaceTestFixture.messagesResourceId
     let itemResourceId = MarketplaceTestFixture.itemsResourceId
     let itemId = UUID().uuidString
@@ -1429,7 +1429,7 @@ final class EVYActionRunnerTests: XCTestCase {
   func testDatumRowFormatterResolvesDatumReferencesInActions() throws {
     let navigateAction = "{navigate(flowX,pageY,{id: $datum.id})}"
     let updateAction =
-      "{update(66b092ae-7cd8-4d67-95b7-30b03568fd90, 000c2d05-851e-4456-8f22-bb1e54f17c8c, {id: $datum.id, status: \"pending\"}, {status: \"accepted\"})}"
+      "{update(\(EVY_CORE_SERVICE), \(EVYCoreResource.messages.rawValue), {id: $datum.id, status: \"pending\"}, {status: \"accepted\"})}"
     let row = try decodeRow(
       content: """
         {
@@ -1458,7 +1458,7 @@ final class EVYActionRunnerTests: XCTestCase {
   }
 
   func testSwipeLeftUpdateActionAcceptsPendingMessageFromFormattedSearchResult() throws {
-    let namespace = EVYNamespace.marketplace
+    let namespace = EVYNamespace.evy
     let resource = MarketplaceTestFixture.messagesResourceId
     let pendingMessageId = UUID().uuidString
     try? EVY.publicStore.deleteAll(namespace: namespace, resource: resource)

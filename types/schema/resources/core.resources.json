@@ -30,6 +30,9 @@
 		},
 		"addresses": {
 			"singular": "address"
+		},
+		"messages": {
+			"singular": "message"
 		}
 	}
 }

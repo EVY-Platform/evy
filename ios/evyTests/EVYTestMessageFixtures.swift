@@ -41,6 +41,7 @@ enum EVYTestMessageFixtures {
     if !data.isEmpty {
       dict["data"] = .dictionary(data)
     }
+    dict["visibility"] = .string("public")
     return .dictionary(dict)
   }
 }

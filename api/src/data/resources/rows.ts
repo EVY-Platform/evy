@@ -11,5 +11,6 @@ export const rowsResource = makeCoreResource<DATA_EVY_Row>({
 		type: v.type,
 		visible: v.visible,
 		data: v.data,
+		visibility: v.visibility,
 	}),
 });

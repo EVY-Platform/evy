@@ -59,6 +59,7 @@ describe("validateServicePayload", () => {
 			description: "D",
 			createdAt: now,
 			updatedAt: now,
+			visibility: "public",
 		});
 		expect(out.name).toBe("Svc");
 		expect(out.description).toBe("D");
@@ -113,6 +114,7 @@ describe("validateOrganizationPayload", () => {
 			supportEmail: "a@b.co",
 			createdAt: now,
 			updatedAt: now,
+			visibility: "public",
 		});
 		expect(out.name).toBe("Org");
 	});
@@ -139,9 +141,10 @@ describe("validateServiceProviderPayload", () => {
 			description: "D",
 			logo: sid,
 			url: "https://x.com",
+			retired: false,
+			visibility: "public",
 			createdAt: now,
 			updatedAt: now,
-			retired: false,
 		});
 		expect(out.name).toBe("P");
 	});
@@ -556,6 +559,7 @@ describe("validateDataEvyFile", () => {
 			type,
 			createdAt: now,
 			updatedAt: now,
+			visibility: "public",
 		});
 		expect(out.id).toBe(id);
 		expect(out.type).toBe(type);

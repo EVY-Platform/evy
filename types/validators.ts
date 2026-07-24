@@ -15,6 +15,7 @@ import type {
 	DATA_EVY_Address,
 	DATA_EVY_File,
 	DATA_EVY_Flow,
+	DATA_EVY_Message,
 	DATA_EVY_Organization,
 	DATA_EVY_Page,
 	DATA_EVY_Row,
@@ -379,6 +380,10 @@ const getValidateDataEvyAddress = lazyValidator<DATA_EVY_Address>(
 	getEntityAjv,
 	`${fileId("data/data.schema.json")}#/$defs/DATA_EVY_Address`,
 );
+const getValidateDataEvyMessage = lazyValidator<DATA_EVY_Message>(
+	getEntityAjv,
+	`${fileId("data/data.schema.json")}#/$defs/DATA_EVY_Message`,
+);
 const getValidateDataEvyFlow = lazyValidator<DATA_EVY_Flow>(
 	getEntityAjv,
 	`${fileId("data/data.schema.json")}#/$defs/DATA_EVY_Flow`,
@@ -573,6 +578,10 @@ export function validateUiFlow(data: unknown): UI_Flow {
 export const validateDataEvyAddress = makeValidator<DATA_EVY_Address>(
 	"Address",
 	getValidateDataEvyAddress,
+);
+export const validateDataEvyMessage = makeValidator<DATA_EVY_Message>(
+	"Message",
+	getValidateDataEvyMessage,
 );
 export const validateDataEvyFlow = makeValidator<DATA_EVY_Flow>(
 	"Flow",

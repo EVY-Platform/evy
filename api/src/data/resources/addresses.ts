@@ -12,6 +12,7 @@ function omitNullOptionalFields(
 export const addressesResource = makeCoreResource<DATA_EVY_Address>({
 	table: address,
 	validate: validateDataEvyAddress,
+	defaultVisibility: "private",
 	toUpdateSet: (v) => ({
 		unit: v.unit,
 		street: v.street,
@@ -22,6 +23,7 @@ export const addressesResource = makeCoreResource<DATA_EVY_Address>({
 		latitude: v.latitude,
 		longitude: v.longitude,
 		instructions: v.instructions,
+		visibility: v.visibility,
 	}),
 	normalize: omitNullOptionalFields,
 });

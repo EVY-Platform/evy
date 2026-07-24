@@ -190,92 +190,15 @@ describe("marketplace get/create/update", () => {
 		expect(updated).toMatchObject({ data: { ...row, value: "v2" } });
 	});
 
-	it("persists generic message rows without payload validation", async () => {
-		const itemId = crypto.randomUUID();
-		const baseMessage = {
-			fk: itemId,
-			service: MARKETPLACE_SERVICE,
-			resource: MARKETPLACE_RESOURCE.ITEMS,
-			archivedAt: null,
-			createdAt: "2026-06-01T00:00:00.000Z",
-			status: "pending" as const,
-		};
-		const pickupMessage = {
-			...baseMessage,
-			id: crypto.randomUUID(),
-			data: { type: "pickup", time: "2026-06-03T10:00:00" },
-		};
-		const deliveryMessage = {
-			...baseMessage,
-			id: crypto.randomUUID(),
-			data: { type: "delivery", time: "2026-06-03T11:00:00" },
-		};
-		const shippingMessage = {
-			...baseMessage,
-			id: crypto.randomUUID(),
-			data: { type: "shipping", postalcode: "2018" },
-		};
-
-		for (const message of [
-			pickupMessage,
-			deliveryMessage,
-			shippingMessage,
-		]) {
-			await create({
+	it("rejects unknown marketplace resource ids", async () => {
+		await expect(
+			create({
 				service: MARKETPLACE_SERVICE,
-				resource: MARKETPLACE_RESOURCE.MESSAGES,
-				filter: { id: message.id },
-				data: message,
-			});
-		}
-
-		const messages = await get({
-			service: MARKETPLACE_SERVICE,
-			resource: MARKETPLACE_RESOURCE.MESSAGES,
-		});
-		expect(messages).toHaveLength(3);
-		expect(messages).toEqual(
-			expect.arrayContaining([
-				pickupMessage,
-				deliveryMessage,
-				shippingMessage,
-			]),
-		);
-
-		// data is free-form: unknown keys and shapes are accepted as-is
-		const freeFormMessage = {
-			...baseMessage,
-			id: crypto.randomUUID(),
-			data: {
-				type: "courier",
-				address: { street: "1 Main St" },
-				legs: 2,
-			},
-		};
-		await create({
-			service: MARKETPLACE_SERVICE,
-			resource: MARKETPLACE_RESOURCE.MESSAGES,
-			filter: { id: freeFormMessage.id },
-			data: freeFormMessage,
-		});
-		const byId = await get({
-			service: MARKETPLACE_SERVICE,
-			resource: MARKETPLACE_RESOURCE.MESSAGES,
-			filter: { id: freeFormMessage.id },
-		});
-		expect(byId).toEqual([freeFormMessage]);
-
-		const archivedPickup = {
-			...pickupMessage,
-			archivedAt: "2026-06-02T00:00:00.000Z",
-		};
-		const updated = await update({
-			service: MARKETPLACE_SERVICE,
-			resource: MARKETPLACE_RESOURCE.MESSAGES,
-			filter: { id: pickupMessage.id },
-			data: archivedPickup,
-		});
-		expect(updated).toMatchObject({ data: archivedPickup });
+				resource: "000c2d05-851e-4456-8f22-bb1e54f17c8c",
+				filter: { id: crypto.randomUUID() },
+				data: { id: crypto.randomUUID(), value: "orphan" },
+			}),
+		).rejects.toThrow();
 	});
 
 	it("deletes a row by resource and id", async () => {

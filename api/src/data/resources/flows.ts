@@ -6,5 +6,9 @@ import { makeCoreResource } from "./coreResource";
 export const flowsResource = makeCoreResource<DATA_EVY_Flow>({
 	table: flow,
 	validate: validateDataEvyFlow,
-	toUpdateSet: (v) => ({ name: v.name, pageIds: v.pageIds }),
+	toUpdateSet: (v) => ({
+		name: v.name,
+		pageIds: v.pageIds,
+		visibility: v.visibility,
+	}),
 });
