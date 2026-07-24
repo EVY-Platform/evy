@@ -24,6 +24,7 @@ test.describe("Offline and connection resilience", () => {
 				id: OFFLINE_FLOW_ID,
 				name: "Offline Save Fail",
 				pageIds: [OFFLINE_PAGE_ID],
+				visibility: "public",
 				createdAt: nowIso,
 				updatedAt: nowIso,
 			};
@@ -32,6 +33,7 @@ test.describe("Offline and connection resilience", () => {
 				name: "Page",
 				title: "Page",
 				rowIds: [],
+				visibility: "public",
 				createdAt: nowIso,
 				updatedAt: nowIso,
 			};

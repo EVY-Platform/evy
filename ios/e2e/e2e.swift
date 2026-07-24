@@ -528,8 +528,9 @@ class E2ETestBase: XCTestCase {
     return response as? [Any]
   }
 
-  func waitForMarketplaceResourceUpdate(
+  func waitForResourceUpdate(
     emitter: WSEmitter,
+    service: String,
     resource: String,
     timeout: TimeInterval = 10,
     matches: (Any) -> Bool
@@ -537,7 +538,7 @@ class E2ETestBase: XCTestCase {
     let deadline = Date().addingTimeInterval(timeout)
     repeat {
       let payload = try await emitter.getResource(
-        service: MARKETPLACE_SERVICE,
+        service: service,
         resource: resource
       )
       if matches(payload) {
@@ -547,18 +548,19 @@ class E2ETestBase: XCTestCase {
     return false
   }
 
-  func waitForMarketplaceMessageStatus(
+  func waitForMessageStatus(
     emitter: WSEmitter,
     messageId: String,
     status: String
   ) async throws -> Bool {
-    try await waitForMarketplaceResourceUpdate(
+    try await waitForResourceUpdate(
       emitter: emitter,
+      service: EVY_CORE_SERVICE,
       resource: EVYCoreResource.messages.rawValue
-    ) { Self.marketplaceMessageHasStatus($0, messageId: messageId, status: status) }
+    ) { Self.messageHasStatus($0, messageId: messageId, status: status) }
   }
 
-  static func marketplaceMessageHasStatus(
+  static func messageHasStatus(
     _ messages: Any,
     messageId: String,
     status: String
@@ -2273,7 +2275,7 @@ final class WebSocketE2ETests: E2ETestBase {
       app.alerts.firstMatch.waitForExistence(timeout: 2),
       "Pickup request should not show a native confirmation alert")
 
-    let pickupRequestCreated = try await waitForMarketplaceMessage(
+    let pickupRequestCreated = try await waitForMessage(
       emitter: emitter,
       type: "pickup",
       itemId: selectedItemId,
@@ -2321,11 +2323,11 @@ final class WebSocketE2ETests: E2ETestBase {
     dismissConfirmationSheet()
 
     let messagesAfterCancel = try await emitter.getResource(
-      service: MARKETPLACE_SERVICE,
+      service: EVY_CORE_SERVICE,
       resource: EVYCoreResource.messages.rawValue
     )
     XCTAssertFalse(
-      Self.marketplaceMessagesContain(
+      Self.messagesContain(
         messagesAfterCancel,
         type: "pickup",
         itemId: selectedItemId
@@ -2432,7 +2434,7 @@ final class WebSocketE2ETests: E2ETestBase {
       "Pickup confirmation sheet should appear after selecting a timeslot")
     tapConfirmationSheetRequestButton()
 
-    let pickupRequestCreated = try await waitForMarketplaceMessage(
+    let pickupRequestCreated = try await waitForMessage(
       emitter: emitter,
       type: "pickup",
       itemId: selectedItemId,
@@ -2464,7 +2466,7 @@ final class WebSocketE2ETests: E2ETestBase {
       "Confirm cancel button should be tappable in the sheet")
     confirmCancelButton.tap()
 
-    let messageArchived = try await waitForArchivedMarketplaceMessage(
+    let messageArchived = try await waitForArchivedMessage(
       emitter: emitter,
       itemId: selectedItemId
     )
@@ -2518,7 +2520,7 @@ final class WebSocketE2ETests: E2ETestBase {
       "Pickup confirmation sheet should appear after selecting a timeslot")
     tapConfirmationSheetRequestButton()
 
-    let pickupRequestCreated = try await waitForMarketplaceMessage(
+    let pickupRequestCreated = try await waitForMessage(
       emitter: emitter,
       type: "pickup",
       itemId: selectedItemId,
@@ -2531,7 +2533,7 @@ final class WebSocketE2ETests: E2ETestBase {
       "Cancel pickup request should be visible for a pending request")
 
     let messagesPayload = try await emitter.getResource(
-      service: MARKETPLACE_SERVICE,
+      service: EVY_CORE_SERVICE,
       resource: EVYCoreResource.messages.rawValue
     )
     let messageRows = try XCTUnwrap(
@@ -2552,12 +2554,12 @@ final class WebSocketE2ETests: E2ETestBase {
     )
     acceptedMessage["status"] = "accepted"
     _ = try await emitter.updateResource(
-      service: MARKETPLACE_SERVICE,
+      service: EVY_CORE_SERVICE,
       resource: EVYCoreResource.messages.rawValue,
       filter: ["id": messageId],
       data: acceptedMessage
     )
-    let acceptedOnServer = try await waitForMarketplaceMessageStatus(
+    let acceptedOnServer = try await waitForMessageStatus(
       emitter: emitter,
       messageId: messageId,
       status: "accepted"
@@ -2623,11 +2625,11 @@ final class WebSocketE2ETests: E2ETestBase {
       "An empty shipping postcode should show the missing-information alert"
     )
     let messagesAfterEmptyPostcode = try await emitter.getResource(
-      service: MARKETPLACE_SERVICE,
+      service: EVY_CORE_SERVICE,
       resource: EVYCoreResource.messages.rawValue
     )
     XCTAssertFalse(
-      Self.marketplaceMessagesContain(
+      Self.messagesContain(
         messagesAfterEmptyPostcode,
         type: "shipping",
         itemId: selectedItemId
@@ -2645,7 +2647,7 @@ final class WebSocketE2ETests: E2ETestBase {
       "Shipping confirmation sheet should appear after Ask to buy with a postcode")
     tapConfirmationSheetRequestButton()
 
-    let shippingRequestCreated = try await waitForMarketplaceMessage(
+    let shippingRequestCreated = try await waitForMessage(
       emitter: emitter,
       type: "shipping",
       itemId: selectedItemId,
@@ -3008,8 +3010,9 @@ final class WebSocketE2ETests: E2ETestBase {
     }
 
     let itemMatched = try awaitResult("wait for marketplace item with address_id") {
-      try await self.waitForMarketplaceResourceUpdate(
+      try await self.waitForResourceUpdate(
         emitter: emitter,
+        service: MARKETPLACE_SERVICE,
         resource: MARKETPLACE_ITEMS_RESOURCE_ID,
         timeout: 20
       ) { payload in
@@ -3097,17 +3100,18 @@ final class WebSocketE2ETests: E2ETestBase {
     return labels.allSatisfy { !app.buttons[$0].exists }
   }
 
-  private func waitForArchivedMarketplaceMessage(
+  private func waitForArchivedMessage(
     emitter: WSEmitter,
     itemId: String
   ) async throws -> Bool {
-    try await waitForMarketplaceResourceUpdate(
+    try await waitForResourceUpdate(
       emitter: emitter,
+      service: EVY_CORE_SERVICE,
       resource: EVYCoreResource.messages.rawValue
-    ) { Self.marketplaceMessagesArchived($0, itemId: itemId) }
+    ) { Self.messagesArchived($0, itemId: itemId) }
   }
 
-  private static func marketplaceMessagesArchived(
+  private static func messagesArchived(
     _ messages: Any,
     itemId: String
   ) -> Bool {
@@ -3122,18 +3126,19 @@ final class WebSocketE2ETests: E2ETestBase {
     }
   }
 
-  private func waitForMarketplaceMessage(
+  private func waitForMessage(
     emitter: WSEmitter,
     type: String,
     itemId: String,
     valueKey: String,
     value: String
   ) async throws -> Bool {
-    try await waitForMarketplaceResourceUpdate(
+    try await waitForResourceUpdate(
       emitter: emitter,
+      service: EVY_CORE_SERVICE,
       resource: EVYCoreResource.messages.rawValue
     ) {
-      Self.marketplaceMessagesContain(
+      Self.messagesContain(
         $0,
         type: type,
         itemId: itemId,
@@ -3143,7 +3148,7 @@ final class WebSocketE2ETests: E2ETestBase {
     }
   }
 
-  private static func marketplaceMessagesContain(
+  private static func messagesContain(
     _ messages: Any,
     type: String,
     itemId: String,
@@ -4017,7 +4022,7 @@ final class E2EHomepageMessageSearchTests: E2ETestBase {
       let emitter = WSEmitter()
       try await emitter.connect(host: self.apiHost)
       try await emitter.login(token: "e2e-test", os: "ios")
-      let accepted = try await self.waitForMarketplaceMessageStatus(
+      let accepted = try await self.waitForMessageStatus(
         emitter: emitter,
         messageId: Self.pickupMessageId,
         status: "accepted"
