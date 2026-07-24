@@ -1565,7 +1565,7 @@ class E2ETestBase: XCTestCase {
   static func viewItemRequestFlowData(flowId: String, pageId: String) -> [String: Any] {
     let messagesResourceId = EVYCoreResource.messages.rawValue
     let messageEnvelope =
-      "fk: \(MARKETPLACE_ITEMS_RESOURCE_ID).id, service: \"\(MARKETPLACE_SERVICE)\", resource: \"\(MARKETPLACE_ITEMS_RESOURCE_ID)\", archivedAt: null"
+      "fk: \(MARKETPLACE_ITEMS_RESOURCE_ID).id, service: \"\(MARKETPLACE_SERVICE)\", resource: \"\(MARKETPLACE_ITEMS_RESOURCE_ID)\", archivedAt: null, status: \"pending\""
     let pickupCreateAction =
       "{create(\(EVY_CORE_SERVICE),\(messagesResourceId),{\(messageEnvelope), data: {type: pickup, time: selected_pickup_timeslot}})}"
     let shippingCreateAction =
@@ -1747,7 +1747,10 @@ class E2ETestBase: XCTestCase {
     pickupSelection: [String]? = nil,
     shippingFee: String? = nil
   ) async throws -> (id: String, title: String) {
-    let selectedItemId = UUID().uuidString
+    // Lowercased to match the canonical form Postgres `uuid` columns (e.g. core
+    // Message.fk) normalize values to on storage/retrieval, so assertions comparing
+    // this id against server-returned data never mismatch on case alone.
+    let selectedItemId = UUID().uuidString.lowercased()
     let selectedItemTitle = "\(titlePrefix) \(Int(Date().timeIntervalSince1970))"
     var data: [String: Any] = [
       "id": selectedItemId,

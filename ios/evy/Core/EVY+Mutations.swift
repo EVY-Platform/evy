@@ -178,7 +178,10 @@ extension EVY {
     resource: String,
     payload: [String: EVYJson]
   ) throws -> String {
-    let newId = UUID().uuidString
+    // Lowercased to match the canonical form Postgres `uuid` columns normalize to on
+    // storage/retrieval, so id comparisons (e.g. `fk == item.id` visibility expressions)
+    // never silently mismatch on case once a value round-trips through such a column.
+    let newId = UUID().uuidString.lowercased()
     var payloadWithId = payload
     payloadWithId["id"] = .string(newId)
     if payloadWithId["createdAt"] == nil {
