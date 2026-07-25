@@ -10,7 +10,8 @@
 		"skipLibCheck": true,
 		"noEmit": true,
 		"types": ["bun-types"],
-		"baseUrl": "."
+		"baseUrl": ".",
+		"customConditions": ["node"]
 	},
 	"include": ["app/**/*", "dev/**/*"]
 }
