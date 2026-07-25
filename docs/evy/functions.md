@@ -26,13 +26,15 @@ count({_variable_type_list_})
 
 #### length
 
-Returns the number of characters in a string argument. Missing paths and JSON `null` count as `0`; other non-strings count as `0` (no raw-argument echo).
+Returns the number of characters in a string argument. Missing paths and JSON `null` count as `0`.
 
 ```
 length({_variable_type_string_})
 Variable: "Hello"
 Output: 5
 ```
+
+> **Current behaviour:** `length` is implemented as an alias of `count` on iOS, so it does not yet behave as documented for non-strings — arrays return their element count and numbers return themselves, rather than `0`. Treat `length` as string-only until the two are separated.
 
 #### earliestDatetime
 
@@ -92,14 +94,18 @@ Comparison expressions resolve to `true` or `false` in display text. They are us
 - **Boolean combinators**: `||` (OR), `&&` (AND)
 - **Grouping**: `()` (parentheses)
 
-Both sides of a comparison are resolved as data paths, string literals, numbers, or nested function calls before comparing. Numeric values compare numerically; strings compare lexicographically.
+Both sides of a comparison are resolved as data paths, unquoted literals, numbers, or nested function calls before comparing. Numeric values compare numerically; strings compare lexicographically.
+
+> **Quotes are forbidden inside comparison blocks.** A block containing a `"` is not recognised as a comparison at all: it is never evaluated, the raw text leaks into display, and as a `condition` it is treated as false. Write string literals bare — `{item.title == Amazing}`, not `{item.title == "Amazing"}`. Quotes *are* required elsewhere: in `create`/`update` action data (`status: "pending"`) and in format patterns (`formatDatetime(x, "HH:mm")`).
 
 ```
-{item.title == "Amazing"}
+{item.title == Amazing}
 {count(item.photos) > 0}
 {item.price > 100 && item.price < 500}
-{(item.width == item.height) || item.type == "square"}
+{(item.width == item.height) || item.type == square}
 ```
+
+Boolean literals are valid as standalone conditions: `{true}` and `{false}` evaluate directly without a comparison operator.
 
 The `visible` field on rows uses these expressions natively. A row with `visible: "{item.enabled == true}"` only renders when the condition holds.
 

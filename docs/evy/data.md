@@ -37,8 +37,11 @@ bun run types:generate
 `bun run types:generate` runs:
 
 1. `scripts/generate-types.ts` — Emits TypeScript under `types/generated/ts/` and Swift under `types/generated/swift/` from `*.schema.json`. It generates stable Swift filenames from nested and hyphenated schema paths, includes `types/schema/files/file.schema.json`, and runs `scripts/generate-swift-sdui.ts` for Swift UI shapes from `evy.schema.json` plus `types/schema/sdui/definitions/*.schema.json`.
-2. `scripts/generate-drizzle.ts` — Emits `types/generated/ts/db/schema.generated.ts` from `data.schema.json` and `drizzle.config.json`.
+2. `scripts/generate-drizzle.ts` — Emits `types/generated/ts/db/schema.generated.ts` from `data.schema.json` and `drizzle.config.json`. Every `DATA_EVY_*` `$def` must have a table entry in `drizzle.config.json`, or be listed there under `nonTableDefs` if it is a nested value object with no table of its own; otherwise generation fails.
 3. `scripts/generate-core-resources.ts` — Emits generated evy core resource compile-time constants only for core API validation and sync's core-resource loop. Non-evy service/resource ownership is stored in normal core `services` and `serviceResources` rows and can be read through standard `get` CRUD.
+4. `scripts/generate-marketplace-resources.ts` — Emits the marketplace service and resource UUID constants used by the marketplace service guard, the seed script, and iOS.
+
+`scripts/generate-types.ts` additionally invokes `scripts/generate-sdui-definitions.ts`, which emits the embedded SDUI row schemas and trigger specs consumed by `validateUiFlow` and the web builder.
 
 ### Outputs (do not edit by hand)
 
@@ -55,7 +58,9 @@ This document covers EVY shared data: schema-backed rows stored in the API datab
 
 ### Wire contract vs persisted rows
 
-Clients call the API with JSON-RPC `sync`, `get`, `api`, `create`, `update`, and `delete` using `service` and `resource` where applicable (see [`types/schema/rpc`](../../../types/schema/rpc)). `service: "[evy_core_service_id]"` is dispatched by the API into resource modules under [`api/src/data/resources`](../../../api/src/data/resources) and maps to the row types below in the API Postgres schema. External services such as `service: "[service_id]"` are routed by service ID from normal core `services` rows. External resource ownership is represented in core `serviceResources` rows, and the runtime `resource` value for an external service is the `serviceResources.id` UUID. `serviceResources.name` is a human-friendly base label only; it is not a routing key. External payloads are validated in those services and stored in their own databases—not as a generic "namespace row" in the EVY data schema. See [`external-service-resource-id-discovery.md`](../plans/external-service-resource-id-discovery.md) for the resource-ID routing details.
+Clients call the API with JSON-RPC `get`, `api`, `create`, `update`, and `delete` using `service` and `resource` where applicable (`sync` is not a top-level method — it is `api` with `method: "sync"`) (see [`types/schema/rpc`](../../../types/schema/rpc)). `service: "[evy_core_service_id]"` is dispatched by the API into resource modules under [`api/src/data/resources`](../../../api/src/data/resources) and maps to the row types below in the API Postgres schema. External services such as `service: "[service_id]"` are routed by service ID from normal core `services` rows. External resource ownership is represented in core `serviceResources` rows, and the runtime `resource` value for an external service is the `serviceResources.id` UUID. `serviceResources.name` is a human-friendly base label only; it is not a routing key. External payloads are validated in those services and stored in their own databases—not as a generic "namespace row" in the EVY data schema.
+
+Routing in practice: the API dispatches on `service`, comparing it against the generated core service UUID (`EVY_CORE_SERVICE`). Core resources are addressed by **name** (`flows`, `messages`, …); external resources are addressed by the **`serviceResources.id` UUID**. Anything that is not the core service is forwarded to the owning service's adapter, which the API resolves from the core `services` table at startup.
 
 ### Common date-time fields
 

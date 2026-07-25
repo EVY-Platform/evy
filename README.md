@@ -1,6 +1,8 @@
 # EVY
 
-If smartphones and the internet were built by the people for the people. Create services on the EVY platform and get paid every time your contribution is used. The EVY app is privacy-focused, local-first and peer-to-peer.
+If smartphones and the internet were built by the people for the people. Create services on the EVY platform and get paid every time your contribution is used.
+
+The EVY app is privacy-focused and local-first: the iOS client keeps a persistent on-device store, reads from it offline, and writes optimistically before syncing. Today all clients sync through a central JSON-RPC WebSocket gateway backed by Postgres — peer-to-peer transport and enforced per-user data scoping are roadmap goals, not the current architecture.
 
 ## Architecture
 

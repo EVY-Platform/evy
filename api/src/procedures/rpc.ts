@@ -41,7 +41,7 @@ export async function api(params: unknown, db: EvyDb): Promise<unknown> {
 		return coreApi(params, db);
 	}
 	throw new Error(
-		`API calls are only supported for service "evy" (got "${params.service}")`,
+		`API calls are only supported for the evy core service ${EVY_CORE_SERVICE} (got "${params.service}")`,
 	);
 }
 

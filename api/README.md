@@ -6,7 +6,7 @@ WebSocket API that routes data requests to the proper service, handles evy core 
 
 ### Request dispatch
 
-Incoming JSON-RPC messages are authenticated where required, validated, then dispatched based on `service`. Requests for `service: "evy"` are handled by evy core resource modules. All other services are forwarded to the appropriate backend over JSON-RPC (WebSocket).
+Incoming JSON-RPC messages are authenticated where required, validated, then dispatched based on `service`. `service` is always a UUID: requests whose value matches the generated core service id (`EVY_CORE_SERVICE`, exported from `evy-types/coreResources`) are handled by evy core resource modules. All other services are forwarded to the appropriate backend over JSON-RPC (WebSocket). Note the literal string `"evy"` is not a valid `service` value.
 
 ```mermaid
 sequenceDiagram
@@ -23,12 +23,12 @@ sequenceDiagram
     index->>rpc: registered handler
     rpc->>rpc: validateStrict*Request
 
-    alt service == "evy"
+    alt service == EVY_CORE_SERVICE
         rpc->>data: core dispatch
         data->>resource: resource-specific handler
         resource-->>data: row JSON
         data-->>rpc: row JSON
-    else service != "evy"
+    else other service UUID
         rpc->>services: forwardGet/Create/Update
         services->>marketplace: JSON-RPC get/create/update
         marketplace-->>services: validated response
@@ -131,6 +131,6 @@ Env vars must be exported in the shell or provided via Docker — they are not l
 
 ## File Upload
 
-Files are stored at `api/src/public/files/{id}` (excluded from git). File metadata is an evy core resource (`service: "evy"`, `resource: "files"`). Maximum upload size is 20 MB. For production deployments, migrate to S3 or a CDN while keeping file IDs stable.
+Files are stored at `api/src/public/files/{id}` (excluded from git). File metadata is an evy core resource (`service: EVY_CORE_SERVICE`, `resource: "files"`). Maximum upload size is 20 MB. For production deployments, migrate to S3 or a CDN while keeping file IDs stable.
 
 Reads are split by shape: a `get` addressing a single file by `filter.id` returns the binary inline as `dataBase64`, while collection reads — including every `sync` — return metadata only. Clients fetch content lazily by id (iOS caches it on disk), so sync payloads stay small and a binary missing from disk cannot fail a whole sync.

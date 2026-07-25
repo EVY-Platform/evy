@@ -49,7 +49,9 @@ describe("api JSON-RPC handler", () => {
 				},
 				dataDb,
 			),
-		).rejects.toThrow('API calls are only supported for service "evy"');
+		).rejects.toThrow(
+			"API calls are only supported for the evy core service",
+		);
 	});
 
 	it("rejects requests without an API method", async () => {

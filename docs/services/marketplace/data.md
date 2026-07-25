@@ -33,13 +33,14 @@ value: string
 
 A listing aggregate. Field names below follow the marketplace service mock and UI bindings; some keys use `snake_case` in persisted JSON.
 
+Items do **not** embed an address object. A pickup location is referenced by id through `transfer_options.pickup.address_id`, which points at a core [`addresses`](../../evy/data.md) row; SDUI reads it with `findFirst(addresses, <item>.transfer_options.pickup.address_id)`.
+
 ```
 id: uuid
 title: string
 photo_ids: [uuid] (references `evy:files` rows)
 price: price
 seller_id: uuid
-address: address
 createdAt: string (date-time)
 transfer_options: transfer_options
 description: string
