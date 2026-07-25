@@ -198,6 +198,8 @@ struct EVYSwipeableRow<Content: View>: View {
     }
     .contentShape(Rectangle())
     .clipped()
+    .accessibilityElement(children: .contain)
+    .accessibilityIdentifier("swipeRow_\(swipeIdentity)")
     .onPreferenceChange(EVYSwipeRowWidthKey.self) { width in
       rowWidth = width
     }

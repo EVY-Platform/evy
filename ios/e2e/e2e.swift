@@ -4115,15 +4115,20 @@ final class E2EHomepageMessageSearchTests: E2ETestBase {
     let messageSearchField = Self.orderedSearchTextFields(in: homePage)[0]
     clearAndType(field: messageSearchField, text: Self.matchingTypeQuery)
 
+    let pickupRowId =
+      "swipeRow_\(Self.messageChildRowId)_\(Self.pickupMessageId)"
+    let pickupRow = app.otherElements[pickupRowId]
     XCTAssertTrue(
-      app.staticTexts["pickup request"].waitForExistence(timeout: 10),
-      "Pickup message row should be visible")
+      pickupRow.waitForExistence(timeout: 10),
+      "Seeded pickup message row should be visible")
     XCTAssertTrue(
-      app.staticTexts["pending"].waitForExistence(timeout: 5),
+      pickupRow.staticTexts["pickup request"].waitForExistence(timeout: 5),
+      "Pickup message row should show pickup request title")
+    XCTAssertTrue(
+      pickupRow.staticTexts["pending"].waitForExistence(timeout: 5),
       "Pickup message should show pending status")
 
-    let pickupLabel = app.staticTexts["pickup request"]
-    pickupLabel.swipeLeft(velocity: .slow)
+    pickupRow.swipeLeft(velocity: .slow)
 
     let swipeButtonId =
       "swipeLeft_\(Self.messageChildRowId)_\(Self.pickupMessageId)"
@@ -4135,7 +4140,7 @@ final class E2EHomepageMessageSearchTests: E2ETestBase {
     swipeButton.tap()
 
     XCTAssertTrue(
-      app.staticTexts["accepted"].waitForExistence(timeout: 5),
+      pickupRow.staticTexts["accepted"].waitForExistence(timeout: 5),
       "Pickup message subtitle should show accepted after swipe")
 
     let acceptedOnServer = try awaitResult("pickup message status accepted") {
