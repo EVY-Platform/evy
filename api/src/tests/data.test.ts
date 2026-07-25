@@ -187,6 +187,49 @@ describe("flat flow resources", () => {
 		expect(await testDb.select().from(schema.flow)).toHaveLength(1);
 	});
 
+	it("round-trips a flow submits declaration through create, get and update", async () => {
+		const submits = {
+			service: "66b092ae-7cd8-4d67-95b7-30b03568fd90",
+			resource: "dc28ed59-298e-493c-8ff3-3e60f2ebccbd",
+		};
+		const flowPayload = { ...flowRow({ pageIds: [] }), submits };
+
+		const created = (await create(dataDb, {
+			service: EVY_CORE_SERVICE,
+			resource: FLOW_RESOURCE,
+			data: flowPayload,
+		})) as DATA_EVY_Flow;
+		expect(created.submits).toEqual(submits);
+
+		const [fetched] = (await get(dataDb, {
+			service: EVY_CORE_SERVICE,
+			resource: FLOW_RESOURCE,
+			filter: { id: flowPayload.id },
+		})) as DATA_EVY_Flow[];
+		expect(fetched?.submits).toEqual(submits);
+
+		const updated = (await update(dataDb, {
+			service: EVY_CORE_SERVICE,
+			resource: FLOW_RESOURCE,
+			filter: { id: flowPayload.id },
+			data: { ...flowPayload, submits: undefined },
+		})) as DATA_EVY_Flow;
+		expect(updated.submits).toBeUndefined();
+	});
+
+	it("omits submits entirely when a flow does not declare one", async () => {
+		const flowPayload = flowRow({ pageIds: [] });
+
+		const created = (await create(dataDb, {
+			service: EVY_CORE_SERVICE,
+			resource: FLOW_RESOURCE,
+			data: flowPayload,
+		})) as DATA_EVY_Flow;
+
+		expect(created.submits).toBeUndefined();
+		expect("submits" in created).toBe(false);
+	});
+
 	it("uses filter.id as the persisted id on create", async () => {
 		const flowId = crypto.randomUUID();
 		const result = (await create(dataDb, {

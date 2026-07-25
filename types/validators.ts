@@ -11,6 +11,8 @@ import type { ErrorObject, ValidateFunction } from "ajv";
 import Ajv2020 from "ajv/dist/2020";
 import addFormats from "ajv-formats";
 
+import { splitFunctionArguments } from "./functionArgs";
+
 import type {
 	DATA_EVY_Address,
 	DATA_EVY_File,
@@ -550,6 +552,95 @@ function walkUiFlowRowTree(row: UI_Row, path: string): void {
 	}
 }
 
+/** `{create(service,resource,submit)}` -> `service/resource`, else null. */
+function submitCreateTarget(branch: string): string | null {
+	const trimmed = branch.trim();
+	if (!trimmed.startsWith("{") || !trimmed.endsWith("}")) return null;
+	const inner = trimmed.slice(1, -1).trim();
+	if (!inner.startsWith("create(") || !inner.endsWith(")")) return null;
+
+	const args = splitFunctionArguments(inner.slice("create(".length, -1));
+	if (args[2]?.trim() !== "submit") return null;
+
+	const service = args[0]?.trim();
+	const resource = args[1]?.trim();
+	if (!service || !resource) return null;
+	return `${service}/${resource}`;
+}
+
+function collectSubmitTargets(row: UI_Row, into: Set<string>): void {
+	for (const actionList of Object.values(row.actions ?? {})) {
+		if (!Array.isArray(actionList)) continue;
+		for (const action of actionList) {
+			for (const branch of [action.true, action.false]) {
+				if (typeof branch !== "string") continue;
+				const target = submitCreateTarget(branch);
+				if (target) into.add(target);
+			}
+		}
+	}
+
+	const record = row as Record<string, unknown>;
+	if (record.sheet && typeof record.sheet === "object") {
+		collectSubmitTargets(record.sheet as UI_Row, into);
+	}
+	if (record.child && typeof record.child === "object") {
+		collectSubmitTargets(record.child as UI_Row, into);
+	}
+	if (Array.isArray(record.children)) {
+		for (const child of record.children) {
+			if (child && typeof child === "object") {
+				collectSubmitTargets(child as UI_Row, into);
+			}
+		}
+	}
+}
+
+/**
+ * A flow that submits must say so. Both clients previously derived this by
+ * re-parsing every action string in the flow - independently, in two languages.
+ * The declaration is now the source of truth and the actions are checked
+ * against it.
+ *
+ * A declaration with no matching action is allowed: flows are authored
+ * incrementally, and the declaration alone is harmless.
+ */
+function assertUiFlowSubmitsDeclaration(flow: UI_Flow): void {
+	const targets = new Set<string>();
+	for (const page of flow.pages) {
+		for (const row of page.rows) {
+			if (row) collectSubmitTargets(row, targets);
+		}
+		if (page.footer) collectSubmitTargets(page.footer, targets);
+	}
+
+	if (targets.size === 0) return;
+
+	if (targets.size > 1) {
+		throw new Error(
+			`Flow validation failed: flow submits more than one entity (${[
+				...targets,
+			]
+				.sort()
+				.join(", ")}); a flow may submit at most one`,
+		);
+	}
+
+	const [target] = [...targets];
+	if (!flow.submits) {
+		throw new Error(
+			`Flow validation failed: flow has a create(...,submit) targeting ${target} but declares no "submits"`,
+		);
+	}
+
+	const declared = `${flow.submits.service}/${flow.submits.resource}`;
+	if (declared !== target) {
+		throw new Error(
+			`Flow validation failed: flow declares submits ${declared} but its create(...,submit) targets ${target}`,
+		);
+	}
+}
+
 function assertUiFlowRowTriggers(flow: UI_Flow): void {
 	for (let pageIndex = 0; pageIndex < flow.pages.length; pageIndex++) {
 		const page = flow.pages[pageIndex];
@@ -573,6 +664,7 @@ export function validateUiFlow(data: unknown): UI_Flow {
 	assertValid("Flow", getValidateUiFlow(), data);
 	const flow = data as UI_Flow;
 	assertUiFlowRowTriggers(flow);
+	assertUiFlowSubmitsDeclaration(flow);
 	return flow;
 }
 export const validateDataEvyAddress = makeValidator<DATA_EVY_Address>(

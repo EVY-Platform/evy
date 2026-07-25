@@ -683,6 +683,10 @@
 	{
 		"id": "ca47e6c5-da19-4491-8422-adb40d9e8a27",
 		"name": "Create item",
+		"submits": {
+			"service": "66b092ae-7cd8-4d67-95b7-30b03568fd90",
+			"resource": "dc28ed59-298e-493c-8ff3-3e60f2ebccbd"
+		},
 		"pages": [
 			{
 				"id": "306ed62c-c2af-4652-a873-26c7a388972d",

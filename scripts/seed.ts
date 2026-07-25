@@ -388,6 +388,7 @@ function decomposeFlow(flow: SeedFlow, now: string): DecomposedFlow {
 			id: flow.id,
 			name: flow.name,
 			pageIds: pageRows.map((page) => page.id),
+			...(flow.submits ? { submits: flow.submits } : {}),
 			visibility: "public",
 			...timestamped(now),
 		},

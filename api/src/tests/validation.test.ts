@@ -483,6 +483,150 @@ describe("validateFlowData", () => {
 	});
 });
 
+describe("validateFlowData submits declaration", () => {
+	const SERVICE = "66b092ae-1e3f-4f2a-8a7d-9b0c1d2e3f40";
+
+	function submitButton(service: string, resource: string) {
+		return {
+			name: "Submit",
+			type: "Button",
+			actions: {
+				tap: [
+					{
+						condition: "",
+						false: "",
+						true: `{create(${service},${resource},submit)}`,
+					},
+				],
+			},
+			visible: "true",
+			label: "Go",
+		};
+	}
+
+	function flowWithSubmit(
+		row: Record<string, unknown>,
+		submits?: { service: string; resource: string },
+	) {
+		const flow = flowWithRow(row) as Record<string, unknown>;
+		if (submits) flow.submits = submits;
+		return flow;
+	}
+
+	it("accepts a submitting flow whose declaration matches", () => {
+		const out = validateFlowData(
+			flowWithSubmit(submitButton(SERVICE, "items"), {
+				service: SERVICE,
+				resource: "items",
+			}),
+		);
+		expect(out.submits?.resource).toBe("items");
+	});
+
+	it("rejects a submitting flow with no declaration", () => {
+		expect(() =>
+			validateFlowData(flowWithSubmit(submitButton(SERVICE, "items"))),
+		).toThrow('declares no "submits"');
+	});
+
+	it("rejects a declaration whose resource does not match the action", () => {
+		expect(() =>
+			validateFlowData(
+				flowWithSubmit(submitButton(SERVICE, "items"), {
+					service: SERVICE,
+					resource: "addresses",
+				}),
+			),
+		).toThrow("but its create(...,submit) targets");
+	});
+
+	it("rejects a declaration whose service does not match the action", () => {
+		expect(() =>
+			validateFlowData(
+				flowWithSubmit(submitButton(SERVICE, "items"), {
+					service: "475731ac-31aa-4d65-94d2-7032782ae359",
+					resource: "items",
+				}),
+			),
+		).toThrow("but its create(...,submit) targets");
+	});
+
+	it("rejects a flow submitting more than one entity", () => {
+		const flow = flowWithRow(submitButton(SERVICE, "items")) as Record<
+			string,
+			unknown
+		>;
+		const pages = flow.pages as Record<string, unknown>[];
+		const rows = pages[0]?.rows as Record<string, unknown>[];
+		rows.push({
+			id: crypto.randomUUID(),
+			...submitButton(SERVICE, "addresses"),
+		});
+
+		expect(() => validateFlowData(flow)).toThrow(
+			"submits more than one entity",
+		);
+	});
+
+	it("ignores non-submit creates", () => {
+		const out = validateFlowData(
+			flowWithRow({
+				name: "Inline",
+				type: "Button",
+				actions: {
+					tap: [
+						{
+							condition: "",
+							false: "",
+							true: `{create(${SERVICE},messages,{status: "pending"})}`,
+						},
+					],
+				},
+				visible: "true",
+				label: "Go",
+			}),
+		);
+		expect(out.submits).toBeUndefined();
+	});
+
+	// Flows are authored incrementally, so the declaration may land first.
+	it("allows a declaration with no submitting action yet", () => {
+		const out = validateFlowData(
+			flowWithSubmit(
+				{
+					name: "Plain",
+					type: "Text",
+					actions: {},
+					visible: "true",
+					title: "Hello",
+				},
+				{ service: SERVICE, resource: "items" },
+			),
+		);
+		expect(out.submits?.service).toBe(SERVICE);
+	});
+
+	it("finds submit actions nested in a sheet", () => {
+		expect(() =>
+			validateFlowData(
+				flowWithRow({
+					name: "Opener",
+					type: "Button",
+					actions: {
+						tap: [{ condition: "", false: "", true: "{close()}" }],
+					},
+					visible: "true",
+					label: "Open",
+					sheet: {
+						id: crypto.randomUUID(),
+						...submitButton(SERVICE, "items"),
+					},
+				}),
+			),
+		).toThrow('declares no "submits"');
+	});
+});
+
 describe("validateFileUploadChunkMetadata", () => {
 	const uploadId = "440dcda6-3a4c-4767-8de0-dffe860fd5ba";
 
