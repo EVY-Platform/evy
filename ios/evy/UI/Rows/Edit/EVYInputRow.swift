@@ -23,8 +23,6 @@ struct EVYInputRow: View {
     self.onValueCommit = onValueCommit
   }
 
-  @Environment(\.evyScope) private var evyScope
-
   var body: some View {
     EVYTitledTextFieldRow(
       title: view.title,

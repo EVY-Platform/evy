@@ -28,8 +28,7 @@ struct EVYTextView: View {
 
   static func makeState(
     template: String,
-    placeholder: String = "",
-    scope: EVYScope? = nil
+    placeholder: String = ""
   ) -> EVYState<EVYValue> {
     let props = EVY.parsePropsFromText(template)
 
@@ -42,7 +41,6 @@ struct EVYTextView: View {
 
     return EVYState(
       textToWatch: templateText,
-      scope: scope,
       setter: {
         guard let value = try? EVY.getValueFromText(templateText) else {
           return placeholderVal

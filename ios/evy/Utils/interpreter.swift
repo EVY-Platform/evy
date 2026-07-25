@@ -321,15 +321,14 @@ func _getDataFromPropsStrict(_ props: String, scope: EVYScope? = nil) -> EVYJson
 @MainActor
 func _getValueFromText(
   _ input: String,
-  editing: Bool = false,
-  scope: EVYScope? = nil
+  editing: Bool = false
 ) throws -> EVYValue {
   let match = try parseTextFromText(input, editing)
   return EVYValue(match.value, match.prefix, match.suffix)
 }
 
 @MainActor
-func _evaluateFromText(_ input: String, scope: EVYScope? = nil) throws -> Bool {
+func _evaluateFromText(_ input: String) throws -> Bool {
   // A standalone boolean literal carries no comparison operator, so it never
   // reaches the comparison path and would otherwise be resolved as a data path.
   if let literal = standaloneBooleanLiteral(in: input) {

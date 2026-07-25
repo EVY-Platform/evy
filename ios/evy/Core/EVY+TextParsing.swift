@@ -29,9 +29,8 @@ extension EVY {
   static func getValueFromText(
     _ input: String,
     editing: Bool = false,
-    scope: EVYScope? = nil
   ) throws -> EVYValue {
-    try _getValueFromText(input, editing: editing, scope: scope)
+    try _getValueFromText(input, editing: editing)
   }
 
   static func parsePropsFromText(_ input: String) -> String {
@@ -42,8 +41,8 @@ extension EVY {
     _watchTargets(for: text)
   }
 
-  static func evaluateFromText(_ input: String, scope: EVYScope? = nil) throws -> Bool {
-    try _evaluateFromText(input, scope: scope)
+  static func evaluateFromText(_ input: String) throws -> Bool {
+    try _evaluateFromText(input)
   }
 
   static func formatData(json: EVYJson, format: String) throws -> String {

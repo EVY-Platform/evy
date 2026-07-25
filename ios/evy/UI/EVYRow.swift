@@ -261,12 +261,13 @@ private struct EVYResolvedRow: View {
     if visibleExpr.isEmpty {
       return EVYState(staticString: true)
     }
-    let evaluateVisibility = { (try? EVY.evaluateFromText(visibleExpr, scope: scope)) ?? false }
-    let watchTargets = EVY.watchTargets(for: visibleExpr)
-    if watchTargets.isEmpty {
-      return EVYState(staticString: evaluateVisibility())
-    }
-    return EVYState(watches: watchTargets, scope: scope, setter: evaluateVisibility)
+    // Through EVYState even with nothing to watch: it installs the row's scope
+    // around the evaluation, which evaluating here directly would not.
+    let evaluateVisibility = { (try? EVY.evaluateFromText(visibleExpr)) ?? false }
+    return EVYState(
+      watches: EVY.watchTargets(for: visibleExpr),
+      scope: scope,
+      setter: evaluateVisibility)
   }
 
   // Keep in sync with `rowView(for:)` cases that wire their own tap callbacks.
