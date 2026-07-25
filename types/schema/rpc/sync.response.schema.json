@@ -29,6 +29,26 @@
 					}
 				}
 			}
+		},
+		"errors": {
+			"description": "Resources that could not be fetched this round. The rest of the response is still usable; clients keep their previous cursor so the failed resources are retried.",
+			"type": "array",
+			"items": {
+				"type": "object",
+				"additionalProperties": false,
+				"required": ["service", "resource", "message"],
+				"properties": {
+					"service": {
+						"type": "string"
+					},
+					"resource": {
+						"type": "string"
+					},
+					"message": {
+						"type": "string"
+					}
+				}
+			}
 		}
 	}
 }

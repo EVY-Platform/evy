@@ -74,9 +74,16 @@ struct SyncRow: Codable {
   let value: EVYJson
 }
 
+struct SyncError: Codable {
+  let service: String
+  let resource: String
+  let message: String
+}
+
 struct SyncResponse: Codable {
   let data: [SyncRow]
   let cursor: String
+  let errors: [SyncError]?
 }
 
 // MARK: - Core

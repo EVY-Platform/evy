@@ -28,6 +28,18 @@ extension EVY {
         assignsOrder: assignsOrder)
     }
 
+    // A partial sync must not advance the cursor, or the resources that failed
+    // would never be retried. The rows that did arrive are still applied.
+    if let errors = response.errors, !errors.isEmpty {
+      let summary = errors.map { "\($0.resource): \($0.message)" }
+        .joined(separator: "; ")
+      NotificationCenter.default.post(
+        name: .evyErrorOccurred,
+        object: EVYError.invalidData(context: "sync was incomplete - \(summary)")
+      )
+      return
+    }
+
     EVYSyncState.markSynced(cursor: response.cursor)
   }
 }

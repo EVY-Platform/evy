@@ -52,52 +52,80 @@ type ExternalServiceResource = {
 	resourceId: string;
 };
 
+type SyncError = NonNullable<SyncResponse["errors"]>[number];
+
+type FetchOutcome = { rows: SyncRow[]; errors: SyncError[] };
+
+function describe(error: unknown): string {
+	return error instanceof Error ? error.message : String(error);
+}
+
 async function fetchEvyCoreData(
 	lastSyncTime: string,
 	getCore: (params: GetRequest) => Promise<GetResponse>,
-): Promise<SyncRow[]> {
+): Promise<FetchOutcome> {
 	const rows: SyncRow[] = [];
+	const errors: SyncError[] = [];
 	for (const coreResourceName of EVY_CORE_RESOURCE_NAMES) {
 		if (coreResourceName === EVY_CORE_RESOURCE.DEVICES) continue;
 
-		const value: GetResponse = await getCore({
-			service: EVY_CORE_SERVICE,
-			resource: coreResourceName,
-			filter: { updatedAfter: lastSyncTime },
-		});
-		if (value.length === 0) continue;
+		try {
+			const value: GetResponse = await getCore({
+				service: EVY_CORE_SERVICE,
+				resource: coreResourceName,
+				filter: { updatedAfter: lastSyncTime },
+			});
+			if (value.length === 0) continue;
 
-		rows.push({
-			service: EVY_CORE_SERVICE,
-			resource: coreResourceName,
-			value,
-		});
+			rows.push({
+				service: EVY_CORE_SERVICE,
+				resource: coreResourceName,
+				value,
+			});
+		} catch (error) {
+			errors.push({
+				service: EVY_CORE_SERVICE,
+				resource: coreResourceName,
+				message: describe(error),
+			});
+		}
 	}
-	return rows;
+	return { rows, errors };
 }
 
 async function fetchExternalServiceData(
 	lastSyncTime: string,
 	externalResources: ExternalServiceResource[],
 	fetchService: typeof services.forwardGet,
-): Promise<SyncRow[]> {
+): Promise<FetchOutcome> {
 	const rows: SyncRow[] = [];
+	const errors: SyncError[] = [];
 	for (const { serviceId, resourceId } of externalResources) {
-		const value: GetResponse = await fetchService(serviceId, {
-			service: serviceId,
-			resource: resourceId,
-			filter: { updatedAfter: lastSyncTime },
-		});
+		try {
+			const value: GetResponse = await fetchService(serviceId, {
+				service: serviceId,
+				resource: resourceId,
+				filter: { updatedAfter: lastSyncTime },
+			});
 
-		if (value.length === 0) continue;
+			if (value.length === 0) continue;
 
-		rows.push({
-			service: serviceId,
-			resource: resourceId,
-			value,
-		});
+			rows.push({
+				service: serviceId,
+				resource: resourceId,
+				value,
+			});
+		} catch (error) {
+			// One unreachable service degrades the response instead of failing
+			// the whole sync for every other resource.
+			errors.push({
+				service: serviceId,
+				resource: resourceId,
+				message: describe(error),
+			});
+		}
 	}
-	return rows;
+	return { rows, errors };
 }
 
 export async function sync(
@@ -116,9 +144,17 @@ export async function sync(
 		),
 	]);
 
-	const rows = [...evyData, ...externalData];
+	const rows = [...evyData.rows, ...externalData.rows];
+	const errors = [...evyData.errors, ...externalData.errors];
+
+	// A partial response must not advance the cursor, or the resources that
+	// failed would never be retried.
+	const cursor =
+		errors.length > 0 ? resumedFrom : nextCursor(rows, resumedFrom);
+
 	return validateSyncResponse({
 		data: rows,
-		cursor: nextCursor(rows, resumedFrom),
+		cursor,
+		...(errors.length > 0 ? { errors } : {}),
 	});
 }

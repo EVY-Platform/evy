@@ -198,15 +198,78 @@ describe("sync", () => {
 		expect(result.data).toEqual([]);
 	});
 
-	it("propagates forwardGet errors for external services", async () => {
+	// An unreachable service used to fail the whole sync, taking every other
+	// resource down with it.
+	it("reports an unreachable service instead of failing the sync", async () => {
 		forwardGetImpl = async (serviceName) => {
 			if (serviceName === MARKETPLACE_SERVICE_ID) {
 				throw new Error("marketplace service unavailable");
 			}
 			return buildMockGetResponse([]);
 		};
-		await expect(sync({ lastSyncTime: EPOCH }, db)).rejects.toThrow(
+
+		const result = await sync({ lastSyncTime: EPOCH }, db);
+
+		expect(result.errors?.length).toBeGreaterThan(0);
+		expect(result.errors?.[0]?.message).toContain(
 			"marketplace service unavailable",
+		);
+	});
+
+	it("still returns core rows when an external service is down", async () => {
+		getImpl = async () =>
+			[
+				{ id: "core-1", updatedAt: "2026-01-01T00:00:00.000Z" },
+			] as unknown as GetResponse;
+		forwardGetImpl = async () => {
+			throw new Error("down");
+		};
+
+		const result = await sync({ lastSyncTime: EPOCH }, db);
+
+		expect(result.data.length).toBeGreaterThan(0);
+		expect(result.errors?.length).toBeGreaterThan(0);
+	});
+
+	// Advancing past a failure would mean the missed resources are never retried.
+	it("holds the cursor when any resource failed", async () => {
+		getImpl = async () =>
+			[
+				{ id: "core-1", updatedAt: "2099-01-01T00:00:00.000Z" },
+			] as unknown as GetResponse;
+		forwardGetImpl = async () => {
+			throw new Error("down");
+		};
+
+		const result = await sync({ cursor: "2026-01-01T00:00:00.000Z" }, db);
+
+		expect(result.cursor).toBe("2026-01-01T00:00:00.000Z");
+	});
+
+	it("omits errors entirely when everything succeeded", async () => {
+		getImpl = async () => buildMockGetResponse([]);
+		forwardGetImpl = async () => buildMockGetResponse([]);
+
+		const result = await sync({ cursor: EPOCH }, db);
+
+		expect(result.errors).toBeUndefined();
+	});
+
+	it("keeps a failing core resource from hiding the others", async () => {
+		getImpl = async (params) => {
+			if (params.resource === "rows")
+				throw new Error("rows table broken");
+			return [
+				{ id: "ok", updatedAt: "2026-01-01T00:00:00.000Z" },
+			] as unknown as GetResponse;
+		};
+		forwardGetImpl = async () => buildMockGetResponse([]);
+
+		const result = await sync({ lastSyncTime: EPOCH }, db);
+
+		expect(result.data.some((row) => row.resource !== "rows")).toBe(true);
+		expect(result.errors?.some((entry) => entry.resource === "rows")).toBe(
+			true,
 		);
 	});
 
