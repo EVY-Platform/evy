@@ -11,11 +11,6 @@ struct EVYScope: Equatable {
 
   static let empty = EVYScope(cacheScopeId: nil, draftScopeId: nil)
 
-  /// The scope implied by the global statics.
-  ///
-  /// Transitional: resolution used to read those statics directly, so every
-  /// call site that has not yet been given an explicit scope falls back to
-  /// this and behaves exactly as before. Removed once nothing needs it.
   /// A scope that swaps only the cache, keeping the active draft scope.
   ///
   /// Cache scoping and draft scoping move independently: a view can render
@@ -25,8 +20,19 @@ struct EVYScope: Equatable {
     EVYScope(cacheScopeId: cacheScopeId, draftScopeId: EVY.draftStore.activeScopeId)
   }
 
+  /// The scope implied by the global statics - whichever page is active.
+  ///
+  /// Resolution and mutation fall back to this when handed no scope of their
+  /// own. Two things still depend on it, and neither is an oversight:
+  /// - SwiftUI initialisers, which cannot read `@Environment`, so a state built
+  ///   outside a row wrapper has nothing else to go on.
+  /// - `EVY+Mutations`, whose write paths take a draft scope id explicitly but
+  ///   still read the active cache scope ambiently.
+  ///
+  /// Rows on a page are handed an explicit scope and do not come through here.
+  /// This is the floor, not the normal path.
   @MainActor
-  static var legacyGlobal: EVYScope {
+  static var ambient: EVYScope {
     EVYScope(
       cacheScopeId: EVY.activeCacheScopeId,
       draftScopeId: EVY.draftStore.activeScopeId

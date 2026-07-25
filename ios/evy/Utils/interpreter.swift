@@ -257,7 +257,7 @@ private func _resolveBindingRoot(
   // nil means "whatever the globals say", which is how every call site behaved
   // before scope became a value. Default parameters cannot read main-actor
   // state, so the fallback is resolved here instead.
-  let scope = explicitScope ?? .legacyGlobal
+  let scope = explicitScope ?? .ambient
   let (store, cleanProps) = EVY.store(for: props)
   let splitProps = try splitPropsFromText(cleanProps)
   guard let firstProp = splitProps.first else {
@@ -816,15 +816,37 @@ private func parseFunctionInText(_ input: String) -> (
   return (match, String(functionName), String(functionArgs))
 }
 
-private var regexPatternCache: [String: Regex<AnyRegexOutput>] = [:]
+/// Compiled patterns, shared across every caller.
+///
+/// Regex compilation is not free and the same handful of patterns are used on
+/// every resolution, so they are cached. Resolution is not confined to the main
+/// actor - row formatting runs wherever its caller happens to be - so the cache
+/// needs a lock rather than an unguarded global.
+private final class RegexPatternCache: @unchecked Sendable {
+  static let shared = RegexPatternCache()
+
+  private let lock = NSLock()
+  private var patterns: [String: Regex<AnyRegexOutput>] = [:]
+
+  func regex(for pattern: String) throws -> Regex<AnyRegexOutput> {
+    lock.lock()
+    let cached = patterns[pattern]
+    lock.unlock()
+    if let cached { return cached }
+
+    // Compiled outside the lock: two callers racing on a cold pattern both
+    // compile it and the second overwrites an identical value, which is
+    // cheaper than holding the lock across compilation.
+    let compiled = try Regex(pattern)
+    lock.lock()
+    patterns[pattern] = compiled
+    lock.unlock()
+    return compiled
+  }
+}
 
 private func regexForPattern(_ pattern: String) throws -> Regex<AnyRegexOutput> {
-  if let cached = regexPatternCache[pattern] {
-    return cached
-  }
-  let r = try Regex(pattern)
-  regexPatternCache[pattern] = r
-  return r
+  try RegexPatternCache.shared.regex(for: pattern)
 }
 
 private func firstMatch(_ input: String, pattern: String) throws -> Regex<AnyRegexOutput>.Match? {
