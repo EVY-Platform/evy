@@ -1,4 +1,4 @@
-name: PR Title
+name: PR Title Validation
 
 on:
     pull_request:
@@ -7,7 +7,7 @@ on:
 
 jobs:
     pr_title:
-        name: Validation
+        name: PR Title Validation
         timeout-minutes: 1
         runs-on: ubuntu-latest
         steps:

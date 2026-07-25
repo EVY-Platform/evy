@@ -1,4 +1,4 @@
-name: E2E
+name: E2E Tests
 
 on:
     pull_request:
@@ -13,7 +13,7 @@ on:
 
 jobs:
     e2e_tests:
-        name: Tests
+        name: E2Es
         permissions:
             contents: read
             packages: read

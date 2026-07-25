@@ -12,7 +12,7 @@ on:
 
 jobs:
     web_lint:
-        name: Lint
+        name: Web Lint
         defaults:
             run:
                 working-directory: web
@@ -36,7 +36,7 @@ jobs:
               run: bun run lint
 
     web_tests:
-        name: Tests
+        name: Web Tests
         permissions:
             contents: read
             packages: read
