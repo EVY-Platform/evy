@@ -562,10 +562,9 @@
 			}
 		},
 		"DATA_EVY_RowData": {
+			"description": "Row payload. Unknown keys are unconstrained JSON. `additionalProperties: true` rather than a JSONValue $ref: the ref renders as a closed TypeScript index signature that conflicts with the typed properties below (a property may be undefined, which the JSONValue union excludes), while `true` renders `[k: string]: unknown`. Both accept exactly the same wire input.",
 			"type": "object",
-			"additionalProperties": {
-				"$ref": "../common/json.schema.json#/$defs/JSONValue"
-			},
+			"additionalProperties": true,
 			"properties": {
 				"actions": {
 					"description": "Trigger-keyed action lists. Optional for storage, but validated when present so a malformed shape is rejected at write time instead of silently dropping the row on the client.",
