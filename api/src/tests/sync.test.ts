@@ -14,7 +14,6 @@ const db = null as unknown as EvyDb;
 
 const MARKETPLACE_SERVICE_ID = MARKETPLACE_SERVICE;
 const EPOCH = "1970-01-01T00:00:00.000Z";
-/** Inside the tombstone retention window, so cursor tests are not expiry tests. */
 const RECENT_CURSOR = new Date(Date.now() - 86_400_000).toISOString();
 const OLDER_RECENT_CURSOR = new Date(Date.now() - 2 * 86_400_000).toISOString();
 
@@ -199,55 +198,6 @@ describe("sync", () => {
 			db,
 		);
 		expect(result.data).toEqual([]);
-	});
-
-	// A cursor older than the tombstone retention window may have missed
-	// deletes that have since been purged, so resuming from it would leave
-	// those records on the client with nothing left to ever remove them.
-	describe("expired cursors", () => {
-		const ANCIENT = "2020-01-01T00:00:00.000Z";
-
-		it("restarts from scratch and says so", async () => {
-			const requested: string[] = [];
-			getImpl = async (params) => {
-				requested.push(String(params.filter?.updatedAfter));
-				return buildMockGetResponse([]);
-			};
-
-			const result = await sync({ cursor: ANCIENT }, db);
-
-			expect(result.reset).toBe(true);
-			expect(requested.every((from) => from === EPOCH)).toBe(true);
-		});
-
-		it("resumes normally from a cursor inside the window", async () => {
-			const recent = RECENT_CURSOR;
-			const requested: string[] = [];
-			getImpl = async (params) => {
-				requested.push(String(params.filter?.updatedAfter));
-				return buildMockGetResponse([]);
-			};
-
-			const result = await sync({ cursor: recent }, db);
-
-			expect(result.reset).toBeUndefined();
-			expect(requested.every((from) => from === recent)).toBe(true);
-		});
-
-		it("does not flag a first-ever sync as a reset", async () => {
-			const result = await sync({}, db);
-			expect(result.reset).toBeUndefined();
-		});
-
-		it("does not flag an explicit epoch full sync as a reset", async () => {
-			const result = await sync({ lastSyncTime: EPOCH }, db);
-			expect(result.reset).toBeUndefined();
-		});
-
-		it("expires an equally old lastSyncTime from a pre-cursor client", async () => {
-			const result = await sync({ lastSyncTime: ANCIENT }, db);
-			expect(result.reset).toBe(true);
-		});
 	});
 
 	// An unreachable service used to fail the whole sync, taking every other

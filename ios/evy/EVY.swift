@@ -83,9 +83,6 @@ struct SyncError: Codable {
 struct SyncResponse: Codable {
   let data: [SyncRow]
   let cursor: String
-  /// The cursor we sent predated the server's tombstone retention, so `data`
-  /// is a full snapshot and the local stores must be discarded first.
-  let reset: Bool?
   let errors: [SyncError]?
 }
 

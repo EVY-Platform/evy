@@ -57,13 +57,11 @@ See [docs/evy/data.md](../docs/evy/data.md#procedures) for the manifest fields a
 
 The builder tracks the server's `updatedAt` per record — from sync, from each write response, and from `dataChanged` pushes — and sends it on every update, so the precondition means "no change I have not already seen". A conflict surfaces as its own message telling the editor to reload, not as a connection failure.
 
-### Tombstones and retention
+### Tombstones
 
-A delete is a soft delete: the row stays with `deletedAt` set so sync can tell clients to drop it. Tombstones are kept for `TOMBSTONE_RETENTION_DAYS` (default 30) and then removed for real by `bun run --cwd api purge:tombstones`, meant to run on a schedule rather than inside the serving process.
+A delete is a soft delete: the row stays with `deletedAt` set so sync can tell clients to drop it. Tombstones are permanent — nothing removes them.
 
-The window is also the maximum age of a sync cursor. A client resuming from before the horizon may have missed a tombstone that has since been purged — and nothing would ever tell it about that record again — so sync ignores the cursor, returns a full snapshot, and sets `reset` on the response. Clients must discard their synced stores before applying a `reset` response; iOS does this in `EVY+Sync.swift`. The web builder never sends a cursor, so it never sees one.
-
-Shortening the window shortens how long a client may stay offline before its next sync costs a full snapshot.
+That is what makes a cursor of any age safe to resume from: every delete a client missed is still there to be replayed, so there is no horizon past which a cursor goes stale and no need to fall back to a full snapshot. The cost is that deleted rows accumulate.
 
 ### Notifications
 

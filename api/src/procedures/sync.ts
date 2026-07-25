@@ -10,7 +10,6 @@ import {
 	EVY_CORE_SERVICE,
 } from "evy-types/coreResources";
 import * as data from "../data/data";
-import { isCursorExpired } from "../data/tombstones";
 import type { EvyDb } from "../database/db";
 import * as services from "./services";
 
@@ -102,11 +101,7 @@ export async function sync(
 ): Promise<SyncResponse> {
 	const externalResources = await data.listExternalServiceResources(db);
 
-	// EPOCH is the full-sync sentinel, so it is not a stale cursor - flagging a
-	// client's first ever sync as a reset would tell it to wipe nothing.
-	const requestedResume = resumePoint(syncParams);
-	const reset = requestedResume !== EPOCH && isCursorExpired(requestedResume);
-	const resumedFrom = reset ? EPOCH : requestedResume;
+	const resumedFrom = resumePoint(syncParams);
 
 	const [core, external] = await Promise.all([
 		fetchResources(coreResourceRefs(), resumedFrom, (_ref, request) =>
@@ -133,7 +128,6 @@ export async function sync(
 	return {
 		data: rows,
 		cursor,
-		...(reset ? { reset: true } : {}),
 		...(errors.length > 0 ? { errors } : {}),
 	};
 }

@@ -11,10 +11,6 @@
 			"description": "Pass to the next sync call. Opaque: clients must not parse or generate it.",
 			"type": "string"
 		},
-		"reset": {
-			"description": "The cursor sent was older than the tombstone retention window, so deletes it never saw have already been purged. `data` is a full snapshot: clients must discard their synced stores before applying it, or a record deleted while they were away lingers forever.",
-			"type": "boolean"
-		},
 		"data": {
 			"type": "array",
 			"items": {

@@ -166,8 +166,9 @@ export function makeCoreResource<
 
 	/**
 	 * Soft delete. The row is kept as a tombstone so incremental syncs can tell
-	 * clients it is gone; plain reads exclude it. Tombstones past the retention
-	 * window are removed by `purgeTombstones` (see `data/tombstones.ts`).
+	 * clients it is gone; plain reads exclude it. Tombstones are kept
+	 * permanently, so a client can resume from any cursor and still learn about
+	 * every delete.
 	 */
 	async function remove(
 		db: EvyDb,
