@@ -28,14 +28,20 @@ final class ContentViewTests: XCTestCase {
     EVYDataStore(name: UUID().uuidString, inMemoryOnly: true)
   }
 
-  private func seedFlow(store: EVYDataStore, id: String, pageIds: [String]) throws {
-    let json: [String: Any] = [
+  private func seedFlow(
+    store: EVYDataStore,
+    id: String,
+    pageIds: [String],
+    submits: [String: String]? = nil
+  ) throws {
+    var json: [String: Any] = [
       "id": id,
       "name": "Test Flow",
       "pageIds": pageIds,
       "createdAt": "2024-01-01T00:00:00.000Z",
       "updatedAt": "2024-01-01T00:00:00.000Z",
     ]
+    if let submits { json["submits"] = submits }
     let data = try JSONSerialization.data(withJSONObject: json)
     try store.upsert(
       namespace: EVYNamespace.evy,
@@ -702,6 +708,124 @@ final class ContentViewTests: XCTestCase {
       EVYDraft.createMergeScopeId(
         flowId: "create-flow", entityKey: MarketplaceTestFixture.itemsResourceId)
     )
+  }
+
+  // MARK: - submits declaration
+
+  /// Seeds a flow whose only action submits `submitResource`, optionally
+  /// declaring `declared` on the flow record.
+  private func seedSubmittingFlow(
+    store: EVYDataStore,
+    flowId: String,
+    submitResource: String,
+    declared: String? = nil
+  ) throws {
+    try seedFlow(
+      store: store,
+      id: flowId,
+      pageIds: ["\(flowId)-page"],
+      submits: declared.map { ["service": MarketplaceTestFixture.serviceId, "resource": $0] }
+    )
+    try seedPage(
+      store: store, id: "\(flowId)-page", rowIds: [], footerRowId: "\(flowId)-button")
+    try seedRow(
+      store: store, id: "\(flowId)-button", type: "Button",
+      data: [
+        "source": "", "title": "", "label": "Submit",
+        "actions": [
+          "tap": [
+            [
+              "condition": "",
+              "false": "",
+              "true":
+                "{create(\(MarketplaceTestFixture.serviceId),\(submitResource), submit)}",
+            ]
+          ]
+        ],
+      ])
+  }
+
+  func testDeclaredSubmitsDrivesDraftScope() throws {
+    let store = makeStore()
+    try seedSubmittingFlow(
+      store: store, flowId: "declared-flow",
+      submitResource: MarketplaceTestFixture.itemsResourceId,
+      declared: MarketplaceTestFixture.itemsResourceId)
+
+    let route = Route(flowId: "declared-flow", pageId: "declared-flow-page")
+    XCTAssertEqual(
+      EVYFlowStore.draftScopeId(for: route, from: store),
+      EVYDraft.createMergeScopeId(
+        flowId: "declared-flow", entityKey: MarketplaceTestFixture.itemsResourceId)
+    )
+  }
+
+  /// The declaration wins over the actions, so scope no longer depends on
+  /// re-parsing every branch in the flow.
+  func testDeclaredSubmitsTakesPrecedenceOverScrapedActions() throws {
+    let store = makeStore()
+    try seedSubmittingFlow(
+      store: store, flowId: "precedence-flow",
+      submitResource: "scraped-resource",
+      declared: "declared-resource")
+
+    XCTAssertEqual(
+      EVYFlowStore.submissionResources(flowId: "precedence-flow", from: store),
+      ["declared-resource"])
+  }
+
+  func testFlowWithoutDeclarationStillInfersFromActions() throws {
+    let store = makeStore()
+    try seedSubmittingFlow(
+      store: store, flowId: "legacy-submit-flow",
+      submitResource: MarketplaceTestFixture.itemsResourceId)
+
+    XCTAssertEqual(
+      EVYFlowStore.submissionResources(flowId: "legacy-submit-flow", from: store),
+      [MarketplaceTestFixture.itemsResourceId])
+  }
+
+  func testValidateReportsActionsDisagreeingWithDeclaration() throws {
+    let store = makeStore()
+    try seedSubmittingFlow(
+      store: store, flowId: "mismatch-flow",
+      submitResource: "actual-resource",
+      declared: "declared-resource")
+
+    var errors: [Error] = []
+    let observer = NotificationCenter.default.addObserver(
+      forName: .evyErrorOccurred, object: nil, queue: nil
+    ) { note in
+      if let error = note.object as? Error { errors.append(error) }
+    }
+    defer { NotificationCenter.default.removeObserver(observer) }
+
+    EVYFlowStore.validateSubmissionResources(flowId: "mismatch-flow", from: store)
+
+    XCTAssertEqual(errors.count, 1, "a disagreeing declaration should be reported")
+    XCTAssertTrue(
+      errors.first?.localizedDescription.contains("declares submits") == true,
+      "\(String(describing: errors.first?.localizedDescription))")
+  }
+
+  func testValidateStaysQuietWhenDeclarationMatches() throws {
+    let store = makeStore()
+    try seedSubmittingFlow(
+      store: store, flowId: "agreeing-flow",
+      submitResource: MarketplaceTestFixture.itemsResourceId,
+      declared: MarketplaceTestFixture.itemsResourceId)
+
+    var errors: [Error] = []
+    let observer = NotificationCenter.default.addObserver(
+      forName: .evyErrorOccurred, object: nil, queue: nil
+    ) { note in
+      if let error = note.object as? Error { errors.append(error) }
+    }
+    defer { NotificationCenter.default.removeObserver(observer) }
+
+    EVYFlowStore.validateSubmissionResources(flowId: "agreeing-flow", from: store)
+
+    XCTAssertTrue(errors.isEmpty, "\(errors)")
   }
 
   func testExtractCreateKeysIgnoresUnparseableTwoArgCreate() throws {
