@@ -556,6 +556,183 @@ describe("row actions shape validation", () => {
 	});
 });
 
+describe("structured action invocations", () => {
+	const SVC = "66b092ae-7cd8-4d67-95b7-30b03568fd90";
+	const baseRow = {
+		id: "11111111-1111-4111-8111-111111111111",
+		name: "R",
+		type: "Button",
+		visible: "true",
+		createdAt: "2024-01-01T00:00:00.000Z",
+		updatedAt: "2024-01-01T00:00:00.000Z",
+		visibility: "public" as const,
+	};
+
+	function rowWithBranch(branch: unknown) {
+		return validateRowPayload({
+			...baseRow,
+			data: {
+				actions: { tap: [{ condition: "", false: "", true: branch }] },
+			},
+		});
+	}
+
+	it.each([
+		["legacy string branch", "{close()}"],
+		["empty branch", ""],
+		["close", { fn: "close" }],
+		["delete_photo", { fn: "delete_photo" }],
+		["show", { fn: "show", rowId: "row-1" }],
+		["expand_text", { fn: "expand_text", rowId: "row-1" }],
+		["highlight_required", { fn: "highlight_required", field: "title" }],
+		["select", { fn: "select", value: "$datum" }],
+		["navigate", { fn: "navigate", flowId: "f", pageId: "p" }],
+		[
+			"navigate with query",
+			{
+				fn: "navigate",
+				flowId: "f",
+				pageId: "p",
+				query: { id: "$datum.id" },
+			},
+		],
+		[
+			"create submit",
+			{ fn: "create", service: SVC, resource: "items", mode: "submit" },
+		],
+		[
+			"create inline",
+			{
+				fn: "create",
+				service: SVC,
+				resource: "addresses",
+				mode: "inline",
+				data: { street: "$datum.street" },
+			},
+		],
+		[
+			"create from path with id destination",
+			{
+				fn: "create",
+				service: SVC,
+				resource: "addresses",
+				mode: "fromPath",
+				dataPath: "pickup_address",
+				idDestination: "{pickup_address.id}",
+			},
+		],
+		[
+			"update store",
+			{
+				fn: "update",
+				service: SVC,
+				resource: "items",
+				mode: "store",
+				filter: { id: "item.id" },
+				changes: { status: "accepted" },
+			},
+		],
+		[
+			"update draft",
+			{
+				fn: "update",
+				service: SVC,
+				resource: "items",
+				mode: "draft",
+				changes: { status: "accepted" },
+			},
+		],
+		[
+			"update store from path",
+			{
+				fn: "update",
+				service: SVC,
+				resource: "addresses",
+				mode: "store",
+				filter: { id: "item.id" },
+				changesPath: "pickup_address",
+			},
+		],
+	])("accepts %s", (_label, branch) => {
+		expect(() => rowWithBranch(branch)).not.toThrow();
+	});
+
+	it.each([
+		["an unknown function", { fn: "explode" }],
+		["show without a row id", { fn: "show" }],
+		["show with an empty row id", { fn: "show", rowId: "" }],
+		[
+			"create submit carrying data",
+			{
+				fn: "create",
+				service: SVC,
+				resource: "a",
+				mode: "submit",
+				data: { x: "y" },
+			},
+		],
+		[
+			"create with an unknown mode",
+			{ fn: "create", service: SVC, resource: "a", mode: "magic" },
+		],
+		[
+			"a store update with an empty filter",
+			{
+				fn: "update",
+				service: SVC,
+				resource: "i",
+				mode: "store",
+				filter: {},
+				changes: { a: "b" },
+			},
+		],
+		[
+			"a draft update carrying a filter",
+			{
+				fn: "update",
+				service: SVC,
+				resource: "i",
+				mode: "draft",
+				filter: { id: "x" },
+				changes: { a: "b" },
+			},
+		],
+		[
+			"an update with both changes and changesPath",
+			{
+				fn: "update",
+				service: SVC,
+				resource: "i",
+				mode: "draft",
+				changes: { a: "b" },
+				changesPath: "p",
+			},
+		],
+		[
+			"an update with no changes at all",
+			{ fn: "update", service: SVC, resource: "i", mode: "draft" },
+		],
+		[
+			"a non-string expression value",
+			{
+				fn: "create",
+				service: SVC,
+				resource: "a",
+				mode: "inline",
+				data: { x: 5 },
+			},
+		],
+	])("rejects %s", (_label, branch) => {
+		expect(() => rowWithBranch(branch)).toThrow("Row validation failed");
+	});
+
+	it("reports the offending branch path", () => {
+		expect(() => rowWithBranch({ fn: "explode" })).toThrow(
+			"/data/actions/tap/0/true",
+		);
+	});
+});
+
 describe("validateFlowData submits declaration", () => {
 	const SERVICE = "66b092ae-1e3f-4f2a-8a7d-9b0c1d2e3f40";
 

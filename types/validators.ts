@@ -248,11 +248,21 @@ function formatAjvErrors(
 	errors: ErrorObject[] | null | undefined,
 ): string {
 	if (!errors?.length) return `${label} validation failed`;
-	const parts = errors.map((e) => {
+
+	// A oneOf union reports one failure per branch, so the same complaint
+	// repeats many times. Dedupe and cap so the real cause stays readable.
+	const seen = new Set<string>();
+	for (const e of errors) {
 		const path = e.instancePath === "" ? "(root)" : e.instancePath;
-		return `${path}: ${e.message ?? "invalid"}`;
-	});
-	return `${label} validation failed: ${parts.join("; ")}`;
+		seen.add(`${path}: ${e.message ?? "invalid"}`);
+	}
+
+	const MAX_REPORTED = 6;
+	const parts = [...seen];
+	const shown = parts.slice(0, MAX_REPORTED);
+	const remaining = parts.length - shown.length;
+	const suffix = remaining > 0 ? `; (+${remaining} more)` : "";
+	return `${label} validation failed: ${shown.join("; ")}${suffix}`;
 }
 
 function compileRoot<T>(
