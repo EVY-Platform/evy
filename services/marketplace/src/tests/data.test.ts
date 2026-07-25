@@ -353,3 +353,86 @@ describe("marketplace item payload validation", () => {
 		).resolves.toBeDefined();
 	});
 });
+
+describe("marketplace tombstones", () => {
+	const resource = MARKETPLACE_RESOURCE.CONDITIONS;
+
+	async function createAndDelete() {
+		const rowId = crypto.randomUUID();
+		await create({
+			service: MARKETPLACE_SERVICE,
+			resource,
+			filter: { id: rowId },
+			data: { id: rowId, value: "gone" },
+		});
+		await deleteResource({
+			service: MARKETPLACE_SERVICE,
+			resource,
+			filter: { id: rowId },
+		});
+		return rowId;
+	}
+
+	it("hides a deleted row from a plain read", async () => {
+		await createAndDelete();
+
+		expect(await get({ service: MARKETPLACE_SERVICE, resource })).toEqual(
+			[],
+		);
+	});
+
+	it("includes the tombstone in an incremental read", async () => {
+		const rowId = await createAndDelete();
+
+		const rows = await get({
+			service: MARKETPLACE_SERVICE,
+			resource,
+			filter: { updatedAfter: "1970-01-01T00:00:00.000Z" },
+		});
+
+		expect(rows).toHaveLength(1);
+		expect((rows[0] as { id?: string })?.id).toBe(rowId);
+	});
+
+	it("reports the tombstone on the delete response", async () => {
+		const rowId = crypto.randomUUID();
+		await create({
+			service: MARKETPLACE_SERVICE,
+			resource,
+			filter: { id: rowId },
+			data: { id: rowId, value: "x" },
+		});
+
+		const deleted = await deleteResource({
+			service: MARKETPLACE_SERVICE,
+			resource,
+			filter: { id: rowId },
+		});
+
+		expect((deleted as { deletedAt?: string }).deletedAt).toBeTruthy();
+	});
+
+	it("refuses to delete an already-tombstoned row", async () => {
+		const rowId = await createAndDelete();
+
+		await expect(
+			deleteResource({
+				service: MARKETPLACE_SERVICE,
+				resource,
+				filter: { id: rowId },
+			}),
+		).rejects.toThrow("Resource not found");
+	});
+
+	it("omits deletedAt for a live row", async () => {
+		const rowId = crypto.randomUUID();
+		const created = await create({
+			service: MARKETPLACE_SERVICE,
+			resource,
+			filter: { id: rowId },
+			data: { id: rowId, value: "live" },
+		});
+
+		expect("deletedAt" in (created as object)).toBe(false);
+	});
+});

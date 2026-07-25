@@ -86,6 +86,11 @@
 				"updatedAt": {
 					"type": "string",
 					"format": "date-time"
+				},
+				"deletedAt": {
+					"description": "Set when the record is deleted. Tombstoned rows are excluded from plain reads but included in incremental ones, so clients learn about deletions.",
+					"type": "string",
+					"format": "date-time"
 				}
 			}
 		},
@@ -133,6 +138,11 @@
 					"format": "date-time"
 				},
 				"updatedAt": {
+					"type": "string",
+					"format": "date-time"
+				},
+				"deletedAt": {
+					"description": "Set when the record is deleted. Tombstoned rows are excluded from plain reads but included in incremental ones, so clients learn about deletions.",
 					"type": "string",
 					"format": "date-time"
 				},
@@ -191,6 +201,11 @@
 					"format": "date-time"
 				},
 				"updatedAt": {
+					"type": "string",
+					"format": "date-time"
+				},
+				"deletedAt": {
+					"description": "Set when the record is deleted. Tombstoned rows are excluded from plain reads but included in incremental ones, so clients learn about deletions.",
 					"type": "string",
 					"format": "date-time"
 				}
@@ -286,6 +301,11 @@
 				"updatedAt": {
 					"type": "string",
 					"format": "date-time"
+				},
+				"deletedAt": {
+					"description": "Set when the record is deleted. Tombstoned rows are excluded from plain reads but included in incremental ones, so clients learn about deletions.",
+					"type": "string",
+					"format": "date-time"
 				}
 			}
 		},
@@ -336,6 +356,11 @@
 					"format": "date-time"
 				},
 				"updatedAt": {
+					"type": "string",
+					"format": "date-time"
+				},
+				"deletedAt": {
+					"description": "Set when the record is deleted. Tombstoned rows are excluded from plain reads but included in incremental ones, so clients learn about deletions.",
 					"type": "string",
 					"format": "date-time"
 				}
@@ -397,6 +422,11 @@
 					"type": "string",
 					"format": "date-time"
 				},
+				"deletedAt": {
+					"description": "Set when the record is deleted. Tombstoned rows are excluded from plain reads but included in incremental ones, so clients learn about deletions.",
+					"type": "string",
+					"format": "date-time"
+				},
 				"retired": {
 					"type": "boolean",
 					"default": false
@@ -438,6 +468,11 @@
 				"updatedAt": {
 					"type": "string",
 					"format": "date-time"
+				},
+				"deletedAt": {
+					"description": "Set when the record is deleted. Tombstoned rows are excluded from plain reads but included in incremental ones, so clients learn about deletions.",
+					"type": "string",
+					"format": "date-time"
 				}
 			}
 		},
@@ -463,6 +498,11 @@
 					"format": "date-time"
 				},
 				"updatedAt": {
+					"type": "string",
+					"format": "date-time"
+				},
+				"deletedAt": {
+					"description": "Set when the record is deleted. Tombstoned rows are excluded from plain reads but included in incremental ones, so clients learn about deletions.",
 					"type": "string",
 					"format": "date-time"
 				}
@@ -511,6 +551,11 @@
 					"format": "date-time"
 				},
 				"updatedAt": {
+					"type": "string",
+					"format": "date-time"
+				},
+				"deletedAt": {
+					"description": "Set when the record is deleted. Tombstoned rows are excluded from plain reads but included in incremental ones, so clients learn about deletions.",
 					"type": "string",
 					"format": "date-time"
 				}
@@ -607,6 +652,11 @@
 					"format": "date-time"
 				},
 				"updatedAt": {
+					"type": "string",
+					"format": "date-time"
+				},
+				"deletedAt": {
+					"description": "Set when the record is deleted. Tombstoned rows are excluded from plain reads but included in incremental ones, so clients learn about deletions.",
 					"type": "string",
 					"format": "date-time"
 				}

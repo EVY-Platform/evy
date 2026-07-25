@@ -1,0 +1,1 @@
+ALTER TABLE "Data" ADD COLUMN "deleted_at" text;

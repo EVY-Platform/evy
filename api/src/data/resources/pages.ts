@@ -1,11 +1,7 @@
 import type { DATA_EVY_Page } from "evy-types";
 import { page } from "evy-types/db/schema.generated";
 import { validateDataEvyPage } from "evy-types/validators";
-import { makeCoreResource, omitNulls } from "./coreResource";
-
-function normalizePageRow(rowData: typeof page.$inferSelect): DATA_EVY_Page {
-	return validateDataEvyPage(omitNulls(rowData));
-}
+import { makeCoreResource } from "./coreResource";
 
 export const pagesResource = makeCoreResource<DATA_EVY_Page>({
 	table: page,
@@ -17,5 +13,4 @@ export const pagesResource = makeCoreResource<DATA_EVY_Page>({
 		footerRowId: v.footerRowId,
 		visibility: v.visibility,
 	}),
-	normalize: normalizePageRow,
 });

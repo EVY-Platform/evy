@@ -1,13 +1,7 @@
 import type { DATA_EVY_Message } from "evy-types";
 import { message } from "evy-types/db/schema.generated";
 import { validateDataEvyMessage } from "evy-types/validators";
-import { makeCoreResource, omitNulls } from "./coreResource";
-
-function omitNullOptionalFields(
-	rowData: typeof message.$inferSelect,
-): DATA_EVY_Message {
-	return validateDataEvyMessage(omitNulls(rowData));
-}
+import { makeCoreResource } from "./coreResource";
 
 export const messagesResource = makeCoreResource<DATA_EVY_Message>({
 	table: message,
@@ -21,5 +15,4 @@ export const messagesResource = makeCoreResource<DATA_EVY_Message>({
 		data: v.data,
 		visibility: v.visibility,
 	}),
-	normalize: omitNullOptionalFields,
 });

@@ -1,4 +1,4 @@
-import { and, asc, eq, gt } from "drizzle-orm";
+import { and, asc, eq, gt, isNull } from "drizzle-orm";
 
 import type {
 	CreateRequest,
@@ -24,6 +24,7 @@ import {
 	getUploadSession,
 	uploadSessionToBuffer,
 } from "../../shared/uploadSessions";
+import { omitNulls } from "./coreResource";
 import {
 	deleteFileBinaryIfExists,
 	readFileBinary,
@@ -56,7 +57,10 @@ export async function listFileRows(
 		whereClauses.push(eq(file.id, filter.id));
 	}
 	if (filter?.updatedAfter) {
+		// Incremental reads carry tombstones so clients can drop deleted files.
 		whereClauses.push(gt(file.updatedAt, filter.updatedAfter));
+	} else {
+		whereClauses.push(isNull(file.deletedAt));
 	}
 
 	const query = whereClauses.length ? base.where(and(...whereClauses)) : base;
@@ -149,25 +153,28 @@ async function insertFileMetadata(
 			}
 			throw err;
 		});
-	const response = validateCreateResponse(inserted[0]);
+	const response = validateCreateResponse(omitNulls(inserted[0]));
 
 	notify(response);
 	return response;
 }
 
+/** Metadata is tombstoned; the binary is removed from disk immediately. */
 async function deleteFileMetadata(
 	db: EvyDb,
 	filter: DeleteRequest["filter"],
 	notify: (value: unknown) => void,
 ): Promise<DeleteResponse> {
+	const nowIso = new Date().toISOString();
 	const deleted = await db
-		.delete(file)
-		.where(eq(file.id, filter.id))
+		.update(file)
+		.set({ deletedAt: nowIso, updatedAt: nowIso })
+		.where(and(eq(file.id, filter.id), isNull(file.deletedAt)))
 		.returning();
 	if (deleted.length === 0) {
 		throw new Error("Resource not found");
 	}
-	const response = validateDeleteResponse(deleted[0]);
+	const response = validateDeleteResponse(omitNulls(deleted[0]));
 
 	notify(response);
 	return response;
@@ -218,13 +225,14 @@ async function createFileFromUpload(params: {
 // Response mapping
 
 function fileRowToMetadataResponse(metadata: DATA_EVY_File): DATA_EVY_File {
-	return {
+	return omitNulls({
 		id: metadata.id,
 		type: metadata.type,
 		createdAt: metadata.createdAt,
 		updatedAt: metadata.updatedAt,
 		visibility: metadata.visibility,
-	};
+		deletedAt: metadata.deletedAt,
+	});
 }
 
 async function fileRowToGetFileResponse(

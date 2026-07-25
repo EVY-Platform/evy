@@ -1,4 +1,4 @@
-import { and, asc, eq, gt } from "drizzle-orm";
+import { and, asc, eq, gt, isNull } from "drizzle-orm";
 
 import type {
 	CreateRequest,
@@ -22,6 +22,14 @@ import {
 	validateUpdateResponse,
 } from "evy-types/validators";
 import { data, db } from "./db";
+
+/** Drops null columns so an absent tombstone is omitted rather than null. */
+function omitNulls<T extends Record<string, unknown>>(row: T): T {
+	return Object.fromEntries(
+		Object.entries(row).filter(([, value]) => value !== null),
+	) as T;
+}
+
 import { emitDataChanged } from "./events";
 import {
 	MARKETPLACE_RESOURCE,
@@ -62,7 +70,10 @@ export async function get(params: GetRequest): Promise<GetResponse> {
 		whereClauses.push(eq(data.id, filter.id));
 	}
 	if (filter?.updatedAfter) {
+		// Incremental reads carry tombstones; plain reads exclude them.
 		whereClauses.push(gt(data.updatedAt, filter.updatedAfter));
+	} else {
+		whereClauses.push(isNull(data.deletedAt));
 	}
 
 	const rows = await db
@@ -105,7 +116,7 @@ export async function create(params: CreateRequest): Promise<CreateResponse> {
 	}
 
 	const row = result[0];
-	const response = validateCreateResponse(row);
+	const response = validateCreateResponse(omitNulls(row));
 	emitDataChanged(resource, "create", row.data);
 	return response;
 }
@@ -130,7 +141,7 @@ export async function update(params: UpdateRequest): Promise<UpdateResponse> {
 	}
 
 	const row = result[0];
-	const response = validateUpdateResponse(row);
+	const response = validateUpdateResponse(omitNulls(row));
 	emitDataChanged(resource, "update", row.data);
 	return response;
 }
@@ -140,10 +151,19 @@ export async function deleteResource(
 ): Promise<DeleteResponse> {
 	assertMarketplaceRules(params);
 	const { resource, filter } = params;
+	const nowIso = new Date().toISOString();
 
+	// Soft delete, matching the core resources.
 	const result = await db
-		.delete(data)
-		.where(and(eq(data.id, filter.id), eq(data.resource, resource)))
+		.update(data)
+		.set({ deletedAt: nowIso, updatedAt: nowIso })
+		.where(
+			and(
+				eq(data.id, filter.id),
+				eq(data.resource, resource),
+				isNull(data.deletedAt),
+			),
+		)
 		.returning();
 
 	if (result.length === 0) {
@@ -151,7 +171,7 @@ export async function deleteResource(
 	}
 
 	const row = result[0];
-	const response = validateDeleteResponse(row);
+	const response = validateDeleteResponse(omitNulls(row));
 	emitDataChanged(resource, "delete", row.data);
 	return response;
 }

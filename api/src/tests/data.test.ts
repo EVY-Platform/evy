@@ -342,7 +342,16 @@ describe("flat flow resources", () => {
 		})) as DATA_EVY_Page;
 
 		expect(deleted.id).toBe(payload.id);
-		expect(await testDb.select().from(schema.page)).toHaveLength(0);
+		// Soft delete: the row survives as a tombstone so incremental syncs can
+		// tell clients it is gone, but plain reads no longer return it.
+		const [tombstone] = await testDb.select().from(schema.page);
+		expect(tombstone?.deletedAt).toBeTruthy();
+		expect(
+			await get(dataDb, {
+				service: EVY_CORE_SERVICE,
+				resource: PAGE_RESOURCE,
+			}),
+		).toEqual([]);
 	});
 
 	it("rejects invalid flat flow payloads", async () => {
@@ -403,7 +412,16 @@ describe("address resources", () => {
 			filter: { id: payload.id },
 		})) as DATA_EVY_Address;
 		expect(deleted.id).toBe(payload.id);
-		expect(await testDb.select().from(schema.address)).toHaveLength(0);
+		// Soft delete: the row survives as a tombstone so incremental syncs can
+		// tell clients it is gone, but plain reads no longer return it.
+		const [tombstone] = await testDb.select().from(schema.address);
+		expect(tombstone?.deletedAt).toBeTruthy();
+		expect(
+			await get(dataDb, {
+				service: EVY_CORE_SERVICE,
+				resource: ADDRESS_RESOURCE,
+			}),
+		).toEqual([]);
 	});
 
 	it("rejects invalid address payloads", async () => {
@@ -532,7 +550,16 @@ describe("message resources", () => {
 			filter: { id: created.id },
 		})) as DATA_EVY_Message;
 		expect(deleted.id).toBe(created.id);
-		expect(await testDb.select().from(schema.message)).toHaveLength(0);
+		// Soft delete: the row survives as a tombstone so incremental syncs can
+		// tell clients it is gone, but plain reads no longer return it.
+		const [tombstone] = await testDb.select().from(schema.message);
+		expect(tombstone?.deletedAt).toBeTruthy();
+		expect(
+			await get(dataDb, {
+				service: EVY_CORE_SERVICE,
+				resource: MESSAGE_RESOURCE,
+			}),
+		).toEqual([]);
 	});
 
 	it("rejects invalid message payloads", async () => {
@@ -680,5 +707,130 @@ describe("request validation", () => {
 		await expect(
 			deleteCore(dataDb, null as unknown as DeleteRequest),
 		).rejects.toThrow();
+	});
+});
+
+describe("tombstones", () => {
+	beforeEach(async () => {
+		await clearAllTestTables(testDb);
+	});
+
+	async function createAndDeleteFlow() {
+		const payload = flowRow();
+		await create(dataDb, {
+			service: EVY_CORE_SERVICE,
+			resource: FLOW_RESOURCE,
+			data: payload,
+		});
+		await deleteCore(dataDb, {
+			service: EVY_CORE_SERVICE,
+			resource: FLOW_RESOURCE,
+			filter: { id: payload.id },
+		});
+		return payload;
+	}
+
+	it("hides a deleted record from a plain read", async () => {
+		await createAndDeleteFlow();
+
+		expect(
+			await get(dataDb, {
+				service: EVY_CORE_SERVICE,
+				resource: FLOW_RESOURCE,
+			}),
+		).toEqual([]);
+	});
+
+	it("hides a deleted record from a read by id", async () => {
+		const payload = await createAndDeleteFlow();
+
+		expect(
+			await get(dataDb, {
+				service: EVY_CORE_SERVICE,
+				resource: FLOW_RESOURCE,
+				filter: { id: payload.id },
+			}),
+		).toEqual([]);
+	});
+
+	// Without this a client can never learn that a record it holds is gone.
+	it("includes the tombstone in an incremental read", async () => {
+		const payload = await createAndDeleteFlow();
+
+		const rows = (await get(dataDb, {
+			service: EVY_CORE_SERVICE,
+			resource: FLOW_RESOURCE,
+			filter: { updatedAfter: "1970-01-01T00:00:00.000Z" },
+		})) as DATA_EVY_Flow[];
+
+		expect(rows).toHaveLength(1);
+		expect(rows[0]?.id).toBe(payload.id);
+		expect(rows[0]?.deletedAt).toBeTruthy();
+	});
+
+	it("stamps updatedAt on delete so the tombstone lands after the cursor", async () => {
+		const payload = flowRow();
+		const created = (await create(dataDb, {
+			service: EVY_CORE_SERVICE,
+			resource: FLOW_RESOURCE,
+			data: payload,
+		})) as DATA_EVY_Flow;
+
+		const deleted = (await deleteCore(dataDb, {
+			service: EVY_CORE_SERVICE,
+			resource: FLOW_RESOURCE,
+			filter: { id: payload.id },
+		})) as DATA_EVY_Flow;
+
+		expect(deleted.updatedAt >= created.updatedAt).toBe(true);
+		expect(deleted.deletedAt).toBeTruthy();
+	});
+
+	it("refuses to delete an already-tombstoned record", async () => {
+		const payload = await createAndDeleteFlow();
+
+		await expect(
+			deleteCore(dataDb, {
+				service: EVY_CORE_SERVICE,
+				resource: FLOW_RESOURCE,
+				filter: { id: payload.id },
+			}),
+		).rejects.toThrow("Resource not found");
+	});
+
+	it("omits deletedAt entirely for a live record", async () => {
+		const payload = flowRow();
+		const created = (await create(dataDb, {
+			service: EVY_CORE_SERVICE,
+			resource: FLOW_RESOURCE,
+			data: payload,
+		})) as DATA_EVY_Flow;
+
+		expect("deletedAt" in created).toBe(false);
+	});
+
+	it("tombstones file metadata while removing the binary", async () => {
+		const fileId = crypto.randomUUID();
+		await testDb.insert(schema.file).values({
+			id: fileId,
+			type: "image/jpeg",
+			visibility: "public",
+			...timestamps(),
+		});
+
+		await deleteCore(dataDb, {
+			service: EVY_CORE_SERVICE,
+			resource: EVY_CORE_RESOURCE.FILES,
+			filter: { id: fileId },
+		});
+
+		const [row] = await testDb.select().from(schema.file);
+		expect(row?.deletedAt).toBeTruthy();
+		expect(
+			await get(dataDb, {
+				service: EVY_CORE_SERVICE,
+				resource: EVY_CORE_RESOURCE.FILES,
+			}),
+		).toEqual([]);
 	});
 });

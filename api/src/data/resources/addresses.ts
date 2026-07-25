@@ -1,13 +1,7 @@
 import type { DATA_EVY_Address } from "evy-types";
 import { address } from "evy-types/db/schema.generated";
 import { validateDataEvyAddress } from "evy-types/validators";
-import { makeCoreResource, omitNulls } from "./coreResource";
-
-function omitNullOptionalFields(
-	rowData: typeof address.$inferSelect,
-): DATA_EVY_Address {
-	return validateDataEvyAddress(omitNulls(rowData));
-}
+import { makeCoreResource } from "./coreResource";
 
 export const addressesResource = makeCoreResource<DATA_EVY_Address>({
 	table: address,
@@ -25,5 +19,4 @@ export const addressesResource = makeCoreResource<DATA_EVY_Address>({
 		instructions: v.instructions,
 		visibility: v.visibility,
 	}),
-	normalize: omitNullOptionalFields,
 });
