@@ -39,7 +39,7 @@ final class EVYActionRunnerTests: XCTestCase {
     defer { NotificationCenter.default.removeObserver(observer) }
 
     EVYActionRunner.run(
-      actions: [UI_RowAction(condition: "", false: .legacy(""), true: branch)],
+      actions: [UI_RowAction(condition: "", false: .empty, true: branch)],
       datum: .dictionary(["id": .string("datum-id")]),
       show: { shown.append($0) },
       rowOperation: { rowOps.append($0) }
@@ -48,24 +48,25 @@ final class EVYActionRunnerTests: XCTestCase {
     return (operations, shown, rowOps, errors)
   }
 
-  /// Every stored form must execute the same way; this is the guarantee that
-  /// makes migrating fixtures and stored rows safe.
-  func testLegacyAndStructuredBranchesExecuteIdentically() {
+  /// The compact call syntax used by tests and tooling must produce exactly the
+  /// invocation a hand-written enum does, so test fixtures cannot quietly
+  /// diverge from what the app executes.
+  func testAuthoringHelperMatchesHandWrittenInvocations() {
     let cases: [(String, EVYActionBranch, EVYActionBranch)] = [
-      ("close", .legacy("{close()}"), .invocation(.close)),
-      ("show", .legacy("{show(sheet-row)}"), .invocation(.show(rowId: "sheet-row"))),
-      ("select", .legacy("{select($datum)}"), .invocation(.select(value: "$datum"))),
+      ("close", branch("{close()}"), .invocation(.close)),
+      ("show", branch("{show(sheet-row)}"), .invocation(.show(rowId: "sheet-row"))),
+      ("select", branch("{select($datum)}"), .invocation(.select(value: "$datum"))),
       (
-        "navigate", .legacy("{navigate(flow-1,page-1)}"),
+        "navigate", branch("{navigate(flow-1,page-1)}"),
         .invocation(.navigate(flowId: "flow-1", pageId: "page-1", query: [:]))
       ),
       (
-        "navigate with query", .legacy("{navigate(flow-1,page-1,{id: $datum.id})}"),
+        "navigate with query", branch("{navigate(flow-1,page-1,{id: $datum.id})}"),
         .invocation(.navigate(flowId: "flow-1", pageId: "page-1", query: ["id": "$datum.id"]))
       ),
-      ("delete_photo", .legacy("{delete_photo()}"), .invocation(.deletePhoto)),
+      ("delete_photo", branch("{delete_photo()}"), .invocation(.deletePhoto)),
       (
-        "highlight_required", .legacy("{highlight_required(item.pickup_time)}"),
+        "highlight_required", branch("{highlight_required(item.pickup_time)}"),
         .invocation(.highlightRequired(field: "item.pickup_time"))
       ),
     ]
@@ -74,7 +75,7 @@ final class EVYActionRunnerTests: XCTestCase {
       let fromLegacy = runBranchCapturing(legacy)
       let fromAst = runBranchCapturing(structured)
 
-      XCTAssertTrue(fromLegacy.errors.isEmpty, "\(label) legacy: \(fromLegacy.errors)")
+      XCTAssertTrue(fromLegacy.errors.isEmpty, "\(label) converted: \(fromLegacy.errors)")
       XCTAssertTrue(fromAst.errors.isEmpty, "\(label) ast: \(fromAst.errors)")
       XCTAssertEqual(fromLegacy.operations, fromAst.operations, "\(label) operations")
       XCTAssertEqual(fromLegacy.shown, fromAst.shown, "\(label) shown rows")
@@ -82,9 +83,9 @@ final class EVYActionRunnerTests: XCTestCase {
     }
   }
 
-  func testStructuredExpandTextPostsTheSameNotificationAsLegacy() {
+  func testExpandTextPostsTheSameNotificationEitherWay() {
     for branch in [
-      EVYActionBranch.legacy("{expand_text(target-row)}"),
+      branch("{expand_text(target-row)}"),
       .invocation(.expandText(rowId: "target-row")),
     ] {
       var received: [String] = []
@@ -288,14 +289,16 @@ final class EVYActionRunnerTests: XCTestCase {
     XCTAssertEqual(createdRows.count, 1)
   }
 
+  // A malformed action can no longer be stored, so this exercises the runner's
+  // halt-on-throw behaviour with an action the row cannot service instead.
   func testChainHaltsWhenActionThrows() {
-    let throwingAction = rowAction(true: "{create(onlyNamespace)}")
+    let throwingAction = rowAction(true: "{select($datum)}")
     let closeAction = rowAction(true: "{close()}")
     var received: ActionOperation?
     let errors = capturedErrors {
       EVYActionRunner.run(actions: [throwingAction, closeAction]) { received = $0 }
     }
-    XCTAssertFalse(errors.isEmpty, "create with one arg should post an error")
+    XCTAssertFalse(errors.isEmpty, "select on a row with no handler should post an error")
     XCTAssertNil(received, "close should not run once an earlier action throws")
   }
 
@@ -1152,28 +1155,16 @@ final class EVYActionRunnerTests: XCTestCase {
     XCTAssertEqual(shownRowId, "quoted-row")
   }
 
-  func testShowActionWithMissingArgumentPostsError() {
-    let action = rowAction(true: "{show()}")
-    let errors = capturedErrors {
-      EVYActionRunner.run(actions: [action], show: { _ in }) { _ in }
-    }
-    XCTAssertFalse(errors.isEmpty)
+  func testShowActionWithMissingArgumentIsNotConvertible() {
+    XCTAssertThrowsError(try EVYActionParser.invocation(from: "{show()}"))
   }
 
-  func testShowActionWithEmptyArgumentPostsError() {
-    let action = rowAction(true: "{show( )}")
-    let errors = capturedErrors {
-      EVYActionRunner.run(actions: [action], show: { _ in }) { _ in }
-    }
-    XCTAssertFalse(errors.isEmpty)
+  func testShowActionWithEmptyArgumentIsNotConvertible() {
+    XCTAssertThrowsError(try EVYActionParser.invocation(from: "{show( )}"))
   }
 
-  func testShowActionWithExtraArgumentPostsError() {
-    let action = rowAction(true: "{show(row-one, row-two)}")
-    let errors = capturedErrors {
-      EVYActionRunner.run(actions: [action], show: { _ in }) { _ in }
-    }
-    XCTAssertFalse(errors.isEmpty)
+  func testShowActionWithExtraArgumentIsNotConvertible() {
+    XCTAssertThrowsError(try EVYActionParser.invocation(from: "{show(a, b)}"))
   }
 
   func testShowActionThrowingShowCallbackPostsError() {
@@ -1257,19 +1248,10 @@ final class EVYActionRunnerTests: XCTestCase {
     assertSelectValue(received, equals: .string("literal"))
   }
 
-  func testSelectWithInvalidArgumentPostsErrorAndStops() {
-    for branch in ["{select()}", "{select(a, b)}"] {
-      var receivedOps: [ActionOperation] = []
-      var rowOps: [EVYRowActionOperation] = []
-      let errors = capturedErrors {
-        EVYActionRunner.run(
-          actions: [rowAction(true: branch), rowAction(true: "{close()}")],
-          rowOperation: { rowOps.append($0) }
-        ) { receivedOps.append($0) }
-      }
-      XCTAssertFalse(errors.isEmpty, "Expected error for \(branch)")
-      XCTAssertTrue(rowOps.isEmpty, "Expected no row ops for \(branch)")
-      XCTAssertTrue(receivedOps.isEmpty, "Expected stop for \(branch)")
+  func testSelectWithInvalidArgumentIsNotConvertible() {
+    for text in ["{select()}", "{select(a, b)}"] {
+      XCTAssertThrowsError(
+        try EVYActionParser.invocation(from: text), "Expected refusal for \(text)")
     }
   }
 
@@ -1372,16 +1354,12 @@ final class EVYActionRunnerTests: XCTestCase {
     XCTAssertEqual(receivedOps, [.close])
   }
 
-  func testExpandTextWithInvalidArgsPostsErrorAndStops() {
-    for branch in ["{expand_text()}", "{expand_text(a, b)}", "{expand_text( )}"] {
-      var receivedOps: [ActionOperation] = []
-      let errors = capturedErrors {
-        EVYActionRunner.run(
-          actions: [rowAction(true: branch), rowAction(true: "{close()}")]
-        ) { receivedOps.append($0) }
-      }
-      XCTAssertFalse(errors.isEmpty, "Expected error for \(branch)")
-      XCTAssertTrue(receivedOps.isEmpty, "Expected stop for \(branch)")
+  /// Malformed actions are now rejected before they can be stored, so this
+  /// asserts the conversion refuses them rather than the runner erroring later.
+  func testExpandTextWithInvalidArgsIsNotConvertible() {
+    for text in ["{expand_text()}", "{expand_text(a, b)}", "{expand_text( )}"] {
+      XCTAssertThrowsError(
+        try EVYActionParser.invocation(from: text), "Expected refusal for \(text)")
     }
   }
 
@@ -1411,14 +1389,9 @@ final class EVYActionRunnerTests: XCTestCase {
     XCTAssertEqual(route.query["items"], ["id-1", "id-2"])
   }
 
-  func testNavigateNonPlainTextQueryArgumentPostsError() {
-    var received: ActionOperation?
-    let action = rowAction(true: "{navigate(flow-1,page-2,notJson)}")
-    let errors = capturedErrors {
-      EVYActionRunner.run(actions: [action]) { received = $0 }
-    }
-    XCTAssertFalse(errors.isEmpty)
-    XCTAssertNil(received)
+  func testNavigateNonPlainTextQueryArgumentIsNotConvertible() {
+    XCTAssertThrowsError(
+      try EVYActionParser.invocation(from: "{navigate(flow-1,page-2,notJson)}"))
   }
 
   func testHighlightRequiredFormatsFieldLabel() {
@@ -1445,12 +1418,8 @@ final class EVYActionRunnerTests: XCTestCase {
     XCTAssertEqual(label, "Pickup Selection")
   }
 
-  func testUnsupportedFunctionPostsErrorNotification() {
-    let action = rowAction(true: "{notARealEvyFunction()}")
-    let errors = capturedErrors {
-      EVYActionRunner.run(actions: [action]) { _ in }
-    }
-    XCTAssertFalse(errors.isEmpty)
+  func testUnsupportedFunctionIsNotConvertible() {
+    XCTAssertThrowsError(try EVYActionParser.invocation(from: "{teleport(x)}"))
   }
 
   func testNavigateWithDatumResolvesId() {
@@ -1495,19 +1464,17 @@ final class EVYActionRunnerTests: XCTestCase {
     XCTAssertNil(route.query["empty"])
   }
 
-  func testNavigateWithMissingQueryColonPostsError() {
-    var received: ActionOperation?
-    let action = rowAction(true: "{navigate(flowX,pageY,{items [a]})}")
-    let errors = capturedErrors {
-      EVYActionRunner.run(actions: [action]) { received = $0 }
-    }
-    XCTAssertFalse(errors.isEmpty)
-    XCTAssertNil(received)
+  func testNavigateWithMissingQueryColonIsNotConvertible() {
+    XCTAssertThrowsError(
+      try EVYActionParser.invocation(from: "{navigate(flowX,pageY,{items [a]})}"))
   }
 
   func testNavigateWithUnclosedQueryArrayPostsError() {
     var received: ActionOperation?
-    let action = rowAction(true: "{navigate(flowX,pageY,{items: [a})}")
+    let action = UI_RowAction(
+      condition: "", false: .empty,
+      true: .invocation(
+        .navigate(flowId: "flowX", pageId: "pageY", query: ["items": "[a"])))
     let errors = capturedErrors {
       EVYActionRunner.run(actions: [action]) { received = $0 }
     }
@@ -1515,12 +1482,9 @@ final class EVYActionRunnerTests: XCTestCase {
     XCTAssertNil(received)
   }
 
-  func testNavigateWithTooManyArgsThrowsError() {
-    let action = rowAction(true: "{navigate(flowX,pageY,{key: val},extra)}")
-    let errors = capturedErrors {
-      EVYActionRunner.run(actions: [action]) { _ in }
-    }
-    XCTAssertFalse(errors.isEmpty)
+  func testNavigateWithTooManyArgsIsNotConvertible() {
+    XCTAssertThrowsError(
+      try EVYActionParser.invocation(from: "{navigate(flowX,pageY,{key: val},extra)}"))
   }
 
   func testNavigateWithoutDatumKeepsDatumExpression() {
@@ -1612,8 +1576,8 @@ final class EVYActionRunnerTests: XCTestCase {
 
     XCTAssertEqual(formattedRow.id, row.id)
     XCTAssertEqual(formattedRow.title, "Resolved Title")
-    XCTAssertEqual(formattedRow.actions.tap.first?.true, .legacy(navigateAction))
-    XCTAssertEqual(formattedRow.actions.swipeLeft.first?.true, .legacy(updateAction))
+    XCTAssertEqual(formattedRow.actions.tap.first?.true, branch(navigateAction))
+    XCTAssertEqual(formattedRow.actions.swipeLeft.first?.true, branch(updateAction))
   }
 
   func testSwipeLeftUpdateActionAcceptsPendingMessageFromFormattedSearchResult() throws {

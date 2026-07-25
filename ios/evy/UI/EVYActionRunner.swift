@@ -85,18 +85,7 @@ enum EVYActionRunner {
     show: @escaping (String) throws -> Void,
     rowOperation: @escaping EVYRowOperationHandler
   ) throws {
-    // Legacy strings are converted up front, so both stored forms execute
-    // through the one switch below.
-    let invocation: EVYActionInvocation
-    switch branch {
-    case .legacy(let text):
-      let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
-      guard trimmed.hasPrefix("{"), trimmed.hasSuffix("}") else { return }
-      invocation = try EVYActionParser.invocation(from: trimmed)
-    case .invocation(let decoded):
-      invocation = decoded
-    }
-
+    guard let invocation = branch.resolvedInvocation else { return }
     try run(
       invocation: invocation, datum: datum, action: action, show: show,
       rowOperation: rowOperation)

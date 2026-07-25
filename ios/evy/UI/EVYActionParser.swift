@@ -172,13 +172,16 @@ enum EVYActionParser {
   }
 }
 
-// MARK: - Legacy string front-end
+// MARK: - Legacy string authoring helper
 
 extension EVYActionParser {
-  /// Converts a legacy `{fn(...)}` branch into the same structured invocation an
-  /// AST branch decodes to, so the runner has a single execution path. Mirrors
-  /// evy-types/actionAst on the TypeScript side; both are pinned by
-  /// types/grammar/conformance.json.
+  /// Builds an invocation from the old `{fn(...)}` call syntax.
+  ///
+  /// NOT part of the execution path: stored branches are structured, the API
+  /// rejects legacy strings, and EVYActionBranch has no string case. This
+  /// remains only so tests and tooling can express an action compactly as
+  /// `"{create(svc,items,submit)}"` rather than spelling out the enum. Mirrors
+  /// evy-types/actionAst.
   static func invocation(from rawBranch: String) throws -> EVYActionInvocation {
     let trimmed = rawBranch.trimmingCharacters(in: .whitespacesAndNewlines)
     guard trimmed.hasPrefix("{"), trimmed.hasSuffix("}"),

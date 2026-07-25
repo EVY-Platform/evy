@@ -565,8 +565,10 @@ final class ContentViewTests: XCTestCase {
             [
               "condition": "",
               "false": "",
-              "true":
-                "{create(\(MarketplaceTestFixture.serviceId),\(MarketplaceTestFixture.itemsResourceId), submit)}",
+              "true": [
+                "fn": "create", "service": MarketplaceTestFixture.serviceId,
+                "resource": MarketplaceTestFixture.itemsResourceId, "mode": "submit",
+              ],
             ]
           ]
         ],
@@ -597,8 +599,11 @@ final class ContentViewTests: XCTestCase {
             [
               "condition": "",
               "false": "",
-              "true":
-                "{create(\(coreService), addresses, {street: $datum.street}, {\(itemsResource).transfer_options.pickup.address_id})}",
+              "true": [
+                "fn": "create", "service": coreService, "resource": "addresses",
+                "mode": "inline", "data": ["street": "$datum.street"],
+                "idDestination": "{\(itemsResource).transfer_options.pickup.address_id}",
+              ],
             ]
           ]
         ],
@@ -612,7 +617,10 @@ final class ContentViewTests: XCTestCase {
             [
               "condition": "",
               "false": "",
-              "true": "{create(\(MarketplaceTestFixture.serviceId),\(itemsResource), submit)}",
+              "true": [
+                "fn": "create", "service": MarketplaceTestFixture.serviceId,
+                "resource": itemsResource, "mode": "submit",
+              ],
             ]
           ]
         ],
@@ -644,8 +652,10 @@ final class ContentViewTests: XCTestCase {
             [
               "condition": "",
               "false": "",
-              "true":
-                "{create(\(MarketplaceTestFixture.serviceId),\(MarketplaceTestFixture.itemsResourceId), submit)}",
+              "true": [
+                "fn": "create", "service": MarketplaceTestFixture.serviceId,
+                "resource": MarketplaceTestFixture.itemsResourceId, "mode": "submit",
+              ],
             ]
           ]
         ],
@@ -669,7 +679,9 @@ final class ContentViewTests: XCTestCase {
             [
               "condition": "",
               "false": "",
-              "true": "{navigate(another-flow,another-page)}",
+              "true": [
+                "fn": "navigate", "flowId": "another-flow", "pageId": "another-page",
+              ],
             ]
           ]
         ],
@@ -695,8 +707,10 @@ final class ContentViewTests: XCTestCase {
             [
               "condition": "",
               "false": "",
-              "true":
-                "{create(\(MarketplaceTestFixture.serviceId),\(MarketplaceTestFixture.itemsResourceId), submit)}",
+              "true": [
+                "fn": "create", "service": MarketplaceTestFixture.serviceId,
+                "resource": MarketplaceTestFixture.itemsResourceId, "mode": "submit",
+              ],
             ]
           ]
         ],
@@ -737,8 +751,10 @@ final class ContentViewTests: XCTestCase {
             [
               "condition": "",
               "false": "",
-              "true":
-                "{create(\(MarketplaceTestFixture.serviceId),\(submitResource), submit)}",
+              "true": [
+                "fn": "create", "service": MarketplaceTestFixture.serviceId,
+                "resource": submitResource, "mode": "submit",
+              ],
             ]
           ]
         ],
@@ -872,8 +888,10 @@ final class ContentViewTests: XCTestCase {
             [
               "condition": "",
               "false": "",
-              "true":
-                "{create(\(MarketplaceTestFixture.serviceId),\(MarketplaceTestFixture.itemsResourceId), submit)}",
+              "true": [
+                "fn": "create", "service": MarketplaceTestFixture.serviceId,
+                "resource": MarketplaceTestFixture.itemsResourceId, "mode": "submit",
+              ],
             ]
           ]
         ],
@@ -887,7 +905,10 @@ final class ContentViewTests: XCTestCase {
             [
               "condition": "",
               "false": "",
-              "true": "{create(\(MarketplaceTestFixture.serviceId),\(secondResource), submit)}",
+              "true": [
+                "fn": "create", "service": MarketplaceTestFixture.serviceId,
+                "resource": secondResource, "mode": "submit",
+              ],
             ]
           ]
         ],

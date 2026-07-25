@@ -105,7 +105,7 @@ final class GrammarConformanceTests: XCTestCase {
   }
 
   func testEveryIosVectorIsCoveredByThisRunner() throws {
-    let handled = ["split-args", "action-branch", "comparison", "expression", "display"]
+    let handled = ["split-args", "comparison", "expression", "display"]
     let uncovered = try loadVectors()
       .filter { $0.platforms.contains("ios") && !handled.contains($0.category) }
       .map(\.id)
@@ -119,33 +119,6 @@ final class GrammarConformanceTests: XCTestCase {
       let expected = strings(vector.expect["args"]) ?? []
       let actual = EVY.splitFunctionArguments(vector.input)
       XCTAssertEqual(actual, expected, "vector \(vector.id)")
-    }
-  }
-
-  func testActionBranchVectors() throws {
-    for vector in try iosVectors(category: "action-branch") {
-      // Mirrors EVYActionRunner.execute: branches must be brace-wrapped to run.
-      let trimmed = vector.input.trimmingCharacters(in: .whitespacesAndNewlines)
-      let isExecutable = trimmed.hasPrefix("{") && trimmed.hasSuffix("}")
-      let call = isExecutable ? EVYActionParser.functionCall(from: trimmed) : nil
-
-      if case .bool(false) = vector.expect["parsed"] ?? .null {
-        XCTAssertNil(call, "vector \(vector.id) should not parse as an action")
-        continue
-      }
-
-      guard let call else {
-        return XCTFail("vector \(vector.id) failed to parse")
-      }
-      if case .string(let expectedName) = vector.expect["fn"] ?? .null {
-        XCTAssertEqual(call.name, expectedName, "vector \(vector.id) function name")
-      }
-      let expectedArgs = strings(vector.expect["args"]) ?? []
-      let actualArgs =
-        call.args.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-        ? []
-        : EVY.splitFunctionArguments(call.args)
-      XCTAssertEqual(actualArgs, expectedArgs, "vector \(vector.id) args")
     }
   }
 

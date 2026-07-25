@@ -250,7 +250,7 @@ describe("validateFlowData", () => {
 							{
 								condition: "",
 								false: "",
-								true: "{delete_photo()}",
+								true: { fn: "delete_photo" },
 							},
 						],
 					},
@@ -273,14 +273,14 @@ describe("validateFlowData", () => {
 						{
 							condition: "",
 							false: "",
-							true: "{close()}",
+							true: { fn: "close" },
 						},
 					],
 					submit: [
 						{
 							condition: "",
 							false: "",
-							true: "{close()}",
+							true: { fn: "close" },
 						},
 					],
 				},
@@ -303,7 +303,7 @@ describe("validateFlowData", () => {
 							{
 								condition: "",
 								false: "",
-								true: "{close()}",
+								true: { fn: "close" },
 							},
 						],
 					},
@@ -337,14 +337,14 @@ describe("validateFlowData", () => {
 							{
 								condition: "",
 								false: "",
-								true: "{select($datum)}",
+								true: { fn: "select", value: "$datum" },
 							},
 						],
 						"tap-column": [
 							{
 								condition: "",
 								false: "",
-								true: "{select($datum)}",
+								true: { fn: "select", value: "$datum" },
 							},
 						],
 					},
@@ -366,7 +366,7 @@ describe("validateFlowData", () => {
 		const selectAction = {
 			condition: "",
 			false: "",
-			true: "{select($datum)}",
+			true: { fn: "select", value: "$datum" },
 		};
 		const out = validateFlowData(
 			flowWithRow({
@@ -402,14 +402,14 @@ describe("validateFlowData", () => {
 							{
 								condition: "",
 								false: "",
-								true: "{close()}",
+								true: { fn: "close" },
 							},
 						],
 						"tap-row": [
 							{
 								condition: "",
 								false: "",
-								true: "{select($datum)}",
+								true: { fn: "select", value: "$datum" },
 							},
 						],
 					},
@@ -430,7 +430,7 @@ describe("validateFlowData", () => {
 						{
 							condition: "",
 							false: "",
-							true: "{close()}",
+							true: { fn: "close" },
 						},
 					],
 				},
@@ -452,14 +452,14 @@ describe("validateFlowData", () => {
 							{
 								condition: "",
 								false: "",
-								true: "{close()}",
+								true: { fn: "close" },
 							},
 						],
 						"swipe-left": [
 							{
 								condition: "",
 								false: "",
-								true: "{close()}",
+								true: { fn: "close" },
 							},
 						],
 					},
@@ -501,9 +501,9 @@ describe("row actions shape validation", () => {
 
 	it("accepts a well-formed trigger list", () => {
 		const out = rowWithActions({
-			tap: [{ condition: "", false: "", true: "{close()}" }],
+			tap: [{ condition: "", false: "", true: { fn: "close" } }],
 		});
-		expect(out.data.actions?.tap?.[0]?.true).toBe("{close()}");
+		expect(out.data.actions?.tap?.[0]?.true).toEqual({ fn: "close" });
 	});
 
 	it("accepts the canonical empty actions object", () => {
@@ -578,7 +578,6 @@ describe("structured action invocations", () => {
 	}
 
 	it.each([
-		["legacy string branch", "{close()}"],
 		["empty branch", ""],
 		["close", { fn: "close" }],
 		["delete_photo", { fn: "delete_photo" }],
@@ -745,7 +744,12 @@ describe("validateFlowData submits declaration", () => {
 					{
 						condition: "",
 						false: "",
-						true: `{create(${service},${resource},submit)}`,
+						true: {
+							fn: "create",
+							service,
+							resource,
+							mode: "submit",
+						},
 					},
 				],
 			},
@@ -828,7 +832,13 @@ describe("validateFlowData submits declaration", () => {
 						{
 							condition: "",
 							false: "",
-							true: `{create(${SERVICE},messages,{status: "pending"})}`,
+							true: {
+								fn: "create",
+								service: SERVICE,
+								resource: "messages",
+								mode: "inline",
+								data: { status: '"pending"' },
+							},
 						},
 					],
 				},
@@ -863,7 +873,9 @@ describe("validateFlowData submits declaration", () => {
 					name: "Opener",
 					type: "Button",
 					actions: {
-						tap: [{ condition: "", false: "", true: "{close()}" }],
+						tap: [
+							{ condition: "", false: "", true: { fn: "close" } },
+						],
 					},
 					visible: "true",
 					label: "Open",

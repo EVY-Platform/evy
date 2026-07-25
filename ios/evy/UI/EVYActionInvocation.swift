@@ -45,36 +45,19 @@ public enum EVYActionInvocation: Equatable {
   }
 }
 
-/// An action branch is either a legacy `{fn(...)}` string or a structured
-/// invocation. Both decode into the same runtime representation, so there is
-/// one execution path regardless of which form was stored.
+/// An action branch: either nothing to do, or a structured invocation.
 public enum EVYActionBranch: Equatable {
-  case legacy(String)
+  case empty
   case invocation(EVYActionInvocation)
 
-  /// Legacy branches are plain strings; an empty one means "do nothing".
   public var isEmpty: Bool {
-    if case .legacy(let text) = self {
-      return text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-    }
-    return false
+    self == .empty
   }
-}
 
-extension EVYActionBranch {
-  /// The structured form of this branch, whichever way it was stored. Returns
-  /// nil for an empty or unparseable legacy branch, so callers that only want
-  /// to inspect actions do not have to care which form is on disk.
-  @MainActor
-  public func resolvedInvocation() -> EVYActionInvocation? {
-    switch self {
-    case .invocation(let invocation):
-      return invocation
-    case .legacy(let text):
-      let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
-      guard !trimmed.isEmpty else { return nil }
-      return try? EVYActionParser.invocation(from: trimmed)
-    }
+  /// The structured form, or nil when the branch does nothing.
+  public var resolvedInvocation: EVYActionInvocation? {
+    if case .invocation(let invocation) = self { return invocation }
+    return nil
   }
 }
 
@@ -84,7 +67,14 @@ extension EVYActionBranch: Codable {
   public init(from decoder: Decoder) throws {
     let container = try decoder.singleValueContainer()
     if let text = try? container.decode(String.self) {
-      self = .legacy(text)
+      guard text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+        throw DecodingError.dataCorruptedError(
+          in: container,
+          debugDescription:
+            "Action branches are structured invocations; only the empty string means do nothing"
+        )
+      }
+      self = .empty
       return
     }
     self = .invocation(try container.decode(EVYActionInvocation.self))
@@ -93,7 +83,7 @@ extension EVYActionBranch: Codable {
   public func encode(to encoder: Encoder) throws {
     var container = encoder.singleValueContainer()
     switch self {
-    case .legacy(let text): try container.encode(text)
+    case .empty: try container.encode("")
     case .invocation(let invocation): try container.encode(invocation)
     }
   }

@@ -214,25 +214,8 @@ enum EVYFlowStore {
         guard let uiRow = storedRow.uiRow() else { return }
         for action in EVYRowActionTrigger.allActionLists(in: uiRow.actions) {
           for branch in [action.`true`, action.`false`] {
-            guard !branch.isEmpty else { continue }
-            if case .create(_, let resource, .submit, _) = branch.resolvedInvocation() {
+            if case .create(_, let resource, .submit, _) = branch.resolvedInvocation {
               keys.insert(resource)
-              continue
-            }
-            // A create that will not parse is an authoring error worth naming,
-            // whichever form it is stored in.
-            if case .legacy(let text) = branch,
-              let parsed = EVYActionParser.functionCall(from: text),
-              parsed.name == "create",
-              branch.resolvedInvocation() == nil
-            {
-              NotificationCenter.default.post(
-                name: .evyErrorOccurred,
-                object: EVYError.invalidData(
-                  context:
-                    "create requires namespace, resource, and submit or data, e.g. create(marketplace,item,submit)"
-                )
-              )
             }
           }
         }

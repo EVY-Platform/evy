@@ -12,7 +12,7 @@ import {
 	createUsesSubmitMarker,
 	finalizeCreateBranchForSave,
 	formatBranchDisplay,
-	isUnrecognizedBranch,
+	isUnstorableBranchText,
 	isValidCreateBranchForSave,
 	parseBranch,
 	serializeBranch,
@@ -400,11 +400,15 @@ describe("structured branch storage", () => {
 		expect(branchForStorage("")).toBe("");
 	});
 
-	// An action the converter does not understand is left exactly as written
-	// rather than being rewritten into something that merely looks valid.
-	it("leaves an unconvertible branch untouched", () => {
-		expect(branchForStorage("{teleport(x)}")).toBe("{teleport(x)}");
-		expect(branchForStorage("not an action")).toBe("not an action");
+	// Legacy strings are no longer storable, so an unconvertible branch is a
+	// bug to surface rather than something to persist and discover later.
+	it("refuses to store an unconvertible branch", () => {
+		expect(() => branchForStorage("{teleport(x)}")).toThrow(
+			"Cannot store action branch",
+		);
+		expect(() => branchForStorage("not an action")).toThrow(
+			"Cannot store action branch",
+		);
 	});
 
 	it("renders a structured branch back to a string for editing", () => {
@@ -428,10 +432,9 @@ describe("structured branch storage", () => {
 		});
 	});
 
-	it("flags only unconvertible strings as unrecognized", () => {
-		expect(isUnrecognizedBranch("{teleport(x)}")).toBe(true);
-		expect(isUnrecognizedBranch("{close()}")).toBe(false);
-		expect(isUnrecognizedBranch("")).toBe(false);
-		expect(isUnrecognizedBranch({ fn: "close" })).toBe(false);
+	it("flags only unstorable editor text", () => {
+		expect(isUnstorableBranchText("{teleport(x)}")).toBe(true);
+		expect(isUnstorableBranchText("{close()}")).toBe(false);
+		expect(isUnstorableBranchText("")).toBe(false);
 	});
 });

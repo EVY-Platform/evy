@@ -50,11 +50,11 @@ editing the vector — fix the implementation, then update the vector.
 | Category | Platforms | `expect` | Runs against |
 | --- | --- | --- | --- |
 | `split-args` | ios, web | `{ "args": string[] }` | Swift `EVY.splitFunctionArguments`, TS `splitFunctionArguments` |
-| `action-branch` | ios, web | `{ "fn": string, "args": string[] }` or `{ "parsed": false }` | Swift `EVY.parseFunctionCall` + arg split, TS `parseBranch` |
 | `comparison` | ios | `{ "value": boolean }` or `{ "error": true }` | `EVY.evaluateFromText` |
 | `expression` | ios | `{ "text": string }` or `{ "error": true }` | `EVY.getValueFromText(...).toString()` |
 | `display` | ios | `{ "text": string }` | `EVY.displayText(fromSource:destination:)` |
 | `condition-parse` | web | `{ "ast": … }` (`null` when unparseable) | `parseCondition` |
+| `action-ast-convert` | web | `{ "ast": … }` (`null` when unconvertible) | `parseActionStringToInvocation` |
 
 `expression` is the core resolver and `display` is the rendered-row layer above
 it. They are separate categories because they disagree on failure: the core

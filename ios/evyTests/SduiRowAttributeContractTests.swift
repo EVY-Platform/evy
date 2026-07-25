@@ -116,9 +116,24 @@ final class SduiRowAttributeContractTests: XCTestCase {
           ]
         ],
       ])
+    // Legacy call-syntax strings are no longer a valid stored branch.
+    XCTAssertThrowsError(try JSONDecoder().decode(UI_Row.self, from: rowData))
+  }
+
+  func testRowDecodesEmptyBranchAsDoNothing() throws {
+    let rowData = try JSONSerialization.data(
+      withJSONObject: [
+        "id": "empty-branch-row",
+        "type": "Button",
+        "visible": "true",
+        "actions": [
+          "tap": [["condition": "", "false": "", "true": ["fn": "close"]]]
+        ],
+      ])
+
     let row = try JSONDecoder().decode(UI_Row.self, from: rowData)
     XCTAssertEqual(row.actions.tap.count, 1)
-    XCTAssertEqual(row.actions.tap.first?.true, .legacy("{close()}"))
+    XCTAssertEqual(row.actions.tap.first?.false, .empty)
     XCTAssertTrue(row.actions.delete.isEmpty)
   }
 
@@ -156,7 +171,6 @@ final class SduiRowAttributeContractTests: XCTestCase {
 
   func testStructuredBranchesRoundTripThroughCoding() throws {
     let branches: [EVYActionBranch] = [
-      .legacy("{close()}"),
       .invocation(.show(rowId: "row-1")),
       .invocation(.navigate(flowId: "f", pageId: "p", query: ["id": "$datum.id"])),
       .invocation(

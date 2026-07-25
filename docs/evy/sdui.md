@@ -125,8 +125,9 @@ Rows are what are put into pages. They are the building block of the EVY server-
     "actions": {
         "tap": [{
             "condition": "{length(title) > 0}",
-            "false": "{highlight_required(title)}",
-            "true": "{create([service_id],[resource_id],submit)}"
+            "false": { "fn": "highlight_required", "field": "title" },
+            "true": { "fn": "create", "service": "[service_id]",
+                      "resource": "[resource_id]", "mode": "submit" }
         }]
     }
 }
@@ -183,12 +184,12 @@ Each row has an `actions` attribute: an object keyed by **trigger** name. Each t
 
 ```jsonc
 "actions": {
-  "tap": [{ "condition": "", "false": "", "true": "{close()}" }],
-  "submit": [{ "condition": "", "false": "", "true": "{close()}" }],
-  "delete": [{ "condition": "", "false": "", "true": "{delete_photo()}" }],
-  "tap-row": [{ "condition": "", "false": "", "true": "{select($datum)}" }],
-  "tap-column": [{ "condition": "", "false": "", "true": "{select($datum)}" }],
-  "swipe-left": [{ "condition": "", "false": "", "true": "{show(sheetId)}" }]
+  "tap": [{ "condition": "", "false": "", "true": { "fn": "close" } }],
+  "submit": [{ "condition": "", "false": "", "true": { "fn": "close" } }],
+  "delete": [{ "condition": "", "false": "", "true": { "fn": "delete_photo" } }],
+  "tap-row": [{ "condition": "", "false": "", "true": { "fn": "select", "value": "$datum" } }],
+  "tap-column": [{ "condition": "", "false": "", "true": { "fn": "select", "value": "$datum" } }],
+  "swipe-left": [{ "condition": "", "false": "", "true": { "fn": "show", "rowId": "sheetId" } }]
 }
 ```
 
@@ -261,11 +262,40 @@ A row's action list for a given trigger runs **in order**. For each entry: if it
 
 #### Branches (`true` / `false`)
 
-Each branch is a string. Empty string means "do nothing" for that branch.
+Each branch is either the empty string, meaning "do nothing", or a **structured action invocation**: an object naming the function and its arguments.
 
-Action branches **must** be wrapped in curly braces to be executed: `{functionName(arg1, arg2, ...)}`. A bare function name without braces (e.g. `close` or `close()`) is treated as inert text and will not trigger any action.
+```jsonc
+"true": { "fn": "close" }
+"true": { "fn": "show", "rowId": "b8c7d6e5-…" }
+"true": { "fn": "create", "service": "…", "resource": "items", "mode": "submit" }
+"true": { "fn": "update", "service": "…", "resource": "items",
+          "mode": "store", "filter": { "id": "item.id" },
+          "changes": { "status": "accepted" } }
+```
 
-Supported action functions:
+The shape of every invocation is defined in [`types/schema/sdui/action.schema.json`](../../types/schema/sdui/action.schema.json) and enforced by the API on write, so a malformed action is rejected at the source rather than failing silently when tapped.
+
+Legacy `{functionName(arg1, arg2)}` **strings are no longer accepted** — the API rejects them and clients cannot execute them. `scripts/migrate-actions-to-ast.ts` converts stored data.
+
+Value expressions inside `data`, `filter`, `changes` and `query` remain strings and resolve exactly as before (data path, `$datum`, quoted literal, bare word), because whether a bare word is a path or a literal depends on the data present when the action runs.
+
+Supported invocations. The `fn` value selects the shape; every field below is required unless marked optional.
+
+| `fn` | Fields | Meaning |
+| --- | --- | --- |
+| `close` | — | Close the current UI. Inside a sheet overlay, dismisses the sheet only. |
+| `select_photo` | — | Ask the triggering `SelectPhoto` row to present the photo picker. |
+| `delete_photo` | — | Remove the photo tile that was tapped. |
+| `expand_photo` | — | Present the current `PhotoGallery` photo full screen. |
+| `show` | `rowId` | Present that row in a sheet overlay. The target may be on any synced page. |
+| `expand_text` | `rowId` | Expand the `TextExpand` row with that id, wherever it is on screen. |
+| `highlight_required` | `field` | Mark a field as required / show validation. |
+| `select` | `value` | Ask the triggering row to select `value`, usually `$datum`. |
+| `navigate` | `flowId`, `pageId`, `query` (optional) | Go to a page within a flow. `query` is a map of value expressions. |
+| `create` | `service`, `resource`, `mode`, plus mode fields | `mode: "submit"` merges the flow's create drafts; `mode: "inline"` takes `data`; `mode: "fromPath"` takes `dataPath`. Both non-submit modes accept an optional `idDestination`. Never changes routes — follow with `close` to dismiss. |
+| `update` | `service`, `resource`, `mode`, `filter`, `changes` \| `changesPath` | `mode: "store"` requires a non-empty `filter` and updates matching records; `mode: "draft"` takes no filter and writes into the active create draft. Changes are either a map or a whole-object path, never both. |
+
+The older per-function notes below describe the same behaviour in the previous call syntax:
 
 | Function | Meaning |
 | -------- | ------- |
@@ -290,7 +320,7 @@ Validate several fields with empty `true` steps, then navigate:
 ```json
 {
 	"condition": "{length(title) > 0}",
-	"false": "{highlight_required(title)}",
+	"false": { "fn": "highlight_required", "field": "title" },
 	"true": ""
 }
 ```
@@ -301,7 +331,7 @@ Final “Next” after validations:
 {
 	"condition": "",
 	"false": "",
-	"true": "{navigate([flow_id],[page_id])}"
+	"true": { "fn": "navigate", "flowId": "[flow_id]", "pageId": "[page_id]" }
 }
 ```
 
@@ -311,7 +341,8 @@ Navigate with query params (selects an entity from synced data):
 {
 	"condition": "",
 	"false": "",
-	"true": "{navigate([flow_id],[page_id],{id: $datum.id})}"
+	"true": { "fn": "navigate", "flowId": "[flow_id]", "pageId": "[page_id]",
+	          "query": { "id": "$datum.id" } }
 }
 ```
 
@@ -320,8 +351,8 @@ OR condition with navigate on success:
 ```json
 {
 	"condition": "{count(pickup_selection) > 0 || count(delivery_selection) > 0 || count(shipping_destination_areas) > 0}",
-	"false": "{highlight_required(pickup_selection)}",
-	"true": "{navigate([flow_id],[another_page_id])}"
+	"false": { "fn": "highlight_required", "field": "pickup_selection" },
+	"true": { "fn": "navigate", "flowId": "[flow_id]", "pageId": "[another_page_id]" }
 }
 ```
 
@@ -332,12 +363,13 @@ Submit:
 	{
 		"condition": "",
 		"false": "",
-		"true": "{create([service_id],[resource_id],submit)}"
+		"true": { "fn": "create", "service": "[service_id]",
+		          "resource": "[resource_id]", "mode": "submit" }
 	},
 	{
 		"condition": "",
 		"false": "",
-		"true": "{close()}"
+		"true": { "fn": "close" }
 	}
 ]
 ```
@@ -353,12 +385,12 @@ Open a confirmation sheet after selecting a timeslot (`select` must run first so
 			{
 				"condition": "",
 				"false": "",
-				"true": "{select($datum)}"
+				"true": { "fn": "select", "value": "$datum" }
 			},
 			{
 				"condition": "",
 				"false": "",
-				"true": "{show(b8c7d6e5-f4a3-4b2c-9d1e-0f8a7b6c5d4e)}"
+				"true": { "fn": "show", "rowId": "b8c7d6e5-f4a3-4b2c-9d1e-0f8a7b6c5d4e" }
 			}
 		]
 	},
@@ -392,12 +424,19 @@ When an address already exists, the first action's `false` branch runs and **sto
 		"tap": [
 			{
 				"condition": "{length(item.transfer_options.pickup.address_id) == 0}",
-				"true": "{create(core, addresses, pickup_address, {pickup_address.id})}",
-				"false": "{update(core, addresses, {id: item.transfer_options.pickup.address_id}, pickup_address)}"
+				"true": { "fn": "create", "service": "core", "resource": "addresses",
+				          "mode": "fromPath", "dataPath": "pickup_address",
+				          "idDestination": "{pickup_address.id}" },
+				"false": { "fn": "update", "service": "core", "resource": "addresses",
+				           "mode": "store",
+				           "filter": { "id": "item.transfer_options.pickup.address_id" },
+				           "changesPath": "pickup_address" }
 			},
 			{
 				"condition": "",
-				"true": "{update(marketplace, items, {}, {transfer_options.pickup.address_id: pickup_address.id}, draft)}",
+				"true": { "fn": "update", "service": "marketplace", "resource": "items",
+				          "mode": "draft",
+				          "changes": { "transfer_options.pickup.address_id": "pickup_address.id" } },
 				"false": ""
 			}
 		]

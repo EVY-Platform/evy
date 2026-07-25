@@ -23,7 +23,9 @@ struct Filter: Encodable {
 enum EVYSyncState {
   private static let lastSyncTimestampKey = "lastSyncTimestamp"
   private static let storageVersionKey = "syncStorageVersion"
-  private static let currentStorageVersion = 3
+  // 4: action branches moved from legacy `{fn(...)}` strings to structured
+  // invocations, which the old cached rows cannot represent.
+  private static let currentStorageVersion = 4
   static var storageVersionDidChange = false
 
   static var lastSyncTimestamp: String {

@@ -11,8 +11,6 @@ import type { ErrorObject, ValidateFunction } from "ajv";
 import Ajv2020 from "ajv/dist/2020";
 import addFormats from "ajv-formats";
 
-import { splitFunctionArguments } from "./functionArgs";
-
 import type {
 	DATA_EVY_Address,
 	DATA_EVY_File,
@@ -575,18 +573,16 @@ function walkUiFlowRowTree(row: UI_Row, path: string): void {
 	}
 }
 
-/** `{create(service,resource,submit)}` -> `service/resource`, else null. */
-function submitCreateTarget(branch: string): string | null {
-	const trimmed = branch.trim();
-	if (!trimmed.startsWith("{") || !trimmed.endsWith("}")) return null;
-	const inner = trimmed.slice(1, -1).trim();
-	if (!inner.startsWith("create(") || !inner.endsWith(")")) return null;
+/** A submit-mode create -> `service/resource`, else null. */
+function submitCreateTarget(branch: unknown): string | null {
+	if (!branch || typeof branch !== "object") return null;
+	const invocation = branch as Record<string, unknown>;
+	if (invocation.fn !== "create" || invocation.mode !== "submit") return null;
 
-	const args = splitFunctionArguments(inner.slice("create(".length, -1));
-	if (args[2]?.trim() !== "submit") return null;
-
-	const service = args[0]?.trim();
-	const resource = args[1]?.trim();
+	const service =
+		typeof invocation.service === "string" ? invocation.service : "";
+	const resource =
+		typeof invocation.resource === "string" ? invocation.resource : "";
 	if (!service || !resource) return null;
 	return `${service}/${resource}`;
 }
@@ -596,7 +592,6 @@ function collectSubmitTargets(row: UI_Row, into: Set<string>): void {
 		if (!Array.isArray(actionList)) continue;
 		for (const action of actionList) {
 			for (const branch of [action.true, action.false]) {
-				if (typeof branch !== "string") continue;
 				const target = submitCreateTarget(branch);
 				if (target) into.add(target);
 			}

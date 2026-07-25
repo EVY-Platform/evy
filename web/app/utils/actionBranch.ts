@@ -63,9 +63,9 @@ function isActionFunction(name: string): name is ActionFunction {
 }
 
 /**
- * The editor works in the legacy string form regardless of how a branch is
- * stored, so a structured branch is rendered back to a string on the way in.
- * Storage is the thing that changes shape, not the editing model.
+ * The argument-slot editor works on a flat `fn(a,b)` rendering of a branch.
+ * That text form is an editing convenience internal to the builder - it is
+ * never persisted, and the API rejects it.
  */
 export function branchToEditableString(branch: UI_ActionBranch): string {
 	if (typeof branch === "string") return branch;
@@ -73,21 +73,25 @@ export function branchToEditableString(branch: UI_ActionBranch): string {
 }
 
 /**
- * What actually gets persisted. A branch that converts is stored structured; an
- * unconvertible one is left exactly as it was rather than being rewritten into
- * something that looks valid.
+ * Turns the editor's text form into what gets persisted. Only the empty string
+ * and structured invocations are storable, so an unconvertible branch is a bug
+ * in the editor rather than something to persist and discover later.
  */
 export function branchForStorage(branchString: string): UI_ActionBranch {
 	const trimmed = branchString.trim();
-	if (!trimmed) return branchString;
+	if (!trimmed) return "";
 	const converted = parseActionStringToInvocation(trimmed);
-	return converted.ok ? converted.invocation : branchString;
+	if (!converted.ok) {
+		throw new Error(
+			`Cannot store action branch "${branchString}": ${converted.reason}`,
+		);
+	}
+	return converted.invocation;
 }
 
-/** True when a non-empty branch cannot be represented structurally. */
-export function isUnrecognizedBranch(branch: UI_ActionBranch): boolean {
-	if (typeof branch !== "string") return false;
-	const trimmed = branch.trim();
+/** True when the editor's text form could not be stored as an invocation. */
+export function isUnstorableBranchText(branchText: string): boolean {
+	const trimmed = branchText.trim();
 	if (!trimmed) return false;
 	return !parseActionStringToInvocation(trimmed).ok;
 }
