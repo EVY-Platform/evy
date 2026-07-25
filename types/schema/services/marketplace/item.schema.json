@@ -2,33 +2,90 @@
 	"$schema": "https://json-schema.org/draft/2020-12/schema",
 	"$id": "services/marketplace/item",
 	"title": "DATA_MARKETPLACE_Item",
-	"description": "A marketplace listing. Fields are typed but optional, and additional properties are allowed: the create flow merges flat draft fields (payment_cash, delivery_fee, shipping_fee, distance, shipping_source_postal_code, shipping_destination_areas) into a new item, so a freshly created item is shaped differently from a seeded one. This schema therefore constrains the type of every field it knows about without asserting which fields must be present.",
+	"description": "A marketplace listing. Fields are typed but optional, and additional properties are allowed: the create flow merges flat draft fields into a new item, so a freshly created item is shaped differently from a seeded one. This schema therefore constrains the type of every field it knows about without asserting which fields must be present. The flat draft fields are typed from what the create flow actually persists - text inputs and text selects write strings (including \"true\"/\"false\"), and inline pickers write arrays of bare ids.",
 	"type": "object",
 	"additionalProperties": true,
 	"required": ["id"],
 	"properties": {
-		"id": { "type": "string", "format": "uuid" },
-		"title": { "type": "string" },
-		"description": { "type": "string" },
-		"seller_id": { "type": "string", "format": "uuid" },
-		"createdAt": { "type": "string", "format": "date-time" },
-		"condition_id": { "type": "string", "format": "uuid" },
-		"selling_reason_id": { "type": "string", "format": "uuid" },
+		"id": {
+			"type": "string",
+			"format": "uuid"
+		},
+		"title": {
+			"type": "string"
+		},
+		"description": {
+			"type": "string"
+		},
+		"seller_id": {
+			"type": "string",
+			"format": "uuid"
+		},
+		"createdAt": {
+			"type": "string",
+			"format": "date-time"
+		},
+		"condition_id": {
+			"type": "string",
+			"format": "uuid"
+		},
+		"selling_reason_id": {
+			"type": "string",
+			"format": "uuid"
+		},
 		"photo_ids": {
 			"type": "array",
-			"items": { "type": "string", "format": "uuid" }
+			"items": {
+				"type": "string",
+				"format": "uuid"
+			}
 		},
-		"price": { "$ref": "#/$defs/Price" },
-		"pickup_selection": { "$ref": "#/$defs/TimeslotList" },
-		"delivery_selection": { "$ref": "#/$defs/TimeslotList" },
+		"price": {
+			"$ref": "#/$defs/Price"
+		},
+		"payment_cash": {
+			"$ref": "#/$defs/DraftFlag"
+		},
+		"payment_app": {
+			"$ref": "#/$defs/DraftFlag"
+		},
+		"delivery_fee": {
+			"type": "string"
+		},
+		"shipping_fee": {
+			"type": "string"
+		},
+		"shipping_source_postal_code": {
+			"type": "string"
+		},
+		"distance": {
+			"$ref": "#/$defs/DraftIdList"
+		},
+		"shipping_destination_areas": {
+			"$ref": "#/$defs/DraftIdList"
+		},
+		"pickup_selection": {
+			"$ref": "#/$defs/TimeslotList"
+		},
+		"delivery_selection": {
+			"$ref": "#/$defs/TimeslotList"
+		},
 		"dimensions": {
 			"type": "object",
 			"additionalProperties": false,
 			"properties": {
-				"width": { "$ref": "#/$defs/Measurement" },
-				"height": { "$ref": "#/$defs/Measurement" },
-				"length": { "$ref": "#/$defs/Measurement" },
-				"weight": { "$ref": "#/$defs/Measurement" }
+				"width": {
+					"$ref": "#/$defs/Measurement"
+				},
+				"height": {
+					"$ref": "#/$defs/Measurement"
+				},
+				"length": {
+					"$ref": "#/$defs/Measurement"
+				},
+				"weight": {
+					"$ref": "#/$defs/Measurement"
+				}
 			}
 		},
 		"tags": {
@@ -37,8 +94,13 @@
 				"type": "object",
 				"additionalProperties": false,
 				"properties": {
-					"id": { "type": "string", "format": "uuid" },
-					"value": { "type": "string" }
+					"id": {
+						"type": "string",
+						"format": "uuid"
+					},
+					"value": {
+						"type": "string"
+					}
 				}
 			}
 		},
@@ -46,8 +108,12 @@
 			"type": "object",
 			"additionalProperties": false,
 			"properties": {
-				"cash": { "type": "boolean" },
-				"app": { "type": "boolean" }
+				"cash": {
+					"type": "boolean"
+				},
+				"app": {
+					"type": "boolean"
+				}
 			}
 		},
 		"transfer_options": {
@@ -58,24 +124,37 @@
 					"type": "object",
 					"additionalProperties": false,
 					"properties": {
-						"selection": { "$ref": "#/$defs/TimeslotList" },
-						"lead_time_hours": { "type": "string" },
-						"address_id": { "type": "string", "format": "uuid" }
+						"selection": {
+							"$ref": "#/$defs/TimeslotList"
+						},
+						"lead_time_hours": {
+							"type": "string"
+						},
+						"address_id": {
+							"type": "string",
+							"format": "uuid"
+						}
 					}
 				},
 				"delivery": {
 					"type": "object",
 					"additionalProperties": false,
 					"properties": {
-						"selection": { "$ref": "#/$defs/TimeslotList" },
-						"fee": { "$ref": "#/$defs/Price" }
+						"selection": {
+							"$ref": "#/$defs/TimeslotList"
+						},
+						"fee": {
+							"$ref": "#/$defs/Price"
+						}
 					}
 				},
 				"ship": {
 					"type": "object",
 					"additionalProperties": false,
 					"properties": {
-						"postal_code": { "type": "string" },
+						"postal_code": {
+							"type": "string"
+						},
 						"areas": {
 							"type": "array",
 							"items": {
@@ -86,7 +165,9 @@
 										"type": "string",
 										"format": "uuid"
 									},
-									"value": { "type": "string" }
+									"value": {
+										"type": "string"
+									}
 								}
 							}
 						}
@@ -101,8 +182,12 @@
 			"type": "object",
 			"additionalProperties": false,
 			"properties": {
-				"currency": { "type": "string" },
-				"value": { "type": ["number", "string"] }
+				"currency": {
+					"type": "string"
+				},
+				"value": {
+					"type": ["number", "string"]
+				}
 			}
 		},
 		"Measurement": {
@@ -112,7 +197,22 @@
 		"TimeslotList": {
 			"description": "Local ISO datetime strings, e.g. 2026-06-03T09:00:00.",
 			"type": "array",
-			"items": { "type": "string" }
+			"items": {
+				"type": "string"
+			}
+		},
+		"DraftFlag": {
+			"description": "A TextSelect writes its state as text, so this is the string \"true\" or \"false\" rather than a boolean. SDUI compares it with an unquoted literal (`{x.payment_cash == true}`), which matches the string.",
+			"type": "string",
+			"enum": ["true", "false"]
+		},
+		"DraftIdList": {
+			"description": "An InlinePicker whose tap action selects `$datum` stores the chosen rows' ids, not the rows.",
+			"type": "array",
+			"items": {
+				"type": "string",
+				"format": "uuid"
+			}
 		}
 	}
 }

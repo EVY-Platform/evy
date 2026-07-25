@@ -266,15 +266,53 @@ describe("marketplace item payload validation", () => {
 
 	// The create flow merges flat draft fields into a new item, so an item is
 	// shaped differently depending on how it was made.
-	it("accepts unknown top-level fields from create-flow drafts", async () => {
+	it("accepts unknown top-level fields", async () => {
+		await expect(
+			createItem({ ...fixtureItem, some_future_field: "whatever" }),
+		).resolves.toBeDefined();
+	});
+
+	// Shapes taken from an item the real create flow produced, not from what
+	// the field names suggest: a TextSelect writes the *string* "true".
+	it("accepts the flat draft fields the create flow writes", async () => {
 		await expect(
 			createItem({
 				...fixtureItem,
-				payment_cash: true,
-				delivery_fee: "12.50",
+				payment_cash: "true",
+				payment_app: "false",
+				delivery_fee: "1",
+				shipping_fee: "12.50",
 				shipping_source_postal_code: "2018",
+				distance: ["3e0f4b97-97c3-46da-a242-a5c1e8e63245"],
+				shipping_destination_areas: [
+					"bd87e698-7623-474b-bf87-48600d103253",
+				],
 			}),
 		).resolves.toBeDefined();
+	});
+
+	it("rejects a draft flag written as a boolean", async () => {
+		// The row writes text; a real boolean means something else wrote it.
+		await expect(
+			createItem({ ...fixtureItem, payment_cash: true }),
+		).rejects.toThrow();
+	});
+
+	it("rejects a fee written as a number", async () => {
+		await expect(
+			createItem({ ...fixtureItem, delivery_fee: 12.5 }),
+		).rejects.toThrow();
+	});
+
+	it("rejects a picker list holding rows instead of ids", async () => {
+		await expect(
+			createItem({
+				...fixtureItem,
+				shipping_destination_areas: [
+					{ id: "bd87e698-7623-474b-bf87-48600d103253" },
+				],
+			}),
+		).rejects.toThrow();
 	});
 
 	it("accepts a price value as typed text", async () => {
