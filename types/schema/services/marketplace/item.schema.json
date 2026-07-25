@@ -1,0 +1,118 @@
+{
+	"$schema": "https://json-schema.org/draft/2020-12/schema",
+	"$id": "services/marketplace/item",
+	"title": "DATA_MARKETPLACE_Item",
+	"description": "A marketplace listing. Fields are typed but optional, and additional properties are allowed: the create flow merges flat draft fields (payment_cash, delivery_fee, shipping_fee, distance, shipping_source_postal_code, shipping_destination_areas) into a new item, so a freshly created item is shaped differently from a seeded one. This schema therefore constrains the type of every field it knows about without asserting which fields must be present.",
+	"type": "object",
+	"additionalProperties": true,
+	"required": ["id"],
+	"properties": {
+		"id": { "type": "string", "format": "uuid" },
+		"title": { "type": "string" },
+		"description": { "type": "string" },
+		"seller_id": { "type": "string", "format": "uuid" },
+		"createdAt": { "type": "string", "format": "date-time" },
+		"condition_id": { "type": "string", "format": "uuid" },
+		"selling_reason_id": { "type": "string", "format": "uuid" },
+		"photo_ids": {
+			"type": "array",
+			"items": { "type": "string", "format": "uuid" }
+		},
+		"price": { "$ref": "#/$defs/Price" },
+		"pickup_selection": { "$ref": "#/$defs/TimeslotList" },
+		"delivery_selection": { "$ref": "#/$defs/TimeslotList" },
+		"dimensions": {
+			"type": "object",
+			"additionalProperties": false,
+			"properties": {
+				"width": { "$ref": "#/$defs/Measurement" },
+				"height": { "$ref": "#/$defs/Measurement" },
+				"length": { "$ref": "#/$defs/Measurement" },
+				"weight": { "$ref": "#/$defs/Measurement" }
+			}
+		},
+		"tags": {
+			"type": "array",
+			"items": {
+				"type": "object",
+				"additionalProperties": false,
+				"properties": {
+					"id": { "type": "string", "format": "uuid" },
+					"value": { "type": "string" }
+				}
+			}
+		},
+		"payment_methods": {
+			"type": "object",
+			"additionalProperties": false,
+			"properties": {
+				"cash": { "type": "boolean" },
+				"app": { "type": "boolean" }
+			}
+		},
+		"transfer_options": {
+			"type": "object",
+			"additionalProperties": false,
+			"properties": {
+				"pickup": {
+					"type": "object",
+					"additionalProperties": false,
+					"properties": {
+						"selection": { "$ref": "#/$defs/TimeslotList" },
+						"lead_time_hours": { "type": "string" },
+						"address_id": { "type": "string", "format": "uuid" }
+					}
+				},
+				"delivery": {
+					"type": "object",
+					"additionalProperties": false,
+					"properties": {
+						"selection": { "$ref": "#/$defs/TimeslotList" },
+						"fee": { "$ref": "#/$defs/Price" }
+					}
+				},
+				"ship": {
+					"type": "object",
+					"additionalProperties": false,
+					"properties": {
+						"postal_code": { "type": "string" },
+						"areas": {
+							"type": "array",
+							"items": {
+								"type": "object",
+								"additionalProperties": false,
+								"properties": {
+									"id": {
+										"type": "string",
+										"format": "uuid"
+									},
+									"value": { "type": "string" }
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+	},
+	"$defs": {
+		"Price": {
+			"description": "Currency amount. Both keys are optional: an unset fee persists as {}. `value` may be a number (seeded data) or a string (buildCurrency writes the user's typed text).",
+			"type": "object",
+			"additionalProperties": false,
+			"properties": {
+				"currency": { "type": "string" },
+				"value": { "type": ["number", "string"] }
+			}
+		},
+		"Measurement": {
+			"description": "Millimetres or milligrams, as a number or as typed text.",
+			"type": ["number", "string"]
+		},
+		"TimeslotList": {
+			"description": "Local ISO datetime strings, e.g. 2026-06-03T09:00:00.",
+			"type": "array",
+			"items": { "type": "string" }
+		}
+	}
+}

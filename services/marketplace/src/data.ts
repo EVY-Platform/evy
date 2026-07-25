@@ -15,6 +15,7 @@ import {
 	assertIsoDateTimeJsonFields,
 	validateCreateDataPayload,
 	validateCreateResponse,
+	validateDataMarketplaceItem,
 	validateDeleteResponse,
 	validateGetResponse,
 	validateUpdateDataPayload,
@@ -22,7 +23,22 @@ import {
 } from "evy-types/validators";
 import { data, db } from "./db";
 import { emitDataChanged } from "./events";
-import { MARKETPLACE_SEED_RESOURCES, MARKETPLACE_SERVICE } from "./resources";
+import {
+	MARKETPLACE_RESOURCE,
+	MARKETPLACE_SEED_RESOURCES,
+	MARKETPLACE_SERVICE,
+} from "./resources";
+
+/**
+ * Resource-specific payload validation. Items are the one resource with a
+ * schema today; the rest keep the generic "is a JSON object" check until they
+ * have one of their own.
+ */
+function assertResourcePayload(resource: string, payload: unknown): void {
+	if (resource === MARKETPLACE_RESOURCE.ITEMS) {
+		validateDataMarketplaceItem(payload);
+	}
+}
 
 function assertMarketplaceRules(
 	params: GetRequest | CreateRequest | UpdateRequest | DeleteRequest,
@@ -65,6 +81,7 @@ export async function create(params: CreateRequest): Promise<CreateResponse> {
 
 	const validatedPayload = validateCreateDataPayload(dataPayload);
 	assertIsoDateTimeJsonFields(validatedPayload);
+	assertResourcePayload(resource, validatedPayload);
 
 	const filterId = filter?.id;
 	const insertValues: typeof data.$inferInsert = {
@@ -100,6 +117,7 @@ export async function update(params: UpdateRequest): Promise<UpdateResponse> {
 
 	const validatedPayload = validateUpdateDataPayload(dataPayload);
 	assertIsoDateTimeJsonFields(validatedPayload);
+	assertResourcePayload(resource, validatedPayload);
 
 	const result = await db
 		.update(data)

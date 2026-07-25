@@ -48,6 +48,7 @@ import {
 	SDUI_ROW_TRIGGERS,
 } from "./generated/ts/sdui/definitions.generated";
 import type { UI_Flow, UI_Row, UI_RowActions } from "./generated/ts/sdui/evy";
+import type { DATA_MARKETPLACE_Item } from "./generated/ts/services/marketplace/item";
 
 import commonJsonRaw from "./schema/common/json.schema.json" with {
 	type: "json",
@@ -107,6 +108,9 @@ import sduiActionRaw from "./schema/sdui/action.schema.json" with {
 	type: "json",
 };
 import evySduiRaw from "./schema/sdui/evy.schema.json" with { type: "json" };
+import marketplaceItemRaw from "./schema/services/marketplace/item.schema.json" with {
+	type: "json",
+};
 
 /** Canonical base URI for ajv $ref resolution */
 const SCHEMA_BASE = "https://evy.local";
@@ -139,6 +143,10 @@ const RAW_SCHEMAS: Record<string, Record<string, unknown>> = {
 	...SDUI_DEFINITION_SCHEMAS,
 	"sdui/evy.schema.json": evySduiRaw as Record<string, unknown>,
 	"files/file.schema.json": fileSchemaRaw as Record<string, unknown>,
+	"services/marketplace/item.schema.json": marketplaceItemRaw as Record<
+		string,
+		unknown
+	>,
 	"rpc/placeSearch.request.schema.json": placeSearchRequestRaw as Record<
 		string,
 		unknown
@@ -301,6 +309,7 @@ const ENTITY_SCHEMA_FILES = [
 	...Object.keys(SDUI_DEFINITION_SCHEMAS).sort(),
 	"sdui/evy.schema.json",
 	"files/file.schema.json",
+	"services/marketplace/item.schema.json",
 	"rpc/get.response.schema.json",
 	"rpc/create.response.schema.json",
 	"rpc/update.response.schema.json",
@@ -385,6 +394,10 @@ const getValidateDataEvyAddress = lazyValidator<DATA_EVY_Address>(
 const getValidateDataEvyMessage = lazyValidator<DATA_EVY_Message>(
 	getEntityAjv,
 	`${fileId("data/data.schema.json")}#/$defs/DATA_EVY_Message`,
+);
+const getValidateDataMarketplaceItem = lazyValidator<DATA_MARKETPLACE_Item>(
+	getEntityAjv,
+	fileId("services/marketplace/item.schema.json"),
 );
 const getValidateDataEvyFlow = lazyValidator<DATA_EVY_Flow>(
 	getEntityAjv,
@@ -674,6 +687,10 @@ export const validateDataEvyAddress = makeValidator<DATA_EVY_Address>(
 export const validateDataEvyMessage = makeValidator<DATA_EVY_Message>(
 	"Message",
 	getValidateDataEvyMessage,
+);
+export const validateDataMarketplaceItem = makeValidator<DATA_MARKETPLACE_Item>(
+	"MarketplaceItem",
+	getValidateDataMarketplaceItem,
 );
 export const validateDataEvyFlow = makeValidator<DATA_EVY_Flow>(
 	"Flow",
