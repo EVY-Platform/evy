@@ -19,6 +19,79 @@ final class EVYActionRunnerTests: XCTestCase {
     try await super.tearDown()
   }
 
+  // MARK: - Condition evaluation errors
+
+  private func runCapturingErrors(
+    _ actions: [UI_RowAction]
+  ) -> (errors: [Error], operations: [ActionOperation]) {
+    var errors: [Error] = []
+    var operations: [ActionOperation] = []
+    let observer = NotificationCenter.default.addObserver(
+      forName: .evyErrorOccurred, object: nil, queue: nil
+    ) { note in
+      if let error = note.object as? Error { errors.append(error) }
+    }
+    defer { NotificationCenter.default.removeObserver(observer) }
+
+    EVYActionRunner.run(actions: actions) { operations.append($0) }
+    return (errors, operations)
+  }
+
+  func testUnevaluatableConditionSurfacesErrorAndStops() {
+    let result = runCapturingErrors([
+      rowAction(condition: "{&&}", true: "{close()}", false: "{close()}"),
+      rowAction(true: "{close()}"),
+    ])
+
+    XCTAssertEqual(result.errors.count, 1, "a broken condition should surface exactly one error")
+    XCTAssertTrue(
+      result.operations.isEmpty,
+      "neither branch nor later actions should run: \(result.operations)")
+  }
+
+  func testConditionEvaluatingFalseStillRunsFalseBranchAndStops() {
+    let result = runCapturingErrors([
+      rowAction(condition: "{1 == 2}", true: "{navigate(f,p)}", false: "{close()}"),
+      rowAction(true: "{navigate(f2,p2)}"),
+    ])
+
+    XCTAssertTrue(result.errors.isEmpty, "a false condition is not an error: \(result.errors)")
+    XCTAssertEqual(result.operations.count, 1)
+    guard case .close = result.operations.first else {
+      return XCTFail("expected the false branch to run, got \(result.operations)")
+    }
+  }
+
+  /// Documented in sdui.md: boolean literals are valid standalone conditions.
+  /// `{true}` previously resolved as a data path and silently evaluated false.
+  func testStandaloneBooleanLiteralConditions() {
+    let trueResult = runCapturingErrors([
+      rowAction(condition: "{true}", true: "{close()}", false: "{navigate(f,p)}")
+    ])
+    XCTAssertTrue(trueResult.errors.isEmpty, "\(trueResult.errors)")
+    guard case .close = trueResult.operations.first else {
+      return XCTFail("{true} should take the true branch, got \(trueResult.operations)")
+    }
+
+    let falseResult = runCapturingErrors([
+      rowAction(condition: "{false}", true: "{navigate(f,p)}", false: "{close()}")
+    ])
+    XCTAssertTrue(falseResult.errors.isEmpty, "\(falseResult.errors)")
+    guard case .close = falseResult.operations.first else {
+      return XCTFail("{false} should take the false branch, got \(falseResult.operations)")
+    }
+  }
+
+  func testEmptyConditionRunsTrueBranch() {
+    let result = runCapturingErrors([rowAction(condition: "", true: "{close()}")])
+
+    XCTAssertTrue(result.errors.isEmpty)
+    XCTAssertEqual(result.operations.count, 1)
+    guard case .close = result.operations.first else {
+      return XCTFail("expected the true branch to run, got \(result.operations)")
+    }
+  }
+
   private func assertSelectValue(
     _ received: EVYRowActionOperation?,
     equals expected: EVYJson,

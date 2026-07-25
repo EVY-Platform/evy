@@ -318,8 +318,26 @@ func _getValueFromText(_ input: String, editing: Bool = false) throws -> EVYValu
 
 @MainActor
 func _evaluateFromText(_ input: String) throws -> Bool {
+  // A standalone boolean literal carries no comparison operator, so it never
+  // reaches the comparison path and would otherwise be resolved as a data path.
+  if let literal = standaloneBooleanLiteral(in: input) {
+    return literal
+  }
   let match = try parseTextFromText(input)
   return match.value == "true"
+}
+
+private func standaloneBooleanLiteral(in input: String) -> Bool? {
+  var trimmed = input.trimmingCharacters(in: .whitespacesAndNewlines)
+  if trimmed.hasPrefix("{") && trimmed.hasSuffix("}") {
+    trimmed = String(trimmed.dropFirst().dropLast())
+      .trimmingCharacters(in: .whitespacesAndNewlines)
+  }
+  switch trimmed {
+  case "true": return true
+  case "false": return false
+  default: return nil
+  }
 }
 
 private let formatFunctionsByBuildFunction = [

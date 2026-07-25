@@ -29,7 +29,18 @@ enum EVYActionRunner {
       if condition.isEmpty {
         executeTrueBranch = true
       } else {
-        executeTrueBranch = (try? EVY.evaluateFromText(condition)) ?? false
+        do {
+          executeTrueBranch = try EVY.evaluateFromText(condition)
+        } catch {
+          // A condition that cannot be evaluated is an authoring error, not a
+          // false result: surfacing it stops flows failing silently mid-sequence.
+          NotificationCenter.default.post(
+            name: .evyErrorOccurred,
+            object: EVYError.invalidData(
+              context: "could not evaluate condition \(condition): \(error.localizedDescription)")
+          )
+          return
+        }
       }
 
       if !executeTrueBranch {

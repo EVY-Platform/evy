@@ -238,11 +238,12 @@ Inside a sheet overlay, `{close()}` dismisses the sheet instead of popping navig
 
 #### Sequencing
 
-A row's action list for a given trigger runs **in order**. For each entry: if its `condition` is empty or evaluates true, the `true` branch runs and the runner moves on to the next entry; if the condition evaluates false, the `false` branch runs and the array stops (no later entries execute). If a branch's function throws (e.g. malformed arguments), the error is surfaced and the array also stops — later entries do not run. This is what makes multi-step sequences like "create, then close" or "select timeslot, then show confirmation sheet" expressible as separate action entries. When a sheet interpolates the new selection (e.g. `Request {formatDatetime(selected_pickup_timeslot, "HH:mm")}`), put `{select($datum)}` **before** `{show(...)}`.
+A row's action list for a given trigger runs **in order**. For each entry: if its `condition` is empty or evaluates true, the `true` branch runs and the runner moves on to the next entry; if the condition evaluates false, the `false` branch runs and the array stops (no later entries execute). If a branch's function throws (e.g. malformed arguments), the error is surfaced and the array also stops — later entries do not run. A condition that **cannot be evaluated** (malformed expression) is likewise an error, not a false result: the error is surfaced and the array stops without running either branch. This is what makes multi-step sequences like "create, then close" or "select timeslot, then show confirmation sheet" expressible as separate action entries. When a sheet interpolates the new selection (e.g. `Request {formatDatetime(selected_pickup_timeslot, "HH:mm")}`), put `{select($datum)}` **before** `{show(...)}`.
 
 #### Conditions
 
 - Empty `condition` — treated as always true (the `true` branch is taken unless you rely on client-specific rules).
+- A malformed condition is an **error**, not `false` — it surfaces to the user and stops the action array. A condition whose data paths simply do not resolve is not malformed; it evaluates false as usual.
 - Operators: `==`, `!=`, `>`, `<`, `>=`, `<=`
 - AND: join comparisons with `&&` inside the braces:
 	`{length(title) > 0 && price.value >= 1}`
