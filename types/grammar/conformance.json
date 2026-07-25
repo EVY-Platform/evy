@@ -265,6 +265,58 @@
 			"expect": { "value": true }
 		},
 		{
+			"id": "expression-length-of-string",
+			"category": "expression",
+			"platforms": ["ios"],
+			"input": "{length(title_holder)}",
+			"data": { "title_holder": "Hello" },
+			"expect": { "text": "5" },
+			"notes": "length counts characters."
+		},
+		{
+			"id": "expression-length-of-array-is-zero",
+			"category": "expression",
+			"platforms": ["ios"],
+			"input": "{length(list_holder)}",
+			"data": { "list_holder": ["a", "b", "c"] },
+			"expect": { "text": "0" },
+			"notes": "length is string-only; non-strings count as 0 (functions.md). Use count for collections."
+		},
+		{
+			"id": "expression-length-of-number-is-zero",
+			"category": "expression",
+			"platforms": ["ios"],
+			"input": "{length(num_holder)}",
+			"data": { "num_holder": 42 },
+			"expect": { "text": "0" },
+			"notes": "length must not echo a numeric argument back."
+		},
+		{
+			"id": "expression-length-of-missing-is-zero",
+			"category": "expression",
+			"platforms": ["ios"],
+			"input": "{length(definitely_missing_root)}",
+			"expect": { "text": "0" }
+		},
+		{
+			"id": "expression-count-of-string-counts-characters",
+			"category": "expression",
+			"platforms": ["ios"],
+			"input": "{count(title_holder)}",
+			"data": { "title_holder": "Hello" },
+			"expect": { "text": "5" },
+			"notes": "count keeps its documented polymorphic behaviour; only length is narrowed."
+		},
+		{
+			"id": "expression-count-of-number-echoes-it",
+			"category": "expression",
+			"platforms": ["ios"],
+			"input": "{count(num_holder)}",
+			"data": { "num_holder": 42 },
+			"expect": { "text": "42" },
+			"notes": "count returns the number itself (functions.md)."
+		},
+		{
 			"id": "comparison-missing-path-is-false",
 			"category": "comparison",
 			"platforms": ["ios"],

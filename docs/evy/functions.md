@@ -33,15 +33,13 @@ count({_variable_type_list_})
 
 #### length
 
-Returns the number of characters in a string argument. Missing paths and JSON `null` count as `0`.
+Returns the number of characters in a string argument. `length` is string-only: missing paths, JSON `null`, arrays, and numbers all count as `0` — use [`count`](#count) for collections.
 
 ```
 length({_variable_type_string_})
 Variable: "Hello"
 Output: 5
 ```
-
-> **Current behaviour:** `length` is implemented as an alias of `count` on iOS, so it does not yet behave as documented for non-strings — arrays return their element count and numbers return themselves, rather than `0`. Treat `length` as string-only until the two are separated.
 
 #### earliestDatetime
 

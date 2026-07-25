@@ -13,6 +13,16 @@ struct EVYFunctionOutput {
   let suffix: String?
 }
 
+/// Number of characters in a string argument. Unlike `count`, non-strings
+/// (arrays, numbers, missing paths, null) are 0 - use `count` for collections.
+@MainActor
+func evyLength(_ args: String) -> EVYFunctionOutput {
+  guard case .string(let stringValue) = _getDataFromPropsStrict(args) else {
+    return EVYFunctionOutput(value: "0", prefix: nil, suffix: nil)
+  }
+  return EVYFunctionOutput(value: String(stringValue.count), prefix: nil, suffix: nil)
+}
+
 @MainActor
 func evyCount(_ args: String) -> EVYFunctionOutput {
   guard let res = _getDataFromPropsStrict(args) else {

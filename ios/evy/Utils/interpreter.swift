@@ -490,7 +490,7 @@ private func parseText(
     case "count":
       value = evyCount(funcArgs)
     case "length":
-      value = evyCount(funcArgs)
+      value = evyLength(funcArgs)
     case "earliestDatetime":
       value = try evyEarliestDatetime(funcArgs)
     case "if":
