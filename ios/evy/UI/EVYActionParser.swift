@@ -5,7 +5,7 @@
 
 import Foundation
 
-enum EVYObjectArgument: Equatable {
+public enum EVYObjectArgument: Equatable {
   case literal([String: String])
   case path(String)
 }
@@ -169,5 +169,117 @@ enum EVYActionParser {
       .trimmingCharacters(in: .whitespacesAndNewlines)
     guard !rowId.isEmpty else { return nil }
     return rowId
+  }
+}
+
+// MARK: - Legacy string front-end
+
+extension EVYActionParser {
+  /// Converts a legacy `{fn(...)}` branch into the same structured invocation an
+  /// AST branch decodes to, so the runner has a single execution path. Mirrors
+  /// evy-types/actionAst on the TypeScript side; both are pinned by
+  /// types/grammar/conformance.json.
+  static func invocation(from rawBranch: String) throws -> EVYActionInvocation {
+    let trimmed = rawBranch.trimmingCharacters(in: .whitespacesAndNewlines)
+    guard trimmed.hasPrefix("{"), trimmed.hasSuffix("}"),
+      let call = functionCall(from: trimmed)
+    else {
+      throw EVYError.invalidData(context: "action branch is not a function call")
+    }
+
+    let args = EVY.splitFunctionArguments(call.args)
+
+    switch call.name {
+    case "close":
+      try requireNoArguments(call.args, function: "close")
+      return .close
+    case "select_photo":
+      try requireNoArguments(call.args, function: "select_photo")
+      return .selectPhoto
+    case "expand_photo":
+      try requireNoArguments(call.args, function: "expand_photo")
+      return .expandPhoto
+    case "delete_photo":
+      try requireNoArguments(call.args, function: "delete_photo")
+      return .deletePhoto
+    case "show":
+      guard let rowId = singleIdArgument(fromArgs: call.args) else {
+        throw EVYError.invalidData(
+          context: "show requires exactly one non-empty row id, e.g. show(row-id)")
+      }
+      return .show(rowId: rowId)
+    case "expand_text":
+      guard let rowId = singleIdArgument(fromArgs: call.args) else {
+        throw EVYError.invalidData(
+          context: "expand_text requires exactly one non-empty row id, e.g. expand_text(row-id)")
+      }
+      return .expandText(rowId: rowId)
+    case "highlight_required":
+      return .highlightRequired(field: args.first ?? "field")
+    case "select":
+      guard args.count == 1 else {
+        throw EVYError.invalidData(
+          context: "select requires exactly one argument, e.g. select($datum)")
+      }
+      return .select(value: args[0])
+    case "navigate":
+      guard args.count >= 2 else {
+        throw EVYError.invalidData(context: "navigate requires flowId and pageId")
+      }
+      guard args.count <= 3 else {
+        throw EVYError.invalidData(context: "navigate accepts at most 3 arguments")
+      }
+      let rawQuery = args.count > 2 ? args[2].trimmingCharacters(in: .whitespacesAndNewlines) : ""
+      let query =
+        rawQuery.isEmpty
+        ? [:]
+        : try plainTextObject(
+          from: rawQuery, context: "navigate query params", allowsEmptyValues: true)
+      return .navigate(
+        flowId: EVY.stripOptionalSurroundingQuotes(args[0]),
+        pageId: EVY.stripOptionalSurroundingQuotes(args[1]),
+        query: query)
+    case "create":
+      guard let action = createAction(from: trimmed) else {
+        throw EVYError.invalidData(
+          context:
+            "create requires namespace, resource, and submit or data, e.g. create(marketplace,item,submit)"
+        )
+      }
+      let mode: EVYActionInvocation.CreateMode
+      if action.isSubmission {
+        mode = .submit
+      } else {
+        switch action.data {
+        case .literal(let map): mode = .inline(data: map)
+        case .path(let path): mode = .fromPath(dataPath: path)
+        case .none:
+          throw EVYError.invalidData(context: "create requires data or the submit keyword")
+        }
+      }
+      return .create(
+        service: action.namespace, resource: action.resource, mode: mode,
+        idDestination: action.idDestination)
+    case "update":
+      guard let action = updateAction(from: trimmed) else {
+        throw EVYError.invalidData(
+          context:
+            "update requires namespace, resource, filter, and changes, e.g. update(marketplace,messages,{id: abc},{archivedAt: now()})"
+        )
+      }
+      return .update(
+        service: action.namespace, resource: action.resource,
+        mode: action.mode == .draft ? .draft : .store,
+        filter: action.filter, changes: action.changes)
+    default:
+      throw EVYError.invalidData(context: "Unsupported action function: \(call.name)")
+    }
+  }
+
+  static func requireNoArguments(_ functionArgs: String, function: String) throws {
+    let trimmed = functionArgs.trimmingCharacters(in: .whitespacesAndNewlines)
+    guard trimmed.isEmpty else {
+      throw EVYError.invalidData(context: "\(function) takes no arguments")
+    }
   }
 }

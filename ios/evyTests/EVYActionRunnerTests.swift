@@ -19,6 +19,92 @@ final class EVYActionRunnerTests: XCTestCase {
     try await super.tearDown()
   }
 
+  // MARK: - Dual-read: legacy strings and structured invocations
+
+  private func runBranchCapturing(
+    _ branch: EVYActionBranch
+  ) -> (
+    operations: [ActionOperation], shown: [String], rowOps: [EVYRowActionOperation],
+    errors: [Error]
+  ) {
+    var operations: [ActionOperation] = []
+    var shown: [String] = []
+    var rowOps: [EVYRowActionOperation] = []
+    var errors: [Error] = []
+    let observer = NotificationCenter.default.addObserver(
+      forName: .evyErrorOccurred, object: nil, queue: nil
+    ) { note in
+      if let error = note.object as? Error { errors.append(error) }
+    }
+    defer { NotificationCenter.default.removeObserver(observer) }
+
+    EVYActionRunner.run(
+      actions: [UI_RowAction(condition: "", false: .legacy(""), true: branch)],
+      datum: .dictionary(["id": .string("datum-id")]),
+      show: { shown.append($0) },
+      rowOperation: { rowOps.append($0) }
+    ) { operations.append($0) }
+
+    return (operations, shown, rowOps, errors)
+  }
+
+  /// Every stored form must execute the same way; this is the guarantee that
+  /// makes migrating fixtures and stored rows safe.
+  func testLegacyAndStructuredBranchesExecuteIdentically() {
+    let cases: [(String, EVYActionBranch, EVYActionBranch)] = [
+      ("close", .legacy("{close()}"), .invocation(.close)),
+      ("show", .legacy("{show(sheet-row)}"), .invocation(.show(rowId: "sheet-row"))),
+      ("select", .legacy("{select($datum)}"), .invocation(.select(value: "$datum"))),
+      (
+        "navigate", .legacy("{navigate(flow-1,page-1)}"),
+        .invocation(.navigate(flowId: "flow-1", pageId: "page-1", query: [:]))
+      ),
+      (
+        "navigate with query", .legacy("{navigate(flow-1,page-1,{id: $datum.id})}"),
+        .invocation(.navigate(flowId: "flow-1", pageId: "page-1", query: ["id": "$datum.id"]))
+      ),
+      ("delete_photo", .legacy("{delete_photo()}"), .invocation(.deletePhoto)),
+      (
+        "highlight_required", .legacy("{highlight_required(item.pickup_time)}"),
+        .invocation(.highlightRequired(field: "item.pickup_time"))
+      ),
+    ]
+
+    for (label, legacy, structured) in cases {
+      let fromLegacy = runBranchCapturing(legacy)
+      let fromAst = runBranchCapturing(structured)
+
+      XCTAssertTrue(fromLegacy.errors.isEmpty, "\(label) legacy: \(fromLegacy.errors)")
+      XCTAssertTrue(fromAst.errors.isEmpty, "\(label) ast: \(fromAst.errors)")
+      XCTAssertEqual(fromLegacy.operations, fromAst.operations, "\(label) operations")
+      XCTAssertEqual(fromLegacy.shown, fromAst.shown, "\(label) shown rows")
+      XCTAssertEqual(fromLegacy.rowOps, fromAst.rowOps, "\(label) row operations")
+    }
+  }
+
+  func testStructuredExpandTextPostsTheSameNotificationAsLegacy() {
+    for branch in [
+      EVYActionBranch.legacy("{expand_text(target-row)}"),
+      .invocation(.expandText(rowId: "target-row")),
+    ] {
+      var received: [String] = []
+      let observer = NotificationCenter.default.addObserver(
+        forName: .evyExpandTextRow, object: nil, queue: nil
+      ) { note in
+        if let rowId = note.object as? String { received.append(rowId) }
+      }
+      defer { NotificationCenter.default.removeObserver(observer) }
+
+      _ = runBranchCapturing(branch)
+      XCTAssertEqual(received, ["target-row"])
+    }
+  }
+
+  func testStructuredBranchWithUnsupportedShapeIsRejectedAtDecode() {
+    let json = Data(#"{"condition":"","false":"","true":{"fn":"teleport"}}"#.utf8)
+    XCTAssertThrowsError(try JSONDecoder().decode(UI_RowAction.self, from: json))
+  }
+
   // MARK: - Condition evaluation errors
 
   private func runCapturingErrors(
@@ -1526,8 +1612,8 @@ final class EVYActionRunnerTests: XCTestCase {
 
     XCTAssertEqual(formattedRow.id, row.id)
     XCTAssertEqual(formattedRow.title, "Resolved Title")
-    XCTAssertEqual(formattedRow.actions.tap.first?.true, navigateAction)
-    XCTAssertEqual(formattedRow.actions.swipeLeft.first?.true, updateAction)
+    XCTAssertEqual(formattedRow.actions.tap.first?.true, .legacy(navigateAction))
+    XCTAssertEqual(formattedRow.actions.swipeLeft.first?.true, .legacy(updateAction))
   }
 
   func testSwipeLeftUpdateActionAcceptsPendingMessageFromFormattedSearchResult() throws {

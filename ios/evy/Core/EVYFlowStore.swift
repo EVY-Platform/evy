@@ -214,16 +214,17 @@ enum EVYFlowStore {
         guard let uiRow = storedRow.uiRow() else { return }
         for action in EVYRowActionTrigger.allActionLists(in: uiRow.actions) {
           for branch in [action.`true`, action.`false`] {
-            let trimmed = branch.trimmingCharacters(in: .whitespacesAndNewlines)
-            guard !trimmed.isEmpty else { continue }
-            if let createAction = EVYActionParser.createAction(from: trimmed) {
-              if createAction.isSubmission {
-                keys.insert(createAction.resource)
-              }
+            guard !branch.isEmpty else { continue }
+            if case .create(_, let resource, .submit, _) = branch.resolvedInvocation() {
+              keys.insert(resource)
               continue
             }
-            if let parsed = EVYActionParser.functionCall(from: trimmed),
-              parsed.name == "create"
+            // A create that will not parse is an authoring error worth naming,
+            // whichever form it is stored in.
+            if case .legacy(let text) = branch,
+              let parsed = EVYActionParser.functionCall(from: text),
+              parsed.name == "create",
+              branch.resolvedInvocation() == nil
             {
               NotificationCenter.default.post(
                 name: .evyErrorOccurred,

@@ -30,8 +30,8 @@ extension XCTestCase {
   ) -> UI_RowAction {
     UI_RowAction(
       condition: condition,
-      false: falseBranch,
-      true: trueBranch
+      false: .legacy(falseBranch),
+      true: .legacy(trueBranch)
     )
   }
 }
