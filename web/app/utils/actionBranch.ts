@@ -89,9 +89,20 @@ export function branchForStorage(branchString: string): UI_ActionBranch {
 	return converted.invocation;
 }
 
+/**
+ * Parses a stored branch.
+ *
+ * Storage is structured; the editor works in text. Both forms are readable, so
+ * this converts and hands off to `parseBranchText` rather than each caller
+ * guessing which one it holds.
+ */
 export function parseBranch(branch: UI_ActionBranch): ParsedBranch | null {
-	const branchString = branchToEditableString(branch);
-	const trimmed = branchString.trim();
+	return parseBranchText(branchToEditableString(branch));
+}
+
+/** Parses the editor's text form, which is not storable until finalized. */
+export function parseBranchText(branchText: string): ParsedBranch | null {
+	const trimmed = branchText.trim();
 	if (!trimmed) return null;
 
 	if (trimmed.startsWith("{") && trimmed.endsWith("}")) {
@@ -199,7 +210,7 @@ export function finalizeCreateBranchForSave(
 	branchString: string,
 	offerSubmitWithFlow: boolean,
 ): string | null {
-	const parsed = parseBranch(branchString);
+	const parsed = parseBranchText(branchString);
 	if (parsed?.functionName !== "create") {
 		return branchString;
 	}
@@ -228,7 +239,7 @@ export function formatBranchDisplay(
 	pagesById?: Record<string, DATA_EVY_Page>,
 	rowsById?: Record<string, DATA_EVY_Row>,
 ): string {
-	const parsed = parseBranch(branchString);
+	const parsed = parseBranchText(branchString);
 	if (!parsed) return "None";
 
 	if (

@@ -4,7 +4,7 @@ import type { ServiceResource } from "../../types/resources";
 import {
 	type ActionFunction,
 	createHasInlineDataArg,
-	parseBranch,
+	parseBranchText,
 	ROW_ID_ARG_FUNCTIONS,
 	serializeBranch,
 	updateUsesDraftMarker,
@@ -129,7 +129,7 @@ export function BranchEditor({
 	getAttributeCandidatesForQualifier,
 	onChange,
 }: BranchEditorProps) {
-	const parsed = useMemo(() => parseBranch(value), [value]);
+	const parsed = useMemo(() => parseBranchText(value), [value]);
 	const selectedFunction = parsed?.functionName ?? "";
 	const args = parsed?.args ?? [];
 

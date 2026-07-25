@@ -2,7 +2,7 @@ import type { DATA_EVY_Flow, DATA_EVY_Page, DATA_EVY_Row } from "evy-types";
 import {
 	branchToEditableString,
 	finalizeCreateBranchForSave,
-	parseBranch,
+	parseBranchText,
 	updateUsesDraftMarker,
 } from "./actionBranch";
 import { allRowActions, normalizeStoredRowActions } from "./rowActions";
@@ -74,7 +74,7 @@ export function collectDraftSignals(
 			for (const branch of [action.true, action.false]) {
 				const trimmed = branchToEditableString(branch).trim();
 				if (!trimmed) continue;
-				const parsed = parseBranch(trimmed);
+				const parsed = parseBranchText(trimmed);
 				if (parsed?.functionName !== "update") continue;
 				const serviceId = parsed.args[0]?.trim();
 				const resourceId = parsed.args[1]?.trim();
@@ -123,7 +123,7 @@ export function finalizeBranchForSave(
 	const trimmed = branchString.trim();
 	if (!trimmed) return branchString;
 
-	const parsed = parseBranch(trimmed);
+	const parsed = parseBranchText(trimmed);
 	if (parsed?.functionName !== "create") {
 		return branchString;
 	}
