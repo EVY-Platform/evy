@@ -5,43 +5,8 @@
 		{
 			"idx": 0,
 			"version": "7",
-			"when": 1784772096231,
+			"when": 1784986730322,
 			"tag": "0000_baseline",
-			"breakpoints": true
-		},
-		{
-			"idx": 1,
-			"version": "7",
-			"when": 1784804779789,
-			"tag": "0001_bitter_sandman",
-			"breakpoints": true
-		},
-		{
-			"idx": 2,
-			"version": "7",
-			"when": 1784883621625,
-			"tag": "0002_sleepy_james_howlett",
-			"breakpoints": true
-		},
-		{
-			"idx": 3,
-			"version": "7",
-			"when": 1784960517300,
-			"tag": "0003_mute_the_stranger",
-			"breakpoints": true
-		},
-		{
-			"idx": 4,
-			"version": "7",
-			"when": 1784968347881,
-			"tag": "0004_massive_loki",
-			"breakpoints": true
-		},
-		{
-			"idx": 5,
-			"version": "7",
-			"when": 1784976152506,
-			"tag": "0005_gray_shadowcat",
 			"breakpoints": true
 		}
 	]

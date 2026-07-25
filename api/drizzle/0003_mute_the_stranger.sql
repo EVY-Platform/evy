@@ -1,1 +1,0 @@
-ALTER TABLE "Flow" ADD COLUMN "submits" jsonb;

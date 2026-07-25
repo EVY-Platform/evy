@@ -3,5 +3,6 @@ CREATE TABLE "Data" (
 	"resource" varchar(50) NOT NULL,
 	"data" jsonb NOT NULL,
 	"created_at" text NOT NULL,
-	"updated_at" text NOT NULL
+	"updated_at" text NOT NULL,
+	"deleted_at" text
 );
