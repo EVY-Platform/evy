@@ -1,4 +1,3 @@
-import { EVY_CORE_SERVICE } from "evy-types/coreResources";
 import {
 	createElement,
 	type ReactNode,
@@ -7,13 +6,18 @@ import {
 	useReducer,
 	useRef,
 } from "react";
-import { SaveConflictError, wsClient } from "../api/wsClient";
+import {
+	type RemoteChange,
+	SaveConflictError,
+	wsClient,
+} from "../api/wsClient";
 import { useUrlSync } from "../hooks/useUrlSync";
 import { baseRows } from "../rows/baseRows";
 import type {
 	ResourceAttributeMetadata,
 	ServiceResource,
 } from "../types/resources";
+import { applyRemoteRecord } from "../utils/flatGraph";
 import {
 	collectionsEqual,
 	collectionsToMaps,
@@ -109,24 +113,25 @@ export function AppProvider({
 		pagesById: appState.pagesById,
 		rowsById: appState.rowsById,
 	});
+	/** Remote changes applied since the last save, to fold into its baseline. */
+	const appliedRemoteChangesRef = useRef<RemoteChange[]>([]);
 
 	// Keep the builder current with other writers. Without this the canvas only
 	// ever showed the snapshot loaded at mount, so concurrent editors silently
 	// overwrote one another.
 	useEffect(() => {
-		return wsClient.onDataChanged((notification) => {
-			if (notification.service !== EVY_CORE_SERVICE) return;
-			const records = Array.isArray(notification.value)
-				? notification.value
-				: [notification.value];
+		return wsClient.onDataChanged((changes) => {
+			for (const change of changes) {
+				// Also queued as a baseline correction: without it the autosave
+				// effect reads the applied change as a local edit and writes
+				// the record straight back to the server it came from.
+				appliedRemoteChangesRef.current.push(change);
 
-			for (const record of records) {
-				if (!record || typeof record !== "object") continue;
 				dispatchRow({
 					type: "APPLY_REMOTE_RECORD",
-					resource: notification.resource,
-					record: record as { id: string; updatedAt?: string },
-					operation: notification.operation,
+					resource: change.resource,
+					record: change.record,
+					operation: change.operation,
 				});
 			}
 		});
@@ -138,7 +143,19 @@ export function AppProvider({
 			pagesById: appState.pagesById,
 			rowsById: appState.rowsById,
 		};
-		const previousMaps = previousMapsRef.current;
+		// Replayed through the same function the reducer used, so the baseline
+		// moves exactly as far as the remote change did - no further, which
+		// leaves a concurrent local edit still needing a save.
+		let previousMaps = previousMapsRef.current;
+		for (const change of appliedRemoteChangesRef.current) {
+			previousMaps = applyRemoteRecord(
+				previousMaps,
+				change.resource,
+				change.record,
+				change.operation,
+			);
+		}
+		appliedRemoteChangesRef.current = [];
 		const previousReachable = collectReachableEntityIds(
 			appState.activeFlowId,
 			previousMaps,

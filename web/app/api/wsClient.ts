@@ -5,7 +5,11 @@ import type {
 	SyncResponse,
 } from "evy-types";
 import { EVY_CORE_RESOURCE, EVY_CORE_SERVICE } from "evy-types/coreResources";
-import { DATA_CHANGED_EVENT, type DataChangedNotification } from "evy-types/ws";
+import {
+	DATA_CHANGED_EVENT,
+	type DataChangedNotification,
+	type DataChangedOperation,
+} from "evy-types/ws";
 import { Client } from "rpc-websockets";
 import { config } from "../config";
 import type { FlowEntityCollections } from "../utils/flowEntities";
@@ -76,7 +80,48 @@ function recordsById<T extends FlatResourceRecord>(
 
 type ConnectionState = "disconnected" | "connecting" | "connected" | "error";
 
-type DataChangedListener = (notification: DataChangedNotification) => void;
+/**
+ * A record carried by a `dataChanged` push, after validation.
+ *
+ * The protocol's `value` is `unknown` and may be one record or an array, so it
+ * is normalized once here rather than at each subscriber - the transport and
+ * the UI reading the same payload two different ways is how the version map
+ * silently stopped being updated.
+ */
+export interface RemoteRecord {
+	id: string;
+	updatedAt?: string;
+	deletedAt?: string;
+}
+
+export interface RemoteChange {
+	resource: string;
+	operation: DataChangedOperation;
+	record: RemoteRecord;
+}
+
+type DataChangedListener = (changes: RemoteChange[]) => void;
+
+function normalizeRemoteChanges(
+	notification: DataChangedNotification,
+): RemoteChange[] {
+	if (notification.service !== EVY_CORE_SERVICE) return [];
+	const values = Array.isArray(notification.value)
+		? notification.value
+		: [notification.value];
+
+	const changes: RemoteChange[] = [];
+	for (const value of values) {
+		if (!value || typeof value !== "object") continue;
+		if (typeof (value as Record<string, unknown>).id !== "string") continue;
+		changes.push({
+			resource: notification.resource,
+			operation: notification.operation,
+			record: value as RemoteRecord,
+		});
+	}
+	return changes;
+}
 
 class WSClient {
 	private client: Client | null = null;
@@ -93,6 +138,8 @@ class WSClient {
 	 * have not already seen".
 	 */
 	private serverVersions = new Map<string, string>();
+	/** Tail of the save chain; see `saveFlowGraph`. */
+	private saveQueue: Promise<void> = Promise.resolve();
 
 	/**
 	 * Subscribe to server pushes. Without this the builder only ever saw the
@@ -129,9 +176,13 @@ class WSClient {
 			this.client.on(DATA_CHANGED_EVENT, (payload: unknown) => {
 				const notification = payload as DataChangedNotification;
 				if (!notification || typeof notification !== "object") return;
-				this.rememberVersionFromNotification(notification);
+				const changes = normalizeRemoteChanges(notification);
+				if (changes.length === 0) return;
+				for (const change of changes) {
+					this.rememberRemoteVersion(change);
+				}
 				for (const listener of this.dataChangedListeners) {
-					listener(notification);
+					listener(changes);
 				}
 			});
 
@@ -172,7 +223,34 @@ class WSClient {
 		return response;
 	}
 
-	async saveFlowGraph(
+	/**
+	 * Saves run strictly one at a time.
+	 *
+	 * Autosave fires per state change, so two passes can overlap - and with an
+	 * optimistic lock that is fatal rather than merely wasteful: both read the
+	 * version map before the first response updates it, send the same
+	 * precondition, and the second write is rejected as a conflict with its own
+	 * predecessor. Editing a field fast enough to produce two passes reported
+	 * "someone else changed this".
+	 */
+	saveFlowGraph(
+		previousGraph: FlowEntityCollections,
+		nextGraph: FlowEntityCollections,
+	): Promise<FlowEntityCollections> {
+		const run = this.saveQueue.then(
+			() => this.saveFlowGraphNow(previousGraph, nextGraph),
+			() => this.saveFlowGraphNow(previousGraph, nextGraph),
+		);
+		// The queue must survive a rejected save, or one failure wedges every
+		// later one; callers still see the rejection through `run`.
+		this.saveQueue = run.then(
+			() => undefined,
+			() => undefined,
+		);
+		return run;
+	}
+
+	private async saveFlowGraphNow(
 		previousGraph: FlowEntityCollections,
 		nextGraph: FlowEntityCollections,
 	): Promise<FlowEntityCollections> {
@@ -284,20 +362,18 @@ class WSClient {
 		this.serverVersions.set(versionKey(resource, raw.id), raw.updatedAt);
 	}
 
-	private rememberVersionFromNotification(
-		notification: DataChangedNotification,
-	): void {
-		const record = notification.record;
-		if (!record || typeof record.id !== "string") return;
-		if (record.deletedAt) {
-			this.serverVersions.delete(
-				versionKey(notification.resource, record.id),
-			);
+	private rememberRemoteVersion({
+		resource,
+		operation,
+		record,
+	}: RemoteChange): void {
+		if (operation === "delete" || record.deletedAt) {
+			this.serverVersions.delete(versionKey(resource, record.id));
 			return;
 		}
 		if (typeof record.updatedAt !== "string") return;
 		this.serverVersions.set(
-			versionKey(notification.resource, record.id),
+			versionKey(resource, record.id),
 			record.updatedAt,
 		);
 	}
