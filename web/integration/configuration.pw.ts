@@ -171,42 +171,46 @@ test.describe("Row configuration", () => {
 		await expect(formatInput).toHaveText("{$datum.label}");
 	});
 
-	test("flow submits declaration can be set and cleared", async ({
+	// The declaration is one value, not two: the schema requires a non-empty
+	// resource, so picking a service on its own is not a state a flow can be
+	// saved in.
+	test("flow submits declaration can be set and cleared as one target", async ({
 		page,
 	}) => {
-		await openAppWithTestFlows(page, [
-			{
-				id: "step_1",
-				title: "Test Page",
-				rows: [
-					{
-						type: "Text",
-						title: "Hello",
-						visible: "true",
-					},
-				],
-			},
-		]);
+		await openAppWithTestFlows(
+			page,
+			[
+				{
+					id: "step_1",
+					title: "Test Page",
+					rows: [
+						{
+							type: "Text",
+							title: "Hello",
+							visible: "true",
+						},
+					],
+				},
+			],
+			TEST_SERVICE_RESOURCES,
+		);
 
 		await page.getByText("Hello", { exact: true }).first().click();
 
 		const configPanel = getConfigPanel(page);
-		const serviceSelect = configPanel.getByLabel("Flow submits service");
-		const resourceSelect = configPanel.getByLabel("Flow submits resource");
+		const targetSelect = configPanel.getByLabel("Flow submits target");
 
-		await expect(serviceSelect).toBeVisible();
-		await expect(serviceSelect).toHaveAttribute("data-value", "");
+		await expect(targetSelect).toBeVisible();
+		await expect(targetSelect).toHaveAttribute("data-value", "");
 
-		await popoverSelect(page, serviceSelect, "Marketplace");
-		await expect(serviceSelect).not.toHaveAttribute("data-value", "");
+		await popoverSelect(page, targetSelect, "Marketplace / Item");
+		await expect(targetSelect).toHaveAttribute(
+			"data-value",
+			`${MARKETPLACE_SERVICE}/${MARKETPLACE_RESOURCE.ITEMS}`,
+		);
 
-		// Resource options are scoped to the chosen service.
-		await resourceSelect.click();
-		await expect(page.getByRole("listbox")).toBeVisible();
-		await page.keyboard.press("Escape");
-
-		await popoverSelect(page, serviceSelect, "None");
-		await expect(serviceSelect).toHaveAttribute("data-value", "");
+		await popoverSelect(page, targetSelect, "None");
+		await expect(targetSelect).toHaveAttribute("data-value", "");
 	});
 
 	test("action popup traps focus and is announced as a modal dialog", async ({

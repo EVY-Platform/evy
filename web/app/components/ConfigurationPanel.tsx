@@ -1,9 +1,5 @@
 import type { RowTriggerName, UI_RowAction, UI_RowActions } from "evy-types";
-import { EVY_CORE_SERVICE } from "evy-types/coreResources";
-import {
-	MARKETPLACE_RESOURCE,
-	MARKETPLACE_SERVICE,
-} from "evy-types/marketplaceResources";
+import { MARKETPLACE_RESOURCE } from "evy-types/marketplaceResources";
 import { ChevronRight, Trash2 } from "lucide-react";
 import { useCallback, useMemo, useState } from "react";
 import { useRowById } from "../hooks/useRowById";
@@ -32,6 +28,11 @@ import {
 	findPageReferences,
 	type PageReferenceEntry,
 } from "../utils/pageReferences";
+import {
+	parseSubmitTargetValue,
+	submitTargetOptions,
+	submitTargetValue,
+} from "../utils/serviceResourceOptions";
 import { ActionEditor } from "./ActionEditor";
 import { BuilderAssist } from "./BuilderAssist";
 import { PageInUseDialog } from "./PageInUseDialog";
@@ -174,50 +175,21 @@ export function ConfigurationPanel() {
 		[flowsById, pagesById, serviceResources],
 	);
 
-	const submitsServiceOptions = useMemo<PopoverOption[]>(
-		() => [
-			{ value: "", label: "None" },
-			{ value: MARKETPLACE_SERVICE, label: "Marketplace" },
-			{ value: EVY_CORE_SERVICE, label: "Evy" },
-		],
-		[],
+	const submitsTargetOptions = useMemo<PopoverOption[]>(
+		() => submitTargetOptions(serviceResources),
+		[serviceResources],
 	);
 
-	const submitsResourceOptions = useMemo<PopoverOption[]>(() => {
-		const serviceId = activeFlow?.submits?.service;
-		if (!serviceId) return [];
-		return serviceResources
-			.filter((resource) => resource.fkServiceId === serviceId)
-			.map((resource) => ({ value: resource.id, label: resource.name }))
-			.sort((a, b) => a.label.localeCompare(b.label));
-	}, [activeFlow?.submits?.service, serviceResources]);
-
-	// Changing service invalidates the resource, so the declaration is held
-	// incomplete until a resource is picked rather than pointing at a resource
-	// the new service does not own.
-	const handleSubmitsServiceChange = useCallback(
-		(service: string) => {
+	const handleSubmitsTargetChange = useCallback(
+		(value: string) => {
 			if (!activeFlowId) return;
 			dispatchRow({
 				type: "UPDATE_FLOW_SUBMITS",
 				flowId: activeFlowId,
-				submits: service ? { service, resource: "" } : undefined,
+				submits: parseSubmitTargetValue(value),
 			});
 		},
 		[activeFlowId, dispatchRow],
-	);
-
-	const handleSubmitsResourceChange = useCallback(
-		(resource: string) => {
-			const service = activeFlow?.submits?.service;
-			if (!activeFlowId || !service) return;
-			dispatchRow({
-				type: "UPDATE_FLOW_SUBMITS",
-				flowId: activeFlowId,
-				submits: resource ? { service, resource } : undefined,
-			});
-		},
-		[activeFlowId, activeFlow?.submits?.service, dispatchRow],
 	);
 
 	const [pageInUseReferences, setPageInUseReferences] = useState<
@@ -577,18 +549,15 @@ export function ConfigurationPanel() {
 						</p>
 						<div className="evy-flex evy-gap-2 evy-mt-1">
 							<PopoverSelect
-								ariaLabel="Flow submits service"
-								value={activeFlow.submits?.service ?? ""}
-								placeholder="No service"
-								options={submitsServiceOptions}
-								onChange={handleSubmitsServiceChange}
-							/>
-							<PopoverSelect
-								ariaLabel="Flow submits resource"
-								value={activeFlow.submits?.resource ?? ""}
-								placeholder="No resource"
-								options={submitsResourceOptions}
-								onChange={handleSubmitsResourceChange}
+								ariaLabel="Flow submits target"
+								value={
+									activeFlow.submits
+										? submitTargetValue(activeFlow.submits)
+										: ""
+								}
+								placeholder="None"
+								options={submitsTargetOptions}
+								onChange={handleSubmitsTargetChange}
 							/>
 						</div>
 					</div>
