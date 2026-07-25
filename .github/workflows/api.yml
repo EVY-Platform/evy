@@ -12,7 +12,7 @@ on:
 
 jobs:
     api_lint:
-        name: API Lint
+        name: Lint
         defaults:
             run:
                 working-directory: api
@@ -36,7 +36,7 @@ jobs:
               run: bun run lint
 
     api_build:
-        name: API Build
+        name: Build
         defaults:
             run:
                 working-directory: api
@@ -60,7 +60,7 @@ jobs:
               run: bun run build
 
     scripts_tests:
-        name: Scripts Tests
+        name: Scripts
         timeout-minutes: 2
         runs-on: ubuntu-latest
         steps:
@@ -80,7 +80,7 @@ jobs:
               run: bun run test:scripts
 
     api_tests:
-        name: API Tests
+        name: Tests
         defaults:
             run:
                 working-directory: api
