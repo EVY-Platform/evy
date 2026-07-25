@@ -756,16 +756,24 @@ async function seedDatabase({
 }
 
 /**
- * Endpoint columns for the marketplace service row, taken from the environment
- * when present. Absent values leave the columns null and the API falls back to
- * the `<NAME>_WS_HOST/PORT` convention.
+ * Endpoint columns for the marketplace service row.
+ *
+ * Deliberately not derived from `MARKETPLACE_WS_HOST/PORT`: those say how the
+ * process reading them reaches marketplace, and the seed runs on the host while
+ * the gateway usually runs in a container - so seeding `127.0.0.1` points the
+ * gateway at itself, and because the row wins over the environment, every
+ * forwarded call then fails.
+ *
+ * Set `SEED_MARKETPLACE_WS_HOST/PORT` to pin an endpoint from the gateway's
+ * point of view. Otherwise the columns stay null and the API falls back to its
+ * own `<NAME>_WS_HOST/PORT`, which is correct in both docker and local dev.
  */
 function marketplaceEndpointColumns(): {
 	wsHost?: string;
 	wsPort?: number;
 } {
-	const host = process.env.MARKETPLACE_WS_HOST?.trim();
-	const port = Number(process.env.MARKETPLACE_WS_PORT);
+	const host = process.env.SEED_MARKETPLACE_WS_HOST?.trim();
+	const port = Number(process.env.SEED_MARKETPLACE_WS_PORT);
 	if (!host || !Number.isInteger(port) || port <= 0) return {};
 	return { wsHost: host, wsPort: port };
 }
