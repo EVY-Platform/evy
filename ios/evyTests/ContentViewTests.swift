@@ -941,22 +941,24 @@ final class ContentViewTests: XCTestCase {
 
   // MARK: - Sync state tests (unrelated to flow shape)
 
-  func testSyncStateResetsStoredTimestampWhenStorageVersionChanges() {
+  func testSyncStateDropsCursorWhenStorageVersionChanges() {
     EVYSyncState.reset()
     defer { EVYSyncState.reset() }
 
-    UserDefaults.standard.set("2026-01-01T00:00:00.000Z", forKey: "lastSyncTimestamp")
+    UserDefaults.standard.set("stale-cursor", forKey: "syncCursor")
 
-    XCTAssertEqual(EVYSyncState.lastSyncTimestamp, "1970-01-01T00:00:00.000Z")
+    // No cursor means the next sync is a full one, which is what a cache built
+    // by an older storage version needs.
+    XCTAssertNil(EVYSyncState.cursor)
   }
 
-  func testSyncStateKeepsTimestampAfterCurrentVersionIsMarkedSynced() {
+  func testSyncStateKeepsCursorAfterCurrentVersionIsMarkedSynced() {
     EVYSyncState.reset()
     defer { EVYSyncState.reset() }
 
-    EVYSyncState.markSynced()
+    EVYSyncState.markSynced(cursor: "2026-05-05T00:00:00.000Z")
 
-    XCTAssertNotEqual(EVYSyncState.lastSyncTimestamp, "1970-01-01T00:00:00.000Z")
+    XCTAssertEqual(EVYSyncState.cursor, "2026-05-05T00:00:00.000Z")
   }
 
   // MARK: - Row payload decoding tests (in-memory UI_Row path)
