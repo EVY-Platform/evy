@@ -1,5 +1,6 @@
 import { describe, expect, test } from "bun:test";
 
+import { parseActionStringToInvocation } from "evy-types/actionAst";
 import corpus from "../../../types/grammar/conformance.json";
 import { parseBranch } from "./actionBranch";
 import {
@@ -61,9 +62,12 @@ describe("grammar conformance corpus", () => {
 		const covered = new Set(
 			webVectors
 				.filter((vector) =>
-					["split-args", "action-branch", "condition-parse"].includes(
-						vector.category,
-					),
+					[
+						"split-args",
+						"action-branch",
+						"condition-parse",
+						"action-ast-convert",
+					].includes(vector.category),
 				)
 				.map((vector) => vector.id),
 		);
@@ -108,6 +112,24 @@ describe("condition-parse", () => {
 			expect(normalizeAst(parseCondition(vector.input))).toEqual(
 				vector.expect.ast,
 			);
+		});
+	}
+});
+
+describe("action-ast-convert", () => {
+	for (const vector of webVectors.filter(
+		(v) => v.category === "action-ast-convert",
+	)) {
+		test(vector.id, () => {
+			const result = parseActionStringToInvocation(vector.input);
+			if (vector.expect.ast === null) {
+				expect(result.ok).toBe(false);
+				return;
+			}
+			expect(result.ok).toBe(true);
+			if (result.ok) {
+				expect(result.invocation).toEqual(vector.expect.ast);
+			}
 		});
 	}
 });

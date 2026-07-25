@@ -6,35 +6,45 @@
 			"category": "split-args",
 			"platforms": ["ios", "web"],
 			"input": "a",
-			"expect": { "args": ["a"] }
+			"expect": {
+				"args": ["a"]
+			}
 		},
 		{
 			"id": "split-args-empty-string",
 			"category": "split-args",
 			"platforms": ["ios", "web"],
 			"input": "",
-			"expect": { "args": [] }
+			"expect": {
+				"args": []
+			}
 		},
 		{
 			"id": "split-args-plain-pair",
 			"category": "split-args",
 			"platforms": ["ios", "web"],
 			"input": "a,b",
-			"expect": { "args": ["a", "b"] }
+			"expect": {
+				"args": ["a", "b"]
+			}
 		},
 		{
 			"id": "split-args-trims-surrounding-space",
 			"category": "split-args",
 			"platforms": ["ios", "web"],
 			"input": "a , b",
-			"expect": { "args": ["a", "b"] }
+			"expect": {
+				"args": ["a", "b"]
+			}
 		},
 		{
 			"id": "split-args-respects-nested-parens",
 			"category": "split-args",
 			"platforms": ["ios", "web"],
 			"input": "formatDatetime(x, HH:mm),b",
-			"expect": { "args": ["formatDatetime(x, HH:mm)", "b"] },
+			"expect": {
+				"args": ["formatDatetime(x, HH:mm)", "b"]
+			},
 			"notes": "A comma inside a nested call is not a separator."
 		},
 		{
@@ -42,7 +52,9 @@
 			"category": "split-args",
 			"platforms": ["ios", "web"],
 			"input": "a,{k: v, j: w},c",
-			"expect": { "args": ["a", "{k: v, j: w}", "c"] },
+			"expect": {
+				"args": ["a", "{k: v, j: w}", "c"]
+			},
 			"notes": "Plain-text objects are one argument."
 		},
 		{
@@ -50,7 +62,9 @@
 			"category": "split-args",
 			"platforms": ["ios", "web"],
 			"input": "a,\"x,y\",c",
-			"expect": { "args": ["a", "\"x,y\"", "c"] },
+			"expect": {
+				"args": ["a", "\"x,y\"", "c"]
+			},
 			"notes": "Quoted commas are literal. Quotes are legal in action args, unlike in comparison blocks."
 		},
 		{
@@ -58,7 +72,9 @@
 			"category": "split-args",
 			"platforms": ["ios", "web"],
 			"input": "a,[x, y],c",
-			"expect": { "args": ["a", "[x, y]", "c"] },
+			"expect": {
+				"args": ["a", "[x, y]", "c"]
+			},
 			"notes": "Array literals (navigate query values) are one argument."
 		},
 		{
@@ -66,7 +82,10 @@
 			"category": "action-branch",
 			"platforms": ["ios", "web"],
 			"input": "{close()}",
-			"expect": { "fn": "close", "args": [] }
+			"expect": {
+				"fn": "close",
+				"args": []
+			}
 		},
 		{
 			"id": "action-branch-show-row-id",
@@ -83,7 +102,10 @@
 			"category": "action-branch",
 			"platforms": ["ios", "web"],
 			"input": "{select($datum)}",
-			"expect": { "fn": "select", "args": ["$datum"] }
+			"expect": {
+				"fn": "select",
+				"args": ["$datum"]
+			}
 		},
 		{
 			"id": "action-branch-create-submit",
@@ -161,7 +183,9 @@
 			"category": "action-branch",
 			"platforms": ["ios", "web"],
 			"input": "close()",
-			"expect": { "parsed": false },
+			"expect": {
+				"parsed": false
+			},
 			"notes": "Branches must be wrapped in braces to execute; a bare name is inert text (sdui.md)."
 		},
 		{
@@ -169,7 +193,9 @@
 			"category": "action-branch",
 			"platforms": ["ios", "web"],
 			"input": "",
-			"expect": { "parsed": false },
+			"expect": {
+				"parsed": false
+			},
 			"notes": "An empty branch means do nothing."
 		},
 		{
@@ -177,42 +203,54 @@
 			"category": "comparison",
 			"platforms": ["ios"],
 			"input": "{1 > 0}",
-			"expect": { "value": true }
+			"expect": {
+				"value": true
+			}
 		},
 		{
 			"id": "comparison-numeric-gt-false",
 			"category": "comparison",
 			"platforms": ["ios"],
 			"input": "{0 > 1}",
-			"expect": { "value": false }
+			"expect": {
+				"value": false
+			}
 		},
 		{
 			"id": "comparison-or-combinator",
 			"category": "comparison",
 			"platforms": ["ios"],
 			"input": "{0 > 1 || 1 > 0}",
-			"expect": { "value": true }
+			"expect": {
+				"value": true
+			}
 		},
 		{
 			"id": "comparison-and-combinator",
 			"category": "comparison",
 			"platforms": ["ios"],
 			"input": "{1 > 0 && 0 > 1}",
-			"expect": { "value": false }
+			"expect": {
+				"value": false
+			}
 		},
 		{
 			"id": "comparison-grouping-parens",
 			"category": "comparison",
 			"platforms": ["ios"],
 			"input": "{(1 > 0 && 2 > 1) || 0 > 1}",
-			"expect": { "value": true }
+			"expect": {
+				"value": true
+			}
 		},
 		{
 			"id": "comparison-standalone-true",
 			"category": "comparison",
 			"platforms": ["ios"],
 			"input": "{true}",
-			"expect": { "value": true },
+			"expect": {
+				"value": true
+			},
 			"notes": "Boolean literals are valid standalone conditions (sdui.md). Resolved before path resolution."
 		},
 		{
@@ -220,15 +258,23 @@
 			"category": "comparison",
 			"platforms": ["ios"],
 			"input": "{false}",
-			"expect": { "value": false }
+			"expect": {
+				"value": false
+			}
 		},
 		{
 			"id": "comparison-unquoted-literal-match",
 			"category": "comparison",
 			"platforms": ["ios"],
 			"input": "{status_holder.status == pending}",
-			"data": { "status_holder": { "status": "pending" } },
-			"expect": { "value": true },
+			"data": {
+				"status_holder": {
+					"status": "pending"
+				}
+			},
+			"expect": {
+				"value": true
+			},
 			"notes": "Unquoted bare words are the supported way to write string literals in comparisons."
 		},
 		{
@@ -236,16 +282,28 @@
 			"category": "comparison",
 			"platforms": ["ios"],
 			"input": "{status_holder.status == accepted}",
-			"data": { "status_holder": { "status": "pending" } },
-			"expect": { "value": false }
+			"data": {
+				"status_holder": {
+					"status": "pending"
+				}
+			},
+			"expect": {
+				"value": false
+			}
 		},
 		{
 			"id": "comparison-quoted-literal-never-matches",
 			"category": "comparison",
 			"platforms": ["ios"],
 			"input": "{status_holder.status == \"pending\"}",
-			"data": { "status_holder": { "status": "pending" } },
-			"expect": { "value": false },
+			"data": {
+				"status_holder": {
+					"status": "pending"
+				}
+			},
+			"expect": {
+				"value": false
+			},
 			"notes": "WART: quotes are excluded by the comparison regex, so the block is never evaluated and the condition reads false even though the values are equal. docs/evy/functions.md warns about this."
 		},
 		{
@@ -253,24 +311,36 @@
 			"category": "comparison",
 			"platforms": ["ios"],
 			"input": "{count(list_holder) > 1}",
-			"data": { "list_holder": ["a", "b"] },
-			"expect": { "value": true }
+			"data": {
+				"list_holder": ["a", "b"]
+			},
+			"expect": {
+				"value": true
+			}
 		},
 		{
 			"id": "comparison-length-of-string",
 			"category": "comparison",
 			"platforms": ["ios"],
 			"input": "{length(title_holder) > 0}",
-			"data": { "title_holder": "Hello" },
-			"expect": { "value": true }
+			"data": {
+				"title_holder": "Hello"
+			},
+			"expect": {
+				"value": true
+			}
 		},
 		{
 			"id": "expression-length-of-string",
 			"category": "expression",
 			"platforms": ["ios"],
 			"input": "{length(title_holder)}",
-			"data": { "title_holder": "Hello" },
-			"expect": { "text": "5" },
+			"data": {
+				"title_holder": "Hello"
+			},
+			"expect": {
+				"text": "5"
+			},
 			"notes": "length counts characters."
 		},
 		{
@@ -278,8 +348,12 @@
 			"category": "expression",
 			"platforms": ["ios"],
 			"input": "{length(list_holder)}",
-			"data": { "list_holder": ["a", "b", "c"] },
-			"expect": { "text": "0" },
+			"data": {
+				"list_holder": ["a", "b", "c"]
+			},
+			"expect": {
+				"text": "0"
+			},
 			"notes": "length is string-only; non-strings count as 0 (functions.md). Use count for collections."
 		},
 		{
@@ -287,8 +361,12 @@
 			"category": "expression",
 			"platforms": ["ios"],
 			"input": "{length(num_holder)}",
-			"data": { "num_holder": 42 },
-			"expect": { "text": "0" },
+			"data": {
+				"num_holder": 42
+			},
+			"expect": {
+				"text": "0"
+			},
 			"notes": "length must not echo a numeric argument back."
 		},
 		{
@@ -296,15 +374,21 @@
 			"category": "expression",
 			"platforms": ["ios"],
 			"input": "{length(definitely_missing_root)}",
-			"expect": { "text": "0" }
+			"expect": {
+				"text": "0"
+			}
 		},
 		{
 			"id": "expression-count-of-string-counts-characters",
 			"category": "expression",
 			"platforms": ["ios"],
 			"input": "{count(title_holder)}",
-			"data": { "title_holder": "Hello" },
-			"expect": { "text": "5" },
+			"data": {
+				"title_holder": "Hello"
+			},
+			"expect": {
+				"text": "5"
+			},
 			"notes": "count keeps its documented polymorphic behaviour; only length is narrowed."
 		},
 		{
@@ -312,8 +396,12 @@
 			"category": "expression",
 			"platforms": ["ios"],
 			"input": "{count(num_holder)}",
-			"data": { "num_holder": 42 },
-			"expect": { "text": "42" },
+			"data": {
+				"num_holder": 42
+			},
+			"expect": {
+				"text": "42"
+			},
 			"notes": "count returns the number itself (functions.md)."
 		},
 		{
@@ -321,7 +409,9 @@
 			"category": "comparison",
 			"platforms": ["ios"],
 			"input": "{count(definitely_missing_root) > 0}",
-			"expect": { "value": false },
+			"expect": {
+				"value": false
+			},
 			"notes": "Unresolvable paths count as 0 rather than erroring."
 		},
 		{
@@ -329,63 +419,95 @@
 			"category": "expression",
 			"platforms": ["ios"],
 			"input": "plain text",
-			"expect": { "text": "plain text" }
+			"expect": {
+				"text": "plain text"
+			}
 		},
 		{
 			"id": "expression-simple-path",
 			"category": "expression",
 			"platforms": ["ios"],
 			"input": "{title_holder}",
-			"data": { "title_holder": "Hello" },
-			"expect": { "text": "Hello" }
+			"data": {
+				"title_holder": "Hello"
+			},
+			"expect": {
+				"text": "Hello"
+			}
 		},
 		{
 			"id": "expression-nested-path",
 			"category": "expression",
 			"platforms": ["ios"],
 			"input": "{item_holder.name}",
-			"data": { "item_holder": { "name": "Chair" } },
-			"expect": { "text": "Chair" }
+			"data": {
+				"item_holder": {
+					"name": "Chair"
+				}
+			},
+			"expect": {
+				"text": "Chair"
+			}
 		},
 		{
 			"id": "expression-interpolated-in-sentence",
 			"category": "expression",
 			"platforms": ["ios"],
 			"input": "Hello {title_holder}!",
-			"data": { "title_holder": "world" },
-			"expect": { "text": "Hello world!" }
+			"data": {
+				"title_holder": "world"
+			},
+			"expect": {
+				"text": "Hello world!"
+			}
 		},
 		{
 			"id": "expression-array-index-sugar",
 			"category": "expression",
 			"platforms": ["ios"],
 			"input": "{list_holder[1]}",
-			"data": { "list_holder": ["a", "b"] },
-			"expect": { "text": "b" }
+			"data": {
+				"list_holder": ["a", "b"]
+			},
+			"expect": {
+				"text": "b"
+			}
 		},
 		{
 			"id": "expression-count-function",
 			"category": "expression",
 			"platforms": ["ios"],
 			"input": "{count(list_holder)}",
-			"data": { "list_holder": ["a", "b", "c"] },
-			"expect": { "text": "3" }
+			"data": {
+				"list_holder": ["a", "b", "c"]
+			},
+			"expect": {
+				"text": "3"
+			}
 		},
 		{
 			"id": "expression-format-decimal",
 			"category": "expression",
 			"platforms": ["ios"],
 			"input": "{formatDecimal(num_holder, 2)}",
-			"data": { "num_holder": 20.0423 },
-			"expect": { "text": "20.04" }
+			"data": {
+				"num_holder": 20.0423
+			},
+			"expect": {
+				"text": "20.04"
+			}
 		},
 		{
 			"id": "expression-format-datetime",
 			"category": "expression",
 			"platforms": ["ios"],
 			"input": "{formatDatetime(when_holder, \"HH:mm\")}",
-			"data": { "when_holder": "2024-01-19T12:42:52" },
-			"expect": { "text": "12:42" },
+			"data": {
+				"when_holder": "2024-01-19T12:42:52"
+			},
+			"expect": {
+				"text": "12:42"
+			},
 			"notes": "Format patterns are quoted - the opposite of the comparison-block rule."
 		},
 		{
@@ -393,7 +515,9 @@
 			"category": "expression",
 			"platforms": ["ios"],
 			"input": "Hello {definitely_missing_root}!",
-			"expect": { "error": true },
+			"expect": {
+				"error": true
+			},
 			"notes": "The core resolver throws on an unresolvable root. The display layer swallows it - see display-missing-root-blanks-whole-string."
 		},
 		{
@@ -401,22 +525,30 @@
 			"category": "display",
 			"platforms": ["ios"],
 			"input": "plain text",
-			"expect": { "text": "plain text" }
+			"expect": {
+				"text": "plain text"
+			}
 		},
 		{
 			"id": "display-resolves-path",
 			"category": "display",
 			"platforms": ["ios"],
 			"input": "Hello {title_holder}!",
-			"data": { "title_holder": "world" },
-			"expect": { "text": "Hello world!" }
+			"data": {
+				"title_holder": "world"
+			},
+			"expect": {
+				"text": "Hello world!"
+			}
 		},
 		{
 			"id": "display-missing-root-blanks-whole-string",
 			"category": "display",
 			"platforms": ["ios"],
 			"input": "Hello {definitely_missing_root}!",
-			"expect": { "text": "" },
+			"expect": {
+				"text": ""
+			},
 			"notes": "WART: one unresolvable root empties the entire rendered string, including the literal text around it, instead of blanking just that token."
 		},
 		{
@@ -464,7 +596,9 @@
 			"category": "condition-parse",
 			"platforms": ["web"],
 			"input": "",
-			"expect": { "ast": null },
+			"expect": {
+				"ast": null
+			},
 			"notes": "An empty condition means always true; it has no AST."
 		},
 		{
@@ -472,8 +606,179 @@
 			"category": "condition-parse",
 			"platforms": ["web"],
 			"input": "{true}",
-			"expect": { "ast": null },
+			"expect": {
+				"ast": null
+			},
 			"notes": "WART: the web condition editor cannot represent a standalone boolean, so opening and saving such an action silently drops it - even though iOS evaluates it correctly (see comparison-standalone-true)."
+		},
+		{
+			"id": "ast-convert-close",
+			"category": "action-ast-convert",
+			"platforms": ["web"],
+			"input": "{close()}",
+			"expect": {
+				"ast": {
+					"fn": "close"
+				}
+			}
+		},
+		{
+			"id": "ast-convert-show",
+			"category": "action-ast-convert",
+			"platforms": ["web"],
+			"input": "{show(b8c7d6e5-f4a3-4b2c-9d1e-0f8a7b6c5d4e)}",
+			"expect": {
+				"ast": {
+					"fn": "show",
+					"rowId": "b8c7d6e5-f4a3-4b2c-9d1e-0f8a7b6c5d4e"
+				}
+			}
+		},
+		{
+			"id": "ast-convert-select-datum",
+			"category": "action-ast-convert",
+			"platforms": ["web"],
+			"input": "{select($datum)}",
+			"expect": {
+				"ast": {
+					"fn": "select",
+					"value": "$datum"
+				}
+			}
+		},
+		{
+			"id": "ast-convert-navigate-query",
+			"category": "action-ast-convert",
+			"platforms": ["web"],
+			"input": "{navigate(flow-1,page-1,{id: $datum.id})}",
+			"expect": {
+				"ast": {
+					"fn": "navigate",
+					"flowId": "flow-1",
+					"pageId": "page-1",
+					"query": {
+						"id": "$datum.id"
+					}
+				}
+			}
+		},
+		{
+			"id": "ast-convert-create-submit",
+			"category": "action-ast-convert",
+			"platforms": ["web"],
+			"input": "{create(66b092ae-7cd8-4d67-95b7-30b03568fd90,items,submit)}",
+			"expect": {
+				"ast": {
+					"fn": "create",
+					"service": "66b092ae-7cd8-4d67-95b7-30b03568fd90",
+					"resource": "items",
+					"mode": "submit"
+				}
+			},
+			"notes": "The bare `submit` keyword becomes a typed mode."
+		},
+		{
+			"id": "ast-convert-create-inline-quoted",
+			"category": "action-ast-convert",
+			"platforms": ["web"],
+			"input": "{create(66b092ae-7cd8-4d67-95b7-30b03568fd90,messages,{status: \"pending\", type: pickup})}",
+			"expect": {
+				"ast": {
+					"fn": "create",
+					"service": "66b092ae-7cd8-4d67-95b7-30b03568fd90",
+					"resource": "messages",
+					"mode": "inline",
+					"data": {
+						"status": "\"pending\"",
+						"type": "pickup"
+					}
+				}
+			},
+			"notes": "Value expressions cross over verbatim, quotes included: whether `pickup` is a path or a literal is decided at execution, not at conversion."
+		},
+		{
+			"id": "ast-convert-create-from-path",
+			"category": "action-ast-convert",
+			"platforms": ["web"],
+			"input": "{create(core,addresses,pickup_address,{pickup_address.id})}",
+			"expect": {
+				"ast": {
+					"fn": "create",
+					"service": "core",
+					"resource": "addresses",
+					"mode": "fromPath",
+					"dataPath": "pickup_address",
+					"idDestination": "{pickup_address.id}"
+				}
+			}
+		},
+		{
+			"id": "ast-convert-update-store",
+			"category": "action-ast-convert",
+			"platforms": ["web"],
+			"input": "{update(66b092ae-7cd8-4d67-95b7-30b03568fd90,items,{id: item.id},{status: accepted})}",
+			"expect": {
+				"ast": {
+					"fn": "update",
+					"service": "66b092ae-7cd8-4d67-95b7-30b03568fd90",
+					"resource": "items",
+					"mode": "store",
+					"filter": {
+						"id": "item.id"
+					},
+					"changes": {
+						"status": "accepted"
+					}
+				}
+			}
+		},
+		{
+			"id": "ast-convert-update-draft",
+			"category": "action-ast-convert",
+			"platforms": ["web"],
+			"input": "{update(66b092ae-7cd8-4d67-95b7-30b03568fd90,items,{},{a: b},draft)}",
+			"expect": {
+				"ast": {
+					"fn": "update",
+					"service": "66b092ae-7cd8-4d67-95b7-30b03568fd90",
+					"resource": "items",
+					"mode": "draft",
+					"changes": {
+						"a": "b"
+					}
+				}
+			},
+			"notes": "The bare `draft` keyword becomes a typed mode; the empty filter slot disappears."
+		},
+		{
+			"id": "ast-convert-rejects-bare-name",
+			"category": "action-ast-convert",
+			"platforms": ["web"],
+			"input": "close()",
+			"expect": {
+				"ast": null
+			},
+			"notes": "Branches must be brace-wrapped to execute, so an unwrapped call is not convertible."
+		},
+		{
+			"id": "ast-convert-rejects-two-arg-create",
+			"category": "action-ast-convert",
+			"platforms": ["web"],
+			"input": "{create(svc,items)}",
+			"expect": {
+				"ast": null
+			},
+			"notes": "A two-argument create was always invalid."
+		},
+		{
+			"id": "ast-convert-rejects-store-update-without-filter",
+			"category": "action-ast-convert",
+			"platforms": ["web"],
+			"input": "{update(svc,items,{},{a: b})}",
+			"expect": {
+				"ast": null
+			},
+			"notes": "Store mode requires a non-empty filter."
 		}
 	]
 }

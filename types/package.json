@@ -8,6 +8,7 @@
 		"./db/schema.generated": "./generated/ts/db/schema.generated.ts",
 		"./apiDataSources": "./apiDataSources.ts",
 		"./functionArgs": "./functionArgs.ts",
+		"./actionAst": "./actionAst.ts",
 		"./rpcRequestHelpers": "./rpcRequestHelpers.ts",
 		"./validators": "./validators.ts",
 		"./env": "./env.ts",
