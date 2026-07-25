@@ -551,25 +551,43 @@ function assertUiFlowRowTriggerConstraints(row: UI_Row, path: string): void {
 	}
 }
 
-function walkUiFlowRowTree(row: UI_Row, path: string): void {
-	assertUiFlowRowTriggerConstraints(row, path);
-	const record = row as Record<string, unknown>;
-	if (record.sheet && typeof record.sheet === "object") {
-		walkUiFlowRowTree(record.sheet as UI_Row, `${path}.sheet`);
-	}
-	if (record.child && typeof record.child === "object") {
-		walkUiFlowRowTree(record.child as UI_Row, `${path}.child`);
-	}
-	if (Array.isArray(record.children)) {
-		for (let index = 0; index < record.children.length; index++) {
-			const child = record.children[index];
-			if (child && typeof child === "object") {
-				walkUiFlowRowTree(
-					child as UI_Row,
-					`${path}.children[${index}]`,
-				);
+/**
+ * Visits every row in a flow, including nested sheet/child/children rows.
+ *
+ * The one place that knows how a flow's row tree is shaped and how to name a
+ * position in it, so the checks below stay flat.
+ */
+function forEachFlowRow(
+	flow: UI_Flow,
+	visit: (row: UI_Row, path: string) => void,
+): void {
+	function walk(row: UI_Row, path: string): void {
+		visit(row, path);
+		const record = row as Record<string, unknown>;
+		if (record.sheet && typeof record.sheet === "object") {
+			walk(record.sheet as UI_Row, `${path}.sheet`);
+		}
+		if (record.child && typeof record.child === "object") {
+			walk(record.child as UI_Row, `${path}.child`);
+		}
+		if (Array.isArray(record.children)) {
+			for (let index = 0; index < record.children.length; index++) {
+				const child = record.children[index];
+				if (child && typeof child === "object") {
+					walk(child as UI_Row, `${path}.children[${index}]`);
+				}
 			}
 		}
+	}
+
+	for (let pageIndex = 0; pageIndex < flow.pages.length; pageIndex++) {
+		const page = flow.pages[pageIndex];
+		if (!page) continue;
+		for (let rowIndex = 0; rowIndex < page.rows.length; rowIndex++) {
+			const row = page.rows[rowIndex];
+			if (row) walk(row, `pages[${pageIndex}].rows[${rowIndex}]`);
+		}
+		if (page.footer) walk(page.footer, `pages[${pageIndex}].footer`);
 	}
 }
 
@@ -587,28 +605,13 @@ function submitCreateTarget(branch: unknown): string | null {
 	return `${service}/${resource}`;
 }
 
-function collectSubmitTargets(row: UI_Row, into: Set<string>): void {
+function addSubmitTargets(row: UI_Row, into: Set<string>): void {
 	for (const actionList of Object.values(row.actions ?? {})) {
 		if (!Array.isArray(actionList)) continue;
 		for (const action of actionList) {
 			for (const branch of [action.true, action.false]) {
 				const target = submitCreateTarget(branch);
 				if (target) into.add(target);
-			}
-		}
-	}
-
-	const record = row as Record<string, unknown>;
-	if (record.sheet && typeof record.sheet === "object") {
-		collectSubmitTargets(record.sheet as UI_Row, into);
-	}
-	if (record.child && typeof record.child === "object") {
-		collectSubmitTargets(record.child as UI_Row, into);
-	}
-	if (Array.isArray(record.children)) {
-		for (const child of record.children) {
-			if (child && typeof child === "object") {
-				collectSubmitTargets(child as UI_Row, into);
 			}
 		}
 	}
@@ -623,15 +626,10 @@ function collectSubmitTargets(row: UI_Row, into: Set<string>): void {
  * A declaration with no matching action is allowed: flows are authored
  * incrementally, and the declaration alone is harmless.
  */
-function assertUiFlowSubmitsDeclaration(flow: UI_Flow): void {
-	const targets = new Set<string>();
-	for (const page of flow.pages) {
-		for (const row of page.rows) {
-			if (row) collectSubmitTargets(row, targets);
-		}
-		if (page.footer) collectSubmitTargets(page.footer, targets);
-	}
-
+function assertUiFlowSubmitsDeclaration(
+	flow: UI_Flow,
+	targets: Set<string>,
+): void {
 	if (targets.size === 0) return;
 
 	if (targets.size > 1) {
@@ -659,30 +657,16 @@ function assertUiFlowSubmitsDeclaration(flow: UI_Flow): void {
 	}
 }
 
-function assertUiFlowRowTriggers(flow: UI_Flow): void {
-	for (let pageIndex = 0; pageIndex < flow.pages.length; pageIndex++) {
-		const page = flow.pages[pageIndex];
-		if (!page) {
-			continue;
-		}
-		for (let rowIndex = 0; rowIndex < page.rows.length; rowIndex++) {
-			const row = page.rows[rowIndex];
-			if (row) {
-				walkUiFlowRowTree(row, `pages[${pageIndex}].rows[${rowIndex}]`);
-			}
-		}
-		if (page.footer) {
-			walkUiFlowRowTree(page.footer, `pages[${pageIndex}].footer`);
-		}
-	}
-}
-
 /** Human-oriented label for API errors (matches prior `validation.ts` wrappers). */
 export function validateUiFlow(data: unknown): UI_Flow {
 	assertValid("Flow", getValidateUiFlow(), data);
 	const flow = data as UI_Flow;
-	assertUiFlowRowTriggers(flow);
-	assertUiFlowSubmitsDeclaration(flow);
+	const submitTargets = new Set<string>();
+	forEachFlowRow(flow, (row, path) => {
+		assertUiFlowRowTriggerConstraints(row, path);
+		addSubmitTargets(row, submitTargets);
+	});
+	assertUiFlowSubmitsDeclaration(flow, submitTargets);
 	return flow;
 }
 export const validateDataEvyAddress = makeValidator<DATA_EVY_Address>(

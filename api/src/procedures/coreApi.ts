@@ -15,27 +15,33 @@ import * as syncProcedure from "./sync";
 /**
  * A procedure the gateway runs itself.
  *
- * Request and response are both validated: the request because the caller is
- * untrusted, the response because a procedure that drifts from its declared
- * schema breaks clients silently rather than here.
+ * Takes the raw request payload and is responsible for validating it and its
+ * own response: the request because the caller is untrusted, the response
+ * because a procedure that drifts from its declared schema breaks clients
+ * silently rather than here.
  */
-interface CoreProcedure {
-	validateRequest: (data: unknown) => unknown;
-	validateResponse: (data: unknown) => unknown;
-	run: (data: never, db: EvyDb) => Promise<unknown>;
+type CoreProcedure = (data: unknown, db: EvyDb) => Promise<unknown>;
+
+/**
+ * Runs a sync, validating in one place.
+ *
+ * Reachable two ways - as the top-level `sync` method and as
+ * api{method:"sync"} for clients that have not moved over - so both go through
+ * here rather than each repeating the validation.
+ */
+async function runSync(params: unknown, db: EvyDb): Promise<SyncResponse> {
+	const request = validateSyncRequest(params ?? {});
+	return validateSyncResponse(await syncProcedure.sync(request, db));
 }
 
 const coreProcedures: Record<string, CoreProcedure> = {
-	sync: {
-		validateRequest: (data) => validateSyncRequest(data ?? {}),
-		validateResponse: validateSyncResponse,
-		run: (data, db) => syncProcedure.sync(data, db),
-	},
-	place_search: {
-		validateRequest: validatePlaceSearchRequest,
-		validateResponse: validatePlaceSearchResponse,
-		run: (data) => placeSearchProcedure.placeSearch(data),
-	},
+	sync: runSync,
+	place_search: async (data) =>
+		validatePlaceSearchResponse(
+			await placeSearchProcedure.placeSearch(
+				validatePlaceSearchRequest(data),
+			),
+		),
 };
 
 /**
@@ -73,14 +79,7 @@ assertHandlersMatchRegistry(
 );
 
 /** Top-level `sync` RPC. Also reachable as api{method:"sync"} for older clients. */
-export async function syncMethod(
-	params: unknown,
-	db: EvyDb,
-): Promise<SyncResponse> {
-	const syncParams = validateSyncRequest(params ?? {});
-	const response: SyncResponse = await syncProcedure.sync(syncParams, db);
-	return validateSyncResponse(response);
-}
+export const syncMethod = runSync;
 
 export async function coreApi(
 	params: ApiRequest,
@@ -98,7 +97,5 @@ export async function coreApi(
 		PROCEDURES[params.method].perMinute,
 	);
 
-	const request = procedure.validateRequest(params.data) as never;
-	const response = await procedure.run(request, db);
-	return procedure.validateResponse(response);
+	return procedure(params.data, db);
 }
