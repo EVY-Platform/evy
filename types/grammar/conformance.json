@@ -1,0 +1,427 @@
+{
+	"$comment": "Executable reference for the EVY expression + action grammar. See README.md. Any parser behaviour change must update these vectors in the same commit.",
+	"vectors": [
+		{
+			"id": "split-args-single",
+			"category": "split-args",
+			"platforms": ["ios", "web"],
+			"input": "a",
+			"expect": { "args": ["a"] }
+		},
+		{
+			"id": "split-args-empty-string",
+			"category": "split-args",
+			"platforms": ["ios", "web"],
+			"input": "",
+			"expect": { "args": [] }
+		},
+		{
+			"id": "split-args-plain-pair",
+			"category": "split-args",
+			"platforms": ["ios", "web"],
+			"input": "a,b",
+			"expect": { "args": ["a", "b"] }
+		},
+		{
+			"id": "split-args-trims-surrounding-space",
+			"category": "split-args",
+			"platforms": ["ios", "web"],
+			"input": "a , b",
+			"expect": { "args": ["a", "b"] }
+		},
+		{
+			"id": "split-args-respects-nested-parens",
+			"category": "split-args",
+			"platforms": ["ios", "web"],
+			"input": "formatDatetime(x, HH:mm),b",
+			"expect": { "args": ["formatDatetime(x, HH:mm)", "b"] },
+			"notes": "A comma inside a nested call is not a separator."
+		},
+		{
+			"id": "split-args-respects-braces",
+			"category": "split-args",
+			"platforms": ["ios", "web"],
+			"input": "a,{k: v, j: w},c",
+			"expect": { "args": ["a", "{k: v, j: w}", "c"] },
+			"notes": "Plain-text objects are one argument."
+		},
+		{
+			"id": "split-args-respects-quotes",
+			"category": "split-args",
+			"platforms": ["ios", "web"],
+			"input": "a,\"x,y\",c",
+			"expect": { "args": ["a", "\"x,y\"", "c"] },
+			"notes": "Quoted commas are literal. Quotes are legal in action args, unlike in comparison blocks."
+		},
+		{
+			"id": "split-args-respects-brackets",
+			"category": "split-args",
+			"platforms": ["ios", "web"],
+			"input": "a,[x, y],c",
+			"expect": { "args": ["a", "[x, y]", "c"] },
+			"notes": "Array literals (navigate query values) are one argument."
+		},
+		{
+			"id": "action-branch-close",
+			"category": "action-branch",
+			"platforms": ["ios", "web"],
+			"input": "{close()}",
+			"expect": { "fn": "close", "args": [] }
+		},
+		{
+			"id": "action-branch-show-row-id",
+			"category": "action-branch",
+			"platforms": ["ios", "web"],
+			"input": "{show(b8c7d6e5-f4a3-4b2c-9d1e-0f8a7b6c5d4e)}",
+			"expect": {
+				"fn": "show",
+				"args": ["b8c7d6e5-f4a3-4b2c-9d1e-0f8a7b6c5d4e"]
+			}
+		},
+		{
+			"id": "action-branch-select-datum",
+			"category": "action-branch",
+			"platforms": ["ios", "web"],
+			"input": "{select($datum)}",
+			"expect": { "fn": "select", "args": ["$datum"] }
+		},
+		{
+			"id": "action-branch-create-submit",
+			"category": "action-branch",
+			"platforms": ["ios", "web"],
+			"input": "{create(475731ac-31aa-4d65-94d2-7032782ae359,addresses,submit)}",
+			"expect": {
+				"fn": "create",
+				"args": [
+					"475731ac-31aa-4d65-94d2-7032782ae359",
+					"addresses",
+					"submit"
+				]
+			},
+			"notes": "WART: `submit` is a bare positional keyword, not a typed mode. Phase 6 replaces this with a structured AST."
+		},
+		{
+			"id": "action-branch-create-inline-data",
+			"category": "action-branch",
+			"platforms": ["ios", "web"],
+			"input": "{create(svc,messages,{status: \"pending\", type: pickup})}",
+			"expect": {
+				"fn": "create",
+				"args": [
+					"svc",
+					"messages",
+					"{status: \"pending\", type: pickup}"
+				]
+			}
+		},
+		{
+			"id": "action-branch-create-id-destination",
+			"category": "action-branch",
+			"platforms": ["ios", "web"],
+			"input": "{create(core,addresses,pickup_address,{pickup_address.id})}",
+			"expect": {
+				"fn": "create",
+				"args": [
+					"core",
+					"addresses",
+					"pickup_address",
+					"{pickup_address.id}"
+				]
+			}
+		},
+		{
+			"id": "action-branch-update-draft-marker",
+			"category": "action-branch",
+			"platforms": ["ios", "web"],
+			"input": "{update(mkt,items,{},{transfer_options.pickup.address_id: pickup_address.id},draft)}",
+			"expect": {
+				"fn": "update",
+				"args": [
+					"mkt",
+					"items",
+					"{}",
+					"{transfer_options.pickup.address_id: pickup_address.id}",
+					"draft"
+				]
+			},
+			"notes": "WART: `draft` is a bare positional keyword in the fifth slot."
+		},
+		{
+			"id": "action-branch-navigate-with-query",
+			"category": "action-branch",
+			"platforms": ["ios", "web"],
+			"input": "{navigate(flow-1,page-1,{id: $datum.id})}",
+			"expect": {
+				"fn": "navigate",
+				"args": ["flow-1", "page-1", "{id: $datum.id}"]
+			}
+		},
+		{
+			"id": "action-branch-bare-name-not-an-action",
+			"category": "action-branch",
+			"platforms": ["ios", "web"],
+			"input": "close()",
+			"expect": { "parsed": false },
+			"notes": "Branches must be wrapped in braces to execute; a bare name is inert text (sdui.md)."
+		},
+		{
+			"id": "action-branch-empty",
+			"category": "action-branch",
+			"platforms": ["ios", "web"],
+			"input": "",
+			"expect": { "parsed": false },
+			"notes": "An empty branch means do nothing."
+		},
+		{
+			"id": "comparison-numeric-gt-true",
+			"category": "comparison",
+			"platforms": ["ios"],
+			"input": "{1 > 0}",
+			"expect": { "value": true }
+		},
+		{
+			"id": "comparison-numeric-gt-false",
+			"category": "comparison",
+			"platforms": ["ios"],
+			"input": "{0 > 1}",
+			"expect": { "value": false }
+		},
+		{
+			"id": "comparison-or-combinator",
+			"category": "comparison",
+			"platforms": ["ios"],
+			"input": "{0 > 1 || 1 > 0}",
+			"expect": { "value": true }
+		},
+		{
+			"id": "comparison-and-combinator",
+			"category": "comparison",
+			"platforms": ["ios"],
+			"input": "{1 > 0 && 0 > 1}",
+			"expect": { "value": false }
+		},
+		{
+			"id": "comparison-grouping-parens",
+			"category": "comparison",
+			"platforms": ["ios"],
+			"input": "{(1 > 0 && 2 > 1) || 0 > 1}",
+			"expect": { "value": true }
+		},
+		{
+			"id": "comparison-standalone-true",
+			"category": "comparison",
+			"platforms": ["ios"],
+			"input": "{true}",
+			"expect": { "value": true },
+			"notes": "Boolean literals are valid standalone conditions (sdui.md). Resolved before path resolution."
+		},
+		{
+			"id": "comparison-standalone-false",
+			"category": "comparison",
+			"platforms": ["ios"],
+			"input": "{false}",
+			"expect": { "value": false }
+		},
+		{
+			"id": "comparison-unquoted-literal-match",
+			"category": "comparison",
+			"platforms": ["ios"],
+			"input": "{status_holder.status == pending}",
+			"data": { "status_holder": { "status": "pending" } },
+			"expect": { "value": true },
+			"notes": "Unquoted bare words are the supported way to write string literals in comparisons."
+		},
+		{
+			"id": "comparison-unquoted-literal-mismatch",
+			"category": "comparison",
+			"platforms": ["ios"],
+			"input": "{status_holder.status == accepted}",
+			"data": { "status_holder": { "status": "pending" } },
+			"expect": { "value": false }
+		},
+		{
+			"id": "comparison-quoted-literal-never-matches",
+			"category": "comparison",
+			"platforms": ["ios"],
+			"input": "{status_holder.status == \"pending\"}",
+			"data": { "status_holder": { "status": "pending" } },
+			"expect": { "value": false },
+			"notes": "WART: quotes are excluded by the comparison regex, so the block is never evaluated and the condition reads false even though the values are equal. docs/evy/functions.md warns about this."
+		},
+		{
+			"id": "comparison-count-function-operand",
+			"category": "comparison",
+			"platforms": ["ios"],
+			"input": "{count(list_holder) > 1}",
+			"data": { "list_holder": ["a", "b"] },
+			"expect": { "value": true }
+		},
+		{
+			"id": "comparison-length-of-string",
+			"category": "comparison",
+			"platforms": ["ios"],
+			"input": "{length(title_holder) > 0}",
+			"data": { "title_holder": "Hello" },
+			"expect": { "value": true }
+		},
+		{
+			"id": "comparison-missing-path-is-false",
+			"category": "comparison",
+			"platforms": ["ios"],
+			"input": "{count(definitely_missing_root) > 0}",
+			"expect": { "value": false },
+			"notes": "Unresolvable paths count as 0 rather than erroring."
+		},
+		{
+			"id": "expression-plain-text-passthrough",
+			"category": "expression",
+			"platforms": ["ios"],
+			"input": "plain text",
+			"expect": { "text": "plain text" }
+		},
+		{
+			"id": "expression-simple-path",
+			"category": "expression",
+			"platforms": ["ios"],
+			"input": "{title_holder}",
+			"data": { "title_holder": "Hello" },
+			"expect": { "text": "Hello" }
+		},
+		{
+			"id": "expression-nested-path",
+			"category": "expression",
+			"platforms": ["ios"],
+			"input": "{item_holder.name}",
+			"data": { "item_holder": { "name": "Chair" } },
+			"expect": { "text": "Chair" }
+		},
+		{
+			"id": "expression-interpolated-in-sentence",
+			"category": "expression",
+			"platforms": ["ios"],
+			"input": "Hello {title_holder}!",
+			"data": { "title_holder": "world" },
+			"expect": { "text": "Hello world!" }
+		},
+		{
+			"id": "expression-array-index-sugar",
+			"category": "expression",
+			"platforms": ["ios"],
+			"input": "{list_holder[1]}",
+			"data": { "list_holder": ["a", "b"] },
+			"expect": { "text": "b" }
+		},
+		{
+			"id": "expression-count-function",
+			"category": "expression",
+			"platforms": ["ios"],
+			"input": "{count(list_holder)}",
+			"data": { "list_holder": ["a", "b", "c"] },
+			"expect": { "text": "3" }
+		},
+		{
+			"id": "expression-format-decimal",
+			"category": "expression",
+			"platforms": ["ios"],
+			"input": "{formatDecimal(num_holder, 2)}",
+			"data": { "num_holder": 20.0423 },
+			"expect": { "text": "20.04" }
+		},
+		{
+			"id": "expression-format-datetime",
+			"category": "expression",
+			"platforms": ["ios"],
+			"input": "{formatDatetime(when_holder, \"HH:mm\")}",
+			"data": { "when_holder": "2024-01-19T12:42:52" },
+			"expect": { "text": "12:42" },
+			"notes": "Format patterns are quoted - the opposite of the comparison-block rule."
+		},
+		{
+			"id": "expression-missing-root-throws",
+			"category": "expression",
+			"platforms": ["ios"],
+			"input": "Hello {definitely_missing_root}!",
+			"expect": { "error": true },
+			"notes": "The core resolver throws on an unresolvable root. The display layer swallows it - see display-missing-root-blanks-whole-string."
+		},
+		{
+			"id": "display-plain-text-passthrough",
+			"category": "display",
+			"platforms": ["ios"],
+			"input": "plain text",
+			"expect": { "text": "plain text" }
+		},
+		{
+			"id": "display-resolves-path",
+			"category": "display",
+			"platforms": ["ios"],
+			"input": "Hello {title_holder}!",
+			"data": { "title_holder": "world" },
+			"expect": { "text": "Hello world!" }
+		},
+		{
+			"id": "display-missing-root-blanks-whole-string",
+			"category": "display",
+			"platforms": ["ios"],
+			"input": "Hello {definitely_missing_root}!",
+			"expect": { "text": "" },
+			"notes": "WART: one unresolvable root empties the entire rendered string, including the literal text around it, instead of blanking just that token."
+		},
+		{
+			"id": "condition-parse-simple-leaf",
+			"category": "condition-parse",
+			"platforms": ["web"],
+			"input": "{a == b}",
+			"expect": {
+				"ast": {
+					"kind": "leaf",
+					"left": "a",
+					"operator": "==",
+					"right": "b"
+				}
+			}
+		},
+		{
+			"id": "condition-parse-and-group",
+			"category": "condition-parse",
+			"platforms": ["web"],
+			"input": "{a == b && c > d}",
+			"expect": {
+				"ast": {
+					"kind": "group",
+					"operator": "and",
+					"children": [
+						{
+							"kind": "leaf",
+							"left": "a",
+							"operator": "==",
+							"right": "b"
+						},
+						{
+							"kind": "leaf",
+							"left": "c",
+							"operator": ">",
+							"right": "d"
+						}
+					]
+				}
+			}
+		},
+		{
+			"id": "condition-parse-empty-is-null",
+			"category": "condition-parse",
+			"platforms": ["web"],
+			"input": "",
+			"expect": { "ast": null },
+			"notes": "An empty condition means always true; it has no AST."
+		},
+		{
+			"id": "condition-parse-standalone-boolean-unrepresentable",
+			"category": "condition-parse",
+			"platforms": ["web"],
+			"input": "{true}",
+			"expect": { "ast": null },
+			"notes": "WART: the web condition editor cannot represent a standalone boolean, so opening and saving such an action silently drops it - even though iOS evaluates it correctly (see comparison-standalone-true)."
+		}
+	]
+}

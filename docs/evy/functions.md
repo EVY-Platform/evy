@@ -1,5 +1,12 @@
 # Functions in EVY
 
+> The normative behavioural reference is the conformance corpus at
+> [`types/grammar/conformance.json`](../../types/grammar/conformance.json)
+> (see its [README](../../types/grammar/README.md)). It is executed by both the
+> Swift and TypeScript test suites, and records current behaviour — including
+> known warts — as runnable vectors. Where this document and the corpus
+> disagree, the corpus is what the clients actually do.
+
 Functions are used to convert an input into a different output. For example formatting a date.
 
 -   Some default functions are available (eg `formatDecimal`) and some are composed and sent via JSON config to the clients.
