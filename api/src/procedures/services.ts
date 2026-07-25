@@ -1,4 +1,5 @@
 import type {
+	ApiRequest,
 	CreateRequest,
 	CreateResponse,
 	DeleteRequest,
@@ -22,6 +23,7 @@ import type { EvyDb } from "../database/db";
 type BroadcastFn = (eventName: string, payload: unknown) => void;
 
 type ServiceAdapter = {
+	api(params: ApiRequest): Promise<unknown>;
 	get(params: GetRequest): Promise<GetResponse>;
 	create(params: CreateRequest): Promise<CreateResponse>;
 	update(params: UpdateRequest): Promise<UpdateResponse>;
@@ -104,6 +106,9 @@ function makeWsAdapter(wsUrl: string): ServiceAdapter {
 	void connectClient().catch(() => scheduleReconnect());
 
 	return {
+		// A service's procedure responses have no shared schema - the registry
+		// names the response schema, and validating it is the caller's job.
+		api: (params) => callMethod("api", params, (parsed) => parsed),
 		get: (params) =>
 			callMethod("get", params, (parsed) => validateGetResponse(parsed)),
 		create: (params) =>
@@ -289,6 +294,15 @@ async function getServiceAdapter(serviceId: string): Promise<ServiceAdapter> {
 		throw new Error(`No service registered for service ${serviceId}`);
 	}
 	return adapter;
+}
+
+export async function forwardApi(
+	serviceId: string,
+	params: ApiRequest,
+): Promise<unknown> {
+	return forwardTo(serviceId, `api:${params.method}`, (adapter) =>
+		adapter.api(params),
+	);
 }
 
 export async function forwardGet(

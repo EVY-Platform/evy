@@ -36,6 +36,13 @@ async function startTestWsServer(port: number): Promise<WSServer> {
 
 	server.register("get", () => [...storedData]);
 
+	server.register("api", (params: { method?: string; data?: unknown }) => {
+		if (params.method !== "echo") {
+			throw new Error(`Unknown marketplace API method: ${params.method}`);
+		}
+		return { echoed: params.data };
+	});
+
 	server.register("create", (params: CreateRequest) => {
 		const nowIso = new Date().toISOString();
 		const rowData = params.data as { id: string; value: string };
@@ -108,6 +115,34 @@ describe("service WebSocket adapters", () => {
 			process.env.MARKETPLACE_WS_PORT = originalMarketplacePort;
 		}
 		await pgliteClient.close();
+	});
+
+	it("relays a procedure call and returns the service's response", async () => {
+		const { forwardApi } = await import("../procedures/services");
+
+		const response = await forwardApi(MARKETPLACE_SERVICE, {
+			service: MARKETPLACE_SERVICE,
+			method: "echo",
+			data: { hello: "world" },
+		});
+
+		expect(response).toEqual({ echoed: { hello: "world" } });
+	});
+
+	it("attributes a procedure the service rejects to that service", async () => {
+		const { forwardApi, ServiceForwardError } = await import(
+			"../procedures/services"
+		);
+
+		const failure = await forwardApi(MARKETPLACE_SERVICE, {
+			service: MARKETPLACE_SERVICE,
+			method: "nope",
+		}).catch((error: unknown) => error);
+
+		expect(failure).toBeInstanceOf(ServiceForwardError);
+		const err = failure as InstanceType<typeof ServiceForwardError>;
+		// The operation label names the procedure, so a log says which call failed.
+		expect(err.message).toContain("api:nope");
 	});
 
 	it("forwards one upstream dataChanged event per create", async () => {

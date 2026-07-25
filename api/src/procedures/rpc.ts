@@ -5,6 +5,7 @@ import type {
 	UpdateResponse,
 } from "evy-types";
 import { EVY_CORE_SERVICE } from "evy-types/coreResources";
+import { PROCEDURES } from "evy-types/procedures";
 import {
 	validateStrictApiRequest,
 	validateStrictCreateRequest,
@@ -20,7 +21,9 @@ import {
 } from "../data/data";
 import type { EvyDb } from "../database/db";
 import { coreApi } from "./coreApi";
+import { rateLimiter } from "./rateLimit";
 import {
+	forwardApi,
 	forwardCreate,
 	forwardDelete,
 	forwardGet,
@@ -35,14 +38,32 @@ export async function get(params: unknown, db: EvyDb): Promise<GetResponse> {
 	return forwardGet(params.service, params);
 }
 
-export async function api(params: unknown, db: EvyDb): Promise<unknown> {
+export async function api(
+	params: unknown,
+	db: EvyDb,
+	callerId?: string,
+): Promise<unknown> {
 	validateStrictApiRequest(params);
 	if (params.service === EVY_CORE_SERVICE) {
-		return coreApi(params, db);
+		return coreApi(params, db, callerId);
 	}
-	throw new Error(
-		`API calls are only supported for the evy core service ${EVY_CORE_SERVICE} (got "${params.service}")`,
+
+	// A service can only be sent procedures the registry says it owns. Without
+	// that check the gateway would relay any method name to any service and the
+	// wire contract would be whatever the two ends happened to agree on.
+	const declared = PROCEDURES[params.method];
+	if (!declared || declared.service !== params.service) {
+		throw new Error(
+			`Procedure "${params.method}" is not declared for service "${params.service}" in types/schema/resources/procedures.json`,
+		);
+	}
+
+	rateLimiter.consume(
+		callerId ?? "anonymous",
+		params.method,
+		declared.perMinute,
 	);
+	return forwardApi(params.service, params);
 }
 
 export async function create(

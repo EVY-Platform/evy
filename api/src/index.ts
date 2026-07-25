@@ -28,7 +28,9 @@ async function startServer(): Promise<void> {
 	initCoreNotifications(broadcast);
 	await initServiceAdapters(appDb, broadcast);
 
-	server.register("api", (params: unknown) => api(params, appDb));
+	server.register("api", (params: unknown, socketId: string) =>
+		api(params, appDb, socketId),
+	);
 	// sync is a first-class method; api{method:"sync"} still works for clients
 	// that have not moved over.
 	server.register("sync", (params: unknown) => syncMethod(params, appDb));
