@@ -7,7 +7,7 @@ import {
 	useReducer,
 	useRef,
 } from "react";
-import { wsClient } from "../api/wsClient";
+import { SaveConflictError, wsClient } from "../api/wsClient";
 import { useUrlSync } from "../hooks/useUrlSync";
 import { baseRows } from "../rows/baseRows";
 import type {
@@ -178,8 +178,12 @@ export function AppProvider({
 			wsClient
 				.saveFlowGraph(previousCollections, nextCollections)
 				.catch((error) => {
+					// A conflict is not a connection problem, and retrying will
+					// not fix it - the editor has to see the other change first.
 					alert(
-						"Failed to save your changes. Please check your connection and try again.",
+						error instanceof SaveConflictError
+							? error.message
+							: "Failed to save your changes. Please check your connection and try again.",
 					);
 					console.error("Failed to save flow:", error);
 				});

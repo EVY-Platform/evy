@@ -49,6 +49,14 @@ sequenceDiagram
 
 See [docs/evy/data.md](../docs/evy/data.md#procedures) for the manifest fields and how to add one.
 
+### Concurrent writers
+
+`update` and `delete` accept an optional `filter.expectedUpdatedAt`. When present the write only applies if the stored row still carries that `updatedAt`; otherwise it is rejected as a conflict rather than silently overwriting. Omitting it keeps last-write-wins, so clients that do not track versions are unaffected.
+
+`updatedAt` is the version token, so it is forced to strictly increase per row: two writes inside the same millisecond would otherwise leave it unchanged and a stale precondition would pass exactly when it needed to fail. A write may therefore record a timestamp up to a few milliseconds ahead of the wall clock under contention.
+
+The builder tracks the server's `updatedAt` per record — from sync, from each write response, and from `dataChanged` pushes — and sends it on every update, so the precondition means "no change I have not already seen". A conflict surfaces as its own message telling the editor to reload, not as a connection failure.
+
 ### Tombstones and retention
 
 A delete is a soft delete: the row stays with `deletedAt` set so sync can tell clients to drop it. Tombstones are kept for `TOMBSTONE_RETENTION_DAYS` (default 30) and then removed for real by `bun run --cwd api purge:tombstones`, meant to run on a schedule rather than inside the serving process.

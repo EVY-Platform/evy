@@ -29,6 +29,40 @@ function isFlatWriteResponse(value: unknown): value is FlatResourceRecord {
 	);
 }
 
+function versionKey(resource: string, id: string): string {
+	return `${resource}:${id}`;
+}
+
+/**
+ * Raised when the server rejects a write because the record moved on.
+ *
+ * Distinguishable from a transport failure so the UI can say the right thing:
+ * retrying will not help, the editor has to see the other change first.
+ */
+export class SaveConflictError extends Error {
+	readonly resource: string;
+	readonly recordId: string;
+
+	constructor(resource: string, recordId: string, detail: string) {
+		super(
+			`Someone else changed this ${resource.replace(/s$/, "")} while you were editing it. ${detail}`,
+		);
+		this.name = "SaveConflictError";
+		this.resource = resource;
+		this.recordId = recordId;
+	}
+}
+
+function isConflictResponse(error: unknown): boolean {
+	const message =
+		error instanceof Error
+			? error.message
+			: typeof error === "object" && error !== null && "message" in error
+				? String((error as { message: unknown }).message)
+				: String(error);
+	return message.includes("Conflict:") || message.includes("ConflictError");
+}
+
 function comparableRecord(record: FlatResourceRecord): string {
 	const { createdAt: _createdAt, updatedAt: _updatedAt, ...rest } = record;
 	return JSON.stringify(rest);
@@ -49,6 +83,16 @@ class WSClient {
 	private connectionState: ConnectionState = "disconnected";
 	private connectionPromise: Promise<void> | null = null;
 	private dataChangedListeners = new Set<DataChangedListener>();
+	/**
+	 * The `updatedAt` the server last told us each record has.
+	 *
+	 * Kept here rather than in app state because it is transport bookkeeping:
+	 * app state carries client-stamped timestamps from local edits, which are
+	 * not versions the server would recognise. Fed from sync, from every write
+	 * response, and from remote pushes - so the precondition means "no change I
+	 * have not already seen".
+	 */
+	private serverVersions = new Map<string, string>();
 
 	/**
 	 * Subscribe to server pushes. Without this the builder only ever saw the
@@ -85,6 +129,7 @@ class WSClient {
 			this.client.on(DATA_CHANGED_EVENT, (payload: unknown) => {
 				const notification = payload as DataChangedNotification;
 				if (!notification || typeof notification !== "object") return;
+				this.rememberVersionFromNotification(notification);
 				for (const listener of this.dataChangedListeners) {
 					listener(notification);
 				}
@@ -123,6 +168,7 @@ class WSClient {
 			throw new Error("Invalid sync response shape");
 		}
 
+		this.rememberVersionsFromSync(response);
 		return response;
 	}
 
@@ -204,14 +250,73 @@ class WSClient {
 		record: FlatResourceRecord,
 	): Promise<void> {
 		if (!this.client) throw new Error("WebSocket client not initialized");
-		const raw = await this.client.call(method, {
-			service: EVY_CORE_SERVICE,
-			resource,
-			filter: { id: record.id },
-			data: record,
-		});
+		const expectedUpdatedAt =
+			method === "update"
+				? this.serverVersions.get(versionKey(resource, record.id))
+				: undefined;
+
+		let raw: unknown;
+		try {
+			raw = await this.client.call(method, {
+				service: EVY_CORE_SERVICE,
+				resource,
+				filter: {
+					id: record.id,
+					...(expectedUpdatedAt ? { expectedUpdatedAt } : {}),
+				},
+				data: record,
+			});
+		} catch (error) {
+			if (isConflictResponse(error)) {
+				throw new SaveConflictError(
+					resource,
+					record.id,
+					"Reload to pick up their change before saving again.",
+				);
+			}
+			throw error;
+		}
+
 		if (!isFlatWriteResponse(raw)) {
 			throw new Error(`Invalid ${resource} write response`);
+		}
+		// The server's timestamp, not our own: the next save preconditions on it.
+		this.serverVersions.set(versionKey(resource, raw.id), raw.updatedAt);
+	}
+
+	private rememberVersionFromNotification(
+		notification: DataChangedNotification,
+	): void {
+		const record = notification.record;
+		if (!record || typeof record.id !== "string") return;
+		if (record.deletedAt) {
+			this.serverVersions.delete(
+				versionKey(notification.resource, record.id),
+			);
+			return;
+		}
+		if (typeof record.updatedAt !== "string") return;
+		this.serverVersions.set(
+			versionKey(notification.resource, record.id),
+			record.updatedAt,
+		);
+	}
+
+	/** Adopts the versions in a sync snapshot as the baseline for later writes. */
+	private rememberVersionsFromSync(response: SyncResponse): void {
+		for (const row of response.data) {
+			if (!Array.isArray(row.value)) continue;
+			for (const record of row.value) {
+				if (!record || typeof record !== "object") continue;
+				const { id, updatedAt } = record as Record<string, unknown>;
+				if (typeof id !== "string" || typeof updatedAt !== "string") {
+					continue;
+				}
+				this.serverVersions.set(
+					versionKey(row.resource, id),
+					updatedAt,
+				);
+			}
 		}
 	}
 
@@ -228,6 +333,7 @@ class WSClient {
 		if (!isFlatWriteResponse(raw)) {
 			throw new Error(`Invalid ${resource} delete response`);
 		}
+		this.serverVersions.delete(versionKey(resource, id));
 	}
 }
 

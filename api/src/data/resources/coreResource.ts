@@ -18,6 +18,7 @@ import {
 	validateUpdateResponse,
 } from "evy-types/validators";
 import type { EvyDb } from "../../database/db";
+import { assertNotModified, monotonicUpdatedAt } from "../conflicts";
 
 type ResourceTable = AnyPgTable & {
 	id: AnyPgColumn;
@@ -138,6 +139,11 @@ export function makeCoreResource<
 			.where(eq(table.id, filter.id))
 			.limit(1);
 		if (existingRows.length === 0) throw new Error("Resource not found");
+		assertNotModified(filter.expectedUpdatedAt, existingRows[0].updatedAt);
+		const nextUpdatedAt = monotonicUpdatedAt(
+			nowIso,
+			existingRows[0].updatedAt,
+		);
 		const validated = validatePayload(
 			dataPayload,
 			nowIso,
@@ -147,7 +153,10 @@ export function makeCoreResource<
 		const updated = await db
 			// biome-ignore lint/suspicious/noExplicitAny: Drizzle generic table requires cast
 			.update(table as any)
-			.set({ ...toUpdateSet(validated, nowIso), updatedAt: nowIso })
+			.set({
+				...toUpdateSet(validated, nowIso),
+				updatedAt: nextUpdatedAt,
+			})
 			.where(eq(table.id, filter.id))
 			.returning();
 		const response = validateUpdateResponse(norm(updated[0]));
@@ -169,10 +178,18 @@ export function makeCoreResource<
 		notify: (value: unknown) => void,
 		nowIso: string = new Date().toISOString(),
 	): Promise<DeleteResponse> {
+		const existing = await db
+			.select()
+			.from(table)
+			.where(and(eq(table.id, filter.id), isNull(table.deletedAt)))
+			.limit(1);
+		if (existing.length === 0) throw new Error("Resource not found");
+		assertNotModified(filter.expectedUpdatedAt, existing[0].updatedAt);
+		const deletedAtIso = monotonicUpdatedAt(nowIso, existing[0].updatedAt);
 		const deleted = await db
 			// biome-ignore lint/suspicious/noExplicitAny: Drizzle generic table requires cast
 			.update(table as any)
-			.set({ deletedAt: nowIso, updatedAt: nowIso })
+			.set({ deletedAt: deletedAtIso, updatedAt: deletedAtIso })
 			.where(and(eq(table.id, filter.id), isNull(table.deletedAt)))
 			.returning();
 		if (deleted.length === 0) throw new Error("Resource not found");
