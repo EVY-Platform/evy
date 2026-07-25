@@ -23,13 +23,12 @@ extension XCTestCase {
     return "evy_test_\(suffix)_\(randomId)"
   }
 
-  /// Builds an action from the compact call syntax. Storage is structured, so
-  /// the strings are converted here rather than persisted.
-  @MainActor
+  /// Builds an action from structured invocations, the only form that is
+  /// stored or executed.
   func rowAction(
     condition: String = "",
-    true trueBranch: String,
-    false falseBranch: String = ""
+    true trueBranch: EVYActionInvocation?,
+    false falseBranch: EVYActionInvocation? = nil
   ) -> UI_RowAction {
     UI_RowAction(
       condition: condition,
@@ -38,13 +37,7 @@ extension XCTestCase {
     )
   }
 
-  @MainActor
-  func branch(_ legacyCallSyntax: String) -> EVYActionBranch {
-    let trimmed = legacyCallSyntax.trimmingCharacters(in: .whitespacesAndNewlines)
-    guard !trimmed.isEmpty else { return .empty }
-    guard let invocation = try? EVYActionParser.invocation(from: trimmed) else {
-      return .empty
-    }
-    return .invocation(invocation)
+  func branch(_ invocation: EVYActionInvocation?) -> EVYActionBranch {
+    invocation.map(EVYActionBranch.invocation) ?? .empty
   }
 }

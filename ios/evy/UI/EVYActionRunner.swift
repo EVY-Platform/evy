@@ -247,7 +247,7 @@ enum EVYActionRunner {
     }
     // Nested object literal, e.g. data: {type: pickup, time: selected_timeslot}
     if value.hasPrefix("{"), value.hasSuffix("}"),
-      let nestedObject = try? EVYActionParser.plainTextObject(
+      let nestedObject = try? EVYObjectLiteral.parse(
         from: value, context: "nested action data")
     {
       return .dictionary(resolvePlainTextValues(nestedObject, datum: datum))
