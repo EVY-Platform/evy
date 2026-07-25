@@ -1,4 +1,4 @@
-name: Marketplace lint, build, and tests
+name: Marketplace
 
 on:
     pull_request:
