@@ -8,6 +8,7 @@ import {
 	validateDataEvyOrganization as validateOrganizationPayload,
 	validatePlaceSearchRequest,
 	validatePlaceSearchResponse,
+	validateDataEvyRow as validateRowPayload,
 	validateDataEvyService as validateServicePayload,
 	validateDataEvyServiceProvider as validateServiceProviderPayload,
 } from "evy-types/validators";
@@ -480,6 +481,78 @@ describe("validateFlowData", () => {
 			}),
 		);
 		expect(out.pages[0]?.rows[0]?.type).toBe("ListItem");
+	});
+});
+
+describe("row actions shape validation", () => {
+	const baseRow = {
+		id: "11111111-1111-4111-8111-111111111111",
+		name: "R",
+		type: "Button",
+		visible: "true",
+		createdAt: "2024-01-01T00:00:00.000Z",
+		updatedAt: "2024-01-01T00:00:00.000Z",
+		visibility: "public" as const,
+	};
+
+	function rowWithActions(actions: unknown) {
+		return validateRowPayload({ ...baseRow, data: { actions } });
+	}
+
+	it("accepts a well-formed trigger list", () => {
+		const out = rowWithActions({
+			tap: [{ condition: "", false: "", true: "{close()}" }],
+		});
+		expect(out.data.actions?.tap?.[0]?.true).toBe("{close()}");
+	});
+
+	it("accepts the canonical empty actions object", () => {
+		expect(() => rowWithActions({})).not.toThrow();
+	});
+
+	it("accepts a row with no actions key at all", () => {
+		expect(() =>
+			validateRowPayload({ ...baseRow, data: { text: "Hello" } }),
+		).not.toThrow();
+	});
+
+	it("rejects an undeclared trigger name", () => {
+		expect(() =>
+			rowWithActions({ hover: [{ condition: "", false: "", true: "" }] }),
+		).toThrow("must NOT have additional properties");
+	});
+
+	it("rejects an action missing a required branch key", () => {
+		expect(() =>
+			rowWithActions({ tap: [{ false: "", true: "x" }] }),
+		).toThrow("must have required property 'condition'");
+	});
+
+	// The pre-migration shape, which the web builder already fail-fasts on.
+	it("rejects the legacy top-level array shape", () => {
+		expect(() =>
+			rowWithActions([{ condition: "", false: "", true: "" }]),
+		).toThrow("must be object");
+	});
+
+	it("rejects a trigger whose value is not a list", () => {
+		expect(() =>
+			rowWithActions({ tap: { condition: "", false: "", true: "" } }),
+		).toThrow("must be array");
+	});
+
+	it("rejects unknown keys inside an action", () => {
+		expect(() =>
+			rowWithActions({
+				tap: [{ condition: "", false: "", true: "", extra: 1 }],
+			}),
+		).toThrow("must NOT have additional properties");
+	});
+
+	it("names the offending path in the error", () => {
+		expect(() => rowWithActions({ tap: [{ true: "x" }] })).toThrow(
+			"/data/actions/tap/0",
+		);
 	});
 });
 

@@ -194,6 +194,8 @@ Each row has an `actions` attribute: an object keyed by **trigger** name. Each t
 
 An empty object `{}` is the canonical “no actions” state (do not use `{"tap": []}`). The iOS client treats a missing trigger key the same as an empty list.
 
+The **shape** of `actions` is validated by the API on every `create`/`update` of a row: only the six trigger names are accepted, each must map to a list, and each entry must have exactly `condition`, `true`, and `false`. A malformed shape is rejected at write time with the offending path (e.g. `/data/actions/tap/0`) rather than being stored and then silently dropped when a client fails to decode the row. Note this validates structure only — the *contents* of the branch strings are still unchecked at the API.
+
 #### Trigger matrix
 
 | Row type | `tap` | `submit` | `delete` | `tap-row` | `tap-column` | `swipe-left` |

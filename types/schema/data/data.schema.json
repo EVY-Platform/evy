@@ -511,6 +511,10 @@
 				"$ref": "../common/json.schema.json#/$defs/JSONValue"
 			},
 			"properties": {
+				"actions": {
+					"description": "Trigger-keyed action lists. Optional for storage, but validated when present so a malformed shape is rejected at write time instead of silently dropping the row on the client.",
+					"$ref": "../sdui/evy.schema.json#/$defs/UI_RowActions"
+				},
 				"sheet_row_id": {
 					"type": "string",
 					"format": "uuid"
