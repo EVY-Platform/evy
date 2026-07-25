@@ -9,7 +9,13 @@ import XCTest
 
 @MainActor
 final class EVYStoreRoutingTests: XCTestCase {
+  override func setUpWithError() throws {
+    // Without this the create/update cases below fire real RPCs at localhost:8000.
+    installHermeticMutationSync()
+  }
+
   override func tearDownWithError() throws {
+    resetHermeticMutationSync()
     try? EVY.publicStore.wipeAll()
     try? EVY.privateStore.wipeAll()
   }
@@ -137,6 +143,72 @@ final class EVYStoreRoutingTests: XCTestCase {
       return XCTFail("Expected dictionary payload")
     }
     XCTAssertEqual(values["visibility"], .string("public"))
+  }
+
+  func testRemoveSyncedValueDeletesFromPublicStore() throws {
+    let recordId = UUID().uuidString
+    let resource = EVYCoreResource.messages.rawValue
+    try EVY.applySyncedValue(
+      namespace: EVYNamespace.evy,
+      resource: resource,
+      value: .dictionary(["id": .string(recordId), "visibility": .string("public")])
+    )
+    XCTAssertNotNil(
+      try? EVY.publicStore.get(namespace: EVYNamespace.evy, resource: resource, id: recordId))
+
+    try EVY.removeSyncedValue(
+      namespace: EVYNamespace.evy,
+      resource: resource,
+      value: .dictionary(["id": .string(recordId)])
+    )
+
+    XCTAssertNil(
+      try? EVY.publicStore.get(namespace: EVYNamespace.evy, resource: resource, id: recordId))
+  }
+
+  func testRemoveSyncedValueDeletesFromPrivateStore() throws {
+    let recordId = UUID().uuidString
+    let resource = EVYCoreResource.addresses.rawValue
+    try EVY.applySyncedValue(
+      namespace: EVYNamespace.evy,
+      resource: resource,
+      value: .dictionary(["id": .string(recordId), "visibility": .string("private")])
+    )
+    XCTAssertNotNil(
+      try? EVY.privateStore.get(namespace: EVYNamespace.evy, resource: resource, id: recordId))
+
+    // The delete payload need not carry visibility, so both stores are cleared.
+    try EVY.removeSyncedValue(
+      namespace: EVYNamespace.evy,
+      resource: resource,
+      value: .dictionary(["id": .string(recordId)])
+    )
+
+    XCTAssertNil(
+      try? EVY.privateStore.get(namespace: EVYNamespace.evy, resource: resource, id: recordId))
+  }
+
+  func testRemoveSyncedValueHandlesArraysAndMissingRecords() throws {
+    let presentId = UUID().uuidString
+    let absentId = UUID().uuidString
+    let resource = EVYCoreResource.messages.rawValue
+    try EVY.applySyncedValue(
+      namespace: EVYNamespace.evy,
+      resource: resource,
+      value: .dictionary(["id": .string(presentId), "visibility": .string("public")])
+    )
+
+    try EVY.removeSyncedValue(
+      namespace: EVYNamespace.evy,
+      resource: resource,
+      value: .array([
+        .dictionary(["id": .string(presentId)]),
+        .dictionary(["id": .string(absentId)]),
+      ])
+    )
+
+    XCTAssertNil(
+      try? EVY.publicStore.get(namespace: EVYNamespace.evy, resource: resource, id: presentId))
   }
 
   func testRecordsWithoutVisibilityDefaultToPublicStore() throws {

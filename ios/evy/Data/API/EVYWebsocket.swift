@@ -225,11 +225,24 @@ actor EVYWebsocket: EVYRPCTransport {
 
     Task { @MainActor in
       do {
-        try EVY.applySyncedValue(
-          namespace: notification.service,
-          resource: notification.resource,
-          value: notification.value
-        )
+        switch notification.operation {
+        case "create", "update":
+          try EVY.applySyncedValue(
+            namespace: notification.service,
+            resource: notification.resource,
+            value: notification.value
+          )
+        case "delete":
+          try EVY.removeSyncedValue(
+            namespace: notification.service,
+            resource: notification.resource,
+            value: notification.value
+          )
+        default:
+          #if DEBUG
+            print("[EVYWebsocket] Ignoring unknown operation: \(notification.operation)")
+          #endif
+        }
       } catch {
         self.postError(
           EVYError.invalidData(

@@ -74,6 +74,32 @@ extension EVY {
     }
   }
 
+  /// Removes records the server reported as deleted. Without this a `delete`
+  /// notification would fall through to the upsert path and resurrect the row.
+  static func removeSyncedValue(namespace: String, resource: String, value: EVYJson) throws {
+    if case .array(let items) = value {
+      for item in items {
+        try removeSyncedRecord(namespace: namespace, resource: resource, value: item)
+      }
+      return
+    }
+
+    try removeSyncedRecord(namespace: namespace, resource: resource, value: value)
+  }
+
+  private static func removeSyncedRecord(
+    namespace: String,
+    resource: String,
+    value: EVYJson
+  ) throws {
+    let recordId = syncedRecordId(for: value)
+    // Visibility may have changed before the delete, so clear both stores.
+    for store in syncedStores()
+    where (try? store.get(namespace: namespace, resource: resource, id: recordId)) != nil {
+      try store.delete(namespace: namespace, resource: resource, id: recordId)
+    }
+  }
+
   private static func syncedRecordId(for value: EVYJson) -> String {
     if case .dictionary(let dict) = value, case .string(let idVal) = dict["id"] {
       return idVal
