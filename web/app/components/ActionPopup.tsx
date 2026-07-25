@@ -55,7 +55,8 @@ export function ActionPopup({
 		() => collectDraftSignals(flowsById, pagesById, rowsById, activeFlowId),
 		[flowsById, pagesById, rowsById, activeFlowId],
 	);
-	const { draftVariables, draftUpdateTargets } = draftSignals;
+	const { draftVariables, draftUpdateTargets, declaredSubmits } =
+		draftSignals;
 
 	const idCandidates = useMemo(
 		() => [
@@ -80,25 +81,35 @@ export function ActionPopup({
 			trueBranch,
 			draftVariables,
 			draftUpdateTargets,
+			declaredSubmits,
 		);
 		const finalizedFalse = finalizeBranchForSave(
 			falseBranch,
 			draftVariables,
 			draftUpdateTargets,
+			declaredSubmits,
 		);
 		return finalizedTrue !== null && finalizedFalse !== null;
-	}, [trueBranch, falseBranch, draftVariables, draftUpdateTargets]);
+	}, [
+		trueBranch,
+		falseBranch,
+		draftVariables,
+		draftUpdateTargets,
+		declaredSubmits,
+	]);
 
 	const handleSave = useCallback(() => {
 		const finalizedTrue = finalizeBranchForSave(
 			trueBranch,
 			draftVariables,
 			draftUpdateTargets,
+			declaredSubmits,
 		);
 		const finalizedFalse = finalizeBranchForSave(
 			falseBranch,
 			draftVariables,
 			draftUpdateTargets,
+			declaredSubmits,
 		);
 		if (finalizedTrue === null || finalizedFalse === null) return;
 		onSave({
@@ -112,6 +123,7 @@ export function ActionPopup({
 		falseBranch,
 		draftVariables,
 		draftUpdateTargets,
+		declaredSubmits,
 		onSave,
 	]);
 
@@ -158,6 +170,7 @@ export function ActionPopup({
 							rowsById={rowsById}
 							defaultSheetRowId={defaultSheetRowId}
 							draftUpdateTargets={draftUpdateTargets}
+							declaredSubmits={declaredSubmits}
 							getAttributeCandidatesForQualifier={
 								getAttributeCandidatesForQualifier
 							}
@@ -180,6 +193,7 @@ export function ActionPopup({
 							rowsById={rowsById}
 							defaultSheetRowId={defaultSheetRowId}
 							draftUpdateTargets={draftUpdateTargets}
+							declaredSubmits={declaredSubmits}
 							getAttributeCandidatesForQualifier={
 								getAttributeCandidatesForQualifier
 							}

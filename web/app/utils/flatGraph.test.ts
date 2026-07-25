@@ -18,6 +18,7 @@ import {
 	removePage,
 	removeRowFromPage,
 	setFooterRow,
+	updateFlowSubmits,
 	updatePageTitle,
 	updateRowActions,
 	updateRowField,
@@ -640,5 +641,49 @@ describe("ensureShowAction", () => {
 		expect(actions.tap?.some((a) => a.true === "{show(old-sheet)}")).toBe(
 			false,
 		);
+	});
+});
+
+describe("updateFlowSubmits", () => {
+	const submits = { service: "svc-1", resource: "res-1" };
+
+	function mapsWithFlow(): FlowEntityMaps {
+		return {
+			flowsById: { f1: makeFlow("f1", ["p1"]) },
+			pagesById: {},
+			rowsById: {},
+		};
+	}
+
+	it("sets the declaration and stamps updatedAt", () => {
+		const next = updateFlowSubmits(mapsWithFlow(), "f1", submits);
+
+		expect(next.flowsById.f1?.submits).toEqual(submits);
+		expect(next.flowsById.f1?.updatedAt).not.toBe(NOW);
+	});
+
+	it("removes the key entirely when cleared", () => {
+		const withDeclaration = updateFlowSubmits(
+			mapsWithFlow(),
+			"f1",
+			submits,
+		);
+		const cleared = updateFlowSubmits(withDeclaration, "f1", undefined);
+
+		expect(cleared.flowsById.f1?.submits).toBeUndefined();
+		expect("submits" in (cleared.flowsById.f1 ?? {})).toBe(false);
+	});
+
+	it("does not mutate the previous maps", () => {
+		const maps = mapsWithFlow();
+		const next = updateFlowSubmits(maps, "f1", submits);
+
+		expect(maps.flowsById.f1?.submits).toBeUndefined();
+		expect(next).not.toBe(maps);
+	});
+
+	it("is a no-op for an unknown flow", () => {
+		const maps = mapsWithFlow();
+		expect(updateFlowSubmits(maps, "missing", submits)).toBe(maps);
 	});
 });

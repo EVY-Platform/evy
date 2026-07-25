@@ -87,6 +87,11 @@ export type RowAction =
 			title: string;
 	  }
 	| {
+			type: "UPDATE_FLOW_SUBMITS";
+			flowId: string;
+			submits: { service: string; resource: string } | undefined;
+	  }
+	| {
 			type: "PUSH_CONFIG_STACK";
 			parentRowId: string;
 			childRowId: string;

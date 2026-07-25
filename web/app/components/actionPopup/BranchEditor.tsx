@@ -36,6 +36,7 @@ type BranchEditorProps = {
 	rowsById: Record<string, DATA_EVY_Row>;
 	defaultSheetRowId?: string;
 	draftUpdateTargets: Set<string>;
+	declaredSubmits?: string | null;
 	getAttributeCandidatesForQualifier: (qualifier: string) => IdCandidate[];
 	onChange: (value: string) => void;
 };
@@ -140,6 +141,7 @@ export function BranchEditor({
 	rowsById,
 	defaultSheetRowId,
 	draftUpdateTargets,
+	declaredSubmits = null,
 	getAttributeCandidatesForQualifier,
 	onChange,
 }: BranchEditorProps) {
@@ -197,8 +199,15 @@ export function BranchEditor({
 			resourceId,
 			draftVariables,
 			draftUpdateTargets,
+			declaredSubmits,
 		);
-	}, [selectedFunction, args, draftVariables, draftUpdateTargets]);
+	}, [
+		selectedFunction,
+		args,
+		draftVariables,
+		draftUpdateTargets,
+		declaredSubmits,
+	]);
 
 	const showSubmitCreateHint =
 		offerSubmitCreate && !createHasInlineDataArg(args);

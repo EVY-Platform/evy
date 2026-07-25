@@ -35,6 +35,8 @@ function destinationDraftsTargetResource(
 export type DraftSignals = {
 	draftVariables: string[];
 	draftUpdateTargets: Set<string>;
+	/** `service/resource` the active flow declares it submits, if any. */
+	declaredSubmits: string | null;
 };
 
 export function collectDraftSignals(
@@ -45,8 +47,16 @@ export function collectDraftSignals(
 ): DraftSignals {
 	const flow = activeFlowId ? flowsById[activeFlowId] : undefined;
 	if (!flow) {
-		return { draftVariables: [], draftUpdateTargets: new Set() };
+		return {
+			draftVariables: [],
+			draftUpdateTargets: new Set(),
+			declaredSubmits: null,
+		};
 	}
+
+	const declaredSubmits = flow.submits
+		? `${flow.submits.service}/${flow.submits.resource}`
+		: null;
 
 	const variables = new Set<string>();
 	const draftUpdateTargets = new Set<string>();
@@ -77,16 +87,26 @@ export function collectDraftSignals(
 	return {
 		draftVariables: Array.from(variables).sort(),
 		draftUpdateTargets,
+		declaredSubmits,
 	};
 }
 
+/**
+ * A flow that declares what it submits decides this outright. Only undeclared
+ * flows fall back to inferring it from destinations and draft-mode updates
+ * elsewhere in the flow.
+ */
 export function shouldOfferCreateSubmitWithFlow(
 	serviceId: string,
 	resourceId: string,
 	draftVariables: string[],
 	draftUpdateTargets: Set<string>,
+	declaredSubmits: string | null = null,
 ): boolean {
 	if (!serviceId || !resourceId) return false;
+	if (declaredSubmits !== null) {
+		return declaredSubmits === `${serviceId}/${resourceId}`;
+	}
 	if (destinationDraftsTargetResource(draftVariables, resourceId)) {
 		return true;
 	}
@@ -97,6 +117,7 @@ export function finalizeBranchForSave(
 	branchString: string,
 	draftVariables: string[],
 	draftUpdateTargets: Set<string>,
+	declaredSubmits: string | null = null,
 ): string | null {
 	const trimmed = branchString.trim();
 	if (!trimmed) return branchString;
@@ -113,6 +134,7 @@ export function finalizeBranchForSave(
 		resourceId,
 		draftVariables,
 		draftUpdateTargets,
+		declaredSubmits,
 	);
 
 	return finalizeCreateBranchForSave(trimmed, offerSubmit);

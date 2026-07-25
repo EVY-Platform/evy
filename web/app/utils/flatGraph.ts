@@ -589,6 +589,30 @@ export function updatePageTitle(
 }
 
 /**
+ * Set (or clear) the entity a flow declares it submits. Clients validate their
+ * create(...,submit) actions against this instead of inferring the target.
+ */
+export function updateFlowSubmits(
+	maps: FlowEntityMaps,
+	flowId: string,
+	submits: { service: string; resource: string } | undefined,
+): FlowEntityMaps {
+	const flow = maps.flowsById[flowId];
+	if (!flow) return maps;
+	const { submits: _dropped, ...withoutSubmits } = flow;
+	const nextFlow: DATA_EVY_Flow = submits
+		? { ...withoutSubmits, submits }
+		: withoutSubmits;
+	return {
+		...maps,
+		flowsById: {
+			...maps.flowsById,
+			[flowId]: { ...nextFlow, updatedAt: now() },
+		},
+	};
+}
+
+/**
  * Add a new flow with its pages and rows to the maps.
  */
 export function addFlowRecords(

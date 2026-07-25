@@ -15,6 +15,7 @@ import {
 	removePage,
 	removeRowFromPage,
 	setFooterRow,
+	updateFlowSubmits,
 	updatePageTitle,
 	updateRowActions,
 	updateRowField,
@@ -380,6 +381,15 @@ export const pageReducer = (state: AppState, action: RowAction): AppState => {
 				state,
 				action.pageId,
 				action.title,
+			);
+			return { ...state, ...nextMaps };
+		}
+
+		case "UPDATE_FLOW_SUBMITS": {
+			const nextMaps = updateFlowSubmits(
+				state,
+				action.flowId,
+				action.submits,
 			);
 			return { ...state, ...nextMaps };
 		}

@@ -171,6 +171,44 @@ test.describe("Row configuration", () => {
 		await expect(formatInput).toHaveText("{$datum.label}");
 	});
 
+	test("flow submits declaration can be set and cleared", async ({
+		page,
+	}) => {
+		await openAppWithTestFlows(page, [
+			{
+				id: "step_1",
+				title: "Test Page",
+				rows: [
+					{
+						type: "Text",
+						title: "Hello",
+						visible: "true",
+					},
+				],
+			},
+		]);
+
+		await page.getByText("Hello", { exact: true }).first().click();
+
+		const configPanel = getConfigPanel(page);
+		const serviceSelect = configPanel.getByLabel("Flow submits service");
+		const resourceSelect = configPanel.getByLabel("Flow submits resource");
+
+		await expect(serviceSelect).toBeVisible();
+		await expect(serviceSelect).toHaveAttribute("data-value", "");
+
+		await popoverSelect(page, serviceSelect, "Marketplace");
+		await expect(serviceSelect).not.toHaveAttribute("data-value", "");
+
+		// Resource options are scoped to the chosen service.
+		await resourceSelect.click();
+		await expect(page.getByRole("listbox")).toBeVisible();
+		await page.keyboard.press("Escape");
+
+		await popoverSelect(page, serviceSelect, "None");
+		await expect(serviceSelect).toHaveAttribute("data-value", "");
+	});
+
 	test("action popup traps focus and is announced as a modal dialog", async ({
 		page,
 	}) => {
