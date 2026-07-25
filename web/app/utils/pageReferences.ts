@@ -1,5 +1,5 @@
 import type { DATA_EVY_Flow, DATA_EVY_Page, DATA_EVY_Row } from "evy-types";
-import { parseBranch } from "./actionBranch";
+import { branchToEditableString, parseBranch } from "./actionBranch";
 import { breadcrumbLabelForPage } from "./navLabels";
 import { allRowActions, normalizeStoredRowActions } from "./rowActions";
 
@@ -48,8 +48,16 @@ export function findPageReferences(
 			);
 			const references = actions.some(
 				(action) =>
-					branchReferencesPage(action.true, flowId, targetPageId) ||
-					branchReferencesPage(action.false, flowId, targetPageId),
+					branchReferencesPage(
+						branchToEditableString(action.true),
+						flowId,
+						targetPageId,
+					) ||
+					branchReferencesPage(
+						branchToEditableString(action.false),
+						flowId,
+						targetPageId,
+					),
 			);
 			if (!references) continue;
 

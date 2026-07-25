@@ -14,7 +14,7 @@ import type {
 	DATA_EVY_RowData,
 	UI_RowActions,
 } from "evy-types";
-import { parseBranch } from "./actionBranch";
+import { branchForStorage, parseBranch } from "./actionBranch";
 import { collectSubtreeRowIds, type FlowEntityMaps } from "./flowEntities";
 import { compactRowActions, normalizeStoredRowActions } from "./rowActions";
 import {
@@ -730,7 +730,9 @@ export function ensureShowAction(
 	if (!row) return maps;
 	const existingActions =
 		normalizeStoredRowActions(row.data.actions).tap ?? [];
-	const showBranch = `{show(${sheetRowId})}`;
+	// New actions are written in the structured form; existing ones are only
+	// converted when the author saves them.
+	const showBranch = branchForStorage(`{show(${sheetRowId})}`);
 
 	let updatedExisting = false;
 	const nextActions = existingActions.map((action) => {

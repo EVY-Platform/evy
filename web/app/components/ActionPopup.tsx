@@ -3,6 +3,10 @@ import { useCallback, useMemo, useState } from "react";
 
 import { useFlowsContext } from "../state/contexts/FlowsContext";
 import {
+	branchForStorage,
+	branchToEditableString,
+} from "../utils/actionBranch";
+import {
 	type ConditionExpression,
 	parseCondition,
 	serializeCondition,
@@ -17,7 +21,6 @@ import {
 	buildIdCandidates,
 	createGetAttributeCandidatesForQualifier,
 } from "../utils/idCandidates";
-
 import { BranchEditor } from "./actionPopup/BranchEditor";
 import { ConditionGroupEditor } from "./actionPopup/ConditionGroupEditor";
 import { Modal } from "./Modal";
@@ -48,8 +51,12 @@ export function ActionPopup({
 	const [expression, setExpression] = useState<ConditionExpression | null>(
 		() => parseCondition(action.condition),
 	);
-	const [trueBranch, setTrueBranch] = useState(action.true);
-	const [falseBranch, setFalseBranch] = useState(action.false);
+	const [trueBranch, setTrueBranch] = useState(() =>
+		branchToEditableString(action.true),
+	);
+	const [falseBranch, setFalseBranch] = useState(() =>
+		branchToEditableString(action.false),
+	);
 
 	const draftSignals = useMemo(
 		() => collectDraftSignals(flowsById, pagesById, rowsById, activeFlowId),
@@ -112,10 +119,12 @@ export function ActionPopup({
 			declaredSubmits,
 		);
 		if (finalizedTrue === null || finalizedFalse === null) return;
+		// Conversion happens on save, never on load, so opening and cancelling
+		// an action cannot rewrite the stored row.
 		onSave({
 			condition: serializeCondition(expression),
-			true: finalizedTrue,
-			false: finalizedFalse,
+			true: branchForStorage(finalizedTrue),
+			false: branchForStorage(finalizedFalse),
 		});
 	}, [
 		expression,

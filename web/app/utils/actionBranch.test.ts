@@ -6,10 +6,13 @@ import {
 } from "evy-types/marketplaceResources";
 import {
 	applyCreateModeForDraftSignals,
+	branchForStorage,
+	branchToEditableString,
 	createHasInlineDataArg,
 	createUsesSubmitMarker,
 	finalizeCreateBranchForSave,
 	formatBranchDisplay,
+	isUnrecognizedBranch,
 	isValidCreateBranchForSave,
 	parseBranch,
 	serializeBranch,
@@ -374,5 +377,61 @@ describe("action branch helpers", () => {
 		const locationLabel = "Main / Home / Expand target";
 		expect(expandDisplay).toBe(`expand_text(${locationLabel})`);
 		expect(showDisplay).toBe(`show(${locationLabel})`);
+	});
+});
+
+describe("structured branch storage", () => {
+	const SVC = "66b092ae-7cd8-4d67-95b7-30b03568fd90";
+
+	it("stores a convertible branch structurally", () => {
+		expect(branchForStorage("{close()}")).toEqual({ fn: "close" });
+	});
+
+	it("stores the submit keyword as a typed mode", () => {
+		expect(branchForStorage(`{create(${SVC},items,submit)}`)).toEqual({
+			fn: "create",
+			service: SVC,
+			resource: "items",
+			mode: "submit",
+		});
+	});
+
+	it("keeps an empty branch empty", () => {
+		expect(branchForStorage("")).toBe("");
+	});
+
+	// An action the converter does not understand is left exactly as written
+	// rather than being rewritten into something that merely looks valid.
+	it("leaves an unconvertible branch untouched", () => {
+		expect(branchForStorage("{teleport(x)}")).toBe("{teleport(x)}");
+		expect(branchForStorage("not an action")).toBe("not an action");
+	});
+
+	it("renders a structured branch back to a string for editing", () => {
+		expect(branchToEditableString({ fn: "show", rowId: "row-1" })).toBe(
+			"{show(row-1)}",
+		);
+		expect(branchToEditableString("{close()}")).toBe("{close()}");
+	});
+
+	it("round-trips a structured branch through the editor model", () => {
+		const stored = { fn: "show", rowId: "row-1" } as const;
+		expect(branchForStorage(branchToEditableString(stored))).toEqual(
+			stored,
+		);
+	});
+
+	it("parses a structured branch into the editor model", () => {
+		expect(parseBranch({ fn: "show", rowId: "row-1" })).toEqual({
+			functionName: "show",
+			args: ["row-1"],
+		});
+	});
+
+	it("flags only unconvertible strings as unrecognized", () => {
+		expect(isUnrecognizedBranch("{teleport(x)}")).toBe(true);
+		expect(isUnrecognizedBranch("{close()}")).toBe(false);
+		expect(isUnrecognizedBranch("")).toBe(false);
+		expect(isUnrecognizedBranch({ fn: "close" })).toBe(false);
 	});
 });

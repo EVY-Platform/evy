@@ -1,4 +1,13 @@
-import type { DATA_EVY_Flow, DATA_EVY_Page, DATA_EVY_Row } from "evy-types";
+import type {
+	DATA_EVY_Flow,
+	DATA_EVY_Page,
+	DATA_EVY_Row,
+	UI_ActionBranch,
+} from "evy-types";
+import {
+	parseActionStringToInvocation,
+	serializeInvocationToLegacyString,
+} from "evy-types/actionAst";
 import { splitFunctionArguments } from "./functionArgs";
 import { forEachRowInFlows, rowLocationLabel } from "./rowTraversal";
 import { unwrapOptionalBraces } from "./unwrapBraces";
@@ -53,7 +62,38 @@ function isActionFunction(name: string): name is ActionFunction {
 	return ACTION_FUNCTIONS.includes(name as ActionFunction);
 }
 
-export function parseBranch(branchString: string): ParsedBranch | null {
+/**
+ * The editor works in the legacy string form regardless of how a branch is
+ * stored, so a structured branch is rendered back to a string on the way in.
+ * Storage is the thing that changes shape, not the editing model.
+ */
+export function branchToEditableString(branch: UI_ActionBranch): string {
+	if (typeof branch === "string") return branch;
+	return serializeInvocationToLegacyString(branch);
+}
+
+/**
+ * What actually gets persisted. A branch that converts is stored structured; an
+ * unconvertible one is left exactly as it was rather than being rewritten into
+ * something that looks valid.
+ */
+export function branchForStorage(branchString: string): UI_ActionBranch {
+	const trimmed = branchString.trim();
+	if (!trimmed) return branchString;
+	const converted = parseActionStringToInvocation(trimmed);
+	return converted.ok ? converted.invocation : branchString;
+}
+
+/** True when a non-empty branch cannot be represented structurally. */
+export function isUnrecognizedBranch(branch: UI_ActionBranch): boolean {
+	if (typeof branch !== "string") return false;
+	const trimmed = branch.trim();
+	if (!trimmed) return false;
+	return !parseActionStringToInvocation(trimmed).ok;
+}
+
+export function parseBranch(branch: UI_ActionBranch): ParsedBranch | null {
+	const branchString = branchToEditableString(branch);
 	const trimmed = branchString.trim();
 	if (!trimmed) return null;
 

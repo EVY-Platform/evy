@@ -702,7 +702,13 @@ describe("pageReducer", () => {
 		});
 		expect(next.rowsById["footer-parent"]?.data.sheet_row_id).toBe(newId);
 		expect(next.rowsById["footer-parent"]?.data.actions).toEqual({
-			tap: [{ condition: "", true: `{show(${newId})}`, false: "" }],
+			tap: [
+				{
+					condition: "",
+					true: { fn: "show", rowId: newId },
+					false: "",
+				},
+			],
 		});
 	});
 
@@ -793,7 +799,11 @@ describe("pageReducer", () => {
 		expect(next.rowsById.button?.data.sheet_row_id).toBe(newSheetId);
 		expect(next.rowsById.button?.data.actions).toEqual({
 			tap: [
-				{ condition: "", true: `{show(${newSheetId})}`, false: "" },
+				{
+					condition: "",
+					true: { fn: "show", rowId: newSheetId },
+					false: "",
+				},
 				{
 					condition: "other",
 					true: "{show(other-page-row)}",

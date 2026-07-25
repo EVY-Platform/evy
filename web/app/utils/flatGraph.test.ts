@@ -594,16 +594,22 @@ describe("pageRootIds", () => {
 // ---------------------------------------------------------------------------
 
 describe("ensureShowAction", () => {
-	it("adds {show(sheetId)} action when missing", () => {
+	// New actions are written structured, so this asserts the invocation rather
+	// than the legacy string.
+	it("adds a structured show action when missing", () => {
 		const row = makeRow("r1", { actions: {} });
 		const maps = makeMaps([], [], [row]);
 		const next = ensureShowAction(maps, "r1", "sheet-1");
 		const actions = next.rowsById.r1?.data.actions as {
-			tap?: { condition: string; true: string; false: string }[];
+			tap?: { condition: string; true: unknown; false: unknown }[];
 		};
-		expect(actions.tap?.some((a) => a.true === "{show(sheet-1)}")).toBe(
-			true,
-		);
+		expect(
+			actions.tap?.some(
+				(a) =>
+					JSON.stringify(a.true) ===
+					JSON.stringify({ fn: "show", rowId: "sheet-1" }),
+			),
+		).toBe(true);
 	});
 
 	it("does not duplicate {show(sheetId)} action", () => {
@@ -633,11 +639,16 @@ describe("ensureShowAction", () => {
 		const maps = makeMaps([], [], [row]);
 		const next = ensureShowAction(maps, "r1", "new-sheet", "old-sheet");
 		const actions = next.rowsById.r1?.data.actions as {
-			tap?: (typeof showAction)[];
+			tap?: { condition: string; true: unknown; false: unknown }[];
 		};
-		expect(actions.tap?.some((a) => a.true === "{show(new-sheet)}")).toBe(
-			true,
-		);
+		// A legacy show action is recognised and replaced with the structured form.
+		expect(
+			actions.tap?.some(
+				(a) =>
+					JSON.stringify(a.true) ===
+					JSON.stringify({ fn: "show", rowId: "new-sheet" }),
+			),
+		).toBe(true);
 		expect(actions.tap?.some((a) => a.true === "{show(old-sheet)}")).toBe(
 			false,
 		);
