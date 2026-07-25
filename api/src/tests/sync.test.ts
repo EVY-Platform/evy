@@ -14,6 +14,9 @@ const db = null as unknown as EvyDb;
 
 const MARKETPLACE_SERVICE_ID = MARKETPLACE_SERVICE;
 const EPOCH = "1970-01-01T00:00:00.000Z";
+/** Inside the tombstone retention window, so cursor tests are not expiry tests. */
+const RECENT_CURSOR = new Date(Date.now() - 86_400_000).toISOString();
+const OLDER_RECENT_CURSOR = new Date(Date.now() - 2 * 86_400_000).toISOString();
 
 function buildMockGetResponse(items: { id: string }[]): GetResponse {
 	return items;
@@ -198,6 +201,55 @@ describe("sync", () => {
 		expect(result.data).toEqual([]);
 	});
 
+	// A cursor older than the tombstone retention window may have missed
+	// deletes that have since been purged, so resuming from it would leave
+	// those records on the client with nothing left to ever remove them.
+	describe("expired cursors", () => {
+		const ANCIENT = "2020-01-01T00:00:00.000Z";
+
+		it("restarts from scratch and says so", async () => {
+			const requested: string[] = [];
+			getImpl = async (params) => {
+				requested.push(String(params.filter?.updatedAfter));
+				return buildMockGetResponse([]);
+			};
+
+			const result = await sync({ cursor: ANCIENT }, db);
+
+			expect(result.reset).toBe(true);
+			expect(requested.every((from) => from === EPOCH)).toBe(true);
+		});
+
+		it("resumes normally from a cursor inside the window", async () => {
+			const recent = RECENT_CURSOR;
+			const requested: string[] = [];
+			getImpl = async (params) => {
+				requested.push(String(params.filter?.updatedAfter));
+				return buildMockGetResponse([]);
+			};
+
+			const result = await sync({ cursor: recent }, db);
+
+			expect(result.reset).toBeUndefined();
+			expect(requested.every((from) => from === recent)).toBe(true);
+		});
+
+		it("does not flag a first-ever sync as a reset", async () => {
+			const result = await sync({}, db);
+			expect(result.reset).toBeUndefined();
+		});
+
+		it("does not flag an explicit epoch full sync as a reset", async () => {
+			const result = await sync({ lastSyncTime: EPOCH }, db);
+			expect(result.reset).toBeUndefined();
+		});
+
+		it("expires an equally old lastSyncTime from a pre-cursor client", async () => {
+			const result = await sync({ lastSyncTime: ANCIENT }, db);
+			expect(result.reset).toBe(true);
+		});
+	});
+
 	// An unreachable service used to fail the whole sync, taking every other
 	// resource down with it.
 	it("reports an unreachable service instead of failing the sync", async () => {
@@ -241,9 +293,9 @@ describe("sync", () => {
 			throw new Error("down");
 		};
 
-		const result = await sync({ cursor: "2026-01-01T00:00:00.000Z" }, db);
+		const result = await sync({ cursor: RECENT_CURSOR }, db);
 
-		expect(result.cursor).toBe("2026-01-01T00:00:00.000Z");
+		expect(result.cursor).toBe(RECENT_CURSOR);
 	});
 
 	it("omits errors entirely when everything succeeded", async () => {
@@ -313,12 +365,9 @@ describe("sync", () => {
 			getImpl = async () => buildMockGetResponse([]);
 			forwardGetImpl = async () => buildMockGetResponse([]);
 
-			const result = await sync(
-				{ cursor: "2026-05-05T00:00:00.000Z" },
-				db,
-			);
+			const result = await sync({ cursor: RECENT_CURSOR }, db);
 
-			expect(result.cursor).toBe("2026-05-05T00:00:00.000Z");
+			expect(result.cursor).toBe(RECENT_CURSOR);
 		});
 
 		it("treats a missing cursor as a full sync", async () => {
@@ -342,11 +391,9 @@ describe("sync", () => {
 			};
 			forwardGetImpl = async () => buildMockGetResponse([]);
 
-			await sync({ lastSyncTime: "2026-04-04T00:00:00.000Z" }, db);
+			await sync({ lastSyncTime: RECENT_CURSOR }, db);
 
-			expect(
-				seen.every((value) => value === "2026-04-04T00:00:00.000Z"),
-			).toBe(true);
+			expect(seen.every((value) => value === RECENT_CURSOR)).toBe(true);
 		});
 
 		it("prefers the cursor over lastSyncTime when both are sent", async () => {
@@ -359,15 +406,13 @@ describe("sync", () => {
 
 			await sync(
 				{
-					cursor: "2026-06-06T00:00:00.000Z",
-					lastSyncTime: "2020-01-01T00:00:00.000Z",
+					cursor: RECENT_CURSOR,
+					lastSyncTime: OLDER_RECENT_CURSOR,
 				},
 				db,
 			);
 
-			expect(
-				seen.every((value) => value === "2026-06-06T00:00:00.000Z"),
-			).toBe(true);
+			expect(seen.every((value) => value === RECENT_CURSOR)).toBe(true);
 		});
 	});
 });

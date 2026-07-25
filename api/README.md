@@ -49,6 +49,14 @@ sequenceDiagram
 
 See [docs/evy/data.md](../docs/evy/data.md#procedures) for the manifest fields and how to add one.
 
+### Tombstones and retention
+
+A delete is a soft delete: the row stays with `deletedAt` set so sync can tell clients to drop it. Tombstones are kept for `TOMBSTONE_RETENTION_DAYS` (default 30) and then removed for real by `bun run --cwd api purge:tombstones`, meant to run on a schedule rather than inside the serving process.
+
+The window is also the maximum age of a sync cursor. A client resuming from before the horizon may have missed a tombstone that has since been purged — and nothing would ever tell it about that record again — so sync ignores the cursor, returns a full snapshot, and sets `reset` on the response. Clients must discard their synced stores before applying a `reset` response; iOS does this in `EVY+Sync.swift`. The web builder never sends a cursor, so it never sees one.
+
+Shortening the window shortens how long a client may stay offline before its next sync costs a full snapshot.
+
 ### Notifications
 
 The server emits `dataChanged` JSON-RPC notifications to all subscribed clients when data changes, both for evy core resources and remote service events:

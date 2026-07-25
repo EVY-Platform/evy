@@ -11,6 +11,7 @@ import {
 } from "evy-types/coreResources";
 import { validateSyncResponse } from "evy-types/validators";
 import * as data from "../data/data";
+import { isCursorExpired } from "../data/tombstones";
 import type { EvyDb } from "../database/db";
 import * as services from "./services";
 
@@ -133,7 +134,15 @@ export async function sync(
 	db: EvyDb,
 ): Promise<SyncResponse> {
 	const externalResources = await data.listExternalServiceResources(db);
-	const resumedFrom = resumePoint(syncParams);
+
+	// Resuming from before the tombstone horizon would silently skip deletes
+	// that have already been purged, leaving those records on the client with
+	// nothing left to ever remove them. Start over instead.
+	// EPOCH is the full-sync sentinel, so it is not a stale cursor - flagging a
+	// client's first ever sync as a reset would tell it to wipe nothing.
+	const requestedResume = resumePoint(syncParams);
+	const reset = requestedResume !== EPOCH && isCursorExpired(requestedResume);
+	const resumedFrom = reset ? EPOCH : requestedResume;
 
 	const [evyData, externalData] = await Promise.all([
 		fetchEvyCoreData(resumedFrom, (request) => data.get(db, request)),
@@ -155,6 +164,7 @@ export async function sync(
 	return validateSyncResponse({
 		data: rows,
 		cursor,
+		...(reset ? { reset: true } : {}),
 		...(errors.length > 0 ? { errors } : {}),
 	});
 }

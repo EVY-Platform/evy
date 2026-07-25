@@ -1,4 +1,5 @@
 import { initCoreNotifications, validateAuth } from "./data/data";
+import { purgeTombstones } from "./data/tombstones";
 import { createDb } from "./database/db";
 import { syncMethod } from "./procedures/coreApi";
 import { api, create, deleteResource, get, update } from "./procedures/rpc";
@@ -50,6 +51,19 @@ async function startServer(): Promise<void> {
 	wireBinaryChunkHandler(server, makeAuthChecker(server), handleUploadChunk);
 }
 
+/**
+ * Deletes tombstones past the retention window. Meant to be run on a schedule
+ * (cron, a k8s CronJob) rather than from the serving process, so a long delete
+ * never competes with request handling.
+ */
+async function runPurgeTombstonesCli(): Promise<void> {
+	const result = await purgeTombstones(appDb);
+	console.info(
+		`Purged ${result.total} tombstone(s) deleted before ${result.horizon}` +
+			(result.total > 0 ? `: ${JSON.stringify(result.purged)}` : ""),
+	);
+}
+
 if (import.meta.main) {
 	if (
 		process.argv.some(
@@ -57,6 +71,9 @@ if (import.meta.main) {
 		)
 	) {
 		await runHealthCli();
+	} else if (process.argv.includes("--purge-tombstones")) {
+		await runPurgeTombstonesCli();
+		process.exit(0);
 	} else {
 		await startServer();
 	}
