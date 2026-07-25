@@ -477,4 +477,42 @@ final class EVYStoreRoutingTests: XCTestCase {
     // And the swap is undone - the active page is untouched.
     XCTAssertEqual(EVY.activeCacheScopeId, activeScopeId)
   }
+
+  /// Writes have to land where the row's own bindings read from. Mutation
+  /// paths take the cache scope ambiently, so an action running while some
+  /// other page is active would otherwise read and update that page's cache -
+  /// which is what running the action under the row's scope prevents.
+  func testWriteUnderAnExplicitScopeTargetsThatScope() throws {
+    let ownScopeId = "own-\(UUID().uuidString)"
+    let activeScopeId = "active-\(UUID().uuidString)"
+    let key = "scoped_value"
+
+    for (scopeId, label) in [(ownScopeId, "own"), (activeScopeId, "active")] {
+      try EVY.cacheStore.create(
+        namespace: EVYNamespace.cache, resource: scopeId, id: key,
+        value: #"{"label":"\#(label)"}"#.data(using: .utf8)!)
+    }
+    defer {
+      try? EVY.cacheStore.deleteAll(namespace: EVYNamespace.cache, resource: ownScopeId)
+      try? EVY.cacheStore.deleteAll(namespace: EVYNamespace.cache, resource: activeScopeId)
+      EVY.activeCacheScopeId = nil
+    }
+
+    EVY.activeCacheScopeId = activeScopeId
+
+    try EVY.withScope(.cache(ownScopeId)) {
+      try EVY.updateData(
+        #""written""#.data(using: .utf8)!,
+        destination: "{\(key).label}")
+    }
+
+    XCTAssertEqual(
+      try EVY.getDataFromText(
+        "{\(key).label}", scope: .cache(ownScopeId)),
+      .string("written"))
+    XCTAssertEqual(
+      try EVY.getDataFromText(
+        "{\(key).label}", scope: .cache(activeScopeId)),
+      .string("active"))
+  }
 }

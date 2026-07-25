@@ -23,14 +23,13 @@ struct EVYScope: Equatable {
   /// The scope implied by the global statics - whichever page is active.
   ///
   /// Resolution and mutation fall back to this when handed no scope of their
-  /// own. Two things still depend on it, and neither is an oversight:
-  /// - SwiftUI initialisers, which cannot read `@Environment`, so a state built
-  ///   outside a row wrapper has nothing else to go on.
-  /// - `EVY+Mutations`, whose write paths take a draft scope id explicitly but
-  ///   still read the active cache scope ambiently.
+  /// own. `EVY+Mutations` still reads the active cache scope ambiently, and
+  /// SwiftUI initialisers cannot read `@Environment`, so a state built outside
+  /// a row wrapper has nothing else to go on.
   ///
-  /// Rows on a page are handed an explicit scope and do not come through here.
-  /// This is the floor, not the normal path.
+  /// Rows on a page are handed an explicit scope for reads, and run their
+  /// actions inside `withScope`, so neither their reads nor their writes come
+  /// through here. This is the floor, not the normal path.
   @MainActor
   static var ambient: EVYScope {
     EVYScope(

@@ -297,24 +297,31 @@ private struct EVYResolvedRow: View {
     rowOperation: EVYRowOperationHandler? = nil
   ) {
     let actions = trigger.actions(in: contentRow.actions)
-    EVYActionRunner.run(
-      actions: actions,
-      datum: datum ?? self.datum,
-      show: { rowId in
-        guard EVYRowStore.row(id: rowId) != nil else {
-          throw EVYError.invalidData(context: "show could not resolve row id \(rowId)")
+    // Reads already resolve against this row's scope; writes did not, and took
+    // whichever page most recently activated. Running the whole action under
+    // the row's own scope makes a mutation land where the row's bindings read
+    // from. Action execution is synchronous, so this covers every mutation it
+    // performs.
+    EVY.withScope(evyScope) {
+      EVYActionRunner.run(
+        actions: actions,
+        datum: datum ?? self.datum,
+        show: { rowId in
+          guard EVYRowStore.row(id: rowId) != nil else {
+            throw EVYError.invalidData(context: "show could not resolve row id \(rowId)")
+          }
+          presentedSheetRef = .id(rowId)
+        },
+        rowOperation: rowOperation,
+        action: { operation in
+          if case .close = operation, let sheetDismiss {
+            sheetDismiss()
+            return
+          }
+          action(operation)
         }
-        presentedSheetRef = .id(rowId)
-      },
-      rowOperation: rowOperation,
-      action: { operation in
-        if case .close = operation, let sheetDismiss {
-          sheetDismiss()
-          return
-        }
-        action(operation)
-      }
-    )
+      )
+    }
   }
 
   @ViewBuilder
