@@ -1,34 +1,29 @@
 /// <reference types="bun-types" />
 
 /**
- * Rewrites legacy `{fn(...)}` action branches into structured invocations, in
- * the SDUI fixtures and in stored rows.
+ * Rewrites legacy `{fn(...)}` action branches in stored rows into structured
+ * invocations.
  *
- * Idempotent: a branch that is already structured is left alone, so the script
- * can be re-run safely. Nothing is written unless every branch in the target
- * converts - a partial migration is worse than none, because it leaves two
- * forms in the same flow with no record of which failed.
+ * One-off, for environments that still hold legacy branches. The repository
+ * fixtures were converted in place and a regression test keeps them that way,
+ * so this no longer touches them. Delete the script once every environment
+ * reports zero conversions.
  *
- *   bun scripts/migrate-actions-to-ast.ts --dry-run     # report only
- *   bun scripts/migrate-actions-to-ast.ts --fixtures    # rewrite fixture files
+ * Idempotent: a branch that is already structured is left alone, so it can be
+ * re-run safely. Nothing is written unless every branch converts - a partial
+ * migration is worse than none, because it leaves two forms in the same flow
+ * with no record of which failed.
+ *
+ *   bun scripts/migrate-actions-to-ast.ts --dry-run     # report only (default)
  *   bun scripts/migrate-actions-to-ast.ts --database    # rewrite stored rows
  */
 
-import { readFile, writeFile } from "node:fs/promises";
-import { dirname, join } from "node:path";
-import { fileURLToPath } from "node:url";
 import { SQL } from "bun";
 import { eq } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/bun-sql";
 import { parseActionStringToInvocation } from "../types/actionAst";
 import { getPostgresConnectionUrl } from "../types/env";
 import { row as rowTable } from "../types/generated/ts/db/schema.generated";
-
-const SCRIPT_DIR = dirname(fileURLToPath(import.meta.url));
-const FIXTURE_PATHS = [
-	join(SCRIPT_DIR, "fixtures", "evy", "evy_sdui.json"),
-	join(SCRIPT_DIR, "fixtures", "services", "service_sdui.json"),
-];
 
 type Stats = {
 	converted: number;
@@ -87,23 +82,6 @@ function convertActionsInPlace(
 	}
 }
 
-async function migrateFixtures(dryRun: boolean): Promise<Stats> {
-	const stats = emptyStats();
-	for (const path of FIXTURE_PATHS) {
-		const original = await readFile(path, "utf-8");
-		const parsed = JSON.parse(original);
-		convertActionsInPlace(parsed, stats, path);
-		if (!dryRun && stats.skipped.length === 0) {
-			await writeFile(
-				path,
-				`${JSON.stringify(parsed, null, "\t")}\n`,
-				"utf-8",
-			);
-		}
-	}
-	return stats;
-}
-
 async function migrateDatabase(dryRun: boolean): Promise<Stats> {
 	const stats = emptyStats();
 	const client = new SQL(getPostgresConnectionUrl("DB_EVY_DATABASE"));
@@ -149,27 +127,14 @@ function report(label: string, stats: Stats, dryRun: boolean): void {
 
 async function main(): Promise<void> {
 	const args = new Set(process.argv.slice(2));
-	const dryRun = args.has("--dry-run") || args.size === 0;
-	const doFixtures = args.has("--fixtures") || dryRun;
-	const doDatabase = args.has("--database") || dryRun;
+	const dryRun = args.has("--dry-run") || !args.has("--database");
 
-	let unconvertible = 0;
+	const stats = await migrateDatabase(dryRun);
+	report("database", stats, dryRun);
 
-	if (doFixtures) {
-		const stats = await migrateFixtures(dryRun);
-		report("fixtures", stats, dryRun);
-		unconvertible += stats.skipped.length;
-	}
-
-	if (doDatabase) {
-		const stats = await migrateDatabase(dryRun);
-		report("database", stats, dryRun);
-		unconvertible += stats.skipped.length;
-	}
-
-	if (unconvertible > 0) {
+	if (stats.skipped.length > 0) {
 		console.error(
-			`\nRefusing to write: ${unconvertible} branch(es) did not convert.`,
+			`\nRefusing to write: ${stats.skipped.length} branch(es) did not convert.`,
 		);
 		process.exit(1);
 	}
