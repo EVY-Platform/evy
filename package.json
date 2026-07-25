@@ -17,6 +17,7 @@
 		"types:generate:core": "bun scripts/generate-core-resources.ts",
 		"types:generate:marketplace": "bun scripts/generate-marketplace-resources.ts",
 		"types:generate:resources": "bun run --parallel types:generate:drizzle types:generate:core types:generate:marketplace",
+		"test:scripts": "bun test scripts/",
 		"db:seed": "bun scripts/seed.ts"
 	},
 	"devDependencies": {

@@ -7,6 +7,7 @@
 			"name": "Visibility"
 		}
 	},
+	"nonTableDefs": ["DATA_EVY_RowData"],
 	"tables": {
 		"DATA_EVY_Device": {
 			"tableName": "Device",
