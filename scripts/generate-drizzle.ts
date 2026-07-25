@@ -386,17 +386,22 @@ function buildNumberColumn(dbCol: string): string {
 	return `numeric("${dbCol}", { precision: 28, scale: 10, mode: "number" })`;
 }
 
+/** `#/$defs/Foo` -> `Foo`, for local refs only. */
+function localDefName(ref: string | undefined): string | null {
+	const match = /^#\/\$defs\/([A-Za-z0-9_]+)$/.exec(ref ?? "");
+	return match?.[1] ?? null;
+}
+
 function resolveJsonbTypeAnnotation(ref: string | undefined): string {
 	if (ref?.includes("UI_Flow") || ref?.includes("evy.schema.json")) {
 		return "UI_Flow";
 	}
-	if (ref?.includes("DATA_EVY_RowData")) {
-		return "DATA_EVY_RowData";
-	}
 	if (ref?.includes("JSONValue") || ref?.includes("json.schema.json")) {
 		return 'DATA_PRIMITIVE["data"]';
 	}
-	return "unknown";
+	// Any local $def is a generated type of the same name, so new nested value
+	// objects are typed automatically instead of needing a branch added here.
+	return localDefName(ref) ?? "unknown";
 }
 
 function buildArrayColumn(dbCol: string, prop: JsonSchemaProp): string {
@@ -688,9 +693,18 @@ async function main(): Promise<void> {
 
 	// Relative imports: this file lives inside evy-types, so importing the
 	// package by name would depend on the consumer's own node_modules.
+	// Local $defs referenced by jsonb columns all come from the generated data
+	// types, so they are collected rather than listed one by one.
+	const dataDefImports = Object.keys(schema.$defs ?? {})
+		.filter((defName) =>
+			// Exact `$type<Name>` match: a substring test would pull in
+			// DATA_EVY_Flow just because DATA_EVY_FlowSubmits is used.
+			lines.some((line) => line.includes(`$type<${defName}>`)),
+		)
+		.sort();
 	const typeImports = [
-		isTypeUsed("DATA_EVY_RowData", lines)
-			? 'import type { DATA_EVY_RowData } from "../data/data";'
+		dataDefImports.length > 0
+			? `import type { ${dataDefImports.join(", ")} } from "../data/data";`
 			: null,
 		isTypeUsed("UI_Flow", lines)
 			? 'import type { UI_Flow } from "../sdui/evy";'

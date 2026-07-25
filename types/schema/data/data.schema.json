@@ -108,16 +108,34 @@
 				"visibility"
 			],
 			"properties": {
-				"id": { "type": "string", "format": "uuid" },
-				"fk": { "type": "string", "format": "uuid" },
-				"service": { "type": "string", "format": "uuid" },
-				"resource": { "type": "string", "format": "uuid" },
+				"id": {
+					"type": "string",
+					"format": "uuid"
+				},
+				"fk": {
+					"type": "string",
+					"format": "uuid"
+				},
+				"service": {
+					"type": "string",
+					"format": "uuid"
+				},
+				"resource": {
+					"type": "string",
+					"format": "uuid"
+				},
 				"archivedAt": {
 					"type": ["string", "null"],
 					"format": "date-time"
 				},
-				"createdAt": { "type": "string", "format": "date-time" },
-				"updatedAt": { "type": "string", "format": "date-time" },
+				"createdAt": {
+					"type": "string",
+					"format": "date-time"
+				},
+				"updatedAt": {
+					"type": "string",
+					"format": "date-time"
+				},
 				"status": {
 					"type": "string",
 					"enum": ["pending", "accepted"]
@@ -161,6 +179,9 @@
 						"format": "uuid"
 					}
 				},
+				"submits": {
+					"$ref": "#/$defs/DATA_EVY_FlowSubmits"
+				},
 				"visibility": {
 					"$ref": "#/$defs/Visibility",
 					"default": "public"
@@ -172,6 +193,22 @@
 				"updatedAt": {
 					"type": "string",
 					"format": "date-time"
+				}
+			}
+		},
+		"DATA_EVY_FlowSubmits": {
+			"description": "Domain entity a flow submits via create(...,submit). Declared so clients validate rather than infer submission semantics from action strings.",
+			"type": "object",
+			"additionalProperties": false,
+			"required": ["service", "resource"],
+			"properties": {
+				"service": {
+					"type": "string",
+					"format": "uuid"
+				},
+				"resource": {
+					"type": "string",
+					"minLength": 1
 				}
 			}
 		},
