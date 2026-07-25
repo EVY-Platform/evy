@@ -39,6 +39,10 @@ export function decomposeServerFlow(
 				id: flow.id,
 				name: flow.name,
 				pageIds: pageRows.map((page) => page.id),
+				// Test-fixture decomposition only; these records feed the
+				// builder directly and are never written back, so this matches
+				// the column default rather than carrying real visibility.
+				visibility: "public",
 				createdAt: nowIso,
 				updatedAt: nowIso,
 			},
@@ -63,9 +67,26 @@ function decomposeServerPage(
 		footerRowId: page.footer
 			? decomposeServerRow(page.footer, rowRows, nowIso)
 			: undefined,
+		visibility: "public",
 		createdAt: nowIso,
 		updatedAt: nowIso,
 	};
+}
+
+/**
+ * `child` and `children` exist only on some row variants, so on the UI_Row
+ * union they resolve through the index signature rather than as rows.
+ */
+function nestedRow(value: unknown): ServerRow | undefined {
+	return value !== null && typeof value === "object"
+		? (value as ServerRow)
+		: undefined;
+}
+
+function nestedRows(value: unknown): ServerRow[] {
+	return Array.isArray(value)
+		? value.flatMap((entry) => nestedRow(entry) ?? [])
+		: [];
 }
 
 function decomposeServerRow(
@@ -82,15 +103,17 @@ function decomposeServerRow(
 			data[key] = value;
 		}
 	}
-	if (row.child) {
-		data[ROW_CHILD_FIELD] = decomposeServerRow(row.child, rowRows, nowIso);
+	const child = nestedRow(row.child);
+	if (child) {
+		data[ROW_CHILD_FIELD] = decomposeServerRow(child, rowRows, nowIso);
 	}
 	if (row.sheet) {
 		data[ROW_SHEET_FIELD] = decomposeServerRow(row.sheet, rowRows, nowIso);
 	}
-	if (Array.isArray(row.children) && row.children.length > 0) {
-		data[ROW_CHILDREN_FIELD] = row.children.map((child) =>
-			decomposeServerRow(child, rowRows, nowIso),
+	const children = nestedRows(row.children);
+	if (children.length > 0) {
+		data[ROW_CHILDREN_FIELD] = children.map((childRow) =>
+			decomposeServerRow(childRow, rowRows, nowIso),
 		);
 	}
 	rowRows.push({
@@ -98,6 +121,7 @@ function decomposeServerRow(
 		name: row.name,
 		type: row.type,
 		visible: row.visible || "true",
+		visibility: "public",
 		data: data as DATA_EVY_RowData,
 		createdAt: nowIso,
 		updatedAt: nowIso,

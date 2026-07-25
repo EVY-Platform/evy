@@ -93,9 +93,9 @@ export function OperandEditor({
 		[parsed, onChange],
 	);
 
-	const valueMatchesVariableOption = variableOptions.some(
-		(option) => option.value === parsed.value,
-	);
+	const valueMatchesVariableOption =
+		parsed.type === "value" &&
+		variableOptions.some((option) => option.value === parsed.value);
 	const showValueBuilderAssist =
 		parsed.type === "value" &&
 		parsed.value !== "" &&

@@ -54,13 +54,19 @@ function decomposeRow(row: Row, records: DATA_EVY_Row[], now: string): string {
 		data.children_row_ids = row.config.childrenRowIds;
 	}
 
-	const name = row.config.name;
+	// Required on the stored row, so it cannot be left undefined. Same fallback
+	// decodeFlow applies when reading a row without one.
+	const name =
+		row.config.name ?? (row.config.title?.trim() || row.config.type);
 
 	records.push({
 		id: row.id,
 		name,
 		type: row.config.type,
 		visible: row.config.visible ?? "true",
+		// The builder's row model has no visibility, and the API applies this
+		// same default when a record omits it. Stated rather than implied.
+		visibility: "public",
 		data: data as DATA_EVY_RowData,
 		createdAt: now,
 		updatedAt: now,

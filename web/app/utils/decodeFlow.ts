@@ -213,18 +213,34 @@ function decodeRowConfig(row: ServerRow, name?: string): RowConfig {
 	return config as RowConfig;
 }
 
+/**
+ * `child` and `children` exist only on some row variants, so on the UI_Row
+ * union they resolve through the index signature rather than as rows. Read
+ * them through a shape check, the same way row payload fields are read.
+ */
+function nestedRow(value: unknown): ServerRow | undefined {
+	return value !== null && typeof value === "object"
+		? (value as ServerRow)
+		: undefined;
+}
+
+function nestedRows(value: unknown): ServerRow[] {
+	return Array.isArray(value)
+		? value.flatMap((entry) => nestedRow(entry) ?? [])
+		: [];
+}
+
 function assignFreshIdsInPlace(row: ServerRow, rootId: string): void {
 	row.id = rootId;
-	if (row.child) {
-		assignFreshIdsInPlace(row.child, crypto.randomUUID());
+	const child = nestedRow(row.child);
+	if (child) {
+		assignFreshIdsInPlace(child, crypto.randomUUID());
 	}
 	if (row.sheet) {
 		assignFreshIdsInPlace(row.sheet, crypto.randomUUID());
 	}
-	if (row.children) {
-		for (const childRow of row.children) {
-			assignFreshIdsInPlace(childRow, crypto.randomUUID());
-		}
+	for (const childRow of nestedRows(row.children)) {
+		assignFreshIdsInPlace(childRow, crypto.randomUUID());
 	}
 }
 
