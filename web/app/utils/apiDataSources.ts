@@ -1,10 +1,15 @@
-import { API_DATA_SOURCE_ATTRIBUTES } from "evy-types/apiDataSources";
+import { procedureResultAttributes } from "evy-types/procedures";
 import type { IdCandidate } from "./idCandidates";
 import { buildAttributeCandidates } from "./idCandidates";
 
+/**
+ * Attributes the builder offers for a `{$api:<method>}` source.
+ *
+ * Empty for an unknown procedure and for one whose response is not a list of
+ * rows - `sync` is callable but nothing binds into its envelope.
+ */
 export function getApiDataSourceAttributeCandidates(
 	method: string,
 ): IdCandidate[] {
-	const attributeNames = API_DATA_SOURCE_ATTRIBUTES[method];
-	return attributeNames ? buildAttributeCandidates(attributeNames) : [];
+	return buildAttributeCandidates(procedureResultAttributes(method));
 }

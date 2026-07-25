@@ -31,4 +31,9 @@ describe("apiDataSources", () => {
 			[],
 		);
 	});
+
+	test("getApiDataSourceAttributeCandidates is empty for a procedure with no bindable rows", () => {
+		// sync is a declared procedure, but its response is an envelope.
+		expect(getApiDataSourceAttributeCandidates("sync")).toEqual([]);
+	});
 });

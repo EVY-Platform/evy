@@ -7,7 +7,6 @@
 		"./marketplaceResources": "./generated/ts/marketplaceResources.ts",
 		"./procedures": "./generated/ts/procedures.ts",
 		"./db/schema.generated": "./generated/ts/db/schema.generated.ts",
-		"./apiDataSources": "./apiDataSources.ts",
 		"./functionArgs": "./functionArgs.ts",
 		"./actionAst": "./actionAst.ts",
 		"./rpcRequestHelpers": "./rpcRequestHelpers.ts",
