@@ -15,7 +15,9 @@
 							"tap": [
 								{
 									"condition": "",
-									"true": "{expand_photo()}",
+									"true": {
+										"fn": "expand_photo"
+									},
 									"false": ""
 								}
 							]
@@ -56,7 +58,10 @@
 								{
 									"condition": "",
 									"false": "",
-									"true": "{show(7c8d9e0f-1a2b-4c3d-8e5f-6a7b8c9d0e1f)}"
+									"true": {
+										"fn": "show",
+										"rowId": "7c8d9e0f-1a2b-4c3d-8e5f-6a7b8c9d0e1f"
+									}
 								}
 							]
 						},
@@ -113,7 +118,10 @@
 							"tap": [
 								{
 									"condition": "",
-									"true": "{select($datum)}",
+									"true": {
+										"fn": "select",
+										"value": "$datum"
+									},
 									"false": ""
 								}
 							]
@@ -146,12 +154,18 @@
 											"tap": [
 												{
 													"condition": "",
-													"true": "{select($datum)}",
+													"true": {
+														"fn": "select",
+														"value": "$datum"
+													},
 													"false": ""
 												},
 												{
 													"condition": "",
-													"true": "{show(b8c7d6e5-f4a3-4b2c-9d1e-0f8a7b6c5d4e)}",
+													"true": {
+														"fn": "show",
+														"rowId": "b8c7d6e5-f4a3-4b2c-9d1e-0f8a7b6c5d4e"
+													},
 													"false": ""
 												}
 											]
@@ -198,12 +212,27 @@
 														"tap": [
 															{
 																"condition": "",
-																"true": "{create(475731ac-31aa-4d65-94d2-7032782ae359, messages, {fk: dc28ed59-298e-493c-8ff3-3e60f2ebccbd.id, service: \"66b092ae-7cd8-4d67-95b7-30b03568fd90\", resource: \"dc28ed59-298e-493c-8ff3-3e60f2ebccbd\", archivedAt: null, status: \"pending\", data: {type: pickup, time: selected_pickup_timeslot}})}",
+																"true": {
+																	"fn": "create",
+																	"service": "475731ac-31aa-4d65-94d2-7032782ae359",
+																	"resource": "messages",
+																	"mode": "inline",
+																	"data": {
+																		"fk": "dc28ed59-298e-493c-8ff3-3e60f2ebccbd.id",
+																		"service": "\"66b092ae-7cd8-4d67-95b7-30b03568fd90\"",
+																		"resource": "\"dc28ed59-298e-493c-8ff3-3e60f2ebccbd\"",
+																		"archivedAt": "null",
+																		"status": "\"pending\"",
+																		"data": "{type: pickup, time: selected_pickup_timeslot}"
+																	}
+																},
 																"false": ""
 															},
 															{
 																"condition": "",
-																"true": "{close()}",
+																"true": {
+																	"fn": "close"
+																},
 																"false": ""
 															}
 														]
@@ -245,12 +274,18 @@
 											"tap": [
 												{
 													"condition": "",
-													"true": "{select($datum)}",
+													"true": {
+														"fn": "select",
+														"value": "$datum"
+													},
 													"false": ""
 												},
 												{
 													"condition": "",
-													"true": "{show(c4d5e6f7-a8b9-4c0d-1e2f-3a4b5c6d7e80)}",
+													"true": {
+														"fn": "show",
+														"rowId": "c4d5e6f7-a8b9-4c0d-1e2f-3a4b5c6d7e80"
+													},
 													"false": ""
 												}
 											]
@@ -288,12 +323,27 @@
 														"tap": [
 															{
 																"condition": "",
-																"true": "{create(475731ac-31aa-4d65-94d2-7032782ae359, messages, {fk: dc28ed59-298e-493c-8ff3-3e60f2ebccbd.id, service: \"66b092ae-7cd8-4d67-95b7-30b03568fd90\", resource: \"dc28ed59-298e-493c-8ff3-3e60f2ebccbd\", archivedAt: null, status: \"pending\", data: {type: delivery, time: selected_delivery_timeslot}})}",
+																"true": {
+																	"fn": "create",
+																	"service": "475731ac-31aa-4d65-94d2-7032782ae359",
+																	"resource": "messages",
+																	"mode": "inline",
+																	"data": {
+																		"fk": "dc28ed59-298e-493c-8ff3-3e60f2ebccbd.id",
+																		"service": "\"66b092ae-7cd8-4d67-95b7-30b03568fd90\"",
+																		"resource": "\"dc28ed59-298e-493c-8ff3-3e60f2ebccbd\"",
+																		"archivedAt": "null",
+																		"status": "\"pending\"",
+																		"data": "{type: delivery, time: selected_delivery_timeslot}"
+																	}
+																},
 																"false": ""
 															},
 															{
 																"condition": "",
-																"true": "{close()}",
+																"true": {
+																	"fn": "close"
+																},
 																"false": ""
 															}
 														]
@@ -334,8 +384,14 @@
 											"tap": [
 												{
 													"condition": "{length(shipping_address.postcode) > 0}",
-													"true": "{show(f2a1b0c9-d8e7-4f6a-5b4c-3d2e1f0a9b8c)}",
-													"false": "{highlight_required(postcode)}"
+													"true": {
+														"fn": "show",
+														"rowId": "f2a1b0c9-d8e7-4f6a-5b4c-3d2e1f0a9b8c"
+													},
+													"false": {
+														"fn": "highlight_required",
+														"field": "postcode"
+													}
 												}
 											]
 										},
@@ -383,12 +439,27 @@
 														"tap": [
 															{
 																"condition": "",
-																"true": "{create(475731ac-31aa-4d65-94d2-7032782ae359, messages, {fk: dc28ed59-298e-493c-8ff3-3e60f2ebccbd.id, service: \"66b092ae-7cd8-4d67-95b7-30b03568fd90\", resource: \"dc28ed59-298e-493c-8ff3-3e60f2ebccbd\", archivedAt: null, status: \"pending\", data: {type: shipping, postalcode: shipping_address.postcode}})}",
+																"true": {
+																	"fn": "create",
+																	"service": "475731ac-31aa-4d65-94d2-7032782ae359",
+																	"resource": "messages",
+																	"mode": "inline",
+																	"data": {
+																		"fk": "dc28ed59-298e-493c-8ff3-3e60f2ebccbd.id",
+																		"service": "\"66b092ae-7cd8-4d67-95b7-30b03568fd90\"",
+																		"resource": "\"dc28ed59-298e-493c-8ff3-3e60f2ebccbd\"",
+																		"archivedAt": "null",
+																		"status": "\"pending\"",
+																		"data": "{type: shipping, postalcode: shipping_address.postcode}"
+																	}
+																},
 																"false": ""
 															},
 															{
 																"condition": "",
-																"true": "{close()}",
+																"true": {
+																	"fn": "close"
+																},
 																"false": ""
 															}
 														]
@@ -442,7 +513,10 @@
 									"tap": [
 										{
 											"condition": "",
-											"true": "{show(f1a2b3c4-d5e6-4f7a-8b9c-0d1e2f3a4b5d)}",
+											"true": {
+												"fn": "show",
+												"rowId": "f1a2b3c4-d5e6-4f7a-8b9c-0d1e2f3a4b5d"
+											},
 											"false": ""
 										}
 									]
@@ -474,12 +548,27 @@
 												"tap": [
 													{
 														"condition": "",
-														"true": "{update(475731ac-31aa-4d65-94d2-7032782ae359, messages, {fk: dc28ed59-298e-493c-8ff3-3e60f2ebccbd.id, archivedAt: null, status: \"pending\"}, {archivedAt: now()})}",
+														"true": {
+															"fn": "update",
+															"service": "475731ac-31aa-4d65-94d2-7032782ae359",
+															"resource": "messages",
+															"mode": "store",
+															"filter": {
+																"fk": "dc28ed59-298e-493c-8ff3-3e60f2ebccbd.id",
+																"archivedAt": "null",
+																"status": "\"pending\""
+															},
+															"changes": {
+																"archivedAt": "now()"
+															}
+														},
 														"false": ""
 													},
 													{
 														"condition": "",
-														"true": "{close()}",
+														"true": {
+															"fn": "close"
+														},
 														"false": ""
 													}
 												]
@@ -530,7 +619,10 @@
 									"tap": [
 										{
 											"condition": "",
-											"true": "{show(f7a8b9c0-d1e2-4f3a-4b5c-6d7e8f9a0b1d)}",
+											"true": {
+												"fn": "show",
+												"rowId": "f7a8b9c0-d1e2-4f3a-4b5c-6d7e8f9a0b1d"
+											},
 											"false": ""
 										}
 									]
@@ -562,12 +654,27 @@
 												"tap": [
 													{
 														"condition": "",
-														"true": "{update(475731ac-31aa-4d65-94d2-7032782ae359, messages, {fk: dc28ed59-298e-493c-8ff3-3e60f2ebccbd.id, archivedAt: null, status: \"pending\"}, {archivedAt: now()})}",
+														"true": {
+															"fn": "update",
+															"service": "475731ac-31aa-4d65-94d2-7032782ae359",
+															"resource": "messages",
+															"mode": "store",
+															"filter": {
+																"fk": "dc28ed59-298e-493c-8ff3-3e60f2ebccbd.id",
+																"archivedAt": "null",
+																"status": "\"pending\""
+															},
+															"changes": {
+																"archivedAt": "now()"
+															}
+														},
 														"false": ""
 													},
 													{
 														"condition": "",
-														"true": "{close()}",
+														"true": {
+															"fn": "close"
+														},
 														"false": ""
 													}
 												]
@@ -618,7 +725,10 @@
 									"tap": [
 										{
 											"condition": "",
-											"true": "{show(d1e2f3a4-b5c6-4d7e-8f9a-0b1c2d3e4f5b)}",
+											"true": {
+												"fn": "show",
+												"rowId": "d1e2f3a4-b5c6-4d7e-8f9a-0b1c2d3e4f5b"
+											},
 											"false": ""
 										}
 									]
@@ -650,12 +760,27 @@
 												"tap": [
 													{
 														"condition": "",
-														"true": "{update(475731ac-31aa-4d65-94d2-7032782ae359, messages, {fk: dc28ed59-298e-493c-8ff3-3e60f2ebccbd.id, archivedAt: null, status: \"pending\"}, {archivedAt: now()})}",
+														"true": {
+															"fn": "update",
+															"service": "475731ac-31aa-4d65-94d2-7032782ae359",
+															"resource": "messages",
+															"mode": "store",
+															"filter": {
+																"fk": "dc28ed59-298e-493c-8ff3-3e60f2ebccbd.id",
+																"archivedAt": "null",
+																"status": "\"pending\""
+															},
+															"changes": {
+																"archivedAt": "now()"
+															}
+														},
 														"false": ""
 													},
 													{
 														"condition": "",
-														"true": "{close()}",
+														"true": {
+															"fn": "close"
+														},
 														"false": ""
 													}
 												]
@@ -700,7 +825,9 @@
 							"tap": [
 								{
 									"condition": "",
-									"true": "{select_photo()}",
+									"true": {
+										"fn": "select_photo"
+									},
 									"false": ""
 								}
 							],
@@ -708,7 +835,9 @@
 								{
 									"condition": "",
 									"false": "",
-									"true": "{delete_photo()}"
+									"true": {
+										"fn": "delete_photo"
+									}
 								}
 							]
 						},
@@ -759,7 +888,10 @@
 								{
 									"condition": "",
 									"false": "",
-									"true": "{show(e5f6a7b8-c9d0-4e1f-8a3b-4c5d6e7f8a9b)}"
+									"true": {
+										"fn": "show",
+										"rowId": "e5f6a7b8-c9d0-4e1f-8a3b-4c5d6e7f8a9b"
+									}
 								}
 							]
 						}
@@ -780,7 +912,10 @@
 								{
 									"condition": "",
 									"false": "",
-									"true": "{show(f6a7b8c9-d0e1-4f2a-8b4c-5d6e7f8a9b0c)}"
+									"true": {
+										"fn": "show",
+										"rowId": "f6a7b8c9-d0e1-4f2a-8b4c-5d6e7f8a9b0c"
+									}
 								}
 							]
 						}
@@ -840,43 +975,68 @@
 						"tap": [
 							{
 								"condition": "{length(dc28ed59-298e-493c-8ff3-3e60f2ebccbd.title) > 0}",
-								"false": "{highlight_required(dc28ed59-298e-493c-8ff3-3e60f2ebccbd.title)}",
+								"false": {
+									"fn": "highlight_required",
+									"field": "dc28ed59-298e-493c-8ff3-3e60f2ebccbd.title"
+								},
 								"true": ""
 							},
 							{
 								"condition": "{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.price.value >= 1}",
-								"false": "{highlight_required(dc28ed59-298e-493c-8ff3-3e60f2ebccbd.price)}",
+								"false": {
+									"fn": "highlight_required",
+									"field": "dc28ed59-298e-493c-8ff3-3e60f2ebccbd.price"
+								},
 								"true": ""
 							},
 							{
 								"condition": "{length(dc28ed59-298e-493c-8ff3-3e60f2ebccbd.condition_id) > 0}",
-								"false": "{highlight_required(dc28ed59-298e-493c-8ff3-3e60f2ebccbd.condition_id)}",
+								"false": {
+									"fn": "highlight_required",
+									"field": "dc28ed59-298e-493c-8ff3-3e60f2ebccbd.condition_id"
+								},
 								"true": ""
 							},
 							{
 								"condition": "{length(dc28ed59-298e-493c-8ff3-3e60f2ebccbd.selling_reason_id) > 0}",
-								"false": "{highlight_required(dc28ed59-298e-493c-8ff3-3e60f2ebccbd.selling_reason_id)}",
+								"false": {
+									"fn": "highlight_required",
+									"field": "dc28ed59-298e-493c-8ff3-3e60f2ebccbd.selling_reason_id"
+								},
 								"true": ""
 							},
 							{
 								"condition": "{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.dimensions.width > 0}",
-								"false": "{highlight_required(dc28ed59-298e-493c-8ff3-3e60f2ebccbd.dimensions.width)}",
+								"false": {
+									"fn": "highlight_required",
+									"field": "dc28ed59-298e-493c-8ff3-3e60f2ebccbd.dimensions.width"
+								},
 								"true": ""
 							},
 							{
 								"condition": "{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.dimensions.height > 0}",
-								"false": "{highlight_required(dc28ed59-298e-493c-8ff3-3e60f2ebccbd.dimensions.height)}",
+								"false": {
+									"fn": "highlight_required",
+									"field": "dc28ed59-298e-493c-8ff3-3e60f2ebccbd.dimensions.height"
+								},
 								"true": ""
 							},
 							{
 								"condition": "{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.dimensions.length >= 1}",
-								"false": "{highlight_required(dc28ed59-298e-493c-8ff3-3e60f2ebccbd.dimensions.length)}",
+								"false": {
+									"fn": "highlight_required",
+									"field": "dc28ed59-298e-493c-8ff3-3e60f2ebccbd.dimensions.length"
+								},
 								"true": ""
 							},
 							{
 								"condition": "",
 								"false": "",
-								"true": "{navigate(ca47e6c5-da19-4491-8422-adb40d9e8a27,06b21b52-0845-468a-ace1-170a3b05f3a2)}"
+								"true": {
+									"fn": "navigate",
+									"flowId": "ca47e6c5-da19-4491-8422-adb40d9e8a27",
+									"pageId": "06b21b52-0845-468a-ace1-170a3b05f3a2"
+								}
 							}
 						]
 					},
@@ -910,8 +1070,15 @@
 						"tap": [
 							{
 								"condition": "{length(dc28ed59-298e-493c-8ff3-3e60f2ebccbd.description) > 0}",
-								"false": "{highlight_required(dc28ed59-298e-493c-8ff3-3e60f2ebccbd.description)}",
-								"true": "{navigate(ca47e6c5-da19-4491-8422-adb40d9e8a27,26dae81a-4122-4b5c-8396-a72a319ccd8b)}"
+								"false": {
+									"fn": "highlight_required",
+									"field": "dc28ed59-298e-493c-8ff3-3e60f2ebccbd.description"
+								},
+								"true": {
+									"fn": "navigate",
+									"flowId": "ca47e6c5-da19-4491-8422-adb40d9e8a27",
+									"pageId": "26dae81a-4122-4b5c-8396-a72a319ccd8b"
+								}
 							}
 						]
 					},
@@ -932,7 +1099,10 @@
 							"tap": [
 								{
 									"condition": "",
-									"true": "{select($datum)}",
+									"true": {
+										"fn": "select",
+										"value": "$datum"
+									},
 									"false": ""
 								}
 							]
@@ -960,7 +1130,10 @@
 										"actions": {
 											"tap": [
 												{
-													"true": "{show(3bb1bad9-a193-4eef-825e-da6f63a1a38e)}",
+													"true": {
+														"fn": "show",
+														"rowId": "3bb1bad9-a193-4eef-825e-da6f63a1a38e"
+													},
 													"false": "",
 													"condition": ""
 												}
@@ -993,12 +1166,36 @@
 												"tap": [
 													{
 														"condition": "{length(dc28ed59-298e-493c-8ff3-3e60f2ebccbd.transfer_options.pickup.address_id) == 0}",
-														"true": "{create(475731ac-31aa-4d65-94d2-7032782ae359, addresses, pickup_address, {pickup_address.id})}",
-														"false": "{update(475731ac-31aa-4d65-94d2-7032782ae359, addresses, {id: dc28ed59-298e-493c-8ff3-3e60f2ebccbd.transfer_options.pickup.address_id}, pickup_address)}"
+														"true": {
+															"fn": "create",
+															"service": "475731ac-31aa-4d65-94d2-7032782ae359",
+															"resource": "addresses",
+															"mode": "fromPath",
+															"dataPath": "pickup_address",
+															"idDestination": "{pickup_address.id}"
+														},
+														"false": {
+															"fn": "update",
+															"service": "475731ac-31aa-4d65-94d2-7032782ae359",
+															"resource": "addresses",
+															"mode": "store",
+															"filter": {
+																"id": "dc28ed59-298e-493c-8ff3-3e60f2ebccbd.transfer_options.pickup.address_id"
+															},
+															"changesPath": "pickup_address"
+														}
 													},
 													{
 														"condition": "",
-														"true": "{update(66b092ae-7cd8-4d67-95b7-30b03568fd90, dc28ed59-298e-493c-8ff3-3e60f2ebccbd, {}, {transfer_options.pickup.address_id: pickup_address.id}, draft)}",
+														"true": {
+															"fn": "update",
+															"service": "66b092ae-7cd8-4d67-95b7-30b03568fd90",
+															"resource": "dc28ed59-298e-493c-8ff3-3e60f2ebccbd",
+															"mode": "draft",
+															"changes": {
+																"transfer_options.pickup.address_id": "pickup_address.id"
+															}
+														},
 														"false": ""
 													}
 												]
@@ -1019,7 +1216,18 @@
 											"submit": [
 												{
 													"condition": "{length(dc28ed59-298e-493c-8ff3-3e60f2ebccbd.transfer_options.pickup.address_id) > 0}",
-													"true": "{update(475731ac-31aa-4d65-94d2-7032782ae359, addresses, {id: dc28ed59-298e-493c-8ff3-3e60f2ebccbd.transfer_options.pickup.address_id}, {instructions: pickup_address.instructions})}",
+													"true": {
+														"fn": "update",
+														"service": "475731ac-31aa-4d65-94d2-7032782ae359",
+														"resource": "addresses",
+														"mode": "store",
+														"filter": {
+															"id": "dc28ed59-298e-493c-8ff3-3e60f2ebccbd.transfer_options.pickup.address_id"
+														},
+														"changes": {
+															"instructions": "pickup_address.instructions"
+														}
+													},
 													"false": ""
 												}
 											]
@@ -1056,21 +1264,30 @@
 											"tap": [
 												{
 													"condition": "",
-													"true": "{select($datum)}",
+													"true": {
+														"fn": "select",
+														"value": "$datum"
+													},
 													"false": ""
 												}
 											],
 											"tap-row": [
 												{
 													"condition": "",
-													"true": "{select($datum)}",
+													"true": {
+														"fn": "select",
+														"value": "$datum"
+													},
 													"false": ""
 												}
 											],
 											"tap-column": [
 												{
 													"condition": "",
-													"true": "{select($datum)}",
+													"true": {
+														"fn": "select",
+														"value": "$datum"
+													},
 													"false": ""
 												}
 											]
@@ -1134,7 +1351,10 @@
 											"tap": [
 												{
 													"condition": "",
-													"true": "{select($datum)}",
+													"true": {
+														"fn": "select",
+														"value": "$datum"
+													},
 													"false": ""
 												}
 											]
@@ -1164,21 +1384,30 @@
 											"tap": [
 												{
 													"condition": "",
-													"true": "{select($datum)}",
+													"true": {
+														"fn": "select",
+														"value": "$datum"
+													},
 													"false": ""
 												}
 											],
 											"tap-row": [
 												{
 													"condition": "",
-													"true": "{select($datum)}",
+													"true": {
+														"fn": "select",
+														"value": "$datum"
+													},
 													"false": ""
 												}
 											],
 											"tap-column": [
 												{
 													"condition": "",
-													"true": "{select($datum)}",
+													"true": {
+														"fn": "select",
+														"value": "$datum"
+													},
 													"false": ""
 												}
 											]
@@ -1254,7 +1483,10 @@
 											"tap": [
 												{
 													"condition": "",
-													"true": "{select($datum)}",
+													"true": {
+														"fn": "select",
+														"value": "$datum"
+													},
 													"false": ""
 												}
 											]
@@ -1295,8 +1527,15 @@
 						"tap": [
 							{
 								"condition": "{count(dc28ed59-298e-493c-8ff3-3e60f2ebccbd.pickup_selection) > 0 || count(dc28ed59-298e-493c-8ff3-3e60f2ebccbd.delivery_selection) > 0 || count(dc28ed59-298e-493c-8ff3-3e60f2ebccbd.shipping_destination_areas) > 0}",
-								"false": "{highlight_required(dc28ed59-298e-493c-8ff3-3e60f2ebccbd.pickup_selection)}",
-								"true": "{navigate(ca47e6c5-da19-4491-8422-adb40d9e8a27,25a3269b-344c-477d-89c8-b2f5426a5d91)}"
+								"false": {
+									"fn": "highlight_required",
+									"field": "dc28ed59-298e-493c-8ff3-3e60f2ebccbd.pickup_selection"
+								},
+								"true": {
+									"fn": "navigate",
+									"flowId": "ca47e6c5-da19-4491-8422-adb40d9e8a27",
+									"pageId": "25a3269b-344c-477d-89c8-b2f5426a5d91"
+								}
 							}
 						]
 					},
@@ -1332,7 +1571,10 @@
 									"tap": [
 										{
 											"condition": "",
-											"true": "{select($datum)}",
+											"true": {
+												"fn": "select",
+												"value": "$datum"
+											},
 											"false": ""
 										}
 									]
@@ -1351,7 +1593,10 @@
 									"tap": [
 										{
 											"condition": "",
-											"true": "{select($datum)}",
+											"true": {
+												"fn": "select",
+												"value": "$datum"
+											},
 											"false": ""
 										}
 									]
@@ -1376,8 +1621,14 @@
 						"tap": [
 							{
 								"condition": "{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.payment_cash == true || dc28ed59-298e-493c-8ff3-3e60f2ebccbd.payment_app == true}",
-								"false": "{highlight_required(dc28ed59-298e-493c-8ff3-3e60f2ebccbd.payment_app)}",
-								"true": "{show(a4b5c6d7-e8f9-4a0b-1c2d-3e4f5a6b7c8d)}"
+								"false": {
+									"fn": "highlight_required",
+									"field": "dc28ed59-298e-493c-8ff3-3e60f2ebccbd.payment_app"
+								},
+								"true": {
+									"fn": "show",
+									"rowId": "a4b5c6d7-e8f9-4a0b-1c2d-3e4f5a6b7c8d"
+								}
 							}
 						]
 					},
@@ -1398,7 +1649,10 @@
 									"tap": [
 										{
 											"condition": "",
-											"true": "{expand_text(b5c6d7e8-f9a0-4b1c-2d3e-4f5a6b7c8d9e)}",
+											"true": {
+												"fn": "expand_text",
+												"rowId": "b5c6d7e8-f9a0-4b1c-2d3e-4f5a6b7c8d9e"
+											},
 											"false": ""
 										}
 									]
@@ -1416,16 +1670,27 @@
 										{
 											"condition": "",
 											"false": "",
-											"true": "{create(66b092ae-7cd8-4d67-95b7-30b03568fd90,dc28ed59-298e-493c-8ff3-3e60f2ebccbd, submit)}"
+											"true": {
+												"fn": "create",
+												"service": "66b092ae-7cd8-4d67-95b7-30b03568fd90",
+												"resource": "dc28ed59-298e-493c-8ff3-3e60f2ebccbd",
+												"mode": "submit"
+											}
 										},
 										{
 											"condition": "",
 											"false": "",
-											"true": "{close()}"
+											"true": {
+												"fn": "close"
+											}
 										},
 										{
 											"condition": "",
-											"true": "{navigate(f267c629-2594-4770-8cec-d5324ebb4058,55e427ac-263c-441f-9673-f60627b1baea)}",
+											"true": {
+												"fn": "navigate",
+												"flowId": "f267c629-2594-4770-8cec-d5324ebb4058",
+												"pageId": "55e427ac-263c-441f-9673-f60627b1baea"
+											},
 											"false": ""
 										}
 									]

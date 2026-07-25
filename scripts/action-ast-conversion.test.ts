@@ -1,28 +1,26 @@
 import { describe, expect, test } from "bun:test";
 
-import {
-	parseActionStringToInvocation,
-	serializeInvocationToLegacyString,
-} from "../types/actionAst";
 import { validateDataEvyRow } from "../types/validators";
 
 /**
- * Converts every action branch in the shipped fixtures. This is the evidence
- * that the AST covers the real corpus, not just hand-picked examples: any
- * branch that fails to convert, fails to round-trip, or produces something the
- * schema rejects fails a test here rather than surfacing during the migration.
+ * Guards the migrated state of the shipped fixtures: every action branch is
+ * structured, and every one of them satisfies the row schema.
+ *
+ * Conversion itself is covered by the corpus vectors in
+ * types/grammar/conformance.json. What this file protects is the fixtures not
+ * drifting back to legacy strings, which would quietly re-introduce the form
+ * the migration removed.
  */
 
 const FIXTURES = ["evy/evy_sdui.json", "services/service_sdui.json"] as const;
 
-type Branch = { source: string; branch: string };
+type Branch = { source: string; branch: unknown };
 
 async function loadFixtureBranches(): Promise<Branch[]> {
 	const branches: Branch[] = [];
 	for (const relative of FIXTURES) {
 		const url = new URL(`./fixtures/${relative}`, import.meta.url);
-		const flows = await Bun.file(url).json();
-		walk(flows, relative, branches);
+		walk(await Bun.file(url).json(), relative, branches);
 	}
 	return branches;
 }
@@ -44,9 +42,9 @@ function walk(node: unknown, source: string, out: Branch[]): void {
 				if (!action || typeof action !== "object") continue;
 				for (const key of ["true", "false"] as const) {
 					const branch = (action as Record<string, unknown>)[key];
-					if (typeof branch === "string" && branch.trim()) {
-						out.push({ source, branch });
-					}
+					// An empty string is the canonical "do nothing" branch.
+					if (branch === "" || branch === undefined) continue;
+					out.push({ source, branch });
 				}
 			}
 		}
@@ -72,70 +70,55 @@ function rowWithBranch(branch: unknown) {
 	};
 }
 
-describe("action AST conversion over the shipped fixtures", () => {
+describe("shipped fixtures use structured actions", () => {
 	test("the fixtures actually contain action branches", () => {
 		expect(fixtureBranches.length).toBeGreaterThan(20);
 	});
 
-	test("every fixture branch converts", () => {
-		const failures = fixtureBranches
-			.map(({ source, branch }) => {
-				const result = parseActionStringToInvocation(branch);
-				return result.ok
-					? null
-					: `${source}: ${branch} -> ${result.reason}`;
-			})
-			.filter((entry): entry is string => entry !== null);
+	test("no legacy string branches remain", () => {
+		const legacy = fixtureBranches
+			.filter(({ branch }) => typeof branch === "string")
+			.map(({ source, branch }) => `${source}: ${branch}`);
 
-		expect(failures).toEqual([]);
+		expect(legacy).toEqual([]);
 	});
 
-	test("every converted branch round-trips back to an identical AST", () => {
-		const mismatches: string[] = [];
-		for (const { source, branch } of fixtureBranches) {
-			const first = parseActionStringToInvocation(branch);
-			if (!first.ok) continue;
-			const again = parseActionStringToInvocation(
-				serializeInvocationToLegacyString(first.invocation),
-			);
-			if (
-				!again.ok ||
-				JSON.stringify(again.invocation) !==
-					JSON.stringify(first.invocation)
-			) {
-				mismatches.push(`${source}: ${branch}`);
-			}
-		}
-		expect(mismatches).toEqual([]);
-	});
-
-	test("every converted branch satisfies the row schema", () => {
+	test("every branch satisfies the row schema", () => {
 		const rejected: string[] = [];
 		for (const { source, branch } of fixtureBranches) {
-			const result = parseActionStringToInvocation(branch);
-			if (!result.ok) continue;
 			try {
-				validateDataEvyRow(rowWithBranch(result.invocation));
+				validateDataEvyRow(rowWithBranch(branch));
 			} catch (error) {
 				const detail =
 					error instanceof Error ? error.message : String(error);
 				rejected.push(
-					`${source}: ${branch} -> ${detail.slice(0, 120)}`,
+					`${source}: ${JSON.stringify(branch)} -> ${detail.slice(0, 120)}`,
 				);
 			}
 		}
 		expect(rejected).toEqual([]);
 	});
 
-	test("covers every action function used by the fixtures", () => {
-		const functions = new Set<string>();
-		for (const { branch } of fixtureBranches) {
-			const result = parseActionStringToInvocation(branch);
-			if (result.ok) functions.add(result.invocation.fn);
+	test("covers the action functions the flows rely on", () => {
+		const functions = new Set(
+			fixtureBranches
+				.map(({ branch }) =>
+					branch && typeof branch === "object"
+						? (branch as { fn?: string }).fn
+						: undefined,
+				)
+				.filter((fn): fn is string => Boolean(fn)),
+		);
+
+		// Guards against the fixtures quietly losing coverage of a function.
+		for (const expected of [
+			"create",
+			"update",
+			"navigate",
+			"show",
+			"select",
+		]) {
+			expect([...functions]).toContain(expected);
 		}
-		// Guards against the corpus quietly losing coverage of a function.
-		expect([...functions].sort()).toContain("create");
-		expect([...functions].sort()).toContain("update");
-		expect([...functions].sort()).toContain("navigate");
 	});
 });

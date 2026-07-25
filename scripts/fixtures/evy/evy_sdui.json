@@ -21,7 +21,19 @@
 								{
 									"condition": "",
 									"false": "",
-									"true": "{update(475731ac-31aa-4d65-94d2-7032782ae359, messages, {id: $datum.id, status: \"pending\"}, {status: \"accepted\"})}"
+									"true": {
+										"fn": "update",
+										"service": "475731ac-31aa-4d65-94d2-7032782ae359",
+										"resource": "messages",
+										"mode": "store",
+										"filter": {
+											"id": "$datum.id",
+											"status": "\"pending\""
+										},
+										"changes": {
+											"status": "\"accepted\""
+										}
+									}
 								}
 							]
 						}
@@ -46,7 +58,14 @@
 						"actions": {
 							"tap": [
 								{
-									"true": "{navigate(74a49d4b-2176-4925-857a-e29e2991f1bd,82cae120-c7b1-4c29-bd42-e1521320b109,{id: $datum.id})}",
+									"true": {
+										"fn": "navigate",
+										"flowId": "74a49d4b-2176-4925-857a-e29e2991f1bd",
+										"pageId": "82cae120-c7b1-4c29-bd42-e1521320b109",
+										"query": {
+											"id": "$datum.id"
+										}
+									},
 									"false": "",
 									"condition": ""
 								}
@@ -73,7 +92,11 @@
 				"actions": {
 					"tap": [
 						{
-							"true": "{navigate(ca47e6c5-da19-4491-8422-adb40d9e8a27,306ed62c-c2af-4652-a873-26c7a388972d)}",
+							"true": {
+								"fn": "navigate",
+								"flowId": "ca47e6c5-da19-4491-8422-adb40d9e8a27",
+								"pageId": "306ed62c-c2af-4652-a873-26c7a388972d"
+							},
 							"false": "",
 							"condition": ""
 						}
