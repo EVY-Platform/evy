@@ -19,6 +19,7 @@ function makeDataRow(
 		data: data as DATA_EVY_Row["data"],
 		createdAt: "",
 		updatedAt: "",
+		visibility: "public",
 	};
 }
 
@@ -35,6 +36,7 @@ function makePage(
 		...(footerRowId ? { footerRowId } : {}),
 		createdAt: "",
 		updatedAt: "",
+		visibility: "public",
 	};
 }
 

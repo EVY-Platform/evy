@@ -1,5 +1,10 @@
 import { describe, expect, it } from "bun:test";
-import type { DATA_EVY_Flow, DATA_EVY_Page, DATA_EVY_Row } from "evy-types";
+import type {
+	DATA_EVY_Flow,
+	DATA_EVY_Page,
+	DATA_EVY_Row,
+	UI_RowAction,
+} from "evy-types";
 import {
 	addFlowRecords,
 	addPage,
@@ -456,7 +461,9 @@ describe("updateRowActions", () => {
 	it("updates the actions array in data", () => {
 		const row = makeRow("r1");
 		const maps = makeMaps([], [], [row]);
-		const actions = [{ condition: "", true: "{close()}", false: "" }];
+		const actions: UI_RowAction[] = [
+			{ condition: "", true: { fn: "close" }, false: "" },
+		];
 		const next = updateRowActions(maps, "r1", { tap: actions });
 		expect(next.rowsById.r1?.data.actions).toEqual({ tap: actions });
 	});

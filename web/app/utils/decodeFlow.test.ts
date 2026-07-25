@@ -1,5 +1,9 @@
 import { describe, expect, it } from "bun:test";
-import type { UI_Flow as ServerFlow, UI_Row as ServerRow } from "evy-types";
+import type {
+	UI_Flow as ServerFlow,
+	UI_Row as ServerRow,
+	UI_RowAction,
+} from "evy-types";
 import CalendarRow from "../rows/edit/CalendarRow";
 import DropdownRow from "../rows/edit/DropdownRow";
 import SearchRow from "../rows/edit/SearchRow";
@@ -171,7 +175,7 @@ describe("buildRowForNewPageFromBase", () => {
 	it("keeps palette select defaults for Calendar without show-self injection", () => {
 		const newId = "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee";
 		const row = buildRowForNewPageFromBase(CalendarRow, newId);
-		const selectDatum = {
+		const selectDatum: UI_RowAction = {
 			condition: "",
 			true: { fn: "select", value: "$datum" },
 			false: "",
@@ -197,12 +201,16 @@ describe("decomposeServerFlow", () => {
 					rows: [
 						{
 							id: "search-1",
+							name: "Search",
 							type: "Search",
 							visible: "true",
 							title: "Search",
+							source: "",
+							destination: "",
 							actions: {},
 							child: {
 								id: "child-1",
+								name: "Result",
 								type: "Text",
 								visible: "true",
 								title: "Result",
@@ -210,6 +218,7 @@ describe("decomposeServerFlow", () => {
 							},
 							sheet: {
 								id: "sheet-1",
+								name: "Sheet",
 								type: "Text",
 								visible: "true",
 								title: "Sheet",

@@ -1,4 +1,5 @@
 import { describe, expect, test } from "bun:test";
+import type { UI_ActionInvocation } from "evy-types";
 
 import { parseActionStringToInvocation } from "evy-types/actionAst";
 import corpus from "../../../types/grammar/conformance.json";
@@ -109,7 +110,10 @@ describe("action-ast-convert", () => {
 			}
 			expect(result.ok).toBe(true);
 			if (result.ok) {
-				expect(result.invocation).toEqual(vector.expect.ast);
+				// Corpus values arrive as JSON, like the `as Vector[]` above.
+				expect(result.invocation).toEqual(
+					vector.expect.ast as UI_ActionInvocation,
+				);
 			}
 		});
 	}

@@ -24,6 +24,7 @@ const flowsById: Record<string, DATA_EVY_Flow> = {
 		pageIds: ["page-1", "page-2"],
 		createdAt: "",
 		updatedAt: "",
+		visibility: "public",
 	},
 };
 
@@ -35,6 +36,7 @@ const pagesById: Record<string, DATA_EVY_Page> = {
 		rowIds: ["parent-row"],
 		createdAt: "",
 		updatedAt: "",
+		visibility: "public",
 	},
 	"page-2": {
 		id: "page-2",
@@ -43,6 +45,7 @@ const pagesById: Record<string, DATA_EVY_Page> = {
 		rowIds: [],
 		createdAt: "",
 		updatedAt: "",
+		visibility: "public",
 	},
 };
 
