@@ -124,11 +124,23 @@ export async function listExternalServiceResources(
 		.orderBy(asc(service.id), asc(serviceResource.id));
 }
 
+export type ExternalServiceRow = {
+	id: string;
+	name: string;
+	wsHost: string | null;
+	wsPort: number | null;
+};
+
 export async function listExternalServices(
 	db: EvyDb,
-): Promise<Array<{ id: string; name: string }>> {
+): Promise<ExternalServiceRow[]> {
 	return db
-		.select({ id: service.id, name: service.name })
+		.select({
+			id: service.id,
+			name: service.name,
+			wsHost: service.wsHost,
+			wsPort: service.wsPort,
+		})
 		.from(service)
 		.where(ne(service.id, EVY_CORE_SERVICE));
 }

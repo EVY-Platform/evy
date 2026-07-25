@@ -680,6 +680,9 @@ async function seedDatabase({
 				description: "Marketplace service",
 				sortOrder: 1,
 				visibility: "public",
+				// Records the endpoint on the row when the environment knows it,
+				// so routing does not depend on the env convention at runtime.
+				...marketplaceEndpointColumns(),
 				...timestamped(now),
 			},
 		]);
@@ -750,6 +753,21 @@ async function seedDatabase({
 			await tx.insert(marketplaceSchema.data).values(marketplaceRows);
 		}
 	});
+}
+
+/**
+ * Endpoint columns for the marketplace service row, taken from the environment
+ * when present. Absent values leave the columns null and the API falls back to
+ * the `<NAME>_WS_HOST/PORT` convention.
+ */
+function marketplaceEndpointColumns(): {
+	wsHost?: string;
+	wsPort?: number;
+} {
+	const host = process.env.MARKETPLACE_WS_HOST?.trim();
+	const port = Number(process.env.MARKETPLACE_WS_PORT);
+	if (!host || !Number.isInteger(port) || port <= 0) return {};
+	return { wsHost: host, wsPort: port };
 }
 
 async function main(): Promise<void> {

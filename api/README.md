@@ -98,6 +98,17 @@ docker build -t evy-api .
 
 All required env vars (database connection, service WebSocket hosts, etc.) must be provided at runtime. See the root [`.env.example`](../.env.example) for the full list.
 
+### Service registration
+
+External services are discovered from rows in the core `Service` table. The API resolves each service's WebSocket endpoint in this order:
+
+1. `wsHost` / `wsPort` on the service row — the preferred form, keeping registration in data alongside the routing it drives. `bun run db:seed` populates these from the environment.
+2. The `<NAME>_WS_HOST` / `<NAME>_WS_PORT` convention, where `<NAME>` is the uppercased service name. Kept so existing deployments and Docker Compose work unchanged. A service whose name cannot form an env var (anything outside letters, digits and underscores) is rejected with that reason rather than silently looking up an empty variable.
+
+Every forwarded call is bounded by `SERVICE_RPC_TIMEOUT_MS` (default 10000) and, on failure, raises an error naming the service and carrying `{ serviceId, serviceName, code }`, where code is `SERVICE_TIMEOUT` or `SERVICE_ERROR`. A hung service therefore fails fast and attributably instead of stalling the caller.
+
+Readiness treats an unresolvable endpoint as a warning unless the service is named in `REQUIRED_SERVICES` (comma-separated), so one misconfigured optional service does not take the whole gateway out of rotation.
+
 ### Docker Compose
 
 From the repo root: `docker compose up -d api` (same stack as [README § Development (with Docker Compose)](../README.md#development-with-docker-compose)). Optional API-only file: [`compose.yml`](./compose.yml) here (service `app`, `env_file` → root `.env`).
