@@ -39,10 +39,6 @@ export function assertNotModified(
 	}
 }
 
-export function isConflictError(error: unknown): error is ConflictError {
-	return error instanceof ConflictError;
-}
-
 /**
  * The row's next `updatedAt`, guaranteed to be greater than its current one.
  *

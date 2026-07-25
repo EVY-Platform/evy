@@ -12,7 +12,6 @@ import {
 	createUsesSubmitMarker,
 	finalizeCreateBranchForSave,
 	formatBranchDisplay,
-	isUnstorableBranchText,
 	isValidCreateBranchForSave,
 	parseBranch,
 	serializeBranch,
@@ -430,11 +429,5 @@ describe("structured branch storage", () => {
 			functionName: "show",
 			args: ["row-1"],
 		});
-	});
-
-	it("flags only unstorable editor text", () => {
-		expect(isUnstorableBranchText("{teleport(x)}")).toBe(true);
-		expect(isUnstorableBranchText("{close()}")).toBe(false);
-		expect(isUnstorableBranchText("")).toBe(false);
 	});
 });

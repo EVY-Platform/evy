@@ -49,16 +49,6 @@ public enum EVYActionInvocation: Equatable {
 public enum EVYActionBranch: Equatable {
   case empty
   case invocation(EVYActionInvocation)
-
-  public var isEmpty: Bool {
-    self == .empty
-  }
-
-  /// The structured form, or nil when the branch does nothing.
-  public var resolvedInvocation: EVYActionInvocation? {
-    if case .invocation(let invocation) = self { return invocation }
-    return nil
-  }
 }
 
 // MARK: - Codable

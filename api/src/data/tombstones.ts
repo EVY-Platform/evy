@@ -74,7 +74,7 @@ export function isCursorExpired(
 	return cursor < horizon;
 }
 
-export interface PurgeResult {
+interface PurgeResult {
 	horizon: string;
 	purged: Record<string, number>;
 	total: number;

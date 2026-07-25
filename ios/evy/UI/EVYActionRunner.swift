@@ -67,28 +67,16 @@ enum EVYActionRunner {
     rowOperation: @escaping EVYRowOperationHandler,
     action: @escaping (ActionOperation) -> Void
   ) -> Bool {
-    guard !branch.isEmpty else { return true }
+    guard case .invocation(let invocation) = branch else { return true }
     do {
-      try execute(
-        branch: branch, datum: datum, action: action, show: show, rowOperation: rowOperation)
+      try run(
+        invocation: invocation, datum: datum, action: action, show: show,
+        rowOperation: rowOperation)
       return true
     } catch {
       NotificationCenter.default.post(name: .evyErrorOccurred, object: error)
       return false
     }
-  }
-
-  private static func execute(
-    branch: EVYActionBranch,
-    datum: EVYJson?,
-    action: @escaping (ActionOperation) -> Void,
-    show: @escaping (String) throws -> Void,
-    rowOperation: @escaping EVYRowOperationHandler
-  ) throws {
-    guard let invocation = branch.resolvedInvocation else { return }
-    try run(
-      invocation: invocation, datum: datum, action: action, show: show,
-      rowOperation: rowOperation)
   }
 
   private static func run(

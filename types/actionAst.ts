@@ -19,7 +19,7 @@ import type {
 	UI_ActionInvocation,
 } from "./generated/ts/sdui/action";
 
-export type ActionConversion =
+type ActionConversion =
 	| { ok: true; invocation: UI_ActionInvocation }
 	| { ok: false; reason: string };
 

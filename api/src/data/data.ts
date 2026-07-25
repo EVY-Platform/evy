@@ -124,7 +124,7 @@ export async function listExternalServiceResources(
 		.orderBy(asc(service.id), asc(serviceResource.id));
 }
 
-export type ExternalServiceRow = {
+type ExternalServiceRow = {
 	id: string;
 	name: string;
 	wsHost: string | null;

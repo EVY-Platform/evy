@@ -89,13 +89,6 @@ export function branchForStorage(branchString: string): UI_ActionBranch {
 	return converted.invocation;
 }
 
-/** True when the editor's text form could not be stored as an invocation. */
-export function isUnstorableBranchText(branchText: string): boolean {
-	const trimmed = branchText.trim();
-	if (!trimmed) return false;
-	return !parseActionStringToInvocation(trimmed).ok;
-}
-
 export function parseBranch(branch: UI_ActionBranch): ParsedBranch | null {
 	const branchString = branchToEditableString(branch);
 	const trimmed = branchString.trim();

@@ -214,7 +214,7 @@ enum EVYFlowStore {
         guard let uiRow = storedRow.uiRow() else { return }
         for action in EVYRowActionTrigger.allActionLists(in: uiRow.actions) {
           for branch in [action.`true`, action.`false`] {
-            if case .create(_, let resource, .submit, _) = branch.resolvedInvocation {
+            if case .invocation(.create(_, let resource, .submit, _)) = branch {
               keys.insert(resource)
             }
           }

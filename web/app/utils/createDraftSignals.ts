@@ -33,7 +33,7 @@ function destinationDraftsTargetResource(
 	);
 }
 
-export type DraftSignals = {
+type DraftSignals = {
 	draftVariables: string[];
 	draftUpdateTargets: Set<string>;
 	/** `service/resource` the active flow declares it submits, if any. */
