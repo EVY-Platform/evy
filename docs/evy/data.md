@@ -58,7 +58,7 @@ A procedure is an RPC call that runs code rather than reading or writing a resou
 | Field | Meaning |
 | --- | --- |
 | `service` | The service UUID that owns it. Core procedures run in the gateway; anything else is forwarded to that service. |
-| `request` / `response` | Schema paths, relative to `types/schema/`. Both are validated — the request because the caller is untrusted, the response because a procedure that drifts from its schema breaks clients silently. |
+| `response` | Schema path, relative to `types/schema/`. The generator reads it for the result attributes the builder offers. Request and response are both validated at dispatch, but by handlers wired in code rather than from this file. |
 | `rateLimit.perMinute` | Optional. Calls allowed per socket per minute. Omit for unmetered. |
 
 The manifest is the single source of truth for which procedures exist:
@@ -67,7 +67,7 @@ The manifest is the single source of truth for which procedures exist:
 - `api/src/procedures/rpc.ts` will only forward a procedure to the service that declares it.
 - The web builder offers a `{$api:<method>}` source's attributes from the registry, derived from the response schema at generation time. Only array-of-object responses have them; `sync` is callable but its envelope is not a bindable source.
 
-Adding one means: write the request/response schemas, add the manifest entry, `bun run types:generate`, then implement the handler (in the gateway for a core procedure, or in the owning service).
+Adding one means: write the request/response schemas, add the manifest entry naming the response, `bun run types:generate`, then implement the handler with its validation (in the gateway for a core procedure, or in the owning service).
 
 ---
 

@@ -83,58 +83,52 @@ export function ActionPopup({
 		[serviceResources, resourceAttributeMetadata],
 	);
 
-	const canSave = useMemo(() => {
-		const finalizedTrue = finalizeBranchForSave(
+	/**
+	 * Both branches in their storable form, or null where one cannot be saved.
+	 *
+	 * One computation feeds both the save button's enabled state and the save
+	 * itself, which previously ran the same conversion twice behind dependency
+	 * lists that had to be kept in step.
+	 */
+	const finalized = useMemo(
+		() => ({
+			trueBranch: finalizeBranchForSave(
+				trueBranch,
+				draftVariables,
+				draftUpdateTargets,
+				declaredSubmits,
+			),
+			falseBranch: finalizeBranchForSave(
+				falseBranch,
+				draftVariables,
+				draftUpdateTargets,
+				declaredSubmits,
+			),
+		}),
+		[
 			trueBranch,
-			draftVariables,
-			draftUpdateTargets,
-			declaredSubmits,
-		);
-		const finalizedFalse = finalizeBranchForSave(
 			falseBranch,
 			draftVariables,
 			draftUpdateTargets,
 			declaredSubmits,
-		);
-		return finalizedTrue !== null && finalizedFalse !== null;
-	}, [
-		trueBranch,
-		falseBranch,
-		draftVariables,
-		draftUpdateTargets,
-		declaredSubmits,
-	]);
+		],
+	);
+
+	const canSave =
+		finalized.trueBranch !== null && finalized.falseBranch !== null;
 
 	const handleSave = useCallback(() => {
-		const finalizedTrue = finalizeBranchForSave(
-			trueBranch,
-			draftVariables,
-			draftUpdateTargets,
-			declaredSubmits,
-		);
-		const finalizedFalse = finalizeBranchForSave(
-			falseBranch,
-			draftVariables,
-			draftUpdateTargets,
-			declaredSubmits,
-		);
-		if (finalizedTrue === null || finalizedFalse === null) return;
+		if (finalized.trueBranch === null || finalized.falseBranch === null) {
+			return;
+		}
 		// Conversion happens on save, never on load, so opening and cancelling
 		// an action cannot rewrite the stored row.
 		onSave({
 			condition: serializeCondition(expression),
-			true: branchForStorage(finalizedTrue),
-			false: branchForStorage(finalizedFalse),
+			true: branchForStorage(finalized.trueBranch),
+			false: branchForStorage(finalized.falseBranch),
 		});
-	}, [
-		expression,
-		trueBranch,
-		falseBranch,
-		draftVariables,
-		draftUpdateTargets,
-		declaredSubmits,
-		onSave,
-	]);
+	}, [expression, finalized, onSave]);
 
 	return (
 		<Modal

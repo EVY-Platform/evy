@@ -68,12 +68,8 @@ export async function listFileRows(
 
 	const isSingleFileRead = Boolean(filter?.id);
 	const response = isSingleFileRead
-		? await Promise.all(
-				rows.map((row) =>
-					fileRowToGetFileResponse(row as DATA_EVY_File),
-				),
-			)
-		: rows.map((row) => fileRowToMetadataResponse(row as DATA_EVY_File));
+		? await Promise.all(rows.map(fileRowToGetFileResponse))
+		: rows.map(omitNulls);
 
 	return validateGetResponse(response);
 }
@@ -224,19 +220,10 @@ async function createFileFromUpload(params: {
 
 // Response mapping
 
-function fileRowToMetadataResponse(metadata: DATA_EVY_File): DATA_EVY_File {
-	return omitNulls({
-		id: metadata.id,
-		type: metadata.type,
-		createdAt: metadata.createdAt,
-		updatedAt: metadata.updatedAt,
-		visibility: metadata.visibility,
-		deletedAt: metadata.deletedAt,
-	});
-}
+type FileRow = typeof file.$inferSelect;
 
 async function fileRowToGetFileResponse(
-	metadata: DATA_EVY_File,
+	metadata: FileRow,
 ): Promise<FileWithBinary> {
 	let fileData: Buffer;
 	try {

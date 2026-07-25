@@ -16,6 +16,7 @@ import { Client } from "rpc-websockets";
 import * as data from "../data/data";
 import type { EvyDb } from "../database/db";
 import { assertApiReadable } from "../readiness";
+import { withEnvironment } from "./withEnvironment";
 import { getFreePort, type WSServer, waitForClientOpen } from "./wsTestHelpers";
 
 const db = null as unknown as EvyDb;
@@ -145,24 +146,15 @@ describe("assertApiReadable", () => {
 	});
 
 	/** Runs `body` with the marketplace endpoint env vars unset. */
-	async function withoutMarketplaceEnv(body: () => Promise<void>) {
-		const savedHost = process.env.MARKETPLACE_WS_HOST;
-		const savedPort = process.env.MARKETPLACE_WS_PORT;
-		const savedRequired = process.env.REQUIRED_SERVICES;
-		delete process.env.MARKETPLACE_WS_HOST;
-		delete process.env.MARKETPLACE_WS_PORT;
-		delete process.env.REQUIRED_SERVICES;
-		try {
-			await body();
-		} finally {
-			if (savedHost !== undefined)
-				process.env.MARKETPLACE_WS_HOST = savedHost;
-			if (savedPort !== undefined)
-				process.env.MARKETPLACE_WS_PORT = savedPort;
-			if (savedRequired !== undefined)
-				process.env.REQUIRED_SERVICES = savedRequired;
-			else delete process.env.REQUIRED_SERVICES;
-		}
+	function withoutMarketplaceEnv(body: () => Promise<void>) {
+		return withEnvironment(
+			{
+				MARKETPLACE_WS_HOST: undefined,
+				MARKETPLACE_WS_PORT: undefined,
+				REQUIRED_SERVICES: undefined,
+			},
+			body,
+		);
 	}
 
 	// An unreachable optional service degrades readiness rather than taking the

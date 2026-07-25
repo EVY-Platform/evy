@@ -9,7 +9,6 @@ const VALID = {
 	procedures: {
 		place_search: {
 			service: "svc-1",
-			request: "rpc/placeSearch.request.schema.json",
 			response: "rpc/placeSearch.response.schema.json",
 			rateLimit: { perMinute: 30 },
 		},
@@ -71,7 +70,6 @@ describe("generated registry", () => {
 				procedures: {
 					sync: {
 						service: "svc-1",
-						request: "a.json",
 						response: "b.json",
 					},
 					place_search: VALID.procedures.place_search,
@@ -83,8 +81,8 @@ describe("generated registry", () => {
 					: { type: "array", items: { properties: { id: {} } } },
 		);
 
-		expect(output).toContain('SYNC: "sync"');
-		expect(output).toContain('PLACE_SEARCH: "place_search"');
+		expect(output).toContain('"sync"');
+		expect(output).toContain('"place_search"');
 		expect(output).toContain("perMinute: null");
 		expect(output).toContain("perMinute: 30");
 		expect(output).toContain('resultAttributes: ["id"]');

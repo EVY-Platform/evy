@@ -17,7 +17,6 @@ import {
 	generatedFileHeader,
 	loadJson,
 	OUT_TS,
-	resourceKey,
 	runMain,
 	SCHEMA_DIR,
 } from "./types-generation-utils.js";
@@ -32,7 +31,6 @@ interface RateLimitMeta {
 
 interface ProcedureMeta {
 	service: string;
-	request: string;
 	response: string;
 	rateLimit?: RateLimitMeta;
 }
@@ -73,7 +71,7 @@ export function validateSchema(
 			);
 		}
 		const m = meta as Record<string, unknown>;
-		for (const field of ["service", "request", "response"] as const) {
+		for (const field of ["service", "response"] as const) {
 			if (typeof m[field] !== "string" || m[field] === "") {
 				throw new Error(
 					`${SOURCE_LABEL}: procedures.${name}.${field} must be a non-empty string`,
@@ -111,70 +109,50 @@ export function resultAttributes(schema: ResponseSchema): string[] {
 	return [];
 }
 
-function tsKey(name: string): string {
-	return resourceKey(name);
-}
-
 export async function generateTypeScript(
 	schema: ProceduresSchema,
 	loadResponseSchema: (path: string) => Promise<ResponseSchema>,
 ): Promise<string> {
-	const names = Object.keys(schema.procedures);
 	const lines = generatedFileHeader(SOURCE_LABEL);
 
-	lines.push("export const PROCEDURE = {");
-	for (const name of names) {
-		lines.push(`\t${tsKey(name)}: ${JSON.stringify(name)},`);
-	}
-	lines.push("} as const;");
-	lines.push("");
-	lines.push(
-		"export type ProcedureName = (typeof PROCEDURE)[keyof typeof PROCEDURE];",
-	);
-	lines.push("");
-	lines.push("export interface ProcedureMeta {");
-	lines.push("\treadonly name: string;");
-	lines.push(
-		"\t/** Service that owns the procedure; others must forward. */",
-	);
-	lines.push("\treadonly service: string;");
-	lines.push(
-		"\t/** Calls allowed per socket per minute; absent means unlimited. */",
-	);
-	lines.push("\treadonly perMinute: number | null;");
-	lines.push(
-		"\t/** Bindable attribute names from the response; empty when not a bindable source. */",
-	);
-	lines.push("\treadonly resultAttributes: readonly string[];");
-	lines.push("}");
-	lines.push("");
-	lines.push("export const PROCEDURES: Record<string, ProcedureMeta> = {");
-	for (const name of names) {
-		const meta = schema.procedures[name];
+	lines.push("export const PROCEDURES = {");
+	for (const [name, meta] of Object.entries(schema.procedures)) {
 		const response = await loadResponseSchema(
 			join(SCHEMA_DIR, meta.response),
 		);
-		const attributes = resultAttributes(response);
 		lines.push(`\t${JSON.stringify(name)}: {`);
-		lines.push(`\t\tname: ${JSON.stringify(name)},`);
+		lines.push(
+			"\t\t/** Service that owns the procedure; others must forward. */",
+		);
 		lines.push(`\t\tservice: ${JSON.stringify(meta.service)},`);
+		lines.push(
+			"\t\t/** Calls allowed per socket per minute; null means unmetered. */",
+		);
 		lines.push(`\t\tperMinute: ${meta.rateLimit?.perMinute ?? "null"},`);
 		lines.push(
-			`\t\tresultAttributes: ${JSON.stringify(attributes)} as const,`,
+			"\t\t/** Bindable attribute names; empty when not a bindable source. */",
+		);
+		lines.push(
+			`\t\tresultAttributes: ${JSON.stringify(resultAttributes(response))},`,
 		);
 		lines.push("\t},");
 	}
-	lines.push("};");
+	lines.push("} as const satisfies Record<string, ProcedureMeta>;");
 	lines.push("");
-	lines.push("export const PROCEDURE_NAMES: readonly string[] =");
-	lines.push("\tObject.keys(PROCEDURES);");
+	lines.push("interface ProcedureMeta {");
+	lines.push("\treadonly service: string;");
+	lines.push("\treadonly perMinute: number | null;");
+	lines.push("\treadonly resultAttributes: readonly string[];");
+	lines.push("}");
 	lines.push("");
 	lines.push("/** Procedure names a given service owns. */");
 	lines.push(
 		"export function proceduresForService(service: string): string[] {",
 	);
-	lines.push("\treturn PROCEDURE_NAMES.filter(");
-	lines.push("\t\t(name) => PROCEDURES[name].service === service,");
+	lines.push("\treturn Object.keys(PROCEDURES).filter(");
+	lines.push(
+		"\t\t(name) => PROCEDURES[name as keyof typeof PROCEDURES].service === service,",
+	);
 	lines.push("\t);");
 	lines.push("}");
 	lines.push("");
@@ -184,7 +162,9 @@ export async function generateTypeScript(
 	lines.push(
 		"export function procedureResultAttributes(name: string): readonly string[] {",
 	);
-	lines.push("\treturn PROCEDURES[name]?.resultAttributes ?? [];");
+	lines.push(
+		"\treturn PROCEDURES[name as keyof typeof PROCEDURES]?.resultAttributes ?? [];",
+	);
 	lines.push("}");
 	lines.push("");
 

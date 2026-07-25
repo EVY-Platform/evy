@@ -10,6 +10,7 @@ import { DATA_CHANGED_EVENT } from "evy-types/ws";
 import { Server } from "rpc-websockets";
 import { resolveServiceWsEndpoint } from "../procedures/services";
 import { emitJsonRpc } from "../shared/ws";
+import { withEnvironment } from "./withEnvironment";
 import {
 	asEvyDb,
 	createPgliteTestDatabase,
@@ -222,26 +223,14 @@ describe("resolveServiceWsEndpoint", () => {
 		port: string | undefined,
 		body: () => void,
 	) {
-		const savedHost = process.env.MARKETPLACE_WS_HOST;
-		const savedPort = process.env.MARKETPLACE_WS_PORT;
-		if (host === undefined) delete process.env.MARKETPLACE_WS_HOST;
-		else process.env.MARKETPLACE_WS_HOST = host;
-		if (port === undefined) delete process.env.MARKETPLACE_WS_PORT;
-		else process.env.MARKETPLACE_WS_PORT = port;
-		try {
-			body();
-		} finally {
-			if (savedHost !== undefined)
-				process.env.MARKETPLACE_WS_HOST = savedHost;
-			else delete process.env.MARKETPLACE_WS_HOST;
-			if (savedPort !== undefined)
-				process.env.MARKETPLACE_WS_PORT = savedPort;
-			else delete process.env.MARKETPLACE_WS_PORT;
-		}
+		return withEnvironment(
+			{ MARKETPLACE_WS_HOST: host, MARKETPLACE_WS_PORT: port },
+			body,
+		);
 	}
 
-	it("prefers the endpoint on the service row", () => {
-		withEnv("env-host", "9999", () => {
+	it("prefers the endpoint on the service row", async () => {
+		await withEnv("env-host", "9999", () => {
 			expect(
 				resolveServiceWsEndpoint({
 					...base,
@@ -252,8 +241,8 @@ describe("resolveServiceWsEndpoint", () => {
 		});
 	});
 
-	it("falls back to the env convention when the row has no endpoint", () => {
-		withEnv("env-host", "9999", () => {
+	it("falls back to the env convention when the row has no endpoint", async () => {
+		await withEnv("env-host", "9999", () => {
 			expect(
 				resolveServiceWsEndpoint({
 					...base,
@@ -265,8 +254,8 @@ describe("resolveServiceWsEndpoint", () => {
 	});
 
 	// Half a row endpoint is not an endpoint; fall through rather than guess.
-	it("falls back when the row has a host but no port", () => {
-		withEnv("env-host", "9999", () => {
+	it("falls back when the row has a host but no port", async () => {
+		await withEnv("env-host", "9999", () => {
 			expect(
 				resolveServiceWsEndpoint({
 					...base,
@@ -277,8 +266,8 @@ describe("resolveServiceWsEndpoint", () => {
 		});
 	});
 
-	it("throws naming the service when nothing is configured", () => {
-		withEnv(undefined, undefined, () => {
+	it("throws naming the service when nothing is configured", async () => {
+		await withEnv(undefined, undefined, () => {
 			expect(() =>
 				resolveServiceWsEndpoint({
 					...base,
@@ -291,7 +280,7 @@ describe("resolveServiceWsEndpoint", () => {
 
 	// The env fallback builds a variable name from the service name, so a name
 	// that cannot be one must say so rather than silently looking up "".
-	it("rejects a service name that cannot form an env var", () => {
+	it("rejects a service name that cannot form an env var", async () => {
 		expect(() =>
 			resolveServiceWsEndpoint({
 				id: MARKETPLACE_SERVICE,
@@ -302,7 +291,7 @@ describe("resolveServiceWsEndpoint", () => {
 		).toThrow("cannot be used for env lookup");
 	});
 
-	it("accepts a name-derived env var with digits and underscores", () => {
+	it("accepts a name-derived env var with digits and underscores", async () => {
 		const savedHost = process.env.SVC_2_WS_HOST;
 		const savedPort = process.env.SVC_2_WS_PORT;
 		process.env.SVC_2_WS_HOST = "h";
