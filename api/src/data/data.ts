@@ -22,7 +22,7 @@ import { addressesResource } from "./resources/addresses";
 import {
 	createFileResource,
 	deleteFileResource,
-	listFileRowsWithBinary,
+	listFileRows,
 } from "./resources/files";
 import { flowsResource } from "./resources/flows";
 import { messagesResource } from "./resources/messages";
@@ -91,7 +91,7 @@ const CORE_RESOURCE_REGISTRY: Record<string, CoreResourceOps> = {
 		update: serviceResourcesResource.update,
 	},
 	[EVY_CORE_RESOURCE.FILES]: {
-		list: listFileRowsWithBinary,
+		list: listFileRows,
 		create: createFileResource,
 		remove: deleteFileResource,
 	},

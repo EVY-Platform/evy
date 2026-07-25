@@ -131,4 +131,6 @@ Env vars must be exported in the shell or provided via Docker — they are not l
 
 ## File Upload
 
-Files are stored at `api/public/files/{id}` (excluded from git). File metadata is an evy core resource (`service: "evy"`, `resource: "files"`). Maximum upload size is 20 MB. For production deployments, migrate to S3 or a CDN while keeping file IDs stable.
+Files are stored at `api/src/public/files/{id}` (excluded from git). File metadata is an evy core resource (`service: "evy"`, `resource: "files"`). Maximum upload size is 20 MB. For production deployments, migrate to S3 or a CDN while keeping file IDs stable.
+
+Reads are split by shape: a `get` addressing a single file by `filter.id` returns the binary inline as `dataBase64`, while collection reads — including every `sync` — return metadata only. Clients fetch content lazily by id (iOS caches it on disk), so sync payloads stay small and a binary missing from disk cannot fail a whole sync.

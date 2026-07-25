@@ -39,7 +39,13 @@ type PreparedFileUpload = {
 
 // Resource operations
 
-export async function listFileRowsWithBinary(
+/**
+ * Binaries are returned only when a single file is addressed by id. Collection
+ * reads - notably every `sync` - return metadata alone, so a sync payload does
+ * not carry every changed file's bytes and a binary missing from disk cannot
+ * fail the whole sync. Clients fetch content lazily by id.
+ */
+export async function listFileRows(
 	db: EvyDb,
 	filter: GetRequest["filter"] | undefined,
 ): Promise<GetResponse> {
@@ -55,9 +61,16 @@ export async function listFileRowsWithBinary(
 
 	const query = whereClauses.length ? base.where(and(...whereClauses)) : base;
 	const rows = await query.orderBy(asc(file.updatedAt), asc(file.id));
-	const response = await Promise.all(
-		rows.map((row) => fileRowToGetFileResponse(row as DATA_EVY_File)),
-	);
+
+	const isSingleFileRead = Boolean(filter?.id);
+	const response = isSingleFileRead
+		? await Promise.all(
+				rows.map((row) =>
+					fileRowToGetFileResponse(row as DATA_EVY_File),
+				),
+			)
+		: rows.map((row) => fileRowToMetadataResponse(row as DATA_EVY_File));
+
 	return validateGetResponse(response);
 }
 
@@ -203,6 +216,16 @@ async function createFileFromUpload(params: {
 }
 
 // Response mapping
+
+function fileRowToMetadataResponse(metadata: DATA_EVY_File): DATA_EVY_File {
+	return {
+		id: metadata.id,
+		type: metadata.type,
+		createdAt: metadata.createdAt,
+		updatedAt: metadata.updatedAt,
+		visibility: metadata.visibility,
+	};
+}
 
 async function fileRowToGetFileResponse(
 	metadata: DATA_EVY_File,

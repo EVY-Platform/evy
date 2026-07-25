@@ -73,7 +73,7 @@ describe("get files", () => {
 		]);
 	});
 
-	it("returns all files with binaries when no filter is given", async () => {
+	it("returns metadata without binaries when no filter is given", async () => {
 		const id = "c48853d2-e94f-4220-bec4-e578d03097c1";
 		await insertFileMetadata(id);
 		await writeFileBinary({ id, bytes: opaqueBytes });
@@ -86,11 +86,38 @@ describe("get files", () => {
 		const item = (result as Record<string, unknown>[]).find(
 			(r) => r.id === id,
 		);
-		expect(item).toMatchObject({
-			id,
-			type: fileType,
-			dataBase64: opaqueBytes.toString("base64"),
-		});
+		expect(item).toMatchObject({ id, type: fileType });
+		expect(item).not.toHaveProperty("dataBase64");
+	});
+
+	it("returns metadata without binaries for an updatedAfter read", async () => {
+		const id = "b2b1f2a8-6b1a-4c6f-9f1a-2f1c8d0a77aa";
+		await insertFileMetadata(id);
+		await writeFileBinary({ id, bytes: opaqueBytes });
+
+		const result = (await get(dataDb, {
+			service: EVY_CORE_SERVICE,
+			resource: "files",
+			filter: { updatedAfter: "1970-01-01T00:00:00.000Z" },
+		})) as Record<string, unknown>[];
+
+		const item = result.find((r) => r.id === id);
+		expect(item).toBeDefined();
+		expect(item).not.toHaveProperty("dataBase64");
+	});
+
+	// A binary missing from disk used to fail the whole sync, since sync reads
+	// files through the same collection path.
+	it("does not fail a collection read when a binary is missing", async () => {
+		const id = "f0f5f0f5-1111-4222-8333-444455556666";
+		await insertFileMetadata(id);
+
+		const result = (await get(dataDb, {
+			service: EVY_CORE_SERVICE,
+			resource: "files",
+		})) as Record<string, unknown>[];
+
+		expect(result.find((r) => r.id === id)).toMatchObject({ id });
 	});
 
 	it("throws when file binary not found", async () => {
