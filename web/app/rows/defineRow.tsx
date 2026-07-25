@@ -1,4 +1,4 @@
-import type { RowTriggerName, UI_RowActions } from "evy-types";
+import type { RowTriggerName, UI_ActionBranch, UI_RowActions } from "evy-types";
 import { createElement, type ReactNode } from "react";
 
 import { useRowById } from "../hooks/useRowById";
@@ -18,7 +18,11 @@ type RowComponent = ((props: { rowId: string }) => ReactNode) & {
 	name: string;
 };
 
-type DefaultRowActionsInput = Partial<Record<RowTriggerName, string>>;
+/**
+ * Palette defaults are storage-shaped, like everything the builder saves. The
+ * editor's text form only exists inside the action editor.
+ */
+type DefaultRowActionsInput = Partial<Record<RowTriggerName, UI_ActionBranch>>;
 
 export function defaultRowActions(
 	options: DefaultRowActionsInput,
@@ -26,7 +30,7 @@ export function defaultRowActions(
 	const actions: UI_RowActions = {};
 	for (const [trigger, branch] of Object.entries(options) as [
 		RowTriggerName,
-		string | undefined,
+		UI_ActionBranch | undefined,
 	][]) {
 		if (branch !== undefined) {
 			actions[trigger] = [rowAction(branch)];

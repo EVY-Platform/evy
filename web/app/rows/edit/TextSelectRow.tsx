@@ -8,7 +8,9 @@ import { RowLayout } from "../design-system/RowLayout";
 export default defineRow("TextSelectRow", {
 	config: {
 		type: "TextSelect",
-		actions: defaultRowActions({ tap: "{select($datum)}" }),
+		actions: defaultRowActions({
+			tap: { fn: "select", value: "$datum" },
+		}),
 		source: `{${MARKETPLACE_RESOURCE.ITEMS}.payment_cash}`,
 		visible: "true",
 		title: "Text select row title",

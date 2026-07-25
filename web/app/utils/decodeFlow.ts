@@ -292,7 +292,7 @@ export function buildRowForNewPageFromBase(
 	if (row.config.type === "TextExpand") {
 		actions = {
 			...actions,
-			tap: [rowAction(`{expand_text(${newRowId})}`)],
+			tap: [rowAction({ fn: "expand_text", rowId: newRowId })],
 		};
 	}
 
@@ -308,7 +308,7 @@ export function buildRowForNewPageFromBase(
 		}
 		nextActions = {
 			...nextActions,
-			[trigger]: [rowAction(`{show(${newRowId})}`)],
+			[trigger]: [rowAction({ fn: "show", rowId: newRowId })],
 		};
 	}
 	actions = nextActions;

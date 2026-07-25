@@ -10,7 +10,7 @@ export default defineRow("ButtonRow", {
 		title: "",
 		label: "Button row text",
 		style: "primary",
-		actions: defaultRowActions({ tap: "{close()}" }),
+		actions: defaultRowActions({ tap: { fn: "close" } }),
 	} satisfies RowConfig,
 	render: (row) => (
 		<RowLayout title={row.config.title}>

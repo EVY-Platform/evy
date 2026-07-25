@@ -7,7 +7,7 @@ import { RowLayout } from "../design-system/RowLayout";
 export default defineRow("PhotoGalleryRow", {
 	config: {
 		type: "PhotoGallery",
-		actions: defaultRowActions({ tap: "{expand_photo()}" }),
+		actions: defaultRowActions({ tap: { fn: "expand_photo" } }),
 		source: `{${MARKETPLACE_RESOURCE.ITEMS}.photo_ids}`,
 		visible: "true",
 		title: "Photo gallery row title",

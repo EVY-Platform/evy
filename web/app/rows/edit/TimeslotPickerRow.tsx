@@ -108,7 +108,9 @@ function DayColumn({ day, config }: { day: MockDay; config: RowConfig }) {
 export default defineRow("TimeslotPickerRow", {
 	config: {
 		type: "TimeslotPicker",
-		actions: defaultRowActions({ tap: "{select($datum)}" }),
+		actions: defaultRowActions({
+			tap: { fn: "select", value: "$datum" },
+		}),
 		source: `{${MARKETPLACE_RESOURCE.ITEMS}.delivery_selection}`,
 		visible: "true",
 		title: "Timeslot picker row title",

@@ -7,7 +7,9 @@ import { RowLayout } from "../design-system/RowLayout";
 export default defineRow("InlinePickerRow", {
 	config: {
 		type: "InlinePicker",
-		actions: defaultRowActions({ tap: "{select($datum)}" }),
+		actions: defaultRowActions({
+			tap: { fn: "select", value: "$datum" },
+		}),
 		source: `{${MARKETPLACE_RESOURCE.DURATIONS}}`,
 		visible: "true",
 		title: "Inline picker row title",

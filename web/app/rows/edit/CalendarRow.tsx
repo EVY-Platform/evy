@@ -113,9 +113,9 @@ export default defineRow("CalendarRow", {
 	config: {
 		type: "Calendar",
 		actions: defaultRowActions({
-			tap: "{select($datum)}",
-			"tap-row": "{select($datum)}",
-			"tap-column": "{select($datum)}",
+			tap: { fn: "select", value: "$datum" },
+			"tap-row": { fn: "select", value: "$datum" },
+			"tap-column": { fn: "select", value: "$datum" },
 		}),
 		source: `{${MARKETPLACE_RESOURCE.ITEMS}.pickup_selection}`,
 		visible: "true",

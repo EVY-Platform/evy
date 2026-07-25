@@ -141,7 +141,7 @@ describe("buildRowForNewPageFromBase", () => {
 			tap: [
 				{
 					condition: "",
-					true: `{expand_text(${newId})}`,
+					true: { fn: "expand_text", rowId: newId },
 					false: "",
 				},
 			],
@@ -155,7 +155,7 @@ describe("buildRowForNewPageFromBase", () => {
 			tap: [
 				{
 					condition: "",
-					true: `{show(${newId})}`,
+					true: { fn: "show", rowId: newId },
 					false: "",
 				},
 			],
@@ -173,7 +173,7 @@ describe("buildRowForNewPageFromBase", () => {
 		const row = buildRowForNewPageFromBase(CalendarRow, newId);
 		const selectDatum = {
 			condition: "",
-			true: "{select($datum)}",
+			true: { fn: "select", value: "$datum" },
 			false: "",
 		};
 		expect(row.config.actions).toEqual({
