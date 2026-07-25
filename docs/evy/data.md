@@ -40,6 +40,7 @@ bun run types:generate
 2. `scripts/generate-drizzle.ts` — Emits `types/generated/ts/db/schema.generated.ts` from `data.schema.json` and `drizzle.config.json`. Every `DATA_EVY_*` `$def` must have a table entry in `drizzle.config.json`, or be listed there under `nonTableDefs` if it is a nested value object with no table of its own; otherwise generation fails.
 3. `scripts/generate-core-resources.ts` — Emits generated evy core resource compile-time constants only for core API validation and sync's core-resource loop. Non-evy service/resource ownership is stored in normal core `services` and `serviceResources` rows and can be read through standard `get` CRUD.
 4. `scripts/generate-marketplace-resources.ts` — Emits the marketplace service and resource UUID constants used by the marketplace service guard, the seed script, and iOS.
+5. `scripts/generate-procedures.ts` — Emits the RPC procedure registry from `types/schema/resources/procedures.json` (see [Procedures](#procedures)).
 
 `scripts/generate-types.ts` additionally invokes `scripts/generate-sdui-definitions.ts`, which emits the embedded SDUI row schemas and trigger specs consumed by `validateUiFlow` and the web builder.
 
@@ -49,6 +50,24 @@ bun run types:generate
 - `types/generated/swift/` — Swift types. The iOS app references generated SDUI, core resource, OS, and file API models while keeping transport and UI models handwritten where needed.
 
 After changing any schema, `drizzle.config.json`, or SDUI row definition schema, run `bun run types:generate`. Output under `types/generated/` is gitignored; regenerate locally and do not hand-edit generated files.
+
+### Procedures
+
+A procedure is an RPC call that runs code rather than reading or writing a resource — reached as `api{service, method, data}`, and written `{$api:<method>}` in a row source. `types/schema/resources/procedures.json` declares each one:
+
+| Field | Meaning |
+| --- | --- |
+| `service` | The service UUID that owns it. Core procedures run in the gateway; anything else is forwarded to that service. |
+| `request` / `response` | Schema paths, relative to `types/schema/`. Both are validated — the request because the caller is untrusted, the response because a procedure that drifts from its schema breaks clients silently. |
+| `rateLimit.perMinute` | Optional. Calls allowed per socket per minute. Omit for unmetered. |
+
+The manifest is the single source of truth for which procedures exist:
+
+- `api/src/procedures/coreApi.ts` refuses to load if its handlers and the registry disagree. A handler with no declaration is the dangerous direction — it would be reachable while skipping the rate limit.
+- `api/src/procedures/rpc.ts` will only forward a procedure to the service that declares it.
+- The web builder offers a `{$api:<method>}` source's attributes from the registry, derived from the response schema at generation time. Only array-of-object responses have them; `sync` is callable but its envelope is not a bindable source.
+
+Adding one means: write the request/response schemas, add the manifest entry, `bun run types:generate`, then implement the handler (in the gateway for a core procedure, or in the owning service).
 
 ---
 
