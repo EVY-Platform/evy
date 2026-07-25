@@ -171,6 +171,54 @@ test.describe("Row configuration", () => {
 		await expect(formatInput).toHaveText("{$datum.label}");
 	});
 
+	test("action popup traps focus and is announced as a modal dialog", async ({
+		page,
+	}) => {
+		await openAppWithTestFlows(page, [
+			{
+				id: "step_1",
+				title: "Test Page",
+				rows: [
+					{
+						type: "Button",
+						title: "",
+						label: "Test Button",
+						actions: tapAction("{close()}"),
+					},
+				],
+			},
+		]);
+		await page.getByText("Test Button", { exact: true }).first().click();
+		await getConfigPanel(page).getByLabel("Edit action 1").click();
+
+		const popup = page.getByRole("dialog", { name: "Edit action 1" });
+		await expect(popup).toBeVisible();
+		await expect(popup).toHaveAttribute("aria-modal", "true");
+
+		// Focus starts inside the dialog rather than on the page behind it.
+		await expect
+			.poll(() =>
+				popup.evaluate((panel) =>
+					panel.contains(document.activeElement),
+				),
+			)
+			.toBe(true);
+
+		// Tabbing all the way round stays inside the dialog instead of
+		// escaping into the builder underneath.
+		for (let i = 0; i < 25; i++) {
+			await page.keyboard.press("Tab");
+		}
+		expect(
+			await popup.evaluate((panel) =>
+				panel.contains(document.activeElement),
+			),
+		).toBe(true);
+
+		await page.keyboard.press("Escape");
+		await expect(popup).toBeHidden();
+	});
+
 	test("should display and edit action items via popup", async ({ page }) => {
 		await openAppWithTestFlows(page, [
 			{

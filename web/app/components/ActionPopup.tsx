@@ -1,8 +1,6 @@
 import type { UI_RowAction } from "evy-types";
 import { useCallback, useMemo, useState } from "react";
-import { createPortal } from "react-dom";
 
-import { useEscapeKey } from "../hooks/useEscapeKey";
 import { useFlowsContext } from "../state/contexts/FlowsContext";
 import {
 	type ConditionExpression,
@@ -22,6 +20,7 @@ import {
 
 import { BranchEditor } from "./actionPopup/BranchEditor";
 import { ConditionGroupEditor } from "./actionPopup/ConditionGroupEditor";
+import { Modal } from "./Modal";
 
 type ActionPopupProps = {
 	action: UI_RowAction;
@@ -116,112 +115,97 @@ export function ActionPopup({
 		onSave,
 	]);
 
-	useEscapeKey(onCancel);
+	return (
+		<Modal
+			onClose={onCancel}
+			panelClassName="evy-modal-panel--action"
+			label={`Edit action ${actionIndex + 1}`}
+		>
+			<div className="evy-popup-header">
+				<span className="evy-text-lg evy-font-semibold">
+					Action {actionIndex + 1}
+				</span>
+			</div>
 
-	return createPortal(
-		<div className="evy-modal-root">
-			<button
-				type="button"
-				className="evy-modal-backdrop"
-				aria-label="Close dialog"
-				onClick={onCancel}
-			/>
-			<div
-				className="evy-modal-panel evy-modal-panel--action"
-				role="dialog"
-				aria-label={`Edit action ${actionIndex + 1}`}
-			>
-				<div className="evy-popup-header">
-					<span className="evy-text-lg evy-font-semibold">
-						Action {actionIndex + 1}
-					</span>
+			<div className="evy-popup-body">
+				<div>
+					<span className="evy-popup-section-title">Conditions</span>
+					<ConditionGroupEditor
+						expression={expression}
+						draftVariables={draftVariables}
+						serviceResources={serviceResources}
+						idCandidates={idCandidates}
+						getAttributeCandidatesForQualifier={
+							getAttributeCandidatesForQualifier
+						}
+						onChange={setExpression}
+						idPrefix={`condition-${actionIndex}`}
+						isTopLevel
+					/>
 				</div>
 
-				<div className="evy-popup-body">
+				<div className="evy-popup-branches">
 					<div>
-						<span className="evy-popup-section-title">
-							Conditions
-						</span>
-						<ConditionGroupEditor
-							expression={expression}
+						<span className="evy-popup-section-title">If true</span>
+						<BranchEditor
+							branchId={`true-${actionIndex}`}
+							value={trueBranch}
 							draftVariables={draftVariables}
+							flowsById={flowsById}
+							pagesById={pagesById}
 							serviceResources={serviceResources}
 							idCandidates={idCandidates}
+							rowsById={rowsById}
+							defaultSheetRowId={defaultSheetRowId}
+							draftUpdateTargets={draftUpdateTargets}
 							getAttributeCandidatesForQualifier={
 								getAttributeCandidatesForQualifier
 							}
-							onChange={setExpression}
-							idPrefix={`condition-${actionIndex}`}
-							isTopLevel
+							onChange={setTrueBranch}
 						/>
 					</div>
 
-					<div className="evy-popup-branches">
-						<div>
-							<span className="evy-popup-section-title">
-								If true
-							</span>
-							<BranchEditor
-								branchId={`true-${actionIndex}`}
-								value={trueBranch}
-								draftVariables={draftVariables}
-								flowsById={flowsById}
-								pagesById={pagesById}
-								serviceResources={serviceResources}
-								idCandidates={idCandidates}
-								rowsById={rowsById}
-								defaultSheetRowId={defaultSheetRowId}
-								draftUpdateTargets={draftUpdateTargets}
-								getAttributeCandidatesForQualifier={
-									getAttributeCandidatesForQualifier
-								}
-								onChange={setTrueBranch}
-							/>
-						</div>
-
-						<div>
-							<span className="evy-popup-section-title">
-								If false
-							</span>
-							<BranchEditor
-								branchId={`false-${actionIndex}`}
-								value={falseBranch}
-								draftVariables={draftVariables}
-								flowsById={flowsById}
-								pagesById={pagesById}
-								serviceResources={serviceResources}
-								idCandidates={idCandidates}
-								rowsById={rowsById}
-								defaultSheetRowId={defaultSheetRowId}
-								draftUpdateTargets={draftUpdateTargets}
-								getAttributeCandidatesForQualifier={
-									getAttributeCandidatesForQualifier
-								}
-								onChange={setFalseBranch}
-							/>
-						</div>
+					<div>
+						<span className="evy-popup-section-title">
+							If false
+						</span>
+						<BranchEditor
+							branchId={`false-${actionIndex}`}
+							value={falseBranch}
+							draftVariables={draftVariables}
+							flowsById={flowsById}
+							pagesById={pagesById}
+							serviceResources={serviceResources}
+							idCandidates={idCandidates}
+							rowsById={rowsById}
+							defaultSheetRowId={defaultSheetRowId}
+							draftUpdateTargets={draftUpdateTargets}
+							getAttributeCandidatesForQualifier={
+								getAttributeCandidatesForQualifier
+							}
+							onChange={setFalseBranch}
+						/>
 					</div>
 				</div>
-
-				<div className="evy-modal-footer">
-					<button
-						type="button"
-						className="evy-modal-btn evy-modal-btn--md evy-modal-btn-cancel"
-						onClick={onCancel}
-					>
-						Cancel
-					</button>
-					<button
-						type="button"
-						className="evy-modal-btn evy-modal-btn--md evy-modal-btn-primary"
-						onClick={handleSave}
-						disabled={!canSave}
-					>
-						Save
-					</button>
-				</div>
 			</div>
-		</div>,
-		document.body,
+
+			<div className="evy-modal-footer">
+				<button
+					type="button"
+					className="evy-modal-btn evy-modal-btn--md evy-modal-btn-cancel"
+					onClick={onCancel}
+				>
+					Cancel
+				</button>
+				<button
+					type="button"
+					className="evy-modal-btn evy-modal-btn--md evy-modal-btn-primary"
+					onClick={handleSave}
+					disabled={!canSave}
+				>
+					Save
+				</button>
+			</div>
+		</Modal>
 	);
 }

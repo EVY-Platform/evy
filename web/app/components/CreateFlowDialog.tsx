@@ -1,7 +1,6 @@
 import { type FormEvent, useEffect, useId, useRef, useState } from "react";
-import { createPortal } from "react-dom";
 
-import { useEscapeKey } from "../hooks/useEscapeKey";
+import { Modal } from "./Modal";
 
 type CreateFlowDialogProps = {
 	open: boolean;
@@ -22,10 +21,7 @@ export function CreateFlowDialog({
 	useEffect(() => {
 		if (!open) return;
 		setFlowName("");
-		queueMicrotask(() => inputRef.current?.focus());
 	}, [open]);
-
-	useEscapeKey(onClose, open);
 
 	if (!open) return null;
 
@@ -37,57 +33,48 @@ export function CreateFlowDialog({
 		onClose();
 	}
 
-	return createPortal(
-		<div className="evy-modal-root">
-			<button
-				type="button"
-				className="evy-modal-backdrop"
-				aria-label="Close dialog"
-				onClick={onClose}
-				data-testid="create-flow-overlay"
-			/>
-			<div
-				className="evy-modal-panel evy-modal-panel--create-flow"
-				role="dialog"
-				aria-modal="true"
-				aria-labelledby={titleId}
-				data-testid="create-flow-dialog"
-			>
-				<h2 className="evy-create-flow-title" id={titleId}>
-					Create new flow
-				</h2>
-				<form onSubmit={handleSubmit}>
-					<div className="evy-create-flow-field">
-						<label htmlFor={inputId}>Flow name</label>
-						<input
-							ref={inputRef}
-							id={inputId}
-							className="evy-create-flow-input"
-							type="text"
-							value={flowName}
-							onChange={(e) => setFlowName(e.target.value)}
-							autoComplete="off"
-						/>
-					</div>
-					<div className="evy-modal-footer">
-						<button
-							type="button"
-							className="evy-modal-btn evy-modal-btn--sm evy-modal-btn-cancel"
-							onClick={onClose}
-						>
-							Cancel
-						</button>
-						<button
-							type="submit"
-							className="evy-modal-btn evy-modal-btn--sm evy-modal-btn-primary"
-							disabled={flowName.trim() === ""}
-						>
-							Create
-						</button>
-					</div>
-				</form>
-			</div>
-		</div>,
-		document.body,
+	return (
+		<Modal
+			onClose={onClose}
+			panelClassName="evy-modal-panel--create-flow"
+			labelledBy={titleId}
+			panelTestId="create-flow-dialog"
+			backdropTestId="create-flow-overlay"
+			initialFocusRef={inputRef}
+		>
+			<h2 className="evy-create-flow-title" id={titleId}>
+				Create new flow
+			</h2>
+			<form onSubmit={handleSubmit}>
+				<div className="evy-create-flow-field">
+					<label htmlFor={inputId}>Flow name</label>
+					<input
+						ref={inputRef}
+						id={inputId}
+						className="evy-create-flow-input"
+						type="text"
+						value={flowName}
+						onChange={(e) => setFlowName(e.target.value)}
+						autoComplete="off"
+					/>
+				</div>
+				<div className="evy-modal-footer">
+					<button
+						type="button"
+						className="evy-modal-btn evy-modal-btn--sm evy-modal-btn-cancel"
+						onClick={onClose}
+					>
+						Cancel
+					</button>
+					<button
+						type="submit"
+						className="evy-modal-btn evy-modal-btn--sm evy-modal-btn-primary"
+						disabled={flowName.trim() === ""}
+					>
+						Create
+					</button>
+				</div>
+			</form>
+		</Modal>
 	);
 }
