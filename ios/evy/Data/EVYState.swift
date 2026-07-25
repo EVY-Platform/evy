@@ -27,6 +27,13 @@ import Observation
 
   private var _value: T
   @ObservationIgnored private var observerTokens: [NSObjectProtocol] = []
+  /// The scope this state belongs to, captured when it is created.
+  ///
+  /// A recompute can fire long after some other page became active, so
+  /// resolving against whatever the globals happen to say at that moment reads
+  /// the wrong drafts and cache. Pinning the scope makes a recompute produce
+  /// the same value regardless of what else is on screen.
+  @ObservationIgnored private let scope: EVYScope
   var value: T {
     get { _value }
     set {
@@ -49,24 +56,35 @@ import Observation
         let change = EVYValueChange(notification: notification)
         if watches.contains(where: { $0.isAffected(by: change) }) {
           MainActor.assumeIsolated {
-            self.value = recompute()
+            self.value = EVY.withScope(self.scope) { recompute() }
           }
         }
       }
     )
   }
 
-  init(watches: [String], setter: @escaping () -> T) {
+  init(watches: [String], scope: EVYScope? = nil, setter: @escaping () -> T) {
+    // Constructed while its own page is active, so the current scope is this
+    // state's scope unless the caller knows better.
+    self.scope = scope ?? .legacyGlobal
     _value = setter()
     guard !watches.isEmpty else { return }
     registerObserver(watchTargets: watches, recompute: setter)
   }
 
-  convenience init(textToWatch text: String?, setter: @escaping () -> T) {
-    self.init(watches: text.map { EVY.watchTargets(for: $0) } ?? [], setter: setter)
+  convenience init(
+    textToWatch text: String?,
+    scope: EVYScope? = nil,
+    setter: @escaping () -> T
+  ) {
+    self.init(
+      watches: text.map { EVY.watchTargets(for: $0) } ?? [],
+      scope: scope,
+      setter: setter)
   }
 
   init(staticString: T) {
+    scope = .empty
     _value = staticString
   }
 

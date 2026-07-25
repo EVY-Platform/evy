@@ -391,4 +391,57 @@ final class EVYStoreRoutingTests: XCTestCase {
     XCTAssertEqual(
       try EVY.getValueFromText("{\(key).label}").toString(), "from-global")
   }
+
+  /// A state built on one page must keep resolving against that page's scope
+  /// after the user navigates away. Recomputes fire on a notification, long
+  /// after construction, so reading the globals at that moment resolves against
+  /// whichever page happens to be foremost - the background page silently
+  /// renders the foreground page's data.
+  func testStateRecomputesAgainstItsOwnScopeAfterAnotherPageActivates() throws {
+    let backgroundScopeId = "background-\(UUID().uuidString)"
+    let foregroundScopeId = "foreground-\(UUID().uuidString)"
+    let key = "scoped_value"
+    let resource = EVYCoreResource.messages.rawValue
+
+    try EVY.cacheStore.create(
+      namespace: EVYNamespace.cache, resource: backgroundScopeId, id: key,
+      value: #"{"label":"background-page"}"#.data(using: .utf8)!)
+    try EVY.cacheStore.create(
+      namespace: EVYNamespace.cache, resource: foregroundScopeId, id: key,
+      value: #"{"label":"foreground-page"}"#.data(using: .utf8)!)
+
+    let recordId = UUID().uuidString
+    try EVY.applySyncedValue(
+      namespace: EVYNamespace.evy,
+      resource: resource,
+      value: .array([.dictionary(["id": .string(recordId), "status": .string("pending")])])
+    )
+    defer {
+      try? EVY.cacheStore.deleteAll(namespace: EVYNamespace.cache, resource: backgroundScopeId)
+      try? EVY.cacheStore.deleteAll(namespace: EVYNamespace.cache, resource: foregroundScopeId)
+      EVY.activeCacheScopeId = nil
+    }
+
+    // The background page is on screen, and builds a state that resolves a
+    // value out of its own cache scope but recomputes when the record changes.
+    EVY.activeCacheScopeId = backgroundScopeId
+    let state = EVYState(
+      textToWatch: "{\(resource)}",
+      setter: { (try? EVY.getValueFromText("{\(key).label}").toString()) ?? "unresolved" }
+    )
+    XCTAssertEqual(state.value, "background-page")
+
+    // The user navigates to another page, which activates its own scope.
+    EVY.activeCacheScopeId = foregroundScopeId
+
+    // Something the background page watches changes, forcing a recompute.
+    try EVY.update(
+      namespace: EVYNamespace.evy,
+      resource: resource,
+      matching: ["id": .string(recordId)],
+      changes: ["status": .string("accepted")]
+    )
+
+    XCTAssertEqual(state.value, "background-page")
+  }
 }

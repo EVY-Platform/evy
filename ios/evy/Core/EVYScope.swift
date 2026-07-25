@@ -25,6 +25,29 @@ struct EVYScope: Equatable {
   }
 }
 
+extension EVY {
+  /// Runs `body` with `scope` installed, restoring whatever was there before.
+  ///
+  /// Resolution still reads the globals when no scope is passed explicitly, and
+  /// closures captured in a SwiftUI `init` cannot be handed one - `@Environment`
+  /// is not readable there. This is the bridge: a caller that knows its scope
+  /// can guarantee the work inside sees it, whatever else has happened since.
+  /// Symmetric and exception-safe, unlike the save/assign/defer blocks it
+  /// replaces.
+  @MainActor
+  static func withScope<T>(_ scope: EVYScope, _ body: () throws -> T) rethrows -> T {
+    let previousCache = activeCacheScopeId
+    let previousDraft = draftStore.activeScopeId
+    activeCacheScopeId = scope.cacheScopeId
+    draftStore.activeScopeId = scope.draftScopeId
+    defer {
+      activeCacheScopeId = previousCache
+      draftStore.activeScopeId = previousDraft
+    }
+    return try body()
+  }
+}
+
 private struct EVYScopeEnvironmentKey: EnvironmentKey {
   static let defaultValue = EVYScope.empty
 }
