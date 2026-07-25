@@ -340,4 +340,55 @@ final class EVYStoreRoutingTests: XCTestCase {
       namespace: EVYNamespace.evy, resource: resource, id: newId)
     XCTAssertGreaterThan(appended.sortIndex, 0)
   }
+
+  // MARK: - Scope as a value
+
+  /// An explicit scope must win over the global statics. Without this, a view
+  /// resolving off the foreground page reads whichever scope was set last.
+  func testExplicitScopeOverridesTheGlobalCacheScope() throws {
+    let globalScopeId = "global-\(UUID().uuidString)"
+    let explicitScopeId = "explicit-\(UUID().uuidString)"
+    let key = "scoped_value"
+
+    try EVY.cacheStore.create(
+      namespace: EVYNamespace.cache, resource: globalScopeId, id: key,
+      value: #"{"label":"from-global"}"#.data(using: .utf8)!)
+    try EVY.cacheStore.create(
+      namespace: EVYNamespace.cache, resource: explicitScopeId, id: key,
+      value: #"{"label":"from-explicit"}"#.data(using: .utf8)!)
+    defer {
+      try? EVY.cacheStore.deleteAll(namespace: EVYNamespace.cache, resource: globalScopeId)
+      try? EVY.cacheStore.deleteAll(namespace: EVYNamespace.cache, resource: explicitScopeId)
+      EVY.activeCacheScopeId = nil
+    }
+
+    EVY.activeCacheScopeId = globalScopeId
+
+    XCTAssertEqual(
+      try EVY.getDataFromText("{\(key).label}"), .string("from-global"))
+
+    XCTAssertEqual(
+      try EVY.getDataFromText(
+        "{\(key).label}",
+        scope: EVYScope(cacheScopeId: explicitScopeId, draftScopeId: nil)),
+      .string("from-explicit"))
+  }
+
+  func testOmittingScopeStillUsesTheGlobals() throws {
+    let globalScopeId = "global-\(UUID().uuidString)"
+    let key = "scoped_value"
+
+    try EVY.cacheStore.create(
+      namespace: EVYNamespace.cache, resource: globalScopeId, id: key,
+      value: #"{"label":"from-global"}"#.data(using: .utf8)!)
+    defer {
+      try? EVY.cacheStore.deleteAll(namespace: EVYNamespace.cache, resource: globalScopeId)
+      EVY.activeCacheScopeId = nil
+    }
+
+    EVY.activeCacheScopeId = globalScopeId
+
+    XCTAssertEqual(
+      try EVY.getValueFromText("{\(key).label}").toString(), "from-global")
+  }
 }
