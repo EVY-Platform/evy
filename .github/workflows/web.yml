@@ -35,6 +35,10 @@ jobs:
               if: steps.setup.outputs.has-changes == 'true'
               run: bun run lint
 
+            - name: Run typecheck
+              if: steps.setup.outputs.has-changes == 'true'
+              run: bun run typecheck
+
     web_tests:
         name: Web Tests
         permissions:
