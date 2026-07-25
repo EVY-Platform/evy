@@ -67,7 +67,9 @@ import Observation
     // Constructed while its own page is active, so the current scope is this
     // state's scope unless the caller knows better.
     self.scope = scope ?? .legacyGlobal
-    _value = setter()
+    // Under the pinned scope too: a view can be built while another page is
+    // active, so the globals are not reliably this state's scope even now.
+    _value = EVY.withScope(self.scope) { setter() }
     guard !watches.isEmpty else { return }
     registerObserver(watchTargets: watches, recompute: setter)
   }

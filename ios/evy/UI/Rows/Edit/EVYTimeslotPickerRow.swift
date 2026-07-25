@@ -18,12 +18,15 @@ struct EVYTimeslotPickerRow: View {
     self.onTimeslotTapped = onTimeslotTapped
   }
 
+  @Environment(\.evyScope) private var evyScope
+
   var body: some View {
     EVYTimeslotPicker(
       content: view,
       source: view.source,
       destination: view.destination,
-      onTimeslotTapped: onTimeslotTapped
+      onTimeslotTapped: onTimeslotTapped,
+      scope: evyScope
     )
     .titledRow(view.title)
   }

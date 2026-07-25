@@ -16,6 +16,15 @@ struct EVYScope: Equatable {
   /// Transitional: resolution used to read those statics directly, so every
   /// call site that has not yet been given an explicit scope falls back to
   /// this and behaves exactly as before. Removed once nothing needs it.
+  /// A scope that swaps only the cache, keeping the active draft scope.
+  ///
+  /// Cache scoping and draft scoping move independently: a view can render
+  /// another page's cached data while still writing drafts to its own page.
+  @MainActor
+  static func cache(_ cacheScopeId: String?) -> EVYScope {
+    EVYScope(cacheScopeId: cacheScopeId, draftScopeId: EVY.draftStore.activeScopeId)
+  }
+
   @MainActor
   static var legacyGlobal: EVYScope {
     EVYScope(

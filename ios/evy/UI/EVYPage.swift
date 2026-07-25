@@ -79,13 +79,13 @@ struct EVYPage: View {
     return EVYDraft.ephemeralScopeId(forPageId: pageId)
   }
 
-  /// Re-establishes this page's cache/draft scope as the active one and refreshes its rows.
+  /// Re-establishes this page's cache/draft scope as the active one, bootstraps its drafts
+  /// and refreshes its rows.
   ///
-  /// `EVYState` reads resolve drafts through the global `activeScopeId`, which only reflects
-  /// the most recently appeared page. A row added to this page while another page was active
-  /// (e.g. via a WebSocket SDUI update while navigated away) would have initialised against
-  /// the wrong scope. Re-asserting the scope and broadcasting a recompute makes every row on
-  /// this page re-resolve against the correct scope when it (re)appears or its rows change.
+  /// Rows now carry their scope as a value, so this no longer exists to repair rows that
+  /// initialised against the wrong page. It remains because the globals are still the
+  /// fallback for everything with no scope of its own - action execution and mutations -
+  /// and because appearing is when this page's drafts must exist and its rows must re-read.
   @MainActor
   private func activatePageScope() {
     EVY.activeCacheScopeId = pageId

@@ -13,13 +13,14 @@ struct EVYInputList: View {
   var placeholder: String?
   private var values: EVYState<[String]>
 
-  init(data: String, format: String?, placeholder: String?) {
+  init(data: String, format: String?, placeholder: String?, scope: EVYScope? = nil) {
     self.data = data
     self.format = format
     self.placeholder = placeholder
 
     values = EVYState(
       textToWatch: data,
+      scope: scope,
       setter: {
         do {
           let data = try EVY.getDataFromText(data)

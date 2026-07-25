@@ -26,7 +26,11 @@ struct EVYTextView: View {
   var text: EVYState<EVYValue>
   let style: EVYTextStyle
 
-  static func makeState(template: String, placeholder: String = "") -> EVYState<EVYValue> {
+  static func makeState(
+    template: String,
+    placeholder: String = "",
+    scope: EVYScope? = nil
+  ) -> EVYState<EVYValue> {
     let props = EVY.parsePropsFromText(template)
 
     if props == template && !containsInterpolation(template) {
@@ -38,6 +42,7 @@ struct EVYTextView: View {
 
     return EVYState(
       textToWatch: templateText,
+      scope: scope,
       setter: {
         guard let value = try? EVY.getValueFromText(templateText) else {
           return placeholderVal

@@ -169,7 +169,8 @@ private struct EVYResolvedRow: View {
     self.hidesTitle = hidesTitle
     _isVisible = State(
       initialValue: Self.makeVisibilityState(
-        for: Self.visibleExpression(ref: ref, storedRow: storedRow)
+        for: Self.visibleExpression(ref: ref, storedRow: storedRow),
+        scope: nil
       )
     )
   }
@@ -248,19 +249,24 @@ private struct EVYResolvedRow: View {
   }
 
   private func refreshVisibilityState() {
-    isVisible = Self.makeVisibilityState(for: visibleExpression)
+    isVisible = Self.makeVisibilityState(for: visibleExpression, scope: evyScope)
   }
 
-  private static func makeVisibilityState(for visibleExpr: String) -> EVYState<Bool> {
+  /// `scope` is nil only from `init`, where `@Environment` is not yet readable;
+  /// `onAppear` rebuilds the state straight away with the row's real scope.
+  private static func makeVisibilityState(
+    for visibleExpr: String,
+    scope: EVYScope?
+  ) -> EVYState<Bool> {
     if visibleExpr.isEmpty {
       return EVYState(staticString: true)
     }
-    let evaluateVisibility = { (try? EVY.evaluateFromText(visibleExpr)) ?? false }
+    let evaluateVisibility = { (try? EVY.evaluateFromText(visibleExpr, scope: scope)) ?? false }
     let watchTargets = EVY.watchTargets(for: visibleExpr)
     if watchTargets.isEmpty {
       return EVYState(staticString: evaluateVisibility())
     }
-    return EVYState(watches: watchTargets, setter: evaluateVisibility)
+    return EVYState(watches: watchTargets, scope: scope, setter: evaluateVisibility)
   }
 
   // Keep in sync with `rowView(for:)` cases that wire their own tap callbacks.
@@ -396,7 +402,7 @@ private struct EVYResolvedRow: View {
     case .listItem(let view, _):
       EVYListItemRow(view: view)
     case .map(let view, _):
-      EVYMapRow(view: view)
+      EVYMapRow(view: view, scope: evyScope)
     case .search(let view, _):
       EVYSearchRow(view: view, childRef: childRef) { selectedDatum in
         runActions(contentRow: contentRow, datum: selectedDatum)
@@ -449,7 +455,8 @@ private struct EVYResolvedRow: View {
         view: view,
         onTap: { value, rowOperation in
           runActions(contentRow: contentRow, datum: value, rowOperation: rowOperation)
-        })
+        },
+        scope: evyScope)
       {
         row
       } else {

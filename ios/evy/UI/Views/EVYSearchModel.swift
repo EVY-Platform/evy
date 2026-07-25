@@ -38,24 +38,24 @@ struct EVYSearchResult: Equatable, Identifiable {
     }
 
     do {
-      let previous = EVY.activeCacheScopeId
-      EVY.activeCacheScopeId = scopeId
-      defer { EVY.activeCacheScopeId = previous }
-
-      let formatter = try EVYDatumRowFormatter(template: resultTemplate)
-      return dataRows.compactMap { datum in
-        guard let (displayRow, searchableValues) = try? formatter.formattedResult(datum: datum)
-        else {
-          return nil
+      // The formatter resolves each row's templates internally and takes no
+      // scope of its own, so the scope has to be installed around the call.
+      return try EVY.withScope(.cache(scopeId)) {
+        let formatter = try EVYDatumRowFormatter(template: resultTemplate)
+        return dataRows.compactMap { datum in
+          guard let (displayRow, searchableValues) = try? formatter.formattedResult(datum: datum)
+          else {
+            return nil
+          }
+          let id = datum.identifierValue()
+          let searchableText = searchableValues.joined(separator: " ")
+          return EVYSearchResult(
+            id: id,
+            datum: datum,
+            displayRow: displayRow,
+            searchableText: searchableText
+          )
         }
-        let id = datum.identifierValue()
-        let searchableText = searchableValues.joined(separator: " ")
-        return EVYSearchResult(
-          id: id,
-          datum: datum,
-          displayRow: displayRow,
-          searchableText: searchableText
-        )
       }
     } catch {
       return []
@@ -68,11 +68,8 @@ struct EVYSearchResult: Equatable, Identifiable {
     resultTemplate: UI_Row?,
     scopeId: String?
   ) -> [EVYSearchResult] {
-    let previous = EVY.activeCacheScopeId
-    EVY.activeCacheScopeId = scopeId
-    defer { EVY.activeCacheScopeId = previous }
     return makeResults(
-      from: try? EVY.getDataFromText(source),
+      from: try? EVY.getDataFromText(source, scope: .cache(scopeId)),
       resultTemplate: resultTemplate,
       scopeId: scopeId
     )

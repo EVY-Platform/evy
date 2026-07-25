@@ -33,7 +33,8 @@ struct EVYSearchRow: View {
       resultTemplate: childRef?.templateRow(),
       scopeId: evyScope.cacheScopeId,
       draftScopeId: evyScope.draftScopeId,
-      onSelect: onSelect
+      onSelect: onSelect,
+      scope: evyScope
     )
     .titledRow(view.title, spacing: 0)
   }

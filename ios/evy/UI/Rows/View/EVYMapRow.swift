@@ -10,10 +10,11 @@ struct EVYMapRow: View {
   private let view: MapRowViewData
   private let location: EVYState<EVYJson>
 
-  init(view: MapRowViewData) {
+  init(view: MapRowViewData, scope: EVYScope? = nil) {
     self.view = view
     self.location = EVYState(
       textToWatch: view.source,
+      scope: scope,
       setter: { Self.resolveLocation(source: view.source) }
     )
   }

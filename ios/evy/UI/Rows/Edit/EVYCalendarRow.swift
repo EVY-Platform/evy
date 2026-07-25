@@ -24,6 +24,8 @@ struct EVYCalendarRow: View {
     self.onColumnTapped = onColumnTapped
   }
 
+  @Environment(\.evyScope) private var evyScope
+
   var body: some View {
     let selectHandler = EVYRowActionOperation.selectHandler { value in
       try EVYCalendar.applyPrimarySelection(value: value, destination: view.destination)
@@ -38,7 +40,8 @@ struct EVYCalendarRow: View {
       },
       onColumnTapped: { dateTimeISOs in
         onColumnTapped(dateTimeISOs, selectHandler)
-      }
+      },
+      scope: evyScope
     )
     .titledRow(view.title)
   }

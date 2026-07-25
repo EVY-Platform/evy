@@ -22,7 +22,8 @@ struct EVYInlinePicker: View {
     data: String,
     valueTemplate: String?,
     destination: String,
-    onOptionTapped: @escaping EVYRowTapCallback<EVYJson>
+    onOptionTapped: @escaping EVYRowTapCallback<EVYJson>,
+    scope: EVYScope? = nil
   ) {
     self.title = title
     self.valueTemplate = valueTemplate
@@ -35,6 +36,7 @@ struct EVYInlinePicker: View {
 
     selectedIdentifiers = EVYState(
       textToWatch: destination,
+      scope: scope,
       setter: {
         do {
           let selected = try EVY.getDataFromText(destination)

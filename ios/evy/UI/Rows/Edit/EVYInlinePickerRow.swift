@@ -20,13 +20,16 @@ struct EVYInlinePickerRow: View {
     self.onOptionTapped = onOptionTapped
   }
 
+  @Environment(\.evyScope) private var evyScope
+
   var body: some View {
     EVYInlinePicker(
       title: view.title ?? "",
       data: view.source ?? "",
       valueTemplate: view.value,
       destination: view.destination ?? "",
-      onOptionTapped: onOptionTapped
+      onOptionTapped: onOptionTapped,
+      scope: evyScope
     )
     .titledRow(view.title)
   }

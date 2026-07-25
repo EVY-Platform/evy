@@ -28,7 +28,8 @@ struct EVYTextField: View {
     placeholder: String?,
     multiLine: Bool = false,
     isInteractive: Bool = true,
-    onValueCommit: (() -> Void)? = nil
+    onValueCommit: (() -> Void)? = nil,
+    scope: EVYScope? = nil
   ) {
     self.source = source
     self.placeholder = placeholder
@@ -40,12 +41,14 @@ struct EVYTextField: View {
     let watchTargets = EVY.watchTargets(forSource: source, destination: destination)
     self.displayValue = EVYState(
       watches: watchTargets,
+      scope: scope,
       setter: {
         let text = EVY.displayText(fromSource: source, destination: destination)
         return EVYValue(text, nil, nil)
       })
     self.placeholderValue = EVYState(
       textToWatch: placeholder,
+      scope: scope,
       setter: {
         EVYTextField.resolvePlaceholderValue(from: placeholder)
       })

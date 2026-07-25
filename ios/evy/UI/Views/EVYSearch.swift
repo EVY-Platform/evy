@@ -26,7 +26,8 @@ struct EVYSearch: View {
     source: String, destination: String, placeholder: String?, resultTemplate: UI_Row?,
     scopeId: String? = nil,
     draftScopeId: String? = nil,
-    onSelect: ((EVYJson) -> Void)? = nil
+    onSelect: ((EVYJson) -> Void)? = nil,
+    scope: EVYScope? = nil
   ) {
     self.destination = destination
     self.placeholder = placeholder
@@ -38,6 +39,7 @@ struct EVYSearch: View {
     case .local:
       localResults = EVYState(
         textToWatch: source,
+        scope: scope,
         setter: {
           EVYSearchResult.loadLocalResults(
             source: source,

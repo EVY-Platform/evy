@@ -444,4 +444,37 @@ final class EVYStoreRoutingTests: XCTestCase {
 
     XCTAssertEqual(state.value, "background-page")
   }
+
+  /// A row can be built while another page is foremost - a websocket SDUI
+  /// update adding rows to a page the user has navigated away from. Its
+  /// initial value has to come from its own scope, not from whatever page
+  /// happens to be active at that instant.
+  func testStateBuiltWithAnExplicitScopeIgnoresTheActiveGlobal() throws {
+    let ownScopeId = "own-\(UUID().uuidString)"
+    let activeScopeId = "active-\(UUID().uuidString)"
+    let key = "scoped_value"
+
+    try EVY.cacheStore.create(
+      namespace: EVYNamespace.cache, resource: ownScopeId, id: key,
+      value: #"{"label":"own-page"}"#.data(using: .utf8)!)
+    try EVY.cacheStore.create(
+      namespace: EVYNamespace.cache, resource: activeScopeId, id: key,
+      value: #"{"label":"active-page"}"#.data(using: .utf8)!)
+    defer {
+      try? EVY.cacheStore.deleteAll(namespace: EVYNamespace.cache, resource: ownScopeId)
+      try? EVY.cacheStore.deleteAll(namespace: EVYNamespace.cache, resource: activeScopeId)
+      EVY.activeCacheScopeId = nil
+    }
+
+    EVY.activeCacheScopeId = activeScopeId
+    let state = EVYState(
+      watches: ["{\(EVYCoreResource.messages.rawValue)}"],
+      scope: .cache(ownScopeId),
+      setter: { (try? EVY.getValueFromText("{\(key).label}").toString()) ?? "unresolved" }
+    )
+
+    XCTAssertEqual(state.value, "own-page")
+    // And the swap is undone - the active page is untouched.
+    XCTAssertEqual(EVY.activeCacheScopeId, activeScopeId)
+  }
 }
