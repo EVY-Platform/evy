@@ -39,15 +39,37 @@ struct DataChangedNotification: Decodable {
   let value: EVYJson
 }
 
-actor EVYWebsocket {
+/// Connection-owning transport used by `EVYAPIManager`. Exists so the manager's
+/// session lifecycle (auth state, reconnect) can be tested without a live socket.
+protocol EVYRPCTransport: Actor {
+  var isConnected: Bool { get }
+  func setDisconnectHandler(_ handler: (@Sendable () async -> Void)?)
+  func connect(token: String, os: DataOS) async throws -> Bool
+  func subscribe(event: String) async throws -> [String: String]
+  func fetch<T: Codable & Sendable>(
+    method: String,
+    params: Encodable,
+    expecting _: T.Type
+  ) async throws -> T
+  func sendBinary(_ data: Data) async throws
+}
+
+actor EVYWebsocket: EVYRPCTransport {
   private var task: URLSessionWebSocketTask?
   private var pendingRequests: [Int: CheckedContinuation<String, Error>] = [:]
   private var nextId = 1
   private var urlSession: URLSession?
   private let wsURL: URL
+  private var onDisconnect: (@Sendable () async -> Void)?
 
   init(host: String) {
     wsURL = URL(string: "ws://\(host)")!
+  }
+
+  var isConnected: Bool { task != nil }
+
+  func setDisconnectHandler(_ handler: (@Sendable () async -> Void)?) {
+    onDisconnect = handler
   }
 
   func connect(token: String, os: DataOS) async throws -> Bool {
@@ -107,8 +129,8 @@ actor EVYWebsocket {
   }
 
   private func openSocket() {
-    let delegate = EVYWebSocketDelegate { [weak self] in
-      Task { [weak self] in await self?.handleDisconnect() }
+    let delegate = EVYWebSocketDelegate { [weak self] closedTask in
+      Task { [weak self] in await self?.handleDisconnect(for: closedTask) }
     }
     let session = URLSession(
       configuration: .default, delegate: delegate, delegateQueue: nil)
@@ -127,7 +149,7 @@ actor EVYWebsocket {
           let message = try await wsTask.receive()
           await self?.dispatch(message)
         } catch {
-          await self?.handleDisconnect()
+          await self?.handleDisconnect(for: wsTask)
           break
         }
       }
@@ -155,15 +177,28 @@ actor EVYWebsocket {
     }
   }
 
-  private func handleDisconnect() {
+  /// Tears down a dropped socket exactly once. `closedTask` identifies the socket
+  /// the callback came from, so a late callback from an already-replaced socket
+  /// cannot tear down its successor.
+  private func handleDisconnect(for closedTask: URLSessionWebSocketTask?) {
+    guard let currentTask = task else { return }
+    if let closedTask, closedTask !== currentTask { return }
+
     task = nil
+    urlSession?.invalidateAndCancel()
+    urlSession = nil
+
     let pending = pendingRequests
     pendingRequests.removeAll()
     for continuation in pending.values {
       continuation.resume(
         throwing: EVYRPCError.connectionError("WebSocket disconnected"))
     }
-    postError(EVYError.websocketError(context: "WebSocket disconnected"))
+
+    // Surfacing the drop is the manager's job: it knows whether a reconnect is
+    // already in flight and so whether the user needs to hear about it again.
+    let handler = onDisconnect
+    Task { await handler?() }
   }
 
   private func handleNotification(method: String, params: Any?) {
@@ -245,9 +280,9 @@ actor EVYWebsocket {
 }
 
 private final class EVYWebSocketDelegate: NSObject, URLSessionWebSocketDelegate {
-  private let onClose: @Sendable () -> Void
+  private let onClose: @Sendable (URLSessionWebSocketTask) -> Void
 
-  init(onClose: @escaping @Sendable () -> Void) {
+  init(onClose: @escaping @Sendable (URLSessionWebSocketTask) -> Void) {
     self.onClose = onClose
   }
 
@@ -257,6 +292,6 @@ private final class EVYWebSocketDelegate: NSObject, URLSessionWebSocketDelegate 
     didCloseWith closeCode: URLSessionWebSocketTask.CloseCode,
     reason: Data?
   ) {
-    onClose()
+    onClose(webSocketTask)
   }
 }

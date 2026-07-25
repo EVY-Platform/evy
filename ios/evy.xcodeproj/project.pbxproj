@@ -146,6 +146,7 @@
 		FA001005RT00000100000001 /* EVYTextViewReactiveTitleTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA001006RT00000100000001 /* EVYTextViewReactiveTitleTests.swift */; };
 		SP001001UK00000100000001 /* XCTestCase+UniqueKey.swift in Sources */ = {isa = PBXBuildFile; fileRef = SP001002UK00000100000001 /* XCTestCase+UniqueKey.swift */; };
 		SP001003UK00000100000001 /* EVYTestMessageFixtures.swift in Sources */ = {isa = PBXBuildFile; fileRef = SP001004UK00000100000001 /* EVYTestMessageFixtures.swift */; };
+		RC0000012FAB000100000001 /* EVYAPIManagerReconnectTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = RC0000022FAB000100000001 /* EVYAPIManagerReconnectTests.swift */; };
 		ST0000032FAA2D1C006BEA92 /* EVYStoreRoutingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = ST0000042FAA2D1C006BEA92 /* EVYStoreRoutingTests.swift */; };
 /* End PBXBuildFile section */
 
@@ -302,6 +303,7 @@
 		FA001006RT00000100000001 /* EVYTextViewReactiveTitleTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EVYTextViewReactiveTitleTests.swift; sourceTree = "<group>"; };
 		SP001002UK00000100000001 /* XCTestCase+UniqueKey.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "XCTestCase+UniqueKey.swift"; sourceTree = "<group>"; };
 		SP001004UK00000100000001 /* EVYTestMessageFixtures.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EVYTestMessageFixtures.swift; sourceTree = "<group>"; };
+		RC0000022FAB000100000001 /* EVYAPIManagerReconnectTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EVYAPIManagerReconnectTests.swift; sourceTree = "<group>"; };
 		ST0000042FAA2D1C006BEA92 /* EVYStoreRoutingTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EVYStoreRoutingTests.swift; sourceTree = "<group>"; };
 		FA002002MP00001000000001 /* EVYMap.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EVYMap.swift; sourceTree = "<group>"; };
 		FA002004MP00001000000001 /* EVYMapRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EVYMapRow.swift; sourceTree = "<group>"; };
@@ -635,6 +637,7 @@
 				FA001006RT00000100000001 /* EVYTextViewReactiveTitleTests.swift */,
 		SP001002UK00000100000001 /* XCTestCase+UniqueKey.swift */,
 				SP001004UK00000100000001 /* EVYTestMessageFixtures.swift */,
+				RC0000022FAB000100000001 /* EVYAPIManagerReconnectTests.swift */,
 				ST0000042FAA2D1C006BEA92 /* EVYStoreRoutingTests.swift */,
 				FA002006MP00001000000001 /* EVYMapTests.swift */,
 				FA003002DP00001000000001 /* EVYDataPatcherTests.swift */,
@@ -923,6 +926,7 @@
 				FA001005RT00000100000001 /* EVYTextViewReactiveTitleTests.swift in Sources */,
 				SP001001UK00000100000001 /* XCTestCase+UniqueKey.swift in Sources */,
 				SP001003UK00000100000001 /* EVYTestMessageFixtures.swift in Sources */,
+				RC0000012FAB000100000001 /* EVYAPIManagerReconnectTests.swift in Sources */,
 				ST0000032FAA2D1C006BEA92 /* EVYStoreRoutingTests.swift in Sources */,
 				FA002005MP00001000000001 /* EVYMapTests.swift in Sources */,
 				FA003001DP00001000000001 /* EVYDataPatcherTests.swift in Sources */,
