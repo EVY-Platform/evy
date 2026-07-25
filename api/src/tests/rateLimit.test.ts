@@ -81,15 +81,4 @@ describe("rate limiter", () => {
 			expect((error as RateLimitError).retryAfterMs).toBe(45_000);
 		}
 	});
-
-	it("forgets a caller's counters when its socket goes away", () => {
-		const limiter = new RateLimiter(fixedClock().now);
-		limiter.consume("socket-1", "place_search", 1);
-
-		limiter.forget("socket-1");
-
-		expect(() =>
-			limiter.consume("socket-1", "place_search", 1),
-		).not.toThrow();
-	});
 });

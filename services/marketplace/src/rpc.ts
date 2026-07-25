@@ -30,17 +30,6 @@ export async function startMarketplaceRpcServer(
 
 	await server.event(DATA_CHANGED_EVENT);
 
-	// Marketplace owns no procedures yet. The method exists so the gateway has
-	// a target to forward to the moment one is declared in the registry, and so
-	// an undeclared call fails here the same way it would on core.
-	server.register("api", (params: unknown) => {
-		const method =
-			typeof params === "object" && params !== null && "method" in params
-				? String((params as { method: unknown }).method)
-				: "(missing)";
-		throw new Error(`Unknown marketplace API method: ${method}`);
-	});
-
 	server.register("get", (params: unknown) => {
 		validateStrictGetRequest(params);
 		return get(params);

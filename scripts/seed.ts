@@ -682,7 +682,6 @@ async function seedDatabase({
 				visibility: "public",
 				// Records the endpoint on the row when the environment knows it,
 				// so routing does not depend on the env convention at runtime.
-				...marketplaceEndpointColumns(),
 				...timestamped(now),
 			},
 		]);
@@ -753,29 +752,6 @@ async function seedDatabase({
 			await tx.insert(marketplaceSchema.data).values(marketplaceRows);
 		}
 	});
-}
-
-/**
- * Endpoint columns for the marketplace service row.
- *
- * Deliberately not derived from `MARKETPLACE_WS_HOST/PORT`: those say how the
- * process reading them reaches marketplace, and the seed runs on the host while
- * the gateway usually runs in a container - so seeding `127.0.0.1` points the
- * gateway at itself, and because the row wins over the environment, every
- * forwarded call then fails.
- *
- * Set `SEED_MARKETPLACE_WS_HOST/PORT` to pin an endpoint from the gateway's
- * point of view. Otherwise the columns stay null and the API falls back to its
- * own `<NAME>_WS_HOST/PORT`, which is correct in both docker and local dev.
- */
-function marketplaceEndpointColumns(): {
-	wsHost?: string;
-	wsPort?: number;
-} {
-	const host = process.env.SEED_MARKETPLACE_WS_HOST?.trim();
-	const port = Number(process.env.SEED_MARKETPLACE_WS_PORT);
-	if (!host || !Number.isInteger(port) || port <= 0) return {};
-	return { wsHost: host, wsPort: port };
 }
 
 async function main(): Promise<void> {
