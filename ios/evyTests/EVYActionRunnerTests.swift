@@ -19,8 +19,6 @@ final class EVYActionRunnerTests: XCTestCase {
     try await super.tearDown()
   }
 
-  // MARK: - Dual-read: legacy strings and structured invocations
-
   private func runBranchCapturing(
     _ branch: EVYActionBranch
   ) -> (
@@ -46,60 +44,6 @@ final class EVYActionRunnerTests: XCTestCase {
     ) { operations.append($0) }
 
     return (operations, shown, rowOps, errors)
-  }
-
-  /// The compact call syntax used by tests and tooling must produce exactly the
-  /// invocation a hand-written enum does, so test fixtures cannot quietly
-  /// diverge from what the app executes.
-  func testAuthoringHelperMatchesHandWrittenInvocations() {
-    let cases: [(String, EVYActionBranch, EVYActionBranch)] = [
-      ("close", branch(.close), .invocation(.close)),
-      ("show", branch(.show(rowId: "sheet-row")), .invocation(.show(rowId: "sheet-row"))),
-      ("select", branch(.select(value: "$datum")), .invocation(.select(value: "$datum"))),
-      (
-        "navigate", branch(.navigate(flowId: "flow-1", pageId: "page-1", query: [:])),
-        .invocation(.navigate(flowId: "flow-1", pageId: "page-1", query: [:]))
-      ),
-      (
-        "navigate with query",
-        branch(.navigate(flowId: "flow-1", pageId: "page-1", query: ["id": "$datum.id"])),
-        .invocation(.navigate(flowId: "flow-1", pageId: "page-1", query: ["id": "$datum.id"]))
-      ),
-      ("delete_photo", branch(.deletePhoto), .invocation(.deletePhoto)),
-      (
-        "highlight_required", branch(.highlightRequired(field: "item.pickup_time")),
-        .invocation(.highlightRequired(field: "item.pickup_time"))
-      ),
-    ]
-
-    for (label, legacy, structured) in cases {
-      let fromLegacy = runBranchCapturing(legacy)
-      let fromAst = runBranchCapturing(structured)
-
-      XCTAssertTrue(fromLegacy.errors.isEmpty, "\(label) converted: \(fromLegacy.errors)")
-      XCTAssertTrue(fromAst.errors.isEmpty, "\(label) ast: \(fromAst.errors)")
-      XCTAssertEqual(fromLegacy.operations, fromAst.operations, "\(label) operations")
-      XCTAssertEqual(fromLegacy.shown, fromAst.shown, "\(label) shown rows")
-      XCTAssertEqual(fromLegacy.rowOps, fromAst.rowOps, "\(label) row operations")
-    }
-  }
-
-  func testExpandTextPostsTheSameNotificationEitherWay() {
-    for branch in [
-      branch(.expandText(rowId: "target-row")),
-      .invocation(.expandText(rowId: "target-row")),
-    ] {
-      var received: [String] = []
-      let observer = NotificationCenter.default.addObserver(
-        forName: .evyExpandTextRow, object: nil, queue: nil
-      ) { note in
-        if let rowId = note.object as? String { received.append(rowId) }
-      }
-      defer { NotificationCenter.default.removeObserver(observer) }
-
-      _ = runBranchCapturing(branch)
-      XCTAssertEqual(received, ["target-row"])
-    }
   }
 
   func testStructuredBranchWithUnsupportedShapeIsRejectedAtDecode() {

@@ -100,26 +100,6 @@ final class SduiRowAttributeContractTests: XCTestCase {
     }
   }
 
-  func testUIRowDecodesTriggerKeyedActions() throws {
-    let rowData = try JSONSerialization.data(
-      withJSONObject: [
-        "id": "actions-shape-row",
-        "type": "Button",
-        "visible": "true",
-        "actions": [
-          "tap": [
-            [
-              "condition": "",
-              "false": "",
-              "true": "{close()}",
-            ]
-          ]
-        ],
-      ])
-    // Legacy call-syntax strings are no longer a valid stored branch.
-    XCTAssertThrowsError(try JSONDecoder().decode(UI_Row.self, from: rowData))
-  }
-
   func testRowDecodesEmptyBranchAsDoNothing() throws {
     let rowData = try JSONSerialization.data(
       withJSONObject: [

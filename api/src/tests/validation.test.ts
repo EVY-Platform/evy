@@ -528,13 +528,6 @@ describe("row actions shape validation", () => {
 		).toThrow("must have required property 'condition'");
 	});
 
-	// The pre-migration shape, which the web builder already fail-fasts on.
-	it("rejects the legacy top-level array shape", () => {
-		expect(() =>
-			rowWithActions([{ condition: "", false: "", true: "" }]),
-		).toThrow("must be object");
-	});
-
 	it("rejects a trigger whose value is not a list", () => {
 		expect(() =>
 			rowWithActions({ tap: { condition: "", false: "", true: "" } }),

@@ -404,8 +404,8 @@ describe("structured branch storage", () => {
 		expect(branchForStorage("")).toBe("");
 	});
 
-	// Legacy strings are no longer storable, so an unconvertible branch is a
-	// bug to surface rather than something to persist and discover later.
+	// An unconvertible branch is a bug in the editor to surface, rather than
+	// something to persist and discover later.
 	it("refuses to store an unconvertible branch", () => {
 		expect(() => branchForStorage("{teleport(x)}")).toThrow(
 			"Cannot store action branch",

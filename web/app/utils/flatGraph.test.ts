@@ -602,8 +602,6 @@ describe("pageRootIds", () => {
 // ---------------------------------------------------------------------------
 
 describe("ensureShowAction", () => {
-	// New actions are written structured, so this asserts the invocation rather
-	// than the legacy string.
 	it("adds a structured show action when missing", () => {
 		const row = makeRow("r1", { actions: {} });
 		const maps = makeMaps([], [], [row]);
@@ -620,27 +618,31 @@ describe("ensureShowAction", () => {
 		).toBe(true);
 	});
 
-	it("does not duplicate {show(sheetId)} action", () => {
-		const showAction = {
+	it("does not duplicate an existing show action", () => {
+		const showAction: UI_RowAction = {
 			condition: "",
-			true: "{show(sheet-1)}",
+			true: { fn: "show", rowId: "sheet-1" },
 			false: "",
 		};
 		const row = makeRow("r1", { actions: { tap: [showAction] } });
 		const maps = makeMaps([], [], [row]);
 		const next = ensureShowAction(maps, "r1", "sheet-1");
 		const actions = next.rowsById.r1?.data.actions as {
-			tap?: (typeof showAction)[];
+			tap?: UI_RowAction[];
 		};
 		expect(
-			actions.tap?.filter((a) => a.true === "{show(sheet-1)}").length,
+			actions.tap?.filter(
+				(a) =>
+					JSON.stringify(a.true) ===
+					JSON.stringify({ fn: "show", rowId: "sheet-1" }),
+			).length,
 		).toBe(1);
 	});
 
 	it("updates unconditional show when sheet is replaced", () => {
-		const showAction = {
+		const showAction: UI_RowAction = {
 			condition: "",
-			true: "{show(old-sheet)}",
+			true: { fn: "show", rowId: "old-sheet" },
 			false: "",
 		};
 		const row = makeRow("r1", { actions: { tap: [showAction] } });
@@ -649,7 +651,6 @@ describe("ensureShowAction", () => {
 		const actions = next.rowsById.r1?.data.actions as {
 			tap?: { condition: string; true: unknown; false: unknown }[];
 		};
-		// A legacy show action is recognised and replaced with the structured form.
 		expect(
 			actions.tap?.some(
 				(a) =>
@@ -657,9 +658,13 @@ describe("ensureShowAction", () => {
 					JSON.stringify({ fn: "show", rowId: "new-sheet" }),
 			),
 		).toBe(true);
-		expect(actions.tap?.some((a) => a.true === "{show(old-sheet)}")).toBe(
-			false,
-		);
+		expect(
+			actions.tap?.some(
+				(a) =>
+					JSON.stringify(a.true) ===
+					JSON.stringify({ fn: "show", rowId: "old-sheet" }),
+			),
+		).toBe(false);
 	});
 });
 

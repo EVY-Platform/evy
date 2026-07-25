@@ -844,35 +844,6 @@ final class ContentViewTests: XCTestCase {
     XCTAssertTrue(errors.isEmpty, "\(errors)")
   }
 
-  func testExtractCreateKeysIgnoresUnparseableTwoArgCreate() throws {
-    let store = makeStore()
-
-    try seedFlow(store: store, id: "legacy-flow", pageIds: ["legacy-page"])
-    try seedPage(
-      store: store, id: "legacy-page", rowIds: [],
-      footerRowId: "submit-button")
-    try seedRow(
-      store: store, id: "submit-button", type: "Button",
-      data: [
-        "source": "", "title": "", "label": "Submit",
-        "actions": [
-          "tap": [
-            [
-              "condition": "",
-              "false": "",
-              "true":
-                "{create(\(MarketplaceTestFixture.serviceId),\(MarketplaceTestFixture.itemsResourceId))}",
-            ]
-          ]
-        ],
-      ])
-
-    let keys = EVYFlowStore.createKeys(flowId: "legacy-flow", from: store)
-    XCTAssertEqual(keys, [])
-    let route = Route(flowId: "legacy-flow", pageId: "legacy-page")
-    XCTAssertEqual(EVYFlowStore.draftScopeId(for: route, from: store), "legacy-flow:browse")
-  }
-
   func testDraftScopeIdSurfacesErrorForMultipleSubmissionResources() throws {
     let store = makeStore()
     let secondResource = "fe000000-0000-0000-0000-000000000001"

@@ -3,13 +3,10 @@ import { describe, expect, test } from "bun:test";
 import { validateDataEvyRow } from "../types/validators";
 
 /**
- * Guards the migrated state of the shipped fixtures: every action branch is
- * structured, and every one of them satisfies the row schema.
+ * Every action branch in the shipped fixtures satisfies the row schema.
  *
- * Conversion itself is covered by the corpus vectors in
- * types/grammar/conformance.json. What this file protects is the fixtures not
- * drifting back to legacy strings, which would quietly re-introduce the form
- * the migration removed.
+ * The schema admits only the empty string or a structured invocation, so this
+ * also catches a fixture drifting to any other branch shape.
  */
 
 const FIXTURES = ["evy/evy_sdui.json", "services/service_sdui.json"] as const;
@@ -70,17 +67,9 @@ function rowWithBranch(branch: unknown) {
 	};
 }
 
-describe("shipped fixtures use structured actions", () => {
+describe("shipped fixtures satisfy the row schema", () => {
 	test("the fixtures actually contain action branches", () => {
 		expect(fixtureBranches.length).toBeGreaterThan(20);
-	});
-
-	test("no legacy string branches remain", () => {
-		const legacy = fixtureBranches
-			.filter(({ branch }) => typeof branch === "string")
-			.map(({ source, branch }) => `${source}: ${branch}`);
-
-		expect(legacy).toEqual([]);
 	});
 
 	test("every branch satisfies the row schema", () => {
