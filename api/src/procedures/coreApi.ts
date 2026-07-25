@@ -16,12 +16,18 @@ import * as syncProcedure from "./sync";
 
 type CoreApiHandler = (params: ApiRequest, db: EvyDb) => Promise<unknown>;
 
+/** Top-level `sync` RPC. Also reachable as api{method:"sync"} for older clients. */
+export async function syncMethod(
+	params: unknown,
+	db: EvyDb,
+): Promise<SyncResponse> {
+	const syncParams = validateSyncRequest(params ?? {});
+	const response: SyncResponse = await syncProcedure.sync(syncParams, db);
+	return validateSyncResponse(response);
+}
+
 const coreApiHandlers: Record<string, CoreApiHandler> = {
-	sync: async (params, db) => {
-		const syncParams = validateSyncRequest(params.data);
-		const response: SyncResponse = await syncProcedure.sync(syncParams, db);
-		return validateSyncResponse(response);
-	},
+	sync: async (params, db) => syncMethod(params.data, db),
 	place_search: async (params) => {
 		const placeSearchParams: PlaceSearchRequest =
 			validatePlaceSearchRequest(params.data);

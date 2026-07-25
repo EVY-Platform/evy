@@ -1,5 +1,6 @@
 import { initCoreNotifications, validateAuth } from "./data/data";
 import { createDb } from "./database/db";
+import { syncMethod } from "./procedures/coreApi";
 import { api, create, deleteResource, get, update } from "./procedures/rpc";
 import { initServiceAdapters } from "./procedures/services";
 import { cancelUpload, handleUploadChunk } from "./procedures/uploads";
@@ -28,6 +29,9 @@ async function startServer(): Promise<void> {
 	await initServiceAdapters(appDb, broadcast);
 
 	server.register("api", (params: unknown) => api(params, appDb));
+	// sync is a first-class method; api{method:"sync"} still works for clients
+	// that have not moved over.
+	server.register("sync", (params: unknown) => syncMethod(params, appDb));
 	server.register("cancelUpload", cancelUpload).protected();
 
 	server.register("get", (params: unknown) => get(params, appDb));

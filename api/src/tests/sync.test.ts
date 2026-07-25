@@ -112,7 +112,7 @@ describe("sync", () => {
 	it("returns changed rows in the unified data response", async () => {
 		const result = await sync({ lastSyncTime: EPOCH }, db);
 
-		expect(result).toEqual({ data: result.data });
+		expect(result).toEqual({ data: result.data, cursor: result.cursor });
 		expect(result.data).toBeDefined();
 		expect(Array.isArray(result.data)).toBe(true);
 	});
@@ -195,7 +195,7 @@ describe("sync", () => {
 			{ lastSyncTime: "2999-01-01T00:00:00.000Z" },
 			db,
 		);
-		expect(result).toEqual({ data: [] });
+		expect(result.data).toEqual([]);
 	});
 
 	it("propagates forwardGet errors for external services", async () => {
@@ -227,5 +227,84 @@ describe("sync", () => {
 				},
 			]);
 		}
+	});
+
+	describe("cursor", () => {
+		it("issues a cursor derived from the newest updatedAt it returned", async () => {
+			getImpl = async () =>
+				[
+					{ id: "a", updatedAt: "2026-01-01T00:00:00.000Z" },
+					{ id: "b", updatedAt: "2026-03-01T00:00:00.000Z" },
+					{ id: "c", updatedAt: "2026-02-01T00:00:00.000Z" },
+				] as unknown as GetResponse;
+			forwardGetImpl = async () => buildMockGetResponse([]);
+
+			const result = await sync({ cursor: EPOCH }, db);
+
+			expect(result.cursor).toBe("2026-03-01T00:00:00.000Z");
+		});
+
+		// A cursor that advanced on an empty response would skip past writes made
+		// between the query and the reply.
+		it("holds the cursor steady when nothing changed", async () => {
+			getImpl = async () => buildMockGetResponse([]);
+			forwardGetImpl = async () => buildMockGetResponse([]);
+
+			const result = await sync(
+				{ cursor: "2026-05-05T00:00:00.000Z" },
+				db,
+			);
+
+			expect(result.cursor).toBe("2026-05-05T00:00:00.000Z");
+		});
+
+		it("treats a missing cursor as a full sync", async () => {
+			const seen: string[] = [];
+			getImpl = async (params) => {
+				seen.push(params.filter?.updatedAfter ?? "none");
+				return buildMockGetResponse([]);
+			};
+			forwardGetImpl = async () => buildMockGetResponse([]);
+
+			await sync({}, db);
+
+			expect(seen.every((value) => value === EPOCH)).toBe(true);
+		});
+
+		it("still accepts the deprecated lastSyncTime", async () => {
+			const seen: string[] = [];
+			getImpl = async (params) => {
+				seen.push(params.filter?.updatedAfter ?? "none");
+				return buildMockGetResponse([]);
+			};
+			forwardGetImpl = async () => buildMockGetResponse([]);
+
+			await sync({ lastSyncTime: "2026-04-04T00:00:00.000Z" }, db);
+
+			expect(
+				seen.every((value) => value === "2026-04-04T00:00:00.000Z"),
+			).toBe(true);
+		});
+
+		it("prefers the cursor over lastSyncTime when both are sent", async () => {
+			const seen: string[] = [];
+			getImpl = async (params) => {
+				seen.push(params.filter?.updatedAfter ?? "none");
+				return buildMockGetResponse([]);
+			};
+			forwardGetImpl = async () => buildMockGetResponse([]);
+
+			await sync(
+				{
+					cursor: "2026-06-06T00:00:00.000Z",
+					lastSyncTime: "2020-01-01T00:00:00.000Z",
+				},
+				db,
+			);
+
+			expect(
+				seen.every((value) => value === "2026-06-06T00:00:00.000Z"),
+			).toBe(true);
+		});
 	});
 });

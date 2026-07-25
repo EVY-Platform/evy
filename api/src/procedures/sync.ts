@@ -16,6 +16,37 @@ import * as services from "./services";
 
 type SyncRow = SyncResponse["data"][number];
 
+const EPOCH = "1970-01-01T00:00:00.000Z";
+
+/**
+ * Where to resume from. The cursor is preferred; lastSyncTime is accepted so
+ * clients predating it keep working, and neither means a full sync.
+ */
+function resumePoint(syncParams: SyncRequest): string {
+	return syncParams.cursor ?? syncParams.lastSyncTime ?? EPOCH;
+}
+
+/**
+ * The high-water mark actually observed in this response, so the next sync
+ * resumes from server-recorded time rather than the client's clock. Falls back
+ * to where we resumed from when nothing changed, which keeps the cursor stable
+ * instead of drifting forward past unseen writes.
+ */
+function nextCursor(rows: SyncRow[], resumedFrom: string): string {
+	let highWater = resumedFrom;
+	for (const row of rows) {
+		if (!Array.isArray(row.value)) continue;
+		for (const record of row.value) {
+			if (!record || typeof record !== "object") continue;
+			const updatedAt = (record as Record<string, unknown>).updatedAt;
+			if (typeof updatedAt === "string" && updatedAt > highWater) {
+				highWater = updatedAt;
+			}
+		}
+	}
+	return highWater;
+}
+
 type ExternalServiceResource = {
 	serviceId: string;
 	resourceId: string;
@@ -74,17 +105,20 @@ export async function sync(
 	db: EvyDb,
 ): Promise<SyncResponse> {
 	const externalResources = await data.listExternalServiceResources(db);
+	const resumedFrom = resumePoint(syncParams);
 
 	const [evyData, externalData] = await Promise.all([
-		fetchEvyCoreData(syncParams.lastSyncTime, (request) =>
-			data.get(db, request),
-		),
+		fetchEvyCoreData(resumedFrom, (request) => data.get(db, request)),
 		fetchExternalServiceData(
-			syncParams.lastSyncTime,
+			resumedFrom,
 			externalResources,
 			services.forwardGet,
 		),
 	]);
 
-	return validateSyncResponse({ data: [...evyData, ...externalData] });
+	const rows = [...evyData, ...externalData];
+	return validateSyncResponse({
+		data: rows,
+		cursor: nextCursor(rows, resumedFrom),
+	});
 }
