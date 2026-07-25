@@ -87,6 +87,12 @@ export type RowAction =
 			title: string;
 	  }
 	| {
+			type: "APPLY_REMOTE_RECORD";
+			resource: string;
+			record: { id: string; updatedAt?: string; deletedAt?: string };
+			operation: "create" | "update" | "delete";
+	  }
+	| {
 			type: "UPDATE_FLOW_SUBMITS";
 			flowId: string;
 			submits: { service: string; resource: string } | undefined;

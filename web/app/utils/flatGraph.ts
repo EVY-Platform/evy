@@ -589,6 +589,45 @@ export function updatePageTitle(
 }
 
 /**
+ * Applies a record pushed by the server.
+ *
+ * A push is ignored when the local copy is at least as new, which covers the
+ * echo of our own write and, more importantly, avoids overwriting an edit the
+ * user has made since the push was generated.
+ */
+export function applyRemoteRecord(
+	maps: FlowEntityMaps,
+	resource: string,
+	record: { id: string; updatedAt?: string; deletedAt?: string },
+	operation: "create" | "update" | "delete",
+): FlowEntityMaps {
+	const mapKey =
+		resource === "flows"
+			? "flowsById"
+			: resource === "pages"
+				? "pagesById"
+				: resource === "rows"
+					? "rowsById"
+					: null;
+	if (!mapKey || !record?.id) return maps;
+
+	const collection = maps[mapKey] as Record<string, { updatedAt?: string }>;
+	const existing = collection[record.id];
+
+	if (operation === "delete" || record.deletedAt) {
+		if (!existing) return maps;
+		const { [record.id]: _removed, ...rest } = collection;
+		return { ...maps, [mapKey]: rest };
+	}
+
+	if (existing?.updatedAt && record.updatedAt) {
+		if (existing.updatedAt >= record.updatedAt) return maps;
+	}
+
+	return { ...maps, [mapKey]: { ...collection, [record.id]: record } };
+}
+
+/**
  * Set (or clear) the entity a flow declares it submits. Clients validate their
  * create(...,submit) actions against this instead of inferring the target.
  */

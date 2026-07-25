@@ -146,14 +146,14 @@ function extractResourceAttributeMetadata(
 		.filter((metadata) => metadata.attributeNames.length > 0);
 }
 
-const EPOCH = "1970-01-01T00:00:00.000Z";
-
 export async function syncWebData(): Promise<{
 	flowGraph: FlowEntityCollections;
 	serviceResources: ServiceResource[];
 	resourceAttributeMetadata: ResourceAttributeMetadata[];
 }> {
-	const response = await wsClient.sync(EPOCH);
+	// No cursor: the builder loads a full snapshot at mount and stays current
+	// through dataChanged pushes rather than by re-syncing.
+	const response = await wsClient.sync();
 	return {
 		flowGraph: extractFlowEntityCollections(response),
 		serviceResources: extractServiceResources(response),

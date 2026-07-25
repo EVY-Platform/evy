@@ -1,3 +1,4 @@
+import { EVY_CORE_SERVICE } from "evy-types/coreResources";
 import {
 	createElement,
 	type ReactNode,
@@ -108,6 +109,28 @@ export function AppProvider({
 		pagesById: appState.pagesById,
 		rowsById: appState.rowsById,
 	});
+
+	// Keep the builder current with other writers. Without this the canvas only
+	// ever showed the snapshot loaded at mount, so concurrent editors silently
+	// overwrote one another.
+	useEffect(() => {
+		return wsClient.onDataChanged((notification) => {
+			if (notification.service !== EVY_CORE_SERVICE) return;
+			const records = Array.isArray(notification.value)
+				? notification.value
+				: [notification.value];
+
+			for (const record of records) {
+				if (!record || typeof record !== "object") continue;
+				dispatchRow({
+					type: "APPLY_REMOTE_RECORD",
+					resource: notification.resource,
+					record: record as { id: string; updatedAt?: string },
+					operation: notification.operation,
+				});
+			}
+		});
+	}, []);
 
 	useEffect(() => {
 		const currentMaps = {

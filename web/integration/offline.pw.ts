@@ -85,14 +85,25 @@ test.describe("Offline and connection resilience", () => {
 						return;
 					}
 
+					if (request.method === "rpc.on") {
+						this.respond({
+							jsonrpc: "2.0",
+							id: request.id,
+							result: { dataChanged: "ok" },
+						});
+						return;
+					}
+
 					if (
-						request.method === "api" &&
-						request.params?.method === "sync"
+						request.method === "sync" ||
+						(request.method === "api" &&
+							request.params?.method === "sync")
 					) {
 						this.respond({
 							jsonrpc: "2.0",
 							id: request.id,
 							result: {
+								cursor: "1970-01-01T00:00:00.000Z",
 								data: [
 									{
 										service: EVY_CORE_SERVICE,

@@ -4,6 +4,7 @@ import {
 	addFlowRecords,
 	addPage,
 	addRowRecords,
+	applyRemoteRecord,
 	collectSubtreeRowIds,
 	ensureShowAction,
 	findChildIndexInContainer,
@@ -696,5 +697,106 @@ describe("updateFlowSubmits", () => {
 	it("is a no-op for an unknown flow", () => {
 		const maps = mapsWithFlow();
 		expect(updateFlowSubmits(maps, "missing", submits)).toBe(maps);
+	});
+});
+
+describe("applyRemoteRecord", () => {
+	function mapsWithRow(updatedAt: string): FlowEntityMaps {
+		return {
+			flowsById: {},
+			pagesById: {},
+			rowsById: {
+				r1: { ...makeRow("r1", { text: "local" }), updatedAt },
+			},
+		};
+	}
+
+	it("applies a strictly newer record", () => {
+		const next = applyRemoteRecord(
+			mapsWithRow("2026-01-01T00:00:00.000Z"),
+			"rows",
+			{ id: "r1", updatedAt: "2026-02-01T00:00:00.000Z" },
+			"update",
+		);
+
+		expect(next.rowsById.r1?.updatedAt).toBe("2026-02-01T00:00:00.000Z");
+	});
+
+	// The echo of our own write carries the timestamp we already hold.
+	it("ignores a record that is not newer", () => {
+		const maps = mapsWithRow("2026-02-01T00:00:00.000Z");
+		const next = applyRemoteRecord(
+			maps,
+			"rows",
+			{ id: "r1", updatedAt: "2026-02-01T00:00:00.000Z" },
+			"update",
+		);
+
+		expect(next).toBe(maps);
+	});
+
+	it("ignores a record older than the local copy", () => {
+		const maps = mapsWithRow("2026-03-01T00:00:00.000Z");
+		const next = applyRemoteRecord(
+			maps,
+			"rows",
+			{ id: "r1", updatedAt: "2026-01-01T00:00:00.000Z" },
+			"update",
+		);
+
+		expect(next).toBe(maps);
+	});
+
+	it("removes a record on a delete push", () => {
+		const next = applyRemoteRecord(
+			mapsWithRow("2026-01-01T00:00:00.000Z"),
+			"rows",
+			{ id: "r1" },
+			"delete",
+		);
+
+		expect(next.rowsById.r1).toBeUndefined();
+	});
+
+	it("removes a record carrying a tombstone", () => {
+		const next = applyRemoteRecord(
+			mapsWithRow("2026-01-01T00:00:00.000Z"),
+			"rows",
+			{ id: "r1", deletedAt: "2026-02-01T00:00:00.000Z" },
+			"update",
+		);
+
+		expect(next.rowsById.r1).toBeUndefined();
+	});
+
+	it("adds a record the builder has not seen", () => {
+		const next = applyRemoteRecord(
+			mapsWithRow("2026-01-01T00:00:00.000Z"),
+			"rows",
+			{ id: "r2", updatedAt: "2026-02-01T00:00:00.000Z" },
+			"create",
+		);
+
+		expect(next.rowsById.r2).toBeDefined();
+	});
+
+	it("ignores resources the builder does not hold", () => {
+		const maps = mapsWithRow("2026-01-01T00:00:00.000Z");
+
+		expect(
+			applyRemoteRecord(maps, "messages", { id: "m1" }, "update"),
+		).toBe(maps);
+	});
+
+	it("does not mutate the previous maps", () => {
+		const maps = mapsWithRow("2026-01-01T00:00:00.000Z");
+		applyRemoteRecord(
+			maps,
+			"rows",
+			{ id: "r1", updatedAt: "2026-05-01T00:00:00.000Z" },
+			"update",
+		);
+
+		expect(maps.rowsById.r1?.updatedAt).toBe("2026-01-01T00:00:00.000Z");
 	});
 });

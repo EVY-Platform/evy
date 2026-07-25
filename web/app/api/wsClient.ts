@@ -5,6 +5,7 @@ import type {
 	SyncResponse,
 } from "evy-types";
 import { EVY_CORE_RESOURCE, EVY_CORE_SERVICE } from "evy-types/coreResources";
+import { DATA_CHANGED_EVENT, type DataChangedNotification } from "evy-types/ws";
 import { Client } from "rpc-websockets";
 import { config } from "../config";
 import type { FlowEntityCollections } from "../utils/flowEntities";
@@ -41,10 +42,23 @@ function recordsById<T extends FlatResourceRecord>(
 
 type ConnectionState = "disconnected" | "connecting" | "connected" | "error";
 
+type DataChangedListener = (notification: DataChangedNotification) => void;
+
 class WSClient {
 	private client: Client | null = null;
 	private connectionState: ConnectionState = "disconnected";
 	private connectionPromise: Promise<void> | null = null;
+	private dataChangedListeners = new Set<DataChangedListener>();
+
+	/**
+	 * Subscribe to server pushes. Without this the builder only ever saw the
+	 * snapshot it loaded at mount, so two people editing the same flow
+	 * overwrote each other silently.
+	 */
+	onDataChanged(listener: DataChangedListener): () => void {
+		this.dataChangedListeners.add(listener);
+		return () => this.dataChangedListeners.delete(listener);
+	}
 
 	async connect(): Promise<void> {
 		if (this.connectionState === "connected") return;
@@ -59,11 +73,20 @@ class WSClient {
 				try {
 					const token = crypto.randomUUID();
 					await this.client?.login({ token, os: "Web" });
+					await this.client?.subscribe(DATA_CHANGED_EVENT);
 					this.connectionState = "connected";
 					resolve();
 				} catch (error) {
 					this.connectionState = "error";
 					reject(error);
+				}
+			});
+
+			this.client.on(DATA_CHANGED_EVENT, (payload: unknown) => {
+				const notification = payload as DataChangedNotification;
+				if (!notification || typeof notification !== "object") return;
+				for (const listener of this.dataChangedListeners) {
+					listener(notification);
 				}
 			});
 
@@ -82,15 +105,14 @@ class WSClient {
 		return this.connectionPromise;
 	}
 
-	async sync(lastSyncTime: string): Promise<SyncResponse> {
+	async sync(cursor?: string): Promise<SyncResponse> {
 		await this.connect();
 		if (!this.client) throw new Error("WebSocket client not initialized");
 
-		const rawUnknown: unknown = await this.client.call("api", {
-			service: EVY_CORE_SERVICE,
-			method: "sync",
-			data: { lastSyncTime },
-		});
+		const rawUnknown: unknown = await this.client.call(
+			"sync",
+			cursor ? { cursor } : {},
+		);
 
 		const response = rawUnknown as SyncResponse;
 		if (
