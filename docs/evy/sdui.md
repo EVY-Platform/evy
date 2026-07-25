@@ -99,7 +99,7 @@ Rows are what are put into pages. They are the building block of the EVY server-
     "text": "string",
 
     // Structural relationships (persisted as IDs in row data — see data.md):
-    // sheet — optional on every row; overlay content presented via {show(rowId)}
+    // sheet — optional on every row; overlay content presented via a `show` action
     // child — Search only; one result-row template (not a sheet)
     // children — static nested rows on container types
     // segments — TabContainer tab labels, paired with static children entries
@@ -135,13 +135,13 @@ Rows are what are put into pages. They are the building block of the EVY server-
 
 #### Row relationships
 
-Every row may declare an optional nested `sheet` row. At runtime, `{show(rowId)}` presents that stored row (or any other row ID loaded in the client) in a sheet overlay. The sheet root row's `title` is the sheet header and is live-interpolated when it contains expressions; put confirmation headings on the sheet root, not on nested rows inside it.
+Every row may declare an optional nested `sheet` row. At runtime, a `show` action presents that stored row (or any other row ID loaded in the client) in a sheet overlay. The sheet root row's `title` is the sheet header and is live-interpolated when it contains expressions; put confirmation headings on the sheet root, not on nested rows inside it.
 
 `Search` is the only row type that may declare `child`. That `child` is a **result template**: the iOS app renders one instantiated copy per search result. It is not opened with `show`. A Search row may own both `child` and `sheet` independently.
 
 `VerticalContainer`, `HorizontalContainer`, and `TabContainer` support static `children` (and `TabContainer` uses `segments` paired with those children). Dynamic `source` + per-item `child` templates are not supported; collection-driven layouts must use static structure or row types that bind their own `source`.
 
-**Web builder:** Secondary builder pages edit a row's optional `sheet` only. For Search, the configured `child` template renders **once** inline directly under the search input as a layout sample—it is not a live search and does not mirror API results. When you add or edit a Show action, the row argument defaults to the currently configured row's `sheet` row ID when one exists; you can pick any row from any loaded flow/page instead. Show requires an explicit row ID—there is no zero-argument `{show()}`.
+**Web builder:** Secondary builder pages edit a row's optional `sheet` only. For Search, the configured `child` template renders **once** inline directly under the search input as a layout sample—it is not a live search and does not mirror API results. When you add or edit a Show action, the row argument defaults to the currently configured row's `sheet` row ID when one exists; you can pick any row from any loaded flow/page instead. Show requires an explicit row ID—a `show` with no row id is not a valid invocation.
 
 #### Row binding fields
 
@@ -153,11 +153,11 @@ Every row may declare an optional nested `sheet` row. At runtime, `{show(rowId)}
 | `Dropdown`, `InlinePicker` | yes | yes | no | yes | `source` = options; `value` = `$datum` display template; selection writes raw datum to `destination`. Optional `initial` seeds the default selection — a single option identifier for `Dropdown`, and a one-element identifier array for `InlinePicker`. |
 | `Search` | yes | yes | no | no | `destination` stores the selected raw datum (builder-aware), stripping external `id` and merging over any existing draft so omitted keys (e.g. instructions) are preserved. Optional `child` is the search **result template** only (not a sheet). Optional `sheet` uses the universal overlay relationship. On result select, iOS also runs `actions.tap` with `$datum` set to the selected result (after the destination write). |
 | `Calendar` | yes | yes | yes | no | `source` = main timeslots to display (same binding as `destination`); `destination` = edited selection; `secondary` = greyed background slots. |
-| `TimeslotPicker` | yes | yes | no | no | Single selected timeslot string in `destination`. Optional `sheet` for confirmation overlays via `{show(sheetRowId)}`. |
+| `TimeslotPicker` | yes | yes | no | no | Single selected timeslot string in `destination`. Optional `sheet` for confirmation overlays via a `show` action. |
 | `SelectPhoto` | yes | yes | no | no | `source` = shown images; `destination` = written image IDs. |
 | `TextSelect` | yes | yes | no | no | `source` = current selected state; `destination` = write target. |
 | `PhotoGallery`, `Map`, `VerticalContainer`, `HorizontalContainer`, `TabContainer`, `InputList` | yes | no | no | no | Read-only or collection `source`. Containers render static `children` only (`TabContainer`: `segments` paired with `children`). Optional `sheet` on any row type. |
-| `Button`, `Text`, `TextAction`, `Heading` | no | no | no | no | `Button` accepts optional `style` `"primary"` (default) or `"danger"` (red on iOS). Any row type may attach optional `sheet`; `TextAction` commonly pairs with `{show(sheetRowId)}`. |
+| `Button`, `Text`, `TextAction`, `Heading` | no | no | no | no | `Button` accepts optional `style` `"primary"` (default) or `"danger"` (red on iOS). Any row type may attach optional `sheet`; `TextAction` commonly pairs with a `show` action. |
 
 Formatted vs raw: the runtime resolves `source` for display (including `{formatCurrency(...)}` expressions) and exposes raw values for writes. `destination` may use builder functions such as `{buildCurrency(item.price)}` — writes pass raw user/selection data into the builder.
 
@@ -195,7 +195,7 @@ Each row has an `actions` attribute: an object keyed by **trigger** name. Each t
 
 An empty object `{}` is the canonical “no actions” state (do not use `{"tap": []}`). The iOS client treats a missing trigger key the same as an empty list.
 
-The **shape** of `actions` is validated by the API on every `create`/`update` of a row: only the six trigger names are accepted, each must map to a list, and each entry must have exactly `condition`, `true`, and `false`. A malformed shape is rejected at write time with the offending path (e.g. `/data/actions/tap/0`) rather than being stored and then silently dropped when a client fails to decode the row. Note this validates structure only — the *contents* of the branch strings are still unchecked at the API.
+The **shape** of `actions` is validated by the API on every `create`/`update` of a row: only the six trigger names are accepted, each must map to a list, and each entry must have exactly `condition`, `true`, and `false`. A malformed shape is rejected at write time with the offending path (e.g. `/data/actions/tap/0`) rather than being stored and then silently dropped when a client fails to decode the row. Branch contents are validated too: a branch is either the empty string or one of the structured invocations in [`action.schema.json`](../../types/schema/sdui/action.schema.json), so an unknown `fn` or a missing field is rejected at write time along with a malformed shape.
 
 #### Trigger matrix
 
@@ -235,13 +235,13 @@ On iOS, Heading, Input, ListItem, and Text rows with a non-empty `swipe-left` ac
 
 Optional **`swipeLabel`** (Heading, Input, ListItem, Text only) sets the revealed button content as EVY text (icons like `::check::`, interpolations, etc.). When omitted or blank, iOS shows a white ellipsis icon and uses the accessibility label “Swipe left”.
 
-For destructive or important `create`/`update` actions, attach a `sheet` row to the triggering row and call `{show(sheetRowId)}` with that sheet row's ID (often the nested `sheet.id`). Put confirmation copy on the sheet root's `title` and message rows inside the sheet, then run the actual `create`/`update` followed by `{close()}` from a confirm button in the sheet.
+For destructive or important `create`/`update` actions, attach a `sheet` row to the triggering row and use a `show` action with that sheet row's id (often the nested `sheet.id`). Put confirmation copy on the sheet root's `title` and message rows inside the sheet, then run the actual `create`/`update` followed by `close` from a confirm button in the sheet.
 
-Inside a sheet overlay, `{close()}` dismisses the sheet instead of popping navigation.
+Inside a sheet overlay, `close` dismisses the sheet instead of popping navigation.
 
 #### Sequencing
 
-A row's action list for a given trigger runs **in order**. For each entry: if its `condition` is empty or evaluates true, the `true` branch runs and the runner moves on to the next entry; if the condition evaluates false, the `false` branch runs and the array stops (no later entries execute). If a branch's function throws (e.g. malformed arguments), the error is surfaced and the array also stops — later entries do not run. A condition that **cannot be evaluated** (malformed expression) is likewise an error, not a false result: the error is surfaced and the array stops without running either branch. This is what makes multi-step sequences like "create, then close" or "select timeslot, then show confirmation sheet" expressible as separate action entries. When a sheet interpolates the new selection (e.g. `Request {formatDatetime(selected_pickup_timeslot, "HH:mm")}`), put `{select($datum)}` **before** `{show(...)}`.
+A row's action list for a given trigger runs **in order**. For each entry: if its `condition` is empty or evaluates true, the `true` branch runs and the runner moves on to the next entry; if the condition evaluates false, the `false` branch runs and the array stops (no later entries execute). If a branch's function throws (e.g. malformed arguments), the error is surfaced and the array also stops — later entries do not run. A condition that **cannot be evaluated** (malformed expression) is likewise an error, not a false result: the error is surfaced and the array stops without running either branch. This is what makes multi-step sequences like "create, then close" or "select timeslot, then show confirmation sheet" expressible as separate action entries. When a sheet interpolates the new selection (e.g. `Request {formatDatetime(selected_pickup_timeslot, "HH:mm")}`), put the `select` action **before** the `show`.
 
 #### Conditions
 
@@ -292,26 +292,10 @@ Supported invocations. The `fn` value selects the shape; every field below is re
 | `highlight_required` | `field` | Mark a field as required / show validation. |
 | `select` | `value` | Ask the triggering row to select `value`, usually `$datum`. |
 | `navigate` | `flowId`, `pageId`, `query` (optional) | Go to a page within a flow. `query` is a map of value expressions. |
-| `create` | `service`, `resource`, `mode`, plus mode fields | `mode: "submit"` merges the flow's create drafts; `mode: "inline"` takes `data`; `mode: "fromPath"` takes `dataPath`. Both non-submit modes accept an optional `idDestination`. Never changes routes — follow with `close` to dismiss. |
-| `update` | `service`, `resource`, `mode`, `filter`, `changes` \| `changesPath` | `mode: "store"` requires a non-empty `filter` and updates matching records; `mode: "draft"` takes no filter and writes into the active create draft. Changes are either a map or a whole-object path, never both. |
+| `create` | `service`, `resource`, `mode`, plus mode fields | Create a domain entity. **Never changes routes** — follow with `close` to dismiss. `mode: "submit"` merges the active flow's create drafts into the entity and cleans them up. `mode: "inline"` takes a `data` map: its values resolve as data paths or `$datum`, unresolved bare words stay literals (bare `true`/`false` become booleans, bare `null` becomes JSON null, quoted `"…"` stays a literal string, and `{…}` values resolve as nested objects). `mode: "fromPath"` takes a `dataPath` and sends the whole resolved object from drafts or synced data. Both non-submit modes accept an optional `idDestination`, which writes the generated uuid to a draft-aware path (e.g. `pickup_address.id`) — use it in **create flows** where the target record does not exist yet. When the target already exists, link it with a follow-up store-mode `update` instead of writing onto the live record path. |
+| `update` | `service`, `resource`, `mode`, `filter`, `changes` \| `changesPath` | `mode: "store"` requires a non-empty `filter` and updates matching records immediately; `mode: "draft"` takes no filter and writes into the active create draft. Changes are either a map or a whole-object path, never both; a path-resolved object has any `id` key stripped before merging. Filter and change values resolve like inline `create` data. Change keys may use dotted paths (e.g. `transfer_options.pickup.address_id`) to patch nested fields without clobbering siblings. A filter value of `null` matches records where the property is absent or JSON `null`. A store-mode update matching nothing is a no-op. |
 
-The older per-function notes below describe the same behaviour in the previous call syntax:
-
-| Function | Meaning |
-| -------- | ------- |
-| `close()` | Close current UI, e.g. `{close()}`. Inside a sheet overlay, dismisses the sheet only. |
-| `create(service_id, resource_id, submit \| data, id_destination?)` | Create a domain entity. **Never changes routes** — with `submit` as the third argument, merges the active flow's create drafts into the created entity and cleans them up (two-argument create is invalid). With a plain-text data object `{key: value, …}`, resolves its data-path or `$datum` values, preserves unresolved bare words as literals (bare `true`/`false` resolve as booleans, bare `null` resolves as JSON null, quoted `"…"` values stay literal strings, and `{…}` values resolve as nested objects), and creates that one entity immediately. Alternatively, pass a **data path** (bare identifier, e.g. `pickup_address`) as the third argument to send the whole resolved object from drafts or synced data. Optional fourth argument writes the generated uuid to a draft-aware destination path (e.g. `{pickup_address.id}`) — use this in **create flows** where the target record does not exist yet. When the target record already exists, link it with a follow-up store-mode `update` action instead of writing onto the live record path. Either way, a flow that should close after submitting must do so explicitly with a following `{close()}` action. |
-| `update(service_id, resource_id, filter, changes, draft?)` | Update matching domain entities immediately (store mode, default), or write into the active create draft (`draft` fifth argument with filter `{}`). Resolves filter and changes like inline `create` data (including boolean, `null`, quoted-string, and nested-object literals), or pass a **data path** as `changes` to merge a whole draft object (the client strips any `id` key from path-resolved changes before merging). Change keys may use dotted paths (e.g. `transfer_options.pickup.address_id`) to patch nested fields without clobbering siblings. A filter value of `null` matches records where the property is absent or JSON `null`. Locally finds rows where every filter property matches, merges changes, refreshes matching cache-scope entities, then syncs each match to the server with an `update` RPC. Store mode requires a non-empty filter; `changes` is required as either a non-empty `{…}` object or a data path. A store-mode update matching nothing is a no-op. |
-| `navigate(flowId, pageId, queryParams?)` | Go to a page within a flow, e.g. `{navigate(flowId, pageId)}`. Pass query params as the optional third argument using a plain-text query object, e.g. `{navigate(flowId, pageId, {id: $datum.id})}`. |
-| `show(rowId)` | Present the row with ID `rowId` in a sheet overlay, e.g. `{show(b8c7d6e5-f4a3-4b2c-9d1e-0f8a7b6c5d4e)}`. Requires exactly one non-empty row ID. The target may belong to any page in the synced flow data, not only the action row's nested `sheet`. If the ID is missing from the client row store, the action fails and later actions in the same array do not run. The presented row's `title` is the sheet header (live-interpolated when it contains expressions). |
-| `highlight_required(field)` | Mark a field as required / show validation, e.g. `{highlight_required(title)}` |
-| `select(value)` | Ask the triggering row to select `value`. The row defines semantics (toggle bool, toggle array membership, write a scalar, switch segment, or batch-toggle). Usually `{select($datum)}` where `$datum` is the tapped unit (timeslot ISO string, array of ISO strings for a Calendar axis tap, option object, segment index, etc.). Rows without a select handler treat this as an error. |
-| `select_photo()` | Ask the triggering `SelectPhoto` row to present the photo picker. |
-| `delete_photo()` | Ask the triggering `SelectPhoto` row to remove the photo tile that was tapped (same effect as the built-in delete control when using the default action). |
-| `expand_photo()` | Ask the triggering `PhotoGallery` row to present the current photo full screen. |
-| `expand_text(rowId)` | Expand the `TextExpand` row with ID `rowId` (cross-row, like `show`). Requires exactly one non-empty row ID. |
-
-Note that the web builder does not execute actions; it only stores these strings and displays mocks.
+The web builder does not execute actions; it edits the structured invocations above and displays mocks. See [`types/schema/sdui/action.schema.json`](../../types/schema/sdui/action.schema.json) for the authoritative shape of each variant.
 
 #### Examples (from `scripts/fixtures/services/service_sdui.json`)
 
@@ -409,8 +393,8 @@ Search result template (`child` only on Search; separate from `sheet`).
 
 Use the same two-action `tap` array on the pickup Search row for create and edit flows, but the **link** step differs by flow type.
 
-1. **Create or update the address** — if `address_id` is empty, `{create(core, addresses, pickup_address, {pickup_address.id})}` persists the address and writes the generated id to the page-local `pickup_address` buffer; otherwise `{update(core, addresses, {id: item.transfer_options.pickup.address_id}, pickup_address)}` updates the existing row.
-2. **Link the item** — on **edit** flows where the item row already exists: `{update(marketplace, items, {id: item.id}, {transfer_options.pickup.address_id: pickup_address.id})}` matches the row and syncs immediately. On **create** flows: `{update(marketplace, items, {}, {transfer_options.pickup.address_id: pickup_address.id}, draft)}` writes into the create draft (picked up by submit `create`). A page shared across both flow types needs condition-branched actions (store vs draft link) because one action string no longer serves both.
+1. **Create or update the address** — if `address_id` is empty, a `create` on `core/addresses` with `mode: "fromPath"`, `dataPath: "pickup_address"` and `idDestination: "pickup_address.id"` persists the address and writes the generated id to the page-local `pickup_address` buffer; otherwise a store-mode `update` on `core/addresses` filtered by `id: item.transfer_options.pickup.address_id` with `changesPath: "pickup_address"` updates the existing row.
+2. **Link the item** — on **edit** flows where the item row already exists: a store-mode `update` on `marketplace/items` filtered by `id: item.id`, changing `transfer_options.pickup.address_id` to `pickup_address.id`, matches the row and syncs immediately. On **create** flows: the same change in `mode: "draft"` writes into the create draft (picked up by submit `create`). A page shared across both flow types needs condition-branched actions (store vs draft link) because one invocation cannot serve both.
 
 When an address already exists, the first action's `false` branch runs and **stops the action array** (runner semantics), so the link step does not run again on re-pick.
 
@@ -506,7 +490,7 @@ flowchart TD
 Both clients connect to the same JSON-RPC WebSocket gateway. The API returns flows, pages, and rows as independent flat collections. Each client builds its own in-memory representation:
 
 - **Web builder** converts records to ID-keyed maps and uses `flatGraph.ts` for all edits. Changes are written back to the API as individual record updates.
-- **iOS app** stores records in `EVYDataStore` and resolves them on demand through typed store accessors (`EVYFlowStore`, `EVYPageStore`, `EVYRowStore`). Rows follow `sheet_row_id`, Search-only `child_row_id`, and container `children_row_ids` links at render time; `{show(rowId)}` resolves targets through `EVYRowStore` across pages.
+- **iOS app** stores records in `EVYDataStore` and resolves them on demand through typed store accessors (`EVYFlowStore`, `EVYPageStore`, `EVYRowStore`). Rows follow `sheet_row_id`, Search-only `child_row_id`, and container `children_row_ids` links at render time; a `show` action resolves its target through `EVYRowStore` across pages.
 
 ```mermaid
 flowchart TD

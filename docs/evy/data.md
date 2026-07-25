@@ -92,66 +92,21 @@ Tables that track updates use ISO 8601 / RFC 3339 strings (never numeric Unix ti
 
 ### Schema-backed row types (`DATA_EVY_*`)
 
+Fields, types and which of them are required live in [`types/schema/data/data.schema.json`](../../types/schema/data/data.schema.json) and the generated TypeScript and Swift built from it. That is the reference; the notes below cover only what a schema does not explain — routing, references between records, and how a shape is represented on the wire. Hand-copied field lists here went stale as soon as a column was added.
+
 These are defined in `types/schema/data/data.schema.json`. The API and generated Drizzle schema use them.
 
 #### DATA_EVY_Device
 
 Primary key: `token`.
 
-```
-token: string (maxLength 256)
-os: "ios" | "android" | "Web"
-createdAt: string (date-time)
-```
-
 #### DATA_EVY_Service
-
-```
-id: uuid
-name: string (maxLength 50)
-description: string
-sortOrder: integer (optional)
-createdAt: string (date-time)
-updatedAt: string (date-time)
-```
 
 #### DATA_EVY_Organization
 
-```
-id: uuid
-name: string (maxLength 100)
-description: string
-logo: uuid
-url: string (maxLength 50)
-supportEmail: string (maxLength 50)
-createdAt: string (date-time)
-updatedAt: string (date-time)
-```
-
 #### DATA_EVY_ServiceProvider
 
-```
-id: uuid
-fkServiceId: uuid
-fkOrganizationId: uuid
-name: string (maxLength 100)
-description: string
-logo: uuid
-url: string (maxLength 50)
-createdAt: string (date-time)
-updatedAt: string (date-time)
-retired: boolean (default false)
-```
-
 #### DATA_EVY_ServiceResource
-
-```
-id: uuid
-fkServiceId: uuid
-name: string (maxLength 50)
-createdAt: string (date-time)
-updatedAt: string (date-time)
-```
 
 `name` is the display/base name used by the web builder for human-friendly labels. Runtime service/resource references use `id`; clients must not derive API routing or persistence keys from `name`.
 
@@ -159,29 +114,11 @@ updatedAt: string (date-time)
 
 Persisted flow shell. Clients assemble the nested [`UI_Flow`](sdui.md) shape from `flows`, `pages`, and `rows` at the serialization boundary.
 
-```
-id: uuid
-name: string
-pageIds: uuid[]
-createdAt: string (date-time)
-updatedAt: string (date-time)
-```
-
 On the wire this is accessed with `service: "475731ac-31aa-4d65-94d2-7032782ae359"` and `resource: "flows"`.
 
 #### DATA_EVY_Page
 
 Persisted page shell.
-
-```
-id: uuid
-name: string
-title: string (optional)
-rowIds: uuid[]
-footerRowId: uuid (optional)
-createdAt: string (date-time)
-updatedAt: string (date-time)
-```
 
 On the wire this is accessed with `service: "475731ac-31aa-4d65-94d2-7032782ae359"` and `resource: "pages"`.
 
@@ -197,37 +134,11 @@ Persisted row record. Row-type-specific SDUI fields live in `data`. Nested row r
 
 A Search row may persist both `child_row_id` and `sheet_row_id`. Relationship kind is explicit in storage; do not infer it from row type alone beyond the Search-only rule for `child`.
 
-```
-id: uuid
-name: string
-type: string
-visible: string
-data: object
-createdAt: string (date-time)
-updatedAt: string (date-time)
-```
-
 On the wire this is accessed with `service: "475731ac-31aa-4d65-94d2-7032782ae359"` and `resource: "rows"`.
 
 #### DATA_EVY_Address
 
 First-class pickup/location address row in the core database. Marketplace items reference an address by id (`transfer_options.pickup.address_id`) rather than embedding the object. SDUI reads use `findFirst(addresses, <item>.transfer_options.pickup.address_id)`.
-
-```
-id: uuid
-unit: string (optional)
-street: string (optional)
-city: string (optional)
-postcode: string (optional)
-state: string (optional)
-country: string (optional)
-latitude: number (optional)
-longitude: number (optional)
-instructions: string (optional)
-visibility: "public" | "private" (defaults to private)
-createdAt: string (date-time)
-updatedAt: string (date-time)
-```
 
 On the wire this is accessed with `service: "475731ac-31aa-4d65-94d2-7032782ae359"` and `resource: "addresses"`. Addresses are private by policy — iOS routes them to `privateStore`.
 
@@ -240,19 +151,6 @@ Every `DATA_EVY_*` row carries a required `visibility` attribute: `"public"` or 
 #### DATA_EVY_Message
 
 Core message record in [`data.schema.json`](../../../types/schema/data/data.schema.json) (`$defs.DATA_EVY_Message`, Postgres table `Message`). A message always relates to one record of another resource: `fk` is that record's id, and `service` / `resource` identify which service and resource the `fk` belongs to. Use-case-specific fields (e.g. `type`, `time`, `postalcode`) live in the free-form `data` object.
-
-```
-id: uuid
-fk: uuid (the related record, e.g. a marketplace item id)
-service: uuid (service the fk belongs to)
-resource: uuid (resource the fk belongs to)
-archivedAt: string (date-time) | null (null/absent while active)
-status: "pending" | "accepted"
-createdAt: string (date-time)
-updatedAt: string (date-time, server-stamped)
-visibility: "public" | "private" (defaults to public)
-data: object (free-form, use-case specific)
-```
 
 On the wire this is accessed with `service: "475731ac-31aa-4d65-94d2-7032782ae359"` and `resource: "messages"`. Cancelling sets `archivedAt`; accepting sets `status` to `accepted` via `{update(...)}`.
 
