@@ -1,4 +1,4 @@
-name: Marketplace lint, build, and tests
+name: Marketplace
 
 on:
     pull_request:
@@ -12,6 +12,7 @@ on:
 
 jobs:
     marketplace_lint:
+        name: Marketplace Lint
         defaults:
             run:
                 working-directory: services/marketplace
@@ -35,6 +36,7 @@ jobs:
               run: bun run lint
 
     marketplace_build:
+        name: Marketplace Build
         defaults:
             run:
                 working-directory: services/marketplace
@@ -51,6 +53,7 @@ jobs:
               if: steps.setup.outputs.has-changes == 'true'
 
     marketplace_tests:
+        name: Marketplace Tests
         defaults:
             run:
                 working-directory: services/marketplace

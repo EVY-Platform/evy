@@ -15,11 +15,14 @@ struct EVYInputListRow: View {
     self.view = view
   }
 
+  @Environment(\.evyScope) private var evyScope
+
   var body: some View {
     EVYInputList(
       data: view.source,
       format: view.format,
-      placeholder: view.placeholder
+      placeholder: view.placeholder,
+      scope: evyScope
     )
     .titledRow(view.title)
   }

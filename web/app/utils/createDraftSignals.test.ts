@@ -7,36 +7,44 @@ import { shouldOfferCreateSubmitWithFlow } from "./createDraftSignals";
 
 describe("createDraftSignals", () => {
 	const itemResourceId = MARKETPLACE_RESOURCE.ITEMS;
+	const declared = `${MARKETPLACE_SERVICE}/${itemResourceId}`;
 
-	it("offers submit create when destinations target the resource", () => {
+	it("offers submit create only for the declared target", () => {
 		expect(
 			shouldOfferCreateSubmitWithFlow(
 				MARKETPLACE_SERVICE,
 				itemResourceId,
-				[`${itemResourceId}.price`],
-				new Set(),
+				declared,
 			),
 		).toBe(true);
 	});
 
-	it("offers submit create when a draft-mode update targets the resource", () => {
+	it("does not offer submit create without a declaration", () => {
 		expect(
 			shouldOfferCreateSubmitWithFlow(
 				MARKETPLACE_SERVICE,
 				itemResourceId,
-				[],
-				new Set([`${MARKETPLACE_SERVICE}/${itemResourceId}`]),
+				null,
 			),
-		).toBe(true);
+		).toBe(false);
 	});
 
-	it("does not offer submit create without destination or draft-update signals", () => {
+	it("does not offer submit create for a different resource", () => {
 		expect(
 			shouldOfferCreateSubmitWithFlow(
 				MARKETPLACE_SERVICE,
+				"addresses",
+				declared,
+			),
+		).toBe(false);
+	});
+
+	it("does not offer submit create for a different service", () => {
+		expect(
+			shouldOfferCreateSubmitWithFlow(
+				"475731ac-31aa-4d65-94d2-7032782ae359",
 				itemResourceId,
-				["pickup_address"],
-				new Set(),
+				declared,
 			),
 		).toBe(false);
 	});

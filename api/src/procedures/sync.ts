@@ -9,64 +9,86 @@ import {
 	EVY_CORE_RESOURCE_NAMES,
 	EVY_CORE_SERVICE,
 } from "evy-types/coreResources";
-import { validateSyncResponse } from "evy-types/validators";
 import * as data from "../data/data";
 import type { EvyDb } from "../database/db";
 import * as services from "./services";
 
 type SyncRow = SyncResponse["data"][number];
 
-type ExternalServiceResource = {
-	serviceId: string;
-	resourceId: string;
-};
+const EPOCH = "1970-01-01T00:00:00.000Z";
 
-async function fetchEvyCoreData(
-	lastSyncTime: string,
-	getCore: (params: GetRequest) => Promise<GetResponse>,
-): Promise<SyncRow[]> {
-	const rows: SyncRow[] = [];
-	for (const coreResourceName of EVY_CORE_RESOURCE_NAMES) {
-		if (coreResourceName === EVY_CORE_RESOURCE.DEVICES) continue;
-
-		const value: GetResponse = await getCore({
-			service: EVY_CORE_SERVICE,
-			resource: coreResourceName,
-			filter: { updatedAfter: lastSyncTime },
-		});
-		if (value.length === 0) continue;
-
-		rows.push({
-			service: EVY_CORE_SERVICE,
-			resource: coreResourceName,
-			value,
-		});
-	}
-	return rows;
+function resumePoint(syncParams: SyncRequest): string {
+	return syncParams.cursor ?? EPOCH;
 }
 
-async function fetchExternalServiceData(
-	lastSyncTime: string,
-	externalResources: ExternalServiceResource[],
-	fetchService: typeof services.forwardGet,
-): Promise<SyncRow[]> {
-	const rows: SyncRow[] = [];
-	for (const { serviceId, resourceId } of externalResources) {
-		const value: GetResponse = await fetchService(serviceId, {
-			service: serviceId,
-			resource: resourceId,
-			filter: { updatedAfter: lastSyncTime },
-		});
-
-		if (value.length === 0) continue;
-
-		rows.push({
-			service: serviceId,
-			resource: resourceId,
-			value,
-		});
+/**
+ * The high-water mark actually observed in this response, so the next sync
+ * resumes from server-recorded time rather than the client's clock. Falls back
+ * to where we resumed from when nothing changed, which keeps the cursor stable
+ * instead of drifting forward past unseen writes.
+ */
+function nextCursor(rows: SyncRow[], resumedFrom: string): string {
+	let highWater = resumedFrom;
+	for (const row of rows) {
+		if (!Array.isArray(row.value)) continue;
+		for (const record of row.value) {
+			if (!record || typeof record !== "object") continue;
+			const updatedAt = (record as Record<string, unknown>).updatedAt;
+			if (typeof updatedAt === "string" && updatedAt > highWater) {
+				highWater = updatedAt;
+			}
+		}
 	}
-	return rows;
+	return highWater;
+}
+
+type SyncError = NonNullable<SyncResponse["errors"]>[number];
+
+type FetchOutcome = { rows: SyncRow[]; errors: SyncError[] };
+
+/** A resource to pull from, and the service that owns it. */
+type ResourceRef = { service: string; resource: string };
+
+function describe(error: unknown): string {
+	return error instanceof Error ? error.message : String(error);
+}
+
+/**
+ * Pulls everything changed since `since` for each resource.
+ *
+ * One resource failing degrades the response rather than failing the sync for
+ * every other resource, so each is caught and reported on its own.
+ */
+async function fetchResources(
+	refs: ResourceRef[],
+	since: string,
+	fetchOne: (ref: ResourceRef, request: GetRequest) => Promise<GetResponse>,
+): Promise<FetchOutcome> {
+	const rows: SyncRow[] = [];
+	const errors: SyncError[] = [];
+
+	for (const ref of refs) {
+		try {
+			const value = await fetchOne(ref, {
+				service: ref.service,
+				resource: ref.resource,
+				filter: { updatedAfter: since },
+			});
+			if (value.length === 0) continue;
+			rows.push({ ...ref, value });
+		} catch (error) {
+			errors.push({ ...ref, message: describe(error) });
+		}
+	}
+
+	return { rows, errors };
+}
+
+/** Devices are written by the client and never synced back to it. */
+function coreResourceRefs(): ResourceRef[] {
+	return EVY_CORE_RESOURCE_NAMES.filter(
+		(name) => name !== EVY_CORE_RESOURCE.DEVICES,
+	).map((resource) => ({ service: EVY_CORE_SERVICE, resource }));
 }
 
 export async function sync(
@@ -75,16 +97,33 @@ export async function sync(
 ): Promise<SyncResponse> {
 	const externalResources = await data.listExternalServiceResources(db);
 
-	const [evyData, externalData] = await Promise.all([
-		fetchEvyCoreData(syncParams.lastSyncTime, (request) =>
+	const resumedFrom = resumePoint(syncParams);
+
+	const [core, external] = await Promise.all([
+		fetchResources(coreResourceRefs(), resumedFrom, (_ref, request) =>
 			data.get(db, request),
 		),
-		fetchExternalServiceData(
-			syncParams.lastSyncTime,
-			externalResources,
-			services.forwardGet,
+		fetchResources(
+			externalResources.map(({ serviceId, resourceId }) => ({
+				service: serviceId,
+				resource: resourceId,
+			})),
+			resumedFrom,
+			(ref, request) => services.forwardGet(ref.service, request),
 		),
 	]);
 
-	return validateSyncResponse({ data: [...evyData, ...externalData] });
+	const rows = [...core.rows, ...external.rows];
+	const errors = [...core.errors, ...external.errors];
+
+	// A partial response must not advance the cursor, or the resources that
+	// failed would never be retried.
+	const cursor =
+		errors.length > 0 ? resumedFrom : nextCursor(rows, resumedFrom);
+
+	return {
+		data: rows,
+		cursor,
+		...(errors.length > 0 ? { errors } : {}),
+	};
 }

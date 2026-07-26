@@ -27,7 +27,9 @@ const segmentGroupStyle: CSSProperties = {
 export default defineRow(typeName, {
 	config: {
 		type: "TabContainer",
-		actions: defaultRowActions({ tap: "{select($datum)}" }),
+		actions: defaultRowActions({
+			tap: { fn: "select", value: "$datum" },
+		}),
 		visible: "true",
 		title: "Tab container row title",
 		segments: ["X", "Y", "Z"],

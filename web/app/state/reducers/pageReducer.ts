@@ -5,6 +5,7 @@ import {
 	addFlowRecords,
 	addPage,
 	addRowRecords,
+	applyRemoteRecord,
 	ensureShowAction,
 	type FlowEntityMaps,
 	findPageIdContainingRow,
@@ -15,6 +16,7 @@ import {
 	removePage,
 	removeRowFromPage,
 	setFooterRow,
+	updateFlowSubmits,
 	updatePageTitle,
 	updateRowActions,
 	updateRowField,
@@ -380,6 +382,25 @@ export const pageReducer = (state: AppState, action: RowAction): AppState => {
 				state,
 				action.pageId,
 				action.title,
+			);
+			return { ...state, ...nextMaps };
+		}
+
+		case "APPLY_REMOTE_RECORD": {
+			const nextMaps = applyRemoteRecord(
+				state,
+				action.resource,
+				action.record,
+				action.operation,
+			);
+			return nextMaps === state ? state : { ...state, ...nextMaps };
+		}
+
+		case "UPDATE_FLOW_SUBMITS": {
+			const nextMaps = updateFlowSubmits(
+				state,
+				action.flowId,
+				action.submits,
 			);
 			return { ...state, ...nextMaps };
 		}

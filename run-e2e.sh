@@ -39,6 +39,8 @@ IOS_SIM_UDID=""
 # Preserve env overrides when sourcing `.env` (e.g. WEB_PORT=3001 ./run-e2e.sh).
 _PRESET_WEB_PORT="${WEB_PORT-}"
 _PRESET_API_PORT="${API_PORT-}"
+_PRESET_API_HOST="${API_HOST-}"
+_PRESET_API_URL="${API_URL-}"
 _PRESET_MARKETPLACE_WS_HOST="${MARKETPLACE_WS_HOST-}"
 _PRESET_MARKETPLACE_WS_PORT="${MARKETPLACE_WS_PORT-}"
 set -a
@@ -50,6 +52,19 @@ if [ -n "${_PRESET_WEB_PORT}" ]; then
 fi
 if [ -n "${_PRESET_API_PORT}" ]; then
 	export API_PORT="${_PRESET_API_PORT}"
+	# `.env` derives API_HOST and API_URL from API_PORT as it is sourced, so they
+	# still name the `.env` port. Re-derive them, or the services listen on the
+	# override while the tests dial the old port and everything times out.
+	export API_HOST="localhost:${API_PORT}"
+	export API_URL="ws://${API_HOST}"
+fi
+# An explicit override of the derived values themselves still wins.
+if [ -n "${_PRESET_API_HOST}" ]; then
+	export API_HOST="${_PRESET_API_HOST}"
+	export API_URL="ws://${API_HOST}"
+fi
+if [ -n "${_PRESET_API_URL}" ]; then
+	export API_URL="${_PRESET_API_URL}"
 fi
 if [ -n "${_PRESET_MARKETPLACE_WS_HOST}" ]; then
 	export MARKETPLACE_WS_HOST="${_PRESET_MARKETPLACE_WS_HOST}"
@@ -57,6 +72,24 @@ fi
 if [ -n "${_PRESET_MARKETPLACE_WS_PORT}" ]; then
 	export MARKETPLACE_WS_PORT="${_PRESET_MARKETPLACE_WS_PORT}"
 fi
+
+# Catches both a stale derivation and a future change to `.env`'s formula: the
+# failure it prevents is silent (services up, tests dialling nothing).
+case "${API_HOST}" in
+	*:"${API_PORT}") ;;
+	*)
+		echo -e "${RED}API_HOST (${API_HOST}) does not use API_PORT (${API_PORT}).${NC}"
+		echo "Set API_HOST/API_URL explicitly, or check how .env derives them."
+		exit 1
+		;;
+esac
+case "${API_URL}" in
+	*"${API_HOST}") ;;
+	*)
+		echo -e "${RED}API_URL (${API_URL}) does not point at API_HOST (${API_HOST}).${NC}"
+		exit 1
+		;;
+esac
 
 echo -e "${YELLOW}========================================${NC}"
 echo -e "${YELLOW}EVY End-to-End Test Runner${NC}"

@@ -89,7 +89,7 @@ final class EVYDataStore {
   /// Flushes pending changes to disk. The context is created manually (not the
   /// container's mainContext), so it never autosaves — without an explicit save,
   /// synced data is silently lost when the process exits, and the next launch
-  /// combines an empty store with a fresh lastSyncTimestamp and cannot recover.
+  /// combines an empty store with a cleared sync cursor and cannot recover.
   /// Also used for mutations made directly on fetched `EVYData` models (e.g.
   /// in-place `row.data` edits) that bypass create/update/delete.
   func persistChanges() throws {

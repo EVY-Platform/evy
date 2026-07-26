@@ -23,7 +23,8 @@ struct EVYDropdown: View {
     placeholder: String? = nil,
     data: String,
     valueTemplate: String?,
-    destination: String
+    destination: String,
+    scope: EVYScope? = nil
   ) {
     self.title = title
     self.destination = destination
@@ -37,6 +38,7 @@ struct EVYDropdown: View {
 
     selection = EVYState(
       textToWatch: destination,
+      scope: scope,
       setter: {
         do {
           let value = try EVY.getDataFromText(destination)

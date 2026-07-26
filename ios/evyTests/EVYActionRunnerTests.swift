@@ -19,6 +19,114 @@ final class EVYActionRunnerTests: XCTestCase {
     try await super.tearDown()
   }
 
+  private func runBranchCapturing(
+    _ branch: EVYActionBranch
+  ) -> (
+    operations: [ActionOperation], shown: [String], rowOps: [EVYRowActionOperation],
+    errors: [Error]
+  ) {
+    var operations: [ActionOperation] = []
+    var shown: [String] = []
+    var rowOps: [EVYRowActionOperation] = []
+    var errors: [Error] = []
+    let observer = NotificationCenter.default.addObserver(
+      forName: .evyErrorOccurred, object: nil, queue: nil
+    ) { note in
+      if let error = note.object as? Error { errors.append(error) }
+    }
+    defer { NotificationCenter.default.removeObserver(observer) }
+
+    EVYActionRunner.run(
+      actions: [UI_RowAction(condition: "", false: .empty, true: branch)],
+      datum: .dictionary(["id": .string("datum-id")]),
+      show: { shown.append($0) },
+      rowOperation: { rowOps.append($0) }
+    ) { operations.append($0) }
+
+    return (operations, shown, rowOps, errors)
+  }
+
+  func testStructuredBranchWithUnsupportedShapeIsRejectedAtDecode() {
+    let json = Data(#"{"condition":"","false":"","true":{"fn":"teleport"}}"#.utf8)
+    XCTAssertThrowsError(try JSONDecoder().decode(UI_RowAction.self, from: json))
+  }
+
+  // MARK: - Condition evaluation errors
+
+  private func runCapturingErrors(
+    _ actions: [UI_RowAction]
+  ) -> (errors: [Error], operations: [ActionOperation]) {
+    var errors: [Error] = []
+    var operations: [ActionOperation] = []
+    let observer = NotificationCenter.default.addObserver(
+      forName: .evyErrorOccurred, object: nil, queue: nil
+    ) { note in
+      if let error = note.object as? Error { errors.append(error) }
+    }
+    defer { NotificationCenter.default.removeObserver(observer) }
+
+    EVYActionRunner.run(actions: actions) { operations.append($0) }
+    return (errors, operations)
+  }
+
+  func testUnevaluatableConditionSurfacesErrorAndStops() {
+    let result = runCapturingErrors([
+      rowAction(condition: "{&&}", true: .close, false: .close),
+      rowAction(true: .close),
+    ])
+
+    XCTAssertEqual(result.errors.count, 1, "a broken condition should surface exactly one error")
+    XCTAssertTrue(
+      result.operations.isEmpty,
+      "neither branch nor later actions should run: \(result.operations)")
+  }
+
+  func testConditionEvaluatingFalseStillRunsFalseBranchAndStops() {
+    let result = runCapturingErrors([
+      rowAction(
+        condition: "{1 == 2}", true: .navigate(flowId: "f", pageId: "p", query: [:]), false: .close),
+      rowAction(true: .navigate(flowId: "f2", pageId: "p2", query: [:])),
+    ])
+
+    XCTAssertTrue(result.errors.isEmpty, "a false condition is not an error: \(result.errors)")
+    XCTAssertEqual(result.operations.count, 1)
+    guard case .close = result.operations.first else {
+      return XCTFail("expected the false branch to run, got \(result.operations)")
+    }
+  }
+
+  /// Documented in sdui.md: boolean literals are valid standalone conditions.
+  /// `{true}` previously resolved as a data path and silently evaluated false.
+  func testStandaloneBooleanLiteralConditions() {
+    let trueResult = runCapturingErrors([
+      rowAction(
+        condition: "{true}", true: .close, false: .navigate(flowId: "f", pageId: "p", query: [:]))
+    ])
+    XCTAssertTrue(trueResult.errors.isEmpty, "\(trueResult.errors)")
+    guard case .close = trueResult.operations.first else {
+      return XCTFail("{true} should take the true branch, got \(trueResult.operations)")
+    }
+
+    let falseResult = runCapturingErrors([
+      rowAction(
+        condition: "{false}", true: .navigate(flowId: "f", pageId: "p", query: [:]), false: .close)
+    ])
+    XCTAssertTrue(falseResult.errors.isEmpty, "\(falseResult.errors)")
+    guard case .close = falseResult.operations.first else {
+      return XCTFail("{false} should take the false branch, got \(falseResult.operations)")
+    }
+  }
+
+  func testEmptyConditionRunsTrueBranch() {
+    let result = runCapturingErrors([rowAction(condition: "", true: .close)])
+
+    XCTAssertTrue(result.errors.isEmpty)
+    XCTAssertEqual(result.operations.count, 1)
+    guard case .close = result.operations.first else {
+      return XCTFail("expected the true branch to run, got \(result.operations)")
+    }
+  }
+
   private func assertSelectValue(
     _ received: EVYRowActionOperation?,
     equals expected: EVYJson,
@@ -33,13 +141,13 @@ final class EVYActionRunnerTests: XCTestCase {
   }
 
   private func assertRowPhotoOperationDispatchesAndContinues(
-    action: String,
+    action: EVYActionInvocation,
     expected: (EVYRowActionOperation) -> Bool
   ) {
     var received: EVYRowActionOperation?
     var receivedOps: [ActionOperation] = []
     EVYActionRunner.run(
-      actions: [rowAction(true: action), rowAction(true: "{close()}")],
+      actions: [rowAction(true: action), rowAction(true: .close)],
       rowOperation: { received = $0 }
     ) { receivedOps.append($0) }
     guard let received, expected(received) else {
@@ -51,23 +159,9 @@ final class EVYActionRunnerTests: XCTestCase {
 
   func testCloseAction() {
     var received: ActionOperation?
-    let action = rowAction(true: "{close()}")
+    let action = rowAction(true: .close)
     EVYActionRunner.run(actions: [action]) { received = $0 }
     XCTAssertEqual(received, .close)
-  }
-
-  func testBareCloseActionIsInert() {
-    var received: ActionOperation?
-    let action = rowAction(true: "close")
-    EVYActionRunner.run(actions: [action]) { received = $0 }
-    XCTAssertNil(received)
-  }
-
-  func testUnwrappedCloseFunctionIsInert() {
-    var received: ActionOperation?
-    let action = rowAction(true: "close()")
-    EVYActionRunner.run(actions: [action]) { received = $0 }
-    XCTAssertNil(received)
   }
 
   func testCreateActionPersistsFlowSubmissionAndEmitsNothing() throws {
@@ -88,7 +182,8 @@ final class EVYActionRunnerTests: XCTestCase {
       "Flow Submitted Title", destination: "{\(resource).title}", scopeId: scopeId)
 
     var received: ActionOperation?
-    let action = rowAction(true: "{create(\(namespace),\(resource), submit)}")
+    let action = rowAction(
+      true: .create(service: namespace, resource: resource, mode: .submit, idDestination: nil))
     EVYActionRunner.run(actions: [action]) { received = $0 }
 
     XCTAssertNil(received)
@@ -120,8 +215,9 @@ final class EVYActionRunnerTests: XCTestCase {
     try EVY.updateValue("Chained Title", destination: "{title}", scopeId: scopeId)
 
     var receivedOperations: [ActionOperation] = []
-    let createAction = rowAction(true: "{create(\(namespace),\(resource), submit)}")
-    let closeAction = rowAction(true: "{close()}")
+    let createAction = rowAction(
+      true: .create(service: namespace, resource: resource, mode: .submit, idDestination: nil))
+    let closeAction = rowAction(true: .close)
     EVYActionRunner.run(actions: [createAction, closeAction]) { receivedOperations.append($0) }
 
     XCTAssertEqual(receivedOperations, [.close])
@@ -129,94 +225,17 @@ final class EVYActionRunnerTests: XCTestCase {
     XCTAssertEqual(createdRows.count, 1)
   }
 
+  // A malformed action can no longer be stored, so this exercises the runner's
+  // halt-on-throw behaviour with an action the row cannot service instead.
   func testChainHaltsWhenActionThrows() {
-    let throwingAction = rowAction(true: "{create(onlyNamespace)}")
-    let closeAction = rowAction(true: "{close()}")
+    let throwingAction = rowAction(true: .select(value: "$datum"))
+    let closeAction = rowAction(true: .close)
     var received: ActionOperation?
     let errors = capturedErrors {
       EVYActionRunner.run(actions: [throwingAction, closeAction]) { received = $0 }
     }
-    XCTAssertFalse(errors.isEmpty, "create with one arg should post an error")
+    XCTAssertFalse(errors.isEmpty, "select on a row with no handler should post an error")
     XCTAssertNil(received, "close should not run once an earlier action throws")
-  }
-
-  func testCreateActionParserParsesInlineData() {
-    let action = EVYActionParser.createAction(
-      from:
-        "{create(ns,res,{fk: abc.id, archivedAt: null, data: {type: pickup, time: selected_pickup_timeslot}})}"
-    )
-
-    XCTAssertEqual(action?.namespace, "ns")
-    XCTAssertEqual(action?.resource, "res")
-    XCTAssertEqual(
-      action?.data,
-      .literal([
-        "fk": "abc.id",
-        "archivedAt": "null",
-        "data": "{type: pickup, time: selected_pickup_timeslot}",
-      ])
-    )
-  }
-
-  func testCreateActionParserRejectsTwoArgumentCreate() {
-    XCTAssertNil(EVYActionParser.createAction(from: "{create(ns,res)}"))
-  }
-
-  func testCreateActionParserParsesSubmitMarker() {
-    let action = EVYActionParser.createAction(from: "{create(ns,res,submit)}")
-
-    XCTAssertEqual(action?.namespace, "ns")
-    XCTAssertEqual(action?.resource, "res")
-    XCTAssertEqual(action?.isSubmission, true)
-    XCTAssertNil(action?.data)
-    XCTAssertNil(action?.idDestination)
-  }
-
-  func testCreateActionParserRejectsSubmitWithExtraArgs() {
-    XCTAssertNil(
-      EVYActionParser.createAction(
-        from: "{create(ns,res,submit,{pickup_address.id})}"))
-  }
-
-  func testCreateActionParserParsesIdDestination() {
-    let action = EVYActionParser.createAction(
-      from: "{create(ns,res,{street: Main},item.transfer_options.pickup.address_id)}"
-    )
-
-    XCTAssertEqual(action?.namespace, "ns")
-    XCTAssertEqual(action?.resource, "res")
-    XCTAssertEqual(action?.data, .literal(["street": "Main"]))
-    XCTAssertEqual(action?.idDestination, "item.transfer_options.pickup.address_id")
-  }
-
-  func testCreateActionParserParsesDataPath() {
-    let action = EVYActionParser.createAction(
-      from: "{create(ns,res,pickup_address,{pickup_address.id})}"
-    )
-
-    XCTAssertEqual(action?.namespace, "ns")
-    XCTAssertEqual(action?.resource, "res")
-    XCTAssertEqual(action?.data, .path("pickup_address"))
-    XCTAssertEqual(action?.idDestination, "{pickup_address.id}")
-  }
-
-  func testCreateActionParserRejectsEmptyDataPath() {
-    XCTAssertNil(EVYActionParser.createAction(from: "{create(ns,res, ,{pickup_address.id})}"))
-  }
-
-  func testUpdateActionParserParsesChangesPath() {
-    let action = EVYActionParser.updateAction(
-      from: "{update(ns,res,{id: abc},pickup_address)}"
-    )
-
-    XCTAssertEqual(action?.namespace, "ns")
-    XCTAssertEqual(action?.resource, "res")
-    XCTAssertEqual(action?.filter, ["id": "abc"])
-    XCTAssertEqual(action?.changes, .path("pickup_address"))
-  }
-
-  func testCreateActionParserRejectsMalformedInlineData() {
-    XCTAssertNil(EVYActionParser.createAction(from: "{create(ns,res,{type: pickup, fk})}"))
   }
 
   func testCreateWithIdDestinationWritesGeneratedId() throws {
@@ -242,7 +261,10 @@ final class EVYActionRunnerTests: XCTestCase {
 
     let createAction = rowAction(
       true:
-        "{create(\(namespace),\(resource),{street: Rothschild Avenue},{\(entityId).transfer_options.pickup.address_id})}"
+        .create(
+          service: namespace, resource: resource,
+          mode: .inline(data: ["street": "Rothschild Avenue"]),
+          idDestination: "\(entityId).transfer_options.pickup.address_id")
     )
     var errors: [Error] = []
     let observer = NotificationCenter.default.addObserver(
@@ -290,7 +312,9 @@ final class EVYActionRunnerTests: XCTestCase {
     try EVY.writeRawValue(address, to: "{pickup_address}", scopeId: scopeId)
 
     let createAction = rowAction(
-      true: "{create(\(namespace),\(resource),pickup_address,{pickup_address.id})}"
+      true: .create(
+        service: namespace, resource: resource, mode: .fromPath(dataPath: "pickup_address"),
+        idDestination: "pickup_address.id")
     )
     EVYActionRunner.run(actions: [createAction]) { _ in }
 
@@ -340,7 +364,9 @@ final class EVYActionRunnerTests: XCTestCase {
     try EVY.writeRawValue(draft, to: "{pickup_address}", scopeId: scopeId)
 
     let updateAction = rowAction(
-      true: "{update(\(namespace),\(resource),{id: \(recordId)},pickup_address)}"
+      true: .update(
+        service: namespace, resource: resource, mode: .store, filter: ["id": recordId],
+        changes: .path("pickup_address"))
     )
     EVYActionRunner.run(actions: [updateAction]) { _ in }
 
@@ -365,22 +391,32 @@ final class EVYActionRunnerTests: XCTestCase {
     marketplaceNamespace: String = EVYNamespace.marketplace,
     linkMode: PickupLinkMode = .store
   ) -> [UI_RowAction] {
-    let linkAction: String
+    let linkAction: EVYActionInvocation
     switch linkMode {
     case .store:
       linkAction =
-        "{update(\(marketplaceNamespace), \(itemsResource), {id: \(itemsResource).id}, {transfer_options.pickup.address_id: pickup_address.id})}"
+        .update(
+          service: marketplaceNamespace, resource: itemsResource, mode: .store,
+          filter: ["id": "\(itemsResource).id"],
+          changes: .literal(["transfer_options.pickup.address_id": "pickup_address.id"]))
     case .draft:
       linkAction =
-        "{update(\(marketplaceNamespace), \(itemsResource), {}, {transfer_options.pickup.address_id: pickup_address.id}, draft)}"
+        .update(
+          service: marketplaceNamespace, resource: itemsResource, mode: .draft, filter: [:],
+          changes: .literal(["transfer_options.pickup.address_id": "pickup_address.id"]))
     }
     return [
       rowAction(
         condition: "{length(\(itemsResource).transfer_options.pickup.address_id) == 0}",
         true:
-          "{create(\(coreNamespace), \(addressesResource), pickup_address, {pickup_address.id})}",
+          .create(
+            service: coreNamespace, resource: addressesResource,
+            mode: .fromPath(dataPath: "pickup_address"), idDestination: "pickup_address.id"),
         false:
-          "{update(\(coreNamespace), \(addressesResource), {id: \(itemsResource).transfer_options.pickup.address_id}, pickup_address)}"
+          .update(
+            service: coreNamespace, resource: addressesResource, mode: .store,
+            filter: ["id": "\(itemsResource).transfer_options.pickup.address_id"],
+            changes: .path("pickup_address"))
       ),
       rowAction(true: linkAction),
     ]
@@ -522,7 +558,9 @@ final class EVYActionRunnerTests: XCTestCase {
 
     let linkAction = rowAction(
       true:
-        "{update(\(marketplaceNamespace), \(itemsResource), {}, {transfer_options.pickup.address_id: \"some-address-uuid\"}, draft)}"
+        .update(
+          service: marketplaceNamespace, resource: itemsResource, mode: .draft, filter: [:],
+          changes: .literal(["transfer_options.pickup.address_id": "\"some-address-uuid\""]))
     )
     EVYActionRunner.run(actions: [linkAction]) { _ in }
 
@@ -567,7 +605,10 @@ final class EVYActionRunnerTests: XCTestCase {
 
     let linkAction = rowAction(
       true:
-        "{update(\(marketplaceNamespace), \(itemsResource), {id: \(itemsResource).id}, {transfer_options.pickup.address_id: \"some-address-uuid\"})}"
+        .update(
+          service: marketplaceNamespace, resource: itemsResource, mode: .store,
+          filter: ["id": "\(itemsResource).id"],
+          changes: .literal(["transfer_options.pickup.address_id": "\"some-address-uuid\""]))
     )
     EVYActionRunner.run(actions: [linkAction]) { _ in }
 
@@ -609,7 +650,9 @@ final class EVYActionRunnerTests: XCTestCase {
 
     let linkAction = rowAction(
       true:
-        "{update(\(marketplaceNamespace), \(itemsResource), {}, {title: \"patched\"}, draft)}"
+        .update(
+          service: marketplaceNamespace, resource: itemsResource, mode: .draft, filter: [:],
+          changes: .literal(["title": "\"patched\""]))
     )
     let errors = capturedErrors {
       EVYActionRunner.run(actions: [linkAction]) { _ in }
@@ -652,7 +695,9 @@ final class EVYActionRunnerTests: XCTestCase {
 
     let updateAction = rowAction(
       true:
-        "{update(\(marketplaceNamespace), \(itemsResource), {id: \"\(itemId)\"}, {title: \"Archived title\"})}"
+        .update(
+          service: marketplaceNamespace, resource: itemsResource, mode: .store,
+          filter: ["id": "\"\(itemId)\""], changes: .literal(["title": "\"Archived title\""]))
     )
     EVYActionRunner.run(actions: [updateAction]) { _ in }
 
@@ -750,58 +795,6 @@ final class EVYActionRunnerTests: XCTestCase {
     XCTAssertNil(itemDict["pickup_address"])
   }
 
-  func testUpdateActionParserParsesFilterAndChanges() {
-    let action = EVYActionParser.updateAction(
-      from:
-        "{update(ns,res,{fk: abc.id, archivedAt: null},{archivedAt: now()})}"
-    )
-
-    XCTAssertEqual(action?.namespace, "ns")
-    XCTAssertEqual(action?.resource, "res")
-    XCTAssertEqual(action?.filter, ["fk": "abc.id", "archivedAt": "null"])
-    XCTAssertEqual(action?.changes, .literal(["archivedAt": "now()"]))
-    XCTAssertEqual(action?.mode, .store)
-  }
-
-  func testUpdateActionParserParsesDraftMode() {
-    let action = EVYActionParser.updateAction(
-      from: "{update(ns,res,{},{transfer_options.pickup.address_id: pickup_address.id},draft)}"
-    )
-
-    XCTAssertEqual(action?.mode, .draft)
-    XCTAssertEqual(action?.filter, [:])
-    XCTAssertEqual(
-      action?.changes,
-      .literal(["transfer_options.pickup.address_id": "pickup_address.id"]))
-  }
-
-  func testUpdateActionParserRejectsNonEmptyFilterWithDraftMode() {
-    XCTAssertNil(
-      EVYActionParser.updateAction(
-        from: "{update(ns,res,{id: abc},{title: x},draft)}"))
-  }
-
-  func testUpdateActionParserRejectsUnknownMode() {
-    XCTAssertNil(
-      EVYActionParser.updateAction(
-        from: "{update(ns,res,{},{title: x},store)}"))
-  }
-
-  func testUpdateActionParserRejectsSixArgs() {
-    XCTAssertNil(
-      EVYActionParser.updateAction(
-        from: "{update(ns,res,{},{title: x},draft,extra)}"))
-  }
-
-  func testUpdateActionParserRejectsMissingFilterOrChanges() {
-    XCTAssertNil(EVYActionParser.updateAction(from: "{update(ns,res)}"))
-    XCTAssertNil(EVYActionParser.updateAction(from: "{update(ns,res,{id: abc})}"))
-    XCTAssertNil(
-      EVYActionParser.updateAction(from: "{update(ns,res,{}, {archivedAt: now()})}"))
-    XCTAssertNil(
-      EVYActionParser.updateAction(from: "{update(ns,res,{fk: abc},{})}"))
-  }
-
   func testResolveInlineCreateDataMapsLiterals() throws {
     let namespace = EVYNamespace.marketplace
     let resource = "literal-create-actions"
@@ -815,7 +808,12 @@ final class EVYActionRunnerTests: XCTestCase {
 
     let action = rowAction(
       true:
-        "{create(\(namespace),\(resource),{fk: item-1, service: \"svc-1\", archivedAt: null, verified: true, data: {type: pickup, time: 2026-06-03T09:00:00}})}"
+        .create(
+          service: namespace, resource: resource,
+          mode: .inline(data: [
+            "fk": "item-1", "service": "\"svc-1\"", "archivedAt": "null", "verified": "true",
+            "data": "{type: pickup, time: 2026-06-03T09:00:00}",
+          ]), idDestination: nil)
     )
     var received: ActionOperation?
     EVYActionRunner.run(actions: [action]) { received = $0 }
@@ -847,7 +845,10 @@ final class EVYActionRunnerTests: XCTestCase {
 
     let action = rowAction(
       true:
-        "{create(\(namespace),\(resource),{fk: item-1, createdAt: \"2026-06-01T00:00:00Z\"})}"
+        .create(
+          service: namespace, resource: resource,
+          mode: .inline(data: ["fk": "item-1", "createdAt": "\"2026-06-01T00:00:00Z\""]),
+          idDestination: nil)
     )
     EVYActionRunner.run(actions: [action]) { _ in }
 
@@ -899,7 +900,10 @@ final class EVYActionRunnerTests: XCTestCase {
 
     let acceptAction = rowAction(
       true:
-        "{update(\(namespace),\(resource),{id: $datum.id, status: \"pending\"},{status: \"accepted\"})}"
+        .update(
+          service: namespace, resource: resource, mode: .store,
+          filter: ["id": "$datum.id", "status": "\"pending\""],
+          changes: .literal(["status": "\"accepted\""]))
     )
 
     let pendingDatum = EVYJson.dictionary(["id": .string(pendingMessageId)])
@@ -956,7 +960,11 @@ final class EVYActionRunnerTests: XCTestCase {
     let datum = EVYJson.dictionary(["id": .string("item-id")])
     let action = rowAction(
       true:
-        "{create(\(namespace),\(resource),{fk: $datum.id, data: {type: pickup, time: selected_pickup_timeslot}})}"
+        .create(
+          service: namespace, resource: resource,
+          mode: .inline(data: [
+            "fk": "$datum.id", "data": "{type: pickup, time: selected_pickup_timeslot}",
+          ]), idDestination: nil)
     )
     var receivedNavigation: ActionOperation?
 
@@ -981,44 +989,13 @@ final class EVYActionRunnerTests: XCTestCase {
 
   func testShowActionInvokesShowWithParsedRowId() {
     var shownRowId: String?
-    let action = rowAction(true: "{show(child-row)}")
+    let action = rowAction(true: .show(rowId: "child-row"))
     EVYActionRunner.run(actions: [action], show: { rowId in shownRowId = rowId }) { _ in }
     XCTAssertEqual(shownRowId, "child-row")
   }
 
-  func testShowActionWithQuotedRowId() {
-    var shownRowId: String?
-    let action = rowAction(true: "{show(\"quoted-row\")}")
-    EVYActionRunner.run(actions: [action], show: { rowId in shownRowId = rowId }) { _ in }
-    XCTAssertEqual(shownRowId, "quoted-row")
-  }
-
-  func testShowActionWithMissingArgumentPostsError() {
-    let action = rowAction(true: "{show()}")
-    let errors = capturedErrors {
-      EVYActionRunner.run(actions: [action], show: { _ in }) { _ in }
-    }
-    XCTAssertFalse(errors.isEmpty)
-  }
-
-  func testShowActionWithEmptyArgumentPostsError() {
-    let action = rowAction(true: "{show( )}")
-    let errors = capturedErrors {
-      EVYActionRunner.run(actions: [action], show: { _ in }) { _ in }
-    }
-    XCTAssertFalse(errors.isEmpty)
-  }
-
-  func testShowActionWithExtraArgumentPostsError() {
-    let action = rowAction(true: "{show(row-one, row-two)}")
-    let errors = capturedErrors {
-      EVYActionRunner.run(actions: [action], show: { _ in }) { _ in }
-    }
-    XCTAssertFalse(errors.isEmpty)
-  }
-
   func testShowActionThrowingShowCallbackPostsError() {
-    let action = rowAction(true: "{show(missing-row)}")
+    let action = rowAction(true: .show(rowId: "missing-row"))
     let errors = capturedErrors {
       EVYActionRunner.run(
         actions: [action],
@@ -1032,16 +1009,9 @@ final class EVYActionRunnerTests: XCTestCase {
 
   func testFalseBranchShowActionInvokesShowWithParsedRowId() {
     var shownRowId: String?
-    let action = rowAction(condition: "{false}", true: "", false: "{show(sheet-row)}")
+    let action = rowAction(condition: "{false}", true: nil, false: .show(rowId: "sheet-row"))
     EVYActionRunner.run(actions: [action], show: { rowId in shownRowId = rowId }) { _ in }
     XCTAssertEqual(shownRowId, "sheet-row")
-  }
-
-  func testSingleIdArgumentRejectsInvalidArgs() {
-    XCTAssertNil(EVYActionParser.singleIdArgument(fromArgs: ""))
-    XCTAssertNil(EVYActionParser.singleIdArgument(fromArgs: "a, b"))
-    XCTAssertNil(EVYActionParser.singleIdArgument(fromArgs: "flow, page"))
-    XCTAssertEqual(EVYActionParser.singleIdArgument(fromArgs: "target-id"), "target-id")
   }
 
   func testSelectDispatchesBareDatum() {
@@ -1050,8 +1020,8 @@ final class EVYActionRunnerTests: XCTestCase {
       "label": .string("11:00"),
     ])
     var received: EVYRowActionOperation?
-    let selectAction = rowAction(true: "{select($datum)}")
-    let closeAction = rowAction(true: "{close()}")
+    let selectAction = rowAction(true: .select(value: "$datum"))
+    let closeAction = rowAction(true: .close)
     var receivedOps: [ActionOperation] = []
     EVYActionRunner.run(
       actions: [selectAction, closeAction],
@@ -1069,7 +1039,7 @@ final class EVYActionRunnerTests: XCTestCase {
     ])
     var received: EVYRowActionOperation?
     EVYActionRunner.run(
-      actions: [rowAction(true: "{select($datum)}")],
+      actions: [rowAction(true: .select(value: "$datum"))],
       datum: datum,
       rowOperation: { received = $0 }
     ) { _ in }
@@ -1082,7 +1052,7 @@ final class EVYActionRunnerTests: XCTestCase {
     ])
     var received: EVYRowActionOperation?
     EVYActionRunner.run(
-      actions: [rowAction(true: "{select($datum.dateTimeISO)}")],
+      actions: [rowAction(true: .select(value: "$datum.dateTimeISO"))],
       datum: datum,
       rowOperation: { received = $0 }
     ) { _ in }
@@ -1092,46 +1062,30 @@ final class EVYActionRunnerTests: XCTestCase {
   func testSelectPassesQuotedLiteral() {
     var received: EVYRowActionOperation?
     EVYActionRunner.run(
-      actions: [rowAction(true: "{select(\"literal\")}")],
+      actions: [rowAction(true: .select(value: "\"literal\""))],
       rowOperation: { received = $0 }
     ) { _ in }
     assertSelectValue(received, equals: .string("literal"))
   }
 
-  func testSelectWithInvalidArgumentPostsErrorAndStops() {
-    for branch in ["{select()}", "{select(a, b)}"] {
-      var receivedOps: [ActionOperation] = []
-      var rowOps: [EVYRowActionOperation] = []
-      let errors = capturedErrors {
-        EVYActionRunner.run(
-          actions: [rowAction(true: branch), rowAction(true: "{close()}")],
-          rowOperation: { rowOps.append($0) }
-        ) { receivedOps.append($0) }
-      }
-      XCTAssertFalse(errors.isEmpty, "Expected error for \(branch)")
-      XCTAssertTrue(rowOps.isEmpty, "Expected no row ops for \(branch)")
-      XCTAssertTrue(receivedOps.isEmpty, "Expected stop for \(branch)")
-    }
-  }
-
   func testRowPhotoOperationsDispatchesAndContinues() {
-    let cases: [(String, (EVYRowActionOperation) -> Bool)] = [
+    let cases: [(EVYActionInvocation, (EVYRowActionOperation) -> Bool)] = [
       (
-        "{delete_photo()}",
+        .deletePhoto,
         {
           if case .deletePhoto = $0 { return true }
           return false
         }
       ),
       (
-        "{select_photo()}",
+        .selectPhoto,
         {
           if case .selectPhoto = $0 { return true }
           return false
         }
       ),
       (
-        "{expand_photo()}",
+        .expandPhoto,
         {
           if case .expandPhoto = $0 { return true }
           return false
@@ -1144,7 +1098,7 @@ final class EVYActionRunnerTests: XCTestCase {
   }
 
   func testTriggerIsolationRunsOnlyRequestedActionList() {
-    let closeAction = rowAction(true: "{close()}")
+    let closeAction = rowAction(true: .close)
     let actions = UI_RowActions(
       delete: [closeAction],
       submit: [closeAction],
@@ -1185,7 +1139,7 @@ final class EVYActionRunnerTests: XCTestCase {
     var receivedOps: [ActionOperation] = []
     let errors = capturedErrors {
       EVYActionRunner.run(
-        actions: [rowAction(true: "{select($datum)}"), rowAction(true: "{close()}")],
+        actions: [rowAction(true: .select(value: "$datum")), rowAction(true: .close)],
         datum: .string("slot")
       ) { receivedOps.append($0) }
     }
@@ -1206,29 +1160,16 @@ final class EVYActionRunnerTests: XCTestCase {
 
     var receivedOps: [ActionOperation] = []
     EVYActionRunner.run(
-      actions: [rowAction(true: "{expand_text(text-expand-row)}"), rowAction(true: "{close()}")]
+      actions: [rowAction(true: .expandText(rowId: "text-expand-row")), rowAction(true: .close)]
     ) { receivedOps.append($0) }
 
     XCTAssertEqual(postedRowId, "text-expand-row")
     XCTAssertEqual(receivedOps, [.close])
   }
 
-  func testExpandTextWithInvalidArgsPostsErrorAndStops() {
-    for branch in ["{expand_text()}", "{expand_text(a, b)}", "{expand_text( )}"] {
-      var receivedOps: [ActionOperation] = []
-      let errors = capturedErrors {
-        EVYActionRunner.run(
-          actions: [rowAction(true: branch), rowAction(true: "{close()}")]
-        ) { receivedOps.append($0) }
-      }
-      XCTAssertFalse(errors.isEmpty, "Expected error for \(branch)")
-      XCTAssertTrue(receivedOps.isEmpty, "Expected stop for \(branch)")
-    }
-  }
-
   func testNavigateWithBraceFunction() {
     var received: ActionOperation?
-    let action = rowAction(true: "{navigate(flow-1,page-2)}")
+    let action = rowAction(true: .navigate(flowId: "flow-1", pageId: "page-2", query: [:]))
     EVYActionRunner.run(actions: [action]) { received = $0 }
     guard case .navigate(let route) = received else {
       XCTFail("Expected navigate, got \(String(describing: received))")
@@ -1241,7 +1182,8 @@ final class EVYActionRunnerTests: XCTestCase {
 
   func testNavigateWithBraceFunctionAndPlainTextQueryArgument() {
     var received: ActionOperation?
-    let action = rowAction(true: "{navigate(flow-1,page-2,{items: [id-1, id-2]})}")
+    let action = rowAction(
+      true: .navigate(flowId: "flow-1", pageId: "page-2", query: ["items": "[id-1, id-2]"]))
     EVYActionRunner.run(actions: [action]) { received = $0 }
     guard case .navigate(let route) = received else {
       XCTFail("Expected navigate, got \(String(describing: received))")
@@ -1252,19 +1194,9 @@ final class EVYActionRunnerTests: XCTestCase {
     XCTAssertEqual(route.query["items"], ["id-1", "id-2"])
   }
 
-  func testNavigateNonPlainTextQueryArgumentPostsError() {
-    var received: ActionOperation?
-    let action = rowAction(true: "{navigate(flow-1,page-2,notJson)}")
-    let errors = capturedErrors {
-      EVYActionRunner.run(actions: [action]) { received = $0 }
-    }
-    XCTAssertFalse(errors.isEmpty)
-    XCTAssertNil(received)
-  }
-
   func testHighlightRequiredFormatsFieldLabel() {
     var received: ActionOperation?
-    let action = rowAction(true: "{highlight_required(unit_price)}")
+    let action = rowAction(true: .highlightRequired(field: "unit_price"))
     EVYActionRunner.run(actions: [action]) { received = $0 }
     guard case .highlightRequired(let label) = received else {
       XCTFail("Expected highlightRequired")
@@ -1276,7 +1208,7 @@ final class EVYActionRunnerTests: XCTestCase {
   func testHighlightRequiredFormatsUuidQualifiedFieldLabel() {
     var received: ActionOperation?
     let action = rowAction(
-      true: "{highlight_required(\(MarketplaceTestFixture.itemsResourceId).pickup_selection)}"
+      true: .highlightRequired(field: "\(MarketplaceTestFixture.itemsResourceId).pickup_selection")
     )
     EVYActionRunner.run(actions: [action]) { received = $0 }
     guard case .highlightRequired(let label) = received else {
@@ -1286,21 +1218,14 @@ final class EVYActionRunnerTests: XCTestCase {
     XCTAssertEqual(label, "Pickup Selection")
   }
 
-  func testUnsupportedFunctionPostsErrorNotification() {
-    let action = rowAction(true: "{notARealEvyFunction()}")
-    let errors = capturedErrors {
-      EVYActionRunner.run(actions: [action]) { _ in }
-    }
-    XCTAssertFalse(errors.isEmpty)
-  }
-
   func testNavigateWithDatumResolvesId() {
     var received: ActionOperation?
     let datum = EVYJson.dictionary([
       "id": .string("resolved-uuid"),
       "title": .string("Test Item"),
     ])
-    let action = rowAction(true: "{navigate(flowX,pageY,{items: $datum.id})}")
+    let action = rowAction(
+      true: .navigate(flowId: "flowX", pageId: "pageY", query: ["items": "$datum.id"]))
     EVYActionRunner.run(actions: [action], datum: datum) { received = $0 }
     guard case .navigate(let route) = received else {
       XCTFail("Expected navigate")
@@ -1313,7 +1238,8 @@ final class EVYActionRunnerTests: XCTestCase {
 
   func testNavigateWithCommaInQuery() {
     var received: ActionOperation?
-    let action = rowAction(true: "{navigate(flowX,pageY,{items: [a], kind: item})}")
+    let action = rowAction(
+      true: .navigate(flowId: "flowX", pageId: "pageY", query: ["items": "[a]", "kind": "item"]))
     EVYActionRunner.run(actions: [action]) { received = $0 }
     guard case .navigate(let route) = received else {
       XCTFail("Expected navigate")
@@ -1325,7 +1251,9 @@ final class EVYActionRunnerTests: XCTestCase {
 
   func testNavigateSkipsEmptyQueryValues() {
     var received: ActionOperation?
-    let action = rowAction(true: "{navigate(flowX,pageY,{items: [], kind: item, empty: })}")
+    let action = rowAction(
+      true: .navigate(
+        flowId: "flowX", pageId: "pageY", query: ["items": "[]", "kind": "item", "empty": ""]))
     EVYActionRunner.run(actions: [action]) { received = $0 }
     guard case .navigate(let route) = received else {
       XCTFail("Expected navigate")
@@ -1336,37 +1264,23 @@ final class EVYActionRunnerTests: XCTestCase {
     XCTAssertNil(route.query["empty"])
   }
 
-  func testNavigateWithMissingQueryColonPostsError() {
-    var received: ActionOperation?
-    let action = rowAction(true: "{navigate(flowX,pageY,{items [a]})}")
-    let errors = capturedErrors {
-      EVYActionRunner.run(actions: [action]) { received = $0 }
-    }
-    XCTAssertFalse(errors.isEmpty)
-    XCTAssertNil(received)
-  }
-
   func testNavigateWithUnclosedQueryArrayPostsError() {
     var received: ActionOperation?
-    let action = rowAction(true: "{navigate(flowX,pageY,{items: [a})}")
+    let action = UI_RowAction(
+      condition: "", false: .empty,
+      true: .invocation(
+        .navigate(flowId: "flowX", pageId: "pageY", query: ["items": "[a"])))
     let errors = capturedErrors {
       EVYActionRunner.run(actions: [action]) { received = $0 }
     }
     XCTAssertFalse(errors.isEmpty)
     XCTAssertNil(received)
-  }
-
-  func testNavigateWithTooManyArgsThrowsError() {
-    let action = rowAction(true: "{navigate(flowX,pageY,{key: val},extra)}")
-    let errors = capturedErrors {
-      EVYActionRunner.run(actions: [action]) { _ in }
-    }
-    XCTAssertFalse(errors.isEmpty)
   }
 
   func testNavigateWithoutDatumKeepsDatumExpression() {
     var received: ActionOperation?
-    let action = rowAction(true: "{navigate(flowX,pageY,{items: $datum.id})}")
+    let action = rowAction(
+      true: .navigate(flowId: "flowX", pageId: "pageY", query: ["items": "$datum.id"]))
     EVYActionRunner.run(actions: [action]) { received = $0 }
     guard case .navigate(let route) = received else {
       XCTFail("Expected navigate")
@@ -1382,8 +1296,13 @@ final class EVYActionRunnerTests: XCTestCase {
     let action = rowAction(
       condition: "{length(shipping_address.postcode) > 0}",
       true:
-        "{create(\(EVYNamespace.evy),\(messagesResourceId),{fk: \(itemResourceId).id, archivedAt: null, data: {type: shipping, postalcode: shipping_address.postcode}})}",
-      false: "{highlight_required(postcode)}"
+        .create(
+          service: EVYNamespace.evy, resource: messagesResourceId,
+          mode: .inline(data: [
+            "fk": "\(itemResourceId).id", "archivedAt": "null",
+            "data": "{type: shipping, postalcode: shipping_address.postcode}",
+          ]), idDestination: nil),
+      false: .highlightRequired(field: "postcode")
     )
     EVYActionRunner.run(actions: [action]) { received = $0 }
     XCTAssertEqual(received, .highlightRequired("Postcode"))
@@ -1417,7 +1336,12 @@ final class EVYActionRunnerTests: XCTestCase {
     var received: ActionOperation?
     let action = rowAction(
       true:
-        "{create(\(namespace),\(resource),{fk: \(itemResourceId).id, archivedAt: null, data: {type: pickup, time: 2026-06-03T09:00:00}})}"
+        .create(
+          service: namespace, resource: resource,
+          mode: .inline(data: [
+            "fk": "\(itemResourceId).id", "archivedAt": "null",
+            "data": "{type: pickup, time: 2026-06-03T09:00:00}",
+          ]), idDestination: nil)
     )
     EVYActionRunner.run(actions: [action]) { received = $0 }
 
@@ -1427,9 +1351,14 @@ final class EVYActionRunnerTests: XCTestCase {
   }
 
   func testDatumRowFormatterResolvesDatumReferencesInActions() throws {
-    let navigateAction = "{navigate(flowX,pageY,{id: $datum.id})}"
-    let updateAction =
-      "{update(\(EVY_CORE_SERVICE), \(EVYCoreResource.messages.rawValue), {id: $datum.id, status: \"pending\"}, {status: \"accepted\"})}"
+    let navigateAction: EVYActionInvocation = .navigate(
+      flowId: "flowX", pageId: "pageY", query: ["id": "$datum.id"])
+    let updateAction: EVYActionInvocation = .update(
+      service: EVY_CORE_SERVICE,
+      resource: EVYCoreResource.messages.rawValue,
+      mode: .store,
+      filter: ["id": "$datum.id", "status": "\"pending\""],
+      changes: .literal(["status": "\"accepted\""]))
     let row = try decodeRow(
       content: """
         {
@@ -1453,8 +1382,8 @@ final class EVYActionRunnerTests: XCTestCase {
 
     XCTAssertEqual(formattedRow.id, row.id)
     XCTAssertEqual(formattedRow.title, "Resolved Title")
-    XCTAssertEqual(formattedRow.actions.tap.first?.true, navigateAction)
-    XCTAssertEqual(formattedRow.actions.swipeLeft.first?.true, updateAction)
+    XCTAssertEqual(formattedRow.actions.tap.first?.true, branch(navigateAction))
+    XCTAssertEqual(formattedRow.actions.swipeLeft.first?.true, branch(updateAction))
   }
 
   func testSwipeLeftUpdateActionAcceptsPendingMessageFromFormattedSearchResult() throws {
@@ -1484,7 +1413,10 @@ final class EVYActionRunnerTests: XCTestCase {
         swipeLeft: [
           rowAction(
             true:
-              "{update(\(namespace),\(resource),{id: $datum.id, status: \"pending\"},{status: \"accepted\"})}"
+              .update(
+                service: namespace, resource: resource, mode: .store,
+                filter: ["id": "$datum.id", "status": "\"pending\""],
+                changes: .literal(["status": "\"accepted\""]))
           )
         ]
       )

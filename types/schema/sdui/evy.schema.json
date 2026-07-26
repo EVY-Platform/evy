@@ -15,6 +15,22 @@
 			"type": "string",
 			"minLength": 1
 		},
+		"submits": {
+			"description": "Domain entity this flow submits via create(...,submit).",
+			"type": "object",
+			"additionalProperties": false,
+			"required": ["service", "resource"],
+			"properties": {
+				"service": {
+					"type": "string",
+					"format": "uuid"
+				},
+				"resource": {
+					"type": "string",
+					"minLength": 1
+				}
+			}
+		},
 		"pages": {
 			"type": "array",
 			"items": {

@@ -15,13 +15,16 @@ struct EVYDropdownRow: View {
     self.view = view
   }
 
+  @Environment(\.evyScope) private var evyScope
+
   var body: some View {
     EVYDropdown(
       title: view.title ?? "",
       placeholder: view.placeholder,
       data: view.source,
       valueTemplate: view.value,
-      destination: view.destination
+      destination: view.destination,
+      scope: evyScope
     )
     .titledRow(view.title)
   }

@@ -171,6 +171,96 @@ test.describe("Row configuration", () => {
 		await expect(formatInput).toHaveText("{$datum.label}");
 	});
 
+	// The declaration is one value, not two: the schema requires a non-empty
+	// resource, so picking a service on its own is not a state a flow can be
+	// saved in.
+	test("flow submits declaration can be set and cleared as one target", async ({
+		page,
+	}) => {
+		await openAppWithTestFlows(
+			page,
+			[
+				{
+					id: "step_1",
+					title: "Test Page",
+					rows: [
+						{
+							type: "Text",
+							title: "Hello",
+							visible: "true",
+						},
+					],
+				},
+			],
+			TEST_SERVICE_RESOURCES,
+		);
+
+		await page.getByText("Hello", { exact: true }).first().click();
+
+		const configPanel = getConfigPanel(page);
+		const targetSelect = configPanel.getByLabel("Flow submits target");
+
+		await expect(targetSelect).toBeVisible();
+		await expect(targetSelect).toHaveAttribute("data-value", "");
+
+		await popoverSelect(page, targetSelect, "Marketplace / Item");
+		await expect(targetSelect).toHaveAttribute(
+			"data-value",
+			`${MARKETPLACE_SERVICE}/${MARKETPLACE_RESOURCE.ITEMS}`,
+		);
+
+		await popoverSelect(page, targetSelect, "None");
+		await expect(targetSelect).toHaveAttribute("data-value", "");
+	});
+
+	test("action popup traps focus and is announced as a modal dialog", async ({
+		page,
+	}) => {
+		await openAppWithTestFlows(page, [
+			{
+				id: "step_1",
+				title: "Test Page",
+				rows: [
+					{
+						type: "Button",
+						title: "",
+						label: "Test Button",
+						actions: tapAction("{close()}"),
+					},
+				],
+			},
+		]);
+		await page.getByText("Test Button", { exact: true }).first().click();
+		await getConfigPanel(page).getByLabel("Edit action 1").click();
+
+		const popup = page.getByRole("dialog", { name: "Edit action 1" });
+		await expect(popup).toBeVisible();
+		await expect(popup).toHaveAttribute("aria-modal", "true");
+
+		// Focus starts inside the dialog rather than on the page behind it.
+		await expect
+			.poll(() =>
+				popup.evaluate((panel) =>
+					panel.contains(document.activeElement),
+				),
+			)
+			.toBe(true);
+
+		// Tabbing all the way round stays inside the dialog instead of
+		// escaping into the builder underneath.
+		for (let i = 0; i < 25; i++) {
+			await page.keyboard.press("Tab");
+		}
+		expect(
+			await popup.evaluate((panel) =>
+				panel.contains(document.activeElement),
+			),
+		).toBe(true);
+
+		await page.keyboard.press("Escape");
+		await expect(popup).toBeHidden();
+	});
+
 	test("should display and edit action items via popup", async ({ page }) => {
 		await openAppWithTestFlows(page, [
 			{
@@ -733,7 +823,7 @@ test.describe("Row configuration", () => {
 		).toBeVisible();
 	});
 
-	test("should use submit create when row destinations target the resource", async ({
+	test("should use submit create when the flow declares submits", async ({
 		page,
 	}) => {
 		await openAppWithTestFlows(
@@ -761,6 +851,11 @@ test.describe("Row configuration", () => {
 				},
 			],
 			TEST_SERVICE_RESOURCES,
+			[],
+			{
+				service: MARKETPLACE_SERVICE,
+				resource: MARKETPLACE_RESOURCE.ITEMS,
+			},
 		);
 
 		await page.getByText("Submit Create", { exact: true }).first().click();

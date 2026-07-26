@@ -1,4 +1,4 @@
-import { and, asc, eq, gt } from "drizzle-orm";
+import { and, asc, eq, gt, isNull } from "drizzle-orm";
 import type { AnyPgColumn, AnyPgTable } from "drizzle-orm/pg-core";
 import type {
 	CreateRequest,
@@ -18,8 +18,13 @@ import {
 	validateUpdateResponse,
 } from "evy-types/validators";
 import type { EvyDb } from "../../database/db";
+import { assertNotModified, monotonicUpdatedAt } from "../conflicts";
 
-type ResourceTable = AnyPgTable & { id: AnyPgColumn; updatedAt: AnyPgColumn };
+type ResourceTable = AnyPgTable & {
+	id: AnyPgColumn;
+	updatedAt: AnyPgColumn;
+	deletedAt: AnyPgColumn;
+};
 
 export function omitNulls<T extends Record<string, unknown>>(row: T): T {
 	return Object.fromEntries(
@@ -48,7 +53,12 @@ export function makeCoreResource<
 		normalize,
 		defaultVisibility = "public",
 	} = config;
-	const norm = normalize ?? validate;
+	// Nullable columns come back from Drizzle as null, which the schemas do not
+	// allow for optional fields, so stripping nulls is the default rather than
+	// something each resource has to remember when a nullable column is added.
+	const norm =
+		normalize ??
+		((raw: unknown) => validate(omitNulls(raw as Record<string, unknown>)));
 
 	function validatePayload(
 		dataPayload: unknown,
@@ -78,8 +88,13 @@ export function makeCoreResource<
 		const base = db.select().from(table);
 		const whereClauses: ReturnType<typeof eq>[] = [];
 		if (filter?.id) whereClauses.push(eq(table.id, filter.id));
-		if (filter?.updatedAfter)
+		if (filter?.updatedAfter) {
+			// An incremental read must carry tombstones, otherwise a client can
+			// never learn that a record it holds was deleted.
 			whereClauses.push(gt(table.updatedAt, filter.updatedAfter));
+		} else {
+			whereClauses.push(isNull(table.deletedAt));
+		}
 		const query = whereClauses.length
 			? base.where(and(...whereClauses))
 			: base;
@@ -124,6 +139,11 @@ export function makeCoreResource<
 			.where(eq(table.id, filter.id))
 			.limit(1);
 		if (existingRows.length === 0) throw new Error("Resource not found");
+		assertNotModified(filter.expectedUpdatedAt, existingRows[0].updatedAt);
+		const nextUpdatedAt = monotonicUpdatedAt(
+			nowIso,
+			existingRows[0].updatedAt,
+		);
 		const validated = validatePayload(
 			dataPayload,
 			nowIso,
@@ -133,7 +153,10 @@ export function makeCoreResource<
 		const updated = await db
 			// biome-ignore lint/suspicious/noExplicitAny: Drizzle generic table requires cast
 			.update(table as any)
-			.set({ ...toUpdateSet(validated, nowIso), updatedAt: nowIso })
+			.set({
+				...toUpdateSet(validated, nowIso),
+				updatedAt: nextUpdatedAt,
+			})
 			.where(eq(table.id, filter.id))
 			.returning();
 		const response = validateUpdateResponse(norm(updated[0]));
@@ -141,15 +164,31 @@ export function makeCoreResource<
 		return response;
 	}
 
+	/**
+	 * Soft delete. The row is kept as a tombstone so incremental syncs can tell
+	 * clients it is gone; plain reads exclude it. Tombstones are kept
+	 * permanently, so a client can resume from any cursor and still learn about
+	 * every delete.
+	 */
 	async function remove(
 		db: EvyDb,
 		filter: DeleteRequest["filter"],
 		notify: (value: unknown) => void,
+		nowIso: string = new Date().toISOString(),
 	): Promise<DeleteResponse> {
+		const existing = await db
+			.select()
+			.from(table)
+			.where(and(eq(table.id, filter.id), isNull(table.deletedAt)))
+			.limit(1);
+		if (existing.length === 0) throw new Error("Resource not found");
+		assertNotModified(filter.expectedUpdatedAt, existing[0].updatedAt);
+		const deletedAtIso = monotonicUpdatedAt(nowIso, existing[0].updatedAt);
 		const deleted = await db
 			// biome-ignore lint/suspicious/noExplicitAny: Drizzle generic table requires cast
-			.delete(table as any)
-			.where(eq(table.id, filter.id))
+			.update(table as any)
+			.set({ deletedAt: deletedAtIso, updatedAt: deletedAtIso })
+			.where(and(eq(table.id, filter.id), isNull(table.deletedAt)))
 			.returning();
 		if (deleted.length === 0) throw new Error("Resource not found");
 		const response = validateDeleteResponse(norm(deleted[0]));

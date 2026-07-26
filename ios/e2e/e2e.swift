@@ -7,6 +7,123 @@ import XCTest
 
 private let MARKETPLACE_ITEMS_RESOURCE_ID = MarketplaceResource.items.rawValue
 
+// MARK: - Action branch helpers
+
+/// Builds a structured action branch from the compact call syntax.
+///
+/// The stored format is a structured invocation and the API rejects legacy
+/// strings, but spelling every action out longhand would make these fixtures
+/// unreadable. This converts at the seam. It is deliberately small: it handles
+/// only the forms this harness uses.
+func e2eActionBranch(_ callSyntax: String) -> Any {
+  let trimmed = callSyntax.trimmingCharacters(in: .whitespacesAndNewlines)
+  guard trimmed.hasPrefix("{"), trimmed.hasSuffix("}") else { return "" }
+  let inner = String(trimmed.dropFirst().dropLast())
+  guard let parenIndex = inner.firstIndex(of: "("), inner.hasSuffix(")") else { return "" }
+
+  let name = String(inner[..<parenIndex]).trimmingCharacters(in: .whitespacesAndNewlines)
+  let argsText = String(inner[inner.index(after: parenIndex)..<inner.index(before: inner.endIndex)])
+  let args = e2eSplitTopLevel(argsText)
+
+  switch name {
+  case "close", "select_photo", "expand_photo", "delete_photo":
+    return ["fn": name]
+  case "show", "expand_text":
+    return ["fn": name, "rowId": args.first ?? ""]
+  case "highlight_required":
+    return ["fn": name, "field": args.first ?? ""]
+  case "select":
+    return ["fn": name, "value": args.first ?? ""]
+  case "navigate":
+    var out: [String: Any] = ["fn": "navigate", "flowId": args[0], "pageId": args[1]]
+    if args.count > 2, let query = e2ePlainObject(args[2]), !query.isEmpty {
+      out["query"] = query
+    }
+    return out
+  case "create":
+    var out: [String: Any] = ["fn": "create", "service": args[0], "resource": args[1]]
+    let third = args.count > 2 ? args[2] : ""
+    if third == "submit" {
+      out["mode"] = "submit"
+    } else if let data = e2ePlainObject(third) {
+      out["mode"] = "inline"
+      out["data"] = data
+    } else {
+      out["mode"] = "fromPath"
+      out["dataPath"] = third
+    }
+    if args.count > 3, !args[3].isEmpty { out["idDestination"] = args[3] }
+    return out
+  case "update":
+    let isDraft = args.count == 5 && args[4] == "draft"
+    var out: [String: Any] = [
+      "fn": "update", "service": args[0], "resource": args[1],
+      "mode": isDraft ? "draft" : "store",
+    ]
+    if !isDraft, let filter = e2ePlainObject(args[2]) { out["filter"] = filter }
+    if let changes = e2ePlainObject(args[3]) {
+      out["changes"] = changes
+    } else {
+      out["changesPath"] = args[3]
+    }
+    return out
+  default:
+    return ""
+  }
+}
+
+/// `{a: b, c: d}` -> map, or nil when the text is not a brace-wrapped object.
+private func e2ePlainObject(_ text: String) -> [String: String]? {
+  let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
+  guard trimmed.hasPrefix("{"), trimmed.hasSuffix("}") else { return nil }
+  let inner = String(trimmed.dropFirst().dropLast()).trimmingCharacters(in: .whitespacesAndNewlines)
+  guard !inner.isEmpty else { return [:] }
+
+  var out: [String: String] = [:]
+  for pair in e2eSplitTopLevel(inner) {
+    guard let colon = pair.firstIndex(of: ":") else { continue }
+    let key = String(pair[..<colon]).trimmingCharacters(in: .whitespacesAndNewlines)
+    let value = String(pair[pair.index(after: colon)...])
+      .trimmingCharacters(in: .whitespacesAndNewlines)
+    if !key.isEmpty { out[key] = value }
+  }
+  return out
+}
+
+/// Splits on top-level commas, respecting nesting and quotes.
+private func e2eSplitTopLevel(_ input: String) -> [String] {
+  var parts: [String] = []
+  var current = ""
+  var depth = 0
+  var quote: Character?
+
+  for character in input {
+    if let openQuote = quote {
+      current.append(character)
+      if character == openQuote { quote = nil }
+      continue
+    }
+    switch character {
+    case "\"", "'":
+      quote = character
+      current.append(character)
+    case "(", "[", "{":
+      depth += 1
+      current.append(character)
+    case ")", "]", "}":
+      depth -= 1
+      current.append(character)
+    case "," where depth == 0:
+      parts.append(current.trimmingCharacters(in: .whitespacesAndNewlines))
+      current = ""
+    default: current.append(character)
+    }
+  }
+  let last = current.trimmingCharacters(in: .whitespacesAndNewlines)
+  if !last.isEmpty { parts.append(last) }
+  return parts
+}
+
 // MARK: - Minimal WebSocket Emitter for E2E Tests
 
 actor WSEmitter {
@@ -188,13 +305,16 @@ actor WSEmitter {
     let pages = pagesInput.map { pageData in
       decomposePage(pageData: pageData, rows: &rows, now: now)
     }
-    let flowRow: [String: Any] = [
+    var flowRow: [String: Any] = [
       "id": flowId,
       "name": nonEmptyString(flowData["name"]) ?? "Flow",
       "pageIds": pages.map(\.id),
       "createdAt": now,
       "updatedAt": now,
     ]
+    if let submits = flowData["submits"] as? [String: Any] {
+      flowRow["submits"] = submits
+    }
     return ((flowId, flowRow), pages, rows)
   }
 
@@ -384,6 +504,10 @@ class E2ETestBase: XCTestCase {
     [
       "id": E2EFlowIds.webSocketCreateFlow,
       "name": "Create item",
+      "submits": [
+        "service": MARKETPLACE_SERVICE,
+        "resource": MARKETPLACE_ITEMS_RESOURCE_ID,
+      ],
       "pages": [
         [
           "id": E2EFlowIds.webSocketCreatePage,
@@ -422,7 +546,7 @@ class E2ETestBase: XCTestCase {
                 [
                   "condition": "",
                   "false": "",
-                  "true": "{show(a4b5c6d7-e8f9-4a0b-1c2d-3e4f5a6b7c8d)}",
+                  "true": e2eActionBranch("{show(a4b5c6d7-e8f9-4a0b-1c2d-3e4f5a6b7c8d)}"),
                 ]
               ]
             ),
@@ -446,6 +570,10 @@ class E2ETestBase: XCTestCase {
     return [
       "id": E2EFlowIds.webSocketCreateFlow,
       "name": "Create item with address",
+      "submits": [
+        "service": MARKETPLACE_SERVICE,
+        "resource": MARKETPLACE_ITEMS_RESOURCE_ID,
+      ],
       "pages": [
         [
           "id": E2EFlowIds.webSocketCreatePage,
@@ -475,7 +603,7 @@ class E2ETestBase: XCTestCase {
                 [
                   "condition": "",
                   "false": "",
-                  "true": "{show(a4b5c6d7-e8f9-4a0b-1c2d-3e4f5a6b7c8d)}",
+                  "true": e2eActionBranch("{show(a4b5c6d7-e8f9-4a0b-1c2d-3e4f5a6b7c8d)}"),
                 ]
               ]
             ),
@@ -925,7 +1053,7 @@ class E2ETestBase: XCTestCase {
     style: String? = nil,
     sheet: [String: Any]? = nil
   ) -> [String: Any] {
-    let resolvedActions: [[String: String]]
+    let resolvedActions: [[String: Any]]
     if let action {
       resolvedActions = [
         rowAction(
@@ -972,17 +1100,17 @@ class E2ETestBase: XCTestCase {
     true action: String,
     condition: String = "",
     false falseAction: String = ""
-  ) -> [String: String] {
+  ) -> [String: Any] {
     [
       "condition": condition,
-      "false": falseAction,
-      "true": action,
+      "false": falseAction.isEmpty ? "" : e2eActionBranch(falseAction),
+      "true": action.isEmpty ? "" : e2eActionBranch(action),
     ]
   }
 
   static func actionsObject(
-    tap: [[String: String]] = [],
-    swipeLeft: [[String: String]] = []
+    tap: [[String: Any]] = [],
+    swipeLeft: [[String: Any]] = []
   ) -> [String: Any] {
     var result: [String: Any] = [:]
     if !tap.isEmpty {
@@ -1294,7 +1422,7 @@ class E2ETestBase: XCTestCase {
     id: String,
     source: String,
     destination: String = "{selected_pickup_timeslot}",
-    actions: [[String: String]] = [],
+    actions: [[String: Any]] = [],
     visible: String = "true",
     name: String = "Pickup available times",
     sheet: [String: Any]? = nil
@@ -1492,7 +1620,7 @@ class E2ETestBase: XCTestCase {
       name: "Confirm submit listing"
     )
     var confirmActions =
-      (confirmButton["actions"] as? [String: Any])?["tap"] as? [[String: String]] ?? []
+      (confirmButton["actions"] as? [String: Any])?["tap"] as? [[String: Any]] ?? []
     confirmActions.append(
       Self.rowAction(
         true: "{navigate(\(E2EFlowIds.defaultHomeFlow),\(E2EFlowIds.webSocketHomePage))}"))
@@ -3825,7 +3953,7 @@ final class E2EPlaceSearchTests: E2ETestBase {
           [
             "condition": "",
             "false": "",
-            "true": "{show(\(sheetId))}",
+            "true": e2eActionBranch("{show(\(sheetId))}"),
           ]
         ]
       ),
@@ -3840,7 +3968,7 @@ final class E2EPlaceSearchTests: E2ETestBase {
     placeholder: String,
     child: [String: Any],
     visible: String = "true",
-    tapActions: [[String: String]] = []
+    tapActions: [[String: Any]] = []
   ) -> [String: Any] {
     let actions: [String: Any] =
       tapActions.isEmpty ? [:] : Self.actionsObject(tap: tapActions)
@@ -3998,15 +4126,20 @@ final class E2EHomepageMessageSearchTests: E2ETestBase {
     let messageSearchField = Self.orderedSearchTextFields(in: homePage)[0]
     clearAndType(field: messageSearchField, text: Self.matchingTypeQuery)
 
+    let pickupRowId =
+      "swipeRow_\(Self.messageChildRowId)_\(Self.pickupMessageId)"
+    let pickupRow = app.otherElements[pickupRowId]
     XCTAssertTrue(
-      app.staticTexts["pickup request"].waitForExistence(timeout: 10),
-      "Pickup message row should be visible")
+      pickupRow.waitForExistence(timeout: 10),
+      "Seeded pickup message row should be visible")
     XCTAssertTrue(
-      app.staticTexts["pending"].waitForExistence(timeout: 5),
+      pickupRow.staticTexts["pickup request"].waitForExistence(timeout: 5),
+      "Pickup message row should show pickup request title")
+    XCTAssertTrue(
+      pickupRow.staticTexts["pending"].waitForExistence(timeout: 5),
       "Pickup message should show pending status")
 
-    let pickupLabel = app.staticTexts["pickup request"]
-    pickupLabel.swipeLeft(velocity: .slow)
+    pickupRow.swipeLeft(velocity: .slow)
 
     let swipeButtonId =
       "swipeLeft_\(Self.messageChildRowId)_\(Self.pickupMessageId)"
@@ -4018,7 +4151,7 @@ final class E2EHomepageMessageSearchTests: E2ETestBase {
     swipeButton.tap()
 
     XCTAssertTrue(
-      app.staticTexts["accepted"].waitForExistence(timeout: 5),
+      pickupRow.staticTexts["accepted"].waitForExistence(timeout: 5),
       "Pickup message subtitle should show accepted after swipe")
 
     let acceptedOnServer = try awaitResult("pickup message status accepted") {

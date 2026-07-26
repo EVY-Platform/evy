@@ -388,6 +388,7 @@ function decomposeFlow(flow: SeedFlow, now: string): DecomposedFlow {
 			id: flow.id,
 			name: flow.name,
 			pageIds: pageRows.map((page) => page.id),
+			...(flow.submits ? { submits: flow.submits } : {}),
 			visibility: "public",
 			...timestamped(now),
 		},
@@ -679,6 +680,8 @@ async function seedDatabase({
 				description: "Marketplace service",
 				sortOrder: 1,
 				visibility: "public",
+				// Records the endpoint on the row when the environment knows it,
+				// so routing does not depend on the env convention at runtime.
 				...timestamped(now),
 			},
 		]);

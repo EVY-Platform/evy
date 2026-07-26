@@ -28,6 +28,11 @@ import {
 	findPageReferences,
 	type PageReferenceEntry,
 } from "../utils/pageReferences";
+import {
+	parseSubmitTargetValue,
+	submitTargetOptions,
+	submitTargetValue,
+} from "../utils/serviceResourceOptions";
 import { ActionEditor } from "./ActionEditor";
 import { BuilderAssist } from "./BuilderAssist";
 import { PageInUseDialog } from "./PageInUseDialog";
@@ -168,6 +173,23 @@ export function ConfigurationPanel() {
 			...buildFunctionCandidates(),
 		],
 		[flowsById, pagesById, serviceResources],
+	);
+
+	const submitsTargetOptions = useMemo<PopoverOption[]>(
+		() => submitTargetOptions(serviceResources),
+		[serviceResources],
+	);
+
+	const handleSubmitsTargetChange = useCallback(
+		(value: string) => {
+			if (!activeFlowId) return;
+			dispatchRow({
+				type: "UPDATE_FLOW_SUBMITS",
+				flowId: activeFlowId,
+				submits: parseSubmitTargetValue(value),
+			});
+		},
+		[activeFlowId, dispatchRow],
 	);
 
 	const [pageInUseReferences, setPageInUseReferences] = useState<
@@ -514,6 +536,30 @@ export function ConfigurationPanel() {
 							aria-label="Page title"
 							className="evy-w-full evy-mt-1 evy-focus-visible:outline-none"
 						/>
+					</div>
+				)}
+				{showPageTitleInPanel && activeFlow && (
+					<div className="evy-mb-2">
+						<span className="evy-text-sm evy-font-medium evy-text-black">
+							Flow submits
+						</span>
+						<p className="evy-text-sm evy-text-gray">
+							The entity this flow creates on submit. Leave unset
+							for flows that do not submit.
+						</p>
+						<div className="evy-flex evy-gap-2 evy-mt-1">
+							<PopoverSelect
+								ariaLabel="Flow submits target"
+								value={
+									activeFlow.submits
+										? submitTargetValue(activeFlow.submits)
+										: ""
+								}
+								placeholder="None"
+								options={submitsTargetOptions}
+								onChange={handleSubmitsTargetChange}
+							/>
+						</div>
 					</div>
 				)}
 				{showPageTitleInPanel && activePage && currentConfigRow && (

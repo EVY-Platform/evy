@@ -76,6 +76,10 @@ function buildBuilderAssistFlow(
 		{
 			id: "flow-builder",
 			name: "Builder Flow",
+			submits: {
+				service: MARKETPLACE_SERVICE,
+				resource: ITEM_RESOURCE_ID,
+			},
 			pages: [
 				{
 					id: "page-editor",

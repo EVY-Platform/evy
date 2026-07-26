@@ -139,7 +139,8 @@ struct EVYSelectItem: View {
     selectionStyle: EVYRadioStyle,
     target: EVYSelectItemTarget,
     textStyle: EVYTextStyle = .body,
-    onTap: @escaping (@escaping () throws -> Void) -> Void
+    onTap: @escaping (@escaping () throws -> Void) -> Void,
+    scope: EVYScope? = nil
   ) {
     self.destination = destination
     self.value = value
@@ -155,6 +156,7 @@ struct EVYSelectItem: View {
 
     selected = EVYState(
       textToWatch: destination,
+      scope: scope,
       setter: {
         (try? target.isSelected(value: value, destination: destination)) ?? false
       })

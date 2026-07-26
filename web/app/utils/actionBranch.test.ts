@@ -1,4 +1,5 @@
 import { describe, expect, it } from "bun:test";
+import type { DATA_EVY_Flow, DATA_EVY_Page, DATA_EVY_Row } from "evy-types";
 import { EVY_CORE_RESOURCE, EVY_CORE_SERVICE } from "evy-types/coreResources";
 import {
 	MARKETPLACE_RESOURCE,
@@ -6,12 +7,15 @@ import {
 } from "evy-types/marketplaceResources";
 import {
 	applyCreateModeForDraftSignals,
+	branchForStorage,
+	branchToEditableString,
 	createHasInlineDataArg,
 	createUsesSubmitMarker,
 	finalizeCreateBranchForSave,
 	formatBranchDisplay,
 	isValidCreateBranchForSave,
 	parseBranch,
+	parseBranchText,
 	serializeBranch,
 	updateUsesDraftMarker,
 } from "./actionBranch";
@@ -137,7 +141,7 @@ describe("action branch helpers", () => {
 	});
 
 	it("parses show action with row id", () => {
-		expect(parseBranch("{show(row-abc)}")).toEqual({
+		expect(parseBranchText("{show(row-abc)}")).toEqual({
 			functionName: "show",
 			args: ["row-abc"],
 		});
@@ -153,7 +157,7 @@ describe("action branch helpers", () => {
 
 	it("parses create with submit marker", () => {
 		expect(
-			parseBranch(
+			parseBranchText(
 				`{create(${MARKETPLACE_SERVICE},${MARKETPLACE_RESOURCE.ITEMS},submit)}`,
 			),
 		).toEqual({
@@ -176,7 +180,7 @@ describe("action branch helpers", () => {
 
 	it("round-trips draft-mode update with empty filter", () => {
 		const branch = `{update(${MARKETPLACE_SERVICE},${MARKETPLACE_RESOURCE.ITEMS},{},{transfer_options.pickup.address_id: pickup_address.id},draft)}`;
-		expect(parseBranch(branch)).toEqual({
+		expect(parseBranchText(branch)).toEqual({
 			functionName: "update",
 			args: [
 				MARKETPLACE_SERVICE,
@@ -199,7 +203,7 @@ describe("action branch helpers", () => {
 
 	it("parses create with namespace and resource", () => {
 		expect(
-			parseBranch(
+			parseBranchText(
 				`{create(${MARKETPLACE_SERVICE},${MARKETPLACE_RESOURCE.ITEMS})}`,
 			),
 		).toEqual({
@@ -221,7 +225,7 @@ describe("action branch helpers", () => {
 
 	it("parses update with filter and changes objects", () => {
 		expect(
-			parseBranch(
+			parseBranchText(
 				`{update(${EVY_CORE_SERVICE},${EVY_CORE_RESOURCE.MESSAGES},{fk: $datum.id, archivedAt: null},{archivedAt: now()})}`,
 			),
 		).toEqual({
@@ -260,7 +264,7 @@ describe("action branch helpers", () => {
 
 	it("parses navigate query as a third function argument", () => {
 		expect(
-			parseBranch("{navigate(flow-1,page-2,{items: [id-1, id-2]})}"),
+			parseBranchText("{navigate(flow-1,page-2,{items: [id-1, id-2]})}"),
 		).toEqual({
 			functionName: "navigate",
 			args: ["flow-1", "page-2", "{items: [id-1, id-2]}"],
@@ -286,7 +290,7 @@ describe("action branch helpers", () => {
 	});
 
 	it("parses delete_photo as a zero-arg action", () => {
-		expect(parseBranch("{delete_photo()}")).toEqual({
+		expect(parseBranchText("{delete_photo()}")).toEqual({
 			functionName: "delete_photo",
 			args: [],
 		});
@@ -294,7 +298,7 @@ describe("action branch helpers", () => {
 	});
 
 	it("parses and serializes select with datum", () => {
-		expect(parseBranch("{select($datum)}")).toEqual({
+		expect(parseBranchText("{select($datum)}")).toEqual({
 			functionName: "select",
 			args: ["$datum"],
 		});
@@ -302,13 +306,13 @@ describe("action branch helpers", () => {
 	});
 
 	it("parses and serializes zero-arg row actions", () => {
-		expect(parseBranch("{select_photo()}")).toEqual({
+		expect(parseBranchText("{select_photo()}")).toEqual({
 			functionName: "select_photo",
 			args: [],
 		});
 		expect(serializeBranch("select_photo", [])).toBe("{select_photo()}");
 
-		expect(parseBranch("{expand_photo()}")).toEqual({
+		expect(parseBranchText("{expand_photo()}")).toEqual({
 			functionName: "expand_photo",
 			args: [],
 		});
@@ -316,7 +320,7 @@ describe("action branch helpers", () => {
 	});
 
 	it("parses and serializes expand_text with row id", () => {
-		expect(parseBranch("{expand_text(row-expand)}")).toEqual({
+		expect(parseBranchText("{expand_text(row-expand)}")).toEqual({
 			functionName: "expand_text",
 			args: ["row-expand"],
 		});
@@ -328,32 +332,35 @@ describe("action branch helpers", () => {
 
 	it("resolves row labels for show and expand_text display", () => {
 		const now = "2024-01-01T00:00:00.000Z";
-		const flowsById = {
+		const flowsById: Record<string, DATA_EVY_Flow> = {
 			"flow-1": {
 				id: "flow-1",
 				name: "Main",
 				pageIds: ["page-1"],
+				visibility: "public",
 				createdAt: now,
 				updatedAt: now,
 			},
 		};
-		const pagesById = {
+		const pagesById: Record<string, DATA_EVY_Page> = {
 			"page-1": {
 				id: "page-1",
 				name: "Home",
 				title: "",
 				rowIds: ["row-expand"],
+				visibility: "public",
 				createdAt: now,
 				updatedAt: now,
 			},
 		};
-		const rowsById = {
+		const rowsById: Record<string, DATA_EVY_Row> = {
 			"row-expand": {
 				id: "row-expand",
 				name: "Expand target",
 				type: "TextExpand",
 				visible: "true",
 				data: {},
+				visibility: "public",
 				createdAt: now,
 				updatedAt: now,
 			},
@@ -374,5 +381,57 @@ describe("action branch helpers", () => {
 		const locationLabel = "Main / Home / Expand target";
 		expect(expandDisplay).toBe(`expand_text(${locationLabel})`);
 		expect(showDisplay).toBe(`show(${locationLabel})`);
+	});
+});
+
+describe("structured branch storage", () => {
+	const SVC = "66b092ae-7cd8-4d67-95b7-30b03568fd90";
+
+	it("stores a convertible branch structurally", () => {
+		expect(branchForStorage("{close()}")).toEqual({ fn: "close" });
+	});
+
+	it("stores the submit keyword as a typed mode", () => {
+		expect(branchForStorage(`{create(${SVC},items,submit)}`)).toEqual({
+			fn: "create",
+			service: SVC,
+			resource: "items",
+			mode: "submit",
+		});
+	});
+
+	it("keeps an empty branch empty", () => {
+		expect(branchForStorage("")).toBe("");
+	});
+
+	// An unconvertible branch is a bug in the editor to surface, rather than
+	// something to persist and discover later.
+	it("refuses to store an unconvertible branch", () => {
+		expect(() => branchForStorage("{teleport(x)}")).toThrow(
+			"Cannot store action branch",
+		);
+		expect(() => branchForStorage("not an action")).toThrow(
+			"Cannot store action branch",
+		);
+	});
+
+	it("renders a structured branch back to a string for editing", () => {
+		expect(branchToEditableString({ fn: "show", rowId: "row-1" })).toBe(
+			"{show(row-1)}",
+		);
+	});
+
+	it("round-trips a structured branch through the editor model", () => {
+		const stored = { fn: "show", rowId: "row-1" } as const;
+		expect(branchForStorage(branchToEditableString(stored))).toEqual(
+			stored,
+		);
+	});
+
+	it("parses a structured branch into the editor model", () => {
+		expect(parseBranch({ fn: "show", rowId: "row-1" })).toEqual({
+			functionName: "show",
+			args: ["row-1"],
+		});
 	});
 });

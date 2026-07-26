@@ -61,6 +61,40 @@ describe("API E2E Tests", () => {
 			expect(Array.isArray(result)).toBe(true);
 		});
 
+		it("sync is reachable as a top-level method and issues a cursor", async () => {
+			const result = (await unauthClient.call("sync", {})) as {
+				data: unknown[];
+				cursor: string;
+			};
+
+			expect(Array.isArray(result.data)).toBe(true);
+			expect(typeof result.cursor).toBe("string");
+			expect(result.cursor.length).toBeGreaterThan(0);
+		});
+
+		it("a returned cursor resumes the next sync", async () => {
+			const first = (await unauthClient.call("sync", {})) as {
+				cursor: string;
+			};
+			const second = (await unauthClient.call("sync", {
+				cursor: first.cursor,
+			})) as { data: unknown[]; cursor: string };
+
+			// Nothing changed in between, so the cursor holds and no rows repeat.
+			expect(second.data).toEqual([]);
+			expect(second.cursor).toBe(first.cursor);
+		});
+
+		it("api{method:sync} is rejected", async () => {
+			await expect(
+				unauthClient.call("api", {
+					service: EVY_CORE_SERVICE,
+					method: "sync",
+					data: { cursor: "1970-01-01T00:00:00.000Z" },
+				}),
+			).rejects.toThrow();
+		});
+
 		it("create should reject without auth", async () => {
 			try {
 				await unauthClient.call("create", {

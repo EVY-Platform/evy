@@ -16,6 +16,7 @@ import { Client } from "rpc-websockets";
 import * as data from "../data/data";
 import type { EvyDb } from "../database/db";
 import { assertApiReadable } from "../readiness";
+import { withEnvironment } from "./withEnvironment";
 import { getFreePort, type WSServer, waitForClientOpen } from "./wsTestHelpers";
 
 const db = null as unknown as EvyDb;
@@ -144,24 +145,72 @@ describe("assertApiReadable", () => {
 		await expect(assertApiReadable(db, true)).resolves.toBeUndefined();
 	});
 
-	it("throws when an external service is missing its WebSocket env vars", async () => {
+	/** Runs `body` with the marketplace endpoint env vars unset. */
+	function withoutMarketplaceEnv(body: () => Promise<void>) {
+		return withEnvironment(
+			{
+				MARKETPLACE_WS_HOST: undefined,
+				MARKETPLACE_WS_PORT: undefined,
+				REQUIRED_SERVICES: undefined,
+			},
+			body,
+		);
+	}
+
+	// An unreachable optional service degrades readiness rather than taking the
+	// whole gateway out of rotation.
+	it("warns but stays ready when an unconfigured service is not required", async () => {
 		listExternalServicesImpl = async () => [
-			{ id: MARKETPLACE_SERVICE, name: "marketplace" },
+			{
+				id: MARKETPLACE_SERVICE,
+				name: "marketplace",
+				wsHost: null,
+				wsPort: null,
+			},
 		];
-		const savedHost = process.env.MARKETPLACE_WS_HOST;
-		const savedPort = process.env.MARKETPLACE_WS_PORT;
-		delete process.env.MARKETPLACE_WS_HOST;
-		delete process.env.MARKETPLACE_WS_PORT;
-		try {
+		await withoutMarketplaceEnv(async () => {
+			const warnSpy = spyOn(console, "warn").mockImplementation(() => {});
+			try {
+				await expect(
+					assertApiReadable(db, false),
+				).resolves.toBeUndefined();
+				expect(warnSpy).toHaveBeenCalled();
+			} finally {
+				warnSpy.mockRestore();
+			}
+		});
+	});
+
+	it("throws when an unconfigured service is listed in REQUIRED_SERVICES", async () => {
+		listExternalServicesImpl = async () => [
+			{
+				id: MARKETPLACE_SERVICE,
+				name: "marketplace",
+				wsHost: null,
+				wsPort: null,
+			},
+		];
+		await withoutMarketplaceEnv(async () => {
+			process.env.REQUIRED_SERVICES = "marketplace";
 			await expect(assertApiReadable(db, false)).rejects.toThrow(
-				"MARKETPLACE_WS_HOST",
+				"API readiness failed",
 			);
-		} finally {
-			if (savedHost !== undefined)
-				process.env.MARKETPLACE_WS_HOST = savedHost;
-			if (savedPort !== undefined)
-				process.env.MARKETPLACE_WS_PORT = savedPort;
-		}
+		});
+	});
+
+	it("is ready from the service row alone, with no env vars", async () => {
+		listExternalServicesImpl = async () => [
+			{
+				id: MARKETPLACE_SERVICE,
+				name: "marketplace",
+				wsHost: "marketplace.internal",
+				wsPort: 8001,
+			},
+		];
+		await withoutMarketplaceEnv(async () => {
+			process.env.REQUIRED_SERVICES = "marketplace";
+			await expect(assertApiReadable(db, false)).resolves.toBeUndefined();
+		});
 	});
 
 	it("resolves when all external services have WebSocket env vars configured", async () => {

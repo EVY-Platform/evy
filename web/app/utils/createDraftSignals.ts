@@ -1,7 +1,8 @@
 import type { DATA_EVY_Flow, DATA_EVY_Page, DATA_EVY_Row } from "evy-types";
 import {
+	branchToEditableString,
 	finalizeCreateBranchForSave,
-	parseBranch,
+	parseBranchText,
 	updateUsesDraftMarker,
 } from "./actionBranch";
 import { allRowActions, normalizeStoredRowActions } from "./rowActions";
@@ -23,18 +24,11 @@ function extractVariableFromDestination(destination: string): string | null {
 	return inner;
 }
 
-function destinationDraftsTargetResource(
-	draftVariables: string[],
-	resourceId: string,
-): boolean {
-	return draftVariables.some(
-		(name) => name === resourceId || name.startsWith(`${resourceId}.`),
-	);
-}
-
-export type DraftSignals = {
+type DraftSignals = {
 	draftVariables: string[];
 	draftUpdateTargets: Set<string>;
+	/** `service/resource` the active flow declares it submits, if any. */
+	declaredSubmits: string | null;
 };
 
 export function collectDraftSignals(
@@ -45,8 +39,16 @@ export function collectDraftSignals(
 ): DraftSignals {
 	const flow = activeFlowId ? flowsById[activeFlowId] : undefined;
 	if (!flow) {
-		return { draftVariables: [], draftUpdateTargets: new Set() };
+		return {
+			draftVariables: [],
+			draftUpdateTargets: new Set(),
+			declaredSubmits: null,
+		};
 	}
+
+	const declaredSubmits = flow.submits
+		? `${flow.submits.service}/${flow.submits.resource}`
+		: null;
 
 	const variables = new Set<string>();
 	const draftUpdateTargets = new Set<string>();
@@ -60,10 +62,10 @@ export function collectDraftSignals(
 
 		const actions = normalizeStoredRowActions(row.data.actions);
 		for (const action of allRowActions(actions)) {
-			for (const branchString of [action.true, action.false]) {
-				const trimmed = branchString.trim();
+			for (const branch of [action.true, action.false]) {
+				const trimmed = branchToEditableString(branch).trim();
 				if (!trimmed) continue;
-				const parsed = parseBranch(trimmed);
+				const parsed = parseBranchText(trimmed);
 				if (parsed?.functionName !== "update") continue;
 				const serviceId = parsed.args[0]?.trim();
 				const resourceId = parsed.args[1]?.trim();
@@ -77,31 +79,27 @@ export function collectDraftSignals(
 	return {
 		draftVariables: Array.from(variables).sort(),
 		draftUpdateTargets,
+		declaredSubmits,
 	};
 }
 
 export function shouldOfferCreateSubmitWithFlow(
 	serviceId: string,
 	resourceId: string,
-	draftVariables: string[],
-	draftUpdateTargets: Set<string>,
+	declaredSubmits: string | null = null,
 ): boolean {
-	if (!serviceId || !resourceId) return false;
-	if (destinationDraftsTargetResource(draftVariables, resourceId)) {
-		return true;
-	}
-	return draftUpdateTargets.has(`${serviceId}/${resourceId}`);
+	if (!serviceId || !resourceId || declaredSubmits === null) return false;
+	return declaredSubmits === `${serviceId}/${resourceId}`;
 }
 
 export function finalizeBranchForSave(
 	branchString: string,
-	draftVariables: string[],
-	draftUpdateTargets: Set<string>,
+	declaredSubmits: string | null = null,
 ): string | null {
 	const trimmed = branchString.trim();
 	if (!trimmed) return branchString;
 
-	const parsed = parseBranch(trimmed);
+	const parsed = parseBranchText(trimmed);
 	if (parsed?.functionName !== "create") {
 		return branchString;
 	}
@@ -111,8 +109,7 @@ export function finalizeBranchForSave(
 	const offerSubmit = shouldOfferCreateSubmitWithFlow(
 		serviceId,
 		resourceId,
-		draftVariables,
-		draftUpdateTargets,
+		declaredSubmits,
 	);
 
 	return finalizeCreateBranchForSave(trimmed, offerSubmit);

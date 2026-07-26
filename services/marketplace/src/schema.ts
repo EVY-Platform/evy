@@ -9,4 +9,6 @@ export const data = pgTable("Data", {
 	data: jsonb("data").$type<DATA_PRIMITIVE["data"]>().notNull(),
 	createdAt: text("created_at").notNull(),
 	updatedAt: text("updated_at").notNull(),
+	// Tombstone: kept so incremental reads can tell clients the row is gone.
+	deletedAt: text("deleted_at"),
 });

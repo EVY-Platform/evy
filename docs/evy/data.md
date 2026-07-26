@@ -37,8 +37,12 @@ bun run types:generate
 `bun run types:generate` runs:
 
 1. `scripts/generate-types.ts` — Emits TypeScript under `types/generated/ts/` and Swift under `types/generated/swift/` from `*.schema.json`. It generates stable Swift filenames from nested and hyphenated schema paths, includes `types/schema/files/file.schema.json`, and runs `scripts/generate-swift-sdui.ts` for Swift UI shapes from `evy.schema.json` plus `types/schema/sdui/definitions/*.schema.json`.
-2. `scripts/generate-drizzle.ts` — Emits `types/generated/ts/db/schema.generated.ts` from `data.schema.json` and `drizzle.config.json`.
+2. `scripts/generate-drizzle.ts` — Emits `types/generated/ts/db/schema.generated.ts` from `data.schema.json` and `drizzle.config.json`. Every `DATA_EVY_*` `$def` must have a table entry in `drizzle.config.json`, or be listed there under `nonTableDefs` if it is a nested value object with no table of its own; otherwise generation fails.
 3. `scripts/generate-core-resources.ts` — Emits generated evy core resource compile-time constants only for core API validation and sync's core-resource loop. Non-evy service/resource ownership is stored in normal core `services` and `serviceResources` rows and can be read through standard `get` CRUD.
+4. `scripts/generate-marketplace-resources.ts` — Emits the marketplace service and resource UUID constants used by the marketplace service guard, the seed script, and iOS.
+5. `scripts/generate-procedures.ts` — Emits the RPC procedure registry from `types/schema/resources/procedures.json` (see [Procedures](#procedures)).
+
+`scripts/generate-types.ts` additionally invokes `scripts/generate-sdui-definitions.ts`, which emits the embedded SDUI row schemas and trigger specs consumed by `validateUiFlow` and the web builder.
 
 ### Outputs (do not edit by hand)
 
@@ -46,6 +50,24 @@ bun run types:generate
 - `types/generated/swift/` — Swift types. The iOS app references generated SDUI, core resource, OS, and file API models while keeping transport and UI models handwritten where needed.
 
 After changing any schema, `drizzle.config.json`, or SDUI row definition schema, run `bun run types:generate`. Output under `types/generated/` is gitignored; regenerate locally and do not hand-edit generated files.
+
+### Procedures
+
+A procedure is an RPC call that runs code rather than reading or writing a resource — reached as `api{service, method, data}`, and written `{$api:<method>}` in a row source. `types/schema/resources/procedures.json` declares each one:
+
+| Field | Meaning |
+| --- | --- |
+| `service` | The service UUID that owns it. Core procedures run in the gateway; anything else is forwarded to that service. |
+| `response` | Schema path, relative to `types/schema/`. The generator reads it for the result attributes the builder offers. Request and response are both validated at dispatch, but by handlers wired in code rather than from this file. |
+| `rateLimit.perMinute` | Optional. Calls allowed per socket per minute. Omit for unmetered. |
+
+The manifest is the single source of truth for which procedures exist:
+
+- `api/src/procedures/coreApi.ts` refuses to load if its handlers and the registry disagree. A handler with no declaration is the dangerous direction — it would be reachable while skipping the rate limit.
+- `api/src/procedures/rpc.ts` will only forward a procedure to the service that declares it.
+- The web builder offers a `{$api:<method>}` source's attributes from the registry, derived from the response schema at generation time. Only array-of-object responses have them; `sync` is callable but its envelope is not a bindable source.
+
+Adding one means: write the request/response schemas, add the manifest entry naming the response, `bun run types:generate`, then implement the handler with its validation (in the gateway for a core procedure, or in the owning service).
 
 ---
 
@@ -55,7 +77,9 @@ This document covers EVY shared data: schema-backed rows stored in the API datab
 
 ### Wire contract vs persisted rows
 
-Clients call the API with JSON-RPC `sync`, `get`, `api`, `create`, `update`, and `delete` using `service` and `resource` where applicable (see [`types/schema/rpc`](../../../types/schema/rpc)). `service: "[evy_core_service_id]"` is dispatched by the API into resource modules under [`api/src/data/resources`](../../../api/src/data/resources) and maps to the row types below in the API Postgres schema. External services such as `service: "[service_id]"` are routed by service ID from normal core `services` rows. External resource ownership is represented in core `serviceResources` rows, and the runtime `resource` value for an external service is the `serviceResources.id` UUID. `serviceResources.name` is a human-friendly base label only; it is not a routing key. External payloads are validated in those services and stored in their own databases—not as a generic "namespace row" in the EVY data schema. See [`external-service-resource-id-discovery.md`](../plans/external-service-resource-id-discovery.md) for the resource-ID routing details.
+Clients call the API with JSON-RPC `get`, `sync`, `api`, `create`, `update`, and `delete` using `service` and `resource` where applicable (see [`types/schema/rpc`](../../../types/schema/rpc)). `sync` is a top-level method: send back the opaque `cursor` from the previous response, or omit it for a full sync. `service: "[evy_core_service_id]"` is dispatched by the API into resource modules under [`api/src/data/resources`](../../../api/src/data/resources) and maps to the row types below in the API Postgres schema. External services such as `service: "[service_id]"` are routed by service ID from normal core `services` rows. External resource ownership is represented in core `serviceResources` rows, and the runtime `resource` value for an external service is the `serviceResources.id` UUID. `serviceResources.name` is a human-friendly base label only; it is not a routing key. External payloads are validated in those services and stored in their own databases—not as a generic "namespace row" in the EVY data schema.
+
+Routing in practice: the API dispatches on `service`, comparing it against the generated core service UUID (`EVY_CORE_SERVICE`). Core resources are addressed by **name** (`flows`, `messages`, …); external resources are addressed by the **`serviceResources.id` UUID**. Anything that is not the core service is forwarded to the owning service's adapter, which the API resolves from the core `services` table at startup.
 
 ### Common date-time fields
 
@@ -68,66 +92,21 @@ Tables that track updates use ISO 8601 / RFC 3339 strings (never numeric Unix ti
 
 ### Schema-backed row types (`DATA_EVY_*`)
 
+Fields, types and which of them are required live in [`types/schema/data/data.schema.json`](../../types/schema/data/data.schema.json) and the generated TypeScript and Swift built from it. That is the reference; the notes below cover only what a schema does not explain — routing, references between records, and how a shape is represented on the wire. Hand-copied field lists here went stale as soon as a column was added.
+
 These are defined in `types/schema/data/data.schema.json`. The API and generated Drizzle schema use them.
 
 #### DATA_EVY_Device
 
 Primary key: `token`.
 
-```
-token: string (maxLength 256)
-os: "ios" | "android" | "Web"
-createdAt: string (date-time)
-```
-
 #### DATA_EVY_Service
-
-```
-id: uuid
-name: string (maxLength 50)
-description: string
-sortOrder: integer (optional)
-createdAt: string (date-time)
-updatedAt: string (date-time)
-```
 
 #### DATA_EVY_Organization
 
-```
-id: uuid
-name: string (maxLength 100)
-description: string
-logo: uuid
-url: string (maxLength 50)
-supportEmail: string (maxLength 50)
-createdAt: string (date-time)
-updatedAt: string (date-time)
-```
-
 #### DATA_EVY_ServiceProvider
 
-```
-id: uuid
-fkServiceId: uuid
-fkOrganizationId: uuid
-name: string (maxLength 100)
-description: string
-logo: uuid
-url: string (maxLength 50)
-createdAt: string (date-time)
-updatedAt: string (date-time)
-retired: boolean (default false)
-```
-
 #### DATA_EVY_ServiceResource
-
-```
-id: uuid
-fkServiceId: uuid
-name: string (maxLength 50)
-createdAt: string (date-time)
-updatedAt: string (date-time)
-```
 
 `name` is the display/base name used by the web builder for human-friendly labels. Runtime service/resource references use `id`; clients must not derive API routing or persistence keys from `name`.
 
@@ -135,29 +114,11 @@ updatedAt: string (date-time)
 
 Persisted flow shell. Clients assemble the nested [`UI_Flow`](sdui.md) shape from `flows`, `pages`, and `rows` at the serialization boundary.
 
-```
-id: uuid
-name: string
-pageIds: uuid[]
-createdAt: string (date-time)
-updatedAt: string (date-time)
-```
-
 On the wire this is accessed with `service: "475731ac-31aa-4d65-94d2-7032782ae359"` and `resource: "flows"`.
 
 #### DATA_EVY_Page
 
 Persisted page shell.
-
-```
-id: uuid
-name: string
-title: string (optional)
-rowIds: uuid[]
-footerRowId: uuid (optional)
-createdAt: string (date-time)
-updatedAt: string (date-time)
-```
 
 On the wire this is accessed with `service: "475731ac-31aa-4d65-94d2-7032782ae359"` and `resource: "pages"`.
 
@@ -173,37 +134,11 @@ Persisted row record. Row-type-specific SDUI fields live in `data`. Nested row r
 
 A Search row may persist both `child_row_id` and `sheet_row_id`. Relationship kind is explicit in storage; do not infer it from row type alone beyond the Search-only rule for `child`.
 
-```
-id: uuid
-name: string
-type: string
-visible: string
-data: object
-createdAt: string (date-time)
-updatedAt: string (date-time)
-```
-
 On the wire this is accessed with `service: "475731ac-31aa-4d65-94d2-7032782ae359"` and `resource: "rows"`.
 
 #### DATA_EVY_Address
 
 First-class pickup/location address row in the core database. Marketplace items reference an address by id (`transfer_options.pickup.address_id`) rather than embedding the object. SDUI reads use `findFirst(addresses, <item>.transfer_options.pickup.address_id)`.
-
-```
-id: uuid
-unit: string (optional)
-street: string (optional)
-city: string (optional)
-postcode: string (optional)
-state: string (optional)
-country: string (optional)
-latitude: number (optional)
-longitude: number (optional)
-instructions: string (optional)
-visibility: "public" | "private" (defaults to private)
-createdAt: string (date-time)
-updatedAt: string (date-time)
-```
 
 On the wire this is accessed with `service: "475731ac-31aa-4d65-94d2-7032782ae359"` and `resource: "addresses"`. Addresses are private by policy — iOS routes them to `privateStore`.
 
@@ -216,19 +151,6 @@ Every `DATA_EVY_*` row carries a required `visibility` attribute: `"public"` or 
 #### DATA_EVY_Message
 
 Core message record in [`data.schema.json`](../../../types/schema/data/data.schema.json) (`$defs.DATA_EVY_Message`, Postgres table `Message`). A message always relates to one record of another resource: `fk` is that record's id, and `service` / `resource` identify which service and resource the `fk` belongs to. Use-case-specific fields (e.g. `type`, `time`, `postalcode`) live in the free-form `data` object.
-
-```
-id: uuid
-fk: uuid (the related record, e.g. a marketplace item id)
-service: uuid (service the fk belongs to)
-resource: uuid (resource the fk belongs to)
-archivedAt: string (date-time) | null (null/absent while active)
-status: "pending" | "accepted"
-createdAt: string (date-time)
-updatedAt: string (date-time, server-stamped)
-visibility: "public" | "private" (defaults to public)
-data: object (free-form, use-case specific)
-```
 
 On the wire this is accessed with `service: "475731ac-31aa-4d65-94d2-7032782ae359"` and `resource: "messages"`. Cancelling sets `archivedAt`; accepting sets `status` to `accepted` via `{update(...)}`.
 

@@ -77,12 +77,14 @@ struct EVYTimeslotPicker: View {
     content: TimeslotPickerRowViewData,
     source: String,
     destination: String,
-    onTimeslotTapped: @escaping EVYRowTapCallback<EVYJson>
+    onTimeslotTapped: @escaping EVYRowTapCallback<EVYJson>,
+    scope: EVYScope? = nil
   ) {
     self.destination = destination
     self.onTimeslotTapped = onTimeslotTapped
     timeslotDates = EVYState(
       watches: [source, destination],
+      scope: scope,
       setter: { Self.buildDates(content: content, source: source, destination: destination) }
     )
   }

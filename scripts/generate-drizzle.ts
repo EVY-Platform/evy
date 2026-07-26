@@ -36,7 +36,7 @@ interface JsonSchemaDef {
 	additionalProperties?: boolean;
 }
 
-interface JsonSchema {
+export interface JsonSchema {
 	$defs?: Record<string, JsonSchemaDef>;
 }
 
@@ -61,11 +61,20 @@ interface DrizzleRelation {
 	oneToMany?: boolean;
 }
 
-interface DrizzleConfig {
+export interface DrizzleConfig {
 	enums?: Record<string, DrizzleEnumConfig>;
 	tables?: Record<string, DrizzleTableConfig>;
 	relations?: DrizzleRelation[];
+	/**
+	 * `DATA_EVY_*` $defs that intentionally have no table (nested value objects
+	 * embedded in another table's column). Listing one here is a deliberate
+	 * opt-out; anything else without a table is treated as drift.
+	 */
+	nonTableDefs?: string[];
 }
+
+/** $defs matching this prefix are expected to be persisted as tables. */
+const TABLE_DEF_PREFIX = "DATA_EVY_";
 
 /** Minimal JSON shape so {@link validateConfigSemantic} can safely read `tables` / `relations`. */
 function assertDrizzleConfigRoot(
@@ -76,7 +85,9 @@ function assertDrizzleConfigRoot(
 	}
 }
 
-function assertDrizzleConfig(value: unknown): asserts value is DrizzleConfig {
+export function assertDrizzleConfig(
+	value: unknown,
+): asserts value is DrizzleConfig {
 	assertDrizzleConfigRoot(value);
 	if (value.tables !== undefined) {
 		if (
@@ -156,6 +167,16 @@ function assertDrizzleConfig(value: unknown): asserts value is DrizzleConfig {
 			}
 		}
 	}
+	if (value.nonTableDefs !== undefined) {
+		if (
+			!Array.isArray(value.nonTableDefs) ||
+			value.nonTableDefs.some((entry) => typeof entry !== "string")
+		) {
+			throw new Error(
+				"drizzle.config.json: nonTableDefs must be an array of strings",
+			);
+		}
+	}
 	if (value.relations !== undefined) {
 		if (!Array.isArray(value.relations)) {
 			throw new Error("drizzle.config.json: relations must be an array");
@@ -184,12 +205,55 @@ function schemaPropertyKeys(def: {
 	return new Set(Object.keys(def.properties ?? {}));
 }
 
-function validateConfigSemantic(
+/**
+ * Catches the reverse of the checks below: a new `DATA_EVY_*` $def with no
+ * table entry used to generate silently, leaving the type with nowhere to
+ * persist. Opt a def out explicitly via `nonTableDefs`.
+ */
+export function validateEveryDataDefHasATable(
+	schema: JsonSchema,
+	config: DrizzleConfig,
+): void {
+	const tables = config.tables ?? {};
+	const enums = config.enums ?? {};
+	const exempt = new Set(config.nonTableDefs ?? []);
+
+	const missing = Object.keys(schema.$defs ?? {}).filter(
+		(defKey) =>
+			defKey.startsWith(TABLE_DEF_PREFIX) &&
+			!(defKey in tables) &&
+			!(defKey in enums) &&
+			!exempt.has(defKey),
+	);
+
+	if (missing.length > 0) {
+		throw new Error(
+			`drizzle.config.json: $def(s) ${missing
+				.map((name) => `"${name}"`)
+				.join(", ")} have no table entry. Add one, or list them in ` +
+				`"nonTableDefs" if they are nested value objects with no table of their own.`,
+		);
+	}
+
+	const unknownExempt = [...exempt].filter(
+		(defKey) => !(defKey in (schema.$defs ?? {})),
+	);
+	if (unknownExempt.length > 0) {
+		throw new Error(
+			`drizzle.config.json: nonTableDefs ${unknownExempt
+				.map((name) => `"${name}"`)
+				.join(", ")} are not $defs in the schema`,
+		);
+	}
+}
+
+export function validateConfigSemantic(
 	schema: JsonSchema,
 	config: DrizzleConfig,
 ): void {
 	const defs = schema.$defs ?? {};
 	const tables = config.tables ?? {};
+	validateEveryDataDefHasATable(schema, config);
 	for (const [tableKey, tableConfig] of Object.entries(tables) as [
 		string,
 		DrizzleTableConfig,
@@ -322,17 +386,22 @@ function buildNumberColumn(dbCol: string): string {
 	return `numeric("${dbCol}", { precision: 28, scale: 10, mode: "number" })`;
 }
 
+/** `#/$defs/Foo` -> `Foo`, for local refs only. */
+function localDefName(ref: string | undefined): string | null {
+	const match = /^#\/\$defs\/([A-Za-z0-9_]+)$/.exec(ref ?? "");
+	return match?.[1] ?? null;
+}
+
 function resolveJsonbTypeAnnotation(ref: string | undefined): string {
 	if (ref?.includes("UI_Flow") || ref?.includes("evy.schema.json")) {
 		return "UI_Flow";
 	}
-	if (ref?.includes("DATA_EVY_RowData")) {
-		return "DATA_EVY_RowData";
-	}
 	if (ref?.includes("JSONValue") || ref?.includes("json.schema.json")) {
 		return 'DATA_PRIMITIVE["data"]';
 	}
-	return "unknown";
+	// Any local $def is a generated type of the same name, so new nested value
+	// objects are typed automatically instead of needing a branch added here.
+	return localDefName(ref) ?? "unknown";
 }
 
 function buildArrayColumn(dbCol: string, prop: JsonSchemaProp): string {
@@ -624,9 +693,18 @@ async function main(): Promise<void> {
 
 	// Relative imports: this file lives inside evy-types, so importing the
 	// package by name would depend on the consumer's own node_modules.
+	// Local $defs referenced by jsonb columns all come from the generated data
+	// types, so they are collected rather than listed one by one.
+	const dataDefImports = Object.keys(schema.$defs ?? {})
+		.filter((defName) =>
+			// Exact `$type<Name>` match: a substring test would pull in
+			// DATA_EVY_Flow just because DATA_EVY_FlowSubmits is used.
+			lines.some((line) => line.includes(`$type<${defName}>`)),
+		)
+		.sort();
 	const typeImports = [
-		isTypeUsed("DATA_EVY_RowData", lines)
-			? 'import type { DATA_EVY_RowData } from "../data/data";'
+		dataDefImports.length > 0
+			? `import type { ${dataDefImports.join(", ")} } from "../data/data";`
 			: null,
 		isTypeUsed("UI_Flow", lines)
 			? 'import type { UI_Flow } from "../sdui/evy";'
@@ -652,4 +730,8 @@ async function main(): Promise<void> {
 	console.log("Drizzle schema generated successfully.");
 }
 
-runMain(main);
+// Guarded so the validation helpers above can be imported by tests without
+// kicking off a real generation run.
+if (import.meta.main) {
+	runMain(main);
+}

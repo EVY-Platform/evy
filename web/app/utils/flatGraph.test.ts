@@ -1,9 +1,15 @@
 import { describe, expect, it } from "bun:test";
-import type { DATA_EVY_Flow, DATA_EVY_Page, DATA_EVY_Row } from "evy-types";
+import type {
+	DATA_EVY_Flow,
+	DATA_EVY_Page,
+	DATA_EVY_Row,
+	UI_RowAction,
+} from "evy-types";
 import {
 	addFlowRecords,
 	addPage,
 	addRowRecords,
+	applyRemoteRecord,
 	collectSubtreeRowIds,
 	ensureShowAction,
 	findChildIndexInContainer,
@@ -18,6 +24,7 @@ import {
 	removePage,
 	removeRowFromPage,
 	setFooterRow,
+	updateFlowSubmits,
 	updatePageTitle,
 	updateRowActions,
 	updateRowField,
@@ -454,7 +461,9 @@ describe("updateRowActions", () => {
 	it("updates the actions array in data", () => {
 		const row = makeRow("r1");
 		const maps = makeMaps([], [], [row]);
-		const actions = [{ condition: "", true: "{close()}", false: "" }];
+		const actions: UI_RowAction[] = [
+			{ condition: "", true: { fn: "close" }, false: "" },
+		];
 		const next = updateRowActions(maps, "r1", { tap: actions });
 		expect(next.rowsById.r1?.data.actions).toEqual({ tap: actions });
 	});
@@ -593,52 +602,213 @@ describe("pageRootIds", () => {
 // ---------------------------------------------------------------------------
 
 describe("ensureShowAction", () => {
-	it("adds {show(sheetId)} action when missing", () => {
+	it("adds a structured show action when missing", () => {
 		const row = makeRow("r1", { actions: {} });
 		const maps = makeMaps([], [], [row]);
 		const next = ensureShowAction(maps, "r1", "sheet-1");
 		const actions = next.rowsById.r1?.data.actions as {
-			tap?: { condition: string; true: string; false: string }[];
+			tap?: { condition: string; true: unknown; false: unknown }[];
 		};
-		expect(actions.tap?.some((a) => a.true === "{show(sheet-1)}")).toBe(
-			true,
-		);
+		expect(
+			actions.tap?.some(
+				(a) =>
+					JSON.stringify(a.true) ===
+					JSON.stringify({ fn: "show", rowId: "sheet-1" }),
+			),
+		).toBe(true);
 	});
 
-	it("does not duplicate {show(sheetId)} action", () => {
-		const showAction = {
+	it("does not duplicate an existing show action", () => {
+		const showAction: UI_RowAction = {
 			condition: "",
-			true: "{show(sheet-1)}",
+			true: { fn: "show", rowId: "sheet-1" },
 			false: "",
 		};
 		const row = makeRow("r1", { actions: { tap: [showAction] } });
 		const maps = makeMaps([], [], [row]);
 		const next = ensureShowAction(maps, "r1", "sheet-1");
 		const actions = next.rowsById.r1?.data.actions as {
-			tap?: (typeof showAction)[];
+			tap?: UI_RowAction[];
 		};
 		expect(
-			actions.tap?.filter((a) => a.true === "{show(sheet-1)}").length,
+			actions.tap?.filter(
+				(a) =>
+					JSON.stringify(a.true) ===
+					JSON.stringify({ fn: "show", rowId: "sheet-1" }),
+			).length,
 		).toBe(1);
 	});
 
 	it("updates unconditional show when sheet is replaced", () => {
-		const showAction = {
+		const showAction: UI_RowAction = {
 			condition: "",
-			true: "{show(old-sheet)}",
+			true: { fn: "show", rowId: "old-sheet" },
 			false: "",
 		};
 		const row = makeRow("r1", { actions: { tap: [showAction] } });
 		const maps = makeMaps([], [], [row]);
 		const next = ensureShowAction(maps, "r1", "new-sheet", "old-sheet");
 		const actions = next.rowsById.r1?.data.actions as {
-			tap?: (typeof showAction)[];
+			tap?: { condition: string; true: unknown; false: unknown }[];
 		};
-		expect(actions.tap?.some((a) => a.true === "{show(new-sheet)}")).toBe(
-			true,
+		expect(
+			actions.tap?.some(
+				(a) =>
+					JSON.stringify(a.true) ===
+					JSON.stringify({ fn: "show", rowId: "new-sheet" }),
+			),
+		).toBe(true);
+		expect(
+			actions.tap?.some(
+				(a) =>
+					JSON.stringify(a.true) ===
+					JSON.stringify({ fn: "show", rowId: "old-sheet" }),
+			),
+		).toBe(false);
+	});
+});
+
+describe("updateFlowSubmits", () => {
+	const submits = { service: "svc-1", resource: "res-1" };
+
+	function mapsWithFlow(): FlowEntityMaps {
+		return {
+			flowsById: { f1: makeFlow("f1", ["p1"]) },
+			pagesById: {},
+			rowsById: {},
+		};
+	}
+
+	it("sets the declaration and stamps updatedAt", () => {
+		const next = updateFlowSubmits(mapsWithFlow(), "f1", submits);
+
+		expect(next.flowsById.f1?.submits).toEqual(submits);
+		expect(next.flowsById.f1?.updatedAt).not.toBe(NOW);
+	});
+
+	it("removes the key entirely when cleared", () => {
+		const withDeclaration = updateFlowSubmits(
+			mapsWithFlow(),
+			"f1",
+			submits,
 		);
-		expect(actions.tap?.some((a) => a.true === "{show(old-sheet)}")).toBe(
-			false,
+		const cleared = updateFlowSubmits(withDeclaration, "f1", undefined);
+
+		expect(cleared.flowsById.f1?.submits).toBeUndefined();
+		expect("submits" in (cleared.flowsById.f1 ?? {})).toBe(false);
+	});
+
+	it("does not mutate the previous maps", () => {
+		const maps = mapsWithFlow();
+		const next = updateFlowSubmits(maps, "f1", submits);
+
+		expect(maps.flowsById.f1?.submits).toBeUndefined();
+		expect(next).not.toBe(maps);
+	});
+
+	it("is a no-op for an unknown flow", () => {
+		const maps = mapsWithFlow();
+		expect(updateFlowSubmits(maps, "missing", submits)).toBe(maps);
+	});
+});
+
+describe("applyRemoteRecord", () => {
+	function mapsWithRow(updatedAt: string): FlowEntityMaps {
+		return {
+			flowsById: {},
+			pagesById: {},
+			rowsById: {
+				r1: { ...makeRow("r1", { text: "local" }), updatedAt },
+			},
+		};
+	}
+
+	it("applies a strictly newer record", () => {
+		const next = applyRemoteRecord(
+			mapsWithRow("2026-01-01T00:00:00.000Z"),
+			"rows",
+			{ id: "r1", updatedAt: "2026-02-01T00:00:00.000Z" },
+			"update",
 		);
+
+		expect(next.rowsById.r1?.updatedAt).toBe("2026-02-01T00:00:00.000Z");
+	});
+
+	// The echo of our own write carries the timestamp we already hold.
+	it("ignores a record that is not newer", () => {
+		const maps = mapsWithRow("2026-02-01T00:00:00.000Z");
+		const next = applyRemoteRecord(
+			maps,
+			"rows",
+			{ id: "r1", updatedAt: "2026-02-01T00:00:00.000Z" },
+			"update",
+		);
+
+		expect(next).toBe(maps);
+	});
+
+	it("ignores a record older than the local copy", () => {
+		const maps = mapsWithRow("2026-03-01T00:00:00.000Z");
+		const next = applyRemoteRecord(
+			maps,
+			"rows",
+			{ id: "r1", updatedAt: "2026-01-01T00:00:00.000Z" },
+			"update",
+		);
+
+		expect(next).toBe(maps);
+	});
+
+	it("removes a record on a delete push", () => {
+		const next = applyRemoteRecord(
+			mapsWithRow("2026-01-01T00:00:00.000Z"),
+			"rows",
+			{ id: "r1" },
+			"delete",
+		);
+
+		expect(next.rowsById.r1).toBeUndefined();
+	});
+
+	it("removes a record carrying a tombstone", () => {
+		const next = applyRemoteRecord(
+			mapsWithRow("2026-01-01T00:00:00.000Z"),
+			"rows",
+			{ id: "r1", deletedAt: "2026-02-01T00:00:00.000Z" },
+			"update",
+		);
+
+		expect(next.rowsById.r1).toBeUndefined();
+	});
+
+	it("adds a record the builder has not seen", () => {
+		const next = applyRemoteRecord(
+			mapsWithRow("2026-01-01T00:00:00.000Z"),
+			"rows",
+			{ id: "r2", updatedAt: "2026-02-01T00:00:00.000Z" },
+			"create",
+		);
+
+		expect(next.rowsById.r2).toBeDefined();
+	});
+
+	it("ignores resources the builder does not hold", () => {
+		const maps = mapsWithRow("2026-01-01T00:00:00.000Z");
+
+		expect(
+			applyRemoteRecord(maps, "messages", { id: "m1" }, "update"),
+		).toBe(maps);
+	});
+
+	it("does not mutate the previous maps", () => {
+		const maps = mapsWithRow("2026-01-01T00:00:00.000Z");
+		applyRemoteRecord(
+			maps,
+			"rows",
+			{ id: "r1", updatedAt: "2026-05-01T00:00:00.000Z" },
+			"update",
+		);
+
+		expect(maps.rowsById.r1?.updatedAt).toBe("2026-01-01T00:00:00.000Z");
 	});
 });

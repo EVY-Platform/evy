@@ -2,14 +2,14 @@
 	"$schema": "https://json-schema.org/draft/2020-12/schema",
 	"$id": "sync-request",
 	"title": "SyncRequest",
-	"description": "JSON-RPC params for the unified sync method. Accepts a single lastSyncTime and returns all changes across all services.",
+	"description": "JSON-RPC params for the unified sync method. Send back the cursor from the previous response; omit both fields for a full sync.",
 	"type": "object",
 	"additionalProperties": false,
-	"required": ["lastSyncTime"],
+	"required": [],
 	"properties": {
-		"lastSyncTime": {
-			"type": "string",
-			"format": "date-time"
+		"cursor": {
+			"description": "Opaque marker issued by the previous sync response. Server-generated, so client clock skew cannot drop or duplicate changes.",
+			"type": "string"
 		}
 	}
 }

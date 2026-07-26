@@ -1,5 +1,6 @@
 import { initCoreNotifications, validateAuth } from "./data/data";
 import { createDb } from "./database/db";
+import { syncMethod } from "./procedures/coreApi";
 import { api, create, deleteResource, get, update } from "./procedures/rpc";
 import { initServiceAdapters } from "./procedures/services";
 import { cancelUpload, handleUploadChunk } from "./procedures/uploads";
@@ -27,7 +28,10 @@ async function startServer(): Promise<void> {
 	initCoreNotifications(broadcast);
 	await initServiceAdapters(appDb, broadcast);
 
-	server.register("api", (params: unknown) => api(params, appDb));
+	server.register("api", (params: unknown, socketId: string) =>
+		api(params, appDb, socketId),
+	);
+	server.register("sync", (params: unknown) => syncMethod(params, appDb));
 	server.register("cancelUpload", cancelUpload).protected();
 
 	server.register("get", (params: unknown) => get(params, appDb));

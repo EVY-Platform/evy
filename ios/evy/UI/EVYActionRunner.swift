@@ -29,7 +29,18 @@ enum EVYActionRunner {
       if condition.isEmpty {
         executeTrueBranch = true
       } else {
-        executeTrueBranch = (try? EVY.evaluateFromText(condition)) ?? false
+        do {
+          executeTrueBranch = try EVY.evaluateFromText(condition)
+        } catch {
+          // A condition that cannot be evaluated is an authoring error, not a
+          // false result: surfacing it stops flows failing silently mid-sequence.
+          NotificationCenter.default.post(
+            name: .evyErrorOccurred,
+            object: EVYError.invalidData(
+              context: "could not evaluate condition \(condition): \(error.localizedDescription)")
+          )
+          return
+        }
       }
 
       if !executeTrueBranch {
@@ -50,17 +61,17 @@ enum EVYActionRunner {
 
   @discardableResult
   private static func runBranch(
-    _ rawBranch: String,
+    _ branch: EVYActionBranch,
     datum: EVYJson?,
     show: @escaping (String) throws -> Void,
     rowOperation: @escaping EVYRowOperationHandler,
     action: @escaping (ActionOperation) -> Void
   ) -> Bool {
-    let trimmed = rawBranch.trimmingCharacters(in: .whitespacesAndNewlines)
-    guard !trimmed.isEmpty else { return true }
+    guard case .invocation(let invocation) = branch else { return true }
     do {
-      try execute(
-        branch: trimmed, datum: datum, action: action, show: show, rowOperation: rowOperation)
+      try run(
+        invocation: invocation, datum: datum, action: action, show: show,
+        rowOperation: rowOperation)
       return true
     } catch {
       NotificationCenter.default.post(name: .evyErrorOccurred, object: error)
@@ -68,147 +79,114 @@ enum EVYActionRunner {
     }
   }
 
-  private static func execute(
-    branch: String,
+  private static func run(
+    invocation: EVYActionInvocation,
     datum: EVYJson?,
     action: @escaping (ActionOperation) -> Void,
     show: @escaping (String) throws -> Void,
     rowOperation: @escaping EVYRowOperationHandler
   ) throws {
-    guard branch.hasPrefix("{"), branch.hasSuffix("}") else { return }
+    switch invocation {
+    case .close:
+      action(.close)
 
-    if let (functionName, functionArgs) = EVYActionParser.functionCall(from: branch) {
-      switch functionName {
-      case "navigate":
-        let navArgs = try parseNavigateArguments(functionArgs)
-        let query = try parseQueryArgument(navArgs.queryArgument)
-        let resolvedQuery = EVY.resolveDatumInQuery(query, datum: datum)
-        action(
-          .navigate(
-            Route(
-              flowId: navArgs.flowId,
-              pageId: navArgs.pageId,
-              query: resolvedQuery
-            ))
-        )
-      case "create":
-        guard let createAction = EVYActionParser.createAction(from: branch) else {
-          throw EVYError.invalidData(
-            context:
-              "create requires namespace, resource, and submit or data, e.g. create(marketplace,item,submit)"
-          )
-        }
-        let resolvedData = try createAction.data.map {
-          try resolveObjectArgument($0, datum: datum, stripIdFromChanges: false)
-        }
-        let createdId = try EVY.create(
-          namespace: createAction.namespace,
-          resource: createAction.resource,
-          data: resolvedData,
-          isSubmission: createAction.isSubmission
-        )
-        if let idDestination = createAction.idDestination {
-          try EVY.writeRawStringValue(createdId, to: idDestination)
-        }
-      case "update":
-        guard let updateAction = EVYActionParser.updateAction(from: branch) else {
-          throw EVYError.invalidData(
-            context:
-              "update requires namespace, resource, filter, and changes, e.g. update(marketplace,messages,{id: abc},{archivedAt: now()})"
-          )
-        }
-        let resolvedChanges = try resolveObjectArgument(
-          updateAction.changes, datum: datum, stripIdFromChanges: true)
-        switch updateAction.mode {
-        case .store:
-          let resolvedFilter = resolvePlainTextValues(updateAction.filter, datum: datum)
-          try EVY.update(
-            namespace: updateAction.namespace,
-            resource: updateAction.resource,
-            matching: resolvedFilter,
-            changes: resolvedChanges
-          )
-        case .draft:
-          try EVY.mergeIntoActiveDraft(
-            resource: updateAction.resource,
-            changes: resolvedChanges
-          )
-        }
-      case "close":
-        try requireNoArguments(functionArgs, function: "close")
-        action(.close)
-      case "show":
-        guard let rowId = EVYActionParser.singleIdArgument(fromArgs: functionArgs) else {
-          throw EVYError.invalidData(
-            context: "show requires exactly one non-empty row id, e.g. show(row-id)")
-        }
-        try show(rowId)
-      case "highlight_required":
-        let args = EVY.splitFunctionArguments(functionArgs)
-        let alias = args.first ?? "field"
-        let lastSegment = alias.components(separatedBy: ".").last ?? alias
-        let fieldName =
-          lastSegment
-          .replacingOccurrences(of: "_", with: " ")
-          .trimmingCharacters(in: .whitespacesAndNewlines)
-        let readableField = fieldName.isEmpty ? "Field" : fieldName.capitalized
-        action(.highlightRequired(readableField))
-      case "select":
-        let args = EVY.splitFunctionArguments(functionArgs)
-        guard args.count == 1 else {
-          throw EVYError.invalidData(
-            context: "select requires exactly one argument, e.g. select($datum)")
-        }
-        let resolved = resolvePlainTextValue(args[0], datum: datum)
-        try rowOperation(.select(resolved))
-      case "select_photo":
-        try requireNoArguments(functionArgs, function: "select_photo")
-        try rowOperation(.selectPhoto)
-      case "expand_photo":
-        try requireNoArguments(functionArgs, function: "expand_photo")
-        try rowOperation(.expandPhoto)
-      case "delete_photo":
-        try requireNoArguments(functionArgs, function: "delete_photo")
-        try rowOperation(.deletePhoto)
-      case "expand_text":
-        guard let rowId = EVYActionParser.singleIdArgument(fromArgs: functionArgs) else {
-          throw EVYError.invalidData(
-            context: "expand_text requires exactly one non-empty row id, e.g. expand_text(row-id)")
-        }
-        NotificationCenter.default.post(name: .evyExpandTextRow, object: rowId)
-      default:
-        throw EVYError.invalidData(context: "Unsupported action function: \(functionName)")
+    case .selectPhoto:
+      try rowOperation(.selectPhoto)
+
+    case .expandPhoto:
+      try rowOperation(.expandPhoto)
+
+    case .deletePhoto:
+      try rowOperation(.deletePhoto)
+
+    case .show(let rowId):
+      try show(rowId)
+
+    case .expandText(let rowId):
+      NotificationCenter.default.post(name: .evyExpandTextRow, object: rowId)
+
+    case .highlightRequired(let field):
+      action(.highlightRequired(readableFieldName(from: field)))
+
+    case .select(let value):
+      try rowOperation(.select(resolvePlainTextValue(value, datum: datum)))
+
+    case .navigate(let flowId, let pageId, let query):
+      let expanded = try expandQueryValues(query)
+      action(
+        .navigate(
+          Route(
+            flowId: flowId,
+            pageId: pageId,
+            query: EVY.resolveDatumInQuery(expanded, datum: datum)
+          ))
+      )
+
+    case .create(let service, let resource, let mode, let idDestination):
+      let data: EVYObjectArgument?
+      let isSubmission: Bool
+      switch mode {
+      case .submit:
+        data = nil
+        isSubmission = true
+      case .inline(let map):
+        data = .literal(map)
+        isSubmission = false
+      case .fromPath(let path):
+        data = .path(path)
+        isSubmission = false
       }
-    } else {
-      return
+      let resolvedData = try data.map {
+        try resolveObjectArgument($0, datum: datum, stripIdFromChanges: false)
+      }
+      let createdId = try EVY.create(
+        namespace: service,
+        resource: resource,
+        data: resolvedData,
+        isSubmission: isSubmission
+      )
+      if let idDestination {
+        try EVY.writeRawStringValue(createdId, to: idDestination)
+      }
+
+    case .update(let service, let resource, let mode, let filter, let changes):
+      let resolvedChanges = try resolveObjectArgument(
+        changes, datum: datum, stripIdFromChanges: true)
+      switch mode {
+      case .store:
+        try EVY.update(
+          namespace: service,
+          resource: resource,
+          matching: resolvePlainTextValues(filter, datum: datum),
+          changes: resolvedChanges
+        )
+      case .draft:
+        try EVY.mergeIntoActiveDraft(resource: resource, changes: resolvedChanges)
+      }
     }
   }
 
-  private struct NavigateArguments {
-    let flowId: String
-    let pageId: String
-    let queryArgument: String
+  /// `title` / `item.pickup_time` -> "Title" / "Pickup time".
+  private static func readableFieldName(from alias: String) -> String {
+    let lastSegment = alias.components(separatedBy: ".").last ?? alias
+    let fieldName =
+      lastSegment
+      .replacingOccurrences(of: "_", with: " ")
+      .trimmingCharacters(in: .whitespacesAndNewlines)
+    return fieldName.isEmpty ? "Field" : fieldName.capitalized
   }
 
-  private static func requireNoArguments(_ functionArgs: String, function: String) throws {
-    guard functionArgs.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
-      throw EVYError.invalidData(context: "\(function) takes no arguments")
+  /// Navigate query values may be single values or `[a, b]` lists. Empty values
+  /// are dropped, matching how the legacy query argument was parsed.
+  private static func expandQueryValues(_ query: [String: String]) throws -> [String: [String]] {
+    var expanded: [String: [String]] = [:]
+    for (key, value) in query {
+      let values = try parsePlainTextQueryValue(value)
+      if !values.isEmpty {
+        expanded[key] = values
+      }
     }
-  }
-
-  private static func parseNavigateArguments(_ functionArgs: String) throws -> NavigateArguments {
-    let args = EVY.splitFunctionArguments(functionArgs)
-    guard args.count >= 2 else {
-      throw EVYError.invalidData(context: "navigate requires flowId and pageId")
-    }
-    guard args.count <= 3 else {
-      throw EVYError.invalidData(context: "navigate accepts at most 3 arguments")
-    }
-    return NavigateArguments(
-      flowId: EVY.stripOptionalSurroundingQuotes(args[0]),
-      pageId: EVY.stripOptionalSurroundingQuotes(args[1]),
-      queryArgument: args.count > 2 ? args[2] : ""
-    )
+    return expanded
   }
 
   private static func resolvePlainTextValues(
@@ -269,32 +247,13 @@ enum EVYActionRunner {
     }
     // Nested object literal, e.g. data: {type: pickup, time: selected_timeslot}
     if value.hasPrefix("{"), value.hasSuffix("}"),
-      let nestedObject = try? EVYActionParser.plainTextObject(
+      let nestedObject = try? EVYObjectLiteral.parse(
         from: value, context: "nested action data")
     {
       return .dictionary(resolvePlainTextValues(nestedObject, datum: datum))
     }
 
     return (try? EVY.getDataFromText("{\(value)}")) ?? .string(value)
-  }
-
-  private static func parseQueryArgument(_ value: String) throws -> [String: [String]] {
-    let trimmedValue = value.trimmingCharacters(in: .whitespacesAndNewlines)
-    guard !trimmedValue.isEmpty else { return [:] }
-
-    let queryValues = try EVYActionParser.plainTextObject(
-      from: trimmedValue,
-      context: "navigate query params",
-      allowsEmptyValues: true
-    )
-    var query: [String: [String]] = [:]
-    for (key, value) in queryValues {
-      let values = try parsePlainTextQueryValue(value)
-      if !values.isEmpty {
-        query[key] = values
-      }
-    }
-    return query
   }
 
   private static func parsePlainTextQueryValue(_ value: String) throws -> [String] {

@@ -1,5 +1,9 @@
 import { describe, expect, it } from "bun:test";
-import type { UI_Flow as ServerFlow, UI_Row as ServerRow } from "evy-types";
+import type {
+	UI_Flow as ServerFlow,
+	UI_Row as ServerRow,
+	UI_RowAction,
+} from "evy-types";
 import CalendarRow from "../rows/edit/CalendarRow";
 import DropdownRow from "../rows/edit/DropdownRow";
 import SearchRow from "../rows/edit/SearchRow";
@@ -141,7 +145,7 @@ describe("buildRowForNewPageFromBase", () => {
 			tap: [
 				{
 					condition: "",
-					true: `{expand_text(${newId})}`,
+					true: { fn: "expand_text", rowId: newId },
 					false: "",
 				},
 			],
@@ -155,7 +159,7 @@ describe("buildRowForNewPageFromBase", () => {
 			tap: [
 				{
 					condition: "",
-					true: `{show(${newId})}`,
+					true: { fn: "show", rowId: newId },
 					false: "",
 				},
 			],
@@ -171,9 +175,9 @@ describe("buildRowForNewPageFromBase", () => {
 	it("keeps palette select defaults for Calendar without show-self injection", () => {
 		const newId = "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee";
 		const row = buildRowForNewPageFromBase(CalendarRow, newId);
-		const selectDatum = {
+		const selectDatum: UI_RowAction = {
 			condition: "",
-			true: "{select($datum)}",
+			true: { fn: "select", value: "$datum" },
 			false: "",
 		};
 		expect(row.config.actions).toEqual({
@@ -197,12 +201,16 @@ describe("decomposeServerFlow", () => {
 					rows: [
 						{
 							id: "search-1",
+							name: "Search",
 							type: "Search",
 							visible: "true",
 							title: "Search",
+							source: "",
+							destination: "",
 							actions: {},
 							child: {
 								id: "child-1",
+								name: "Result",
 								type: "Text",
 								visible: "true",
 								title: "Result",
@@ -210,6 +218,7 @@ describe("decomposeServerFlow", () => {
 							},
 							sheet: {
 								id: "sheet-1",
+								name: "Sheet",
 								type: "Text",
 								visible: "true",
 								title: "Sheet",
@@ -228,6 +237,28 @@ describe("decomposeServerFlow", () => {
 		expect(graph.rowRows.map((r) => r.id).sort()).toEqual(
 			["child-1", "search-1", "sheet-1"].sort(),
 		);
+	});
+
+	it("preserves flow submits when decomposing test fixtures", () => {
+		const flow: ServerFlow = {
+			id: "flow-1",
+			name: "Flow",
+			submits: { service: "svc-1", resource: "res-1" },
+			pages: [
+				{
+					id: "page-1",
+					name: "Page",
+					title: "Page",
+					rows: [],
+				},
+			],
+		};
+
+		const graph = decomposeServerFlow(flow, NOW);
+		expect(graph.flowRows[0]?.submits).toEqual({
+			service: "svc-1",
+			resource: "res-1",
+		});
 	});
 });
 

@@ -1,4 +1,5 @@
 import type {
+	ApiRequest,
 	CreateRequest,
 	CreateResponse,
 	DeleteRequest,
@@ -22,6 +23,7 @@ import type { EvyDb } from "../database/db";
 type BroadcastFn = (eventName: string, payload: unknown) => void;
 
 type ServiceAdapter = {
+	api(params: ApiRequest): Promise<unknown>;
 	get(params: GetRequest): Promise<GetResponse>;
 	create(params: CreateRequest): Promise<CreateResponse>;
 	update(params: UpdateRequest): Promise<UpdateResponse>;
@@ -104,6 +106,9 @@ function makeWsAdapter(wsUrl: string): ServiceAdapter {
 	void connectClient().catch(() => scheduleReconnect());
 
 	return {
+		// A service's procedure responses have no shared schema - the registry
+		// names the response schema, and validating it is the caller's job.
+		api: (params) => callMethod("api", params, (parsed) => parsed),
 		get: (params) =>
 			callMethod("get", params, (parsed) => validateGetResponse(parsed)),
 		create: (params) =>
@@ -125,22 +130,89 @@ function makeWsAdapter(wsUrl: string): ServiceAdapter {
 }
 
 let serviceAdapters: Map<string, ServiceAdapter> | null = null;
+let serviceNames: Map<string, string> = new Map();
 let serviceAdapterDb: EvyDb | null = null;
 let serviceBroadcast: BroadcastFn | null = null;
 
-export function requireServiceWsEndpoint(
-	name: string,
-	id: string,
-): { host: string; port: string } {
-	const prefix = name.toUpperCase();
+/** Env var names are derived from the service name, so it must be usable as one. */
+const ENV_SAFE_SERVICE_NAME = /^[A-Z][A-Z0-9_]*$/;
+
+const DEFAULT_SERVICE_RPC_TIMEOUT_MS = 10_000;
+
+function serviceRpcTimeoutMs(): number {
+	const configured = Number(process.env.SERVICE_RPC_TIMEOUT_MS);
+	return Number.isFinite(configured) && configured > 0
+		? configured
+		: DEFAULT_SERVICE_RPC_TIMEOUT_MS;
+}
+
+/**
+ * Endpoint comes from the service row first and the `<NAME>_WS_HOST/PORT` env
+ * convention second. The row keeps registration in data where the rest of
+ * service routing already lives; the env fallback keeps existing deployments
+ * (and Docker Compose) working unchanged.
+ */
+export function resolveServiceWsEndpoint(svc: {
+	id: string;
+	name: string;
+	wsHost?: string | null;
+	wsPort?: number | null;
+}): { host: string; port: string } {
+	const rowHost = svc.wsHost?.trim();
+	const rowPort = svc.wsPort;
+	if (rowHost && rowPort) {
+		return { host: rowHost, port: String(rowPort) };
+	}
+
+	const prefix = svc.name.toUpperCase();
+	if (!ENV_SAFE_SERVICE_NAME.test(prefix)) {
+		throw new Error(
+			`Service "${svc.name}" (${svc.id}) has no wsHost/wsPort and its name ` +
+				"cannot be used for env lookup (expected letters, digits and underscores)",
+		);
+	}
+
 	const host = process.env[`${prefix}_WS_HOST`]?.trim();
 	const port = process.env[`${prefix}_WS_PORT`]?.trim();
 	if (!host || !port) {
 		throw new Error(
-			`Service "${name}" (${id}) requires ${prefix}_WS_HOST and ${prefix}_WS_PORT`,
+			`Service "${svc.name}" (${svc.id}) requires wsHost/wsPort on its row, ` +
+				`or ${prefix}_WS_HOST and ${prefix}_WS_PORT`,
 		);
 	}
 	return { host, port };
+}
+
+/** Carries which service failed so the client is not left guessing. */
+export class ServiceForwardError extends Error {
+	readonly data: { serviceId: string; serviceName: string; code: string };
+
+	constructor(
+		message: string,
+		data: { serviceId: string; serviceName: string; code: string },
+	) {
+		super(message);
+		this.name = "ServiceForwardError";
+		this.data = data;
+	}
+}
+
+async function withTimeout<T>(
+	work: Promise<T>,
+	timeoutMs: number,
+	onTimeout: () => Error,
+): Promise<T> {
+	let timer: ReturnType<typeof setTimeout> | undefined;
+	try {
+		return await Promise.race([
+			work,
+			new Promise<never>((_resolve, reject) => {
+				timer = setTimeout(() => reject(onTimeout()), timeoutMs);
+			}),
+		]);
+	} finally {
+		if (timer) clearTimeout(timer);
+	}
 }
 
 export async function initServiceAdapters(
@@ -154,17 +226,53 @@ export async function initServiceAdapters(
 	const rows = await listExternalServices(db);
 
 	const next = new Map<string, ServiceAdapter>();
+	const names = new Map<string, string>();
 
-	for (const { id, name } of rows) {
-		const { host, port } = requireServiceWsEndpoint(name, id);
+	for (const row of rows) {
+		const { host, port } = resolveServiceWsEndpoint(row);
 		const adapter = makeWsAdapter(`ws://${host}:${port}`);
 		if (serviceBroadcast) {
 			adapter.onEvent(serviceBroadcast);
 		}
-		next.set(id, adapter);
+		next.set(row.id, adapter);
+		names.set(row.id, row.name);
 	}
 
 	serviceAdapters = next;
+	serviceNames = names;
+}
+
+/**
+ * Every forwarded call goes through here so a hung or failing service surfaces
+ * as an attributed, time-bounded error instead of an anonymous stall.
+ */
+async function forwardTo<T>(
+	serviceId: string,
+	operation: string,
+	call: (adapter: ServiceAdapter) => Promise<T>,
+): Promise<T> {
+	const adapter = await getServiceAdapter(serviceId);
+	const serviceName = serviceNames.get(serviceId) ?? "unknown";
+	const timeoutMs = serviceRpcTimeoutMs();
+
+	try {
+		return await withTimeout(
+			call(adapter),
+			timeoutMs,
+			() =>
+				new ServiceForwardError(
+					`Service "${serviceName}" (${serviceId}) timed out after ${timeoutMs}ms on ${operation}`,
+					{ serviceId, serviceName, code: "SERVICE_TIMEOUT" },
+				),
+		);
+	} catch (error) {
+		if (error instanceof ServiceForwardError) throw error;
+		const detail = error instanceof Error ? error.message : String(error);
+		throw new ServiceForwardError(
+			`Service "${serviceName}" (${serviceId}) failed on ${operation}: ${detail}`,
+			{ serviceId, serviceName, code: "SERVICE_ERROR" },
+		);
+	}
 }
 
 function requireAdapters(): Map<string, ServiceAdapter> {
@@ -188,30 +296,39 @@ async function getServiceAdapter(serviceId: string): Promise<ServiceAdapter> {
 	return adapter;
 }
 
+export async function forwardApi(
+	serviceId: string,
+	params: ApiRequest,
+): Promise<unknown> {
+	return forwardTo(serviceId, `api:${params.method}`, (adapter) =>
+		adapter.api(params),
+	);
+}
+
 export async function forwardGet(
 	serviceId: string,
 	params: GetRequest,
 ): Promise<GetResponse> {
-	return (await getServiceAdapter(serviceId)).get(params);
+	return forwardTo(serviceId, "get", (adapter) => adapter.get(params));
 }
 
 export async function forwardCreate(
 	serviceId: string,
 	params: CreateRequest,
 ): Promise<CreateResponse> {
-	return (await getServiceAdapter(serviceId)).create(params);
+	return forwardTo(serviceId, "create", (adapter) => adapter.create(params));
 }
 
 export async function forwardUpdate(
 	serviceId: string,
 	params: UpdateRequest,
 ): Promise<UpdateResponse> {
-	return (await getServiceAdapter(serviceId)).update(params);
+	return forwardTo(serviceId, "update", (adapter) => adapter.update(params));
 }
 
 export async function forwardDelete(
 	serviceId: string,
 	params: DeleteRequest,
 ): Promise<DeleteResponse> {
-	return (await getServiceAdapter(serviceId)).delete(params);
+	return forwardTo(serviceId, "delete", (adapter) => adapter.delete(params));
 }

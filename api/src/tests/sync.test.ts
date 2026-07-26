@@ -14,6 +14,7 @@ const db = null as unknown as EvyDb;
 
 const MARKETPLACE_SERVICE_ID = MARKETPLACE_SERVICE;
 const EPOCH = "1970-01-01T00:00:00.000Z";
+const RECENT_CURSOR = new Date(Date.now() - 86_400_000).toISOString();
 
 function buildMockGetResponse(items: { id: string }[]): GetResponse {
 	return items;
@@ -110,15 +111,15 @@ describe("sync", () => {
 	});
 
 	it("returns changed rows in the unified data response", async () => {
-		const result = await sync({ lastSyncTime: EPOCH }, db);
+		const result = await sync({ cursor: EPOCH }, db);
 
-		expect(result).toEqual({ data: result.data });
+		expect(result).toEqual({ data: result.data, cursor: result.cursor });
 		expect(result.data).toBeDefined();
 		expect(Array.isArray(result.data)).toBe(true);
 	});
 
 	it("includes evy core resources (except devices) in data", async () => {
-		const result = await sync({ lastSyncTime: EPOCH }, db);
+		const result = await sync({ cursor: EPOCH }, db);
 
 		const evyRows = result.data.filter(
 			(row) => row.service === EVY_CORE_SERVICE,
@@ -157,7 +158,7 @@ describe("sync", () => {
 	});
 
 	it("includes external service resources in data", async () => {
-		const result = await sync({ lastSyncTime: EPOCH }, db);
+		const result = await sync({ cursor: EPOCH }, db);
 
 		const marketplaceRows = result.data.filter(
 			(row) => row.service === MARKETPLACE_SERVICE_ID,
@@ -177,7 +178,7 @@ describe("sync", () => {
 			expect(params.filter?.updatedAfter).toBe(EPOCH);
 			return buildMockGetResponse([{ id: `${params.resource}-1` }]);
 		};
-		await sync({ lastSyncTime: EPOCH }, db);
+		await sync({ cursor: EPOCH }, db);
 	});
 
 	it("passes updatedAfter to fetchService", async () => {
@@ -185,33 +186,93 @@ describe("sync", () => {
 			expect(params.filter?.updatedAfter).toBe(EPOCH);
 			return buildMockGetResponse([{ id: `${params.resource}-1` }]);
 		};
-		await sync({ lastSyncTime: EPOCH }, db);
+		await sync({ cursor: EPOCH }, db);
 	});
 
 	it("returns only an empty data array when nothing changed", async () => {
 		getImpl = async () => buildMockGetResponse([]);
 		forwardGetImpl = async () => buildMockGetResponse([]);
-		const result = await sync(
-			{ lastSyncTime: "2999-01-01T00:00:00.000Z" },
-			db,
-		);
-		expect(result).toEqual({ data: [] });
+		const result = await sync({ cursor: "2999-01-01T00:00:00.000Z" }, db);
+		expect(result.data).toEqual([]);
 	});
 
-	it("propagates forwardGet errors for external services", async () => {
+	// An unreachable service used to fail the whole sync, taking every other
+	// resource down with it.
+	it("reports an unreachable service instead of failing the sync", async () => {
 		forwardGetImpl = async (serviceName) => {
 			if (serviceName === MARKETPLACE_SERVICE_ID) {
 				throw new Error("marketplace service unavailable");
 			}
 			return buildMockGetResponse([]);
 		};
-		await expect(sync({ lastSyncTime: EPOCH }, db)).rejects.toThrow(
+
+		const result = await sync({ cursor: EPOCH }, db);
+
+		expect(result.errors?.length).toBeGreaterThan(0);
+		expect(result.errors?.[0]?.message).toContain(
 			"marketplace service unavailable",
 		);
 	});
 
+	it("still returns core rows when an external service is down", async () => {
+		getImpl = async () =>
+			[
+				{ id: "core-1", updatedAt: "2026-01-01T00:00:00.000Z" },
+			] as unknown as GetResponse;
+		forwardGetImpl = async () => {
+			throw new Error("down");
+		};
+
+		const result = await sync({ cursor: EPOCH }, db);
+
+		expect(result.data.length).toBeGreaterThan(0);
+		expect(result.errors?.length).toBeGreaterThan(0);
+	});
+
+	// Advancing past a failure would mean the missed resources are never retried.
+	it("holds the cursor when any resource failed", async () => {
+		getImpl = async () =>
+			[
+				{ id: "core-1", updatedAt: "2099-01-01T00:00:00.000Z" },
+			] as unknown as GetResponse;
+		forwardGetImpl = async () => {
+			throw new Error("down");
+		};
+
+		const result = await sync({ cursor: RECENT_CURSOR }, db);
+
+		expect(result.cursor).toBe(RECENT_CURSOR);
+	});
+
+	it("omits errors entirely when everything succeeded", async () => {
+		getImpl = async () => buildMockGetResponse([]);
+		forwardGetImpl = async () => buildMockGetResponse([]);
+
+		const result = await sync({ cursor: EPOCH }, db);
+
+		expect(result.errors).toBeUndefined();
+	});
+
+	it("keeps a failing core resource from hiding the others", async () => {
+		getImpl = async (params) => {
+			if (params.resource === "rows")
+				throw new Error("rows table broken");
+			return [
+				{ id: "ok", updatedAt: "2026-01-01T00:00:00.000Z" },
+			] as unknown as GetResponse;
+		};
+		forwardGetImpl = async () => buildMockGetResponse([]);
+
+		const result = await sync({ cursor: EPOCH }, db);
+
+		expect(result.data.some((row) => row.resource !== "rows")).toBe(true);
+		expect(result.errors?.some((entry) => entry.resource === "rows")).toBe(
+			true,
+		);
+	});
+
 	it("each data row has required shape", async () => {
-		const result = await sync({ lastSyncTime: EPOCH }, db);
+		const result = await sync({ cursor: EPOCH }, db);
 		for (const row of result.data) {
 			expect(typeof row.service).toBe("string");
 			expect(row.service.length).toBeGreaterThan(0);
@@ -227,5 +288,45 @@ describe("sync", () => {
 				},
 			]);
 		}
+	});
+
+	describe("cursor", () => {
+		it("issues a cursor derived from the newest updatedAt it returned", async () => {
+			getImpl = async () =>
+				[
+					{ id: "a", updatedAt: "2026-01-01T00:00:00.000Z" },
+					{ id: "b", updatedAt: "2026-03-01T00:00:00.000Z" },
+					{ id: "c", updatedAt: "2026-02-01T00:00:00.000Z" },
+				] as unknown as GetResponse;
+			forwardGetImpl = async () => buildMockGetResponse([]);
+
+			const result = await sync({ cursor: EPOCH }, db);
+
+			expect(result.cursor).toBe("2026-03-01T00:00:00.000Z");
+		});
+
+		// A cursor that advanced on an empty response would skip past writes made
+		// between the query and the reply.
+		it("holds the cursor steady when nothing changed", async () => {
+			getImpl = async () => buildMockGetResponse([]);
+			forwardGetImpl = async () => buildMockGetResponse([]);
+
+			const result = await sync({ cursor: RECENT_CURSOR }, db);
+
+			expect(result.cursor).toBe(RECENT_CURSOR);
+		});
+
+		it("treats a missing cursor as a full sync", async () => {
+			const seen: string[] = [];
+			getImpl = async (params) => {
+				seen.push(params.filter?.updatedAfter ?? "none");
+				return buildMockGetResponse([]);
+			};
+			forwardGetImpl = async () => buildMockGetResponse([]);
+
+			await sync({}, db);
+
+			expect(seen.every((value) => value === EPOCH)).toBe(true);
+		});
 	});
 });

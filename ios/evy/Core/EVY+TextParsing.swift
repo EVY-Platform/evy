@@ -18,15 +18,18 @@ extension EVY {
     _stripOptionalSurroundingQuotes(s)
   }
 
-  static func getDataFromText(_ input: String) throws -> EVYJson {
-    try _getDataFromText(input)
+  static func getDataFromText(_ input: String, scope: EVYScope? = nil) throws -> EVYJson {
+    try _getDataFromText(input, scope: scope)
   }
 
   static func getDataFromProps(_ props: String) throws -> EVYJson {
     try _getDataFromProps(props)
   }
 
-  static func getValueFromText(_ input: String, editing: Bool = false) throws -> EVYValue {
+  static func getValueFromText(
+    _ input: String,
+    editing: Bool = false,
+  ) throws -> EVYValue {
     try _getValueFromText(input, editing: editing)
   }
 

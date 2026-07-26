@@ -46,6 +46,7 @@ import {
 	SDUI_ROW_TRIGGERS,
 } from "./generated/ts/sdui/definitions.generated";
 import type { UI_Flow, UI_Row, UI_RowActions } from "./generated/ts/sdui/evy";
+import type { DATA_MARKETPLACE_Item } from "./generated/ts/services/marketplace/item";
 
 import commonJsonRaw from "./schema/common/json.schema.json" with {
 	type: "json",
@@ -105,6 +106,9 @@ import sduiActionRaw from "./schema/sdui/action.schema.json" with {
 	type: "json",
 };
 import evySduiRaw from "./schema/sdui/evy.schema.json" with { type: "json" };
+import marketplaceItemRaw from "./schema/services/marketplace/item.schema.json" with {
+	type: "json",
+};
 
 /** Canonical base URI for ajv $ref resolution */
 const SCHEMA_BASE = "https://evy.local";
@@ -137,6 +141,10 @@ const RAW_SCHEMAS: Record<string, Record<string, unknown>> = {
 	...SDUI_DEFINITION_SCHEMAS,
 	"sdui/evy.schema.json": evySduiRaw as Record<string, unknown>,
 	"files/file.schema.json": fileSchemaRaw as Record<string, unknown>,
+	"services/marketplace/item.schema.json": marketplaceItemRaw as Record<
+		string,
+		unknown
+	>,
 	"rpc/placeSearch.request.schema.json": placeSearchRequestRaw as Record<
 		string,
 		unknown
@@ -238,11 +246,21 @@ function formatAjvErrors(
 	errors: ErrorObject[] | null | undefined,
 ): string {
 	if (!errors?.length) return `${label} validation failed`;
-	const parts = errors.map((e) => {
+
+	// A oneOf union reports one failure per branch, so the same complaint
+	// repeats many times. Dedupe and cap so the real cause stays readable.
+	const seen = new Set<string>();
+	for (const e of errors) {
 		const path = e.instancePath === "" ? "(root)" : e.instancePath;
-		return `${path}: ${e.message ?? "invalid"}`;
-	});
-	return `${label} validation failed: ${parts.join("; ")}`;
+		seen.add(`${path}: ${e.message ?? "invalid"}`);
+	}
+
+	const MAX_REPORTED = 6;
+	const parts = [...seen];
+	const shown = parts.slice(0, MAX_REPORTED);
+	const remaining = parts.length - shown.length;
+	const suffix = remaining > 0 ? `; (+${remaining} more)` : "";
+	return `${label} validation failed: ${shown.join("; ")}${suffix}`;
 }
 
 function compileRoot<T>(
@@ -299,6 +317,7 @@ const ENTITY_SCHEMA_FILES = [
 	...Object.keys(SDUI_DEFINITION_SCHEMAS).sort(),
 	"sdui/evy.schema.json",
 	"files/file.schema.json",
+	"services/marketplace/item.schema.json",
 	"rpc/get.response.schema.json",
 	"rpc/create.response.schema.json",
 	"rpc/update.response.schema.json",
@@ -383,6 +402,10 @@ const getValidateDataEvyAddress = lazyValidator<DATA_EVY_Address>(
 const getValidateDataEvyMessage = lazyValidator<DATA_EVY_Message>(
 	getEntityAjv,
 	`${fileId("data/data.schema.json")}#/$defs/DATA_EVY_Message`,
+);
+const getValidateDataMarketplaceItem = lazyValidator<DATA_MARKETPLACE_Item>(
+	getEntityAjv,
+	fileId("services/marketplace/item.schema.json"),
 );
 const getValidateDataEvyFlow = lazyValidator<DATA_EVY_Flow>(
 	getEntityAjv,
@@ -528,43 +551,109 @@ function assertUiFlowRowTriggerConstraints(row: UI_Row, path: string): void {
 	}
 }
 
-function walkUiFlowRowTree(row: UI_Row, path: string): void {
-	assertUiFlowRowTriggerConstraints(row, path);
-	const record = row as Record<string, unknown>;
-	if (record.sheet && typeof record.sheet === "object") {
-		walkUiFlowRowTree(record.sheet as UI_Row, `${path}.sheet`);
+/**
+ * Visits every row in a flow, including nested sheet/child/children rows.
+ *
+ * The one place that knows how a flow's row tree is shaped and how to name a
+ * position in it, so the checks below stay flat.
+ */
+function forEachFlowRow(
+	flow: UI_Flow,
+	visit: (row: UI_Row, path: string) => void,
+): void {
+	function walk(row: UI_Row, path: string): void {
+		visit(row, path);
+		const record = row as Record<string, unknown>;
+		if (record.sheet && typeof record.sheet === "object") {
+			walk(record.sheet as UI_Row, `${path}.sheet`);
+		}
+		if (record.child && typeof record.child === "object") {
+			walk(record.child as UI_Row, `${path}.child`);
+		}
+		if (Array.isArray(record.children)) {
+			for (let index = 0; index < record.children.length; index++) {
+				const child = record.children[index];
+				if (child && typeof child === "object") {
+					walk(child as UI_Row, `${path}.children[${index}]`);
+				}
+			}
+		}
 	}
-	if (record.child && typeof record.child === "object") {
-		walkUiFlowRowTree(record.child as UI_Row, `${path}.child`);
+
+	for (let pageIndex = 0; pageIndex < flow.pages.length; pageIndex++) {
+		const page = flow.pages[pageIndex];
+		if (!page) continue;
+		for (let rowIndex = 0; rowIndex < page.rows.length; rowIndex++) {
+			const row = page.rows[rowIndex];
+			if (row) walk(row, `pages[${pageIndex}].rows[${rowIndex}]`);
+		}
+		if (page.footer) walk(page.footer, `pages[${pageIndex}].footer`);
 	}
-	if (Array.isArray(record.children)) {
-		for (let index = 0; index < record.children.length; index++) {
-			const child = record.children[index];
-			if (child && typeof child === "object") {
-				walkUiFlowRowTree(
-					child as UI_Row,
-					`${path}.children[${index}]`,
-				);
+}
+
+/** A submit-mode create -> `service/resource`, else null. */
+function submitCreateTarget(branch: unknown): string | null {
+	if (!branch || typeof branch !== "object") return null;
+	const invocation = branch as Record<string, unknown>;
+	if (invocation.fn !== "create" || invocation.mode !== "submit") return null;
+
+	const service =
+		typeof invocation.service === "string" ? invocation.service : "";
+	const resource =
+		typeof invocation.resource === "string" ? invocation.resource : "";
+	if (!service || !resource) return null;
+	return `${service}/${resource}`;
+}
+
+function addSubmitTargets(row: UI_Row, into: Set<string>): void {
+	for (const actionList of Object.values(row.actions ?? {})) {
+		if (!Array.isArray(actionList)) continue;
+		for (const action of actionList) {
+			for (const branch of [action.true, action.false]) {
+				const target = submitCreateTarget(branch);
+				if (target) into.add(target);
 			}
 		}
 	}
 }
 
-function assertUiFlowRowTriggers(flow: UI_Flow): void {
-	for (let pageIndex = 0; pageIndex < flow.pages.length; pageIndex++) {
-		const page = flow.pages[pageIndex];
-		if (!page) {
-			continue;
-		}
-		for (let rowIndex = 0; rowIndex < page.rows.length; rowIndex++) {
-			const row = page.rows[rowIndex];
-			if (row) {
-				walkUiFlowRowTree(row, `pages[${pageIndex}].rows[${rowIndex}]`);
-			}
-		}
-		if (page.footer) {
-			walkUiFlowRowTree(page.footer, `pages[${pageIndex}].footer`);
-		}
+/**
+ * A flow that submits must say so. Both clients previously derived this by
+ * re-parsing every action string in the flow - independently, in two languages.
+ * The declaration is now the source of truth and the actions are checked
+ * against it.
+ *
+ * A declaration with no matching action is allowed: flows are authored
+ * incrementally, and the declaration alone is harmless.
+ */
+function assertUiFlowSubmitsDeclaration(
+	flow: UI_Flow,
+	targets: Set<string>,
+): void {
+	if (targets.size === 0) return;
+
+	if (targets.size > 1) {
+		throw new Error(
+			`Flow validation failed: flow submits more than one entity (${[
+				...targets,
+			]
+				.sort()
+				.join(", ")}); a flow may submit at most one`,
+		);
+	}
+
+	const [target] = [...targets];
+	if (!flow.submits) {
+		throw new Error(
+			`Flow validation failed: flow has a create(...,submit) targeting ${target} but declares no "submits"`,
+		);
+	}
+
+	const declared = `${flow.submits.service}/${flow.submits.resource}`;
+	if (declared !== target) {
+		throw new Error(
+			`Flow validation failed: flow declares submits ${declared} but its create(...,submit) targets ${target}`,
+		);
 	}
 }
 
@@ -572,7 +661,12 @@ function assertUiFlowRowTriggers(flow: UI_Flow): void {
 export function validateUiFlow(data: unknown): UI_Flow {
 	assertValid("Flow", getValidateUiFlow(), data);
 	const flow = data as UI_Flow;
-	assertUiFlowRowTriggers(flow);
+	const submitTargets = new Set<string>();
+	forEachFlowRow(flow, (row, path) => {
+		assertUiFlowRowTriggerConstraints(row, path);
+		addSubmitTargets(row, submitTargets);
+	});
+	assertUiFlowSubmitsDeclaration(flow, submitTargets);
 	return flow;
 }
 export const validateDataEvyAddress = makeValidator<DATA_EVY_Address>(
@@ -582,6 +676,10 @@ export const validateDataEvyAddress = makeValidator<DATA_EVY_Address>(
 export const validateDataEvyMessage = makeValidator<DATA_EVY_Message>(
 	"Message",
 	getValidateDataEvyMessage,
+);
+export const validateDataMarketplaceItem = makeValidator<DATA_MARKETPLACE_Item>(
+	"MarketplaceItem",
+	getValidateDataMarketplaceItem,
 );
 export const validateDataEvyFlow = makeValidator<DATA_EVY_Flow>(
 	"Flow",

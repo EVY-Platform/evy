@@ -22,7 +22,7 @@ import { addressesResource } from "./resources/addresses";
 import {
 	createFileResource,
 	deleteFileResource,
-	listFileRowsWithBinary,
+	listFileRows,
 } from "./resources/files";
 import { flowsResource } from "./resources/flows";
 import { messagesResource } from "./resources/messages";
@@ -91,7 +91,7 @@ const CORE_RESOURCE_REGISTRY: Record<string, CoreResourceOps> = {
 		update: serviceResourcesResource.update,
 	},
 	[EVY_CORE_RESOURCE.FILES]: {
-		list: listFileRowsWithBinary,
+		list: listFileRows,
 		create: createFileResource,
 		remove: deleteFileResource,
 	},
@@ -124,11 +124,23 @@ export async function listExternalServiceResources(
 		.orderBy(asc(service.id), asc(serviceResource.id));
 }
 
+type ExternalServiceRow = {
+	id: string;
+	name: string;
+	wsHost: string | null;
+	wsPort: number | null;
+};
+
 export async function listExternalServices(
 	db: EvyDb,
-): Promise<Array<{ id: string; name: string }>> {
+): Promise<ExternalServiceRow[]> {
 	return db
-		.select({ id: service.id, name: service.name })
+		.select({
+			id: service.id,
+			name: service.name,
+			wsHost: service.wsHost,
+			wsPort: service.wsPort,
+		})
 		.from(service)
 		.where(ne(service.id, EVY_CORE_SERVICE));
 }

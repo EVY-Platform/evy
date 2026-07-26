@@ -1,9 +1,109 @@
 {
-	"id": "2cba1886-d6e1-4ff8-bb28-07f53a439384",
+	"id": "a01f1b65-8439-40e4-bd42-e2b34a1e382a",
 	"prevId": "00000000-0000-0000-0000-000000000000",
 	"version": "7",
 	"dialect": "postgresql",
 	"tables": {
+		"public.Address": {
+			"name": "Address",
+			"schema": "",
+			"columns": {
+				"id": {
+					"name": "id",
+					"type": "uuid",
+					"primaryKey": true,
+					"notNull": true,
+					"default": "gen_random_uuid()"
+				},
+				"unit": {
+					"name": "unit",
+					"type": "text",
+					"primaryKey": false,
+					"notNull": false
+				},
+				"street": {
+					"name": "street",
+					"type": "text",
+					"primaryKey": false,
+					"notNull": false
+				},
+				"city": {
+					"name": "city",
+					"type": "text",
+					"primaryKey": false,
+					"notNull": false
+				},
+				"postcode": {
+					"name": "postcode",
+					"type": "text",
+					"primaryKey": false,
+					"notNull": false
+				},
+				"state": {
+					"name": "state",
+					"type": "text",
+					"primaryKey": false,
+					"notNull": false
+				},
+				"country": {
+					"name": "country",
+					"type": "text",
+					"primaryKey": false,
+					"notNull": false
+				},
+				"latitude": {
+					"name": "latitude",
+					"type": "numeric(28, 10)",
+					"primaryKey": false,
+					"notNull": false
+				},
+				"longitude": {
+					"name": "longitude",
+					"type": "numeric(28, 10)",
+					"primaryKey": false,
+					"notNull": false
+				},
+				"instructions": {
+					"name": "instructions",
+					"type": "text",
+					"primaryKey": false,
+					"notNull": false
+				},
+				"visibility": {
+					"name": "visibility",
+					"type": "Visibility",
+					"typeSchema": "public",
+					"primaryKey": false,
+					"notNull": true,
+					"default": "'private'"
+				},
+				"created_at": {
+					"name": "created_at",
+					"type": "text",
+					"primaryKey": false,
+					"notNull": true
+				},
+				"updated_at": {
+					"name": "updated_at",
+					"type": "text",
+					"primaryKey": false,
+					"notNull": true
+				},
+				"deleted_at": {
+					"name": "deleted_at",
+					"type": "text",
+					"primaryKey": false,
+					"notNull": false
+				}
+			},
+			"indexes": {},
+			"foreignKeys": {},
+			"compositePrimaryKeys": {},
+			"uniqueConstraints": {},
+			"policies": {},
+			"checkConstraints": {},
+			"isRLSEnabled": false
+		},
 		"public.Device": {
 			"name": "Device",
 			"schema": "",
@@ -20,6 +120,14 @@
 					"typeSchema": "public",
 					"primaryKey": false,
 					"notNull": true
+				},
+				"visibility": {
+					"name": "visibility",
+					"type": "Visibility",
+					"typeSchema": "public",
+					"primaryKey": false,
+					"notNull": true,
+					"default": "'public'"
 				},
 				"created_at": {
 					"name": "created_at",
@@ -74,6 +182,14 @@
 					"primaryKey": false,
 					"notNull": true
 				},
+				"visibility": {
+					"name": "visibility",
+					"type": "Visibility",
+					"typeSchema": "public",
+					"primaryKey": false,
+					"notNull": true,
+					"default": "'public'"
+				},
 				"created_at": {
 					"name": "created_at",
 					"type": "text",
@@ -85,6 +201,12 @@
 					"type": "text",
 					"primaryKey": false,
 					"notNull": true
+				},
+				"deleted_at": {
+					"name": "deleted_at",
+					"type": "text",
+					"primaryKey": false,
+					"notNull": false
 				}
 			},
 			"indexes": {},
@@ -118,6 +240,20 @@
 					"primaryKey": false,
 					"notNull": true
 				},
+				"submits": {
+					"name": "submits",
+					"type": "jsonb",
+					"primaryKey": false,
+					"notNull": false
+				},
+				"visibility": {
+					"name": "visibility",
+					"type": "Visibility",
+					"typeSchema": "public",
+					"primaryKey": false,
+					"notNull": true,
+					"default": "'public'"
+				},
 				"created_at": {
 					"name": "created_at",
 					"type": "text",
@@ -129,6 +265,94 @@
 					"type": "text",
 					"primaryKey": false,
 					"notNull": true
+				},
+				"deleted_at": {
+					"name": "deleted_at",
+					"type": "text",
+					"primaryKey": false,
+					"notNull": false
+				}
+			},
+			"indexes": {},
+			"foreignKeys": {},
+			"compositePrimaryKeys": {},
+			"uniqueConstraints": {},
+			"policies": {},
+			"checkConstraints": {},
+			"isRLSEnabled": false
+		},
+		"public.Message": {
+			"name": "Message",
+			"schema": "",
+			"columns": {
+				"id": {
+					"name": "id",
+					"type": "uuid",
+					"primaryKey": true,
+					"notNull": true,
+					"default": "gen_random_uuid()"
+				},
+				"fk": {
+					"name": "fk",
+					"type": "uuid",
+					"primaryKey": false,
+					"notNull": true
+				},
+				"service": {
+					"name": "service",
+					"type": "uuid",
+					"primaryKey": false,
+					"notNull": true
+				},
+				"resource": {
+					"name": "resource",
+					"type": "uuid",
+					"primaryKey": false,
+					"notNull": true
+				},
+				"archived_at": {
+					"name": "archived_at",
+					"type": "text",
+					"primaryKey": false,
+					"notNull": false
+				},
+				"created_at": {
+					"name": "created_at",
+					"type": "text",
+					"primaryKey": false,
+					"notNull": true
+				},
+				"updated_at": {
+					"name": "updated_at",
+					"type": "text",
+					"primaryKey": false,
+					"notNull": true
+				},
+				"deleted_at": {
+					"name": "deleted_at",
+					"type": "text",
+					"primaryKey": false,
+					"notNull": false
+				},
+				"status": {
+					"name": "status",
+					"type": "text",
+					"primaryKey": false,
+					"notNull": true
+				},
+				"data": {
+					"name": "data",
+					"type": "jsonb",
+					"primaryKey": false,
+					"notNull": true
+				},
+				"visibility": {
+					"name": "visibility",
+					"type": "Visibility",
+					"typeSchema": "public",
+					"primaryKey": false,
+					"notNull": true,
+					"default": "'public'"
 				}
 			},
 			"indexes": {},
@@ -179,6 +403,14 @@
 					"primaryKey": false,
 					"notNull": true
 				},
+				"visibility": {
+					"name": "visibility",
+					"type": "Visibility",
+					"typeSchema": "public",
+					"primaryKey": false,
+					"notNull": true,
+					"default": "'public'"
+				},
 				"created_at": {
 					"name": "created_at",
 					"type": "text",
@@ -190,6 +422,12 @@
 					"type": "text",
 					"primaryKey": false,
 					"notNull": true
+				},
+				"deleted_at": {
+					"name": "deleted_at",
+					"type": "text",
+					"primaryKey": false,
+					"notNull": false
 				}
 			},
 			"indexes": {
@@ -251,6 +489,14 @@
 					"primaryKey": false,
 					"notNull": false
 				},
+				"visibility": {
+					"name": "visibility",
+					"type": "Visibility",
+					"typeSchema": "public",
+					"primaryKey": false,
+					"notNull": true,
+					"default": "'public'"
+				},
 				"created_at": {
 					"name": "created_at",
 					"type": "text",
@@ -262,6 +508,12 @@
 					"type": "text",
 					"primaryKey": false,
 					"notNull": true
+				},
+				"deleted_at": {
+					"name": "deleted_at",
+					"type": "text",
+					"primaryKey": false,
+					"notNull": false
 				}
 			},
 			"indexes": {},
@@ -307,6 +559,14 @@
 					"primaryKey": false,
 					"notNull": true
 				},
+				"visibility": {
+					"name": "visibility",
+					"type": "Visibility",
+					"typeSchema": "public",
+					"primaryKey": false,
+					"notNull": true,
+					"default": "'public'"
+				},
 				"created_at": {
 					"name": "created_at",
 					"type": "text",
@@ -318,6 +578,12 @@
 					"type": "text",
 					"primaryKey": false,
 					"notNull": true
+				},
+				"deleted_at": {
+					"name": "deleted_at",
+					"type": "text",
+					"primaryKey": false,
+					"notNull": false
 				}
 			},
 			"indexes": {},
@@ -350,11 +616,31 @@
 					"primaryKey": false,
 					"notNull": true
 				},
+				"ws_host": {
+					"name": "ws_host",
+					"type": "varchar(253)",
+					"primaryKey": false,
+					"notNull": false
+				},
+				"ws_port": {
+					"name": "ws_port",
+					"type": "integer",
+					"primaryKey": false,
+					"notNull": false
+				},
 				"sort_order": {
 					"name": "sort_order",
 					"type": "integer",
 					"primaryKey": false,
 					"notNull": false
+				},
+				"visibility": {
+					"name": "visibility",
+					"type": "Visibility",
+					"typeSchema": "public",
+					"primaryKey": false,
+					"notNull": true,
+					"default": "'public'"
 				},
 				"created_at": {
 					"name": "created_at",
@@ -367,6 +653,12 @@
 					"type": "text",
 					"primaryKey": false,
 					"notNull": true
+				},
+				"deleted_at": {
+					"name": "deleted_at",
+					"type": "text",
+					"primaryKey": false,
+					"notNull": false
 				}
 			},
 			"indexes": {
@@ -439,6 +731,14 @@
 					"primaryKey": false,
 					"notNull": true
 				},
+				"visibility": {
+					"name": "visibility",
+					"type": "Visibility",
+					"typeSchema": "public",
+					"primaryKey": false,
+					"notNull": true,
+					"default": "'public'"
+				},
 				"created_at": {
 					"name": "created_at",
 					"type": "text",
@@ -450,6 +750,12 @@
 					"type": "text",
 					"primaryKey": false,
 					"notNull": true
+				},
+				"deleted_at": {
+					"name": "deleted_at",
+					"type": "text",
+					"primaryKey": false,
+					"notNull": false
 				},
 				"retired": {
 					"name": "retired",
@@ -526,6 +832,14 @@
 					"primaryKey": false,
 					"notNull": true
 				},
+				"visibility": {
+					"name": "visibility",
+					"type": "Visibility",
+					"typeSchema": "public",
+					"primaryKey": false,
+					"notNull": true,
+					"default": "'public'"
+				},
 				"created_at": {
 					"name": "created_at",
 					"type": "text",
@@ -537,6 +851,12 @@
 					"type": "text",
 					"primaryKey": false,
 					"notNull": true
+				},
+				"deleted_at": {
+					"name": "deleted_at",
+					"type": "text",
+					"primaryKey": false,
+					"notNull": false
 				}
 			},
 			"indexes": {
@@ -575,6 +895,11 @@
 			"name": "OS",
 			"schema": "public",
 			"values": ["ios", "android", "Web"]
+		},
+		"public.Visibility": {
+			"name": "Visibility",
+			"schema": "public",
+			"values": ["public", "private"]
 		}
 	},
 	"schemas": {},

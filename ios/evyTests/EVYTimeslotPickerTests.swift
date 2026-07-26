@@ -166,7 +166,7 @@ final class EVYTimeslotPickerTests: XCTestCase {
 
     EVY.ensureDraftExists(variableName: "selected_timeslot", scopeId: scopeId)
     let destination = "{selected_timeslot}"
-    let action = rowAction(true: "{select($datum)}")
+    let action = rowAction(true: .select(value: "$datum"))
 
     EVYActionRunner.run(
       actions: [action],

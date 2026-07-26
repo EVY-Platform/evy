@@ -9,7 +9,13 @@ import XCTest
 
 @MainActor
 final class EVYStoreRoutingTests: XCTestCase {
+  override func setUpWithError() throws {
+    // Without this the create/update cases below fire real RPCs at localhost:8000.
+    installHermeticMutationSync()
+  }
+
   override func tearDownWithError() throws {
+    resetHermeticMutationSync()
     try? EVY.publicStore.wipeAll()
     try? EVY.privateStore.wipeAll()
   }
@@ -139,6 +145,72 @@ final class EVYStoreRoutingTests: XCTestCase {
     XCTAssertEqual(values["visibility"], .string("public"))
   }
 
+  func testRemoveSyncedValueDeletesFromPublicStore() throws {
+    let recordId = UUID().uuidString
+    let resource = EVYCoreResource.messages.rawValue
+    try EVY.applySyncedValue(
+      namespace: EVYNamespace.evy,
+      resource: resource,
+      value: .dictionary(["id": .string(recordId), "visibility": .string("public")])
+    )
+    XCTAssertNotNil(
+      try? EVY.publicStore.get(namespace: EVYNamespace.evy, resource: resource, id: recordId))
+
+    try EVY.removeSyncedValue(
+      namespace: EVYNamespace.evy,
+      resource: resource,
+      value: .dictionary(["id": .string(recordId)])
+    )
+
+    XCTAssertNil(
+      try? EVY.publicStore.get(namespace: EVYNamespace.evy, resource: resource, id: recordId))
+  }
+
+  func testRemoveSyncedValueDeletesFromPrivateStore() throws {
+    let recordId = UUID().uuidString
+    let resource = EVYCoreResource.addresses.rawValue
+    try EVY.applySyncedValue(
+      namespace: EVYNamespace.evy,
+      resource: resource,
+      value: .dictionary(["id": .string(recordId), "visibility": .string("private")])
+    )
+    XCTAssertNotNil(
+      try? EVY.privateStore.get(namespace: EVYNamespace.evy, resource: resource, id: recordId))
+
+    // The delete payload need not carry visibility, so both stores are cleared.
+    try EVY.removeSyncedValue(
+      namespace: EVYNamespace.evy,
+      resource: resource,
+      value: .dictionary(["id": .string(recordId)])
+    )
+
+    XCTAssertNil(
+      try? EVY.privateStore.get(namespace: EVYNamespace.evy, resource: resource, id: recordId))
+  }
+
+  func testRemoveSyncedValueHandlesArraysAndMissingRecords() throws {
+    let presentId = UUID().uuidString
+    let absentId = UUID().uuidString
+    let resource = EVYCoreResource.messages.rawValue
+    try EVY.applySyncedValue(
+      namespace: EVYNamespace.evy,
+      resource: resource,
+      value: .dictionary(["id": .string(presentId), "visibility": .string("public")])
+    )
+
+    try EVY.removeSyncedValue(
+      namespace: EVYNamespace.evy,
+      resource: resource,
+      value: .array([
+        .dictionary(["id": .string(presentId)]),
+        .dictionary(["id": .string(absentId)]),
+      ])
+    )
+
+    XCTAssertNil(
+      try? EVY.publicStore.get(namespace: EVYNamespace.evy, resource: resource, id: presentId))
+  }
+
   func testRecordsWithoutVisibilityDefaultToPublicStore() throws {
     let recordId = UUID().uuidString
     let resource = EVYCoreResource.flows.rawValue
@@ -151,5 +223,296 @@ final class EVYStoreRoutingTests: XCTestCase {
       try? EVY.publicStore.get(namespace: EVYNamespace.evy, resource: resource, id: recordId))
     XCTAssertNil(
       try? EVY.privateStore.get(namespace: EVYNamespace.evy, resource: resource, id: recordId))
+  }
+
+  // MARK: - Tombstones and delta ordering
+
+  func testSyncedTombstoneRemovesTheRecord() throws {
+    let recordId = UUID().uuidString
+    let resource = EVYCoreResource.messages.rawValue
+    try EVY.applySyncedValue(
+      namespace: EVYNamespace.evy,
+      resource: resource,
+      value: .dictionary(["id": .string(recordId), "visibility": .string("public")])
+    )
+    XCTAssertNotNil(
+      try? EVY.publicStore.get(namespace: EVYNamespace.evy, resource: resource, id: recordId))
+
+    try EVY.applySyncedValue(
+      namespace: EVYNamespace.evy,
+      resource: resource,
+      value: .array([
+        .dictionary([
+          "id": .string(recordId),
+          "visibility": .string("public"),
+          "deletedAt": .string("2026-07-01T00:00:00.000Z"),
+        ])
+      ])
+    )
+
+    XCTAssertNil(
+      try? EVY.publicStore.get(namespace: EVYNamespace.evy, resource: resource, id: recordId))
+  }
+
+  func testLiveRecordsWithoutDeletedAtAreKept() throws {
+    let recordId = UUID().uuidString
+    let resource = EVYCoreResource.messages.rawValue
+
+    try EVY.applySyncedValue(
+      namespace: EVYNamespace.evy,
+      resource: resource,
+      value: .array([
+        .dictionary([
+          "id": .string(recordId),
+          "visibility": .string("public"),
+          "deletedAt": .null,
+        ])
+      ])
+    )
+
+    XCTAssertNotNil(
+      try? EVY.publicStore.get(namespace: EVYNamespace.evy, resource: resource, id: recordId))
+  }
+
+  /// A delta carries only what changed, so its positions must not renumber the
+  /// rows already held.
+  func testDeltaDoesNotReorderExistingRecords() throws {
+    let resource = EVYCoreResource.messages.rawValue
+    let firstId = UUID().uuidString
+    let secondId = UUID().uuidString
+
+    try EVY.applySyncedValue(
+      namespace: EVYNamespace.evy,
+      resource: resource,
+      value: .array([
+        .dictionary(["id": .string(firstId), "visibility": .string("public")]),
+        .dictionary(["id": .string(secondId), "visibility": .string("public")]),
+      ])
+    )
+
+    let originalSecond = try EVY.publicStore.get(
+      namespace: EVYNamespace.evy, resource: resource, id: secondId
+    ).sortIndex
+    XCTAssertEqual(originalSecond, 1)
+
+    // The second row changes on its own; as position 0 of the delta it would
+    // previously have jumped to the front of the collection.
+    try EVY.applySyncedValue(
+      namespace: EVYNamespace.evy,
+      resource: resource,
+      value: .array([
+        .dictionary([
+          "id": .string(secondId), "visibility": .string("public"),
+          "status": .string("accepted"),
+        ])
+      ]),
+      assignsOrder: false
+    )
+
+    let updatedSecond = try EVY.publicStore.get(
+      namespace: EVYNamespace.evy, resource: resource, id: secondId)
+    XCTAssertEqual(updatedSecond.sortIndex, originalSecond)
+  }
+
+  func testNewRecordInADeltaIsAppended() throws {
+    let resource = EVYCoreResource.messages.rawValue
+    let firstId = UUID().uuidString
+    let newId = UUID().uuidString
+
+    try EVY.applySyncedValue(
+      namespace: EVYNamespace.evy,
+      resource: resource,
+      value: .array([
+        .dictionary(["id": .string(firstId), "visibility": .string("public")])
+      ])
+    )
+
+    try EVY.applySyncedValue(
+      namespace: EVYNamespace.evy,
+      resource: resource,
+      value: .array([
+        .dictionary(["id": .string(newId), "visibility": .string("public")])
+      ]),
+      assignsOrder: false
+    )
+
+    let appended = try EVY.publicStore.get(
+      namespace: EVYNamespace.evy, resource: resource, id: newId)
+    XCTAssertGreaterThan(appended.sortIndex, 0)
+  }
+
+  // MARK: - Scope as a value
+
+  /// An explicit scope must win over the global statics. Without this, a view
+  /// resolving off the foreground page reads whichever scope was set last.
+  func testExplicitScopeOverridesTheGlobalCacheScope() throws {
+    let globalScopeId = "global-\(UUID().uuidString)"
+    let explicitScopeId = "explicit-\(UUID().uuidString)"
+    let key = "scoped_value"
+
+    try EVY.cacheStore.create(
+      namespace: EVYNamespace.cache, resource: globalScopeId, id: key,
+      value: #"{"label":"from-global"}"#.data(using: .utf8)!)
+    try EVY.cacheStore.create(
+      namespace: EVYNamespace.cache, resource: explicitScopeId, id: key,
+      value: #"{"label":"from-explicit"}"#.data(using: .utf8)!)
+    defer {
+      try? EVY.cacheStore.deleteAll(namespace: EVYNamespace.cache, resource: globalScopeId)
+      try? EVY.cacheStore.deleteAll(namespace: EVYNamespace.cache, resource: explicitScopeId)
+      EVY.activeCacheScopeId = nil
+    }
+
+    EVY.activeCacheScopeId = globalScopeId
+
+    XCTAssertEqual(
+      try EVY.getDataFromText("{\(key).label}"), .string("from-global"))
+
+    XCTAssertEqual(
+      try EVY.getDataFromText(
+        "{\(key).label}",
+        scope: EVYScope(cacheScopeId: explicitScopeId, draftScopeId: nil)),
+      .string("from-explicit"))
+  }
+
+  func testOmittingScopeStillUsesTheGlobals() throws {
+    let globalScopeId = "global-\(UUID().uuidString)"
+    let key = "scoped_value"
+
+    try EVY.cacheStore.create(
+      namespace: EVYNamespace.cache, resource: globalScopeId, id: key,
+      value: #"{"label":"from-global"}"#.data(using: .utf8)!)
+    defer {
+      try? EVY.cacheStore.deleteAll(namespace: EVYNamespace.cache, resource: globalScopeId)
+      EVY.activeCacheScopeId = nil
+    }
+
+    EVY.activeCacheScopeId = globalScopeId
+
+    XCTAssertEqual(
+      try EVY.getValueFromText("{\(key).label}").toString(), "from-global")
+  }
+
+  /// A state built on one page must keep resolving against that page's scope
+  /// after the user navigates away. Recomputes fire on a notification, long
+  /// after construction, so reading the globals at that moment resolves against
+  /// whichever page happens to be foremost - the background page silently
+  /// renders the foreground page's data.
+  func testStateRecomputesAgainstItsOwnScopeAfterAnotherPageActivates() throws {
+    let backgroundScopeId = "background-\(UUID().uuidString)"
+    let foregroundScopeId = "foreground-\(UUID().uuidString)"
+    let key = "scoped_value"
+    let resource = EVYCoreResource.messages.rawValue
+
+    try EVY.cacheStore.create(
+      namespace: EVYNamespace.cache, resource: backgroundScopeId, id: key,
+      value: #"{"label":"background-page"}"#.data(using: .utf8)!)
+    try EVY.cacheStore.create(
+      namespace: EVYNamespace.cache, resource: foregroundScopeId, id: key,
+      value: #"{"label":"foreground-page"}"#.data(using: .utf8)!)
+
+    let recordId = UUID().uuidString
+    try EVY.applySyncedValue(
+      namespace: EVYNamespace.evy,
+      resource: resource,
+      value: .array([.dictionary(["id": .string(recordId), "status": .string("pending")])])
+    )
+    defer {
+      try? EVY.cacheStore.deleteAll(namespace: EVYNamespace.cache, resource: backgroundScopeId)
+      try? EVY.cacheStore.deleteAll(namespace: EVYNamespace.cache, resource: foregroundScopeId)
+      EVY.activeCacheScopeId = nil
+    }
+
+    // The background page is on screen, and builds a state that resolves a
+    // value out of its own cache scope but recomputes when the record changes.
+    EVY.activeCacheScopeId = backgroundScopeId
+    let state = EVYState(
+      textToWatch: "{\(resource)}",
+      setter: { (try? EVY.getValueFromText("{\(key).label}").toString()) ?? "unresolved" }
+    )
+    XCTAssertEqual(state.value, "background-page")
+
+    // The user navigates to another page, which activates its own scope.
+    EVY.activeCacheScopeId = foregroundScopeId
+
+    // Something the background page watches changes, forcing a recompute.
+    try EVY.update(
+      namespace: EVYNamespace.evy,
+      resource: resource,
+      matching: ["id": .string(recordId)],
+      changes: ["status": .string("accepted")]
+    )
+
+    XCTAssertEqual(state.value, "background-page")
+  }
+
+  /// A row can be built while another page is foremost - a websocket SDUI
+  /// update adding rows to a page the user has navigated away from. Its
+  /// initial value has to come from its own scope, not from whatever page
+  /// happens to be active at that instant.
+  func testStateBuiltWithAnExplicitScopeIgnoresTheActiveGlobal() throws {
+    let ownScopeId = "own-\(UUID().uuidString)"
+    let activeScopeId = "active-\(UUID().uuidString)"
+    let key = "scoped_value"
+
+    try EVY.cacheStore.create(
+      namespace: EVYNamespace.cache, resource: ownScopeId, id: key,
+      value: #"{"label":"own-page"}"#.data(using: .utf8)!)
+    try EVY.cacheStore.create(
+      namespace: EVYNamespace.cache, resource: activeScopeId, id: key,
+      value: #"{"label":"active-page"}"#.data(using: .utf8)!)
+    defer {
+      try? EVY.cacheStore.deleteAll(namespace: EVYNamespace.cache, resource: ownScopeId)
+      try? EVY.cacheStore.deleteAll(namespace: EVYNamespace.cache, resource: activeScopeId)
+      EVY.activeCacheScopeId = nil
+    }
+
+    EVY.activeCacheScopeId = activeScopeId
+    let state = EVYState(
+      watches: ["{\(EVYCoreResource.messages.rawValue)}"],
+      scope: .cache(ownScopeId),
+      setter: { (try? EVY.getValueFromText("{\(key).label}").toString()) ?? "unresolved" }
+    )
+
+    XCTAssertEqual(state.value, "own-page")
+    // And the swap is undone - the active page is untouched.
+    XCTAssertEqual(EVY.activeCacheScopeId, activeScopeId)
+  }
+
+  /// Writes have to land where the row's own bindings read from. Mutation
+  /// paths take the cache scope ambiently, so an action running while some
+  /// other page is active would otherwise read and update that page's cache -
+  /// which is what running the action under the row's scope prevents.
+  func testWriteUnderAnExplicitScopeTargetsThatScope() throws {
+    let ownScopeId = "own-\(UUID().uuidString)"
+    let activeScopeId = "active-\(UUID().uuidString)"
+    let key = "scoped_value"
+
+    for (scopeId, label) in [(ownScopeId, "own"), (activeScopeId, "active")] {
+      try EVY.cacheStore.create(
+        namespace: EVYNamespace.cache, resource: scopeId, id: key,
+        value: #"{"label":"\#(label)"}"#.data(using: .utf8)!)
+    }
+    defer {
+      try? EVY.cacheStore.deleteAll(namespace: EVYNamespace.cache, resource: ownScopeId)
+      try? EVY.cacheStore.deleteAll(namespace: EVYNamespace.cache, resource: activeScopeId)
+      EVY.activeCacheScopeId = nil
+    }
+
+    EVY.activeCacheScopeId = activeScopeId
+
+    try EVY.withScope(.cache(ownScopeId)) {
+      try EVY.updateData(
+        #""written""#.data(using: .utf8)!,
+        destination: "{\(key).label}")
+    }
+
+    XCTAssertEqual(
+      try EVY.getDataFromText(
+        "{\(key).label}", scope: .cache(ownScopeId)),
+      .string("written"))
+    XCTAssertEqual(
+      try EVY.getDataFromText(
+        "{\(key).label}", scope: .cache(activeScopeId)),
+      .string("active"))
   }
 }

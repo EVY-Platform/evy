@@ -28,6 +28,8 @@ xcodebuild test -project ios/evy.xcodeproj -scheme evy -destination 'platform=iO
 
 The `e2e` (XCUITest) target additionally requires backend services running; see the root `run-e2e.sh`.
 
+> Unit suites that exercise `EVY.create` / `EVY.update` must call `installHermeticMutationSync()` in `setUp` (see `XCTestCase+UniqueKey.swift`). Without it those mutations fire real RPCs at `localhost:8000` and leave junk rows in the dev database — reseed with `bun run db:seed` if that happens.
+
 ### Architecture
 
 ```mermaid
@@ -74,7 +76,7 @@ flowchart LR
 
 ### Architectural highlights
 
-**sync**: At startup, the app calls the API and stores each returned resource under a service-qualified key: `<service>:<resource>` (for example, `[evy_core_service_id]:flows`, `[evy_core_service_id]:pages`, `[evy_core_service_id]:rows`, `[marketplace_service_id]:[items_resource_id]`, or `[marketplace_service_id]:[conditions_resource_id]`).
+**sync**: At startup, the app calls the API and stores each returned resource under a service-qualified `namespace` / `resource` pair — for example namespace `[evy_core_service_id]` with resources `flows`, `pages`, `rows`, or namespace `[marketplace_service_id]` with resource `[items_resource_id]`. (These are two separate stored columns; the colon form `namespace:resource` is only a binding grammar for expressions.) After startup, changes arrive continuously as `dataChanged` push notifications over the same socket and are applied straight into the stores; a full sync runs again on next launch.
 
 **page scope**: Each rendered page carries an `EVYScope` with the cache scope for page query params and the draft scope for create flows. This keeps route context explicit through the SwiftUI tree while preserving the existing expression and mutation entry points.
 

@@ -63,6 +63,8 @@ struct EVYTitledTextFieldRow: View {
     self.onValueCommit = onValueCommit
   }
 
+  @Environment(\.evyScope) private var evyScope
+
   var body: some View {
     EVYTextField(
       source: source,
@@ -70,7 +72,8 @@ struct EVYTitledTextFieldRow: View {
       placeholder: placeholder,
       multiLine: multiLine,
       isInteractive: isInteractive,
-      onValueCommit: onValueCommit
+      onValueCommit: onValueCommit,
+      scope: evyScope
     )
     .titledRow(title)
   }

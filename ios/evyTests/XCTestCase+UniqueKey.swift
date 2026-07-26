@@ -23,15 +23,21 @@ extension XCTestCase {
     return "evy_test_\(suffix)_\(randomId)"
   }
 
+  /// Builds an action from structured invocations, the only form that is
+  /// stored or executed.
   func rowAction(
     condition: String = "",
-    true trueBranch: String,
-    false falseBranch: String = ""
+    true trueBranch: EVYActionInvocation?,
+    false falseBranch: EVYActionInvocation? = nil
   ) -> UI_RowAction {
     UI_RowAction(
       condition: condition,
-      false: falseBranch,
-      true: trueBranch
+      false: branch(falseBranch),
+      true: branch(trueBranch)
     )
+  }
+
+  func branch(_ invocation: EVYActionInvocation?) -> EVYActionBranch {
+    invocation.map(EVYActionBranch.invocation) ?? .empty
   }
 }

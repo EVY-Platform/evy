@@ -115,7 +115,7 @@ final class EVYSearchModelTests: XCTestCase {
     XCTAssertEqual(state.value.first?.displayRow.subtitle, "pending")
 
     try EVY.update(
-      namespace: EVYNamespace.marketplace,
+      namespace: EVYNamespace.evy,
       resource: resource,
       matching: [
         "id": .string(pendingId),

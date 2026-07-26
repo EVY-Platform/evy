@@ -36,6 +36,11 @@
 				"updatedAfter": {
 					"type": "string",
 					"format": "date-time"
+				},
+				"expectedUpdatedAt": {
+					"description": "Optimistic lock. When present, the write only applies if the stored row still carries this updatedAt; otherwise it is rejected as a conflict. Omit to accept last-write-wins.",
+					"type": "string",
+					"format": "date-time"
 				}
 			}
 		},

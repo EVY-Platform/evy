@@ -1,7 +1,7 @@
 import type { DATA_EVY_Flow, DATA_EVY_Page } from "evy-types";
-import { API_DATA_SOURCE_ATTRIBUTES } from "evy-types/apiDataSources";
 import { EVY_CORE_SERVICE } from "evy-types/coreResources";
 import { MARKETPLACE_SERVICE } from "evy-types/marketplaceResources";
+import { procedureResultAttributes } from "evy-types/procedures";
 import {
 	getAllRowBindingFieldNames,
 	getAllRowContentFieldNames,
@@ -234,10 +234,9 @@ export function createGetAttributeCandidatesForQualifier({
 		if (rowSource !== undefined && qualifier === "$datum") {
 			const apiMethod = parseApiSourceMethod(rowSource);
 			if (apiMethod) {
-				const attributeNames = API_DATA_SOURCE_ATTRIBUTES[apiMethod];
-				return attributeNames
-					? buildAttributeCandidates(attributeNames)
-					: [];
+				return buildAttributeCandidates(
+					procedureResultAttributes(apiMethod),
+				);
 			}
 		}
 

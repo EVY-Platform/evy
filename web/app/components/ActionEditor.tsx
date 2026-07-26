@@ -10,7 +10,11 @@ import { useCallback, useMemo, useState } from "react";
 import { LUCIDE_STROKE_WIDTH } from "../icons/iconSyntax";
 import { TRIGGER_LABELS } from "../rows/rowTriggers";
 import type { ServiceResource } from "../types/resources";
-import { formatBranchDisplay, parseBranch } from "../utils/actionBranch";
+import {
+	branchToEditableString,
+	formatBranchDisplay,
+	parseBranch,
+} from "../utils/actionBranch";
 import {
 	formatExpressionSummary,
 	parseCondition,
@@ -201,7 +205,7 @@ function ActionSummaryCard({
 			trueBranch
 				? getIdDisplayText(
 						formatBranchDisplay(
-							action.true,
+							branchToEditableString(action.true),
 							flowsById,
 							pagesById,
 							rowsById,
@@ -216,7 +220,7 @@ function ActionSummaryCard({
 			falseBranch
 				? getIdDisplayText(
 						formatBranchDisplay(
-							action.false,
+							branchToEditableString(action.false),
 							flowsById,
 							pagesById,
 							rowsById,

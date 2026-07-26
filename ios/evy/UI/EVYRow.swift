@@ -169,7 +169,8 @@ private struct EVYResolvedRow: View {
     self.hidesTitle = hidesTitle
     _isVisible = State(
       initialValue: Self.makeVisibilityState(
-        for: Self.visibleExpression(ref: ref, storedRow: storedRow)
+        for: Self.visibleExpression(ref: ref, storedRow: storedRow),
+        scope: nil
       )
     )
   }
@@ -248,19 +249,25 @@ private struct EVYResolvedRow: View {
   }
 
   private func refreshVisibilityState() {
-    isVisible = Self.makeVisibilityState(for: visibleExpression)
+    isVisible = Self.makeVisibilityState(for: visibleExpression, scope: evyScope)
   }
 
-  private static func makeVisibilityState(for visibleExpr: String) -> EVYState<Bool> {
+  /// `scope` is nil only from `init`, where `@Environment` is not yet readable;
+  /// `onAppear` rebuilds the state straight away with the row's real scope.
+  private static func makeVisibilityState(
+    for visibleExpr: String,
+    scope: EVYScope?
+  ) -> EVYState<Bool> {
     if visibleExpr.isEmpty {
       return EVYState(staticString: true)
     }
+    // Through EVYState even with nothing to watch: it installs the row's scope
+    // around the evaluation, which evaluating here directly would not.
     let evaluateVisibility = { (try? EVY.evaluateFromText(visibleExpr)) ?? false }
-    let watchTargets = EVY.watchTargets(for: visibleExpr)
-    if watchTargets.isEmpty {
-      return EVYState(staticString: evaluateVisibility())
-    }
-    return EVYState(watches: watchTargets, setter: evaluateVisibility)
+    return EVYState(
+      watches: EVY.watchTargets(for: visibleExpr),
+      scope: scope,
+      setter: evaluateVisibility)
   }
 
   // Keep in sync with `rowView(for:)` cases that wire their own tap callbacks.
@@ -291,24 +298,31 @@ private struct EVYResolvedRow: View {
     rowOperation: EVYRowOperationHandler? = nil
   ) {
     let actions = trigger.actions(in: contentRow.actions)
-    EVYActionRunner.run(
-      actions: actions,
-      datum: datum ?? self.datum,
-      show: { rowId in
-        guard EVYRowStore.row(id: rowId) != nil else {
-          throw EVYError.invalidData(context: "show could not resolve row id \(rowId)")
+    // Reads already resolve against this row's scope; writes did not, and took
+    // whichever page most recently activated. Running the whole action under
+    // the row's own scope makes a mutation land where the row's bindings read
+    // from. Action execution is synchronous, so this covers every mutation it
+    // performs.
+    EVY.withScope(evyScope) {
+      EVYActionRunner.run(
+        actions: actions,
+        datum: datum ?? self.datum,
+        show: { rowId in
+          guard EVYRowStore.row(id: rowId) != nil else {
+            throw EVYError.invalidData(context: "show could not resolve row id \(rowId)")
+          }
+          presentedSheetRef = .id(rowId)
+        },
+        rowOperation: rowOperation,
+        action: { operation in
+          if case .close = operation, let sheetDismiss {
+            sheetDismiss()
+            return
+          }
+          action(operation)
         }
-        presentedSheetRef = .id(rowId)
-      },
-      rowOperation: rowOperation,
-      action: { operation in
-        if case .close = operation, let sheetDismiss {
-          sheetDismiss()
-          return
-        }
-        action(operation)
-      }
-    )
+      )
+    }
   }
 
   @ViewBuilder
@@ -396,7 +410,7 @@ private struct EVYResolvedRow: View {
     case .listItem(let view, _):
       EVYListItemRow(view: view)
     case .map(let view, _):
-      EVYMapRow(view: view)
+      EVYMapRow(view: view, scope: evyScope)
     case .search(let view, _):
       EVYSearchRow(view: view, childRef: childRef) { selectedDatum in
         runActions(contentRow: contentRow, datum: selectedDatum)
@@ -449,7 +463,8 @@ private struct EVYResolvedRow: View {
         view: view,
         onTap: { value, rowOperation in
           runActions(contentRow: contentRow, datum: value, rowOperation: rowOperation)
-        })
+        },
+        scope: evyScope)
       {
         row
       } else {

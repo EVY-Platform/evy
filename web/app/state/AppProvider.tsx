@@ -6,13 +6,18 @@ import {
 	useReducer,
 	useRef,
 } from "react";
-import { wsClient } from "../api/wsClient";
+import {
+	type RemoteChange,
+	SaveConflictError,
+	wsClient,
+} from "../api/wsClient";
 import { useUrlSync } from "../hooks/useUrlSync";
 import { baseRows } from "../rows/baseRows";
 import type {
 	ResourceAttributeMetadata,
 	ServiceResource,
 } from "../types/resources";
+import { applyRemoteRecord } from "../utils/flatGraph";
 import {
 	collectionsEqual,
 	collectionsToMaps,
@@ -108,6 +113,29 @@ export function AppProvider({
 		pagesById: appState.pagesById,
 		rowsById: appState.rowsById,
 	});
+	/** Remote changes applied since the last save, to fold into its baseline. */
+	const appliedRemoteChangesRef = useRef<RemoteChange[]>([]);
+
+	// Keep the builder current with other writers. Without this the canvas only
+	// ever showed the snapshot loaded at mount, so concurrent editors silently
+	// overwrote one another.
+	useEffect(() => {
+		return wsClient.onDataChanged((changes) => {
+			for (const change of changes) {
+				// Also queued as a baseline correction: without it the autosave
+				// effect reads the applied change as a local edit and writes
+				// the record straight back to the server it came from.
+				appliedRemoteChangesRef.current.push(change);
+
+				dispatchRow({
+					type: "APPLY_REMOTE_RECORD",
+					resource: change.resource,
+					record: change.record,
+					operation: change.operation,
+				});
+			}
+		});
+	}, []);
 
 	useEffect(() => {
 		const currentMaps = {
@@ -115,7 +143,19 @@ export function AppProvider({
 			pagesById: appState.pagesById,
 			rowsById: appState.rowsById,
 		};
-		const previousMaps = previousMapsRef.current;
+		// Replayed through the same function the reducer used, so the baseline
+		// moves exactly as far as the remote change did - no further, which
+		// leaves a concurrent local edit still needing a save.
+		let previousMaps = previousMapsRef.current;
+		for (const change of appliedRemoteChangesRef.current) {
+			previousMaps = applyRemoteRecord(
+				previousMaps,
+				change.resource,
+				change.record,
+				change.operation,
+			);
+		}
+		appliedRemoteChangesRef.current = [];
 		const previousReachable = collectReachableEntityIds(
 			appState.activeFlowId,
 			previousMaps,
@@ -155,8 +195,12 @@ export function AppProvider({
 			wsClient
 				.saveFlowGraph(previousCollections, nextCollections)
 				.catch((error) => {
+					// A conflict is not a connection problem, and retrying will
+					// not fix it - the editor has to see the other change first.
 					alert(
-						"Failed to save your changes. Please check your connection and try again.",
+						error instanceof SaveConflictError
+							? error.message
+							: "Failed to save your changes. Please check your connection and try again.",
 					);
 					console.error("Failed to save flow:", error);
 				});

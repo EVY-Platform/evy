@@ -32,11 +32,7 @@ struct EVYPhotoGalleryRow: View {
     let trimmedSource = source.trimmingCharacters(in: .whitespacesAndNewlines)
     guard !trimmedSource.isEmpty else { return [] }
 
-    let previous = EVY.activeCacheScopeId
-    EVY.activeCacheScopeId = cacheScopeId
-    defer { EVY.activeCacheScopeId = previous }
-
-    let data = try? EVY.getDataFromText(trimmedSource)
+    let data = try? EVY.getDataFromText(trimmedSource, scope: .cache(cacheScopeId))
     return stringIds(from: data)
   }
 

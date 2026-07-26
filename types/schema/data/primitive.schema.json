@@ -25,6 +25,11 @@
 		"updatedAt": {
 			"type": "string",
 			"format": "date-time"
+		},
+		"deletedAt": {
+			"description": "Set when the row is deleted. Tombstoned rows are excluded from plain reads but included in incremental ones.",
+			"type": "string",
+			"format": "date-time"
 		}
 	}
 }

@@ -2,7 +2,7 @@
 	"$schema": "https://json-schema.org/draft/2020-12/schema",
 	"$id": "sdui-action",
 	"title": "UI_RowAction",
-	"description": "A conditional action attached to an SDUI row.",
+	"description": "A conditional action attached to an SDUI row. Branches are structured invocations; the empty string is the canonical \"do nothing\" branch.",
 	"type": "object",
 	"additionalProperties": false,
 	"required": ["condition", "false", "true"],
@@ -11,10 +11,354 @@
 			"type": "string"
 		},
 		"false": {
-			"type": "string"
+			"$ref": "#/$defs/UI_ActionBranch"
 		},
 		"true": {
-			"type": "string"
+			"$ref": "#/$defs/UI_ActionBranch"
+		}
+	},
+	"$defs": {
+		"UI_ActionBranch": {
+			"description": "Either the empty string, meaning do nothing, or a structured invocation. Legacy `{fn(...)}` strings are no longer accepted.",
+			"oneOf": [
+				{
+					"const": ""
+				},
+				{
+					"$ref": "#/$defs/UI_ActionInvocation"
+				}
+			]
+		},
+		"UI_ActionExpressionMap": {
+			"description": "Named value expressions, resolved by the client at execution time exactly as the equivalent plain-text object was. Values stay strings deliberately: whether a bare word is a data path or a literal depends on the data present when the action runs, so committing to one at authoring time would change behaviour.",
+			"type": "object",
+			"additionalProperties": {
+				"type": "string"
+			}
+		},
+		"UI_ActionInvocation": {
+			"description": "A structured action call, replacing the stringly `{fn(arg,arg)}` form: the function and its slots are named and schema-checked, so a malformed action is rejected on write instead of failing at tap time.",
+			"oneOf": [
+				{
+					"$ref": "#/$defs/UI_ActionNoArgs"
+				},
+				{
+					"$ref": "#/$defs/UI_ActionRowTarget"
+				},
+				{
+					"$ref": "#/$defs/UI_ActionHighlightRequired"
+				},
+				{
+					"$ref": "#/$defs/UI_ActionSelect"
+				},
+				{
+					"$ref": "#/$defs/UI_ActionNavigate"
+				},
+				{
+					"$ref": "#/$defs/UI_ActionCreateSubmit"
+				},
+				{
+					"$ref": "#/$defs/UI_ActionCreateInline"
+				},
+				{
+					"$ref": "#/$defs/UI_ActionCreateFromPath"
+				},
+				{
+					"$ref": "#/$defs/UI_ActionUpdateStore"
+				},
+				{
+					"$ref": "#/$defs/UI_ActionUpdateStoreFromPath"
+				},
+				{
+					"$ref": "#/$defs/UI_ActionUpdateDraft"
+				},
+				{
+					"$ref": "#/$defs/UI_ActionUpdateDraftFromPath"
+				}
+			]
+		},
+		"UI_ActionNoArgs": {
+			"type": "object",
+			"additionalProperties": false,
+			"required": ["fn"],
+			"properties": {
+				"fn": {
+					"enum": [
+						"close",
+						"select_photo",
+						"expand_photo",
+						"delete_photo"
+					]
+				}
+			}
+		},
+		"UI_ActionRowTarget": {
+			"description": "Addresses another row by id; the target may live on any synced page.",
+			"type": "object",
+			"additionalProperties": false,
+			"required": ["fn", "rowId"],
+			"properties": {
+				"fn": {
+					"enum": ["show", "expand_text"]
+				},
+				"rowId": {
+					"type": "string",
+					"minLength": 1
+				}
+			}
+		},
+		"UI_ActionHighlightRequired": {
+			"type": "object",
+			"additionalProperties": false,
+			"required": ["fn", "field"],
+			"properties": {
+				"fn": {
+					"const": "highlight_required"
+				},
+				"field": {
+					"type": "string",
+					"minLength": 1
+				}
+			}
+		},
+		"UI_ActionSelect": {
+			"type": "object",
+			"additionalProperties": false,
+			"required": ["fn", "value"],
+			"properties": {
+				"fn": {
+					"const": "select"
+				},
+				"value": {
+					"type": "string",
+					"minLength": 1
+				}
+			}
+		},
+		"UI_ActionNavigate": {
+			"type": "object",
+			"additionalProperties": false,
+			"required": ["fn", "flowId", "pageId"],
+			"properties": {
+				"fn": {
+					"const": "navigate"
+				},
+				"flowId": {
+					"type": "string",
+					"minLength": 1
+				},
+				"pageId": {
+					"type": "string",
+					"minLength": 1
+				},
+				"query": {
+					"$ref": "#/$defs/UI_ActionExpressionMap"
+				}
+			}
+		},
+		"UI_ActionCreateSubmit": {
+			"description": "Merges the active flow's create drafts into the new entity. Replaces the bare `submit` keyword that used to occupy the third argument slot.",
+			"type": "object",
+			"additionalProperties": false,
+			"required": ["fn", "service", "resource", "mode"],
+			"properties": {
+				"fn": {
+					"const": "create"
+				},
+				"service": {
+					"type": "string",
+					"minLength": 1
+				},
+				"resource": {
+					"type": "string",
+					"minLength": 1
+				},
+				"mode": {
+					"const": "submit"
+				}
+			}
+		},
+		"UI_ActionCreateInline": {
+			"type": "object",
+			"additionalProperties": false,
+			"required": ["fn", "service", "resource", "mode", "data"],
+			"properties": {
+				"fn": {
+					"const": "create"
+				},
+				"service": {
+					"type": "string",
+					"minLength": 1
+				},
+				"resource": {
+					"type": "string",
+					"minLength": 1
+				},
+				"mode": {
+					"const": "inline"
+				},
+				"data": {
+					"$ref": "#/$defs/UI_ActionExpressionMap"
+				},
+				"idDestination": {
+					"type": "string",
+					"minLength": 1
+				}
+			}
+		},
+		"UI_ActionCreateFromPath": {
+			"description": "Creates from a whole resolved object, e.g. a page-local draft buffer.",
+			"type": "object",
+			"additionalProperties": false,
+			"required": ["fn", "service", "resource", "mode", "dataPath"],
+			"properties": {
+				"fn": {
+					"const": "create"
+				},
+				"service": {
+					"type": "string",
+					"minLength": 1
+				},
+				"resource": {
+					"type": "string",
+					"minLength": 1
+				},
+				"mode": {
+					"const": "fromPath"
+				},
+				"dataPath": {
+					"type": "string",
+					"minLength": 1
+				},
+				"idDestination": {
+					"type": "string",
+					"minLength": 1
+				}
+			}
+		},
+		"UI_ActionUpdateStore": {
+			"description": "Updates matching stored records. The filter must match at least one property; an update matching nothing is a no-op.",
+			"type": "object",
+			"additionalProperties": false,
+			"required": [
+				"fn",
+				"service",
+				"resource",
+				"mode",
+				"filter",
+				"changes"
+			],
+			"properties": {
+				"fn": {
+					"const": "update"
+				},
+				"service": {
+					"type": "string",
+					"minLength": 1
+				},
+				"resource": {
+					"type": "string",
+					"minLength": 1
+				},
+				"mode": {
+					"const": "store"
+				},
+				"filter": {
+					"$ref": "#/$defs/UI_ActionExpressionMap",
+					"minProperties": 1
+				},
+				"changes": {
+					"$ref": "#/$defs/UI_ActionExpressionMap"
+				}
+			}
+		},
+		"UI_ActionUpdateStoreFromPath": {
+			"description": "Store update whose changes come from a whole resolved object; the client strips any id before merging.",
+			"type": "object",
+			"additionalProperties": false,
+			"required": [
+				"fn",
+				"service",
+				"resource",
+				"mode",
+				"filter",
+				"changesPath"
+			],
+			"properties": {
+				"fn": {
+					"const": "update"
+				},
+				"service": {
+					"type": "string",
+					"minLength": 1
+				},
+				"resource": {
+					"type": "string",
+					"minLength": 1
+				},
+				"mode": {
+					"const": "store"
+				},
+				"filter": {
+					"$ref": "#/$defs/UI_ActionExpressionMap",
+					"minProperties": 1
+				},
+				"changesPath": {
+					"type": "string",
+					"minLength": 1
+				}
+			}
+		},
+		"UI_ActionUpdateDraft": {
+			"description": "Writes into the active create draft. Takes no filter - the scope is the flow's create draft.",
+			"type": "object",
+			"additionalProperties": false,
+			"required": ["fn", "service", "resource", "mode", "changes"],
+			"properties": {
+				"fn": {
+					"const": "update"
+				},
+				"service": {
+					"type": "string",
+					"minLength": 1
+				},
+				"resource": {
+					"type": "string",
+					"minLength": 1
+				},
+				"mode": {
+					"const": "draft"
+				},
+				"changes": {
+					"$ref": "#/$defs/UI_ActionExpressionMap"
+				}
+			}
+		},
+		"UI_ActionUpdateDraftFromPath": {
+			"description": "Draft update whose changes come from a whole resolved object.",
+			"type": "object",
+			"additionalProperties": false,
+			"required": ["fn", "service", "resource", "mode", "changesPath"],
+			"properties": {
+				"fn": {
+					"const": "update"
+				},
+				"service": {
+					"type": "string",
+					"minLength": 1
+				},
+				"resource": {
+					"type": "string",
+					"minLength": 1
+				},
+				"mode": {
+					"const": "draft"
+				},
+				"changesPath": {
+					"type": "string",
+					"minLength": 1
+				}
+			}
 		}
 	}
 }

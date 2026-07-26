@@ -8,12 +8,14 @@ import {
 	buildIdCandidates,
 	buildResourceAttributeCandidatesForResource,
 	buildRowAttributeCandidates,
+	createGetAttributeCandidatesForQualifier,
 	filterCandidates,
 	filterCandidatesForSuggestionContext,
 	getIdDisplayParts,
 	getIdDisplayText,
 	type IdCandidate,
 } from "./idCandidates";
+import { parseApiSourceMethod } from "./sourceBinding";
 
 const flowsById: Record<string, DATA_EVY_Flow> = {
 	"flow-1": {
@@ -22,6 +24,7 @@ const flowsById: Record<string, DATA_EVY_Flow> = {
 		pageIds: ["page-1", "page-2"],
 		createdAt: "",
 		updatedAt: "",
+		visibility: "public",
 	},
 };
 
@@ -33,6 +36,7 @@ const pagesById: Record<string, DATA_EVY_Page> = {
 		rowIds: ["parent-row"],
 		createdAt: "",
 		updatedAt: "",
+		visibility: "public",
 	},
 	"page-2": {
 		id: "page-2",
@@ -41,6 +45,7 @@ const pagesById: Record<string, DATA_EVY_Page> = {
 		rowIds: [],
 		createdAt: "",
 		updatedAt: "",
+		visibility: "public",
 	},
 };
 
@@ -380,5 +385,44 @@ describe("idCandidates", () => {
 			},
 			{ type: "text", text: ")", start: 23, end: 24 },
 		]);
+	});
+});
+
+describe("api-backed row sources", () => {
+	// The production path the builder uses: a row whose source is {$api:...}
+	// offers the procedure's result attributes for `$datum`.
+	function candidatesForSource(rowSource: string): string[] {
+		return createGetAttributeCandidatesForQualifier({
+			serviceResources: [],
+			resourceAttributeMetadata: [],
+			rowSource,
+		})("$datum").map((candidate) => candidate.name);
+	}
+
+	test("offers a procedure's result attributes", () => {
+		const names = candidatesForSource("{$api:place_search}");
+
+		expect(names).toContain("id");
+		expect(names).toContain("street");
+		expect(names).toContain("latitude");
+		expect(names).toContain("longitude");
+		expect(names).not.toContain("name");
+		expect(names).not.toContain("address.street");
+	});
+
+	test("offers nothing for an undeclared procedure", () => {
+		expect(candidatesForSource("{$api:unknown_method}")).toEqual([]);
+	});
+
+	test("offers nothing for a procedure with no bindable rows", () => {
+		// sync is declared, but its response is an envelope.
+		expect(candidatesForSource("{$api:sync}")).toEqual([]);
+	});
+
+	test("parseApiSourceMethod only matches api sources", () => {
+		expect(parseApiSourceMethod("{$api:place_search}")).toBe(
+			"place_search",
+		);
+		expect(parseApiSourceMethod("{items.title}")).toBeNull();
 	});
 });

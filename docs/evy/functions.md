@@ -1,5 +1,12 @@
 # Functions in EVY
 
+> The normative behavioural reference is the conformance corpus at
+> [`types/grammar/conformance.json`](../../types/grammar/conformance.json)
+> (see its [README](../../types/grammar/README.md)). It is executed by both the
+> Swift and TypeScript test suites, and records current behaviour — including
+> known warts — as runnable vectors. Where this document and the corpus
+> disagree, the corpus is what the clients actually do.
+
 Functions are used to convert an input into a different output. For example formatting a date.
 
 -   Some default functions are available (eg `formatDecimal`) and some are composed and sent via JSON config to the clients.
@@ -26,7 +33,7 @@ count({_variable_type_list_})
 
 #### length
 
-Returns the number of characters in a string argument. Missing paths and JSON `null` count as `0`; other non-strings count as `0` (no raw-argument echo).
+Returns the number of characters in a string argument. `length` is string-only: missing paths, JSON `null`, arrays, and numbers all count as `0` — use [`count`](#count) for collections.
 
 ```
 length({_variable_type_string_})
@@ -92,14 +99,18 @@ Comparison expressions resolve to `true` or `false` in display text. They are us
 - **Boolean combinators**: `||` (OR), `&&` (AND)
 - **Grouping**: `()` (parentheses)
 
-Both sides of a comparison are resolved as data paths, string literals, numbers, or nested function calls before comparing. Numeric values compare numerically; strings compare lexicographically.
+Both sides of a comparison are resolved as data paths, unquoted literals, numbers, or nested function calls before comparing. Numeric values compare numerically; strings compare lexicographically.
+
+> **Quotes are forbidden inside comparison blocks.** A block containing a `"` is not recognised as a comparison at all: it is never evaluated, the raw text leaks into display, and as a `condition` it is treated as false. Write string literals bare — `{item.title == Amazing}`, not `{item.title == "Amazing"}`. Quotes *are* required elsewhere: in `create`/`update` action data (`status: "pending"`) and in format patterns (`formatDatetime(x, "HH:mm")`).
 
 ```
-{item.title == "Amazing"}
+{item.title == Amazing}
 {count(item.photos) > 0}
 {item.price > 100 && item.price < 500}
-{(item.width == item.height) || item.type == "square"}
+{(item.width == item.height) || item.type == square}
 ```
+
+Boolean literals are valid as standalone conditions: `{true}` and `{false}` evaluate directly without a comparison operator.
 
 The `visible` field on rows uses these expressions natively. A row with `visible: "{item.enabled == true}"` only renders when the condition holds.
 

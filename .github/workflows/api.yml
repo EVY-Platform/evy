@@ -12,6 +12,7 @@ on:
 
 jobs:
     api_lint:
+        name: API Lint
         defaults:
             run:
                 working-directory: api
@@ -35,6 +36,7 @@ jobs:
               run: bun run lint
 
     api_build:
+        name: API Build
         defaults:
             run:
                 working-directory: api
@@ -57,7 +59,28 @@ jobs:
               if: steps.setup.outputs.has-changes == 'true'
               run: bun run build
 
+    scripts_tests:
+        name: Scripts Tests
+        timeout-minutes: 2
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v6
+
+            - name: Setup environment
+              uses: ./.github/actions/setup-bun
+              id: setup
+              with:
+                  working-directory: .
+                  path-filter: "scripts/**"
+                  path-filter-extra: "types/**"
+
+            - name: Run tests
+              if: steps.setup.outputs.has-changes == 'true'
+              run: bun run test:scripts
+
     api_tests:
+        name: API Tests
         defaults:
             run:
                 working-directory: api

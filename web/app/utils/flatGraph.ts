@@ -14,7 +14,7 @@ import type {
 	DATA_EVY_RowData,
 	UI_RowActions,
 } from "evy-types";
-import { parseBranch } from "./actionBranch";
+import { branchForStorage, parseBranch } from "./actionBranch";
 import { collectSubtreeRowIds, type FlowEntityMaps } from "./flowEntities";
 import { compactRowActions, normalizeStoredRowActions } from "./rowActions";
 import {
@@ -589,6 +589,69 @@ export function updatePageTitle(
 }
 
 /**
+ * Applies a record pushed by the server.
+ *
+ * A push is ignored when the local copy is at least as new, which covers the
+ * echo of our own write and, more importantly, avoids overwriting an edit the
+ * user has made since the push was generated.
+ */
+export function applyRemoteRecord(
+	maps: FlowEntityMaps,
+	resource: string,
+	record: { id: string; updatedAt?: string; deletedAt?: string },
+	operation: "create" | "update" | "delete",
+): FlowEntityMaps {
+	const mapKey =
+		resource === "flows"
+			? "flowsById"
+			: resource === "pages"
+				? "pagesById"
+				: resource === "rows"
+					? "rowsById"
+					: null;
+	if (!mapKey || !record?.id) return maps;
+
+	const collection = maps[mapKey] as Record<string, { updatedAt?: string }>;
+	const existing = collection[record.id];
+
+	if (operation === "delete" || record.deletedAt) {
+		if (!existing) return maps;
+		const { [record.id]: _removed, ...rest } = collection;
+		return { ...maps, [mapKey]: rest };
+	}
+
+	if (existing?.updatedAt && record.updatedAt) {
+		if (existing.updatedAt >= record.updatedAt) return maps;
+	}
+
+	return { ...maps, [mapKey]: { ...collection, [record.id]: record } };
+}
+
+/**
+ * Set (or clear) the entity a flow declares it submits. Clients validate their
+ * create(...,submit) actions against this instead of inferring the target.
+ */
+export function updateFlowSubmits(
+	maps: FlowEntityMaps,
+	flowId: string,
+	submits: { service: string; resource: string } | undefined,
+): FlowEntityMaps {
+	const flow = maps.flowsById[flowId];
+	if (!flow) return maps;
+	const { submits: _dropped, ...withoutSubmits } = flow;
+	const nextFlow: DATA_EVY_Flow = submits
+		? { ...withoutSubmits, submits }
+		: withoutSubmits;
+	return {
+		...maps,
+		flowsById: {
+			...maps.flowsById,
+			[flowId]: { ...nextFlow, updatedAt: now() },
+		},
+	};
+}
+
+/**
  * Add a new flow with its pages and rows to the maps.
  */
 export function addFlowRecords(
@@ -706,7 +769,9 @@ export function ensureShowAction(
 	if (!row) return maps;
 	const existingActions =
 		normalizeStoredRowActions(row.data.actions).tap ?? [];
-	const showBranch = `{show(${sheetRowId})}`;
+	// New actions are written in the structured form; existing ones are only
+	// converted when the author saves them.
+	const showBranch = branchForStorage(`{show(${sheetRowId})}`);
 
 	let updatedExisting = false;
 	const nextActions = existingActions.map((action) => {

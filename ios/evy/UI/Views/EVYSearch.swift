@@ -10,7 +10,7 @@ import SwiftUI
 struct EVYSearch: View {
   let destination: String
   let placeholder: String?
-  let draftScopeId: String?
+  let scope: EVYScope
   let onSelect: ((EVYJson) -> Void)?
 
   @Environment(\.dismiss) private var dismiss
@@ -24,13 +24,12 @@ struct EVYSearch: View {
 
   init(
     source: String, destination: String, placeholder: String?, resultTemplate: UI_Row?,
-    scopeId: String? = nil,
-    draftScopeId: String? = nil,
+    scope: EVYScope = .empty,
     onSelect: ((EVYJson) -> Void)? = nil
   ) {
     self.destination = destination
     self.placeholder = placeholder
-    self.draftScopeId = draftScopeId
+    self.scope = scope
     self.onSelect = onSelect
     searchSource = EVY.classifySource(source)
 
@@ -38,11 +37,12 @@ struct EVYSearch: View {
     case .local:
       localResults = EVYState(
         textToWatch: source,
+        scope: scope,
         setter: {
           EVYSearchResult.loadLocalResults(
             source: source,
             resultTemplate: resultTemplate,
-            scopeId: scopeId
+            scopeId: scope.cacheScopeId
           )
         }
       )
@@ -52,7 +52,7 @@ struct EVYSearch: View {
         initialValue: EVYSearchModel(
           method: method,
           resultTemplate: resultTemplate,
-          scopeId: scopeId
+          scopeId: scope.cacheScopeId
         )
       )
     }
@@ -117,7 +117,7 @@ struct EVYSearch: View {
       try EVY.writeRawValue(
         EVY.searchDestinationValue(from: datum, destination: destination),
         to: destination,
-        scopeId: draftScopeId
+        scopeId: scope.draftScopeId
       )
       onSelect?(datum)
       dismiss()

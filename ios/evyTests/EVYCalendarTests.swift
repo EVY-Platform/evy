@@ -225,8 +225,8 @@ final class EVYCalendarTests: XCTestCase {
       .string("2026-06-04T09:00:00"),
     ])
     let actions = UI_RowActions(
-      tap: [rowAction(true: "{close()}")],
-      tapRow: [rowAction(true: "{select($datum)}")]
+      tap: [rowAction(true: .close)],
+      tapRow: [rowAction(true: .select(value: "$datum"))]
     )
 
     EVYActionRunner.run(

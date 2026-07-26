@@ -1,9 +1,11 @@
 import type { UI_RowAction } from "evy-types";
 import { useCallback, useMemo, useState } from "react";
-import { createPortal } from "react-dom";
 
-import { useEscapeKey } from "../hooks/useEscapeKey";
 import { useFlowsContext } from "../state/contexts/FlowsContext";
+import {
+	branchForStorage,
+	branchToEditableString,
+} from "../utils/actionBranch";
 import {
 	type ConditionExpression,
 	parseCondition,
@@ -19,9 +21,9 @@ import {
 	buildIdCandidates,
 	createGetAttributeCandidatesForQualifier,
 } from "../utils/idCandidates";
-
 import { BranchEditor } from "./actionPopup/BranchEditor";
 import { ConditionGroupEditor } from "./actionPopup/ConditionGroupEditor";
+import { Modal } from "./Modal";
 
 type ActionPopupProps = {
 	action: UI_RowAction;
@@ -49,14 +51,19 @@ export function ActionPopup({
 	const [expression, setExpression] = useState<ConditionExpression | null>(
 		() => parseCondition(action.condition),
 	);
-	const [trueBranch, setTrueBranch] = useState(action.true);
-	const [falseBranch, setFalseBranch] = useState(action.false);
+	const [trueBranch, setTrueBranch] = useState(() =>
+		branchToEditableString(action.true),
+	);
+	const [falseBranch, setFalseBranch] = useState(() =>
+		branchToEditableString(action.false),
+	);
 
 	const draftSignals = useMemo(
 		() => collectDraftSignals(flowsById, pagesById, rowsById, activeFlowId),
 		[flowsById, pagesById, rowsById, activeFlowId],
 	);
-	const { draftVariables, draftUpdateTargets } = draftSignals;
+	const { draftVariables, draftUpdateTargets, declaredSubmits } =
+		draftSignals;
 
 	const idCandidates = useMemo(
 		() => [
@@ -76,152 +83,130 @@ export function ActionPopup({
 		[serviceResources, resourceAttributeMetadata],
 	);
 
-	const canSave = useMemo(() => {
-		const finalizedTrue = finalizeBranchForSave(
-			trueBranch,
-			draftVariables,
-			draftUpdateTargets,
-		);
-		const finalizedFalse = finalizeBranchForSave(
-			falseBranch,
-			draftVariables,
-			draftUpdateTargets,
-		);
-		return finalizedTrue !== null && finalizedFalse !== null;
-	}, [trueBranch, falseBranch, draftVariables, draftUpdateTargets]);
+	/**
+	 * Both branches in their storable form, or null where one cannot be saved.
+	 *
+	 * One computation feeds both the save button's enabled state and the save
+	 * itself, which previously ran the same conversion twice behind dependency
+	 * lists that had to be kept in step.
+	 */
+	const finalized = useMemo(
+		() => ({
+			trueBranch: finalizeBranchForSave(trueBranch, declaredSubmits),
+			falseBranch: finalizeBranchForSave(falseBranch, declaredSubmits),
+		}),
+		[trueBranch, falseBranch, declaredSubmits],
+	);
+
+	const canSave =
+		finalized.trueBranch !== null && finalized.falseBranch !== null;
 
 	const handleSave = useCallback(() => {
-		const finalizedTrue = finalizeBranchForSave(
-			trueBranch,
-			draftVariables,
-			draftUpdateTargets,
-		);
-		const finalizedFalse = finalizeBranchForSave(
-			falseBranch,
-			draftVariables,
-			draftUpdateTargets,
-		);
-		if (finalizedTrue === null || finalizedFalse === null) return;
+		if (finalized.trueBranch === null || finalized.falseBranch === null) {
+			return;
+		}
+		// Conversion happens on save, never on load, so opening and cancelling
+		// an action cannot rewrite the stored row.
 		onSave({
 			condition: serializeCondition(expression),
-			true: finalizedTrue,
-			false: finalizedFalse,
+			true: branchForStorage(finalized.trueBranch),
+			false: branchForStorage(finalized.falseBranch),
 		});
-	}, [
-		expression,
-		trueBranch,
-		falseBranch,
-		draftVariables,
-		draftUpdateTargets,
-		onSave,
-	]);
+	}, [expression, finalized, onSave]);
 
-	useEscapeKey(onCancel);
+	return (
+		<Modal
+			onClose={onCancel}
+			panelClassName="evy-modal-panel--action"
+			label={`Edit action ${actionIndex + 1}`}
+		>
+			<div className="evy-popup-header">
+				<span className="evy-text-lg evy-font-semibold">
+					Action {actionIndex + 1}
+				</span>
+			</div>
 
-	return createPortal(
-		<div className="evy-modal-root">
-			<button
-				type="button"
-				className="evy-modal-backdrop"
-				aria-label="Close dialog"
-				onClick={onCancel}
-			/>
-			<div
-				className="evy-modal-panel evy-modal-panel--action"
-				role="dialog"
-				aria-label={`Edit action ${actionIndex + 1}`}
-			>
-				<div className="evy-popup-header">
-					<span className="evy-text-lg evy-font-semibold">
-						Action {actionIndex + 1}
-					</span>
+			<div className="evy-popup-body">
+				<div>
+					<span className="evy-popup-section-title">Conditions</span>
+					<ConditionGroupEditor
+						expression={expression}
+						draftVariables={draftVariables}
+						serviceResources={serviceResources}
+						idCandidates={idCandidates}
+						getAttributeCandidatesForQualifier={
+							getAttributeCandidatesForQualifier
+						}
+						onChange={setExpression}
+						idPrefix={`condition-${actionIndex}`}
+						isTopLevel
+					/>
 				</div>
 
-				<div className="evy-popup-body">
+				<div className="evy-popup-branches">
 					<div>
-						<span className="evy-popup-section-title">
-							Conditions
-						</span>
-						<ConditionGroupEditor
-							expression={expression}
+						<span className="evy-popup-section-title">If true</span>
+						<BranchEditor
+							branchId={`true-${actionIndex}`}
+							value={trueBranch}
 							draftVariables={draftVariables}
+							flowsById={flowsById}
+							pagesById={pagesById}
 							serviceResources={serviceResources}
 							idCandidates={idCandidates}
+							rowsById={rowsById}
+							defaultSheetRowId={defaultSheetRowId}
+							draftUpdateTargets={draftUpdateTargets}
+							declaredSubmits={declaredSubmits}
 							getAttributeCandidatesForQualifier={
 								getAttributeCandidatesForQualifier
 							}
-							onChange={setExpression}
-							idPrefix={`condition-${actionIndex}`}
-							isTopLevel
+							onChange={setTrueBranch}
 						/>
 					</div>
 
-					<div className="evy-popup-branches">
-						<div>
-							<span className="evy-popup-section-title">
-								If true
-							</span>
-							<BranchEditor
-								branchId={`true-${actionIndex}`}
-								value={trueBranch}
-								draftVariables={draftVariables}
-								flowsById={flowsById}
-								pagesById={pagesById}
-								serviceResources={serviceResources}
-								idCandidates={idCandidates}
-								rowsById={rowsById}
-								defaultSheetRowId={defaultSheetRowId}
-								draftUpdateTargets={draftUpdateTargets}
-								getAttributeCandidatesForQualifier={
-									getAttributeCandidatesForQualifier
-								}
-								onChange={setTrueBranch}
-							/>
-						</div>
-
-						<div>
-							<span className="evy-popup-section-title">
-								If false
-							</span>
-							<BranchEditor
-								branchId={`false-${actionIndex}`}
-								value={falseBranch}
-								draftVariables={draftVariables}
-								flowsById={flowsById}
-								pagesById={pagesById}
-								serviceResources={serviceResources}
-								idCandidates={idCandidates}
-								rowsById={rowsById}
-								defaultSheetRowId={defaultSheetRowId}
-								draftUpdateTargets={draftUpdateTargets}
-								getAttributeCandidatesForQualifier={
-									getAttributeCandidatesForQualifier
-								}
-								onChange={setFalseBranch}
-							/>
-						</div>
+					<div>
+						<span className="evy-popup-section-title">
+							If false
+						</span>
+						<BranchEditor
+							branchId={`false-${actionIndex}`}
+							value={falseBranch}
+							draftVariables={draftVariables}
+							flowsById={flowsById}
+							pagesById={pagesById}
+							serviceResources={serviceResources}
+							idCandidates={idCandidates}
+							rowsById={rowsById}
+							defaultSheetRowId={defaultSheetRowId}
+							draftUpdateTargets={draftUpdateTargets}
+							declaredSubmits={declaredSubmits}
+							getAttributeCandidatesForQualifier={
+								getAttributeCandidatesForQualifier
+							}
+							onChange={setFalseBranch}
+						/>
 					</div>
 				</div>
-
-				<div className="evy-modal-footer">
-					<button
-						type="button"
-						className="evy-modal-btn evy-modal-btn--md evy-modal-btn-cancel"
-						onClick={onCancel}
-					>
-						Cancel
-					</button>
-					<button
-						type="button"
-						className="evy-modal-btn evy-modal-btn--md evy-modal-btn-primary"
-						onClick={handleSave}
-						disabled={!canSave}
-					>
-						Save
-					</button>
-				</div>
 			</div>
-		</div>,
-		document.body,
+
+			<div className="evy-modal-footer">
+				<button
+					type="button"
+					className="evy-modal-btn evy-modal-btn--md evy-modal-btn-cancel"
+					onClick={onCancel}
+				>
+					Cancel
+				</button>
+				<button
+					type="button"
+					className="evy-modal-btn evy-modal-btn--md evy-modal-btn-primary"
+					onClick={handleSave}
+					disabled={!canSave}
+				>
+					Save
+				</button>
+			</div>
+		</Modal>
 	);
 }

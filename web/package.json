@@ -9,6 +9,7 @@
 		"build": "bun --env-file=../.env run dev/build.ts",
 		"start": "bun --env-file=../.env run dev/server.ts",
 		"lint": "bunx biome check .",
+		"typecheck": "bunx tsc --noEmit",
 		"format": "bunx biome check --write .",
 		"setup": "mkdir -p dist/.well-known/appspecific && cp app/index.html dist/ && cp -r app/public/* dist/ && cp app/globals.css dist/ && cp -r app/.well-known/* dist/.well-known/",
 		"test:unit": "bun test --define __API_URL__='\"ws://127.0.0.1:1\"' app/",
@@ -32,6 +33,7 @@
 		"@playwright/test": "1.60.0",
 		"@types/bun": "^1.3.14",
 		"@types/react": "^19.2.17",
-		"@types/react-dom": "^19.2.3"
+		"@types/react-dom": "^19.2.3",
+		"typescript": "^5.9.3"
 	}
 }

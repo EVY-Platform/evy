@@ -1,12 +1,10 @@
 import type { DATA_EVY_Flow, DATA_EVY_Page, DATA_EVY_Row } from "evy-types";
-import { EVY_CORE_SERVICE } from "evy-types/coreResources";
-import { MARKETPLACE_SERVICE } from "evy-types/marketplaceResources";
 import { useCallback, useMemo } from "react";
 import type { ServiceResource } from "../../types/resources";
 import {
 	type ActionFunction,
 	createHasInlineDataArg,
-	parseBranch,
+	parseBranchText,
 	ROW_ID_ARG_FUNCTIONS,
 	serializeBranch,
 	updateUsesDraftMarker,
@@ -20,7 +18,10 @@ import {
 } from "../../utils/actionFlowOptions";
 import { shouldOfferCreateSubmitWithFlow } from "../../utils/createDraftSignals";
 import type { IdCandidate } from "../../utils/idCandidates";
-import { displayLabel } from "../../utils/labelFormatting";
+import {
+	SERVICE_OPTIONS,
+	toResourceOptions,
+} from "../../utils/serviceResourceOptions";
 import { BuilderAssist } from "../BuilderAssist";
 import { type PopoverOption, PopoverSelect } from "../PopoverSelect";
 import { BRANCH_FUNCTION_OPTIONS } from "./actionPopupConstants";
@@ -36,24 +37,12 @@ type BranchEditorProps = {
 	rowsById: Record<string, DATA_EVY_Row>;
 	defaultSheetRowId?: string;
 	draftUpdateTargets: Set<string>;
+	declaredSubmits?: string | null;
 	getAttributeCandidatesForQualifier: (qualifier: string) => IdCandidate[];
 	onChange: (value: string) => void;
 };
 
 type ArgDropdownSlot = { slotId: string; options: PopoverOption[] };
-
-function toResourceOptions(
-	serviceResources: ServiceResource[],
-	serviceId: string,
-): PopoverOption[] {
-	return serviceResources
-		.filter((resource) => resource.fkServiceId === serviceId)
-		.map((resource) => ({
-			value: resource.id,
-			label: displayLabel(resource.name),
-		}))
-		.sort((a, b) => a.label.localeCompare(b.label));
-}
 
 function buildArgDropdowns(
 	functionName: ActionFunction | "",
@@ -97,12 +86,8 @@ function buildArgDropdowns(
 	}
 
 	if (functionName === "create" || functionName === "update") {
-		const namespaceOptions: PopoverOption[] = [
-			{ value: MARKETPLACE_SERVICE, label: "Marketplace" },
-			{ value: EVY_CORE_SERVICE, label: "Evy" },
-		];
 		const dropdowns: ArgDropdownSlot[] = [
-			{ slotId: `${functionName}-namespace`, options: namespaceOptions },
+			{ slotId: `${functionName}-namespace`, options: SERVICE_OPTIONS },
 		];
 		if (currentArgs[0]) {
 			dropdowns.push({
@@ -139,11 +124,12 @@ export function BranchEditor({
 	idCandidates,
 	rowsById,
 	defaultSheetRowId,
-	draftUpdateTargets,
+	draftUpdateTargets: _draftUpdateTargets,
+	declaredSubmits = null,
 	getAttributeCandidatesForQualifier,
 	onChange,
 }: BranchEditorProps) {
-	const parsed = useMemo(() => parseBranch(value), [value]);
+	const parsed = useMemo(() => parseBranchText(value), [value]);
 	const selectedFunction = parsed?.functionName ?? "";
 	const args = parsed?.args ?? [];
 
@@ -195,10 +181,9 @@ export function BranchEditor({
 		return shouldOfferCreateSubmitWithFlow(
 			serviceId,
 			resourceId,
-			draftVariables,
-			draftUpdateTargets,
+			declaredSubmits,
 		);
-	}, [selectedFunction, args, draftVariables, draftUpdateTargets]);
+	}, [selectedFunction, args, declaredSubmits]);
 
 	const showSubmitCreateHint =
 		offerSubmitCreate && !createHasInlineDataArg(args);

@@ -29,20 +29,46 @@ extension EVY {
     try privateStore.wipeAll()
   }
 
-  static func applySyncedValue(namespace: String, resource: String, value: EVYJson) throws {
+  /// Applies synced rows, removing any the server has tombstoned.
+  ///
+  /// `assignsOrder` is true only for a full sync: an incremental response
+  /// contains just the rows that changed, so its positions say nothing about
+  /// where those rows belong in the collection.
+  static func applySyncedValue(
+    namespace: String,
+    resource: String,
+    value: EVYJson,
+    assignsOrder: Bool = true
+  ) throws {
     if case .array(let items) = value {
-      for (sortIndex, item) in items.enumerated() {
+      for (position, item) in items.enumerated() {
+        if isTombstoned(item) {
+          try removeSyncedRecord(namespace: namespace, resource: resource, value: item)
+          continue
+        }
         try applySyncedRecord(
           namespace: namespace,
           resource: resource,
           value: item,
-          sortIndex: sortIndex
+          sortIndex: assignsOrder ? position : nil
         )
       }
       return
     }
 
+    if isTombstoned(value) {
+      try removeSyncedRecord(namespace: namespace, resource: resource, value: value)
+      return
+    }
     try applySyncedRecord(namespace: namespace, resource: resource, value: value)
+  }
+
+  /// A record the server has deleted. `deletedAt` is absent on live records.
+  private static func isTombstoned(_ value: EVYJson) -> Bool {
+    guard case .dictionary(let record) = value else { return false }
+    guard let deletedAt = record["deletedAt"] else { return false }
+    if case .null = deletedAt { return false }
+    return true
   }
 
   private static func applySyncedRecord(
@@ -53,10 +79,12 @@ extension EVY {
   ) throws {
     let targetStore = storeForSyncedRecord(value)
     let recordId = syncedRecordId(for: value)
+    // An existing row keeps the position it already has: re-ordering must come
+    // from a full sync, never from a delta that happens to include it.
     let resolvedSortIndex =
-      sortIndex
-      ?? (try? targetStore.get(namespace: namespace, resource: resource, id: recordId))?
+      (try? targetStore.get(namespace: namespace, resource: resource, id: recordId))?
       .sortIndex
+      ?? sortIndex
       ?? targetStore.nextSortIndex(namespace: namespace, resource: resource)
 
     let encoded = try JSONEncoder().encode(value)
@@ -71,6 +99,32 @@ extension EVY {
     let counterpartStore = otherSyncedStore(than: targetStore)
     if (try? counterpartStore.get(namespace: namespace, resource: resource, id: recordId)) != nil {
       try counterpartStore.delete(namespace: namespace, resource: resource, id: recordId)
+    }
+  }
+
+  /// Removes records the server reported as deleted. Without this a `delete`
+  /// notification would fall through to the upsert path and resurrect the row.
+  static func removeSyncedValue(namespace: String, resource: String, value: EVYJson) throws {
+    if case .array(let items) = value {
+      for item in items {
+        try removeSyncedRecord(namespace: namespace, resource: resource, value: item)
+      }
+      return
+    }
+
+    try removeSyncedRecord(namespace: namespace, resource: resource, value: value)
+  }
+
+  private static func removeSyncedRecord(
+    namespace: String,
+    resource: String,
+    value: EVYJson
+  ) throws {
+    let recordId = syncedRecordId(for: value)
+    // Visibility may have changed before the delete, so clear both stores.
+    for store in syncedStores()
+    where (try? store.get(namespace: namespace, resource: resource, id: recordId)) != nil {
+      try store.delete(namespace: namespace, resource: resource, id: recordId)
     }
   }
 

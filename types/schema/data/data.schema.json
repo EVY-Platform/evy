@@ -86,6 +86,11 @@
 				"updatedAt": {
 					"type": "string",
 					"format": "date-time"
+				},
+				"deletedAt": {
+					"description": "Set when the record is deleted. Tombstoned rows are excluded from plain reads but included in incremental ones, so clients learn about deletions.",
+					"type": "string",
+					"format": "date-time"
 				}
 			}
 		},
@@ -108,16 +113,39 @@
 				"visibility"
 			],
 			"properties": {
-				"id": { "type": "string", "format": "uuid" },
-				"fk": { "type": "string", "format": "uuid" },
-				"service": { "type": "string", "format": "uuid" },
-				"resource": { "type": "string", "format": "uuid" },
+				"id": {
+					"type": "string",
+					"format": "uuid"
+				},
+				"fk": {
+					"type": "string",
+					"format": "uuid"
+				},
+				"service": {
+					"type": "string",
+					"format": "uuid"
+				},
+				"resource": {
+					"type": "string",
+					"format": "uuid"
+				},
 				"archivedAt": {
 					"type": ["string", "null"],
 					"format": "date-time"
 				},
-				"createdAt": { "type": "string", "format": "date-time" },
-				"updatedAt": { "type": "string", "format": "date-time" },
+				"createdAt": {
+					"type": "string",
+					"format": "date-time"
+				},
+				"updatedAt": {
+					"type": "string",
+					"format": "date-time"
+				},
+				"deletedAt": {
+					"description": "Set when the record is deleted. Tombstoned rows are excluded from plain reads but included in incremental ones, so clients learn about deletions.",
+					"type": "string",
+					"format": "date-time"
+				},
 				"status": {
 					"type": "string",
 					"enum": ["pending", "accepted"]
@@ -161,6 +189,9 @@
 						"format": "uuid"
 					}
 				},
+				"submits": {
+					"$ref": "#/$defs/DATA_EVY_FlowSubmits"
+				},
 				"visibility": {
 					"$ref": "#/$defs/Visibility",
 					"default": "public"
@@ -172,6 +203,27 @@
 				"updatedAt": {
 					"type": "string",
 					"format": "date-time"
+				},
+				"deletedAt": {
+					"description": "Set when the record is deleted. Tombstoned rows are excluded from plain reads but included in incremental ones, so clients learn about deletions.",
+					"type": "string",
+					"format": "date-time"
+				}
+			}
+		},
+		"DATA_EVY_FlowSubmits": {
+			"description": "Domain entity a flow submits via create(...,submit). Declared so clients validate rather than infer submission semantics from action strings.",
+			"type": "object",
+			"additionalProperties": false,
+			"required": ["service", "resource"],
+			"properties": {
+				"service": {
+					"type": "string",
+					"format": "uuid"
+				},
+				"resource": {
+					"type": "string",
+					"minLength": 1
 				}
 			}
 		},
@@ -224,6 +276,17 @@
 				"description": {
 					"type": "string"
 				},
+				"wsHost": {
+					"description": "WebSocket host the API dials for this service. Falls back to the <NAME>_WS_HOST env var when unset.",
+					"type": "string",
+					"maxLength": 253
+				},
+				"wsPort": {
+					"description": "WebSocket port paired with wsHost. Falls back to <NAME>_WS_PORT when unset.",
+					"type": "integer",
+					"minimum": 1,
+					"maximum": 65535
+				},
 				"sortOrder": {
 					"type": "integer"
 				},
@@ -236,6 +299,11 @@
 					"format": "date-time"
 				},
 				"updatedAt": {
+					"type": "string",
+					"format": "date-time"
+				},
+				"deletedAt": {
+					"description": "Set when the record is deleted. Tombstoned rows are excluded from plain reads but included in incremental ones, so clients learn about deletions.",
 					"type": "string",
 					"format": "date-time"
 				}
@@ -288,6 +356,11 @@
 					"format": "date-time"
 				},
 				"updatedAt": {
+					"type": "string",
+					"format": "date-time"
+				},
+				"deletedAt": {
+					"description": "Set when the record is deleted. Tombstoned rows are excluded from plain reads but included in incremental ones, so clients learn about deletions.",
 					"type": "string",
 					"format": "date-time"
 				}
@@ -349,6 +422,11 @@
 					"type": "string",
 					"format": "date-time"
 				},
+				"deletedAt": {
+					"description": "Set when the record is deleted. Tombstoned rows are excluded from plain reads but included in incremental ones, so clients learn about deletions.",
+					"type": "string",
+					"format": "date-time"
+				},
 				"retired": {
 					"type": "boolean",
 					"default": false
@@ -390,6 +468,11 @@
 				"updatedAt": {
 					"type": "string",
 					"format": "date-time"
+				},
+				"deletedAt": {
+					"description": "Set when the record is deleted. Tombstoned rows are excluded from plain reads but included in incremental ones, so clients learn about deletions.",
+					"type": "string",
+					"format": "date-time"
 				}
 			}
 		},
@@ -415,6 +498,11 @@
 					"format": "date-time"
 				},
 				"updatedAt": {
+					"type": "string",
+					"format": "date-time"
+				},
+				"deletedAt": {
+					"description": "Set when the record is deleted. Tombstoned rows are excluded from plain reads but included in incremental ones, so clients learn about deletions.",
 					"type": "string",
 					"format": "date-time"
 				}
@@ -465,15 +553,23 @@
 				"updatedAt": {
 					"type": "string",
 					"format": "date-time"
+				},
+				"deletedAt": {
+					"description": "Set when the record is deleted. Tombstoned rows are excluded from plain reads but included in incremental ones, so clients learn about deletions.",
+					"type": "string",
+					"format": "date-time"
 				}
 			}
 		},
 		"DATA_EVY_RowData": {
+			"description": "Row payload. Unknown keys are unconstrained JSON. `additionalProperties: true` rather than a JSONValue $ref: the ref renders as a closed TypeScript index signature that conflicts with the typed properties below (a property may be undefined, which the JSONValue union excludes), while `true` renders `[k: string]: unknown`. Both accept exactly the same wire input.",
 			"type": "object",
-			"additionalProperties": {
-				"$ref": "../common/json.schema.json#/$defs/JSONValue"
-			},
+			"additionalProperties": true,
 			"properties": {
+				"actions": {
+					"description": "Trigger-keyed action lists. Optional for storage, but validated when present so a malformed shape is rejected at write time instead of silently dropping the row on the client.",
+					"$ref": "../sdui/evy.schema.json#/$defs/UI_RowActions"
+				},
 				"sheet_row_id": {
 					"type": "string",
 					"format": "uuid"
@@ -555,6 +651,11 @@
 					"format": "date-time"
 				},
 				"updatedAt": {
+					"type": "string",
+					"format": "date-time"
+				},
+				"deletedAt": {
+					"description": "Set when the record is deleted. Tombstoned rows are excluded from plain reads but included in incremental ones, so clients learn about deletions.",
 					"type": "string",
 					"format": "date-time"
 				}

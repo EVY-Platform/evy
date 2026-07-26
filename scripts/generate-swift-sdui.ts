@@ -127,6 +127,11 @@ ${rowEnumCases.join("\n")}
 function buildShapeOverrides(): Map<string, string> {
 	const overrides = new Map<string, string>();
 	overrides.set("UI_Row.type", "EVYRowType");
+	// Action branches are `oneOf [string, UI_ActionInvocation]`. This emitter has
+	// no notion of unions, so the branch type is handwritten in the app
+	// (EVYActionBranch) where the Codable conformance can decode either form.
+	overrides.set("UI_RowAction.true", "EVYActionBranch");
+	overrides.set("UI_RowAction.false", "EVYActionBranch");
 	return overrides;
 }
 

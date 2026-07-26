@@ -1,5 +1,10 @@
 import { describe, expect, it, mock } from "bun:test";
-import type { DATA_EVY_Flow, DATA_EVY_Page, DATA_EVY_Row } from "evy-types";
+import type {
+	DATA_EVY_Flow,
+	DATA_EVY_Page,
+	DATA_EVY_Row,
+	UI_RowActions,
+} from "evy-types";
 
 import type { AppState } from "../../types/actions";
 import type { Row, RowConfig } from "../../types/row";
@@ -440,8 +445,8 @@ describe("pageReducer", () => {
 
 	it("UPDATE_ROW_ACTIONS sets actions", () => {
 		const state = initialState();
-		const actions = {
-			tap: [{ condition: "", true: "{close()}", false: "" }],
+		const actions: UI_RowActions = {
+			tap: [{ condition: "", true: { fn: "close" }, false: "" }],
 		};
 		const next = pageReducer(state, {
 			type: "UPDATE_ROW_ACTIONS",
@@ -702,7 +707,13 @@ describe("pageReducer", () => {
 		});
 		expect(next.rowsById["footer-parent"]?.data.sheet_row_id).toBe(newId);
 		expect(next.rowsById["footer-parent"]?.data.actions).toEqual({
-			tap: [{ condition: "", true: `{show(${newId})}`, false: "" }],
+			tap: [
+				{
+					condition: "",
+					true: { fn: "show", rowId: newId },
+					false: "",
+				},
+			],
 		});
 	});
 
@@ -713,7 +724,7 @@ describe("pageReducer", () => {
 				tap: [
 					{
 						condition: "",
-						true: "{show(existing-sheet)}",
+						true: { fn: "show", rowId: "existing-sheet" },
 						false: "",
 					},
 				],
@@ -747,11 +758,11 @@ describe("pageReducer", () => {
 			tap: [
 				{
 					condition: "",
-					true: "{show(existing-sheet)}",
+					true: { fn: "show", rowId: "existing-sheet" },
 					false: "",
 				},
 			],
-		});
+		} satisfies UI_RowActions);
 	});
 
 	it("ADD_ROW replaces a sheet and updates only the default show action", () => {
@@ -759,10 +770,14 @@ describe("pageReducer", () => {
 			sheet_row_id: "old-sheet",
 			actions: {
 				tap: [
-					{ condition: "", true: "{show(old-sheet)}", false: "" },
+					{
+						condition: "",
+						true: { fn: "show", rowId: "old-sheet" },
+						false: "",
+					},
 					{
 						condition: "other",
-						true: "{show(other-page-row)}",
+						true: { fn: "show", rowId: "other-page-row" },
 						false: "",
 					},
 				],
@@ -793,13 +808,17 @@ describe("pageReducer", () => {
 		expect(next.rowsById.button?.data.sheet_row_id).toBe(newSheetId);
 		expect(next.rowsById.button?.data.actions).toEqual({
 			tap: [
-				{ condition: "", true: `{show(${newSheetId})}`, false: "" },
+				{
+					condition: "",
+					true: { fn: "show", rowId: newSheetId },
+					false: "",
+				},
 				{
 					condition: "other",
-					true: "{show(other-page-row)}",
+					true: { fn: "show", rowId: "other-page-row" },
 					false: "",
 				},
 			],
-		});
+		} satisfies UI_RowActions);
 	});
 });

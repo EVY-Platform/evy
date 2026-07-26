@@ -1,4 +1,4 @@
-import { and, asc, eq, gt } from "drizzle-orm";
+import { and, asc, eq, gt, isNull } from "drizzle-orm";
 
 import type {
 	CreateRequest,
@@ -24,6 +24,7 @@ import {
 	getUploadSession,
 	uploadSessionToBuffer,
 } from "../../shared/uploadSessions";
+import { omitNulls } from "./coreResource";
 import {
 	deleteFileBinaryIfExists,
 	readFileBinary,
@@ -39,7 +40,13 @@ type PreparedFileUpload = {
 
 // Resource operations
 
-export async function listFileRowsWithBinary(
+/**
+ * Binaries are returned only when a single file is addressed by id. Collection
+ * reads - notably every `sync` - return metadata alone, so a sync payload does
+ * not carry every changed file's bytes and a binary missing from disk cannot
+ * fail the whole sync. Clients fetch content lazily by id.
+ */
+export async function listFileRows(
 	db: EvyDb,
 	filter: GetRequest["filter"] | undefined,
 ): Promise<GetResponse> {
@@ -50,14 +57,20 @@ export async function listFileRowsWithBinary(
 		whereClauses.push(eq(file.id, filter.id));
 	}
 	if (filter?.updatedAfter) {
+		// Incremental reads carry tombstones so clients can drop deleted files.
 		whereClauses.push(gt(file.updatedAt, filter.updatedAfter));
+	} else {
+		whereClauses.push(isNull(file.deletedAt));
 	}
 
 	const query = whereClauses.length ? base.where(and(...whereClauses)) : base;
 	const rows = await query.orderBy(asc(file.updatedAt), asc(file.id));
-	const response = await Promise.all(
-		rows.map((row) => fileRowToGetFileResponse(row as DATA_EVY_File)),
-	);
+
+	const isSingleFileRead = Boolean(filter?.id);
+	const response = isSingleFileRead
+		? await Promise.all(rows.map(fileRowToGetFileResponse))
+		: rows.map(omitNulls);
+
 	return validateGetResponse(response);
 }
 
@@ -136,25 +149,28 @@ async function insertFileMetadata(
 			}
 			throw err;
 		});
-	const response = validateCreateResponse(inserted[0]);
+	const response = validateCreateResponse(omitNulls(inserted[0]));
 
 	notify(response);
 	return response;
 }
 
+/** Metadata is tombstoned; the binary is removed from disk immediately. */
 async function deleteFileMetadata(
 	db: EvyDb,
 	filter: DeleteRequest["filter"],
 	notify: (value: unknown) => void,
 ): Promise<DeleteResponse> {
+	const nowIso = new Date().toISOString();
 	const deleted = await db
-		.delete(file)
-		.where(eq(file.id, filter.id))
+		.update(file)
+		.set({ deletedAt: nowIso, updatedAt: nowIso })
+		.where(and(eq(file.id, filter.id), isNull(file.deletedAt)))
 		.returning();
 	if (deleted.length === 0) {
 		throw new Error("Resource not found");
 	}
-	const response = validateDeleteResponse(deleted[0]);
+	const response = validateDeleteResponse(omitNulls(deleted[0]));
 
 	notify(response);
 	return response;
@@ -204,8 +220,10 @@ async function createFileFromUpload(params: {
 
 // Response mapping
 
+type FileRow = typeof file.$inferSelect;
+
 async function fileRowToGetFileResponse(
-	metadata: DATA_EVY_File,
+	metadata: FileRow,
 ): Promise<FileWithBinary> {
 	let fileData: Buffer;
 	try {

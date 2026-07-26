@@ -50,9 +50,10 @@ func splitPropsFromText(_ props: String) throws -> [String] {
 @MainActor
 func parseTextFromText(
   _ input: String,
-  _ editing: Bool = false
+  _ editing: Bool = false,
+  scope: EVYScope? = nil
 ) throws -> EVYValue {
-  try parseText(EVYValue(input, nil, nil), editing)
+  try parseText(EVYValue(input, nil, nil), editing, scope)
 }
 
 @MainActor
@@ -241,15 +242,22 @@ func _parsePropsFromText(_ input: String) -> String {
 }
 
 @MainActor
-func _getDataFromText(_ input: String) throws -> EVYJson {
+func _getDataFromText(_ input: String, scope: EVYScope? = nil) throws -> EVYJson {
   let props = _parsePropsFromText(input)
-  return try _getDataFromProps(props)
+  return try _getDataFromProps(props, scope: scope)
 }
 
 @MainActor
-private func _resolveBindingRoot(_ props: String) throws -> (
+private func _resolveBindingRoot(
+  _ props: String,
+  scope explicitScope: EVYScope? = nil
+) throws -> (
   root: EVYJson, remainingProps: [String]
 ) {
+  // nil means "whatever the globals say", which is how every call site behaved
+  // before scope became a value. Default parameters cannot read main-actor
+  // state, so the fallback is resolved here instead.
+  let scope = explicitScope ?? .ambient
   let (store, cleanProps) = EVY.store(for: props)
   let splitProps = try splitPropsFromText(cleanProps)
   guard let firstProp = splitProps.first else {
@@ -272,13 +280,13 @@ private func _resolveBindingRoot(_ props: String) throws -> (
   }
 
   // 1. Check draft store — user's unsaved edits (exact path, then parent prefixes)
-  if let scopeId = EVY.draftStore.activeScopeId,
+  if let scopeId = scope.draftScopeId,
     let match = try? EVY.draftStore.draftMatch(splitProps: splitProps, scopeId: scopeId)
   {
     return (try match.draft.decoded(), match.remainingProps)
   }
 
-  if let scopeId = EVY.activeCacheScopeId,
+  if let scopeId = scope.cacheScopeId,
     let cachedRow = try? EVY.cacheStore.get(
       namespace: EVYNamespace.cache, resource: scopeId, id: firstProp)
   {
@@ -288,38 +296,59 @@ private func _resolveBindingRoot(_ props: String) throws -> (
   // 2. Fall back to persistent store — synced API data
   let json: EVYJson
   do {
-    json = try store.getJsonForBinding(key: firstProp, cacheScopeId: EVY.activeCacheScopeId)
+    json = try store.getJsonForBinding(key: firstProp, cacheScopeId: scope.cacheScopeId)
   } catch EVYDataError.keyNotFound {
     json = try EVY.getSyncedJsonForBinding(
-      key: firstProp, cacheScopeId: EVY.activeCacheScopeId)
+      key: firstProp, cacheScopeId: scope.cacheScopeId)
   }
   return (json, remainingProps)
 }
 
 @MainActor
-func _getDataFromProps(_ props: String) throws -> EVYJson {
-  let resolved = try _resolveBindingRoot(props)
+func _getDataFromProps(_ props: String, scope: EVYScope? = nil) throws -> EVYJson {
+  let resolved = try _resolveBindingRoot(props, scope: scope)
   return resolved.root.parseProp(props: resolved.remainingProps)
 }
 
 @MainActor
-func _getDataFromPropsStrict(_ props: String) -> EVYJson? {
-  guard let resolved = try? _resolveBindingRoot(props) else {
+func _getDataFromPropsStrict(_ props: String, scope: EVYScope? = nil) -> EVYJson? {
+  guard let resolved = try? _resolveBindingRoot(props, scope: scope) else {
     return nil
   }
   return resolved.root.parsePropStrict(props: resolved.remainingProps)
 }
 
 @MainActor
-func _getValueFromText(_ input: String, editing: Bool = false) throws -> EVYValue {
+func _getValueFromText(
+  _ input: String,
+  editing: Bool = false
+) throws -> EVYValue {
   let match = try parseTextFromText(input, editing)
   return EVYValue(match.value, match.prefix, match.suffix)
 }
 
 @MainActor
 func _evaluateFromText(_ input: String) throws -> Bool {
+  // A standalone boolean literal carries no comparison operator, so it never
+  // reaches the comparison path and would otherwise be resolved as a data path.
+  if let literal = standaloneBooleanLiteral(in: input) {
+    return literal
+  }
   let match = try parseTextFromText(input)
   return match.value == "true"
+}
+
+private func standaloneBooleanLiteral(in input: String) -> Bool? {
+  var trimmed = input.trimmingCharacters(in: .whitespacesAndNewlines)
+  if trimmed.hasPrefix("{") && trimmed.hasSuffix("}") {
+    trimmed = String(trimmed.dropFirst().dropLast())
+      .trimmingCharacters(in: .whitespacesAndNewlines)
+  }
+  switch trimmed {
+  case "true": return true
+  case "false": return false
+  default: return nil
+  }
 }
 
 private let formatFunctionsByBuildFunction = [
@@ -415,7 +444,8 @@ func _formatData(json: EVYJson, format: String) throws -> String {
 @MainActor
 private func parseText(
   _ input: EVYValue,
-  _ editing: Bool
+  _ editing: Bool,
+  _ scope: EVYScope? = nil
 ) throws -> EVYValue {
   if input.value.isEmpty {
     return input
@@ -424,13 +454,11 @@ private func parseText(
   if let (fullMatch, comparison) = parseComparisonFromText(input.value) {
     let comparisonResult = try evaluateBooleanExpression(comparison) { operand in
       let trimmedOperand = operand.trimmingCharacters(in: .whitespacesAndNewlines)
-      let parsedOperand = try parseText(
-        EVYValue(trimmedOperand, nil, nil),
-        editing)
+      let parsedOperand = try parseText(EVYValue(trimmedOperand, nil, nil), editing, scope)
       if parsedOperand.value != trimmedOperand {
         return parsedOperand.value
       }
-      if let propsValue = try? _getDataFromText("{\(trimmedOperand)}") {
+      if let propsValue = try? _getDataFromText("{\(trimmedOperand)}", scope: scope) {
         return propsValue.toString()
       }
       return parsedOperand.value
@@ -439,23 +467,19 @@ private func parseText(
       of: fullMatch,
       with: comparisonResult ? "true" : "false"
     )
-    return try parseText(
-      EVYValue(parsedInput, input.prefix, input.suffix),
-      editing)
+    return try parseText(EVYValue(parsedInput, input.prefix, input.suffix), editing, scope)
   }
 
   // Mixed interpolation blocks are text expressions, not prop paths. Unwrap them before
   // function evaluation so `{formatDimension(width) x formatDimension(height)}` never
   // reaches `parseProps` as `{20cm x 30cm}`.
   if let expression = parseTextExpressionInterpolation(input.value) {
-    let parsedInner = try parseText(EVYValue(expression.inner, nil, nil), editing)
+    let parsedInner = try parseText(EVYValue(expression.inner, nil, nil), editing, scope)
     let parsedInput = input.value.replacingOccurrences(
       of: expression.fullMatch,
       with: parsedInner.toString()
     )
-    return try parseText(
-      EVYValue(parsedInput, input.prefix, input.suffix),
-      editing)
+    return try parseText(EVYValue(parsedInput, input.prefix, input.suffix), editing, scope)
   }
 
   if let (match, funcName, funcArgs) =
@@ -472,7 +496,7 @@ private func parseText(
     case "count":
       value = evyCount(funcArgs)
     case "length":
-      value = evyCount(funcArgs)
+      value = evyLength(funcArgs)
     case "earliestDatetime":
       value = try evyEarliestDatetime(funcArgs)
     case "if":
@@ -521,19 +545,16 @@ private func parseText(
         EVYValue(
           parsedInput,
           returnPrefix ? value.prefix : input.prefix,
-          returnSuffix ? value.suffix : input.suffix),
-        editing)
+          returnSuffix ? value.suffix : input.suffix), editing, scope)
     }
   }
 
   if let (match, props) = parseProps(input.value) {
-    let data = try _getDataFromProps(props)
+    let data = try _getDataFromProps(props, scope: scope)
     let parsedInput = input.value.replacingOccurrences(
       of: match.0.description,
       with: data.toString())
-    return try parseText(
-      EVYValue(parsedInput, input.prefix, input.suffix),
-      editing)
+    return try parseText(EVYValue(parsedInput, input.prefix, input.suffix), editing, scope)
   }
 
   return input
@@ -794,15 +815,37 @@ private func parseFunctionInText(_ input: String) -> (
   return (match, String(functionName), String(functionArgs))
 }
 
-private var regexPatternCache: [String: Regex<AnyRegexOutput>] = [:]
+/// Compiled patterns, shared across every caller.
+///
+/// Regex compilation is not free and the same handful of patterns are used on
+/// every resolution, so they are cached. Resolution is not confined to the main
+/// actor - row formatting runs wherever its caller happens to be - so the cache
+/// needs a lock rather than an unguarded global.
+private final class RegexPatternCache: @unchecked Sendable {
+  static let shared = RegexPatternCache()
+
+  private let lock = NSLock()
+  private var patterns: [String: Regex<AnyRegexOutput>] = [:]
+
+  func regex(for pattern: String) throws -> Regex<AnyRegexOutput> {
+    lock.lock()
+    let cached = patterns[pattern]
+    lock.unlock()
+    if let cached { return cached }
+
+    // Compiled outside the lock: two callers racing on a cold pattern both
+    // compile it and the second overwrites an identical value, which is
+    // cheaper than holding the lock across compilation.
+    let compiled = try Regex(pattern)
+    lock.lock()
+    patterns[pattern] = compiled
+    lock.unlock()
+    return compiled
+  }
+}
 
 private func regexForPattern(_ pattern: String) throws -> Regex<AnyRegexOutput> {
-  if let cached = regexPatternCache[pattern] {
-    return cached
-  }
-  let r = try Regex(pattern)
-  regexPatternCache[pattern] = r
-  return r
+  try RegexPatternCache.shared.regex(for: pattern)
 }
 
 private func firstMatch(_ input: String, pattern: String) throws -> Regex<AnyRegexOutput>.Match? {

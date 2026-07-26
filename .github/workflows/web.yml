@@ -12,6 +12,7 @@ on:
 
 jobs:
     web_lint:
+        name: Web Lint
         defaults:
             run:
                 working-directory: web
@@ -34,7 +35,12 @@ jobs:
               if: steps.setup.outputs.has-changes == 'true'
               run: bun run lint
 
+            - name: Run typecheck
+              if: steps.setup.outputs.has-changes == 'true'
+              run: bun run typecheck
+
     web_tests:
+        name: Web Tests
         permissions:
             contents: read
             packages: read

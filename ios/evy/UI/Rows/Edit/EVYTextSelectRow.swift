@@ -17,7 +17,8 @@ struct EVYTextSelectRow: View {
 
   init?(
     view: TextSelectRowViewData,
-    onTap: @escaping EVYRowTapCallback<EVYJson>
+    onTap: @escaping EVYRowTapCallback<EVYJson>,
+    scope: EVYScope? = nil
   ) {
     let destination = view.destination.trimmingCharacters(in: .whitespacesAndNewlines)
     guard !destination.isEmpty else { return nil }
@@ -27,6 +28,7 @@ struct EVYTextSelectRow: View {
     let sourceExpression = view.source
     self.selected = EVYState(
       textToWatch: sourceExpression,
+      scope: scope,
       setter: {
         do {
           return try EVY.evaluateFromText(sourceExpression)
@@ -48,6 +50,8 @@ struct EVYTextSelectRow: View {
     self.value = decoded
   }
 
+  @Environment(\.evyScope) private var evyScope
+
   var body: some View {
     EVYSelectItem(
       destination: destination,
@@ -62,7 +66,8 @@ struct EVYTextSelectRow: View {
           EVYRowActionOperation.selectHandler { _ in
             try performDefault()
           })
-      }
+      },
+      scope: evyScope
     )
     .frame(maxWidth: .infinity, alignment: .leading)
     .titledRow(view.title)

@@ -76,7 +76,8 @@ struct EVYCalendar: View {
     content: CalendarRowViewData,
     onSlotTapped: @escaping (String) -> Void,
     onRowTapped: @escaping ([String]) -> Void,
-    onColumnTapped: @escaping ([String]) -> Void
+    onColumnTapped: @escaping ([String]) -> Void,
+    scope: EVYScope? = nil
   ) {
     self.content = content
     self.onSlotTapped = onSlotTapped
@@ -88,6 +89,7 @@ struct EVYCalendar: View {
         content.source,
         content.secondary ?? "",
       ],
+      scope: scope,
       setter: { Self.buildCalendarData(content: content) }
     )
   }

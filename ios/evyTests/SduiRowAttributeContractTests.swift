@@ -100,26 +100,78 @@ final class SduiRowAttributeContractTests: XCTestCase {
     }
   }
 
-  func testUIRowDecodesTriggerKeyedActions() throws {
+  func testRowDecodesEmptyBranchAsDoNothing() throws {
     let rowData = try JSONSerialization.data(
       withJSONObject: [
-        "id": "actions-shape-row",
+        "id": "empty-branch-row",
+        "type": "Button",
+        "visible": "true",
+        "actions": [
+          "tap": [["condition": "", "false": "", "true": ["fn": "close"]]]
+        ],
+      ])
+
+    let row = try JSONDecoder().decode(UI_Row.self, from: rowData)
+    XCTAssertEqual(row.actions.tap.count, 1)
+    XCTAssertEqual(row.actions.tap.first?.false, .empty)
+    XCTAssertTrue(row.actions.delete.isEmpty)
+  }
+
+  /// The dual-read window: a row may store either branch form, and both must
+  /// decode. A structured branch failing to decode would make the whole row
+  /// vanish, which is the failure this migration exists to remove.
+  func testRowDecodesStructuredActionBranches() throws {
+    let rowData = try JSONSerialization.data(
+      withJSONObject: [
+        "id": "ast-actions-row",
         "type": "Button",
         "visible": "true",
         "actions": [
           "tap": [
             [
               "condition": "",
-              "false": "",
-              "true": "{close()}",
+              "false": ["fn": "close"],
+              "true": [
+                "fn": "create",
+                "service": "svc",
+                "resource": "items",
+                "mode": "submit",
+              ],
             ]
           ]
         ],
       ])
+
     let row = try JSONDecoder().decode(UI_Row.self, from: rowData)
-    XCTAssertEqual(row.actions.tap.count, 1)
-    XCTAssertEqual(row.actions.tap.first?.true, "{close()}")
-    XCTAssertTrue(row.actions.delete.isEmpty)
+    XCTAssertEqual(
+      row.actions.tap.first?.true,
+      .invocation(.create(service: "svc", resource: "items", mode: .submit, idDestination: nil)))
+    XCTAssertEqual(row.actions.tap.first?.false, .invocation(.close))
+  }
+
+  func testStructuredBranchesRoundTripThroughCoding() throws {
+    let branches: [EVYActionBranch] = [
+      .invocation(.show(rowId: "row-1")),
+      .invocation(.navigate(flowId: "f", pageId: "p", query: ["id": "$datum.id"])),
+      .invocation(
+        .create(
+          service: "s", resource: "r", mode: .inline(data: ["a": "b"]),
+          idDestination: "{buf.id}")),
+      .invocation(
+        .update(
+          service: "s", resource: "r", mode: .store, filter: ["id": "x"],
+          changes: .literal(["a": "b"]))),
+      .invocation(
+        .update(
+          service: "s", resource: "r", mode: .draft, filter: [:],
+          changes: .path("buf"))),
+    ]
+
+    for branch in branches {
+      let encoded = try JSONEncoder().encode(branch)
+      let decoded = try JSONDecoder().decode(EVYActionBranch.self, from: encoded)
+      XCTAssertEqual(decoded, branch)
+    }
   }
 
   func testSduiDefinitionsIncludeTriggersMetadata() throws {

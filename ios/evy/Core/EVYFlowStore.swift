@@ -7,9 +7,17 @@ import Foundation
 
 // MARK: - Stored record types (one per backend table)
 
+/// Domain entity a flow submits via `create(...,submit)`, declared on the flow
+/// record so clients validate rather than infer it from action strings.
+struct EVYFlowSubmits: Decodable, Equatable {
+  let service: String
+  let resource: String
+}
+
 struct EVYStoredFlow: Decodable, Equatable {
   let id: String
   let pageIds: [String]
+  let submits: EVYFlowSubmits?
 }
 
 struct EVYStoredPage: Decodable, Equatable {
@@ -154,25 +162,50 @@ enum EVYFlowStore {
     return pageId
   }
 
+  /// The declared submission resource for a flow.
   static func submissionResources(
     flowId: String,
     from store: EVYDataStore = EVY.publicStore
   ) -> [String] {
-    Array(createKeys(flowId: flowId, from: store)).sorted()
+    guard let declared = flow(id: flowId, from: store)?.submits else {
+      return []
+    }
+    return [declared.resource]
   }
 
+  /// Reports a flow whose actions disagree with its declaration, or which
+  /// submits without declaring what it submits.
   static func validateSubmissionResources(
     flowId: String,
     from store: EVYDataStore = EVY.publicStore
   ) {
-    let resources = submissionResources(flowId: flowId, from: store)
-    guard resources.count > 1 else { return }
-    let resourceList = resources.joined(separator: ", ")
+    let scraped = Array(createKeys(flowId: flowId, from: store)).sorted()
+
+    guard let declared = flow(id: flowId, from: store)?.submits else {
+      guard scraped.isEmpty else {
+        if scraped.count > 1 {
+          return postSubmissionError(
+            "flow \(flowId) submits multiple resources (\(scraped.joined(separator: ", "))) "
+              + "and declares no submits to disambiguate")
+        }
+        return postSubmissionError(
+          "flow \(flowId) has create(...,submit) actions targeting \(scraped[0]) but declares no submits"
+        )
+      }
+      return
+    }
+
+    let mismatched = scraped.filter { $0 != declared.resource }
+    guard !mismatched.isEmpty else { return }
+    postSubmissionError(
+      "flow \(flowId) declares submits \(declared.resource) but its actions submit "
+        + mismatched.joined(separator: ", "))
+  }
+
+  private static func postSubmissionError(_ context: String) {
     NotificationCenter.default.post(
       name: .evyErrorOccurred,
-      object: EVYError.invalidData(
-        context:
-          "flow \(flowId) declares multiple submission resources: \(resourceList)")
+      object: EVYError.invalidData(context: context)
     )
   }
 
@@ -187,24 +220,8 @@ enum EVYFlowStore {
         guard let uiRow = storedRow.uiRow() else { return }
         for action in EVYRowActionTrigger.allActionLists(in: uiRow.actions) {
           for branch in [action.`true`, action.`false`] {
-            let trimmed = branch.trimmingCharacters(in: .whitespacesAndNewlines)
-            guard !trimmed.isEmpty else { continue }
-            if let createAction = EVYActionParser.createAction(from: trimmed) {
-              if createAction.isSubmission {
-                keys.insert(createAction.resource)
-              }
-              continue
-            }
-            if let parsed = EVYActionParser.functionCall(from: trimmed),
-              parsed.name == "create"
-            {
-              NotificationCenter.default.post(
-                name: .evyErrorOccurred,
-                object: EVYError.invalidData(
-                  context:
-                    "create requires namespace, resource, and submit or data, e.g. create(marketplace,item,submit)"
-                )
-              )
+            if case .invocation(.create(_, let resource, .submit, _)) = branch {
+              keys.insert(resource)
             }
           }
         }

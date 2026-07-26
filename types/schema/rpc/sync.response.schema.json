@@ -2,11 +2,15 @@
 	"$schema": "https://json-schema.org/draft/2020-12/schema",
 	"$id": "sync-response",
 	"title": "SyncResponse",
-	"description": "JSON-RPC response for the unified sync method. Returns all changed rows across all services since lastSyncTime.",
+	"description": "JSON-RPC response for the unified sync method. Returns all changed rows across all services since the request cursor.",
 	"type": "object",
 	"additionalProperties": false,
-	"required": ["data"],
+	"required": ["data", "cursor"],
 	"properties": {
+		"cursor": {
+			"description": "Pass to the next sync call. Opaque: clients must not parse or generate it.",
+			"type": "string"
+		},
 		"data": {
 			"type": "array",
 			"items": {
@@ -22,6 +26,26 @@
 					},
 					"value": {
 						"$ref": "../common/json.schema.json#/$defs/JSONValue"
+					}
+				}
+			}
+		},
+		"errors": {
+			"description": "Resources that could not be fetched this round. The rest of the response is still usable; clients keep their previous cursor so the failed resources are retried.",
+			"type": "array",
+			"items": {
+				"type": "object",
+				"additionalProperties": false,
+				"required": ["service", "resource", "message"],
+				"properties": {
+					"service": {
+						"type": "string"
+					},
+					"resource": {
+						"type": "string"
+					},
+					"message": {
+						"type": "string"
 					}
 				}
 			}

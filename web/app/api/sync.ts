@@ -146,14 +146,23 @@ function extractResourceAttributeMetadata(
 		.filter((metadata) => metadata.attributeNames.length > 0);
 }
 
-const EPOCH = "1970-01-01T00:00:00.000Z";
-
 export async function syncWebData(): Promise<{
 	flowGraph: FlowEntityCollections;
 	serviceResources: ServiceResource[];
 	resourceAttributeMetadata: ResourceAttributeMetadata[];
 }> {
-	const response = await wsClient.sync(EPOCH);
+	// No cursor: the builder loads a full snapshot at mount and stays current
+	// through dataChanged pushes rather than by re-syncing.
+	const response = await wsClient.sync();
+	if (response.errors?.length) {
+		// Surfacing rather than throwing: the rows that did arrive are usable.
+		console.warn(
+			"sync was incomplete:",
+			response.errors
+				.map((entry) => `${entry.resource}: ${entry.message}`)
+				.join("; "),
+		);
+	}
 	return {
 		flowGraph: extractFlowEntityCollections(response),
 		serviceResources: extractServiceResources(response),

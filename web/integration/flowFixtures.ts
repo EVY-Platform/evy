@@ -102,11 +102,15 @@ function fillEntityNames(flows: ServerFlow[]): ServerFlow[] {
 	}));
 }
 
-function createTestFlows(pages: ServerPageInput[]): ServerFlow[] {
+function createTestFlows(
+	pages: ServerPageInput[],
+	submits?: ServerFlow["submits"],
+): ServerFlow[] {
 	return [
 		{
 			id: crypto.randomUUID(),
 			name: "Test Flow",
+			...(submits !== undefined ? { submits } : {}),
 			pages: pages.map((page) => ({
 				id: page.id ?? crypto.randomUUID(),
 				name: page.name ?? page.title,
@@ -123,10 +127,14 @@ async function initTestFlows(
 	pages: ServerPageInput[],
 	resources: ServiceResource[] = [],
 	metadata: ResourceAttributeMetadata[] = [],
+	submits?: ServerFlow["submits"],
 ): Promise<void> {
-	await page.addInitScript((flows: ServerFlow[]) => {
-		window.__TEST_FLOWS__ = flows;
-	}, createTestFlows(pages));
+	await page.addInitScript(
+		(flows: ServerFlow[]) => {
+			window.__TEST_FLOWS__ = flows;
+		},
+		createTestFlows(pages, submits),
+	);
 	await initServiceResources(page, resources);
 	await initResourceAttributeMetadata(page, metadata);
 }
@@ -167,8 +175,9 @@ export async function openAppWithTestFlows(
 	pages: ServerPageInput[],
 	resources: ServiceResource[] = [],
 	metadata: ResourceAttributeMetadata[] = [],
+	submits?: ServerFlow["submits"],
 ): Promise<void> {
-	await initTestFlows(page, pages, resources, metadata);
+	await initTestFlows(page, pages, resources, metadata, submits);
 	await page.goto("/");
 }
 
