@@ -305,13 +305,16 @@ actor WSEmitter {
     let pages = pagesInput.map { pageData in
       decomposePage(pageData: pageData, rows: &rows, now: now)
     }
-    let flowRow: [String: Any] = [
+    var flowRow: [String: Any] = [
       "id": flowId,
       "name": nonEmptyString(flowData["name"]) ?? "Flow",
       "pageIds": pages.map(\.id),
       "createdAt": now,
       "updatedAt": now,
     ]
+    if let submits = flowData["submits"] as? [String: Any] {
+      flowRow["submits"] = submits
+    }
     return ((flowId, flowRow), pages, rows)
   }
 
@@ -501,6 +504,10 @@ class E2ETestBase: XCTestCase {
     [
       "id": E2EFlowIds.webSocketCreateFlow,
       "name": "Create item",
+      "submits": [
+        "service": MARKETPLACE_SERVICE,
+        "resource": MARKETPLACE_ITEMS_RESOURCE_ID,
+      ],
       "pages": [
         [
           "id": E2EFlowIds.webSocketCreatePage,
@@ -563,6 +570,10 @@ class E2ETestBase: XCTestCase {
     return [
       "id": E2EFlowIds.webSocketCreateFlow,
       "name": "Create item with address",
+      "submits": [
+        "service": MARKETPLACE_SERVICE,
+        "resource": MARKETPLACE_ITEMS_RESOURCE_ID,
+      ],
       "pages": [
         [
           "id": E2EFlowIds.webSocketCreatePage,
