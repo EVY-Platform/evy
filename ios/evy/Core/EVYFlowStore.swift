@@ -162,20 +162,19 @@ enum EVYFlowStore {
     return pageId
   }
 
-  /// The declared submission resource, falling back to scraping the flow's
-  /// action strings for flows authored before `submits` existed.
+  /// The declared submission resource for a flow.
   static func submissionResources(
     flowId: String,
     from store: EVYDataStore = EVY.publicStore
   ) -> [String] {
-    if let declared = flow(id: flowId, from: store)?.submits {
-      return [declared.resource]
+    guard let declared = flow(id: flowId, from: store)?.submits else {
+      return []
     }
-    return Array(createKeys(flowId: flowId, from: store)).sorted()
+    return [declared.resource]
   }
 
   /// Reports a flow whose actions disagree with its declaration, or which
-  /// submits more than one entity when there is nothing declared to disambiguate.
+  /// submits without declaring what it submits.
   static func validateSubmissionResources(
     flowId: String,
     from store: EVYDataStore = EVY.publicStore
@@ -183,10 +182,17 @@ enum EVYFlowStore {
     let scraped = Array(createKeys(flowId: flowId, from: store)).sorted()
 
     guard let declared = flow(id: flowId, from: store)?.submits else {
-      guard scraped.count > 1 else { return }
-      return postSubmissionError(
-        "flow \(flowId) submits multiple resources (\(scraped.joined(separator: ", "))) "
-          + "and declares no submits to disambiguate")
+      guard scraped.isEmpty else {
+        if scraped.count > 1 {
+          return postSubmissionError(
+            "flow \(flowId) submits multiple resources (\(scraped.joined(separator: ", "))) "
+              + "and declares no submits to disambiguate")
+        }
+        return postSubmissionError(
+          "flow \(flowId) has create(...,submit) actions targeting \(scraped[0]) but declares no submits"
+        )
+      }
+      return
     }
 
     let mismatched = scraped.filter { $0 != declared.resource }

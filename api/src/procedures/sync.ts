@@ -17,12 +17,8 @@ type SyncRow = SyncResponse["data"][number];
 
 const EPOCH = "1970-01-01T00:00:00.000Z";
 
-/**
- * Where to resume from. The cursor is preferred; lastSyncTime is accepted so
- * clients predating it keep working, and neither means a full sync.
- */
 function resumePoint(syncParams: SyncRequest): string {
-	return syncParams.cursor ?? syncParams.lastSyncTime ?? EPOCH;
+	return syncParams.cursor ?? EPOCH;
 }
 
 /**

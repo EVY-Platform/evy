@@ -92,26 +92,10 @@ export function ActionPopup({
 	 */
 	const finalized = useMemo(
 		() => ({
-			trueBranch: finalizeBranchForSave(
-				trueBranch,
-				draftVariables,
-				draftUpdateTargets,
-				declaredSubmits,
-			),
-			falseBranch: finalizeBranchForSave(
-				falseBranch,
-				draftVariables,
-				draftUpdateTargets,
-				declaredSubmits,
-			),
+			trueBranch: finalizeBranchForSave(trueBranch, declaredSubmits),
+			falseBranch: finalizeBranchForSave(falseBranch, declaredSubmits),
 		}),
-		[
-			trueBranch,
-			falseBranch,
-			draftVariables,
-			draftUpdateTargets,
-			declaredSubmits,
-		],
+		[trueBranch, falseBranch, declaredSubmits],
 	);
 
 	const canSave =

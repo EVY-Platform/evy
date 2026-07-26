@@ -104,6 +104,19 @@ describe("api JSON-RPC handler", () => {
 		).rejects.toThrow("Unknown evy API method: unknown");
 	});
 
+	it("rejects api{method:sync}", async () => {
+		await expect(
+			api(
+				{
+					service: EVY_CORE_SERVICE,
+					method: "sync",
+					data: { cursor: "1970-01-01T00:00:00.000Z" },
+				},
+				dataDb,
+			),
+		).rejects.toThrow("Unknown evy API method: sync");
+	});
+
 	it("rejects a declared procedure whose request fails its schema", async () => {
 		await expect(
 			api(
@@ -122,27 +135,28 @@ describe("core procedure registry", () => {
 	it("declares every procedure the gateway handles", () => {
 		expect(proceduresForService(EVY_CORE_SERVICE).sort()).toEqual([
 			"place_search",
-			"sync",
 		]);
 	});
 
 	it("fails when a declared procedure has no handler", () => {
-		expect(() =>
-			assertHandlersMatchRegistry(["sync", "place_search"], ["sync"]),
-		).toThrow("declared without a handler: place_search");
+		expect(() => assertHandlersMatchRegistry(["place_search"], [])).toThrow(
+			"declared without a handler: place_search",
+		);
 	});
 
 	it("fails when a handler is reachable but undeclared", () => {
 		// The dangerous direction: undeclared means no rate limit was applied.
 		expect(() =>
-			assertHandlersMatchRegistry(["sync"], ["sync", "smuggled"]),
+			assertHandlersMatchRegistry(
+				["place_search"],
+				["place_search", "smuggled"],
+			),
 		).toThrow("handled but not declared");
 	});
 
 	it("carries the rate limit and result attributes for place_search", () => {
 		expect(PROCEDURES.place_search.perMinute).toBe(30);
 		expect(PROCEDURES.place_search.resultAttributes).toContain("street");
-		expect(PROCEDURES.sync.perMinute).toBeNull();
 	});
 });
 

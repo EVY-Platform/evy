@@ -15,7 +15,6 @@ const db = null as unknown as EvyDb;
 const MARKETPLACE_SERVICE_ID = MARKETPLACE_SERVICE;
 const EPOCH = "1970-01-01T00:00:00.000Z";
 const RECENT_CURSOR = new Date(Date.now() - 86_400_000).toISOString();
-const OLDER_RECENT_CURSOR = new Date(Date.now() - 2 * 86_400_000).toISOString();
 
 function buildMockGetResponse(items: { id: string }[]): GetResponse {
 	return items;
@@ -112,7 +111,7 @@ describe("sync", () => {
 	});
 
 	it("returns changed rows in the unified data response", async () => {
-		const result = await sync({ lastSyncTime: EPOCH }, db);
+		const result = await sync({ cursor: EPOCH }, db);
 
 		expect(result).toEqual({ data: result.data, cursor: result.cursor });
 		expect(result.data).toBeDefined();
@@ -120,7 +119,7 @@ describe("sync", () => {
 	});
 
 	it("includes evy core resources (except devices) in data", async () => {
-		const result = await sync({ lastSyncTime: EPOCH }, db);
+		const result = await sync({ cursor: EPOCH }, db);
 
 		const evyRows = result.data.filter(
 			(row) => row.service === EVY_CORE_SERVICE,
@@ -159,7 +158,7 @@ describe("sync", () => {
 	});
 
 	it("includes external service resources in data", async () => {
-		const result = await sync({ lastSyncTime: EPOCH }, db);
+		const result = await sync({ cursor: EPOCH }, db);
 
 		const marketplaceRows = result.data.filter(
 			(row) => row.service === MARKETPLACE_SERVICE_ID,
@@ -179,7 +178,7 @@ describe("sync", () => {
 			expect(params.filter?.updatedAfter).toBe(EPOCH);
 			return buildMockGetResponse([{ id: `${params.resource}-1` }]);
 		};
-		await sync({ lastSyncTime: EPOCH }, db);
+		await sync({ cursor: EPOCH }, db);
 	});
 
 	it("passes updatedAfter to fetchService", async () => {
@@ -187,16 +186,13 @@ describe("sync", () => {
 			expect(params.filter?.updatedAfter).toBe(EPOCH);
 			return buildMockGetResponse([{ id: `${params.resource}-1` }]);
 		};
-		await sync({ lastSyncTime: EPOCH }, db);
+		await sync({ cursor: EPOCH }, db);
 	});
 
 	it("returns only an empty data array when nothing changed", async () => {
 		getImpl = async () => buildMockGetResponse([]);
 		forwardGetImpl = async () => buildMockGetResponse([]);
-		const result = await sync(
-			{ lastSyncTime: "2999-01-01T00:00:00.000Z" },
-			db,
-		);
+		const result = await sync({ cursor: "2999-01-01T00:00:00.000Z" }, db);
 		expect(result.data).toEqual([]);
 	});
 
@@ -210,7 +206,7 @@ describe("sync", () => {
 			return buildMockGetResponse([]);
 		};
 
-		const result = await sync({ lastSyncTime: EPOCH }, db);
+		const result = await sync({ cursor: EPOCH }, db);
 
 		expect(result.errors?.length).toBeGreaterThan(0);
 		expect(result.errors?.[0]?.message).toContain(
@@ -227,7 +223,7 @@ describe("sync", () => {
 			throw new Error("down");
 		};
 
-		const result = await sync({ lastSyncTime: EPOCH }, db);
+		const result = await sync({ cursor: EPOCH }, db);
 
 		expect(result.data.length).toBeGreaterThan(0);
 		expect(result.errors?.length).toBeGreaterThan(0);
@@ -267,7 +263,7 @@ describe("sync", () => {
 		};
 		forwardGetImpl = async () => buildMockGetResponse([]);
 
-		const result = await sync({ lastSyncTime: EPOCH }, db);
+		const result = await sync({ cursor: EPOCH }, db);
 
 		expect(result.data.some((row) => row.resource !== "rows")).toBe(true);
 		expect(result.errors?.some((entry) => entry.resource === "rows")).toBe(
@@ -276,7 +272,7 @@ describe("sync", () => {
 	});
 
 	it("each data row has required shape", async () => {
-		const result = await sync({ lastSyncTime: EPOCH }, db);
+		const result = await sync({ cursor: EPOCH }, db);
 		for (const row of result.data) {
 			expect(typeof row.service).toBe("string");
 			expect(row.service.length).toBeGreaterThan(0);
@@ -331,38 +327,6 @@ describe("sync", () => {
 			await sync({}, db);
 
 			expect(seen.every((value) => value === EPOCH)).toBe(true);
-		});
-
-		it("still accepts the deprecated lastSyncTime", async () => {
-			const seen: string[] = [];
-			getImpl = async (params) => {
-				seen.push(params.filter?.updatedAfter ?? "none");
-				return buildMockGetResponse([]);
-			};
-			forwardGetImpl = async () => buildMockGetResponse([]);
-
-			await sync({ lastSyncTime: RECENT_CURSOR }, db);
-
-			expect(seen.every((value) => value === RECENT_CURSOR)).toBe(true);
-		});
-
-		it("prefers the cursor over lastSyncTime when both are sent", async () => {
-			const seen: string[] = [];
-			getImpl = async (params) => {
-				seen.push(params.filter?.updatedAfter ?? "none");
-				return buildMockGetResponse([]);
-			};
-			forwardGetImpl = async () => buildMockGetResponse([]);
-
-			await sync(
-				{
-					cursor: RECENT_CURSOR,
-					lastSyncTime: OLDER_RECENT_CURSOR,
-				},
-				db,
-			);
-
-			expect(seen.every((value) => value === RECENT_CURSOR)).toBe(true);
 		});
 	});
 });

@@ -85,15 +85,14 @@ describe("API E2E Tests", () => {
 			expect(second.cursor).toBe(first.cursor);
 		});
 
-		it("api{method:sync} still works for clients that have not moved over", async () => {
-			const result = (await unauthClient.call("api", {
-				service: EVY_CORE_SERVICE,
-				method: "sync",
-				data: { lastSyncTime: "1970-01-01T00:00:00.000Z" },
-			})) as { data: unknown[]; cursor: string };
-
-			expect(Array.isArray(result.data)).toBe(true);
-			expect(typeof result.cursor).toBe("string");
+		it("api{method:sync} is rejected", async () => {
+			await expect(
+				unauthClient.call("api", {
+					service: EVY_CORE_SERVICE,
+					method: "sync",
+					data: { cursor: "1970-01-01T00:00:00.000Z" },
+				}),
+			).rejects.toThrow();
 		});
 
 		it("create should reject without auth", async () => {

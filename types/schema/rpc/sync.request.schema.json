@@ -10,11 +10,6 @@
 		"cursor": {
 			"description": "Opaque marker issued by the previous sync response. Server-generated, so client clock skew cannot drop or duplicate changes.",
 			"type": "string"
-		},
-		"lastSyncTime": {
-			"description": "Deprecated client-clock timestamp, accepted so existing clients keep working. Prefer cursor.",
-			"type": "string",
-			"format": "date-time"
 		}
 	}
 }

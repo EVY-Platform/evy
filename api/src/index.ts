@@ -31,8 +31,6 @@ async function startServer(): Promise<void> {
 	server.register("api", (params: unknown, socketId: string) =>
 		api(params, appDb, socketId),
 	);
-	// sync is a first-class method; api{method:"sync"} still works for clients
-	// that have not moved over.
 	server.register("sync", (params: unknown) => syncMethod(params, appDb));
 	server.register("cancelUpload", cancelUpload).protected();
 

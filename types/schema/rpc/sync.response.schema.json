@@ -2,7 +2,7 @@
 	"$schema": "https://json-schema.org/draft/2020-12/schema",
 	"$id": "sync-response",
 	"title": "SyncResponse",
-	"description": "JSON-RPC response for the unified sync method. Returns all changed rows across all services since lastSyncTime.",
+	"description": "JSON-RPC response for the unified sync method. Returns all changed rows across all services since the request cursor.",
 	"type": "object",
 	"additionalProperties": false,
 	"required": ["data", "cursor"],

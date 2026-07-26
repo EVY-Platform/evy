@@ -542,7 +542,12 @@ final class ContentViewTests: XCTestCase {
   func testExtractCreateKeysFindsCreateActions() throws {
     let store = makeStore()
 
-    try seedFlow(store: store, id: "create-flow", pageIds: ["create-page"])
+    try seedFlow(
+      store: store, id: "create-flow", pageIds: ["create-page"],
+      submits: [
+        "service": MarketplaceTestFixture.serviceId,
+        "resource": MarketplaceTestFixture.itemsResourceId,
+      ])
     try seedPage(
       store: store, id: "create-page", rowIds: ["title-row"],
       footerRowId: "submit-button")
@@ -583,7 +588,12 @@ final class ContentViewTests: XCTestCase {
     let coreService = "475731ac-31aa-4d65-94d2-7032782ae359"
     let itemsResource = MarketplaceTestFixture.itemsResourceId
 
-    try seedFlow(store: store, id: "create-flow", pageIds: ["create-page"])
+    try seedFlow(
+      store: store, id: "create-flow", pageIds: ["create-page"],
+      submits: [
+        "service": MarketplaceTestFixture.serviceId,
+        "resource": MarketplaceTestFixture.itemsResourceId,
+      ])
     try seedPage(
       store: store, id: "create-page", rowIds: ["search-row"],
       footerRowId: "submit-button")
@@ -694,7 +704,12 @@ final class ContentViewTests: XCTestCase {
   func testDraftScopeIdForCreateFlowMatchesFlowAndEntityKey() throws {
     let store = makeStore()
 
-    try seedFlow(store: store, id: "create-flow", pageIds: ["create-page"])
+    try seedFlow(
+      store: store, id: "create-flow", pageIds: ["create-page"],
+      submits: [
+        "service": MarketplaceTestFixture.serviceId,
+        "resource": MarketplaceTestFixture.itemsResourceId,
+      ])
     try seedPage(
       store: store, id: "create-page", rowIds: [],
       footerRowId: "submit-button")
@@ -790,7 +805,7 @@ final class ContentViewTests: XCTestCase {
       ["declared-resource"])
   }
 
-  func testFlowWithoutDeclarationStillInfersFromActions() throws {
+  func testFlowWithoutDeclarationHasNoSubmissionResources() throws {
     let store = makeStore()
     try seedSubmittingFlow(
       store: store, flowId: "legacy-submit-flow",
@@ -798,7 +813,22 @@ final class ContentViewTests: XCTestCase {
 
     XCTAssertEqual(
       EVYFlowStore.submissionResources(flowId: "legacy-submit-flow", from: store),
-      [MarketplaceTestFixture.itemsResourceId])
+      [])
+  }
+
+  func testValidateReportsUndeclaredSubmitFlow() throws {
+    let store = makeStore()
+    try seedSubmittingFlow(
+      store: store, flowId: "undeclared-submit-flow",
+      submitResource: MarketplaceTestFixture.itemsResourceId)
+
+    let errors = capturedErrors {
+      EVYFlowStore.validateSubmissionResources(flowId: "undeclared-submit-flow", from: store)
+    }
+    XCTAssertFalse(errors.isEmpty)
+    XCTAssertTrue(
+      errors.first?.localizedDescription.contains("declares no submits") == true,
+      "\(String(describing: errors.first?.localizedDescription))")
   }
 
   func testValidateReportsActionsDisagreeingWithDeclaration() throws {
@@ -892,8 +922,7 @@ final class ContentViewTests: XCTestCase {
     XCTAssertFalse(errors.isEmpty)
     XCTAssertEqual(
       EVYFlowStore.draftScopeId(for: route, from: store),
-      EVYDraft.createMergeScopeId(
-        flowId: "multi-submit-flow", entityKey: MarketplaceTestFixture.itemsResourceId)
+      "multi-submit-flow:browse"
     )
   }
 

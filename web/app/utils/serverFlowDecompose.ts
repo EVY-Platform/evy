@@ -43,6 +43,7 @@ export function decomposeServerFlow(
 				// builder directly and are never written back, so this matches
 				// the column default rather than carrying real visibility.
 				visibility: "public",
+				...(flow.submits ? { submits: flow.submits } : {}),
 				createdAt: nowIso,
 				updatedAt: nowIso,
 			},

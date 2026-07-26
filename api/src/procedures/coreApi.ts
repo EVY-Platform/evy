@@ -22,20 +22,12 @@ import * as syncProcedure from "./sync";
  */
 type CoreProcedure = (data: unknown, db: EvyDb) => Promise<unknown>;
 
-/**
- * Runs a sync, validating in one place.
- *
- * Reachable two ways - as the top-level `sync` method and as
- * api{method:"sync"} for clients that have not moved over - so both go through
- * here rather than each repeating the validation.
- */
 async function runSync(params: unknown, db: EvyDb): Promise<SyncResponse> {
 	const request = validateSyncRequest(params ?? {});
 	return validateSyncResponse(await syncProcedure.sync(request, db));
 }
 
 const coreProcedures: Record<string, CoreProcedure> = {
-	sync: runSync,
 	place_search: async (data) =>
 		validatePlaceSearchResponse(
 			await placeSearchProcedure.placeSearch(
@@ -78,7 +70,7 @@ assertHandlersMatchRegistry(
 	Object.keys(coreProcedures),
 );
 
-/** Top-level `sync` RPC. Also reachable as api{method:"sync"} for older clients. */
+/** Top-level `sync` JSON-RPC method. */
 export const syncMethod = runSync;
 
 export async function coreApi(

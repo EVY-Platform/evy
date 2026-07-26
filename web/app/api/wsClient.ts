@@ -5,6 +5,7 @@ import type {
 	SyncResponse,
 } from "evy-types";
 import { EVY_CORE_RESOURCE, EVY_CORE_SERVICE } from "evy-types/coreResources";
+import { assertFlatFlowGraphSubmits } from "evy-types/flowSubmits";
 import {
 	DATA_CHANGED_EVENT,
 	type DataChangedNotification,
@@ -13,6 +14,7 @@ import {
 import { Client } from "rpc-websockets";
 import { config } from "../config";
 import type { FlowEntityCollections } from "../utils/flowEntities";
+import { collectionsToMaps } from "../utils/flowEntities";
 
 type FlatResourceName =
 	| typeof EVY_CORE_RESOURCE.FLOWS
@@ -256,6 +258,13 @@ class WSClient {
 	): Promise<FlowEntityCollections> {
 		await this.connect();
 		if (!this.client) throw new Error("WebSocket client not initialized");
+
+		const maps = collectionsToMaps(nextGraph);
+		assertFlatFlowGraphSubmits(
+			nextGraph.flows,
+			maps.pagesById,
+			maps.rowsById,
+		);
 
 		await this.writeChangedRecords(
 			EVY_CORE_RESOURCE.ROWS,

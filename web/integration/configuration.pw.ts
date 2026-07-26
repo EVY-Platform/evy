@@ -823,7 +823,7 @@ test.describe("Row configuration", () => {
 		).toBeVisible();
 	});
 
-	test("should use submit create when row destinations target the resource", async ({
+	test("should use submit create when the flow declares submits", async ({
 		page,
 	}) => {
 		await openAppWithTestFlows(
@@ -851,6 +851,11 @@ test.describe("Row configuration", () => {
 				},
 			],
 			TEST_SERVICE_RESOURCES,
+			[],
+			{
+				service: MARKETPLACE_SERVICE,
+				resource: MARKETPLACE_RESOURCE.ITEMS,
+			},
 		);
 
 		await page.getByText("Submit Create", { exact: true }).first().click();

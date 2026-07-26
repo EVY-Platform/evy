@@ -63,6 +63,14 @@ A delete is a soft delete: the row stays with `deletedAt` set so sync can tell c
 
 That is what makes a cursor of any age safe to resume from: every delete a client missed is still there to be replayed, so there is no horizon past which a cursor goes stale and no need to fall back to a full snapshot. The cost is that deleted rows accumulate.
 
+### Sync
+
+`sync` is a first-class JSON-RPC method, not an `api{method}` procedure. Clients send an optional opaque `cursor` issued by the previous response; omitting it requests a full snapshot. The deprecated `lastSyncTime` request field and the legacy `api{method:"sync"}` entry point are no longer accepted.
+
+### Flow submissions
+
+A flow that contains a `create(...,submit)` action must declare `submits` on its `DATA_EVY_Flow` record. The web builder validates the full flat graph before saving; iOS uses the declaration for draft scope. A one-off data migration backfills missing declarations for flows with exactly one submit target.
+
 ### Notifications
 
 The server emits `dataChanged` JSON-RPC notifications to all subscribed clients when data changes, both for evy core resources and remote service events:

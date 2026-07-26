@@ -1,10 +1,6 @@
 {
 	"$comment": "Registry of RPC procedures reachable via api{method}. The owning service decides whether the gateway handles a call itself or forwards it; the response schema is the wire contract clients bind to; rateLimit is enforced per socket. Adding a procedure here is what makes it callable - api/src/procedures/coreApi.ts asserts its handlers match this file exactly.",
 	"procedures": {
-		"sync": {
-			"service": "475731ac-31aa-4d65-94d2-7032782ae359",
-			"response": "rpc/sync.response.schema.json"
-		},
 		"place_search": {
 			"service": "475731ac-31aa-4d65-94d2-7032782ae359",
 			"response": "rpc/placeSearch.response.schema.json",

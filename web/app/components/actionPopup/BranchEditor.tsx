@@ -124,7 +124,7 @@ export function BranchEditor({
 	idCandidates,
 	rowsById,
 	defaultSheetRowId,
-	draftUpdateTargets,
+	draftUpdateTargets: _draftUpdateTargets,
 	declaredSubmits = null,
 	getAttributeCandidatesForQualifier,
 	onChange,
@@ -181,17 +181,9 @@ export function BranchEditor({
 		return shouldOfferCreateSubmitWithFlow(
 			serviceId,
 			resourceId,
-			draftVariables,
-			draftUpdateTargets,
 			declaredSubmits,
 		);
-	}, [
-		selectedFunction,
-		args,
-		draftVariables,
-		draftUpdateTargets,
-		declaredSubmits,
-	]);
+	}, [selectedFunction, args, declaredSubmits]);
 
 	const showSubmitCreateHint =
 		offerSubmitCreate && !createHasInlineDataArg(args);

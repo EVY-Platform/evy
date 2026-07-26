@@ -238,6 +238,28 @@ describe("decomposeServerFlow", () => {
 			["child-1", "search-1", "sheet-1"].sort(),
 		);
 	});
+
+	it("preserves flow submits when decomposing test fixtures", () => {
+		const flow: ServerFlow = {
+			id: "flow-1",
+			name: "Flow",
+			submits: { service: "svc-1", resource: "res-1" },
+			pages: [
+				{
+					id: "page-1",
+					name: "Page",
+					title: "Page",
+					rows: [],
+				},
+			],
+		};
+
+		const graph = decomposeServerFlow(flow, NOW);
+		expect(graph.flowRows[0]?.submits).toEqual({
+			service: "svc-1",
+			resource: "res-1",
+		});
+	});
 });
 
 function rowAttributes(row: ServerRow | undefined): Record<string, unknown> {

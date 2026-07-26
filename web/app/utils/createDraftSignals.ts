@@ -24,15 +24,6 @@ function extractVariableFromDestination(destination: string): string | null {
 	return inner;
 }
 
-function destinationDraftsTargetResource(
-	draftVariables: string[],
-	resourceId: string,
-): boolean {
-	return draftVariables.some(
-		(name) => name === resourceId || name.startsWith(`${resourceId}.`),
-	);
-}
-
 type DraftSignals = {
 	draftVariables: string[];
 	draftUpdateTargets: Set<string>;
@@ -92,32 +83,17 @@ export function collectDraftSignals(
 	};
 }
 
-/**
- * A flow that declares what it submits decides this outright. Only undeclared
- * flows fall back to inferring it from destinations and draft-mode updates
- * elsewhere in the flow.
- */
 export function shouldOfferCreateSubmitWithFlow(
 	serviceId: string,
 	resourceId: string,
-	draftVariables: string[],
-	draftUpdateTargets: Set<string>,
 	declaredSubmits: string | null = null,
 ): boolean {
-	if (!serviceId || !resourceId) return false;
-	if (declaredSubmits !== null) {
-		return declaredSubmits === `${serviceId}/${resourceId}`;
-	}
-	if (destinationDraftsTargetResource(draftVariables, resourceId)) {
-		return true;
-	}
-	return draftUpdateTargets.has(`${serviceId}/${resourceId}`);
+	if (!serviceId || !resourceId || declaredSubmits === null) return false;
+	return declaredSubmits === `${serviceId}/${resourceId}`;
 }
 
 export function finalizeBranchForSave(
 	branchString: string,
-	draftVariables: string[],
-	draftUpdateTargets: Set<string>,
 	declaredSubmits: string | null = null,
 ): string | null {
 	const trimmed = branchString.trim();
@@ -133,8 +109,6 @@ export function finalizeBranchForSave(
 	const offerSubmit = shouldOfferCreateSubmitWithFlow(
 		serviceId,
 		resourceId,
-		draftVariables,
-		draftUpdateTargets,
 		declaredSubmits,
 	);
 

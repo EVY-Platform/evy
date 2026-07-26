@@ -126,7 +126,7 @@ final class EVYDataStoreSortIndexTests: XCTestCase {
 
   /// Regression: the store's manually created ModelContext never autosaves, so
   /// without an explicit save() every write was lost when the process exited —
-  /// while lastSyncTimestamp survived in UserDefaults, leaving relaunches with an
+  /// while the sync cursor survived in UserDefaults, leaving relaunches with an
   /// empty store that incremental sync could never repopulate ("Failed to load
   /// flows"). A second store instance reading the same file only sees the row if
   /// the first instance actually flushed to disk.
