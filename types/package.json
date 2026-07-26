@@ -4,8 +4,8 @@
 	"exports": {
 		".": "./generated/ts/index.ts",
 		"./coreResources": "./generated/ts/coreResources.ts",
-		"./marketplaceResources": "./generated/ts/marketplaceResources.ts",
 		"./procedures": "./generated/ts/procedures.ts",
+		"./serviceManifest": "./serviceManifest.ts",
 		"./db/schema.generated": "./generated/ts/db/schema.generated.ts",
 		"./functionArgs": "./functionArgs.ts",
 		"./actionAst": "./actionAst.ts",

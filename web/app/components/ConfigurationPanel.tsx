@@ -1,5 +1,4 @@
 import type { RowTriggerName, UI_RowAction, UI_RowActions } from "evy-types";
-import { MARKETPLACE_RESOURCE } from "evy-types/marketplaceResources";
 import { ChevronRight, Trash2 } from "lucide-react";
 import { useCallback, useMemo, useState } from "react";
 import { useRowById } from "../hooks/useRowById";
@@ -152,6 +151,7 @@ export function ConfigurationPanel() {
 		rowsById,
 		serviceResources,
 		resourceAttributeMetadata,
+		serviceNamesById,
 		configStack,
 		dispatchRow,
 	} = useFlowsContext();
@@ -167,17 +167,22 @@ export function ConfigurationPanel() {
 
 	const builderAssistCandidates = useMemo(
 		() => [
-			...buildIdCandidates(flowsById, pagesById, serviceResources),
+			...buildIdCandidates(
+				flowsById,
+				pagesById,
+				serviceResources,
+				serviceNamesById,
+			),
 			...buildRowAttributeCandidates(),
 			buildDatumCandidate(),
 			...buildFunctionCandidates(),
 		],
-		[flowsById, pagesById, serviceResources],
+		[flowsById, pagesById, serviceResources, serviceNamesById],
 	);
 
 	const submitsTargetOptions = useMemo<PopoverOption[]>(
-		() => submitTargetOptions(serviceResources),
-		[serviceResources],
+		() => submitTargetOptions(serviceResources, serviceNamesById),
+		[serviceResources, serviceNamesById],
 	);
 
 	const handleSubmitsTargetChange = useCallback(
@@ -456,7 +461,7 @@ export function ConfigurationPanel() {
 						getAttributeCandidatesForQualifier={
 							getAttributeCandidatesForQualifier
 						}
-						placeholder={`Condition to show row, e.g. {${MARKETPLACE_RESOURCE.ITEMS}.payment_methods.cash == true}`}
+						placeholder="Condition to show row, e.g. {resourceId.payment_methods.cash == true}"
 						ariaLabel="Row visibility condition"
 						labelClassName="evy-text-sm evy-font-medium evy-text-black"
 						fieldClassName=""
@@ -593,6 +598,7 @@ export function ConfigurationPanel() {
 										pagesById={pagesById}
 										rowsById={rowsById}
 										serviceResources={serviceResources}
+										serviceNamesById={serviceNamesById}
 										defaultSheetRowId={
 											currentConfigRow.config.sheetRowId
 										}

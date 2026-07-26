@@ -53,6 +53,8 @@ const serviceResources = [
 	{ id: "res-1", fkServiceId: "service-1", name: "item" },
 ] satisfies ServiceResource[];
 
+const serviceNamesById = new Map([["service-1", "Marketplace"]]);
+
 const candidates: IdCandidate[] = [
 	{ id: "res-1", name: "item", category: "Resource" },
 	{ id: "res-1-long", name: "item details", category: "Resource" },
@@ -82,12 +84,17 @@ const functionCandidate: IdCandidate = {
 describe("idCandidates", () => {
 	test("buildIdCandidates returns flows, pages, and resources", () => {
 		expect(
-			buildIdCandidates(flowsById, pagesById, serviceResources),
+			buildIdCandidates(
+				flowsById,
+				pagesById,
+				serviceResources,
+				serviceNamesById,
+			),
 		).toEqual([
 			{ id: "flow-1", name: "Checkout", category: "Flow" },
 			{ id: "page-1", name: "page-1", category: "Page" },
 			{ id: "page-2", name: "page-2", category: "Page" },
-			{ id: "service-1", name: "service-1", category: "Service" },
+			{ id: "service-1", name: "Marketplace", category: "Service" },
 			{ id: "res-1", name: "item", category: "Resource" },
 		]);
 	});

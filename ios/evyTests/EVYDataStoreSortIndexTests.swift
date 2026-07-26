@@ -9,7 +9,6 @@ import XCTest
 
 @MainActor
 final class EVYDataStoreSortIndexTests: XCTestCase {
-  private var serviceResourceIdsToDelete: [String] = []
   private var resourcesToDelete: [(namespace: String, resource: String)] = []
 
   override func setUp() async throws {
@@ -19,9 +18,6 @@ final class EVYDataStoreSortIndexTests: XCTestCase {
 
   override func tearDown() async throws {
     try? EVY.publicStore.deleteAll(namespace: "test", resource: "items")
-    for id in serviceResourceIdsToDelete {
-      try? EVY.publicStore.delete(namespace: EVYNamespace.evy, resource: "serviceResources", id: id)
-    }
     for resource in resourcesToDelete {
       try? EVY.publicStore.deleteAll(namespace: resource.namespace, resource: resource.resource)
     }
@@ -95,21 +91,12 @@ final class EVYDataStoreSortIndexTests: XCTestCase {
     )
   }
 
-  func testCollectionDoesNotResolveFromServiceResourceName() throws {
+  func testCollectionDoesNotResolveFromResourceName() throws {
     let resourceId = UUID().uuidString
     let resourceName =
       "evy_data_store_sort_index_test_\(UUID().uuidString.replacingOccurrences(of: "-", with: "_"))"
-    serviceResourceIdsToDelete.append(resourceId)
     resourcesToDelete.append((namespace: EVYNamespace.marketplace, resource: resourceId))
 
-    try EVY.publicStore.applySyncedValue(
-      namespace: EVYNamespace.evy,
-      resource: "serviceResources",
-      value: .dictionary([
-        "id": .string(resourceId),
-        "name": .string(resourceName),
-      ])
-    )
     try EVY.publicStore.applySyncedValue(
       namespace: EVYNamespace.marketplace,
       resource: resourceId,

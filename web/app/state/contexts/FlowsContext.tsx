@@ -14,6 +14,7 @@ type FlowsContextValue = {
 	rowsById: Record<string, DATA_EVY_Row>;
 	serviceResources: ServiceResource[];
 	resourceAttributeMetadata: ResourceAttributeMetadata[];
+	serviceNamesById: Map<string, string>;
 	resourceIdToEntityName: Map<string, string>;
 	activeFlowId?: string;
 	activeRowId?: string;
@@ -29,6 +30,7 @@ export const FlowsContext = createContext<FlowsContextValue>({
 	rowsById: {},
 	serviceResources: [],
 	resourceAttributeMetadata: [],
+	serviceNamesById: new Map(),
 	resourceIdToEntityName: new Map(),
 	configStack: [],
 	dispatchRow: () => {},

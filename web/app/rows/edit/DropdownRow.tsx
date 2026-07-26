@@ -1,4 +1,3 @@
-import { MARKETPLACE_RESOURCE } from "evy-types/marketplaceResources";
 import type { RowConfig } from "../../types/row";
 import { defineRow } from "../defineRow";
 import Dropdown from "../design-system/Dropdown";
@@ -8,12 +7,12 @@ export default defineRow("DropdownRow", {
 	config: {
 		type: "Dropdown",
 		actions: {},
-		source: `{${MARKETPLACE_RESOURCE.CONDITIONS}}`,
+		source: "{resourceId}",
 		visible: "true",
 		title: "Dropdown row title",
 		placeholder: "placeholder",
 		value: "{$datum.value}",
-		destination: `{${MARKETPLACE_RESOURCE.ITEMS}.condition}`,
+		destination: "{resourceId.condition}",
 	} satisfies RowConfig,
 	render: (row) => (
 		<RowLayout title={row.config.title}>

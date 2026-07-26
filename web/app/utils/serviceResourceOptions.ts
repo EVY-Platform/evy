@@ -6,16 +6,25 @@
  * once because a half-chosen target is not a valid declaration.
  */
 
-import { EVY_CORE_SERVICE } from "evy-types/coreResources";
-import { MARKETPLACE_SERVICE } from "evy-types/marketplaceResources";
+import { serviceOptions } from "evy-types/serviceManifest";
 import type { PopoverOption } from "../components/PopoverSelect";
 import type { ServiceResource } from "../types/resources";
 import { displayLabel } from "./labelFormatting";
 
-export const SERVICE_OPTIONS: PopoverOption[] = [
-	{ value: MARKETPLACE_SERVICE, label: "Marketplace" },
-	{ value: EVY_CORE_SERVICE, label: "Evy" },
-];
+export function toServiceOptions(
+	serviceNamesById: Map<string, string>,
+): PopoverOption[] {
+	return serviceOptions({
+		services: [...serviceNamesById.entries()].map(([id, name]) => ({
+			id,
+			name,
+			resources: [],
+		})),
+	}).map((option) => ({
+		value: option.value,
+		label: displayLabel(option.label),
+	}));
+}
 
 export function toResourceOptions(
 	serviceResources: ServiceResource[],
@@ -57,8 +66,9 @@ export function parseSubmitTargetValue(
  */
 export function submitTargetOptions(
 	serviceResources: ServiceResource[],
+	serviceNamesById: Map<string, string>,
 ): PopoverOption[] {
-	const targets = SERVICE_OPTIONS.flatMap((service) =>
+	const targets = toServiceOptions(serviceNamesById).flatMap((service) =>
 		toResourceOptions(serviceResources, service.value).map((resource) => ({
 			value: submitTargetValue({
 				service: service.value,

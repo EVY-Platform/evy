@@ -19,8 +19,8 @@ import {
 import { shouldOfferCreateSubmitWithFlow } from "../../utils/createDraftSignals";
 import type { IdCandidate } from "../../utils/idCandidates";
 import {
-	SERVICE_OPTIONS,
 	toResourceOptions,
+	toServiceOptions,
 } from "../../utils/serviceResourceOptions";
 import { BuilderAssist } from "../BuilderAssist";
 import { type PopoverOption, PopoverSelect } from "../PopoverSelect";
@@ -33,6 +33,7 @@ type BranchEditorProps = {
 	flowsById: Record<string, DATA_EVY_Flow>;
 	pagesById: Record<string, DATA_EVY_Page>;
 	serviceResources: ServiceResource[];
+	serviceNamesById: Map<string, string>;
 	idCandidates: IdCandidate[];
 	rowsById: Record<string, DATA_EVY_Row>;
 	defaultSheetRowId?: string;
@@ -51,6 +52,7 @@ function buildArgDropdowns(
 	flowsById: Record<string, DATA_EVY_Flow>,
 	pagesById: Record<string, DATA_EVY_Page>,
 	serviceResources: ServiceResource[],
+	serviceNamesById: Map<string, string>,
 	rowsById: Record<string, DATA_EVY_Row>,
 ): ArgDropdownSlot[] {
 	if (!functionName) {
@@ -87,7 +89,10 @@ function buildArgDropdowns(
 
 	if (functionName === "create" || functionName === "update") {
 		const dropdowns: ArgDropdownSlot[] = [
-			{ slotId: `${functionName}-namespace`, options: SERVICE_OPTIONS },
+			{
+				slotId: `${functionName}-namespace`,
+				options: toServiceOptions(serviceNamesById),
+			},
 		];
 		if (currentArgs[0]) {
 			dropdowns.push({
@@ -121,6 +126,7 @@ export function BranchEditor({
 	flowsById,
 	pagesById,
 	serviceResources,
+	serviceNamesById,
 	idCandidates,
 	rowsById,
 	defaultSheetRowId,
@@ -211,6 +217,7 @@ export function BranchEditor({
 		flowsById,
 		pagesById,
 		serviceResources,
+		serviceNamesById,
 		rowsById,
 	);
 

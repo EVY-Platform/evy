@@ -46,12 +46,14 @@ export function AppProvider({
 	initialFlowGraph,
 	serviceResources = [],
 	resourceAttributeMetadata = [],
+	serviceNamesById = new Map(),
 	syncWithApi = true,
 }: {
 	children: ReactNode;
 	initialFlowGraph: FlowEntityCollections;
 	serviceResources?: ServiceResource[];
 	resourceAttributeMetadata?: ResourceAttributeMetadata[];
+	serviceNamesById?: Map<string, string>;
 	syncWithApi?: boolean;
 }) {
 	const resourceIdToEntityName = useMemo(
@@ -234,6 +236,7 @@ export function AppProvider({
 			rowsById: appState.rowsById,
 			serviceResources,
 			resourceAttributeMetadata,
+			serviceNamesById,
 			resourceIdToEntityName,
 			activeFlowId: appState.activeFlowId,
 			activeRowId: appState.activeRowId,
@@ -247,6 +250,7 @@ export function AppProvider({
 			appState.rowsById,
 			serviceResources,
 			resourceAttributeMetadata,
+			serviceNamesById,
 			resourceIdToEntityName,
 			appState.activeFlowId,
 			appState.activeRowId,

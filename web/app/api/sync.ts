@@ -2,14 +2,18 @@ import type {
 	DATA_EVY_Flow,
 	DATA_EVY_Page,
 	DATA_EVY_Row,
+	ResourcesResponse,
 	SyncResponse,
 } from "evy-types";
 import { EVY_CORE_RESOURCE, EVY_CORE_SERVICE } from "evy-types/coreResources";
 import {
+	flattenServiceResources,
+	serviceNameById,
+} from "evy-types/serviceManifest";
+import {
 	validateDataEvyFlow,
 	validateDataEvyPage,
 	validateDataEvyRow,
-	validateDataEvyServiceResource,
 } from "evy-types/validators";
 import type {
 	ResourceAttributeMetadata,
@@ -78,21 +82,6 @@ function isDataEvyRow(item: unknown): item is DATA_EVY_Row {
 	return isValid(validateDataEvyRow, item);
 }
 
-function isServiceResource(item: unknown): item is ServiceResource {
-	if (!isValid(validateDataEvyServiceResource, item)) return false;
-	return true;
-}
-
-function extractServiceResources(response: SyncResponse): ServiceResource[] {
-	const row = response.data.find(
-		(row) =>
-			row.service === EVY_CORE_SERVICE &&
-			row.resource === EVY_CORE_RESOURCE.SERVICE_RESOURCES,
-	);
-	if (!Array.isArray(row?.value)) return [];
-	return (row.value as unknown[]).filter(isServiceResource);
-}
-
 function isRecord(value: unknown): value is Record<string, unknown> {
 	return typeof value === "object" && value !== null && !Array.isArray(value);
 }
@@ -146,26 +135,59 @@ function extractResourceAttributeMetadata(
 		.filter((metadata) => metadata.attributeNames.length > 0);
 }
 
+function extractResourceCatalog(
+	response: SyncResponse,
+): ResourcesResponse | undefined {
+	const row = response.data.find(
+		(entry) =>
+			entry.service === EVY_CORE_SERVICE &&
+			entry.resource === EVY_CORE_RESOURCE.RESOURCES,
+	);
+	if (
+		!row?.value ||
+		typeof row.value !== "object" ||
+		Array.isArray(row.value)
+	) {
+		return undefined;
+	}
+	return row.value as unknown as ResourcesResponse;
+}
+
 export async function syncWebData(): Promise<{
 	flowGraph: FlowEntityCollections;
 	serviceResources: ServiceResource[];
 	resourceAttributeMetadata: ResourceAttributeMetadata[];
+	serviceNamesById: Map<string, string>;
 }> {
-	// No cursor: the builder loads a full snapshot at mount and stays current
-	// through dataChanged pushes rather than by re-syncing.
-	const response = await wsClient.sync();
-	if (response.errors?.length) {
-		// Surfacing rather than throwing: the rows that did arrive are usable.
+	const [resourcesResponse, syncResponse] = await Promise.all([
+		wsClient.resources(),
+		wsClient.sync(),
+	]);
+
+	if (syncResponse.errors?.length) {
 		console.warn(
 			"sync was incomplete:",
-			response.errors
+			syncResponse.errors
 				.map((entry) => `${entry.resource}: ${entry.message}`)
 				.join("; "),
 		);
 	}
+
+	const catalog = extractResourceCatalog(syncResponse) ?? resourcesResponse;
+	if (resourcesResponse.errors?.length) {
+		console.warn(
+			"resource discovery was incomplete:",
+			resourcesResponse.errors
+				.map((entry) => `${entry.service}: ${entry.message}`)
+				.join("; "),
+		);
+	}
+
 	return {
-		flowGraph: extractFlowEntityCollections(response),
-		serviceResources: extractServiceResources(response),
-		resourceAttributeMetadata: extractResourceAttributeMetadata(response),
+		flowGraph: extractFlowEntityCollections(syncResponse),
+		serviceResources: flattenServiceResources(catalog),
+		resourceAttributeMetadata:
+			extractResourceAttributeMetadata(syncResponse),
+		serviceNamesById: serviceNameById(catalog),
 	};
 }

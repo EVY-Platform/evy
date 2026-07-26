@@ -9,11 +9,11 @@ import {
 } from "bun:test";
 import { migrate } from "drizzle-orm/pglite/migrator";
 import { EVY_CORE_SERVICE } from "evy-types/coreResources";
+import { PROCEDURES, proceduresForService } from "evy-types/procedures";
 import {
 	MARKETPLACE_RESOURCE,
 	MARKETPLACE_SERVICE,
-} from "evy-types/marketplaceResources";
-import { PROCEDURES, proceduresForService } from "evy-types/procedures";
+} from "../../../services/marketplace/src/resources";
 import { assertHandlersMatchRegistry } from "../procedures/coreApi";
 import {
 	type PlacesClientLike,

@@ -1,6 +1,4 @@
 import type { DATA_EVY_Flow, DATA_EVY_Page } from "evy-types";
-import { EVY_CORE_SERVICE } from "evy-types/coreResources";
-import { MARKETPLACE_SERVICE } from "evy-types/marketplaceResources";
 import { procedureResultAttributes } from "evy-types/procedures";
 import {
 	getAllRowBindingFieldNames,
@@ -80,11 +78,6 @@ const functionCandidateNames = [
 	"buildAddress",
 ];
 
-const serviceNamesById = new Map<string, string>([
-	[EVY_CORE_SERVICE, "Evy"],
-	[MARKETPLACE_SERVICE, "Marketplace"],
-]);
-
 function isIdBoundaryCharacter(character: string | undefined): boolean {
 	return !character || !/[a-zA-Z0-9_-]/.test(character);
 }
@@ -111,6 +104,7 @@ export function buildIdCandidates(
 	flowsById: Record<string, DATA_EVY_Flow>,
 	pagesById: Record<string, DATA_EVY_Page>,
 	serviceResources: ServiceResource[],
+	serviceNamesById: Map<string, string>,
 ): IdCandidate[] {
 	const flowCandidates = Object.values(flowsById).map((flow) => ({
 		id: flow.id,

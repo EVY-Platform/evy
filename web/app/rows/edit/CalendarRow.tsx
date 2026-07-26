@@ -1,4 +1,3 @@
-import { MARKETPLACE_RESOURCE } from "evy-types/marketplaceResources";
 import { useParseText } from "../../hooks/useParseText";
 import type { RowConfig } from "../../types/row";
 import { defaultRowActions, defineRow } from "../defineRow";
@@ -117,7 +116,7 @@ export default defineRow("CalendarRow", {
 			"tap-row": { fn: "select", value: "$datum" },
 			"tap-column": { fn: "select", value: "$datum" },
 		}),
-		source: `{${MARKETPLACE_RESOURCE.ITEMS}.pickup_selection}`,
+		source: "{resourceId.pickup_selection}",
 		visible: "true",
 		title: "Calendar row title",
 		start_time: "07:00",
@@ -126,8 +125,8 @@ export default defineRow("CalendarRow", {
 		label_interval_minutes: "60",
 		header_format: "EEE d",
 		timeslot_format: "HH:mm",
-		destination: `{${MARKETPLACE_RESOURCE.ITEMS}.pickup_selection}`,
-		secondary: `{${MARKETPLACE_RESOURCE.ITEMS}.delivery_selection}`,
+		destination: "{resourceId.pickup_selection}",
+		secondary: "{resourceId.delivery_selection}",
 	} satisfies RowConfig,
 	render: (row) => (
 		<RowLayout title={row.config.title}>

@@ -10,6 +10,7 @@ type UseFlowsResult = {
 	flowGraph: FlowEntityCollections | null;
 	serviceResources: ServiceResource[];
 	resourceAttributeMetadata: ResourceAttributeMetadata[];
+	serviceNamesById: Map<string, string>;
 	loading: boolean;
 	error: Error | null;
 };
@@ -24,6 +25,9 @@ export function useFlows(): UseFlowsResult {
 	const [resourceAttributeMetadata, setResourceAttributeMetadata] = useState<
 		ResourceAttributeMetadata[]
 	>([]);
+	const [serviceNamesById, setServiceNamesById] = useState<
+		Map<string, string>
+	>(new Map());
 	const [loading, setLoading] = useState(true);
 	const [error, setError] = useState<Error | null>(null);
 
@@ -36,6 +40,7 @@ export function useFlows(): UseFlowsResult {
 					flowGraph: fetchedFlowGraph,
 					serviceResources: fetchedResources,
 					resourceAttributeMetadata: fetchedResourceAttributeMetadata,
+					serviceNamesById: fetchedServiceNamesById,
 				} = await syncWebData();
 				if (!cancelled) {
 					setFlowGraph(fetchedFlowGraph);
@@ -43,6 +48,7 @@ export function useFlows(): UseFlowsResult {
 					setResourceAttributeMetadata(
 						fetchedResourceAttributeMetadata,
 					);
+					setServiceNamesById(fetchedServiceNamesById);
 					setLoading(false);
 				}
 			} catch (err) {
@@ -66,6 +72,7 @@ export function useFlows(): UseFlowsResult {
 		flowGraph,
 		serviceResources,
 		resourceAttributeMetadata,
+		serviceNamesById,
 		loading,
 		error,
 	};

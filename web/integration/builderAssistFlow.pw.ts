@@ -1,6 +1,6 @@
 import { expect, type Locator, test } from "@playwright/test";
 import type { UI_Flow as ServerFlow } from "evy-types";
-import { MARKETPLACE_SERVICE } from "evy-types/marketplaceResources";
+import { MARKETPLACE_SERVICE } from "../../services/marketplace/src/resources";
 import type { ServiceResource } from "../app/api/sync";
 import { openAppWithFullFlows } from "./flowFixtures";
 import { getConfigPanel, popoverSelect } from "./utils";

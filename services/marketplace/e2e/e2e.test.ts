@@ -1,11 +1,8 @@
 import { afterAll, beforeAll, describe, expect, it } from "bun:test";
 import { EVY_CORE_RESOURCE, EVY_CORE_SERVICE } from "evy-types/coreResources";
-import {
-	MARKETPLACE_RESOURCE,
-	MARKETPLACE_SERVICE,
-} from "evy-types/marketplaceResources";
 import { waitForClientOpen } from "evy-types/wsTestHelpers";
 import { Client } from "rpc-websockets";
+import { MARKETPLACE_RESOURCE, MARKETPLACE_SERVICE } from "../src/resources";
 
 type WSClient = InstanceType<typeof Client>;
 

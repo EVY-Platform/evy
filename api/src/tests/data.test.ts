@@ -16,7 +16,6 @@ import type {
 	DATA_EVY_Page,
 	DATA_EVY_Row,
 	DATA_EVY_Service,
-	DATA_EVY_ServiceResource,
 	DeleteRequest,
 	GetRequest,
 	UpdateRequest,
@@ -608,33 +607,6 @@ describe("service resources", () => {
 			data: { ...payload, name: "UpdatedSvc" },
 		})) as DATA_EVY_Service;
 		expect(updated.name).toBe("UpdatedSvc");
-	});
-
-	it("creates ServiceResource rows", async () => {
-		const serviceId = crypto.randomUUID();
-		const serviceResourceId = crypto.randomUUID();
-		await testDb.insert(schema.service).values({
-			id: serviceId,
-			name: "marketplace",
-			description: "Marketplace",
-			...timestamps(),
-		});
-		const payload = {
-			id: serviceResourceId,
-			fkServiceId: serviceId,
-			name: "item",
-			...timestamps(),
-		};
-
-		const result = (await create(dataDb, {
-			service: EVY_CORE_SERVICE,
-			resource: EVY_CORE_RESOURCE.SERVICE_RESOURCES,
-			data: payload,
-		})) as DATA_EVY_ServiceResource;
-
-		expect(result.id).toBe(serviceResourceId);
-		expect(result.fkServiceId).toBe(serviceId);
-		expect(result.name).toBe("item");
 	});
 });
 

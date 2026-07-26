@@ -1,12 +1,13 @@
 import { afterEach, beforeEach, describe, expect, it, spyOn } from "bun:test";
 import type { GetRequest, GetResponse } from "evy-types";
-import { EVY_CORE_SERVICE } from "evy-types/coreResources";
+import { EVY_CORE_RESOURCE, EVY_CORE_SERVICE } from "evy-types/coreResources";
 import {
 	MARKETPLACE_RESOURCE,
 	MARKETPLACE_SERVICE,
-} from "evy-types/marketplaceResources";
+} from "../../../services/marketplace/src/resources";
 import * as data from "../data/data";
 import type { EvyDb } from "../database/db";
+import * as resources from "../procedures/resources";
 import * as services from "../procedures/services";
 import { sync } from "../procedures/sync";
 
@@ -16,32 +17,49 @@ const MARKETPLACE_SERVICE_ID = MARKETPLACE_SERVICE;
 const EPOCH = "1970-01-01T00:00:00.000Z";
 const RECENT_CURSOR = new Date(Date.now() - 86_400_000).toISOString();
 
+function buildMockCatalog(): Awaited<
+	ReturnType<typeof resources.discoverResources>
+> {
+	return {
+		services: [
+			{
+				id: EVY_CORE_SERVICE,
+				name: "evy",
+				resources: [
+					{ id: "flows", name: "flow" },
+					{ id: "pages", name: "page" },
+					{ id: "rows", name: "row" },
+					{ id: "devices", name: "device" },
+					{ id: "organisations", name: "organisation" },
+					{ id: "services", name: "service" },
+					{ id: "providers", name: "provider" },
+					{ id: EVY_CORE_RESOURCE.RESOURCES, name: "resource" },
+					{ id: "files", name: "file" },
+					{ id: "addresses", name: "address" },
+					{ id: "messages", name: "message" },
+				],
+			},
+			{
+				id: MARKETPLACE_SERVICE_ID,
+				name: "marketplace",
+				resources: [
+					{
+						id: MARKETPLACE_RESOURCE.SELLING_REASONS,
+						name: "selling_reasons",
+					},
+					{ id: MARKETPLACE_RESOURCE.CONDITIONS, name: "conditions" },
+					{ id: MARKETPLACE_RESOURCE.DURATIONS, name: "durations" },
+					{ id: MARKETPLACE_RESOURCE.AREAS, name: "areas" },
+					{ id: MARKETPLACE_RESOURCE.ITEMS, name: "items" },
+				],
+			},
+		],
+	};
+}
+
 function buildMockGetResponse(items: { id: string }[]): GetResponse {
 	return items;
 }
-
-const externalResources = [
-	{
-		serviceId: MARKETPLACE_SERVICE_ID,
-		resourceId: MARKETPLACE_RESOURCE.SELLING_REASONS,
-	},
-	{
-		serviceId: MARKETPLACE_SERVICE_ID,
-		resourceId: MARKETPLACE_RESOURCE.CONDITIONS,
-	},
-	{
-		serviceId: MARKETPLACE_SERVICE_ID,
-		resourceId: MARKETPLACE_RESOURCE.DURATIONS,
-	},
-	{
-		serviceId: MARKETPLACE_SERVICE_ID,
-		resourceId: MARKETPLACE_RESOURCE.AREAS,
-	},
-	{
-		serviceId: MARKETPLACE_SERVICE_ID,
-		resourceId: MARKETPLACE_RESOURCE.ITEMS,
-	},
-];
 
 let getImpl = async (params: GetRequest): Promise<GetResponse> =>
 	buildMockGetResponse([
@@ -87,7 +105,7 @@ function resetSyncMocks(): void {
 
 describe("sync", () => {
 	let getSpy: ReturnType<typeof spyOn>;
-	let listExternalServiceResourcesSpy: ReturnType<typeof spyOn>;
+	let discoverResourcesSpy: ReturnType<typeof spyOn>;
 	let forwardGetSpy: ReturnType<typeof spyOn>;
 
 	beforeEach(() => {
@@ -95,10 +113,10 @@ describe("sync", () => {
 		getSpy = spyOn(data, "get").mockImplementation((_db, params) =>
 			getImpl(params),
 		);
-		listExternalServiceResourcesSpy = spyOn(
-			data,
-			"listExternalServiceResources",
-		).mockResolvedValue(externalResources);
+		discoverResourcesSpy = spyOn(
+			resources,
+			"discoverResources",
+		).mockResolvedValue(buildMockCatalog());
 		forwardGetSpy = spyOn(services, "forwardGet").mockImplementation(
 			(serviceName, params) => forwardGetImpl(serviceName, params),
 		);
@@ -106,7 +124,7 @@ describe("sync", () => {
 
 	afterEach(() => {
 		getSpy.mockRestore();
-		listExternalServiceResourcesSpy.mockRestore();
+		discoverResourcesSpy.mockRestore();
 		forwardGetSpy.mockRestore();
 	});
 
@@ -118,7 +136,7 @@ describe("sync", () => {
 		expect(Array.isArray(result.data)).toBe(true);
 	});
 
-	it("includes evy core resources (except devices) in data", async () => {
+	it("includes evy core resources (except devices and catalog) in data", async () => {
 		const result = await sync({ cursor: EPOCH }, db);
 
 		const evyRows = result.data.filter(
@@ -135,8 +153,8 @@ describe("sync", () => {
 		expect(evyResourceNames).toContain("files");
 		expect(evyResourceNames).toContain("addresses");
 		expect(evyResourceNames).toContain("messages");
-		expect(evyResourceNames).toContain("serviceResources");
 		expect(evyResourceNames).not.toContain("devices");
+		expect(evyResourceNames).toContain(EVY_CORE_RESOURCE.RESOURCES);
 
 		const addressesRow = evyRows.find(
 			(row) => row.resource === "addresses",
@@ -146,15 +164,17 @@ describe("sync", () => {
 			resource: "addresses",
 			value: [{ id: "addresses-mock-1", visibility: "private" }],
 		});
+	});
 
-		const serviceResourcesRow = evyRows.find(
-			(row) => row.resource === "serviceResources",
+	it("includes the resource catalog singleton when discovery succeeds", async () => {
+		const result = await sync({ cursor: EPOCH }, db);
+
+		const catalogRow = result.data.find(
+			(row) =>
+				row.service === EVY_CORE_SERVICE &&
+				row.resource === EVY_CORE_RESOURCE.RESOURCES,
 		);
-		expect(serviceResourcesRow).toEqual({
-			service: EVY_CORE_SERVICE,
-			resource: "serviceResources",
-			value: [{ id: "serviceResources-mock-1", visibility: "public" }],
-		});
+		expect(catalogRow?.value).toEqual(buildMockCatalog());
 	});
 
 	it("includes external service resources in data", async () => {
@@ -189,15 +209,19 @@ describe("sync", () => {
 		await sync({ cursor: EPOCH }, db);
 	});
 
-	it("returns only an empty data array when nothing changed", async () => {
+	it("returns only the catalog when no resource data changed", async () => {
 		getImpl = async () => buildMockGetResponse([]);
 		forwardGetImpl = async () => buildMockGetResponse([]);
 		const result = await sync({ cursor: "2999-01-01T00:00:00.000Z" }, db);
-		expect(result.data).toEqual([]);
+		expect(result.data).toEqual([
+			{
+				service: EVY_CORE_SERVICE,
+				resource: EVY_CORE_RESOURCE.RESOURCES,
+				value: buildMockCatalog(),
+			},
+		]);
 	});
 
-	// An unreachable service used to fail the whole sync, taking every other
-	// resource down with it.
 	it("reports an unreachable service instead of failing the sync", async () => {
 		forwardGetImpl = async (serviceName) => {
 			if (serviceName === MARKETPLACE_SERVICE_ID) {
@@ -229,7 +253,6 @@ describe("sync", () => {
 		expect(result.errors?.length).toBeGreaterThan(0);
 	});
 
-	// Advancing past a failure would mean the missed resources are never retried.
 	it("holds the cursor when any resource failed", async () => {
 		getImpl = async () =>
 			[
@@ -242,6 +265,30 @@ describe("sync", () => {
 		const result = await sync({ cursor: RECENT_CURSOR }, db);
 
 		expect(result.cursor).toBe(RECENT_CURSOR);
+	});
+
+	it("omits the catalog singleton when discovery is incomplete", async () => {
+		discoverResourcesSpy.mockResolvedValue({
+			...buildMockCatalog(),
+			errors: [
+				{
+					service: MARKETPLACE_SERVICE_ID,
+					message: "marketplace unavailable",
+				},
+			],
+		});
+
+		const result = await sync({ cursor: EPOCH }, db);
+
+		expect(
+			result.data.some(
+				(row) => row.resource === EVY_CORE_RESOURCE.RESOURCES,
+			),
+		).toBe(false);
+		expect(
+			result.errors?.some((entry) => entry.resource === "resources"),
+		).toBe(true);
+		expect(result.cursor).toBe(EPOCH);
 	});
 
 	it("omits errors entirely when everything succeeded", async () => {
@@ -279,6 +326,10 @@ describe("sync", () => {
 			expect(typeof row.resource).toBe("string");
 			expect(row.resource.length).toBeGreaterThan(0);
 			expect(row.value).toBeDefined();
+			if (row.resource === EVY_CORE_RESOURCE.RESOURCES) {
+				expect(row.value).toEqual(buildMockCatalog());
+				continue;
+			}
 			expect(row.value).toHaveLength(1);
 			expect(row.value).toEqual([
 				{
@@ -305,8 +356,6 @@ describe("sync", () => {
 			expect(result.cursor).toBe("2026-03-01T00:00:00.000Z");
 		});
 
-		// A cursor that advanced on an empty response would skip past writes made
-		// between the query and the reply.
 		it("holds the cursor steady when nothing changed", async () => {
 			getImpl = async () => buildMockGetResponse([]);
 			forwardGetImpl = async () => buildMockGetResponse([]);

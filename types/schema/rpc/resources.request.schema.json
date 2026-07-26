@@ -1,0 +1,10 @@
+{
+	"$schema": "https://json-schema.org/draft/2020-12/schema",
+	"$id": "resources-request",
+	"title": "ResourcesRequest",
+	"description": "JSON-RPC params for the resources discovery method. No parameters.",
+	"type": "object",
+	"additionalProperties": false,
+	"required": [],
+	"properties": {}
+}

@@ -2,7 +2,7 @@ import { describe, expect, it } from "bun:test";
 import {
 	MARKETPLACE_RESOURCE,
 	MARKETPLACE_SERVICE,
-} from "evy-types/marketplaceResources";
+} from "../../../services/marketplace/src/resources";
 import { shouldOfferCreateSubmitWithFlow } from "./createDraftSignals";
 
 describe("createDraftSignals", () => {

@@ -1,4 +1,3 @@
-import { MARKETPLACE_RESOURCE } from "evy-types/marketplaceResources";
 import type { RowConfig } from "../../types/row";
 import { defaultRowActions, defineRow } from "../defineRow";
 import EVYText from "../design-system/EVYText";
@@ -16,8 +15,8 @@ export default defineRow("SelectPhotoRow", {
 		subtitle: "Photos: 0/10",
 		icon: "::image-plus::",
 		content: "Add photos",
-		source: `{${MARKETPLACE_RESOURCE.ITEMS}.photo_ids}`,
-		destination: `{${MARKETPLACE_RESOURCE.ITEMS}.photo_ids}`,
+		source: "{resourceId.photo_ids}",
+		destination: "{resourceId.photo_ids}",
 	} satisfies RowConfig,
 	render: (row) => (
 		<RowLayout title={row.config.title}>

@@ -9,13 +9,16 @@ import {
 	EVY_CORE_RESOURCE_NAMES,
 	EVY_CORE_SERVICE,
 } from "evy-types/coreResources";
+import { externalResourceRefs } from "evy-types/serviceManifest";
 import * as data from "../data/data";
 import type { EvyDb } from "../database/db";
+import { discoverResources } from "./resources";
 import * as services from "./services";
 
 type SyncRow = SyncResponse["data"][number];
 
 const EPOCH = "1970-01-01T00:00:00.000Z";
+const RESOURCE_CATALOG_KEY = EVY_CORE_RESOURCE.RESOURCES;
 
 function resumePoint(syncParams: SyncRequest): string {
 	return syncParams.cursor ?? EPOCH;
@@ -84,18 +87,34 @@ async function fetchResources(
 	return { rows, errors };
 }
 
-/** Devices are written by the client and never synced back to it. */
+/** Devices and the resource catalog are handled outside the core fetch loop. */
 function coreResourceRefs(): ResourceRef[] {
 	return EVY_CORE_RESOURCE_NAMES.filter(
-		(name) => name !== EVY_CORE_RESOURCE.DEVICES,
+		(name) =>
+			name !== EVY_CORE_RESOURCE.DEVICES &&
+			name !== EVY_CORE_RESOURCE.RESOURCES,
 	).map((resource) => ({ service: EVY_CORE_SERVICE, resource }));
+}
+
+function discoveryErrorsToSyncErrors(
+	errors: NonNullable<
+		Awaited<ReturnType<typeof discoverResources>>["errors"]
+	>,
+): SyncError[] {
+	return errors.map((error) => ({
+		service: error.service,
+		resource: RESOURCE_CATALOG_KEY,
+		message: error.message,
+	}));
 }
 
 export async function sync(
 	syncParams: SyncRequest,
 	db: EvyDb,
 ): Promise<SyncResponse> {
-	const externalResources = await data.listExternalServiceResources(db);
+	const catalog = await discoverResources(db);
+	const discoveryComplete = !catalog.errors || catalog.errors.length === 0;
+	const externalRefs = externalResourceRefs(catalog, EVY_CORE_SERVICE);
 
 	const resumedFrom = resumePoint(syncParams);
 
@@ -103,18 +122,25 @@ export async function sync(
 		fetchResources(coreResourceRefs(), resumedFrom, (_ref, request) =>
 			data.get(db, request),
 		),
-		fetchResources(
-			externalResources.map(({ serviceId, resourceId }) => ({
-				service: serviceId,
-				resource: resourceId,
-			})),
-			resumedFrom,
-			(ref, request) => services.forwardGet(ref.service, request),
+		fetchResources(externalRefs, resumedFrom, (ref, request) =>
+			services.forwardGet(ref.service, request),
 		),
 	]);
 
 	const rows = [...core.rows, ...external.rows];
-	const errors = [...core.errors, ...external.errors];
+	const errors = [
+		...discoveryErrorsToSyncErrors(catalog.errors ?? []),
+		...core.errors,
+		...external.errors,
+	];
+
+	if (discoveryComplete) {
+		rows.push({
+			service: EVY_CORE_SERVICE,
+			resource: RESOURCE_CATALOG_KEY,
+			value: catalog,
+		});
+	}
 
 	// A partial response must not advance the cursor, or the resources that
 	// failed would never be retried.

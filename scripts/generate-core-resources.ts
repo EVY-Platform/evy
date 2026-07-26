@@ -98,6 +98,15 @@ function generateTypeScript(schema: CoreResourcesSchema): string {
 	lines.push("} as const;");
 	lines.push("");
 
+	lines.push("export const EVY_CORE_RESOURCES = [");
+	for (const [plural, meta] of Object.entries(resources)) {
+		lines.push(
+			`\t{ id: ${JSON.stringify(plural)}, name: ${JSON.stringify(meta.singular)} },`,
+		);
+	}
+	lines.push("] as const;");
+	lines.push("");
+
 	// Resource names tuple
 	lines.push("export const EVY_CORE_RESOURCE_NAMES = [");
 	for (const plural of resourceNames) {

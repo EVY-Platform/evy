@@ -26,9 +26,6 @@
 			"$ref": "#/$defs/DATA_EVY_ServiceProvider"
 		},
 		{
-			"$ref": "#/$defs/DATA_EVY_ServiceResource"
-		},
-		{
 			"$ref": "#/$defs/DATA_EVY_File"
 		},
 		{
@@ -430,49 +427,6 @@
 				"retired": {
 					"type": "boolean",
 					"default": false
-				}
-			}
-		},
-		"DATA_EVY_ServiceResource": {
-			"type": "object",
-			"additionalProperties": false,
-			"required": [
-				"id",
-				"fkServiceId",
-				"name",
-				"createdAt",
-				"updatedAt",
-				"visibility"
-			],
-			"properties": {
-				"id": {
-					"type": "string",
-					"format": "uuid"
-				},
-				"fkServiceId": {
-					"type": "string",
-					"format": "uuid"
-				},
-				"name": {
-					"type": "string",
-					"maxLength": 50
-				},
-				"visibility": {
-					"$ref": "#/$defs/Visibility",
-					"default": "public"
-				},
-				"createdAt": {
-					"type": "string",
-					"format": "date-time"
-				},
-				"updatedAt": {
-					"type": "string",
-					"format": "date-time"
-				},
-				"deletedAt": {
-					"description": "Set when the record is deleted. Tombstoned rows are excluded from plain reads but included in incremental ones, so clients learn about deletions.",
-					"type": "string",
-					"format": "date-time"
 				}
 			}
 		},

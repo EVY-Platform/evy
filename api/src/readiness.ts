@@ -2,7 +2,10 @@ import { EVY_CORE_RESOURCE, EVY_CORE_SERVICE } from "evy-types/coreResources";
 import { runReadinessCli } from "evy-types/readiness";
 import * as data from "./data/data";
 import { createDb, type EvyDb } from "./database/db";
-import { resolveServiceWsEndpoint } from "./procedures/services";
+import {
+	forwardResources,
+	resolveServiceWsEndpoint,
+} from "./procedures/services";
 
 /**
  * Services named here must have a resolvable endpoint for the API to be ready.
@@ -36,6 +39,26 @@ export async function assertApiReadable(
 				throw new Error(`API readiness failed: ${detail}`);
 			}
 			console.warn(`API readiness degraded: ${detail}`);
+		}
+
+		if (!required.has(svc.name.toLowerCase())) {
+			continue;
+		}
+
+		try {
+			const manifest = await forwardResources(svc.id);
+			const descriptor = manifest.services.find(
+				(service) => service.id === svc.id,
+			);
+			if (!descriptor) {
+				throw new Error(
+					`service "${svc.name}" did not include itself in resources`,
+				);
+			}
+		} catch (error) {
+			const detail =
+				error instanceof Error ? error.message : String(error);
+			throw new Error(`API readiness failed: ${detail}`);
 		}
 	}
 

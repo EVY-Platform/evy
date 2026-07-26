@@ -1,4 +1,3 @@
-import { MARKETPLACE_RESOURCE } from "evy-types/marketplaceResources";
 import type { RowConfig } from "../../types/row";
 import { defineRow } from "../defineRow";
 import Input from "../design-system/Input";
@@ -12,7 +11,7 @@ export default defineRow("InputRow", {
 		visible: "true",
 		title: "Input row title",
 		placeholder: "placeholder",
-		destination: `{${MARKETPLACE_RESOURCE.ITEMS}.title}`,
+		destination: "{resourceId.title}",
 	} satisfies RowConfig,
 	render: (row) => (
 		<RowLayout title={row.config.title}>

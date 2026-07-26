@@ -2,7 +2,7 @@
 
 Clients talk to marketplace through the EVY api, in order to access the `items`, `selling_reasons`, `conditions`, and `durations` resources.
 
-Service-owned resource payload shapes are conventions defined only in SDUI — there are no code-side JSON schemas or TypeScript types for marketplace data rows. Only resource ids are declared in `marketplace.resources.json`.
+Service-owned resource payload shapes are conventions defined only in SDUI — there are no code-side JSON schemas or TypeScript types for marketplace data rows. Resource ids are declared in `services/marketplace/src/resources.ts` and exposed through the service's `resources` JSON-RPC method.
 
 Shared value objects (`location`, `price`, `address`, `area`, `photo`, `timeslot`, `transfer_options`, `duration`) are documented in [EVY data models](../../evy/data.md).
 

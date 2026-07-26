@@ -12,6 +12,7 @@ import {
 } from "evy-types/wsServer";
 import { create, deleteResource, get, update } from "./data";
 import { DATA_CHANGED_EVENT, onServiceEvent } from "./events";
+import { getMarketplaceResourcesResponse } from "./resources";
 
 let serverInstance: WSServer | null = null;
 
@@ -46,6 +47,7 @@ export async function startMarketplaceRpcServer(
 		validateStrictDeleteRequest(params);
 		return deleteResource(params);
 	});
+	server.register("resources", () => getMarketplaceResourcesResponse());
 
 	onServiceEvent((eventName, payload) => {
 		emitJsonRpc(server, eventName, payload);

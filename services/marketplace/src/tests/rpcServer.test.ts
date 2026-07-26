@@ -81,4 +81,28 @@ describe("marketplace JSON-RPC server", () => {
 		expect(got).toEqual([row]);
 		client.close();
 	});
+
+	it("returns the marketplace resource manifest", async () => {
+		const client = createClient();
+		await waitForOpen(client);
+
+		const response = await client.call("resources", {});
+
+		expect(response).toEqual({
+			services: [
+				{
+					id: MARKETPLACE_SERVICE,
+					name: "marketplace",
+					resources: expect.arrayContaining([
+						{ id: MARKETPLACE_RESOURCE.ITEMS, name: "items" },
+						{
+							id: MARKETPLACE_RESOURCE.CONDITIONS,
+							name: "conditions",
+						},
+					]),
+				},
+			],
+		});
+		client.close();
+	});
 });

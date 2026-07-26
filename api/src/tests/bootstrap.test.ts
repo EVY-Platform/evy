@@ -10,11 +10,12 @@ import {
 } from "bun:test";
 import type { GetRequest, GetResponse } from "evy-types";
 import { EVY_CORE_RESOURCE, EVY_CORE_SERVICE } from "evy-types/coreResources";
-import { MARKETPLACE_SERVICE } from "evy-types/marketplaceResources";
 import { Client } from "rpc-websockets";
+import { MARKETPLACE_SERVICE } from "../../../services/marketplace/src/resources";
 
 import * as data from "../data/data";
 import type { EvyDb } from "../database/db";
+import * as services from "../procedures/services";
 import { assertApiReadable } from "../readiness";
 import { withEnvironment } from "./withEnvironment";
 import { getFreePort, type WSServer, waitForClientOpen } from "./wsTestHelpers";
@@ -92,6 +93,7 @@ describe("initServer bootstrap", () => {
 describe("assertApiReadable", () => {
 	let getSpy: ReturnType<typeof spyOn>;
 	let listExternalServicesSpy: ReturnType<typeof spyOn>;
+	let forwardResourcesSpy: ReturnType<typeof spyOn>;
 
 	beforeEach(() => {
 		resetBootstrapMocks();
@@ -102,11 +104,24 @@ describe("assertApiReadable", () => {
 			data,
 			"listExternalServices",
 		).mockImplementation(() => listExternalServicesImpl());
+		forwardResourcesSpy = spyOn(
+			services,
+			"forwardResources",
+		).mockResolvedValue({
+			services: [
+				{
+					id: MARKETPLACE_SERVICE,
+					name: "marketplace",
+					resources: [{ id: "resource-id", name: "items" }],
+				},
+			],
+		});
 	});
 
 	afterEach(() => {
 		getSpy.mockRestore();
 		listExternalServicesSpy.mockRestore();
+		forwardResourcesSpy.mockRestore();
 	});
 
 	it("resolves when flows get returns an array envelope and requireSeeded is false", async () => {

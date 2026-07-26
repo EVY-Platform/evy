@@ -1,5 +1,5 @@
 import { describe, expect, it } from "bun:test";
-import { MARKETPLACE_RESOURCE } from "evy-types/marketplaceResources";
+import { MARKETPLACE_RESOURCE } from "../../../services/marketplace/src/resources";
 import { parseText } from "./interpreter";
 
 const compoundDimensionsText =

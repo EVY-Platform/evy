@@ -2,12 +2,12 @@ import { afterAll, beforeAll, describe, expect, it } from "bun:test";
 import { migrate } from "drizzle-orm/pglite/migrator";
 import type { CreateRequest } from "evy-types";
 import * as schema from "evy-types/db/schema.generated";
+import { DATA_CHANGED_EVENT } from "evy-types/ws";
+import { Server } from "rpc-websockets";
 import {
 	MARKETPLACE_RESOURCE,
 	MARKETPLACE_SERVICE,
-} from "evy-types/marketplaceResources";
-import { DATA_CHANGED_EVENT } from "evy-types/ws";
-import { Server } from "rpc-websockets";
+} from "../../../services/marketplace/src/resources";
 import { resolveServiceWsEndpoint } from "../procedures/services";
 import { emitJsonRpc } from "../shared/ws";
 import { withEnvironment } from "./withEnvironment";
@@ -36,6 +36,21 @@ async function startTestWsServer(port: number): Promise<WSServer> {
 	await server.event(DATA_CHANGED_EVENT);
 
 	server.register("get", () => [...storedData]);
+
+	server.register("resources", () => ({
+		services: [
+			{
+				id: MARKETPLACE_SERVICE,
+				name: "marketplace",
+				resources: [
+					{
+						id: MARKETPLACE_RESOURCE.CONDITIONS,
+						name: "conditions",
+					},
+				],
+			},
+		],
+	}));
 
 	server.register("api", (params: { method?: string; data?: unknown }) => {
 		if (params.method !== "echo") {

@@ -5,7 +5,8 @@
 
 import XCTest
 
-private let MARKETPLACE_ITEMS_RESOURCE_ID = MarketplaceResource.items.rawValue
+private let MARKETPLACE_ITEMS_RESOURCE_ID = MarketplaceE2EFixture.itemsResourceId
+private let MARKETPLACE_SERVICE = MarketplaceE2EFixture.serviceId
 
 // MARK: - Action branch helpers
 

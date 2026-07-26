@@ -76,7 +76,7 @@ flowchart LR
 
 ### Architectural highlights
 
-**sync**: At startup, the app calls the API and stores each returned resource under a service-qualified `namespace` / `resource` pair — for example namespace `[evy_core_service_id]` with resources `flows`, `pages`, `rows`, or namespace `[marketplace_service_id]` with resource `[items_resource_id]`. (These are two separate stored columns; the colon form `namespace:resource` is only a binding grammar for expressions.) After startup, changes arrive continuously as `dataChanged` push notifications over the same socket and are applied straight into the stores; a full sync runs again on next launch.
+**sync**: At startup, the app calls the API and stores each returned resource under a service-qualified `namespace` / `resource` pair — for example namespace `[evy_core_service_id]` with resources `flows`, `pages`, `rows`, or namespace `[marketplace_service_id]` with resource `[items_resource_id]`. A successful sync also persists the aggregated service/resource catalog singleton under the core `resources` key. (These are two separate stored columns; the colon form `namespace:resource` is only a binding grammar for expressions.) After startup, changes arrive continuously as `dataChanged` push notifications over the same socket and are applied straight into the stores; a full sync runs again on next launch.
 
 **page scope**: Each rendered page carries an `EVYScope` with the cache scope for page query params and the draft scope for create flows. This keeps route context explicit through the SwiftUI tree while preserving the existing expression and mutation entry points.
 

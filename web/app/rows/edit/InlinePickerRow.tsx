@@ -1,4 +1,3 @@
-import { MARKETPLACE_RESOURCE } from "evy-types/marketplaceResources";
 import type { RowConfig } from "../../types/row";
 import { defaultRowActions, defineRow } from "../defineRow";
 import RadioButton from "../design-system/RadioButton";
@@ -10,11 +9,11 @@ export default defineRow("InlinePickerRow", {
 		actions: defaultRowActions({
 			tap: { fn: "select", value: "$datum" },
 		}),
-		source: `{${MARKETPLACE_RESOURCE.DURATIONS}}`,
+		source: "{resourceId}",
 		visible: "true",
 		title: "Inline picker row title",
 		value: "{$datum.value}",
-		destination: `{${MARKETPLACE_RESOURCE.ITEMS}.distance}`,
+		destination: "{resourceId.distance}",
 	} satisfies RowConfig,
 	render: (row) => (
 		<RowLayout title={row.config.title}>

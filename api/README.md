@@ -67,6 +67,12 @@ That is what makes a cursor of any age safe to resume from: every delete a clien
 
 `sync` is a first-class JSON-RPC method, not an `api{method}` procedure. Clients send an optional opaque `cursor` issued by the previous response; omitting it requests a full snapshot. The deprecated `lastSyncTime` request field and the legacy `api{method:"sync"}` entry point are no longer accepted.
 
+When discovery succeeds, sync includes the aggregated service/resource catalog as a singleton row under the core `resources` key. If discovery is incomplete, sync keeps the previous cursor, reports the service error, and omits the partial catalog so clients retain their last complete catalog.
+
+### Resource discovery
+
+`resources` is a first-class JSON-RPC method that returns the core manifest plus each registered external service manifest. Optional services that fail discovery are reported in `errors` without hiding healthy catalogs. Required services must implement the `resources` contract for API readiness.
+
 ### Flow submissions
 
 A flow that contains a `create(...,submit)` action must declare `submits` on its `DATA_EVY_Flow` record. The web builder validates the full flat graph before saving; iOS uses the declaration for draft scope. A one-off data migration backfills missing declarations for flows with exactly one submit target.

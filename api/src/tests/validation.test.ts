@@ -1,5 +1,4 @@
 import { describe, expect, it } from "bun:test";
-import { MARKETPLACE_RESOURCE } from "evy-types/marketplaceResources";
 import {
 	validateDataEvyFile,
 	validateFileUploadChunkMetadata,
@@ -12,6 +11,7 @@ import {
 	validateDataEvyService as validateServicePayload,
 	validateDataEvyServiceProvider as validateServiceProviderPayload,
 } from "evy-types/validators";
+import { MARKETPLACE_RESOURCE } from "../../../services/marketplace/src/resources";
 
 describe("place search validators", () => {
 	it("accepts valid place search payloads", () => {

@@ -34,6 +34,7 @@ type ActionEditorProps = {
 	pagesById: Record<string, DATA_EVY_Page>;
 	rowsById: Record<string, DATA_EVY_Row>;
 	serviceResources: ServiceResource[];
+	serviceNamesById: Map<string, string>;
 	defaultSheetRowId?: string;
 	onUpdate: (actions: UI_RowAction[]) => void;
 };
@@ -46,13 +47,20 @@ export function ActionEditor({
 	pagesById,
 	rowsById,
 	serviceResources,
+	serviceNamesById,
 	defaultSheetRowId,
 	onUpdate,
 }: ActionEditorProps) {
 	const [editingIndex, setEditingIndex] = useState<number | null>(null);
 	const idCandidates = useMemo(
-		() => buildIdCandidates(flowsById, pagesById, serviceResources),
-		[flowsById, pagesById, serviceResources],
+		() =>
+			buildIdCandidates(
+				flowsById,
+				pagesById,
+				serviceResources,
+				serviceNamesById,
+			),
+		[flowsById, pagesById, serviceResources, serviceNamesById],
 	);
 
 	const updateAction = useCallback(

@@ -7,12 +7,6 @@ import XCTest
 
 @testable import evy
 
-enum MarketplaceTestFixture {
-  static let itemsResourceId = MarketplaceResource.items.rawValue
-  static let messagesResourceId = EVYCoreResource.messages.rawValue
-  static let serviceId = MARKETPLACE_SERVICE
-}
-
 @MainActor
 final class ContentViewTests: XCTestCase {
 

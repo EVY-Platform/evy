@@ -4,7 +4,7 @@ import { EVY_CORE_RESOURCE, EVY_CORE_SERVICE } from "evy-types/coreResources";
 import {
 	MARKETPLACE_RESOURCE,
 	MARKETPLACE_SERVICE,
-} from "evy-types/marketplaceResources";
+} from "../../../services/marketplace/src/resources";
 import {
 	applyCreateModeForDraftSignals,
 	branchForStorage,

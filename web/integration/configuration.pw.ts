@@ -3,7 +3,7 @@ import type { UI_RowActions } from "evy-types";
 import {
 	MARKETPLACE_RESOURCE,
 	MARKETPLACE_SERVICE,
-} from "evy-types/marketplaceResources";
+} from "../../services/marketplace/src/resources";
 import { initFullFlows, openAppWithTestFlows, tapAction } from "./flowFixtures";
 import {
 	getConfigPanel,

@@ -47,6 +47,7 @@ export function ActionPopup({
 		activeFlowId,
 		serviceResources,
 		resourceAttributeMetadata,
+		serviceNamesById,
 	} = useFlowsContext();
 	const [expression, setExpression] = useState<ConditionExpression | null>(
 		() => parseCondition(action.condition),
@@ -67,11 +68,16 @@ export function ActionPopup({
 
 	const idCandidates = useMemo(
 		() => [
-			...buildIdCandidates(flowsById, pagesById, serviceResources),
+			...buildIdCandidates(
+				flowsById,
+				pagesById,
+				serviceResources,
+				serviceNamesById,
+			),
 			buildDatumCandidate(),
 			...buildFunctionCandidates(),
 		],
-		[flowsById, pagesById, serviceResources],
+		[flowsById, pagesById, serviceResources, serviceNamesById],
 	);
 
 	const getAttributeCandidatesForQualifier = useMemo(
@@ -153,6 +159,7 @@ export function ActionPopup({
 							flowsById={flowsById}
 							pagesById={pagesById}
 							serviceResources={serviceResources}
+							serviceNamesById={serviceNamesById}
 							idCandidates={idCandidates}
 							rowsById={rowsById}
 							defaultSheetRowId={defaultSheetRowId}
@@ -176,6 +183,7 @@ export function ActionPopup({
 							flowsById={flowsById}
 							pagesById={pagesById}
 							serviceResources={serviceResources}
+							serviceNamesById={serviceNamesById}
 							idCandidates={idCandidates}
 							rowsById={rowsById}
 							defaultSheetRowId={defaultSheetRowId}

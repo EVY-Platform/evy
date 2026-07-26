@@ -34,7 +34,9 @@ Uses the root `.env` (copy from [`.env.example`](../../.env.example)). See the [
 
 Same scripts as [`api`](../../api/README.md#available-scripts): `bun run dev`, `bun run db:migrate`, `bun run health`, etc.
 
-## Docker
+## Resource manifest
+
+The marketplace service owns its resource manifest in `src/resources.ts` and exposes it through the required `resources` JSON-RPC method. The API gateway aggregates that manifest with the core catalog and includes the full result on successful sync.
 
 From repo root:
 
