@@ -159,24 +159,6 @@ bun run health:seeded
 
 Env vars must be exported in the shell or provided via Docker — they are not loaded from `.env` automatically.
 
-## Available Scripts
-
-| Script                  | Description                              |
-| ----------------------- | ---------------------------------------- |
-| `bun run dev`           | Start server with hot reload             |
-| `bun run build`         | Build for production                     |
-| `bun run start`         | Run migrations and start server          |
-| `bun run health`        | Run the readiness check                  |
-| `bun run health:seeded` | Run readiness check and require seed data |
-| `bun run test:unit`     | Run API unit tests                       |
-| `bun run test:e2e`      | Run API end-to-end tests                 |
-| `bun run lint`          | Run Biome linter                         |
-| `bun run format`        | Format files with Biome                  |
-| `bun run db:generate`   | Generate migration from schema changes   |
-| `bun run db:migrate`    | Apply pending migrations                 |
-| `bun run db:push`       | Push schema directly (dev only)          |
-| `bun run db:studio`     | Open Drizzle Studio UI                   |
-
 ## File Upload
 
 Files are stored at `api/src/public/files/{id}` (excluded from git). File metadata is an evy core resource (`service: EVY_CORE_SERVICE`, `resource: "files"`). Maximum upload size is 20 MB. For production deployments, migrate to S3 or a CDN while keeping file IDs stable.

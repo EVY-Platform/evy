@@ -211,18 +211,3 @@ Playwright UI / debug modes apply to the Playwright CLI. Examples:
 bun run test:integration -- --ui
 bun run test:integration -- --debug
 ```
-
-## Available Scripts
-
-| Script                 | Description                              |
-| ---------------------- | ---------------------------------------- |
-| `bun run dev`          | Start the web app in development mode    |
-| `bun run build`        | Build the production assets into `dist/` |
-| `bun run start`        | Start the web app using the Bun server   |
-| `bun run lint`         | Run Biome checks across the project      |
-| `bun run format`       | Format the project with Biome            |
-| `bun run setup`        | Copy static assets into `dist/`          |
-| `bun run test:unit`    | Run Bun unit tests under `app/`          |
-| `bun run test:integration` | Run Playwright browser tests under `integration/` |
-| `bun run test:e2e`     | Run Playwright full-stack tests under `e2e/` |
-| `bun run test:setup`   | Install Playwright Chromium dependencies |
