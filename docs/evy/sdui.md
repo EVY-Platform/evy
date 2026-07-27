@@ -51,8 +51,8 @@ Rows are what are put into pages. They are the building block of the EVY server-
     -   inline icons as [Lucide](https://lucide.dev/icons) names in kebab-case, wrapped in double colons: "EVY ::image-plus:: is the best!"
 -   [ x ]
     -   Denotes a type array of x
--   Objects and arrays
-    -   When objects or arrays are interpolated (e.g. `{[resource_id].tags}`), the UI runtime resolves the binding to structured data (e.g. a JSON array of tag objects) before rendering—use the schema and client behavior for the exact shape, not a hand-written JSON fragment in the flow string.
+	-   Objects and arrays
+	    -   When objects or arrays are interpolated (e.g. `{[resource_id].dimensions}`), the UI runtime resolves the binding to structured data before rendering—use the schema and client behavior for the exact shape, not a hand-written JSON fragment in the flow string.
 
 ```
 {

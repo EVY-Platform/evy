@@ -10,7 +10,7 @@ export default defineRow("InputListRow", {
 		source: "",
 		visible: "true",
 		title: "Input list row title",
-		placeholder: "Search for tags",
+		placeholder: "Search...",
 		format: "{$datum.value}",
 	} satisfies RowConfig,
 	render: (row) => (

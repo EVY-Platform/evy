@@ -77,8 +77,8 @@ private struct EVYInputListPreview: View {
 
   var body: some View {
     EVYInputList(
-      data: "{tags}",
-      format: "{$datum}",
-      placeholder: "Add tags to improve search")
+      data: "{selling_reasons}",
+      format: "{$datum.value}",
+      placeholder: "Search for reasons")
   }
 }

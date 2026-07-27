@@ -236,7 +236,6 @@ describe("marketplace item payload validation", () => {
 		seller_id: "04b34671-4eeb-4f1c-8435-5e029a0e455c",
 		createdAt: "2026-05-20T22:56:17.000Z",
 		dimensions: { width: 500, height: 1600, length: 600, weight: 10 },
-		tags: [{ id: "8e1cd2bf-d94f-4bb0-bd68-fc74434deabe", value: "iPhone" }],
 		payment_methods: { cash: true, app: true },
 		transfer_options: {
 			pickup: {

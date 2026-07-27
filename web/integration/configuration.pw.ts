@@ -151,14 +151,17 @@ test.describe("Row configuration", () => {
 				rows: [
 					{
 						type: "InputList",
-						title: "Tags",
-						placeholder: "Search for tags",
+						title: "Selling Reasons",
+						placeholder: "Search for reasons",
 						format: "{$datum.value}",
 					},
 				],
 			},
 		]);
-		await page.getByText("Tags", { exact: true }).first().click();
+		await page
+			.getByText("Selling Reasons", { exact: true })
+			.first()
+			.click();
 
 		const configPanel = getConfigPanel(page);
 		const formatInput = configPanel.getByLabel("format");
