@@ -1,0 +1,18 @@
+{
+	"$schema": "https://json-schema.org/draft/2020-12/schema",
+	"$id": "marketplace/lookup",
+	"title": "DATA_MARKETPLACE_Lookup",
+	"description": "A simple label row. `selling_reasons`, `conditions`, `durations`, and `areas` all share this shape: an id and the text shown for it. Unlike items there is no create flow merging draft fields into these, so the shape is closed - an unexpected key means something wrote the wrong resource.",
+	"type": "object",
+	"additionalProperties": false,
+	"required": ["id", "value"],
+	"properties": {
+		"id": {
+			"type": "string",
+			"format": "uuid"
+		},
+		"value": {
+			"type": "string"
+		}
+	}
+}

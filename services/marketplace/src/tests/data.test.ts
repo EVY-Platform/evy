@@ -380,12 +380,23 @@ describe("marketplace item payload validation", () => {
 		).rejects.toThrow("/price: must be object");
 	});
 
-	it("leaves resources without a schema on the generic object check", async () => {
+	// Every marketplace resource has a schema: the core api forwards these
+	// payloads without inspecting them, so anything unvalidated here is
+	// unvalidated everywhere.
+	it("validates the lookup resources too", async () => {
 		await expect(
 			create({
 				service: MARKETPLACE_SERVICE,
 				resource: MARKETPLACE_RESOURCE.CONDITIONS,
 				data: { id: crypto.randomUUID(), anything: { goes: true } },
+			}),
+		).rejects.toThrow("MarketplaceLookup validation failed");
+
+		await expect(
+			create({
+				service: MARKETPLACE_SERVICE,
+				resource: MARKETPLACE_RESOURCE.AREAS,
+				data: { id: crypto.randomUUID(), value: "City" },
 			}),
 		).resolves.toBeDefined();
 	});

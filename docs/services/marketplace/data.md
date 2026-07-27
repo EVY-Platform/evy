@@ -2,7 +2,7 @@
 
 Clients talk to marketplace through the EVY api, in order to access the `items`, `selling_reasons`, `conditions`, and `durations` resources.
 
-Service-owned resource payload shapes are conventions defined only in SDUI — there are no code-side JSON schemas or TypeScript types for marketplace data rows. Resource ids are declared in [`services/marketplace/src/resources.ts`](../../../services/marketplace/src/resources.ts) and exposed through the service's `resources` JSON-RPC method.
+Marketplace owns its own payload schemas and validates every `create` and `update` against them: the EVY api forwards these payloads without inspecting them, so anything this service does not check is unchecked everywhere. The schemas live in [`services/marketplace/src/schema/`](../../../services/marketplace/src/schema) and are compiled by [`src/validation.ts`](../../../services/marketplace/src/validation.ts); nothing marketplace-shaped belongs in the shared `types/` package. Resource ids are declared in [`services/marketplace/src/resources.ts`](../../../services/marketplace/src/resources.ts) and exposed through the service's `resources` JSON-RPC method, along with each resource's bindable `attributes` — derived from these same schemas, so what the builder offers and what the service accepts cannot drift apart.
 
 Shared value objects (`location`, `price`, `address`, `area`, `photo`, `timeslot`, `transfer_options`, `duration`) are documented in [EVY data models](../../evy/data.md).
 
@@ -10,19 +10,20 @@ Item requests and seller/buyer messages are core [`DATA_EVY_Message`](../../evy/
 
 ## Simple lookup resources
 
-`DATA_MARKETPLACE_SellingReason` and `DATA_MARKETPLACE_Condition` both
-share the same shape:
+`selling_reasons`, `conditions`, `durations`, and `areas` all share one shape:
 
 ```
 id: uuid
 value: string
 ```
 
+Source of truth: [`services/marketplace/src/schema/lookup.schema.json`](../../../services/marketplace/src/schema/lookup.schema.json). Unlike items these are closed (`additionalProperties: false`) and both fields are required — nothing merges draft fields into a lookup row, so an unexpected key means the wrong resource was written.
+
 ## DATA_MARKETPLACE_Item
 
 A listing aggregate. Field names below follow the marketplace service mock and UI bindings; some keys use `snake_case` in persisted JSON.
 
-Source of truth: [`types/schema/services/marketplace/item.schema.json`](../../../types/schema/services/marketplace/item.schema.json), enforced by the marketplace service on every item `create` and `update`.
+Source of truth: [`services/marketplace/src/schema/item.schema.json`](../../../services/marketplace/src/schema/item.schema.json), enforced by the marketplace service on every item `create` and `update`.
 
 Items do **not** embed an address object. A pickup location is referenced by id through `transfer_options.pickup.address_id`, which points at a core [`addresses`](../../evy/data.md) row; SDUI reads it with `findFirst(addresses, <item>.transfer_options.pickup.address_id)`.
 

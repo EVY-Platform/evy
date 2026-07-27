@@ -422,4 +422,23 @@ describe("forwarded call failures are attributed", () => {
 		expect(err.data).toMatchObject({ serviceId, code: "SERVICE_ERROR" });
 		expect(err.message).toContain("marketplace");
 	});
+
+	// Services own the validation of their own payloads, so the reason a
+	// service rejected something is the only explanation anyone gets. Crossing
+	// the WS hop turns the service's Error into a plain JSON-RPC error object;
+	// stringifying that naively yields "[object Object]" and the reason is lost.
+	it("relays the reason a service gave, not just that it failed", async () => {
+		const { forwardCreate, ServiceForwardError } = await import(
+			"../procedures/services"
+		);
+		const failure = await forwardCreate(serviceId, {
+			service: serviceId,
+			resource: EXTERNAL_TEST_RESOURCE.CONDITIONS,
+			data: { id: crypto.randomUUID(), value: "x" },
+		}).catch((error: unknown) => error);
+
+		const err = failure as InstanceType<typeof ServiceForwardError>;
+		expect(err.message).toContain("marketplace exploded");
+		expect(err.message).not.toContain("[object Object]");
+	});
 });

@@ -31,7 +31,7 @@ final class EVYCreateMergesDraftsTests: XCTestCase {
     EVY.ensureDraftExists(variableName: "items.title", scopeId: testDraftScope)
     try EVY.updateValue("User Title", destination: "{items.title}", scopeId: testDraftScope)
 
-    try EVY.create(
+    _ = try EVY.create(
       namespace: MarketplaceTestFixture.serviceId, resource: "items", isSubmission: true)
 
     let instances = try EVY.publicStore.getAll(
@@ -66,7 +66,7 @@ final class EVYCreateMergesDraftsTests: XCTestCase {
     )
     EVY.draftStore.notifyUpdate(binding: priceBinding)
 
-    try EVY.create(
+    _ = try EVY.create(
       namespace: MarketplaceTestFixture.serviceId, resource: "items", isSubmission: true)
 
     let instances = try EVY.publicStore.getAll(
@@ -105,7 +105,7 @@ final class EVYCreateMergesDraftsTests: XCTestCase {
 
     EVY.ensureDraftExists(variableName: "items.title", scopeId: testDraftScope)
     try EVY.updateValue("New Item", destination: "{items.title}", scopeId: testDraftScope)
-    try EVY.create(
+    _ = try EVY.create(
       namespace: MarketplaceTestFixture.serviceId, resource: "items", isSubmission: true)
 
     let instances = try EVY.publicStore.getAll(
@@ -132,7 +132,7 @@ final class EVYCreateMergesDraftsTests: XCTestCase {
     try EVY.updateValue(
       "500", destination: "{items.dimensions.width}", scopeId: testDraftScope)
 
-    try EVY.create(
+    _ = try EVY.create(
       namespace: MarketplaceTestFixture.serviceId, resource: "items", isSubmission: true)
 
     let instances = try EVY.publicStore.getAll(
@@ -169,7 +169,8 @@ final class EVYCreateMergesDraftsTests: XCTestCase {
       "title": .string("Datum Title"),
       "type": .string("pickup"),
     ]
-    try EVY.create(namespace: MarketplaceTestFixture.serviceId, resource: "items", data: payload)
+    _ = try EVY.create(
+      namespace: MarketplaceTestFixture.serviceId, resource: "items", data: payload)
 
     let instances = try EVY.publicStore.getAll(
       namespace: MarketplaceTestFixture.serviceId, resource: "items")

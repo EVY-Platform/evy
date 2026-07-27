@@ -250,6 +250,37 @@ export async function initServiceAdapters(
 }
 
 /**
+ * Explains why a service rejected a call.
+ *
+ * Services validate their own payloads, so the reason they give is the only
+ * explanation the caller gets. It does not arrive as an Error: crossing the WS
+ * hop leaves a plain JSON-RPC error object, and stringifying that yields
+ * "[object Object]" — the reason, silently discarded.
+ */
+function describeServiceFailure(error: unknown): string {
+	if (error instanceof Error) return error.message;
+	if (typeof error === "object" && error !== null) {
+		const { message, data } = error as {
+			message?: unknown;
+			data?: unknown;
+		};
+		// rpc-websockets puts the thrown Error's name in `message` and its own
+		// message in `data`, so the useful half is usually `data`.
+		const parts = [message, data].filter(
+			(part): part is string =>
+				typeof part === "string" && part.length > 0,
+		);
+		if (parts.length > 0) return parts.join(": ");
+		try {
+			return JSON.stringify(error);
+		} catch {
+			// Fall through to String() for anything JSON cannot represent.
+		}
+	}
+	return String(error);
+}
+
+/**
  * Every forwarded call goes through here so a hung or failing service surfaces
  * as an attributed, time-bounded error instead of an anonymous stall.
  */
@@ -274,9 +305,8 @@ async function forwardTo<T>(
 		);
 	} catch (error) {
 		if (error instanceof ServiceForwardError) throw error;
-		const detail = error instanceof Error ? error.message : String(error);
 		throw new ServiceForwardError(
-			`Service "${serviceName}" (${serviceId}) failed on ${operation}: ${detail}`,
+			`Service "${serviceName}" (${serviceId}) failed on ${operation}: ${describeServiceFailure(error)}`,
 			{ serviceId, serviceName, code: "SERVICE_ERROR" },
 		);
 	}

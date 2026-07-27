@@ -422,7 +422,7 @@ extension EVY {
 
   static func updateData(_ newData: Data, destination: String, scopeId: String? = nil) throws {
     let variableName = _parsePropsFromText(destination)
-    let (store, cleanVariableName) = store(for: variableName)
+    let (_, cleanVariableName) = store(for: variableName)
     let splitProps = try splitPropsFromText(cleanVariableName)
     let rootVariable = splitProps.first!
     let resolvedScopeId = scopeId ?? draftStore.activeScopeId

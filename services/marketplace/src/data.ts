@@ -15,13 +15,16 @@ import {
 	assertIsoDateTimeJsonFields,
 	validateCreateDataPayload,
 	validateCreateResponse,
-	validateDataMarketplaceItem,
 	validateDeleteResponse,
 	validateGetResponse,
 	validateUpdateDataPayload,
 	validateUpdateResponse,
 } from "evy-types/validators";
 import { data, db } from "./db";
+import {
+	validateDataMarketplaceItem,
+	validateDataMarketplaceLookup,
+} from "./validation";
 
 /** Drops null columns so an absent tombstone is omitted rather than null. */
 function omitNulls<T extends Record<string, unknown>>(row: T): T {
@@ -38,14 +41,28 @@ import {
 } from "./resources";
 
 /**
- * Resource-specific payload validation. Items are the one resource with a
- * schema today; the rest keep the generic "is a JSON object" check until they
- * have one of their own.
+ * Resource-specific payload validation. Every marketplace resource has a
+ * schema: the core api forwards these payloads without inspecting them, so an
+ * unvalidated resource here is an unvalidated resource everywhere.
  */
+const RESOURCE_VALIDATORS: Record<string, (payload: unknown) => unknown> = {
+	[MARKETPLACE_RESOURCE.ITEMS]: validateDataMarketplaceItem,
+	[MARKETPLACE_RESOURCE.SELLING_REASONS]: validateDataMarketplaceLookup,
+	[MARKETPLACE_RESOURCE.CONDITIONS]: validateDataMarketplaceLookup,
+	[MARKETPLACE_RESOURCE.DURATIONS]: validateDataMarketplaceLookup,
+	[MARKETPLACE_RESOURCE.AREAS]: validateDataMarketplaceLookup,
+};
+
 function assertResourcePayload(resource: string, payload: unknown): void {
-	if (resource === MARKETPLACE_RESOURCE.ITEMS) {
-		validateDataMarketplaceItem(payload);
+	const validate = RESOURCE_VALIDATORS[resource];
+	if (!validate) {
+		// assertMarketplaceRules already rejected unknown resources, so this
+		// means a resource was added to the manifest without a schema.
+		throw new Error(
+			`No payload schema for marketplace resource ${resource}`,
+		);
 	}
+	validate(payload);
 }
 
 function assertMarketplaceRules(

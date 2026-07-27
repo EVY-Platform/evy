@@ -132,27 +132,52 @@ function addAttributeNames(
 	}
 }
 
-function extractResourceAttributeMetadata(
+function inferAttributeNames(
+	response: SyncResponse,
+	serviceId: string,
+	resourceId: string,
+): string[] {
+	const attributeNames = new Set<string>();
+	for (const row of response.data) {
+		if (row.service !== serviceId || row.resource !== resourceId) continue;
+		if (!Array.isArray(row.value)) continue;
+		for (const item of row.value) {
+			addAttributeNames(item, attributeNames);
+		}
+	}
+	return [...attributeNames].toSorted((a, b) => a.localeCompare(b));
+}
+
+/**
+ * Bindable attribute names per service resource.
+ *
+ * A service that declares `attributes` on its manifest is taken at its word:
+ * it knows its own schema, so the list is right even for a resource nobody has
+ * created a row in yet. Services that declare nothing fall back to reading the
+ * keys off whatever rows synced, which is what every service used to get.
+ */
+export function extractResourceAttributeMetadata(
+	catalog: ResourcesResponse,
 	response: SyncResponse,
 ): ResourceAttributeMetadata[] {
-	return response.data
-		.filter(
-			(row) =>
-				row.service !== EVY_CORE_SERVICE && Array.isArray(row.value),
+	return catalog.services
+		.filter((service) => service.id !== EVY_CORE_SERVICE)
+		.flatMap((service) =>
+			service.resources.map((resource) => ({
+				serviceId: service.id,
+				resourceId: resource.id,
+				attributeNames:
+					resource.attributes && resource.attributes.length > 0
+						? [...resource.attributes].toSorted((a, b) =>
+								a.localeCompare(b),
+							)
+						: inferAttributeNames(
+								response,
+								service.id,
+								resource.id,
+							),
+			})),
 		)
-		.map((row) => {
-			const attributeNames = new Set<string>();
-			for (const item of row.value as unknown[]) {
-				addAttributeNames(item, attributeNames);
-			}
-			return {
-				serviceId: row.service,
-				resourceId: row.resource,
-				attributeNames: [...attributeNames].toSorted((a, b) =>
-					a.localeCompare(b),
-				),
-			};
-		})
 		.filter((metadata) => metadata.attributeNames.length > 0);
 }
 
@@ -209,8 +234,10 @@ export async function syncWebData(): Promise<{
 	return {
 		flowGraph: extractFlowEntityCollections(syncResponse),
 		serviceResources: flattenServiceResources(catalog),
-		resourceAttributeMetadata:
-			extractResourceAttributeMetadata(syncResponse),
+		resourceAttributeMetadata: extractResourceAttributeMetadata(
+			catalog,
+			syncResponse,
+		),
 		serviceNamesById: serviceNamesById(catalog),
 		formatters: extractFlatResourceRows(
 			syncResponse,

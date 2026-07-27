@@ -19,6 +19,17 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 	return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
+/**
+ * A rejected JSON-RPC call arrives as `{code, message, data}`, where `message`
+ * is the error's class name and `data` carries what actually went wrong.
+ */
+function failureDetail(failure: unknown): string {
+	if (!isRecord(failure)) return String(failure);
+	return [failure.message, failure.data]
+		.filter((part): part is string => typeof part === "string")
+		.join(": ");
+}
+
 describe("Marketplace E2E (via API WebSocket)", () => {
 	let client: WSClient;
 	let marketplaceServiceId: string;
@@ -79,6 +90,63 @@ describe("Marketplace E2E (via API WebSocket)", () => {
 				entry.nested.value === 123,
 		);
 		expect(isRecord(matchingRecord)).toBe(true);
+	});
+
+	// The gateway forwards item payloads without inspecting them, so these
+	// rejections prove the marketplace service is the one checking — and that
+	// the reason survives the hop back, since it is all the caller gets.
+	it("rejects an item whose known field has the wrong type", async () => {
+		const failure = await client
+			.call("create", {
+				service: marketplaceServiceId,
+				resource: itemsResourceId,
+				data: { id: crypto.randomUUID(), title: 123 },
+			})
+			.catch((error: unknown) => error);
+
+		expect(failureDetail(failure)).toContain("/title: must be string");
+	});
+
+	it("rejects a lookup row with an unknown key", async () => {
+		const response = await client.call("resources", {});
+		const { resourceIds } = discoverMarketplaceIds(response, [
+			"conditions",
+		]);
+
+		const failure = await client
+			.call("create", {
+				service: marketplaceServiceId,
+				resource: resourceIds.conditions,
+				data: { id: crypto.randomUUID(), value: "Mint", extra: true },
+			})
+			.catch((error: unknown) => error);
+
+		expect(failureDetail(failure)).toContain(
+			"must NOT have additional propert",
+		);
+	});
+
+	// The builder reads these off the catalog the gateway aggregates, so they
+	// have to survive both the service hop and the api hop.
+	it("exposes marketplace attributes through the API resource catalog", async () => {
+		const response = (await client.call("resources", {})) as {
+			services: {
+				id: string;
+				resources: { name: string; attributes?: string[] }[];
+			}[];
+		};
+		const marketplace = response.services.find(
+			(service) => service.id === marketplaceServiceId,
+		);
+		const items = marketplace?.resources.find(
+			(resource) => resource.name === "items",
+		);
+
+		expect(items?.attributes).toContain("title");
+		expect(items?.attributes).toContain("price.currency");
+		expect(items?.attributes).toContain(
+			"transfer_options.pickup.address_id",
+		);
 	});
 
 	it("creates core messages via the EVY API", async () => {

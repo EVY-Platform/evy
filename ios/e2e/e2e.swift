@@ -3591,7 +3591,7 @@ final class WebSocketE2ETests: E2ETestBase {
       var firstRow = rows.first,
       var children = firstRow["children"] as? [[String: Any]],
       let buttonIndex = children.firstIndex(where: { ($0["label"] as? String) == buttonLabel }),
-      var actionsObject = children[buttonIndex]["actions"] as? [String: Any],
+      let actionsObject = children[buttonIndex]["actions"] as? [String: Any],
       var actions = actionsObject["tap"] as? [[String: Any]],
       var firstAction = actions.first
     else {
