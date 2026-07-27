@@ -10,6 +10,25 @@ The Xcode project references generated Swift types under `types/generated/swift`
 bun run types:generate
 ```
 
+### Editor / LSP setup (Zed, Neovim, VS Code, etc.)
+
+`sourcekit-lsp` needs a BSP server to see types across files in this `.xcodeproj` (otherwise it falls back to single-file mode and reports spurious "Cannot find type … in scope" warnings). We use [`xcode-build-server`](https://github.com/SolaWing/xcode-build-server) to bridge `xcodebuild` to sourcekit-lsp.
+
+Install it once (Homebrew):
+
+```sh
+brew install xcode-build-server
+```
+
+Then regenerate the BSP manifest from the `ios/` directory (do this after switching branches that change build settings, adding files, or modifying the project):
+
+```sh
+cd ios
+xcode-build-server config -scheme evy -project evy.xcodeproj
+```
+
+This writes `ios/buildServer.json` (gitignored, machine-specific). Restart your editor and sourcekit-lsp will pick it up automatically.
+
 ### Build
 
 Open `ios/evy.xcodeproj` in Xcode and run the `evy` scheme against the **iPhone 17** simulator on **iOS 26.5** (see root `AGENTS.md`), or from the command line:
