@@ -284,7 +284,7 @@ final class InterpreterTests: XCTestCase {
           "title": .string("Selected item"),
         ]),
       ]),
-      at: "\(EVYNamespace.marketplace):\(entityKey)"
+      at: "\(MarketplaceTestFixture.serviceId):\(entityKey)"
     )
 
     EVY.resolveQueryParams([entityKey: [secondId]])
@@ -337,7 +337,7 @@ final class InterpreterTests: XCTestCase {
           ]),
         ]),
       ]),
-      at: "\(EVYNamespace.marketplace):\(entityKey)"
+      at: "\(MarketplaceTestFixture.serviceId):\(entityKey)"
     )
     let pickupSelections = EVYState<[String]>(
       watches: ["{\(entityKey).pickup_selection}"],
@@ -380,7 +380,7 @@ final class InterpreterTests: XCTestCase {
           "title": .string("Selected exact item"),
         ])
       ]),
-      at: "\(EVYNamespace.marketplace):\(resourceKey)"
+      at: "\(MarketplaceTestFixture.serviceId):\(resourceKey)"
     )
 
     EVY.resolveQueryParams([resourceKey: [id]])
@@ -477,7 +477,8 @@ final class InterpreterTests: XCTestCase {
     let item1 = EVYJson.dictionary(["id": .string("id-1"), "title": .string("Item 1")])
     let item2 = EVYJson.dictionary(["id": .string("id-2"), "title": .string("Item 2")])
     try EVY.publicStore.applySyncedValue(
-      namespace: EVYNamespace.marketplace, resource: itemsKey, value: .array([item1, item2]))
+      namespace: MarketplaceTestFixture.serviceId, resource: itemsKey,
+      value: .array([item1, item2]))
 
     let encoded = try JSONEncoder().encode(item1)
     try EVY.cacheStore.create(
@@ -572,7 +573,7 @@ final class InterpreterTests: XCTestCase {
           "title": .string("Selected by generic id"),
         ])
       ]),
-      at: "\(EVYNamespace.marketplace):\(entityKey)"
+      at: "\(MarketplaceTestFixture.serviceId):\(entityKey)"
     )
 
     EVY.resolveQueryParams(["id": [id]])
@@ -627,49 +628,47 @@ final class InterpreterTests: XCTestCase {
     XCTAssertEqual(time.value, "09:30")
   }
 
-  func testEarliestDatetimeReturnsChronologicallyFirstSlotFromUnsortedArray() throws {
-    let itemKey = uniqueKey("item")
+  func testSortScalarDescendingReversesOrder() throws {
+    let key = uniqueKey("times")
     try store(
-      .dictionary([
-        "id": .string("id-1"),
-        "pickup_selection": .array([
-          .string("2026-06-04T09:30:00"),
-          .string("2026-06-03T09:00:00"),
-          .string("2026-06-03T10:00:00"),
-        ]),
+      .array([
+        .string("2026-06-03T09:00:00"),
+        .string("2026-06-04T09:30:00"),
       ]),
-      at: itemKey
+      at: key
     )
 
-    let earliest = try parseTextFromText("{earliestDatetime(\(itemKey).pickup_selection)}")
-    XCTAssertEqual(earliest.value, "2026-06-03T09:00:00")
+    let latest = try parseTextFromText("{findFirst(sort(\(key), desc))}")
+    XCTAssertEqual(latest.value, "2026-06-04T09:30:00")
+  }
 
-    let scopeId = EVYDraft.ephemeralScopeId(forPageId: testPageId)
-    EVY.draftStore.activeScopeId = scopeId
-    let selectedTimeslotKey = "selected_pickup_timeslot"
-    EVY.ensureDraftExists(variableName: selectedTimeslotKey, scopeId: scopeId)
-
-    try EVY.updateValue(
-      "2026-06-03T10:00:00",
-      destination: "{\(selectedTimeslotKey)}",
-      scopeId: scopeId
-    )
-    XCTAssertTrue(
-      try EVY.evaluateFromText(
-        "{\(selectedTimeslotKey) != earliestDatetime(\(itemKey).pickup_selection)}"
-      )
+  func testSortNumericAscendingUsesNumericComparison() throws {
+    let key = uniqueKey("amounts")
+    try store(
+      .array([
+        .int(150),
+        .int(9),
+        .int(42),
+      ]),
+      at: key
     )
 
-    try EVY.updateValue(
-      "2026-06-03T09:00:00",
-      destination: "{\(selectedTimeslotKey)}",
-      scopeId: scopeId
+    let smallest = try parseTextFromText("{findFirst(sort(\(key), asc))}")
+    XCTAssertEqual(smallest.value, "9")
+  }
+
+  func testSortKeyedRecordsIsStableForEqualKeys() throws {
+    let key = uniqueKey("records")
+    try store(
+      .array([
+        .dictionary(["id": .string("first"), "rank": .int(1)]),
+        .dictionary(["id": .string("second"), "rank": .int(1)]),
+      ]),
+      at: key
     )
-    XCTAssertFalse(
-      try EVY.evaluateFromText(
-        "{\(selectedTimeslotKey) != earliestDatetime(\(itemKey).pickup_selection)}"
-      )
-    )
+
+    let first = try parseTextFromText("{findFirst(sort(\(key), asc, rank)).id}")
+    XCTAssertEqual(first.value, "first")
   }
 
   func testFormatDatetimeSupportsIsoStringWithoutTimezone() throws {
@@ -703,7 +702,7 @@ final class InterpreterTests: XCTestCase {
           "title": .string("Plural resource item"),
         ])
       ]),
-      at: "\(EVYNamespace.marketplace):\(resourceKey)"
+      at: "\(MarketplaceTestFixture.serviceId):\(resourceKey)"
     )
 
     XCTAssertThrowsError(
@@ -723,7 +722,7 @@ final class InterpreterTests: XCTestCase {
           "title": .string("Selected singular item"),
         ])
       ]),
-      at: "\(EVYNamespace.marketplace):\(resourceKey)"
+      at: "\(MarketplaceTestFixture.serviceId):\(resourceKey)"
     )
 
     EVY.resolveQueryParams([entityKey: [id]])
@@ -752,7 +751,7 @@ final class InterpreterTests: XCTestCase {
           "title": .string("Synced collection item"),
         ])
       ]),
-      at: "\(EVYNamespace.marketplace):\(resourceKey)"
+      at: "\(MarketplaceTestFixture.serviceId):\(resourceKey)"
     )
 
     XCTAssertEqual(
@@ -771,7 +770,7 @@ final class InterpreterTests: XCTestCase {
         .dictionary(["id": .string(conditionId), "value": .string("Excellent")]),
         .dictionary(["id": .string(UUID().uuidString), "value": .string("Other")]),
       ]),
-      at: "\(EVYNamespace.marketplace):\(conditionsKey)"
+      at: "\(MarketplaceTestFixture.serviceId):\(conditionsKey)"
     )
     try store(.dictionary(["condition_id": .string(conditionId)]), at: itemKey)
 
@@ -787,7 +786,7 @@ final class InterpreterTests: XCTestCase {
 
     try store(
       .array([.dictionary(["id": .string("abc"), "value": .string("Excellent")])]),
-      at: "\(EVYNamespace.marketplace):\(conditionsKey)"
+      at: "\(MarketplaceTestFixture.serviceId):\(conditionsKey)"
     )
     try store(.dictionary(["condition_id": .string("no_match")]), at: itemKey)
 
@@ -804,7 +803,7 @@ final class InterpreterTests: XCTestCase {
 
     try store(
       .array([.dictionary(["id": .string(conditionId), "value": .string("Good")])]),
-      at: "\(EVYNamespace.marketplace):\(conditionsKey)"
+      at: "\(MarketplaceTestFixture.serviceId):\(conditionsKey)"
     )
     try store(.dictionary(["condition_id": .string(conditionId)]), at: itemKey)
 
@@ -839,7 +838,7 @@ final class InterpreterTests: XCTestCase {
           type: "pickup"
         ),
       ]),
-      at: "\(EVYNamespace.marketplace):\(messagesKey)"
+      at: "\(MarketplaceTestFixture.serviceId):\(messagesKey)"
     )
     try store(.dictionary(["id": .string(itemId)]), at: itemKey)
 
@@ -866,7 +865,7 @@ final class InterpreterTests: XCTestCase {
           time: "2026-06-03T09:00:00"
         )
       ]),
-      at: "\(EVYNamespace.marketplace):\(messagesKey)"
+      at: "\(MarketplaceTestFixture.serviceId):\(messagesKey)"
     )
     try store(.dictionary(["id": .string(itemId)]), at: itemKey)
 
@@ -897,7 +896,7 @@ final class InterpreterTests: XCTestCase {
           time: "2026-06-03T09:00:00"
         )
       ]),
-      at: "\(EVYNamespace.marketplace):\(messagesKey)"
+      at: "\(MarketplaceTestFixture.serviceId):\(messagesKey)"
     )
     try store(.dictionary(["id": .string(itemId)]), at: itemKey)
 
@@ -940,7 +939,7 @@ final class InterpreterTests: XCTestCase {
 
     try store(
       .array([.dictionary(["id": .string(conditionId), "value": .string("Good")])]),
-      at: "\(EVYNamespace.marketplace):\(conditionsKey)"
+      at: "\(MarketplaceTestFixture.serviceId):\(conditionsKey)"
     )
 
     let result = try parseTextFromText("{findFirst(\(conditionsKey), \(conditionId)).value}")
@@ -969,7 +968,7 @@ final class InterpreterTests: XCTestCase {
           type: "pickup"
         ),
       ]),
-      at: "\(EVYNamespace.marketplace):\(messagesKey)"
+      at: "\(MarketplaceTestFixture.serviceId):\(messagesKey)"
     )
     try store(.dictionary(["id": .string(itemId)]), at: itemKey)
 
@@ -995,7 +994,7 @@ final class InterpreterTests: XCTestCase {
           type: "pickup"
         )
       ]),
-      at: "\(EVYNamespace.marketplace):\(messagesKey)"
+      at: "\(MarketplaceTestFixture.serviceId):\(messagesKey)"
     )
     try store(.dictionary(["id": .string(itemId)]), at: itemKey)
 
@@ -1021,7 +1020,7 @@ final class InterpreterTests: XCTestCase {
           "data": .dictionary(["type": .string("pickup")]),
         ]),
       ]),
-      at: "\(EVYNamespace.marketplace):\(messagesKey)"
+      at: "\(MarketplaceTestFixture.serviceId):\(messagesKey)"
     )
 
     let result = try parseTextFromText(
@@ -1045,7 +1044,7 @@ final class InterpreterTests: XCTestCase {
           "price": .int(150),
         ]),
       ]),
-      at: "\(EVYNamespace.marketplace):\(itemsKey)"
+      at: "\(MarketplaceTestFixture.serviceId):\(itemsKey)"
     )
 
     let result = try parseTextFromText("{findFirst(\(itemsKey), price > 100).id}")
@@ -1066,7 +1065,7 @@ final class InterpreterTests: XCTestCase {
           archivedAt: .null
         )
       ]),
-      at: "\(EVYNamespace.marketplace):\(messagesKey)"
+      at: "\(MarketplaceTestFixture.serviceId):\(messagesKey)"
     )
     try store(.dictionary(["id": .string(itemId)]), at: itemKey)
 

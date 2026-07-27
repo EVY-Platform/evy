@@ -1,4 +1,4 @@
-import { asc, eq, ne } from "drizzle-orm";
+import { ne } from "drizzle-orm";
 import type {
 	CreateRequest,
 	CreateResponse,
@@ -10,7 +10,7 @@ import type {
 	UpdateResponse,
 } from "evy-types";
 import { EVY_CORE_RESOURCE, EVY_CORE_SERVICE } from "evy-types/coreResources";
-import { service, serviceResource } from "evy-types/db/schema.generated";
+import { service } from "evy-types/db/schema.generated";
 import {
 	DATA_CHANGED_EVENT,
 	type DataChangedNotification,
@@ -31,7 +31,6 @@ import { pagesResource } from "./resources/pages";
 import { rowsResource } from "./resources/rows";
 import { servicesResource } from "./resources/service";
 import { providersResource } from "./resources/serviceProvider";
-import { serviceResourcesResource } from "./resources/serviceResource";
 
 type BroadcastFn = (eventName: string, payload: unknown) => void;
 
@@ -85,11 +84,6 @@ const CORE_RESOURCE_REGISTRY: Record<string, CoreResourceOps> = {
 		create: providersResource.create,
 		update: providersResource.update,
 	},
-	[EVY_CORE_RESOURCE.SERVICE_RESOURCES]: {
-		list: serviceResourcesResource.list,
-		create: serviceResourcesResource.create,
-		update: serviceResourcesResource.update,
-	},
 	[EVY_CORE_RESOURCE.FILES]: {
 		list: listFileRows,
 		create: createFileResource,
@@ -108,20 +102,6 @@ export { validateAuth } from "./resources/devices";
 export async function get(db: EvyDb, params: GetRequest): Promise<GetResponse> {
 	assertEvyCoreAccess(params);
 	return getCoreBody(db, params);
-}
-
-export async function listExternalServiceResources(
-	db: EvyDb,
-): Promise<Array<{ serviceId: string; resourceId: string }>> {
-	return db
-		.select({
-			serviceId: service.id,
-			resourceId: serviceResource.id,
-		})
-		.from(serviceResource)
-		.innerJoin(service, eq(serviceResource.fkServiceId, service.id))
-		.where(ne(service.id, EVY_CORE_SERVICE))
-		.orderBy(asc(service.id), asc(serviceResource.id));
 }
 
 type ExternalServiceRow = {

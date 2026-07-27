@@ -113,9 +113,9 @@
 		73F5D1012F50000100000001 /* EVYDraft.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73F5D1002F50000100000001 /* EVYDraft.swift */; };
 		73F5D2012F50000200000001 /* forEachRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73F5D2002F50000200000001 /* forEachRow.swift */; };
 		73F7A0012F70B00700000001 /* CoreResources.generated.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73F7A0112F70B00700000001 /* CoreResources.generated.swift */; };
-		73F7A0022F70B00700000002 /* MarketplaceResources.generated.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73F7A0122F70B00700000002 /* MarketplaceResources.generated.swift */; };
 		73F7A0032F70B00700000003 /* CoreResources.generated.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73F7A0112F70B00700000001 /* CoreResources.generated.swift */; };
-		73F7A0042F70B00700000004 /* MarketplaceResources.generated.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73F7A0122F70B00700000002 /* MarketplaceResources.generated.swift */; };
+		73F7E2012F70020100000001 /* MarketplaceE2EFixture.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73F7E1022F70010100000001 /* MarketplaceE2EFixture.swift */; };
+		73F7E2032F70020100000001 /* MarketplaceTestFixture.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73F7E1042F70010100000001 /* MarketplaceTestFixture.swift */; };
 		73F7E0022F70000100000001 /* EVYError.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73F7E0012F70000100000001 /* EVYError.swift */; };
 		73F7E1012F70010100000001 /* EVYDataStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73F7E1002F70010100000001 /* EVYDataStore.swift */; };
 		74A100012F32000100000001 /* interpreterTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 74A100042F32000100000001 /* interpreterTests.swift */; };
@@ -277,7 +277,8 @@
 		73F5D1002F50000100000001 /* EVYDraft.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EVYDraft.swift; sourceTree = "<group>"; };
 		73F5D2002F50000200000001 /* forEachRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = forEachRow.swift; sourceTree = "<group>"; };
 		73F7A0112F70B00700000001 /* CoreResources.generated.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CoreResources.generated.swift; sourceTree = "<group>"; };
-		73F7A0122F70B00700000002 /* MarketplaceResources.generated.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MarketplaceResources.generated.swift; sourceTree = "<group>"; };
+		73F7E1022F70010100000001 /* MarketplaceE2EFixture.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MarketplaceE2EFixture.swift; sourceTree = "<group>"; };
+		73F7E1042F70010100000001 /* MarketplaceTestFixture.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MarketplaceTestFixture.swift; sourceTree = "<group>"; };
 		73F7E0012F70000100000001 /* EVYError.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = EVYError.swift; sourceTree = "<group>"; };
 		73F7E1002F70010100000001 /* EVYDataStore.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = EVYDataStore.swift; sourceTree = "<group>"; };
 		74A100042F32000100000001 /* interpreterTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = interpreterTests.swift; sourceTree = "<group>"; };
@@ -605,6 +606,7 @@
 			isa = PBXGroup;
 			children = (
 				73F1A0002F30B00100000001 /* e2e.swift */,
+				73F7E1022F70010100000001 /* MarketplaceE2EFixture.swift */,
 			);
 			path = e2e;
 			sourceTree = "<group>";
@@ -619,7 +621,6 @@
 					73F2A0162F30B00200000001 /* SduiDefinitions.generated.swift */,
 					73F2A0152F30B00200000001 /* FilesFile.swift */,
 					73F7A0112F70B00700000001 /* CoreResources.generated.swift */,
-					73F7A0122F70B00700000002 /* MarketplaceResources.generated.swift */,
 
 			);
 			path = ../../types/generated/swift;
@@ -630,6 +631,7 @@
 			children = (
 				74A100162F32000100000001 /* EVYActionRunnerTests.swift */,
 				74A100142F32000100000001 /* ContentViewTests.swift */,
+				73F7E1042F70010100000001 /* MarketplaceTestFixture.swift */,
 				74A100182F32000100000001 /* EVYDraftMergesTests.swift */,
 				74A100212F32000100000001 /* EVYDraftBindingsTests.swift */,
 				E00100122F73010100000001 /* EVYDataStoreSortIndexTests.swift */,
@@ -894,7 +896,6 @@
 				73F2A0042F30B00200000001 /* DataOs.swift in Sources */,
 				73F2A0052F30B00200000001 /* FilesFile.swift in Sources */,
 				73F7A0012F70B00700000001 /* CoreResources.generated.swift in Sources */,
-				73F7A0022F70B00700000002 /* MarketplaceResources.generated.swift in Sources */,
 
 				7858E83074C330353C4844E5 /* EVY+DatumExpression.swift in Sources */,
 				A61A9E25AFD75A42586274D7 /* EVYPhotoGalleryRow.swift in Sources */,
@@ -910,8 +911,8 @@
 			buildActionMask = 2147483647;
 			files = (
 				73F1A0012F30B00100000001 /* e2e.swift in Sources */,
+				73F7E2012F70020100000001 /* MarketplaceE2EFixture.swift in Sources */,
 				73F7A0032F70B00700000003 /* CoreResources.generated.swift in Sources */,
-				73F7A0042F70B00700000004 /* MarketplaceResources.generated.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -921,6 +922,7 @@
 			files = (
 				74A100132F32000100000001 /* EVYActionRunnerTests.swift in Sources */,
 				74A100112F32000100000001 /* ContentViewTests.swift in Sources */,
+				73F7E2032F70020100000001 /* MarketplaceTestFixture.swift in Sources */,
 				74A100172F32000100000001 /* EVYDraftMergesTests.swift in Sources */,
 				74A100222F32000100000001 /* EVYDraftBindingsTests.swift in Sources */,
 				E00100112F73010100000001 /* EVYDataStoreSortIndexTests.swift in Sources */,

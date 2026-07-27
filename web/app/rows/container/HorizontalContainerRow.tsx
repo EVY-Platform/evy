@@ -11,7 +11,6 @@ export default defineRow(typeName, {
 		actions: {},
 		visible: "true",
 		title: "Horizontal container row title",
-		children: [],
 	} satisfies RowConfig,
 	render: (row) => (
 		<RowLayout title={row.config.title}>

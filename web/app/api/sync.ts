@@ -2,6 +2,7 @@ import type {
 	DATA_EVY_Flow,
 	DATA_EVY_Page,
 	DATA_EVY_Row,
+	ResourcesResponse,
 	SyncResponse,
 } from "evy-types";
 import { EVY_CORE_RESOURCE, EVY_CORE_SERVICE } from "evy-types/coreResources";
@@ -9,7 +10,7 @@ import {
 	validateDataEvyFlow,
 	validateDataEvyPage,
 	validateDataEvyRow,
-	validateDataEvyServiceResource,
+	validateResourcesResponse,
 } from "evy-types/validators";
 import type {
 	ResourceAttributeMetadata,
@@ -19,6 +20,24 @@ import type { FlowEntityCollections } from "../utils/flowEntities";
 import { wsClient } from "./wsClient";
 
 const MAX_ATTRIBUTE_DEPTH = 5;
+
+function flattenServiceResources(
+	response: ResourcesResponse,
+): ServiceResource[] {
+	return response.services.flatMap((service) =>
+		service.resources.map((resource) => ({
+			id: resource.id,
+			serviceId: service.id,
+			name: resource.name,
+		})),
+	);
+}
+
+function serviceNamesById(response: ResourcesResponse): Map<string, string> {
+	return new Map(
+		response.services.map((service) => [service.id, service.name]),
+	);
+}
 
 function extractFlatResourceRows<T>(
 	response: SyncResponse,
@@ -78,21 +97,6 @@ function isDataEvyRow(item: unknown): item is DATA_EVY_Row {
 	return isValid(validateDataEvyRow, item);
 }
 
-function isServiceResource(item: unknown): item is ServiceResource {
-	if (!isValid(validateDataEvyServiceResource, item)) return false;
-	return true;
-}
-
-function extractServiceResources(response: SyncResponse): ServiceResource[] {
-	const row = response.data.find(
-		(row) =>
-			row.service === EVY_CORE_SERVICE &&
-			row.resource === EVY_CORE_RESOURCE.SERVICE_RESOURCES,
-	);
-	if (!Array.isArray(row?.value)) return [];
-	return (row.value as unknown[]).filter(isServiceResource);
-}
-
 function isRecord(value: unknown): value is Record<string, unknown> {
 	return typeof value === "object" && value !== null && !Array.isArray(value);
 }
@@ -146,26 +150,60 @@ function extractResourceAttributeMetadata(
 		.filter((metadata) => metadata.attributeNames.length > 0);
 }
 
+function extractResourceCatalog(
+	response: SyncResponse,
+): ResourcesResponse | undefined {
+	const row = response.data.find(
+		(entry) =>
+			entry.service === EVY_CORE_SERVICE &&
+			entry.resource === EVY_CORE_RESOURCE.RESOURCES,
+	);
+	if (
+		!row?.value ||
+		typeof row.value !== "object" ||
+		Array.isArray(row.value)
+	) {
+		return undefined;
+	}
+	return validateResourcesResponse(row.value);
+}
+
 export async function syncWebData(): Promise<{
 	flowGraph: FlowEntityCollections;
 	serviceResources: ServiceResource[];
 	resourceAttributeMetadata: ResourceAttributeMetadata[];
+	serviceNamesById: Map<string, string>;
 }> {
-	// No cursor: the builder loads a full snapshot at mount and stays current
-	// through dataChanged pushes rather than by re-syncing.
-	const response = await wsClient.sync();
-	if (response.errors?.length) {
-		// Surfacing rather than throwing: the rows that did arrive are usable.
+	const syncResponse = await wsClient.sync();
+
+	if (syncResponse.errors?.length) {
 		console.warn(
 			"sync was incomplete:",
-			response.errors
+			syncResponse.errors
 				.map((entry) => `${entry.resource}: ${entry.message}`)
 				.join("; "),
 		);
 	}
+
+	let catalog = extractResourceCatalog(syncResponse);
+	if (!catalog) {
+		const resourcesResponse = await wsClient.resources();
+		catalog = resourcesResponse;
+		if (resourcesResponse.errors?.length) {
+			console.warn(
+				"resource discovery was incomplete:",
+				resourcesResponse.errors
+					.map((entry) => `${entry.service}: ${entry.message}`)
+					.join("; "),
+			);
+		}
+	}
+
 	return {
-		flowGraph: extractFlowEntityCollections(response),
-		serviceResources: extractServiceResources(response),
-		resourceAttributeMetadata: extractResourceAttributeMetadata(response),
+		flowGraph: extractFlowEntityCollections(syncResponse),
+		serviceResources: flattenServiceResources(catalog),
+		resourceAttributeMetadata:
+			extractResourceAttributeMetadata(syncResponse),
+		serviceNamesById: serviceNamesById(catalog),
 	};
 }

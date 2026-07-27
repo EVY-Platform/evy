@@ -1,13 +1,13 @@
 import { evaluateConditionForPreview } from "./conditionExpression";
+import type { EVYFunctionOutput } from "./datetime";
 import {
 	type EVYFunctionContext,
-	type EVYFunctionOutput,
 	evyFormatDatetime,
 	stripOptionalSurroundingQuotes,
 } from "./datetime";
 import { splitFunctionArguments } from "./functionArgs";
 
-export type { EVYFunctionContext, EVYFunctionOutput };
+export type { EVYFunctionContext };
 
 type EVYFunctionHandler = (
 	args: string,
@@ -23,7 +23,7 @@ function evyLength(): EVYFunctionOutput {
 	return { value: "1" };
 }
 
-function evyFindFirst(args: string): EVYFunctionOutput {
+function evyCollectionPlaceholder(args: string): EVYFunctionOutput {
 	const [data] = args.split(",");
 	return { value: data?.trim() ?? "" };
 }
@@ -141,6 +141,10 @@ function resolvePreviewConditionOperand(operand: string): string {
 		return "0";
 	}
 	const unquoted = stripOptionalSurroundingQuotes(trimmed);
+	// A quoted operand is a string literal, never a path.
+	if (unquoted !== trimmed) {
+		return unquoted;
+	}
 	const mockValue = resolveMockPath(unquoted);
 	if (Array.isArray(mockValue)) {
 		return String(mockValue.length);
@@ -178,7 +182,8 @@ function evyIfStub(args: string): EVYFunctionOutput {
 const functionHandlers: Record<string, EVYFunctionHandler> = {
 	count: evyCount,
 	length: evyLength,
-	findFirst: evyFindFirst,
+	findFirst: evyCollectionPlaceholder,
+	sort: evyCollectionPlaceholder,
 	formatCurrency: evyFormatCurrency,
 	formatDimension: evyFormatDimension,
 	formatWeight: evyFormatWeight,

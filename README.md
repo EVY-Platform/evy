@@ -27,7 +27,10 @@ flowchart LR
 
 - EVY Platform
   - [Data](./docs/evy/data.md)
-  - [Functions](./docs/evy/functions.md)
+  - [Methods](./docs/evy/methods.md)
+  - [Comparisons](./docs/evy/comparisons.md)
+  - [Formatting](./docs/evy/formatting.md)
+  - [Actions](./docs/evy/actions.md)
   - [Server Driven UI](./docs/evy/sdui.md)
 - Platform
   - [API](./api/README.md)

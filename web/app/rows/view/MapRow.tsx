@@ -1,4 +1,3 @@
-import { MARKETPLACE_RESOURCE } from "evy-types/marketplaceResources";
 import type { RowConfig } from "../../types/row";
 import { defineRow } from "../defineRow";
 import EVYText from "../design-system/EVYText";
@@ -23,7 +22,7 @@ export default defineRow("MapRow", {
 	config: {
 		type: "Map",
 		actions: {},
-		source: `{findFirst(addresses, ${MARKETPLACE_RESOURCE.ITEMS}.transfer_options.pickup.address_id)}`,
+		source: "{findFirst(addresses, resourceId.transfer_options.pickup.address_id)}",
 		visible: "true",
 		title: "Map row title",
 		subtitle: "Map row subtitle",

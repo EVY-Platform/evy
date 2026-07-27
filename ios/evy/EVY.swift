@@ -22,39 +22,20 @@ struct Filter: Encodable {
 
 enum EVYSyncState {
   private static let cursorKey = "syncCursor"
-  private static let storageVersionKey = "syncStorageVersion"
-  // 4: action branches moved from legacy `{fn(...)}` strings to structured
-  //    invocations, which the old cached rows cannot represent.
-  // 5: sync moved to server-issued cursors and tombstones; a cache built from
-  //    client-clock timestamps cannot be resumed safely.
-  private static let currentStorageVersion = 5
-  static var storageVersionDidChange = false
 
   /// The marker to resume from, or nil for a full sync. Opaque: it comes from
   /// the server, so the device clock cannot drop or duplicate changes.
   static var cursor: String? {
-    ensureCurrentStorageVersion()
-    return UserDefaults.standard.string(forKey: cursorKey)
+    UserDefaults.standard.string(forKey: cursorKey)
   }
 
   static func markSynced(cursor: String) {
     UserDefaults.standard.set(cursor, forKey: cursorKey)
-    UserDefaults.standard.set(currentStorageVersion, forKey: storageVersionKey)
   }
 
   // used by tests
   static func reset() {
     UserDefaults.standard.removeObject(forKey: cursorKey)
-    UserDefaults.standard.removeObject(forKey: storageVersionKey)
-  }
-
-  private static func ensureCurrentStorageVersion() {
-    guard UserDefaults.standard.integer(forKey: storageVersionKey) != currentStorageVersion else {
-      return
-    }
-    storageVersionDidChange = true
-    UserDefaults.standard.removeObject(forKey: cursorKey)
-    UserDefaults.standard.set(currentStorageVersion, forKey: storageVersionKey)
   }
 }
 

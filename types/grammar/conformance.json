@@ -142,6 +142,16 @@
 			}
 		},
 		{
+			"id": "comparison-boolean-atom-in-group",
+			"category": "comparison",
+			"platforms": ["ios"],
+			"input": "{true && 1 > 0}",
+			"expect": {
+				"value": true
+			},
+			"notes": "A bare boolean is a valid atom inside a group. Web twin: condition-parse-boolean-atom-in-group."
+		},
+		{
 			"id": "comparison-unquoted-literal-match",
 			"category": "comparison",
 			"platforms": ["ios"],
@@ -171,7 +181,7 @@
 			}
 		},
 		{
-			"id": "comparison-quoted-literal-never-matches",
+			"id": "comparison-quoted-literal-matches",
 			"category": "comparison",
 			"platforms": ["ios"],
 			"input": "{status_holder.status == \"pending\"}",
@@ -181,9 +191,66 @@
 				}
 			},
 			"expect": {
-				"value": false
+				"value": true
 			},
-			"notes": "WART: quotes are excluded by the comparison regex, so the block is never evaluated and the condition reads false even though the values are equal. docs/evy/functions.md warns about this."
+			"notes": "A quoted operand is a string literal, never resolved as a data path. Same rule as findFirst operands and if() branches."
+		},
+		{
+			"id": "comparison-quoted-literal-mismatch",
+			"category": "comparison",
+			"platforms": ["ios"],
+			"input": "{status_holder.status == \"accepted\"}",
+			"data": {
+				"status_holder": {
+					"status": "pending"
+				}
+			},
+			"expect": {
+				"value": false
+			}
+		},
+		{
+			"id": "comparison-quoted-literal-with-space",
+			"category": "comparison",
+			"platforms": ["ios"],
+			"input": "{status_holder.status == \"in progress\"}",
+			"data": {
+				"status_holder": {
+					"status": "in progress"
+				}
+			},
+			"expect": {
+				"value": true
+			},
+			"notes": "Quotes are what make a literal containing spaces expressible at all."
+		},
+		{
+			"id": "comparison-quoted-operator-chars-are-literal",
+			"category": "comparison",
+			"platforms": ["ios"],
+			"input": "{status_holder.status == \"a && b\"}",
+			"data": {
+				"status_holder": {
+					"status": "a && b"
+				}
+			},
+			"expect": {
+				"value": true
+			},
+			"notes": "Combinators and comparison operators inside quotes do not split the expression."
+		},
+		{
+			"id": "comparison-quoted-format-function-operand",
+			"category": "comparison",
+			"platforms": ["ios"],
+			"input": "{formatDatetime(when_holder, \"HH:mm\") == 12:42}",
+			"data": {
+				"when_holder": "2024-01-19T12:42:52"
+			},
+			"expect": {
+				"value": true
+			},
+			"notes": "A quoted format pattern no longer stops the block being recognised as a comparison."
 		},
 		{
 			"id": "comparison-count-function-operand",
@@ -233,7 +300,7 @@
 			"expect": {
 				"text": "0"
 			},
-			"notes": "length is string-only; non-strings count as 0 (functions.md). Use count for collections."
+			"notes": "length is string-only; non-strings count as 0 (methods.md). Use count for collections."
 		},
 		{
 			"id": "expression-length-of-number-is-zero",
@@ -281,7 +348,7 @@
 			"expect": {
 				"text": "42"
 			},
-			"notes": "count returns the number itself (functions.md)."
+			"notes": "count returns the number itself (methods.md)."
 		},
 		{
 			"id": "comparison-missing-path-is-false",
@@ -397,7 +464,7 @@
 			"expect": {
 				"error": true
 			},
-			"notes": "The core resolver throws on an unresolvable root. The display layer swallows it - see display-missing-root-blanks-whole-string."
+			"notes": "The core resolver throws on an unresolvable root. The display layer swallows it per token - see display-missing-root-blanks-only-token."
 		},
 		{
 			"id": "display-plain-text-passthrough",
@@ -421,14 +488,27 @@
 			}
 		},
 		{
-			"id": "display-missing-root-blanks-whole-string",
+			"id": "display-missing-root-blanks-only-token",
 			"category": "display",
 			"platforms": ["ios"],
 			"input": "Hello {definitely_missing_root}!",
 			"expect": {
-				"text": ""
+				"text": "Hello !"
 			},
-			"notes": "WART: one unresolvable root empties the entire rendered string, including the literal text around it, instead of blanking just that token."
+			"notes": "An unresolvable token blanks to empty; the literal text around it survives. The core resolver still throws - see expression-missing-root-throws."
+		},
+		{
+			"id": "display-partial-failure-keeps-resolved-tokens",
+			"category": "display",
+			"platforms": ["ios"],
+			"input": "A {title_holder} B {definitely_missing_root} C",
+			"data": {
+				"title_holder": "Hello"
+			},
+			"expect": {
+				"text": "A Hello B  C"
+			},
+			"notes": "Each token succeeds or blanks on its own. No whitespace collapsing, so the blanked token leaves a double space."
 		},
 		{
 			"id": "condition-parse-simple-leaf",
@@ -471,6 +551,36 @@
 			}
 		},
 		{
+			"id": "condition-parse-quoted-literal",
+			"category": "condition-parse",
+			"platforms": ["web"],
+			"input": "{a == \"x y\"}",
+			"expect": {
+				"ast": {
+					"kind": "leaf",
+					"left": "a",
+					"operator": "==",
+					"right": "\"x y\""
+				}
+			},
+			"notes": "Quotes survive into the AST verbatim, like action-data values - whether a bare word is a path or a literal is decided at execution. A quoted run is one operand even with spaces in it."
+		},
+		{
+			"id": "condition-parse-quoted-operator-chars",
+			"category": "condition-parse",
+			"platforms": ["web"],
+			"input": "{a == \"x > y\"}",
+			"expect": {
+				"ast": {
+					"kind": "leaf",
+					"left": "a",
+					"operator": "==",
+					"right": "\"x > y\""
+				}
+			},
+			"notes": "Operator characters inside quotes are literal text, not tokens."
+		},
+		{
 			"id": "condition-parse-empty-is-null",
 			"category": "condition-parse",
 			"platforms": ["web"],
@@ -481,14 +591,69 @@
 			"notes": "An empty condition means always true; it has no AST."
 		},
 		{
-			"id": "condition-parse-standalone-boolean-unrepresentable",
+			"id": "condition-parse-standalone-boolean-true",
 			"category": "condition-parse",
 			"platforms": ["web"],
 			"input": "{true}",
 			"expect": {
-				"ast": null
+				"ast": {
+					"kind": "boolean",
+					"value": true
+				}
 			},
-			"notes": "WART: the web condition editor cannot represent a standalone boolean, so opening and saving such an action silently drops it - even though iOS evaluates it correctly (see comparison-standalone-true)."
+			"notes": "Standalone booleans round-trip through the editor. Parity with comparison-standalone-true."
+		},
+		{
+			"id": "condition-parse-standalone-boolean-false",
+			"category": "condition-parse",
+			"platforms": ["web"],
+			"input": "{false}",
+			"expect": {
+				"ast": {
+					"kind": "boolean",
+					"value": false
+				}
+			}
+		},
+		{
+			"id": "condition-parse-boolean-atom-in-group",
+			"category": "condition-parse",
+			"platforms": ["web"],
+			"input": "{true && a > b}",
+			"expect": {
+				"ast": {
+					"kind": "group",
+					"operator": "and",
+					"children": [
+						{
+							"kind": "boolean",
+							"value": true
+						},
+						{
+							"kind": "leaf",
+							"left": "a",
+							"operator": ">",
+							"right": "b"
+						}
+					]
+				}
+			},
+			"notes": "A bare boolean is a valid atom inside a group, matching iOS _evaluateBooleanExpression."
+		},
+		{
+			"id": "condition-parse-boolean-word-as-operand",
+			"category": "condition-parse",
+			"platforms": ["web"],
+			"input": "{true == a}",
+			"expect": {
+				"ast": {
+					"kind": "leaf",
+					"left": "true",
+					"operator": "==",
+					"right": "a"
+				}
+			},
+			"notes": "A boolean word followed by a comparison operator is an operand, not a standalone boolean."
 		},
 		{
 			"id": "ast-convert-close",
@@ -658,6 +823,102 @@
 				"ast": null
 			},
 			"notes": "Store mode requires a non-empty filter."
+		},
+		{
+			"id": "expression-sort-scalar-asc-first",
+			"category": "expression",
+			"platforms": ["ios"],
+			"input": "{findFirst(sort(times_holder, asc))}",
+			"data": {
+				"times_holder": [
+					"2026-06-04T09:30:00",
+					"2026-06-03T09:00:00",
+					"2026-06-03T10:00:00"
+				]
+			},
+			"expect": {
+				"text": "2026-06-03T09:00:00"
+			},
+			"notes": "Scalar datetime strings sort chronologically via lexicographic asc."
+		},
+		{
+			"id": "expression-sort-keyed-asc-missing-last",
+			"category": "expression",
+			"platforms": ["ios"],
+			"input": "{findFirst(sort(records_holder, asc, price)).id}",
+			"data": {
+				"records_holder": [
+					{ "id": "a", "price": 50 },
+					{ "id": "b" },
+					{ "id": "c", "price": 10 }
+				]
+			},
+			"expect": {
+				"text": "c"
+			},
+			"notes": "Missing/null keyed values are always last regardless of direction."
+		},
+		{
+			"id": "expression-find-first-one-arg",
+			"category": "expression",
+			"platforms": ["ios"],
+			"input": "{findFirst(records_holder).id}",
+			"data": {
+				"records_holder": [
+					{ "id": "first", "value": "A" },
+					{ "id": "second", "value": "B" }
+				]
+			},
+			"expect": {
+				"text": "first"
+			}
+		},
+		{
+			"id": "comparison-earliest-timeslot-warning",
+			"category": "comparison",
+			"platforms": ["ios"],
+			"input": "{selected_timeslot != findFirst(sort(times_holder, asc))}",
+			"data": {
+				"selected_timeslot": "2026-06-03T10:00:00",
+				"times_holder": [
+					"2026-06-04T09:30:00",
+					"2026-06-03T09:00:00",
+					"2026-06-03T10:00:00"
+				]
+			},
+			"expect": {
+				"value": true
+			},
+			"notes": "Pickup warning visibility when selected slot is not the earliest."
+		},
+		{
+			"id": "comparison-earliest-timeslot-selected",
+			"category": "comparison",
+			"platforms": ["ios"],
+			"input": "{selected_timeslot != findFirst(sort(times_holder, asc))}",
+			"data": {
+				"selected_timeslot": "2026-06-03T09:00:00",
+				"times_holder": [
+					"2026-06-04T09:30:00",
+					"2026-06-03T09:00:00",
+					"2026-06-03T10:00:00"
+				]
+			},
+			"expect": {
+				"value": false
+			}
+		},
+		{
+			"id": "expression-sort-invalid-direction-throws",
+			"category": "expression",
+			"platforms": ["ios"],
+			"input": "{findFirst(sort(times_holder, sideways))}",
+			"data": {
+				"times_holder": ["2026-06-03T09:00:00"]
+			},
+			"expect": {
+				"error": true
+			}
 		}
 	]
 }

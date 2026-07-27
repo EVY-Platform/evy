@@ -5,7 +5,8 @@
 
 import XCTest
 
-private let MARKETPLACE_ITEMS_RESOURCE_ID = MarketplaceResource.items.rawValue
+private let MARKETPLACE_ITEMS_RESOURCE_ID = MarketplaceE2EFixture.itemsResourceId
+private let MARKETPLACE_SERVICE = MarketplaceE2EFixture.serviceId
 
 // MARK: - Action branch helpers
 
@@ -1511,7 +1512,7 @@ class E2ETestBase: XCTestCase {
           subtitle:
             "Be advised someone may request to pick up {\(MARKETPLACE_ITEMS_RESOURCE_ID).title} earlier than your selected timeslot.",
           visible:
-            "{selected_pickup_timeslot != earliestDatetime(\(MARKETPLACE_ITEMS_RESOURCE_ID).pickup_selection)}",
+            "{selected_pickup_timeslot != findFirst(sort(\(MARKETPLACE_ITEMS_RESOURCE_ID).pickup_selection, asc))}",
           name: "Pickup earlier timeslot warning"
         ),
       ],

@@ -2,17 +2,19 @@ import type { Page } from "@playwright/test";
 import type {
 	UI_Flow as ServerFlow,
 	UI_Row as ServerRow,
+	UI_ActionBranch,
 	UI_RowActions,
 } from "evy-types";
+import { getRowBindingFields } from "../app/rows/rowFields";
 import type {
 	ResourceAttributeMetadata,
 	ServiceResource,
-} from "../app/api/sync";
-import { getRowBindingFields } from "../app/rows/rowFields";
+} from "../app/types/resources";
 import { rowAction } from "../app/utils/rowActions";
+import { TEST_SERVICE_NAMES } from "../testFixtures/resourceCatalog";
 
-export function tapAction(expr: string): UI_RowActions {
-	return { tap: [rowAction(expr)] };
+export function tapAction(branch: UI_ActionBranch): UI_RowActions {
+	return { tap: [rowAction(branch)] };
 }
 
 interface ServerRowInput {
@@ -152,13 +154,25 @@ export async function initFullFlows(
 	await initResourceAttributeMetadata(page, metadata);
 }
 
+const DEFAULT_TEST_SERVICE_NAMES = TEST_SERVICE_NAMES;
+
 async function initServiceResources(
 	page: Page,
 	resources: ServiceResource[],
 ): Promise<void> {
-	await page.addInitScript((resources: ServiceResource[]) => {
-		window.__TEST_SERVICE_RESOURCES__ = resources;
-	}, resources);
+	await page.addInitScript(
+		({
+			resources,
+			serviceNames,
+		}: {
+			resources: ServiceResource[];
+			serviceNames: Record<string, string>;
+		}) => {
+			window.__TEST_SERVICE_RESOURCES__ = resources;
+			window.__TEST_SERVICE_NAMES__ = serviceNames;
+		},
+		{ resources, serviceNames: DEFAULT_TEST_SERVICE_NAMES },
+	);
 }
 
 async function initResourceAttributeMetadata(

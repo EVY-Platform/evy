@@ -1,6 +1,5 @@
 import type {
 	DATA_EVY_Flow,
-	DATA_EVY_FlowSubmits,
 	DATA_EVY_Page,
 	DATA_EVY_Row,
 } from "./generated/ts/data/data";
@@ -143,43 +142,6 @@ export function assertFlatFlowSubmitsDeclaration(
 			`Flow validation failed: flow ${flow.id} declares submits ${declared} but its create(...,submit) targets ${target}`,
 		);
 	}
-}
-
-export function resolveSubmitsForFlatFlow(
-	flow: DATA_EVY_Flow,
-	targets: Set<string>,
-): DATA_EVY_FlowSubmits | undefined {
-	if (targets.size === 0) return flow.submits;
-
-	if (targets.size > 1) {
-		throw new Error(
-			`Flow ${flow.id} submits multiple resources (${[...targets]
-				.sort()
-				.join(", ")}) and cannot be backfilled automatically`,
-		);
-	}
-
-	const [target] = [...targets];
-	const slashIndex = target.indexOf("/");
-	if (slashIndex <= 0 || slashIndex === target.length - 1) {
-		throw new Error(
-			`Flow ${flow.id} has an invalid submit target: ${target}`,
-		);
-	}
-	const service = target.slice(0, slashIndex);
-	const resource = target.slice(slashIndex + 1);
-
-	if (flow.submits) {
-		const declared = `${flow.submits.service}/${flow.submits.resource}`;
-		if (declared !== target) {
-			throw new Error(
-				`Flow ${flow.id} declares submits ${declared} but its actions submit ${target}`,
-			);
-		}
-		return flow.submits;
-	}
-
-	return { service, resource };
 }
 
 export function assertFlatFlowGraphSubmits(

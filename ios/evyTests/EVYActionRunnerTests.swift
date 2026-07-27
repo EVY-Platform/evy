@@ -165,7 +165,7 @@ final class EVYActionRunnerTests: XCTestCase {
   }
 
   func testCreateActionPersistsFlowSubmissionAndEmitsNothing() throws {
-    let namespace = EVYNamespace.marketplace
+    let namespace = MarketplaceTestFixture.serviceId
     let resource = MarketplaceTestFixture.itemsResourceId
     let scopeId = "__test__:\(resource)"
     try? EVY.publicStore.deleteAll(namespace: namespace, resource: resource)
@@ -199,7 +199,7 @@ final class EVYActionRunnerTests: XCTestCase {
   }
 
   func testCreateThenCloseRunsSequentially() throws {
-    let namespace = EVYNamespace.marketplace
+    let namespace = MarketplaceTestFixture.serviceId
     let resource = MarketplaceTestFixture.itemsResourceId
     let scopeId = "__test__:\(resource)"
     try? EVY.publicStore.deleteAll(namespace: namespace, resource: resource)
@@ -388,7 +388,7 @@ final class EVYActionRunnerTests: XCTestCase {
     coreNamespace: String,
     addressesResource: String,
     itemsResource: String,
-    marketplaceNamespace: String = EVYNamespace.marketplace,
+    marketplaceNamespace: String = MarketplaceTestFixture.serviceId,
     linkMode: PickupLinkMode = .store
   ) -> [UI_RowAction] {
     let linkAction: EVYActionInvocation
@@ -424,7 +424,7 @@ final class EVYActionRunnerTests: XCTestCase {
 
   func testTwoActionPickupAddressSaveSequence() throws {
     let coreNamespace = "475731ac-31aa-4d65-94d2-7032782ae359"
-    let marketplaceNamespace = EVYNamespace.marketplace
+    let marketplaceNamespace = MarketplaceTestFixture.serviceId
     let itemsResource = MarketplaceTestFixture.itemsResourceId
     let addressesResource = "addresses"
     let itemId = UUID().uuidString
@@ -531,7 +531,7 @@ final class EVYActionRunnerTests: XCTestCase {
   }
 
   func testDraftModeUpdateWritesChangesIntoCreateDraft() throws {
-    let marketplaceNamespace = EVYNamespace.marketplace
+    let marketplaceNamespace = MarketplaceTestFixture.serviceId
     let itemsResource = MarketplaceTestFixture.itemsResourceId
     let flowId = "create-flow"
     let scopeId = EVYDraft.createMergeScopeId(flowId: flowId, entityKey: itemsResource)
@@ -578,7 +578,7 @@ final class EVYActionRunnerTests: XCTestCase {
   }
 
   func testStoreModeUpdateMatchingNothingNoOpsInCreateScope() throws {
-    let marketplaceNamespace = EVYNamespace.marketplace
+    let marketplaceNamespace = MarketplaceTestFixture.serviceId
     let itemsResource = MarketplaceTestFixture.itemsResourceId
     let flowId = "create-flow"
     let scopeId = EVYDraft.createMergeScopeId(flowId: flowId, entityKey: itemsResource)
@@ -624,7 +624,7 @@ final class EVYActionRunnerTests: XCTestCase {
   }
 
   func testDraftModeUpdateOutsideMatchingCreateScopeErrors() throws {
-    let marketplaceNamespace = EVYNamespace.marketplace
+    let marketplaceNamespace = MarketplaceTestFixture.serviceId
     let itemsResource = MarketplaceTestFixture.itemsResourceId
     let browseScopeId = "create-flow:browse"
 
@@ -668,7 +668,7 @@ final class EVYActionRunnerTests: XCTestCase {
   }
 
   func testUpdateInCreateScopeWithMatchingRowStillUpdatesRow() throws {
-    let marketplaceNamespace = EVYNamespace.marketplace
+    let marketplaceNamespace = MarketplaceTestFixture.serviceId
     let itemsResource = MarketplaceTestFixture.itemsResourceId
     let flowId = "create-flow"
     let scopeId = EVYDraft.createMergeScopeId(flowId: flowId, entityKey: itemsResource)
@@ -713,7 +713,7 @@ final class EVYActionRunnerTests: XCTestCase {
 
   func testCreateFlowTwoActionAddressSaveLinksItemDraftAndRepickUpdates() throws {
     let coreNamespace = "475731ac-31aa-4d65-94d2-7032782ae359"
-    let marketplaceNamespace = EVYNamespace.marketplace
+    let marketplaceNamespace = MarketplaceTestFixture.serviceId
     let itemsResource = MarketplaceTestFixture.itemsResourceId
     let addressesResource = "addresses"
     let flowId = "create-flow"
@@ -796,7 +796,7 @@ final class EVYActionRunnerTests: XCTestCase {
   }
 
   func testResolveInlineCreateDataMapsLiterals() throws {
-    let namespace = EVYNamespace.marketplace
+    let namespace = MarketplaceTestFixture.serviceId
     let resource = "literal-create-actions"
     let pinnedDate = Date(timeIntervalSince1970: 1_780_000_000)
     try? EVY.publicStore.deleteAll(namespace: namespace, resource: resource)
@@ -838,7 +838,7 @@ final class EVYActionRunnerTests: XCTestCase {
   }
 
   func testInlineCreateDataKeepsExplicitCreatedAt() throws {
-    let namespace = EVYNamespace.marketplace
+    let namespace = MarketplaceTestFixture.serviceId
     let resource = "created-at-create-actions"
     try? EVY.publicStore.deleteAll(namespace: namespace, resource: resource)
     defer { try? EVY.publicStore.deleteAll(namespace: namespace, resource: resource) }
@@ -862,7 +862,7 @@ final class EVYActionRunnerTests: XCTestCase {
 
   func testUpdateActionAcceptsOnlyMatchingPendingMessageForDatum() throws {
     let namespace = EVYNamespace.evy
-    let resource = MarketplaceTestFixture.messagesResourceId
+    let resource = EVYCoreResource.messages.rawValue
     let itemId = UUID().uuidString
     let pendingMessageId = UUID().uuidString
     let otherPendingMessageId = UUID().uuidString
@@ -1290,7 +1290,7 @@ final class EVYActionRunnerTests: XCTestCase {
   }
 
   func testFalseBranchWithoutCreateRunsHighlightRequired() {
-    let messagesResourceId = MarketplaceTestFixture.messagesResourceId
+    let messagesResourceId = EVYCoreResource.messages.rawValue
     let itemResourceId = MarketplaceTestFixture.itemsResourceId
     var received: ActionOperation?
     let action = rowAction(
@@ -1310,7 +1310,7 @@ final class EVYActionRunnerTests: XCTestCase {
 
   func testCreateActionRunsImmediately() throws {
     let namespace = EVYNamespace.evy
-    let resource = MarketplaceTestFixture.messagesResourceId
+    let resource = EVYCoreResource.messages.rawValue
     let itemResourceId = MarketplaceTestFixture.itemsResourceId
     let itemId = UUID().uuidString
     let itemTitle = "Pickup Item Title"
@@ -1388,7 +1388,7 @@ final class EVYActionRunnerTests: XCTestCase {
 
   func testSwipeLeftUpdateActionAcceptsPendingMessageFromFormattedSearchResult() throws {
     let namespace = EVYNamespace.evy
-    let resource = MarketplaceTestFixture.messagesResourceId
+    let resource = EVYCoreResource.messages.rawValue
     let pendingMessageId = UUID().uuidString
     try? EVY.publicStore.deleteAll(namespace: namespace, resource: resource)
     defer { try? EVY.publicStore.deleteAll(namespace: namespace, resource: resource) }

@@ -1,3 +1,6 @@
 build/
 TestDiagnostics/
 xcuserdata/
+
+# sourcekit-lsp BSP manifest (regenerated per machine, see README)
+buildServer.json

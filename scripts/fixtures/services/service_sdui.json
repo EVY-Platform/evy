@@ -199,7 +199,7 @@
 												{
 													"id": "d0e9f8a7-b6c5-4d4e-9f3a-2b0c9d8e7f6a",
 													"type": "Text",
-													"visible": "{selected_pickup_timeslot != earliestDatetime(dc28ed59-298e-493c-8ff3-3e60f2ebccbd.pickup_selection)}",
+													"visible": "{selected_pickup_timeslot != findFirst(sort(dc28ed59-298e-493c-8ff3-3e60f2ebccbd.pickup_selection, asc))}",
 													"title": "",
 													"subtitle": "Be advised someone may request to pick up {dc28ed59-298e-493c-8ff3-3e60f2ebccbd.title} earlier than your selected timeslot.",
 													"name": "Pickup earlier timeslot warning",

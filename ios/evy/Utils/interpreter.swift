@@ -7,13 +7,15 @@
 
 import Foundation
 
-private let comparisonBlockPattern = "\\{[^{}\"]+\\}"
-private let comparisonBlockRegex = try! Regex(comparisonBlockPattern)
 private let comparisonOperators = [">=", "<=", "==", "!=", ">", "<"]
+// Matches a props object literal with no quoted values. e.g. {archivedAt: now()}, {name: test}
 private let propsPattern = "\\{(?!\")[^}^\"]*(?!\")\\}"
-/// Args may contain one level of nested calls, e.g. update(..., {archivedAt: now()})
+// Matches a parenthesized arg list allowing one level of nested calls,
+// e.g. update(..., {archivedAt: now()}) — matches (a, b), (x, foo(y))
 private let functionParamsPattern = "\\((?:[^()]|\\([^()]*\\))*\\)"
+// Matches a function call: identifier followed by its params. e.g. now(), update(id, {archivedAt: now()})
 private let functionPattern = "[a-zA-Z_][a-zA-Z0-9_]*\(functionParamsPattern)"
+// Matches a numeric array index accessor. e.g. [0], [123]
 private let arrayPattern = "\\[([\\d]*)\\]"
 let PROP_SEPARATOR = "."
 
@@ -270,6 +272,9 @@ private func _resolveBindingRoot(
     if funcName == "findFirst" {
       return (try evyFindFirst(funcArgs, remainingProps: remainingProps), [])
     }
+    if funcName == "sort" {
+      return (try evySort(funcArgs), remainingProps)
+    }
     if funcName == "now" {
       return (.string(EVY.nowISO8601()), [])
     }
@@ -367,7 +372,7 @@ private func _resolvedText(fromSource source: String?, destination: String?, edi
   if let source {
     let trimmedSource = source.trimmingCharacters(in: .whitespacesAndNewlines)
     if !trimmedSource.isEmpty {
-      return (try? _getValueFromText(trimmedSource, editing: editing).toString()) ?? ""
+      return resolvedOrBlankedPerToken(trimmedSource, editing: editing)
     }
   }
 
@@ -380,12 +385,37 @@ private func _resolvedText(fromSource source: String?, destination: String?, edi
   if let (functionName, functionArgs) = _parseFunctionCall(inner),
     let formatFunction = formatFunctionsByBuildFunction[functionName]
   {
-    return
-      (try? _getValueFromText("{\(formatFunction)(\(functionArgs))}", editing: editing).toString())
-      ?? ""
+    return resolvedOrBlankedPerToken(
+      "{\(formatFunction)(\(functionArgs))}", editing: editing)
   }
 
-  return (try? _getValueFromText(wrapped, editing: editing).toString()) ?? ""
+  return resolvedOrBlankedPerToken(wrapped, editing: editing)
+}
+
+/// Resolves `text` whole, falling back to resolving each `{…}` token on its own.
+///
+/// The core resolver throws on an unresolvable root, so coalescing that throw
+/// for the whole string used to erase the literal text around a bad token too.
+/// Resolving token by token on the failure path keeps everything that did
+/// resolve and blanks only what did not. The happy path is unchanged: the
+/// whole-string pass also handles brace-less function text and mixed
+/// function/text expressions, whose semantics we do not re-derive per token.
+@MainActor
+private func resolvedOrBlankedPerToken(_ text: String, editing: Bool) -> String {
+  if let resolved = try? _getValueFromText(text, editing: editing).toString() {
+    return resolved
+  }
+
+  let blocks = interpolations(in: text)
+  guard !blocks.isEmpty else { return "" }
+
+  var output = text
+  for block in blocks {
+    let resolved =
+      (try? _getValueFromText(block.fullMatch, editing: editing).toString()) ?? ""
+    output = output.replacingOccurrences(of: block.fullMatch, with: resolved)
+  }
+  return output
 }
 
 @MainActor
@@ -454,6 +484,11 @@ private func parseText(
   if let (fullMatch, comparison) = parseComparisonFromText(input.value) {
     let comparisonResult = try evaluateBooleanExpression(comparison) { operand in
       let trimmedOperand = operand.trimmingCharacters(in: .whitespacesAndNewlines)
+      // A quoted operand is a string literal, never a data path - the same rule
+      // findFirst operands and if() branches already follow.
+      if trimmedOperand.first == "\"", trimmedOperand.last == "\"", trimmedOperand.count >= 2 {
+        return _stripOptionalSurroundingQuotes(trimmedOperand)
+      }
       let parsedOperand = try parseText(EVYValue(trimmedOperand, nil, nil), editing, scope)
       if parsedOperand.value != trimmedOperand {
         return parsedOperand.value
@@ -497,8 +532,6 @@ private func parseText(
       value = evyCount(funcArgs)
     case "length":
       value = evyLength(funcArgs)
-    case "earliestDatetime":
-      value = try evyEarliestDatetime(funcArgs)
     case "if":
       value = try evyIf(funcArgs)
     case "now":
@@ -655,13 +688,17 @@ private func interpolations(in input: String) -> [(fullMatch: String, inner: Str
   return results
 }
 
+/// Finds the first `{…}` block that is a comparison.
+///
+/// Block boundaries come from the shared scanner rather than a regex, so quotes
+/// and nesting are respected: a quoted operand no longer stops a block being
+/// recognised, and an operator inside quotes or parentheses is not a top-level
+/// operator and so does not make a block a comparison.
 private func parseComparisonFromText(_ input: String) -> (fullMatch: String, content: String)? {
-  for match in input.matches(of: comparisonBlockRegex) {
-    let block = String(match.0)
-    let comparison = String(block.dropFirst().dropLast())
-      .trimmingCharacters(in: .whitespacesAndNewlines)
+  for block in interpolations(in: input) {
+    let comparison = block.inner.trimmingCharacters(in: .whitespacesAndNewlines)
     if firstTopLevelComparison(in: comparison) != nil {
-      return (block, comparison)
+      return (block.fullMatch, comparison)
     }
   }
   return nil

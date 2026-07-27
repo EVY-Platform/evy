@@ -1,17 +1,10 @@
 import { afterAll, beforeAll, describe, expect, it } from "bun:test";
 import { EVY_CORE_RESOURCE, EVY_CORE_SERVICE } from "evy-types/coreResources";
-import {
-	MARKETPLACE_RESOURCE,
-	MARKETPLACE_SERVICE,
-} from "evy-types/marketplaceResources";
 import { waitForClientOpen } from "evy-types/wsTestHelpers";
 import { Client } from "rpc-websockets";
+import { discoverMarketplaceIds } from "../src/tests/discoverMarketplaceIds";
 
 type WSClient = InstanceType<typeof Client>;
-
-const MARKETPLACE_SERVICE_ID = MARKETPLACE_SERVICE;
-const MARKETPLACE_ITEMS_RESOURCE_ID = MARKETPLACE_RESOURCE.ITEMS;
-const EVY_MESSAGES_RESOURCE = EVY_CORE_RESOURCE.MESSAGES;
 
 const API_URL = process.env.API_URL;
 if (!API_URL) {
@@ -28,11 +21,18 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 
 describe("Marketplace E2E (via API WebSocket)", () => {
 	let client: WSClient;
+	let marketplaceServiceId: string;
+	let itemsResourceId: string;
 
 	beforeAll(async () => {
 		client = new Client(API_URL);
 		await waitForClientOpen(client, CONNECTION_TIMEOUT_MS);
 		await client.login({ token: TEST_TOKEN, os: TEST_OS });
+
+		const response = await client.call("resources", {});
+		const discovered = discoverMarketplaceIds(response, ["items"]);
+		marketplaceServiceId = discovered.serviceId;
+		itemsResourceId = discovered.resourceIds.items;
 	});
 
 	afterAll(() => {
@@ -41,8 +41,8 @@ describe("Marketplace E2E (via API WebSocket)", () => {
 
 	it("get marketplace items resource should return an array envelope", async () => {
 		const result = await client.call("get", {
-			service: MARKETPLACE_SERVICE_ID,
-			resource: MARKETPLACE_ITEMS_RESOURCE_ID,
+			service: marketplaceServiceId,
+			resource: itemsResourceId,
 		});
 		expect(Array.isArray(result)).toBe(true);
 	});
@@ -55,8 +55,8 @@ describe("Marketplace E2E (via API WebSocket)", () => {
 		};
 
 		const created = await client.call("create", {
-			service: MARKETPLACE_SERVICE_ID,
-			resource: MARKETPLACE_ITEMS_RESOURCE_ID,
+			service: marketplaceServiceId,
+			resource: itemsResourceId,
 			data: testData,
 		});
 
@@ -65,8 +65,8 @@ describe("Marketplace E2E (via API WebSocket)", () => {
 		expect(created).toHaveProperty("data");
 
 		const got = await client.call("get", {
-			service: MARKETPLACE_SERVICE_ID,
-			resource: MARKETPLACE_ITEMS_RESOURCE_ID,
+			service: marketplaceServiceId,
+			resource: itemsResourceId,
 		});
 
 		expect(Array.isArray(got)).toBe(true);
@@ -85,8 +85,8 @@ describe("Marketplace E2E (via API WebSocket)", () => {
 		const messageId = crypto.randomUUID();
 		const message = {
 			fk: crypto.randomUUID(),
-			service: MARKETPLACE_SERVICE_ID,
-			resource: MARKETPLACE_ITEMS_RESOURCE_ID,
+			service: marketplaceServiceId,
+			resource: itemsResourceId,
 			archivedAt: null,
 			status: "pending",
 			data: { type: "pickup", time: "2026-06-03T10:00:00" },
@@ -94,7 +94,7 @@ describe("Marketplace E2E (via API WebSocket)", () => {
 
 		const created = await client.call("create", {
 			service: EVY_CORE_SERVICE,
-			resource: EVY_MESSAGES_RESOURCE,
+			resource: EVY_CORE_RESOURCE.MESSAGES,
 			filter: { id: messageId },
 			data: message,
 		});
@@ -109,7 +109,7 @@ describe("Marketplace E2E (via API WebSocket)", () => {
 
 		const rows = await client.call("get", {
 			service: EVY_CORE_SERVICE,
-			resource: EVY_MESSAGES_RESOURCE,
+			resource: EVY_CORE_RESOURCE.MESSAGES,
 			filter: { id: messageId },
 		});
 		expect(rows).toHaveLength(1);
@@ -131,8 +131,8 @@ describe("Marketplace E2E (via API WebSocket)", () => {
 		};
 
 		const created = await client.call("create", {
-			service: MARKETPLACE_SERVICE_ID,
-			resource: MARKETPLACE_ITEMS_RESOURCE_ID,
+			service: marketplaceServiceId,
+			resource: itemsResourceId,
 			filter: { id: clientId },
 			data: itemPayload,
 		});
@@ -149,8 +149,8 @@ describe("Marketplace E2E (via API WebSocket)", () => {
 		expect(created.data).not.toHaveProperty("pickup_address");
 
 		const got = await client.call("get", {
-			service: MARKETPLACE_SERVICE_ID,
-			resource: MARKETPLACE_ITEMS_RESOURCE_ID,
+			service: marketplaceServiceId,
+			resource: itemsResourceId,
 			filter: { id: clientId },
 		});
 

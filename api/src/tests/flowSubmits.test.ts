@@ -4,7 +4,6 @@ import {
 	assertFlatFlowGraphSubmits,
 	assertFlatFlowSubmitsDeclaration,
 	collectSubmitTargetsFromFlatFlow,
-	resolveSubmitsForFlatFlow,
 } from "evy-types/flowSubmits";
 
 const SERVICE = "66b092ae-7cd8-4d67-95b7-30b03568fd90";
@@ -87,77 +86,6 @@ describe("flowSubmits flat graph", () => {
 		);
 
 		expect([...targets]).toEqual([`${SERVICE}/${RESOURCE}`]);
-	});
-
-	it("backfills a missing declaration when there is one submit target", () => {
-		const flow = makeFlow();
-		const pagesById = { "page-1": makePage() };
-		const rowsById = { "row-1": makeSubmitRow() };
-		const targets = collectSubmitTargetsFromFlatFlow(
-			flow,
-			pagesById,
-			rowsById,
-		);
-
-		expect(resolveSubmitsForFlatFlow(flow, targets)).toEqual({
-			service: SERVICE,
-			resource: RESOURCE,
-		});
-	});
-
-	it("rejects multiple undeclared submit targets", () => {
-		const flow = makeFlow();
-		const pagesById = {
-			"page-1": makePage({ rowIds: ["row-a", "row-b"] }),
-		};
-		const rowsById = {
-			"row-a": makeSubmitRow("row-a"),
-			"row-b": {
-				...makeSubmitRow("row-b"),
-				data: {
-					actions: {
-						tap: [
-							{
-								condition: "",
-								false: "",
-								true: {
-									fn: "create",
-									service: SERVICE,
-									resource: "other-resource",
-									mode: "submit",
-								},
-							},
-						],
-					},
-				},
-			},
-		};
-		const targets = collectSubmitTargetsFromFlatFlow(
-			flow,
-			pagesById,
-			rowsById,
-		);
-
-		expect(() => resolveSubmitsForFlatFlow(flow, targets)).toThrow(
-			"submits multiple resources",
-		);
-	});
-
-	it("rejects a declaration that disagrees with the action", () => {
-		const flow = makeFlow({
-			submits: { service: SERVICE, resource: "declared-resource" },
-		});
-		const pagesById = { "page-1": makePage() };
-		const rowsById = { "row-1": makeSubmitRow() };
-		const targets = collectSubmitTargetsFromFlatFlow(
-			flow,
-			pagesById,
-			rowsById,
-		);
-
-		expect(() => resolveSubmitsForFlatFlow(flow, targets)).toThrow(
-			"declares submits",
-		);
 	});
 
 	it("allows a declaration without a submit action", () => {

@@ -14,12 +14,11 @@ import {
 	createPgliteTestDatabase,
 	registerMarketplaceTestDb,
 } from "./dbTestHelpers";
+import { discoverMarketplaceIds } from "./discoverMarketplaceIds";
 
 const { pgliteClient, testDb } = createPgliteTestDatabase();
 
 registerMarketplaceTestDb(testDb);
-
-import { MARKETPLACE_RESOURCE, MARKETPLACE_SERVICE } from "../resources";
 
 const { startMarketplaceRpcServer, stopMarketplaceRpcServer } = await import(
 	"../rpc"
@@ -65,20 +64,38 @@ describe("marketplace JSON-RPC server", () => {
 	it("Create and Get round-trip typed params", async () => {
 		const client = createClient();
 		await waitForOpen(client);
+		const response = await client.call("resources", {});
+		const discovered = discoverMarketplaceIds(response, ["conditions"]);
 		const row = { id: crypto.randomUUID(), value: "rpc-condition" };
 
 		await client.call("create", {
-			service: MARKETPLACE_SERVICE,
-			resource: MARKETPLACE_RESOURCE.CONDITIONS,
+			service: discovered.serviceId,
+			resource: discovered.resourceIds.conditions,
 			data: row,
 		});
 
 		const got = await client.call("get", {
-			service: MARKETPLACE_SERVICE,
-			resource: MARKETPLACE_RESOURCE.CONDITIONS,
+			service: discovered.serviceId,
+			resource: discovered.resourceIds.conditions,
 		});
 
 		expect(got).toEqual([row]);
+		client.close();
+	});
+
+	it("returns the marketplace resource manifest", async () => {
+		const client = createClient();
+		await waitForOpen(client);
+
+		const response = await client.call("resources", {});
+		const discovered = discoverMarketplaceIds(response, [
+			"items",
+			"conditions",
+		]);
+
+		expect(discovered.serviceId).toBeTruthy();
+		expect(discovered.resourceIds.items).toBeTruthy();
+		expect(discovered.resourceIds.conditions).toBeTruthy();
 		client.close();
 	});
 });

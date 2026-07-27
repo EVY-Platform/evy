@@ -7,12 +7,6 @@ import XCTest
 
 @testable import evy
 
-enum MarketplaceTestFixture {
-  static let itemsResourceId = MarketplaceResource.items.rawValue
-  static let messagesResourceId = EVYCoreResource.messages.rawValue
-  static let serviceId = MARKETPLACE_SERVICE
-}
-
 @MainActor
 final class ContentViewTests: XCTestCase {
 
@@ -533,174 +527,6 @@ final class ContentViewTests: XCTestCase {
 
   // MARK: - EVYFlowStore tests
 
-  func testExtractCreateKeysReturnsEmptyForUnknownFlowId() {
-    let store = makeStore()
-    let keys = EVYFlowStore.createKeys(flowId: "unknown-flow", from: store)
-    XCTAssertEqual(keys, [])
-  }
-
-  func testExtractCreateKeysFindsCreateActions() throws {
-    let store = makeStore()
-
-    try seedFlow(
-      store: store, id: "create-flow", pageIds: ["create-page"],
-      submits: [
-        "service": MarketplaceTestFixture.serviceId,
-        "resource": MarketplaceTestFixture.itemsResourceId,
-      ])
-    try seedPage(
-      store: store, id: "create-page", rowIds: ["title-row"],
-      footerRowId: "submit-button")
-    try seedRow(
-      store: store, id: "title-row", type: "Input",
-      data: [
-        "source": "",
-        "title": "Title",
-        "value": "",
-        "placeholder": "Enter a title",
-        "destination": "{\(MarketplaceTestFixture.itemsResourceId).title}",
-        "actions": [:],
-      ])
-    try seedRow(
-      store: store, id: "submit-button", type: "Button",
-      data: [
-        "source": "", "title": "", "label": "Submit",
-        "actions": [
-          "tap": [
-            [
-              "condition": "",
-              "false": "",
-              "true": [
-                "fn": "create", "service": MarketplaceTestFixture.serviceId,
-                "resource": MarketplaceTestFixture.itemsResourceId, "mode": "submit",
-              ],
-            ]
-          ]
-        ],
-      ])
-
-    let keys = EVYFlowStore.createKeys(flowId: "create-flow", from: store)
-    XCTAssertEqual(keys, Set([MarketplaceTestFixture.itemsResourceId]))
-  }
-
-  func testExtractCreateKeysIgnoresInlineDataCreatesLikeAddresses() throws {
-    let store = makeStore()
-    let coreService = "475731ac-31aa-4d65-94d2-7032782ae359"
-    let itemsResource = MarketplaceTestFixture.itemsResourceId
-
-    try seedFlow(
-      store: store, id: "create-flow", pageIds: ["create-page"],
-      submits: [
-        "service": MarketplaceTestFixture.serviceId,
-        "resource": MarketplaceTestFixture.itemsResourceId,
-      ])
-    try seedPage(
-      store: store, id: "create-page", rowIds: ["search-row"],
-      footerRowId: "submit-button")
-    try seedRow(
-      store: store, id: "search-row", type: "Search",
-      data: [
-        "source": "{$api:place_search}",
-        "destination": "{pickup_address}",
-        "placeholder": "Search",
-        "title": "",
-        "actions": [
-          "tap": [
-            [
-              "condition": "",
-              "false": "",
-              "true": [
-                "fn": "create", "service": coreService, "resource": "addresses",
-                "mode": "inline", "data": ["street": "$datum.street"],
-                "idDestination": "{\(itemsResource).transfer_options.pickup.address_id}",
-              ],
-            ]
-          ]
-        ],
-      ])
-    try seedRow(
-      store: store, id: "submit-button", type: "Button",
-      data: [
-        "source": "", "title": "", "label": "Submit",
-        "actions": [
-          "tap": [
-            [
-              "condition": "",
-              "false": "",
-              "true": [
-                "fn": "create", "service": MarketplaceTestFixture.serviceId,
-                "resource": itemsResource, "mode": "submit",
-              ],
-            ]
-          ]
-        ],
-      ])
-
-    let keys = EVYFlowStore.createKeys(flowId: "create-flow", from: store)
-    XCTAssertEqual(
-      keys, Set([itemsResource]),
-      "Inline address create must not join createKeys or it steals draft scope from items")
-    let route = Route(flowId: "create-flow", pageId: "create-page")
-    XCTAssertEqual(
-      EVYFlowStore.draftScopeId(for: route, from: store),
-      EVYDraft.createMergeScopeId(flowId: "create-flow", entityKey: itemsResource)
-    )
-  }
-
-  func testExtractCreateKeysIncludesSwipeLeftActions() throws {
-    let store = makeStore()
-
-    try seedFlow(store: store, id: "swipe-flow", pageIds: ["swipe-page"])
-    try seedPage(store: store, id: "swipe-page", rowIds: ["swipe-row"])
-    try seedRow(
-      store: store, id: "swipe-row", type: "Text",
-      data: [
-        "title": "Swipe",
-        "text": "Hello",
-        "actions": [
-          "swipe-left": [
-            [
-              "condition": "",
-              "false": "",
-              "true": [
-                "fn": "create", "service": MarketplaceTestFixture.serviceId,
-                "resource": MarketplaceTestFixture.itemsResourceId, "mode": "submit",
-              ],
-            ]
-          ]
-        ],
-      ])
-
-    let keys = EVYFlowStore.createKeys(flowId: "swipe-flow", from: store)
-    XCTAssertEqual(keys, Set([MarketplaceTestFixture.itemsResourceId]))
-  }
-
-  func testExtractCreateKeysReturnsEmptyForFlowWithoutCreateActions() throws {
-    let store = makeStore()
-
-    try seedFlow(store: store, id: "home-flow", pageIds: ["home-page"])
-    try seedPage(store: store, id: "home-page", rowIds: ["home-button"])
-    try seedRow(
-      store: store, id: "home-button", type: "Button",
-      data: [
-        "source": "", "title": "", "label": "Go",
-        "actions": [
-          "tap": [
-            [
-              "condition": "",
-              "false": "",
-              "true": [
-                "fn": "navigate", "flowId": "another-flow", "pageId": "another-page",
-              ],
-            ]
-          ]
-        ],
-      ])
-
-    let keys = EVYFlowStore.createKeys(flowId: "home-flow", from: store)
-    XCTAssertEqual(keys, [])
-  }
-
   func testDraftScopeIdForCreateFlowMatchesFlowAndEntityKey() throws {
     let store = makeStore()
 
@@ -793,7 +619,7 @@ final class ContentViewTests: XCTestCase {
 
   /// The declaration wins over the actions, so scope no longer depends on
   /// re-parsing every branch in the flow.
-  func testDeclaredSubmitsTakesPrecedenceOverScrapedActions() throws {
+  func testDeclaredSubmitsTakesPrecedenceOverActionBranches() throws {
     let store = makeStore()
     try seedSubmittingFlow(
       store: store, flowId: "precedence-flow",
@@ -808,122 +634,12 @@ final class ContentViewTests: XCTestCase {
   func testFlowWithoutDeclarationHasNoSubmissionResources() throws {
     let store = makeStore()
     try seedSubmittingFlow(
-      store: store, flowId: "legacy-submit-flow",
-      submitResource: MarketplaceTestFixture.itemsResourceId)
-
-    XCTAssertEqual(
-      EVYFlowStore.submissionResources(flowId: "legacy-submit-flow", from: store),
-      [])
-  }
-
-  func testValidateReportsUndeclaredSubmitFlow() throws {
-    let store = makeStore()
-    try seedSubmittingFlow(
       store: store, flowId: "undeclared-submit-flow",
       submitResource: MarketplaceTestFixture.itemsResourceId)
 
-    let errors = capturedErrors {
-      EVYFlowStore.validateSubmissionResources(flowId: "undeclared-submit-flow", from: store)
-    }
-    XCTAssertFalse(errors.isEmpty)
-    XCTAssertTrue(
-      errors.first?.localizedDescription.contains("declares no submits") == true,
-      "\(String(describing: errors.first?.localizedDescription))")
-  }
-
-  func testValidateReportsActionsDisagreeingWithDeclaration() throws {
-    let store = makeStore()
-    try seedSubmittingFlow(
-      store: store, flowId: "mismatch-flow",
-      submitResource: "actual-resource",
-      declared: "declared-resource")
-
-    var errors: [Error] = []
-    let observer = NotificationCenter.default.addObserver(
-      forName: .evyErrorOccurred, object: nil, queue: nil
-    ) { note in
-      if let error = note.object as? Error { errors.append(error) }
-    }
-    defer { NotificationCenter.default.removeObserver(observer) }
-
-    EVYFlowStore.validateSubmissionResources(flowId: "mismatch-flow", from: store)
-
-    XCTAssertEqual(errors.count, 1, "a disagreeing declaration should be reported")
-    XCTAssertTrue(
-      errors.first?.localizedDescription.contains("declares submits") == true,
-      "\(String(describing: errors.first?.localizedDescription))")
-  }
-
-  func testValidateStaysQuietWhenDeclarationMatches() throws {
-    let store = makeStore()
-    try seedSubmittingFlow(
-      store: store, flowId: "agreeing-flow",
-      submitResource: MarketplaceTestFixture.itemsResourceId,
-      declared: MarketplaceTestFixture.itemsResourceId)
-
-    var errors: [Error] = []
-    let observer = NotificationCenter.default.addObserver(
-      forName: .evyErrorOccurred, object: nil, queue: nil
-    ) { note in
-      if let error = note.object as? Error { errors.append(error) }
-    }
-    defer { NotificationCenter.default.removeObserver(observer) }
-
-    EVYFlowStore.validateSubmissionResources(flowId: "agreeing-flow", from: store)
-
-    XCTAssertTrue(errors.isEmpty, "\(errors)")
-  }
-
-  func testDraftScopeIdSurfacesErrorForMultipleSubmissionResources() throws {
-    let store = makeStore()
-    let secondResource = "fe000000-0000-0000-0000-000000000001"
-
-    try seedFlow(store: store, id: "multi-submit-flow", pageIds: ["multi-page"])
-    try seedPage(store: store, id: "multi-page", rowIds: ["row-a", "row-b"])
-    try seedRow(
-      store: store, id: "row-a", type: "Button",
-      data: [
-        "source": "", "title": "", "label": "A",
-        "actions": [
-          "tap": [
-            [
-              "condition": "",
-              "false": "",
-              "true": [
-                "fn": "create", "service": MarketplaceTestFixture.serviceId,
-                "resource": MarketplaceTestFixture.itemsResourceId, "mode": "submit",
-              ],
-            ]
-          ]
-        ],
-      ])
-    try seedRow(
-      store: store, id: "row-b", type: "Button",
-      data: [
-        "source": "", "title": "", "label": "B",
-        "actions": [
-          "tap": [
-            [
-              "condition": "",
-              "false": "",
-              "true": [
-                "fn": "create", "service": MarketplaceTestFixture.serviceId,
-                "resource": secondResource, "mode": "submit",
-              ],
-            ]
-          ]
-        ],
-      ])
-
-    let route = Route(flowId: "multi-submit-flow", pageId: "multi-page")
-    let errors = capturedErrors {
-      EVYFlowStore.validateSubmissionResources(flowId: route.flowId, from: store)
-    }
-    XCTAssertFalse(errors.isEmpty)
     XCTAssertEqual(
-      EVYFlowStore.draftScopeId(for: route, from: store),
-      "multi-submit-flow:browse"
-    )
+      EVYFlowStore.submissionResources(flowId: "undeclared-submit-flow", from: store),
+      [])
   }
 
   func testDraftScopeIdForHomeFlowWithoutCreateUsesBrowseSuffix() throws {
@@ -939,20 +655,9 @@ final class ContentViewTests: XCTestCase {
     )
   }
 
-  // MARK: - Sync state tests (unrelated to flow shape)
+  // MARK: - Sync state tests
 
-  func testSyncStateDropsCursorWhenStorageVersionChanges() {
-    EVYSyncState.reset()
-    defer { EVYSyncState.reset() }
-
-    UserDefaults.standard.set("stale-cursor", forKey: "syncCursor")
-
-    // No cursor means the next sync is a full one, which is what a cache built
-    // by an older storage version needs.
-    XCTAssertNil(EVYSyncState.cursor)
-  }
-
-  func testSyncStateKeepsCursorAfterCurrentVersionIsMarkedSynced() {
+  func testSyncStateKeepsCursorAfterMarkSynced() {
     EVYSyncState.reset()
     defer { EVYSyncState.reset() }
 

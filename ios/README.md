@@ -10,6 +10,25 @@ The Xcode project references generated Swift types under `types/generated/swift`
 bun run types:generate
 ```
 
+### Editor / LSP setup (Zed, Neovim, VS Code, etc.)
+
+`sourcekit-lsp` needs a BSP server to see types across files in this `.xcodeproj` (otherwise it falls back to single-file mode and reports spurious "Cannot find type … in scope" warnings). We use [`xcode-build-server`](https://github.com/SolaWing/xcode-build-server) to bridge `xcodebuild` to sourcekit-lsp.
+
+Install it once (Homebrew):
+
+```sh
+brew install xcode-build-server
+```
+
+Then regenerate the BSP manifest from the `ios/` directory (do this after switching branches that change build settings, adding files, or modifying the project):
+
+```sh
+cd ios
+xcode-build-server config -scheme evy -project evy.xcodeproj
+```
+
+This writes `ios/buildServer.json` (gitignored, machine-specific). Restart your editor and sourcekit-lsp will pick it up automatically.
+
 ### Build
 
 Open `ios/evy.xcodeproj` in Xcode and run the `evy` scheme against the **iPhone 17** simulator on **iOS 26.5** (see root `AGENTS.md`), or from the command line:
@@ -76,7 +95,7 @@ flowchart LR
 
 ### Architectural highlights
 
-**sync**: At startup, the app calls the API and stores each returned resource under a service-qualified `namespace` / `resource` pair — for example namespace `[evy_core_service_id]` with resources `flows`, `pages`, `rows`, or namespace `[marketplace_service_id]` with resource `[items_resource_id]`. (These are two separate stored columns; the colon form `namespace:resource` is only a binding grammar for expressions.) After startup, changes arrive continuously as `dataChanged` push notifications over the same socket and are applied straight into the stores; a full sync runs again on next launch.
+**sync**: At startup, the app calls the API and stores each returned resource under a service-qualified `namespace` / `resource` pair — for example namespace `[evy_core_service_id]` with resources `flows`, `pages`, `rows`, or namespace `[marketplace_service_id]` with resource `[items_resource_id]`. A successful sync also persists the aggregated service/resource catalog singleton under the core `resources` key. (These are two separate stored columns; the colon form `namespace:resource` is only a binding grammar for expressions.) After startup, changes arrive continuously as `dataChanged` push notifications over the same socket and are applied straight into the stores; a full sync runs again on next launch.
 
 **page scope**: Each rendered page carries an `EVYScope` with the cache scope for page query params and the draft scope for create flows. This keeps route context explicit through the SwiftUI tree while preserving the existing expression and mutation entry points.
 

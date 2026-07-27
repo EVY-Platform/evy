@@ -42,18 +42,137 @@ func evyCount(_ args: String) -> EVYFunctionOutput {
   }
 }
 
+private enum SortableKey: Equatable {
+  case missing
+  case number(Decimal)
+  case string(String)
+  case unsupported
+}
+
+private func sortableKey(from json: EVYJson) -> SortableKey {
+  switch json {
+  case .null:
+    return .missing
+  case .int(let intValue):
+    return .number(Decimal(intValue))
+  case .decimal(let decimalValue):
+    return .number(decimalValue)
+  case .string(let stringValue):
+    return stringValue.isEmpty ? .missing : .string(stringValue)
+  default:
+    return .unsupported
+  }
+}
+
 @MainActor
-func evyEarliestDatetime(_ args: String) throws -> EVYFunctionOutput {
-  let res = try EVY.getDataFromProps(args)
-  guard case .array(let items) = res else {
-    return EVYFunctionOutput(value: "", prefix: nil, suffix: nil)
+private func sortableKey(from record: EVYJson, fieldPath: String) -> SortableKey {
+  guard let props = try? splitPropsFromText(fieldPath), !props.isEmpty else {
+    return .unsupported
   }
-  let dateStrings = items.compactMap { item -> String? in
-    guard case .string(let value) = item, !value.isEmpty else { return nil }
-    return value
+  guard let value = record.parsePropStrict(props: props) else {
+    return .missing
   }
-  let earliest = dateStrings.min() ?? ""
-  return EVYFunctionOutput(value: earliest, prefix: nil, suffix: nil)
+  return sortableKey(from: value)
+}
+
+private func compareSortableKeys(_ left: SortableKey, _ right: SortableKey) -> ComparisonResult {
+  switch (left, right) {
+  case (.missing, .missing):
+    return .orderedSame
+  case (.missing, _):
+    return .orderedDescending
+  case (_, .missing):
+    return .orderedAscending
+  case (.unsupported, _), (_, .unsupported):
+    return .orderedSame
+  case (.number(let leftNumber), .number(let rightNumber)):
+    if leftNumber < rightNumber { return .orderedAscending }
+    if leftNumber > rightNumber { return .orderedDescending }
+    return .orderedSame
+  case (.string(let leftString), .string(let rightString)):
+    return leftString.compare(rightString)
+  case (.number(let leftNumber), .string(let rightString)):
+    if let rightNumber = evyNumericValue(rightString) {
+      if leftNumber < rightNumber { return .orderedAscending }
+      if leftNumber > rightNumber { return .orderedDescending }
+      return .orderedSame
+    }
+    return leftNumber.description.compare(rightString)
+  case (.string(let leftString), .number(let rightNumber)):
+    if let leftNumber = evyNumericValue(leftString) {
+      if leftNumber < rightNumber { return .orderedAscending }
+      if leftNumber > rightNumber { return .orderedDescending }
+      return .orderedSame
+    }
+    return leftString.compare(rightNumber.description)
+  }
+}
+
+@MainActor
+func evySort(_ args: String) throws -> EVYJson {
+  let parts = _splitFunctionArguments(args)
+  guard parts.count == 2 || parts.count == 3 else {
+    throw EVYError.invalidData(
+      context: "sort expects collection, asc|desc [, field]")
+  }
+
+  let collectionArg = parts[0].trimmingCharacters(in: .whitespacesAndNewlines)
+  let directionArg = parts[1].trimmingCharacters(in: .whitespacesAndNewlines)
+  let fieldArg =
+    parts.count == 3
+    ? parts[2].trimmingCharacters(in: .whitespacesAndNewlines) : nil
+
+  let ascending: Bool
+  switch directionArg {
+  case "asc":
+    ascending = true
+  case "desc":
+    ascending = false
+  default:
+    throw EVYError.invalidData(context: "sort direction must be asc or desc")
+  }
+
+  let collection = try EVY.getDataFromProps(collectionArg)
+  guard case .array(let items) = collection else {
+    return .array([])
+  }
+
+  let indexedItems = Array(items.enumerated())
+  let keyExtractor: (EVYJson) throws -> SortableKey
+  if let fieldArg {
+    keyExtractor = { item in
+      let key = sortableKey(from: item, fieldPath: fieldArg)
+      if key == .unsupported {
+        throw EVYError.invalidData(
+          context: "sort field values must be numbers or strings")
+      }
+      return key
+    }
+  } else {
+    keyExtractor = { item in
+      let key = sortableKey(from: item)
+      if key == .unsupported {
+        throw EVYError.invalidData(
+          context: "sort values must be numbers or strings")
+      }
+      return key
+    }
+  }
+
+  let keyedItems = try indexedItems.map {
+    indexedItem -> (offset: Int, item: EVYJson, key: SortableKey) in
+    let key = try keyExtractor(indexedItem.element)
+    return (indexedItem.offset, indexedItem.element, key)
+  }
+  let sortedItems = keyedItems.sorted { left, right in
+    let comparison = compareSortableKeys(left.key, right.key)
+    if comparison == .orderedSame {
+      return left.offset < right.offset
+    }
+    return ascending ? comparison == .orderedAscending : comparison == .orderedDescending
+  }.map(\.item)
+
+  return .array(sortedItems)
 }
 
 @MainActor
@@ -121,13 +240,21 @@ private func evaluateFindFirstAtom(
 @MainActor
 func evyFindFirst(_ args: String, remainingProps: [String] = []) throws -> EVYJson {
   let parts = _splitFunctionArguments(args)
-  guard parts.count == 2 else { throw EVYParamError.invalidProps }
+  guard parts.count == 1 || parts.count == 2 else { throw EVYParamError.invalidProps }
   let collectionArg = parts[0].trimmingCharacters(in: .whitespacesAndNewlines)
-  let secondArg = parts[1].trimmingCharacters(in: .whitespacesAndNewlines)
   let collection = try EVY.getDataFromProps(collectionArg)
   guard case .array(let items) = collection else {
     return .string("")
   }
+
+  if parts.count == 1 {
+    guard let firstItem = items.first else {
+      return .string("")
+    }
+    return firstItem.parseProp(props: remainingProps)
+  }
+
+  let secondArg = parts[1].trimmingCharacters(in: .whitespacesAndNewlines)
 
   let match: EVYJson?
   if _containsTopLevelBooleanSyntax(secondArg) {

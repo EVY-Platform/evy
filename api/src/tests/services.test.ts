@@ -2,14 +2,15 @@ import { afterAll, beforeAll, describe, expect, it } from "bun:test";
 import { migrate } from "drizzle-orm/pglite/migrator";
 import type { CreateRequest } from "evy-types";
 import * as schema from "evy-types/db/schema.generated";
-import {
-	MARKETPLACE_RESOURCE,
-	MARKETPLACE_SERVICE,
-} from "evy-types/marketplaceResources";
 import { DATA_CHANGED_EVENT } from "evy-types/ws";
 import { Server } from "rpc-websockets";
 import { resolveServiceWsEndpoint } from "../procedures/services";
 import { emitJsonRpc } from "../shared/ws";
+import {
+	EXTERNAL_TEST_RESOURCE,
+	EXTERNAL_TEST_SERVICE_DESCRIPTOR,
+	EXTERNAL_TEST_SERVICE_ID,
+} from "./externalServiceFixture";
 import { withEnvironment } from "./withEnvironment";
 import {
 	asEvyDb,
@@ -37,6 +38,21 @@ async function startTestWsServer(port: number): Promise<WSServer> {
 
 	server.register("get", () => [...storedData]);
 
+	server.register("resources", () => ({
+		services: [
+			{
+				...EXTERNAL_TEST_SERVICE_DESCRIPTOR,
+				name: "marketplace",
+				resources: [
+					{
+						id: EXTERNAL_TEST_RESOURCE.CONDITIONS,
+						name: "conditions",
+					},
+				],
+			},
+		],
+	}));
+
 	server.register("api", (params: { method?: string; data?: unknown }) => {
 		if (params.method !== "echo") {
 			throw new Error(`Unknown marketplace API method: ${params.method}`);
@@ -56,7 +72,7 @@ async function startTestWsServer(port: number): Promise<WSServer> {
 		};
 		storedData.push(rowData);
 		emitJsonRpc(server, DATA_CHANGED_EVENT, {
-			service: MARKETPLACE_SERVICE,
+			service: EXTERNAL_TEST_SERVICE_ID,
 			resource: params.resource,
 			operation: "create",
 			value: rowData,
@@ -87,7 +103,7 @@ describe("service WebSocket adapters", () => {
 
 		const nowIso = new Date().toISOString();
 		await testDb.insert(schema.service).values({
-			id: MARKETPLACE_SERVICE,
+			id: EXTERNAL_TEST_SERVICE_ID,
 			name: "marketplace",
 			description: "Marketplace",
 			sortOrder: 1,
@@ -121,8 +137,8 @@ describe("service WebSocket adapters", () => {
 	it("relays a procedure call and returns the service's response", async () => {
 		const { forwardApi } = await import("../procedures/services");
 
-		const response = await forwardApi(MARKETPLACE_SERVICE, {
-			service: MARKETPLACE_SERVICE,
+		const response = await forwardApi(EXTERNAL_TEST_SERVICE_ID, {
+			service: EXTERNAL_TEST_SERVICE_ID,
 			method: "echo",
 			data: { hello: "world" },
 		});
@@ -135,8 +151,8 @@ describe("service WebSocket adapters", () => {
 			"../procedures/services"
 		);
 
-		const failure = await forwardApi(MARKETPLACE_SERVICE, {
-			service: MARKETPLACE_SERVICE,
+		const failure = await forwardApi(EXTERNAL_TEST_SERVICE_ID, {
+			service: EXTERNAL_TEST_SERVICE_ID,
 			method: "nope",
 		}).catch((error: unknown) => error);
 
@@ -151,16 +167,16 @@ describe("service WebSocket adapters", () => {
 		const row = { id: crypto.randomUUID(), value: "event-once" };
 		const eventsBefore = receivedEvents.length;
 
-		await forwardCreate(MARKETPLACE_SERVICE, {
-			service: MARKETPLACE_SERVICE,
-			resource: MARKETPLACE_RESOURCE.CONDITIONS,
+		await forwardCreate(EXTERNAL_TEST_SERVICE_ID, {
+			service: EXTERNAL_TEST_SERVICE_ID,
+			resource: EXTERNAL_TEST_RESOURCE.CONDITIONS,
 			data: row,
 		});
 
 		expect(receivedEvents.length - eventsBefore).toBe(1);
 		expect(receivedEvents.at(-1)).toEqual({
-			service: MARKETPLACE_SERVICE,
-			resource: MARKETPLACE_RESOURCE.CONDITIONS,
+			service: EXTERNAL_TEST_SERVICE_ID,
+			resource: EXTERNAL_TEST_RESOURCE.CONDITIONS,
 			operation: "create",
 			value: row,
 		});
@@ -178,9 +194,9 @@ describe("service WebSocket adapters", () => {
 		let reconnected = false;
 		while (Date.now() < reconnectDeadline) {
 			try {
-				await forwardGet(MARKETPLACE_SERVICE, {
-					service: MARKETPLACE_SERVICE,
-					resource: MARKETPLACE_RESOURCE.CONDITIONS,
+				await forwardGet(EXTERNAL_TEST_SERVICE_ID, {
+					service: EXTERNAL_TEST_SERVICE_ID,
+					resource: EXTERNAL_TEST_RESOURCE.CONDITIONS,
 				});
 				reconnected = true;
 				break;
@@ -193,30 +209,30 @@ describe("service WebSocket adapters", () => {
 		const row = { id: crypto.randomUUID(), value: "after-reconnect" };
 		const eventsBefore = receivedEvents.length;
 
-		await forwardCreate(MARKETPLACE_SERVICE, {
-			service: MARKETPLACE_SERVICE,
-			resource: MARKETPLACE_RESOURCE.CONDITIONS,
+		await forwardCreate(EXTERNAL_TEST_SERVICE_ID, {
+			service: EXTERNAL_TEST_SERVICE_ID,
+			resource: EXTERNAL_TEST_RESOURCE.CONDITIONS,
 			data: row,
 		});
 
 		expect(receivedEvents.length - eventsBefore).toBe(1);
 		expect(receivedEvents.at(-1)).toEqual({
-			service: MARKETPLACE_SERVICE,
-			resource: MARKETPLACE_RESOURCE.CONDITIONS,
+			service: EXTERNAL_TEST_SERVICE_ID,
+			resource: EXTERNAL_TEST_RESOURCE.CONDITIONS,
 			operation: "create",
 			value: row,
 		});
 
-		const got = await forwardGet(MARKETPLACE_SERVICE, {
-			service: MARKETPLACE_SERVICE,
-			resource: MARKETPLACE_RESOURCE.CONDITIONS,
+		const got = await forwardGet(EXTERNAL_TEST_SERVICE_ID, {
+			service: EXTERNAL_TEST_SERVICE_ID,
+			resource: EXTERNAL_TEST_RESOURCE.CONDITIONS,
 		});
 		expect(got).toEqual(expect.arrayContaining([row]));
 	});
 });
 
 describe("resolveServiceWsEndpoint", () => {
-	const base = { id: MARKETPLACE_SERVICE, name: "marketplace" };
+	const base = { id: EXTERNAL_TEST_SERVICE_ID, name: "marketplace" };
 
 	function withEnv(
 		host: string | undefined,
@@ -283,7 +299,7 @@ describe("resolveServiceWsEndpoint", () => {
 	it("rejects a service name that cannot form an env var", async () => {
 		expect(() =>
 			resolveServiceWsEndpoint({
-				id: MARKETPLACE_SERVICE,
+				id: EXTERNAL_TEST_SERVICE_ID,
 				name: "my service!",
 				wsHost: null,
 				wsPort: null,
@@ -299,7 +315,7 @@ describe("resolveServiceWsEndpoint", () => {
 		try {
 			expect(
 				resolveServiceWsEndpoint({
-					id: MARKETPLACE_SERVICE,
+					id: EXTERNAL_TEST_SERVICE_ID,
 					name: "svc_2",
 					wsHost: null,
 					wsPort: null,
@@ -315,7 +331,7 @@ describe("resolveServiceWsEndpoint", () => {
 });
 
 describe("forwarded call failures are attributed", () => {
-	const serviceId = MARKETPLACE_SERVICE;
+	const serviceId = EXTERNAL_TEST_SERVICE_ID;
 	let slowPort: number;
 	let slowServer: WSServer | null = null;
 	const savedHost = process.env.MARKETPLACE_WS_HOST;
@@ -378,7 +394,7 @@ describe("forwarded call failures are attributed", () => {
 		);
 		const failure = await forwardGet(serviceId, {
 			service: serviceId,
-			resource: MARKETPLACE_RESOURCE.CONDITIONS,
+			resource: EXTERNAL_TEST_RESOURCE.CONDITIONS,
 		}).catch((error: unknown) => error);
 
 		expect(failure).toBeInstanceOf(ServiceForwardError);
@@ -397,7 +413,7 @@ describe("forwarded call failures are attributed", () => {
 		);
 		const failure = await forwardCreate(serviceId, {
 			service: serviceId,
-			resource: MARKETPLACE_RESOURCE.CONDITIONS,
+			resource: EXTERNAL_TEST_RESOURCE.CONDITIONS,
 			data: { id: crypto.randomUUID(), value: "x" },
 		}).catch((error: unknown) => error);
 

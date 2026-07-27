@@ -6,6 +6,7 @@ import { fileURLToPath } from "node:url";
 import { SQL } from "bun";
 import { drizzle } from "drizzle-orm/bun-sql";
 import { migrate as migratePg } from "drizzle-orm/bun-sql/migrator";
+import { MARKETPLACE_SERVICE_DESCRIPTOR } from "../services/marketplace/src/resources";
 import { data as marketplaceDataTable } from "../services/marketplace/src/schema";
 import { getPostgresConnectionUrl, requireEnv } from "../types/env";
 import type {
@@ -26,13 +27,8 @@ import {
 	page as pageTable,
 	row as rowTable,
 	serviceProvider as serviceProviderTable,
-	serviceResource as serviceResourceTable,
 	service as serviceTable,
 } from "../types/generated/ts/db/schema.generated";
-import {
-	MARKETPLACE_RESOURCE,
-	MARKETPLACE_SERVICE,
-} from "../types/generated/ts/marketplaceResources";
 import { validateUiFlow } from "../types/validators";
 import { copySeedFileBinaries } from "./seed-files";
 
@@ -79,7 +75,6 @@ const coreSchema = {
 	organization: organizationTable,
 	service: serviceTable,
 	serviceProvider: serviceProviderTable,
-	serviceResource: serviceResourceTable,
 	flow: flowTable,
 	page: pageTable,
 	row: rowTable,
@@ -104,27 +99,15 @@ const SEED_IDS = {
 	evyOrganization: "09f07052-c27c-4116-a508-a2bcb074c827",
 	evyMarketplaceProvider: "be00fb53-80e9-4a09-a43f-4588b4ffc851",
 	logo: "ec3a7609-e2bc-484e-aab1-acef6777595c",
-	coreFlowsResource: "d23cd318-3df4-486f-92d8-77f84402e63c",
-	corePagesResource: "fbfdc3be-6a88-4f1a-a72a-cd49de3f9629",
-	coreRowsResource: "7c2d2ca4-9b1a-469f-a5df-39800357f79f",
-	coreDevicesResource: "a7198f1b-7ff9-44e1-b1c1-da491c59aca4",
-	coreOrganisationsResource: "584098b1-811f-4563-a6f0-e7669e884cdc",
-	coreServicesResource: "8eccd82c-dd04-4cc7-b588-e64d36d3f27b",
-	coreProvidersResource: "136d5d53-af3b-4fe1-954c-46df6c9f9ec3",
-	coreServiceResourcesResource: "58e2e69d-78ba-4657-b991-cc6a5e0c80c9",
-	coreFilesResource: "996738e6-15eb-4f3e-8f97-7538a1e2635c",
-	coreAddressesResource: "eef0b91c-f8f6-4603-b082-1211650af931",
-	coreMessagesResource: "7c8d9e0f-1a2b-3c4d-5e6f-7a8b9c0d1e2f",
 } as const;
 
-// Fixture keys are the lowercase forms of the generated resource constants
-// (selling_reasons -> SELLING_REASONS), so derive the map instead of
-// restating every resource.
+const MARKETPLACE_SERVICE = MARKETPLACE_SERVICE_DESCRIPTOR.id;
+
 const MARKETPLACE_SEED_RESOURCE_KEY_TO_ID: Record<string, string> =
 	Object.fromEntries(
-		Object.entries(MARKETPLACE_RESOURCE).map(([key, id]) => [
-			key.toLowerCase(),
-			id,
+		MARKETPLACE_SERVICE_DESCRIPTOR.resources.map((resource) => [
+			resource.name,
+			resource.id,
 		]),
 	);
 
@@ -497,47 +480,6 @@ function decomposeRow(
 	return uiRow.id;
 }
 
-// Seeded ServiceResource row names are snake_case singulars. Note this
-// diverges from core.resources.json's "serviceResource" singular; nothing
-// consumes either value programmatically today, so the seeded names are
-// kept stable for existing data.
-const SERVICE_RESOURCE_SPECS: [string, string, string][] = [
-	[SEED_IDS.coreFlowsResource, EVY_CORE_SERVICE, "flow"],
-	[SEED_IDS.corePagesResource, EVY_CORE_SERVICE, "page"],
-	[SEED_IDS.coreRowsResource, EVY_CORE_SERVICE, "row"],
-	[SEED_IDS.coreDevicesResource, EVY_CORE_SERVICE, "device"],
-	[SEED_IDS.coreOrganisationsResource, EVY_CORE_SERVICE, "organisation"],
-	[SEED_IDS.coreServicesResource, EVY_CORE_SERVICE, "service"],
-	[SEED_IDS.coreProvidersResource, EVY_CORE_SERVICE, "provider"],
-	[
-		SEED_IDS.coreServiceResourcesResource,
-		EVY_CORE_SERVICE,
-		"service_resource",
-	],
-	[SEED_IDS.coreFilesResource, EVY_CORE_SERVICE, "file"],
-	[SEED_IDS.coreAddressesResource, EVY_CORE_SERVICE, "address"],
-	[SEED_IDS.coreMessagesResource, EVY_CORE_SERVICE, "message"],
-	[
-		MARKETPLACE_RESOURCE.SELLING_REASONS,
-		MARKETPLACE_SERVICE,
-		"selling_reason",
-	],
-	[MARKETPLACE_RESOURCE.CONDITIONS, MARKETPLACE_SERVICE, "condition"],
-	[MARKETPLACE_RESOURCE.DURATIONS, MARKETPLACE_SERVICE, "duration"],
-	[MARKETPLACE_RESOURCE.AREAS, MARKETPLACE_SERVICE, "area"],
-	[MARKETPLACE_RESOURCE.ITEMS, MARKETPLACE_SERVICE, "item"],
-];
-
-function buildServiceResourceRows(now: string) {
-	return SERVICE_RESOURCE_SPECS.map(([id, fkServiceId, name]) => ({
-		id,
-		fkServiceId,
-		name,
-		visibility: "public" as const,
-		...timestamped(now),
-	}));
-}
-
 function quotePostgresIdentifier(identifier: string): string {
 	return `"${identifier.replaceAll('"', '""')}"`;
 }
@@ -649,7 +591,6 @@ async function seedDatabase({
 	});
 
 	await coreDb.transaction(async (tx) => {
-		await tx.delete(coreSchema.serviceResource);
 		await tx.delete(coreSchema.serviceProvider);
 		await tx.delete(coreSchema.organization);
 		await tx.delete(coreSchema.service);
@@ -698,10 +639,6 @@ async function seedDatabase({
 			visibility: "public",
 			...timestamped(now),
 		});
-
-		await tx
-			.insert(coreSchema.serviceResource)
-			.values(buildServiceResourceRows(now));
 
 		await tx.delete(coreSchema.row);
 		await tx.delete(coreSchema.page);

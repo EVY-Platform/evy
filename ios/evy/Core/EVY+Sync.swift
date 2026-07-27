@@ -7,11 +7,6 @@ import Foundation
 
 extension EVY {
   static func sync() async throws {
-    if EVYSyncState.storageVersionDidChange {
-      try wipeSyncedStores()
-      EVYSyncState.storageVersionDidChange = false
-    }
-
     let cursor = EVYSyncState.cursor
     let response: SyncResponse = try await EVYAPIManager.shared.fetch(
       method: "sync",

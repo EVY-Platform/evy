@@ -14,13 +14,13 @@ final class EVYCreateMergesDraftsTests: XCTestCase {
   override func setUp() async throws {
     try await super.setUp()
     installHermeticMutationSync()
-    try? EVY.publicStore.deleteAll(namespace: EVYNamespace.marketplace, resource: "items")
+    try? EVY.publicStore.deleteAll(namespace: MarketplaceTestFixture.serviceId, resource: "items")
     EVY.draftStore.deleteDrafts()
     EVY.draftStore.activeScopeId = testDraftScope
   }
 
   override func tearDown() async throws {
-    try? EVY.publicStore.deleteAll(namespace: EVYNamespace.marketplace, resource: "items")
+    try? EVY.publicStore.deleteAll(namespace: MarketplaceTestFixture.serviceId, resource: "items")
     EVY.draftStore.deleteDrafts()
     EVY.draftStore.activeScopeId = nil
     resetHermeticMutationSync()
@@ -31,10 +31,11 @@ final class EVYCreateMergesDraftsTests: XCTestCase {
     EVY.ensureDraftExists(variableName: "items.title", scopeId: testDraftScope)
     try EVY.updateValue("User Title", destination: "{items.title}", scopeId: testDraftScope)
 
-    try EVY.create(namespace: EVYNamespace.marketplace, resource: "items", isSubmission: true)
+    try EVY.create(
+      namespace: MarketplaceTestFixture.serviceId, resource: "items", isSubmission: true)
 
     let instances = try EVY.publicStore.getAll(
-      namespace: EVYNamespace.marketplace, resource: "items")
+      namespace: MarketplaceTestFixture.serviceId, resource: "items")
     XCTAssertEqual(instances.count, 1, "Expected one created item")
 
     let merged = try instances[0].decoded()
@@ -65,10 +66,11 @@ final class EVYCreateMergesDraftsTests: XCTestCase {
     )
     EVY.draftStore.notifyUpdate(binding: priceBinding)
 
-    try EVY.create(namespace: EVYNamespace.marketplace, resource: "items", isSubmission: true)
+    try EVY.create(
+      namespace: MarketplaceTestFixture.serviceId, resource: "items", isSubmission: true)
 
     let instances = try EVY.publicStore.getAll(
-      namespace: EVYNamespace.marketplace, resource: "items")
+      namespace: MarketplaceTestFixture.serviceId, resource: "items")
     XCTAssertEqual(instances.count, 1, "Expected one created item")
 
     let merged = try instances[0].decoded()
@@ -93,18 +95,21 @@ final class EVYCreateMergesDraftsTests: XCTestCase {
     let seed1Data = try JSONEncoder().encode(EVYJson.dictionary(["id": .string("seed-1")]))
     let seed2Data = try JSONEncoder().encode(EVYJson.dictionary(["id": .string("seed-2")]))
     try EVY.publicStore.create(
-      namespace: EVYNamespace.marketplace, resource: "items", id: "seed-1", value: seed1Data,
+      namespace: MarketplaceTestFixture.serviceId, resource: "items", id: "seed-1",
+      value: seed1Data,
       sortIndex: 0)
     try EVY.publicStore.create(
-      namespace: EVYNamespace.marketplace, resource: "items", id: "seed-2", value: seed2Data,
+      namespace: MarketplaceTestFixture.serviceId, resource: "items", id: "seed-2",
+      value: seed2Data,
       sortIndex: 1)
 
     EVY.ensureDraftExists(variableName: "items.title", scopeId: testDraftScope)
     try EVY.updateValue("New Item", destination: "{items.title}", scopeId: testDraftScope)
-    try EVY.create(namespace: EVYNamespace.marketplace, resource: "items", isSubmission: true)
+    try EVY.create(
+      namespace: MarketplaceTestFixture.serviceId, resource: "items", isSubmission: true)
 
     let instances = try EVY.publicStore.getAll(
-      namespace: EVYNamespace.marketplace, resource: "items")
+      namespace: MarketplaceTestFixture.serviceId, resource: "items")
     XCTAssertEqual(instances.count, 3)
     let newItem = try XCTUnwrap(instances.first(where: { $0.id != "seed-1" && $0.id != "seed-2" }))
     XCTAssertEqual(newItem.sortIndex, 2)
@@ -127,10 +132,11 @@ final class EVYCreateMergesDraftsTests: XCTestCase {
     try EVY.updateValue(
       "500", destination: "{items.dimensions.width}", scopeId: testDraftScope)
 
-    try EVY.create(namespace: EVYNamespace.marketplace, resource: "items", isSubmission: true)
+    try EVY.create(
+      namespace: MarketplaceTestFixture.serviceId, resource: "items", isSubmission: true)
 
     let instances = try EVY.publicStore.getAll(
-      namespace: EVYNamespace.marketplace, resource: "items")
+      namespace: MarketplaceTestFixture.serviceId, resource: "items")
     XCTAssertEqual(instances.count, 1, "Expected one created item")
 
     let merged = try instances[0].decoded()
@@ -163,10 +169,10 @@ final class EVYCreateMergesDraftsTests: XCTestCase {
       "title": .string("Datum Title"),
       "type": .string("pickup"),
     ]
-    try EVY.create(namespace: EVYNamespace.marketplace, resource: "items", data: payload)
+    try EVY.create(namespace: MarketplaceTestFixture.serviceId, resource: "items", data: payload)
 
     let instances = try EVY.publicStore.getAll(
-      namespace: EVYNamespace.marketplace, resource: "items")
+      namespace: MarketplaceTestFixture.serviceId, resource: "items")
     XCTAssertEqual(instances.count, 1, "Expected one created item")
 
     let created = try instances[0].decoded()
@@ -189,7 +195,8 @@ final class EVYCreateMergesDraftsTests: XCTestCase {
     let linkedAddressId = UUID().uuidString
     EVY.draftStore.activeScopeId = scopeId
     defer {
-      try? EVY.publicStore.deleteAll(namespace: EVYNamespace.marketplace, resource: itemsResource)
+      try? EVY.publicStore.deleteAll(
+        namespace: MarketplaceTestFixture.serviceId, resource: itemsResource)
       EVY.draftStore.deleteDrafts(scopeId: scopeId)
       EVY.draftStore.activeScopeId = testDraftScope
     }
@@ -208,10 +215,10 @@ final class EVYCreateMergesDraftsTests: XCTestCase {
     )
 
     _ = try EVY.create(
-      namespace: EVYNamespace.marketplace, resource: itemsResource, isSubmission: true)
+      namespace: MarketplaceTestFixture.serviceId, resource: itemsResource, isSubmission: true)
 
     let items = try EVY.publicStore.getAll(
-      namespace: EVYNamespace.marketplace, resource: itemsResource)
+      namespace: MarketplaceTestFixture.serviceId, resource: itemsResource)
     XCTAssertEqual(items.count, 1)
     let merged = try items[0].decoded()
     guard case .dictionary(let dict) = merged else {
@@ -244,14 +251,15 @@ final class EVYCreateMergesDraftsTests: XCTestCase {
         "title": .string("Already listed"),
       ]))
     try EVY.publicStore.create(
-      namespace: EVYNamespace.marketplace,
+      namespace: MarketplaceTestFixture.serviceId,
       resource: itemsResource,
       id: existingItemId,
       value: existingPayload
     )
     EVY.draftStore.activeScopeId = scopeId
     defer {
-      try? EVY.publicStore.deleteAll(namespace: EVYNamespace.marketplace, resource: itemsResource)
+      try? EVY.publicStore.deleteAll(
+        namespace: MarketplaceTestFixture.serviceId, resource: itemsResource)
       EVY.draftStore.deleteDrafts(scopeId: scopeId)
       EVY.draftStore.activeScopeId = testDraftScope
     }
@@ -263,7 +271,7 @@ final class EVYCreateMergesDraftsTests: XCTestCase {
     )
 
     let existingAfterWrite = try EVY.publicStore.get(
-      namespace: EVYNamespace.marketplace, resource: itemsResource, id: existingItemId)
+      namespace: MarketplaceTestFixture.serviceId, resource: itemsResource, id: existingItemId)
     let existingDecoded = try existingAfterWrite.decoded()
     guard case .dictionary(let existingDict) = existingDecoded else {
       return XCTFail("expected existing item dictionary")
@@ -273,10 +281,10 @@ final class EVYCreateMergesDraftsTests: XCTestCase {
       "address_id must not patch the first existing row of the items resource")
 
     _ = try EVY.create(
-      namespace: EVYNamespace.marketplace, resource: itemsResource, isSubmission: true)
+      namespace: MarketplaceTestFixture.serviceId, resource: itemsResource, isSubmission: true)
 
     let items = try EVY.publicStore.getAll(
-      namespace: EVYNamespace.marketplace, resource: itemsResource)
+      namespace: MarketplaceTestFixture.serviceId, resource: itemsResource)
     XCTAssertEqual(items.count, 2)
     let created = try XCTUnwrap(
       items.first { row in
@@ -307,7 +315,7 @@ final class EVYCreateMergesDraftsTests: XCTestCase {
 
     XCTAssertThrowsError(
       try EVY.create(
-        namespace: EVYNamespace.marketplace, resource: "items", isSubmission: true)
+        namespace: MarketplaceTestFixture.serviceId, resource: "items", isSubmission: true)
     ) { error in
       guard let evyError = error as? EVYError else {
         return XCTFail("expected EVYError, got \(error)")

@@ -58,8 +58,9 @@ editing the vector — fix the implementation, then update the vector.
 
 `expression` is the core resolver and `display` is the rendered-row layer above
 it. They are separate categories because they disagree on failure: the core
-*throws* on an unresolvable root, while display swallows that into empty text —
-which is why one bad token blanks a whole row string.
+*throws* on an unresolvable root, while display swallows that per token — the
+bad token renders empty and the rest of the string, literal text included,
+still renders.
 
 `comparison` and `expression` are iOS-only because the web interpreter is
 deliberately a preview mock that renders doc-shaped placeholders rather than

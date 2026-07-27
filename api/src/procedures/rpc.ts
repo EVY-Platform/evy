@@ -21,7 +21,6 @@ import {
 } from "../data/data";
 import type { EvyDb } from "../database/db";
 import { coreApi } from "./coreApi";
-import { rateLimiter } from "./rateLimit";
 import {
 	forwardApi,
 	forwardCreate,
@@ -38,14 +37,10 @@ export async function get(params: unknown, db: EvyDb): Promise<GetResponse> {
 	return forwardGet(params.service, params);
 }
 
-export async function api(
-	params: unknown,
-	db: EvyDb,
-	callerId?: string,
-): Promise<unknown> {
+export async function api(params: unknown, db: EvyDb): Promise<unknown> {
 	validateStrictApiRequest(params);
 	if (params.service === EVY_CORE_SERVICE) {
-		return coreApi(params, db, callerId);
+		return coreApi(params, db);
 	}
 
 	// A service can only be sent procedures the registry says it owns. Without
@@ -58,11 +53,6 @@ export async function api(
 		);
 	}
 
-	rateLimiter.consume(
-		callerId ?? "anonymous",
-		params.method,
-		declared.perMinute,
-	);
 	return forwardApi(params.service, params);
 }
 

@@ -1,7 +1,7 @@
 import { expect, type Locator, test } from "@playwright/test";
-import type { UI_Flow as ServerFlow } from "evy-types";
-import { MARKETPLACE_SERVICE } from "evy-types/marketplaceResources";
-import type { ServiceResource } from "../app/api/sync";
+import type { UI_Flow as ServerFlow, UI_ActionBranch } from "evy-types";
+import type { ServiceResource } from "../app/types/resources";
+import { TEST_SERVICE_ID } from "../testFixtures/resourceCatalog";
 import { openAppWithFullFlows } from "./flowFixtures";
 import { getConfigPanel, popoverSelect } from "./utils";
 
@@ -11,24 +11,24 @@ const ORDER_RESOURCE_ID = "res-order";
 const SERVICE_RESOURCES: ServiceResource[] = [
 	{
 		id: ITEM_RESOURCE_ID,
-		fkServiceId: MARKETPLACE_SERVICE,
+		serviceId: TEST_SERVICE_ID,
 		name: "item",
 	},
 	{
 		id: ORDER_RESOURCE_ID,
-		fkServiceId: MARKETPLACE_SERVICE,
+		serviceId: TEST_SERVICE_ID,
 		name: "order",
 	},
 ];
 
 const RESOURCE_ATTRIBUTE_METADATA = [
 	{
-		serviceId: MARKETPLACE_SERVICE,
+		serviceId: TEST_SERVICE_ID,
 		resourceId: ITEM_RESOURCE_ID,
 		attributeNames: ["price", "title"],
 	},
 	{
-		serviceId: MARKETPLACE_SERVICE,
+		serviceId: TEST_SERVICE_ID,
 		resourceId: ORDER_RESOURCE_ID,
 		attributeNames: ["status"],
 	},
@@ -67,8 +67,14 @@ function getBuilderAssistToken(field: Locator, text: string): Locator {
 	});
 }
 
+type BuilderAssistAction = {
+	condition: string;
+	false: UI_ActionBranch;
+	true: UI_ActionBranch;
+};
+
 function buildBuilderAssistFlow(
-	buttonActions: { condition: string; false: string; true: string }[] = [
+	buttonActions: BuilderAssistAction[] = [
 		{ condition: "", false: "", true: "" },
 	],
 ): ServerFlow[] {
@@ -77,7 +83,7 @@ function buildBuilderAssistFlow(
 			id: "flow-builder",
 			name: "Builder Flow",
 			submits: {
-				service: MARKETPLACE_SERVICE,
+				service: TEST_SERVICE_ID,
 				resource: ITEM_RESOURCE_ID,
 			},
 			pages: [
@@ -116,7 +122,7 @@ function buildBuilderAssistFlow(
 
 async function openBuilderAssistFlow(
 	page: Parameters<typeof openAppWithFullFlows>[0],
-	buttonActions?: { condition: string; false: string; true: string }[],
+	buttonActions?: BuilderAssistAction[],
 ) {
 	await openAppWithFullFlows(
 		page,
@@ -286,7 +292,7 @@ test.describe("Builder Assist flows", () => {
 
 		const namespaceArg = popup.getByLabel("false-0-arg-0");
 		await expect(namespaceArg).toBeVisible();
-		await popoverSelect(page, namespaceArg, "Marketplace");
+		await popoverSelect(page, namespaceArg, "Test Service");
 
 		const resourceArg = popup.getByLabel("false-0-arg-1");
 		await expect(resourceArg).toBeVisible();
@@ -301,7 +307,7 @@ test.describe("Builder Assist flows", () => {
 			),
 		).toBeVisible();
 		await expect(
-			configPanel.getByText("create(Marketplace, item, submit)", {
+			configPanel.getByText("create(Test Service, item, submit)", {
 				exact: true,
 			}),
 		).toBeVisible();
@@ -334,9 +340,24 @@ test.describe("Builder Assist flows", () => {
 	test("shows resource ids as named chips in update() argument fields", async ({
 		page,
 	}) => {
-		const updateBranch = `{update(${MARKETPLACE_SERVICE},${ITEM_RESOURCE_ID},{fk: ${ITEM_RESOURCE_ID}.id, archivedAt: null},{archivedAt: now()})}`;
 		await openBuilderAssistFlow(page, [
-			{ condition: "", false: "", true: updateBranch },
+			{
+				condition: "",
+				false: "",
+				true: {
+					fn: "update",
+					service: TEST_SERVICE_ID,
+					resource: ITEM_RESOURCE_ID,
+					mode: "store",
+					filter: {
+						fk: `${ITEM_RESOURCE_ID}.id`,
+						archivedAt: "null",
+					},
+					changes: {
+						archivedAt: "now()",
+					},
+				},
+			},
 		]);
 
 		await page.getByText("Open checkout", { exact: true }).first().click();
@@ -363,7 +384,7 @@ test.describe("Builder Assist flows", () => {
 
 		await expect(
 			configPanel.getByText(
-				"update(Marketplace, item, {fk: item.id, archivedAt: null}, {archivedAt: now()})",
+				"update(Test Service, item, {fk: item.id, archivedAt: null}, {archivedAt: now()})",
 				{ exact: true },
 			),
 		).toBeVisible();

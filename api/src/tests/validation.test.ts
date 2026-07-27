@@ -1,5 +1,4 @@
 import { describe, expect, it } from "bun:test";
-import { MARKETPLACE_RESOURCE } from "evy-types/marketplaceResources";
 import {
 	validateDataEvyFile,
 	validateFileUploadChunkMetadata,
@@ -12,6 +11,7 @@ import {
 	validateDataEvyService as validateServicePayload,
 	validateDataEvyServiceProvider as validateServiceProviderPayload,
 } from "evy-types/validators";
+import { EXTERNAL_TEST_RESOURCE } from "./externalServiceFixture";
 
 describe("place search validators", () => {
 	it("accepts valid place search payloads", () => {
@@ -216,12 +216,12 @@ describe("validateFlowData", () => {
 				name: "Cash Accepted Row",
 				type: "Text",
 				actions: {},
-				visible: `{${MARKETPLACE_RESOURCE.ITEMS}.payment_methods.cash == true}`,
+				visible: `{${EXTERNAL_TEST_RESOURCE.RECORDS}.payment_methods.cash == true}`,
 				title: "Cash accepted",
 			}),
 		);
 		expect(out.pages[0]?.rows[0]?.visible).toBe(
-			`{${MARKETPLACE_RESOURCE.ITEMS}.payment_methods.cash == true}`,
+			`{${EXTERNAL_TEST_RESOURCE.RECORDS}.payment_methods.cash == true}`,
 		);
 	});
 

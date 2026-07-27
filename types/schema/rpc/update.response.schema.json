@@ -23,9 +23,6 @@
 			"$ref": "../data/data.schema.json#/$defs/DATA_EVY_ServiceProvider"
 		},
 		{
-			"$ref": "../data/data.schema.json#/$defs/DATA_EVY_ServiceResource"
-		},
-		{
 			"$ref": "../data/data.schema.json#/$defs/DATA_EVY_File"
 		},
 		{

@@ -24,11 +24,6 @@ extension EVY {
     store === publicStore ? privateStore : publicStore
   }
 
-  static func wipeSyncedStores() throws {
-    try publicStore.wipeAll()
-    try privateStore.wipeAll()
-  }
-
   /// Applies synced rows, removing any the server has tombstoned.
   ///
   /// `assignsOrder` is true only for a full sync: an incremental response

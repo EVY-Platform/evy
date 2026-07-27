@@ -1,0 +1,80 @@
+{
+	"$schema": "https://json-schema.org/draft/2020-12/schema",
+	"$id": "resources-response",
+	"title": "ResourcesResponse",
+	"description": "JSON-RPC response for the resources discovery method. Returns every registered service and its resource manifest.",
+	"type": "object",
+	"additionalProperties": false,
+	"required": ["services"],
+	"properties": {
+		"services": {
+			"type": "array",
+			"items": {
+				"$ref": "#/$defs/ServiceDescriptor"
+			}
+		},
+		"errors": {
+			"description": "Services whose manifest could not be fetched. The rest of the response is still usable.",
+			"type": "array",
+			"items": {
+				"$ref": "#/$defs/ResourcesError"
+			}
+		}
+	},
+	"$defs": {
+		"ResourceDescriptor": {
+			"type": "object",
+			"additionalProperties": false,
+			"required": ["id", "name"],
+			"properties": {
+				"id": {
+					"description": "Runtime routing key: plural name for core resources, UUID for external services.",
+					"type": "string",
+					"minLength": 1
+				},
+				"name": {
+					"description": "Human-friendly base label for builder display.",
+					"type": "string",
+					"minLength": 1,
+					"maxLength": 50
+				}
+			}
+		},
+		"ServiceDescriptor": {
+			"type": "object",
+			"additionalProperties": false,
+			"required": ["id", "name", "resources"],
+			"properties": {
+				"id": {
+					"type": "string",
+					"format": "uuid"
+				},
+				"name": {
+					"type": "string",
+					"minLength": 1,
+					"maxLength": 100
+				},
+				"resources": {
+					"type": "array",
+					"items": {
+						"$ref": "#/$defs/ResourceDescriptor"
+					}
+				}
+			}
+		},
+		"ResourcesError": {
+			"type": "object",
+			"additionalProperties": false,
+			"required": ["service", "message"],
+			"properties": {
+				"service": {
+					"type": "string",
+					"format": "uuid"
+				},
+				"message": {
+					"type": "string"
+				}
+			}
+		}
+	}
+}

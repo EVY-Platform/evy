@@ -6,6 +6,7 @@ import type {
 	DeleteResponse,
 	GetRequest,
 	GetResponse,
+	ResourcesResponse,
 	UpdateRequest,
 	UpdateResponse,
 } from "evy-types";
@@ -13,6 +14,7 @@ import {
 	validateCreateResponse,
 	validateDeleteResponse,
 	validateGetResponse,
+	validateResourcesResponse,
 	validateUpdateResponse,
 } from "evy-types/validators";
 import { DATA_CHANGED_EVENT } from "evy-types/ws";
@@ -28,6 +30,7 @@ type ServiceAdapter = {
 	create(params: CreateRequest): Promise<CreateResponse>;
 	update(params: UpdateRequest): Promise<UpdateResponse>;
 	delete(params: DeleteRequest): Promise<DeleteResponse>;
+	resources(): Promise<ResourcesResponse>;
 	onEvent(listener: (eventName: string, payload: unknown) => void): void;
 };
 
@@ -122,6 +125,10 @@ function makeWsAdapter(wsUrl: string): ServiceAdapter {
 		delete: (params) =>
 			callMethod("delete", params, (parsed) =>
 				validateDeleteResponse(parsed),
+			),
+		resources: () =>
+			callMethod("resources", {}, (parsed) =>
+				validateResourcesResponse(parsed),
 			),
 		onEvent(listener) {
 			eventListener = listener;
@@ -331,4 +338,10 @@ export async function forwardDelete(
 	params: DeleteRequest,
 ): Promise<DeleteResponse> {
 	return forwardTo(serviceId, "delete", (adapter) => adapter.delete(params));
+}
+
+export async function forwardResources(
+	serviceId: string,
+): Promise<ResourcesResponse> {
+	return forwardTo(serviceId, "resources", (adapter) => adapter.resources());
 }

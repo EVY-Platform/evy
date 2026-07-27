@@ -38,6 +38,9 @@ function normalizeAst(expression: ConditionExpression | null): unknown {
 			children: expression.children.map(normalizeAst),
 		};
 	}
+	if (expression.type === "boolean") {
+		return { kind: "boolean", value: expression.value };
+	}
 	return {
 		kind: "leaf",
 		left: expression.left,

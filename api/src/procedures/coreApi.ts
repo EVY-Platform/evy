@@ -1,6 +1,6 @@
 import type { ApiRequest, SyncResponse } from "evy-types";
 import { EVY_CORE_SERVICE } from "evy-types/coreResources";
-import { PROCEDURES, proceduresForService } from "evy-types/procedures";
+import { proceduresForService } from "evy-types/procedures";
 import {
 	validatePlaceSearchRequest,
 	validatePlaceSearchResponse,
@@ -9,7 +9,6 @@ import {
 } from "evy-types/validators";
 import type { EvyDb } from "../database/db";
 import * as placeSearchProcedure from "./placeSearch";
-import { rateLimiter } from "./rateLimit";
 import * as syncProcedure from "./sync";
 
 /**
@@ -39,8 +38,8 @@ const coreProcedures: Record<string, CoreProcedure> = {
 /**
  * The registry decides what exists; this file decides what it does. If the two
  * disagree a procedure is either declared and unreachable or reachable and
- * undeclared - the second means it skipped rate limiting, so fail at load
- * rather than serve it.
+ * undeclared - the second means it bypassed the registry contract entirely, so
+ * fail at load rather than serve it.
  */
 export function assertHandlersMatchRegistry(
 	declaredNames: readonly string[],
@@ -73,21 +72,11 @@ assertHandlersMatchRegistry(
 /** Top-level `sync` JSON-RPC method. */
 export const syncMethod = runSync;
 
-export async function coreApi(
-	params: ApiRequest,
-	db: EvyDb,
-	callerId = "anonymous",
-): Promise<unknown> {
+export async function coreApi(params: ApiRequest, db: EvyDb): Promise<unknown> {
 	const procedure = coreProcedures[params.method];
 	if (!procedure) {
 		throw new Error(`Unknown evy API method: ${params.method}`);
 	}
-
-	rateLimiter.consume(
-		callerId,
-		params.method,
-		PROCEDURES[params.method].perMinute,
-	);
 
 	return procedure(params.data, db);
 }

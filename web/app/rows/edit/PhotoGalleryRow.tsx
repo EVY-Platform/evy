@@ -1,4 +1,3 @@
-import { MARKETPLACE_RESOURCE } from "evy-types/marketplaceResources";
 import type { RowConfig } from "../../types/row";
 import { defaultRowActions, defineRow } from "../defineRow";
 import CarouselIndicator from "../design-system/CarouselIndicator";
@@ -8,7 +7,7 @@ export default defineRow("PhotoGalleryRow", {
 	config: {
 		type: "PhotoGallery",
 		actions: defaultRowActions({ tap: { fn: "expand_photo" } }),
-		source: `{${MARKETPLACE_RESOURCE.ITEMS}.photo_ids}`,
+		source: "{resourceId.photo_ids}",
 		visible: "true",
 		title: "Photo gallery row title",
 	} satisfies RowConfig,

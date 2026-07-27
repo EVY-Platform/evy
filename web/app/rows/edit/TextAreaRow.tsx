@@ -1,4 +1,3 @@
-import { MARKETPLACE_RESOURCE } from "evy-types/marketplaceResources";
 import type { RowConfig } from "../../types/row";
 import { defineRow } from "../defineRow";
 import { RowLayout } from "../design-system/RowLayout";
@@ -12,7 +11,7 @@ export default defineRow("TextAreaRow", {
 		visible: "true",
 		title: "Text area row title",
 		placeholder: "placeholder",
-		destination: `{${MARKETPLACE_RESOURCE.ITEMS}.description}`,
+		destination: "{resourceId.description}",
 	} satisfies RowConfig,
 	render: (row) => (
 		<RowLayout title={row.config.title}>

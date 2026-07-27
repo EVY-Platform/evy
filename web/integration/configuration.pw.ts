@@ -1,9 +1,9 @@
 import { expect, test } from "@playwright/test";
 import type { UI_RowActions } from "evy-types";
 import {
-	MARKETPLACE_RESOURCE,
-	MARKETPLACE_SERVICE,
-} from "evy-types/marketplaceResources";
+	TEST_RESOURCE_ID,
+	TEST_SERVICE_ID,
+} from "../testFixtures/resourceCatalog";
 import { initFullFlows, openAppWithTestFlows, tapAction } from "./flowFixtures";
 import {
 	getConfigPanel,
@@ -15,8 +15,8 @@ import {
 
 const TEST_SERVICE_RESOURCES = [
 	{
-		id: MARKETPLACE_RESOURCE.ITEMS,
-		fkServiceId: MARKETPLACE_SERVICE,
+		id: TEST_RESOURCE_ID.RECORDS,
+		serviceId: TEST_SERVICE_ID,
 		name: "item",
 	},
 ];
@@ -203,10 +203,10 @@ test.describe("Row configuration", () => {
 		await expect(targetSelect).toBeVisible();
 		await expect(targetSelect).toHaveAttribute("data-value", "");
 
-		await popoverSelect(page, targetSelect, "Marketplace / Item");
+		await popoverSelect(page, targetSelect, "Test Service / Item");
 		await expect(targetSelect).toHaveAttribute(
 			"data-value",
-			`${MARKETPLACE_SERVICE}/${MARKETPLACE_RESOURCE.ITEMS}`,
+			`${TEST_SERVICE_ID}/${TEST_RESOURCE_ID.RECORDS}`,
 		);
 
 		await popoverSelect(page, targetSelect, "None");
@@ -225,7 +225,7 @@ test.describe("Row configuration", () => {
 						type: "Button",
 						title: "",
 						label: "Test Button",
-						actions: tapAction("{close()}"),
+						actions: tapAction({ fn: "close" }),
 					},
 				],
 			},
@@ -271,7 +271,7 @@ test.describe("Row configuration", () => {
 						type: "Button",
 						title: "",
 						label: "Test Button",
-						actions: tapAction("{close()}"),
+						actions: tapAction({ fn: "close" }),
 					},
 				],
 			},
@@ -321,7 +321,7 @@ test.describe("Row configuration", () => {
 						type: "Button",
 						title: "",
 						label: "Nav Button",
-						actions: tapAction("{close()}"),
+						actions: tapAction({ fn: "close" }),
 					},
 				],
 			},
@@ -371,9 +371,9 @@ test.describe("Row configuration", () => {
 									type: "Input",
 									source: "",
 									title: "Name",
-									value: `{${MARKETPLACE_RESOURCE.ITEMS}.name}`,
+									value: `{${TEST_RESOURCE_ID.RECORDS}.name}`,
 									placeholder: "Enter name",
-									destination: `{${MARKETPLACE_RESOURCE.ITEMS}.name}`,
+									destination: `{${TEST_RESOURCE_ID.RECORDS}.name}`,
 								},
 								{
 									id: "submit_button",
@@ -386,7 +386,7 @@ test.describe("Row configuration", () => {
 											{
 												condition: "",
 												false: "",
-												true: "{close()}",
+												true: { fn: "close" },
 											},
 										],
 									},
@@ -437,7 +437,7 @@ test.describe("Row configuration", () => {
 
 		await expect(committedLeft).toHaveAttribute(
 			"data-value",
-			`${MARKETPLACE_RESOURCE.ITEMS}.name`,
+			`${TEST_RESOURCE_ID.RECORDS}.name`,
 		);
 		await expect(committedOp).toHaveAttribute("data-value", "!=");
 		await expect(committedRight).toHaveAttribute(
@@ -500,7 +500,7 @@ test.describe("Row configuration", () => {
 						type: "Button",
 						title: "",
 						label: "Check",
-						actions: tapAction("{close()}"),
+						actions: tapAction({ fn: "close" }),
 					},
 				],
 			},
@@ -551,7 +551,7 @@ test.describe("Row configuration", () => {
 						type: "Button",
 						title: "",
 						label: "Validate",
-						actions: tapAction("{close()}"),
+						actions: tapAction({ fn: "close" }),
 					},
 				],
 			},
@@ -612,7 +612,7 @@ test.describe("Row configuration", () => {
 						type: "Button",
 						title: "",
 						label: "Send",
-						actions: tapAction("{close()}"),
+						actions: tapAction({ fn: "close" }),
 					},
 				],
 			},
@@ -663,7 +663,7 @@ test.describe("Row configuration", () => {
 						type: "Button",
 						title: "",
 						label: "Cancel Test",
-						actions: tapAction("{close()}"),
+						actions: tapAction({ fn: "close" }),
 					},
 				],
 			},
@@ -707,11 +707,20 @@ test.describe("Row configuration", () => {
 						label: "Multi Action",
 						actions: {
 							tap: [
-								{ condition: "", false: "", true: "{close()}" },
 								{
 									condition: "",
 									false: "",
-									true: `{create(${MARKETPLACE_SERVICE},${MARKETPLACE_RESOURCE.ITEMS},submit)}`,
+									true: { fn: "close" },
+								},
+								{
+									condition: "",
+									false: "",
+									true: {
+										fn: "create",
+										service: TEST_SERVICE_ID,
+										resource: TEST_RESOURCE_ID.RECORDS,
+										mode: "submit",
+									},
 								},
 							],
 						},
@@ -749,9 +758,12 @@ test.describe("Row configuration", () => {
 							type: "Button",
 							title: "",
 							label: "Inline Create",
-							actions: tapAction(
-								`{create(${MARKETPLACE_SERVICE},${MARKETPLACE_RESOURCE.ITEMS},submit)}`,
-							),
+							actions: tapAction({
+								fn: "create",
+								service: TEST_SERVICE_ID,
+								resource: TEST_RESOURCE_ID.RECORDS,
+								mode: "submit",
+							}),
 						},
 					],
 				},
@@ -774,9 +786,12 @@ test.describe("Row configuration", () => {
 		await expect(popup).not.toBeVisible();
 
 		await expect(
-			configPanel.getByText("create(Marketplace, item, pickup_address)", {
-				exact: true,
-			}),
+			configPanel.getByText(
+				"create(Test Service, item, pickup_address)",
+				{
+					exact: true,
+				},
+			),
 		).toBeVisible();
 	});
 
@@ -793,9 +808,12 @@ test.describe("Row configuration", () => {
 							type: "Button",
 							title: "",
 							label: "Inline Create",
-							actions: tapAction(
-								`{create(${MARKETPLACE_SERVICE},${MARKETPLACE_RESOURCE.ITEMS},submit)}`,
-							),
+							actions: tapAction({
+								fn: "create",
+								service: TEST_SERVICE_ID,
+								resource: TEST_RESOURCE_ID.RECORDS,
+								mode: "submit",
+							}),
 						},
 					],
 				},
@@ -817,7 +835,7 @@ test.describe("Row configuration", () => {
 		await expect(popup).not.toBeVisible();
 
 		await expect(
-			configPanel.getByText("create(Marketplace, item, submit)", {
+			configPanel.getByText("create(Test Service, item, submit)", {
 				exact: true,
 			}),
 		).toBeVisible();
@@ -837,15 +855,18 @@ test.describe("Row configuration", () => {
 							title: "Title",
 							value: "",
 							placeholder: "",
-							destination: `{${MARKETPLACE_RESOURCE.ITEMS}.title}`,
+							destination: `{${TEST_RESOURCE_ID.RECORDS}.title}`,
 						},
 						{
 							type: "Button",
 							title: "",
 							label: "Submit Create",
-							actions: tapAction(
-								`{create(${MARKETPLACE_SERVICE},${MARKETPLACE_RESOURCE.ITEMS})}`,
-							),
+							actions: tapAction({
+								fn: "create",
+								service: TEST_SERVICE_ID,
+								resource: TEST_RESOURCE_ID.RECORDS,
+								mode: "submit",
+							}),
 						},
 					],
 				},
@@ -853,8 +874,8 @@ test.describe("Row configuration", () => {
 			TEST_SERVICE_RESOURCES,
 			[],
 			{
-				service: MARKETPLACE_SERVICE,
-				resource: MARKETPLACE_RESOURCE.ITEMS,
+				service: TEST_SERVICE_ID,
+				resource: TEST_RESOURCE_ID.RECORDS,
 			},
 		);
 
@@ -873,7 +894,7 @@ test.describe("Row configuration", () => {
 		await expect(popup).not.toBeVisible();
 
 		await expect(
-			configPanel.getByText("create(Marketplace, item, submit)", {
+			configPanel.getByText("create(Test Service, item, submit)", {
 				exact: true,
 			}),
 		).toBeVisible();
@@ -910,8 +931,12 @@ test.describe("Row configuration", () => {
 									tap: [
 										{
 											condition: "{name == true}",
-											true: "{navigate(flow_x,page_x)}",
-											false: "{close()}",
+											true: {
+												fn: "navigate",
+												flowId: "flow_x",
+												pageId: "page_x",
+											},
+											false: { fn: "close" },
 										},
 									],
 								},
@@ -988,9 +1013,9 @@ test.describe("Row configuration", () => {
 									actions: {
 										tap: [
 											{
-												condition: `{count(${MARKETPLACE_RESOURCE.ITEMS}.pickup_timeslots) > 0 || count(${MARKETPLACE_RESOURCE.ITEMS}.delivery_timeslots) > 0}`,
+												condition: `{count(${TEST_RESOURCE_ID.RECORDS}.pickup_timeslots) > 0 || count(${TEST_RESOURCE_ID.RECORDS}.delivery_timeslots) > 0}`,
 												false: "",
-												true: "{close()}",
+												true: { fn: "close" },
 											},
 										],
 									},
@@ -1040,9 +1065,9 @@ test.describe("Row configuration", () => {
 									actions: {
 										tap: [
 											{
-												condition: `{count(${MARKETPLACE_RESOURCE.ITEMS}.pickup_timeslots) > 0 && (count(${MARKETPLACE_RESOURCE.ITEMS}.delivery_timeslots) > 0 || count(${MARKETPLACE_RESOURCE.ITEMS}.shipping_destination_areas) > 0)}`,
+												condition: `{count(${TEST_RESOURCE_ID.RECORDS}.pickup_timeslots) > 0 && (count(${TEST_RESOURCE_ID.RECORDS}.delivery_timeslots) > 0 || count(${TEST_RESOURCE_ID.RECORDS}.shipping_destination_areas) > 0)}`,
 												false: "",
-												true: "{close()}",
+												true: { fn: "close" },
 											},
 										],
 									},
@@ -1103,7 +1128,7 @@ test.describe("Row configuration", () => {
 									condition:
 										"{name == true || email == true}",
 									false: "",
-									true: "{close()}",
+									true: { fn: "close" },
 								},
 							],
 						},
@@ -1176,7 +1201,7 @@ test.describe("Row configuration", () => {
 									condition:
 										"{name == true || email == true}",
 									false: "",
-									true: "{close()}",
+									true: { fn: "close" },
 								},
 							],
 						},
@@ -1306,7 +1331,7 @@ test.describe("Row configuration", () => {
 						type: "Button",
 						title: "",
 						label: "Clear Branch",
-						actions: tapAction("{close()}"),
+						actions: tapAction({ fn: "close" }),
 					},
 				],
 			},
@@ -1369,7 +1394,7 @@ test.describe("Row configuration", () => {
 						type: "Button",
 						title: "",
 						label: "Cancel Clear",
-						actions: tapAction("{close()}"),
+						actions: tapAction({ fn: "close" }),
 					},
 				],
 			},
@@ -1551,7 +1576,7 @@ test.describe("Row configuration", () => {
 						type: "Button",
 						title: "",
 						label: "Trigger Button",
-						actions: tapAction("{close()}"),
+						actions: tapAction({ fn: "close" }),
 					},
 					{
 						type: "SelectPhoto",
@@ -1564,14 +1589,14 @@ test.describe("Row configuration", () => {
 								{
 									condition: "",
 									false: "",
-									true: "{select_photo()}",
+									true: { fn: "select_photo" },
 								},
 							],
 							delete: [
 								{
 									condition: "",
 									false: "",
-									true: "{delete_photo()}",
+									true: { fn: "delete_photo" },
 								},
 							],
 						},
@@ -1610,7 +1635,7 @@ test.describe("Row configuration", () => {
 						type: "Button",
 						title: "",
 						label: "Warn Button",
-						actions: tapAction("{close()}"),
+						actions: tapAction({ fn: "close" }),
 					},
 				],
 			},
@@ -1690,7 +1715,7 @@ test.describe("Row configuration", () => {
 						type: "Button",
 						title: "",
 						label: "Slide Button",
-						actions: tapAction("{close()}"),
+						actions: tapAction({ fn: "close" }),
 					},
 				],
 			},

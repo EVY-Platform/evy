@@ -41,11 +41,10 @@ sequenceDiagram
 
 ### Procedures
 
-`api{service, method, data}` calls a procedure rather than reading a resource. Which procedures exist, who owns them, what they accept and return, and how often they may be called are all declared in `types/schema/resources/procedures.json` and generated into `evy-types/procedures`.
+`api{service, method, data}` calls a procedure rather than reading a resource. Which procedures exist, who owns them, and what they accept and return are all declared in `types/schema/resources/procedures.json` and generated into `evy-types/procedures`.
 
-- `procedures/coreApi.ts` dispatches the procedures the gateway owns, validating request and response against the declared schemas. It asserts at load that its handler set matches the registry, so a procedure cannot become reachable without being declared — and therefore cannot skip its rate limit.
+- `procedures/coreApi.ts` dispatches the procedures the gateway owns, validating request and response against the declared schemas. It asserts at load that its handler set matches the registry, so a procedure cannot become reachable without being declared.
 - `procedures/rpc.ts` forwards a procedure declared for another service to that service's `api` method. A method the registry does not pair with the target service is rejected by name.
-- `procedures/rateLimit.ts` enforces `rateLimit.perMinute` per socket, in fixed one-minute windows. `place_search` is capped because each result costs two Google Places lookups.
 
 See [docs/evy/data.md](../docs/evy/data.md#procedures) for the manifest fields and how to add one.
 
@@ -67,9 +66,15 @@ That is what makes a cursor of any age safe to resume from: every delete a clien
 
 `sync` is a first-class JSON-RPC method, not an `api{method}` procedure. Clients send an optional opaque `cursor` issued by the previous response; omitting it requests a full snapshot. The deprecated `lastSyncTime` request field and the legacy `api{method:"sync"}` entry point are no longer accepted.
 
+When discovery succeeds, sync includes the aggregated service/resource catalog as a singleton row under the core `resources` key. If discovery is incomplete, sync keeps the previous cursor, reports the service error, and omits the partial catalog so clients retain their last complete catalog.
+
+### Resource discovery
+
+`resources` is a first-class JSON-RPC method that returns the core manifest plus each registered external service manifest. Optional services that fail discovery are reported in `errors` without hiding healthy catalogs. Required services must implement the `resources` contract for API readiness.
+
 ### Flow submissions
 
-A flow that contains a `create(...,submit)` action must declare `submits` on its `DATA_EVY_Flow` record. The web builder validates the full flat graph before saving; iOS uses the declaration for draft scope. A one-off data migration backfills missing declarations for flows with exactly one submit target.
+A flow that contains a `create(...,submit)` action must declare `submits` on its `DATA_EVY_Flow` record. The web builder validates the full flat graph before saving; iOS uses the declaration for draft scope.
 
 ### Notifications
 
@@ -153,24 +158,6 @@ bun run health:seeded
 ```
 
 Env vars must be exported in the shell or provided via Docker — they are not loaded from `.env` automatically.
-
-## Available Scripts
-
-| Script                  | Description                              |
-| ----------------------- | ---------------------------------------- |
-| `bun run dev`           | Start server with hot reload             |
-| `bun run build`         | Build for production                     |
-| `bun run start`         | Run migrations and start server          |
-| `bun run health`        | Run the readiness check                  |
-| `bun run health:seeded` | Run readiness check and require seed data |
-| `bun run test:unit`     | Run API unit tests                       |
-| `bun run test:e2e`      | Run API end-to-end tests                 |
-| `bun run lint`          | Run Biome linter                         |
-| `bun run format`        | Format files with Biome                  |
-| `bun run db:generate`   | Generate migration from schema changes   |
-| `bun run db:migrate`    | Apply pending migrations                 |
-| `bun run db:push`       | Push schema directly (dev only)          |
-| `bun run db:studio`     | Open Drizzle Studio UI                   |
 
 ## File Upload
 

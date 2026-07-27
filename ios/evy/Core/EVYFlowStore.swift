@@ -173,63 +173,6 @@ enum EVYFlowStore {
     return [declared.resource]
   }
 
-  /// Reports a flow whose actions disagree with its declaration, or which
-  /// submits without declaring what it submits.
-  static func validateSubmissionResources(
-    flowId: String,
-    from store: EVYDataStore = EVY.publicStore
-  ) {
-    let scraped = Array(createKeys(flowId: flowId, from: store)).sorted()
-
-    guard let declared = flow(id: flowId, from: store)?.submits else {
-      guard scraped.isEmpty else {
-        if scraped.count > 1 {
-          return postSubmissionError(
-            "flow \(flowId) submits multiple resources (\(scraped.joined(separator: ", "))) "
-              + "and declares no submits to disambiguate")
-        }
-        return postSubmissionError(
-          "flow \(flowId) has create(...,submit) actions targeting \(scraped[0]) but declares no submits"
-        )
-      }
-      return
-    }
-
-    let mismatched = scraped.filter { $0 != declared.resource }
-    guard !mismatched.isEmpty else { return }
-    postSubmissionError(
-      "flow \(flowId) declares submits \(declared.resource) but its actions submit "
-        + mismatched.joined(separator: ", "))
-  }
-
-  private static func postSubmissionError(_ context: String) {
-    NotificationCenter.default.post(
-      name: .evyErrorOccurred,
-      object: EVYError.invalidData(context: context)
-    )
-  }
-
-  static func createKeys(
-    flowId: String,
-    from store: EVYDataStore = EVY.publicStore
-  ) -> Set<String> {
-    guard let flow = flow(id: flowId, from: store) else { return [] }
-    var keys = Set<String>()
-    for pid in flow.pageIds {
-      forEachStoredRow(inPageId: pid, from: store) { storedRow in
-        guard let uiRow = storedRow.uiRow() else { return }
-        for action in EVYRowActionTrigger.allActionLists(in: uiRow.actions) {
-          for branch in [action.`true`, action.`false`] {
-            if case .invocation(.create(_, let resource, .submit, _)) = branch {
-              keys.insert(resource)
-            }
-          }
-        }
-      }
-    }
-    return keys
-  }
-
   static func draftScopeId(
     for route: Route,
     from store: EVYDataStore = EVY.publicStore

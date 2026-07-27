@@ -347,6 +347,7 @@ export function App() {
 		flowGraph,
 		serviceResources,
 		resourceAttributeMetadata,
+		serviceNamesById,
 		loading,
 		error,
 	} = useFlows();
@@ -363,6 +364,20 @@ export function App() {
 	const initialResourceAttributeMetadata = testFlows
 		? (testResourceAttributeMetadata ?? [])
 		: resourceAttributeMetadata;
+	const initialServiceNamesById = testFlows
+		? new Map(
+				[
+					...new Set(
+						(testServiceResources ?? []).map(
+							(resource) => resource.serviceId,
+						),
+					),
+				].map((serviceId) => [
+					serviceId,
+					window.__TEST_SERVICE_NAMES__?.[serviceId] ?? serviceId,
+				]),
+			)
+		: serviceNamesById;
 
 	const [minTimeElapsed, setMinTimeElapsed] = useState(Boolean(testFlows));
 	const [exiting, setExiting] = useState(false);
@@ -414,6 +429,7 @@ export function App() {
 			}
 			serviceResources={initialServiceResources}
 			resourceAttributeMetadata={initialResourceAttributeMetadata}
+			serviceNamesById={initialServiceNamesById}
 			syncWithApi={!testFlows}
 		>
 			<AppShell>

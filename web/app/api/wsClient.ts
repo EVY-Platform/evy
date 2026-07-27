@@ -2,6 +2,7 @@ import type {
 	DATA_EVY_Flow,
 	DATA_EVY_Page,
 	DATA_EVY_Row,
+	ResourcesResponse,
 	SyncResponse,
 } from "evy-types";
 import { EVY_CORE_RESOURCE, EVY_CORE_SERVICE } from "evy-types/coreResources";
@@ -222,6 +223,24 @@ class WSClient {
 		}
 
 		this.rememberVersionsFromSync(response);
+		return response;
+	}
+
+	async resources(): Promise<ResourcesResponse> {
+		await this.connect();
+		if (!this.client) throw new Error("WebSocket client not initialized");
+
+		const rawUnknown: unknown = await this.client.call("resources", {});
+
+		const response = rawUnknown as ResourcesResponse;
+		if (
+			!response ||
+			typeof response !== "object" ||
+			!Array.isArray(response.services)
+		) {
+			throw new Error("Invalid resources response shape");
+		}
+
 		return response;
 	}
 

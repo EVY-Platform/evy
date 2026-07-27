@@ -10,7 +10,6 @@ const VALID = {
 		place_search: {
 			service: "svc-1",
 			response: "rpc/placeSearch.response.schema.json",
-			rateLimit: { perMinute: 30 },
 		},
 	},
 };
@@ -27,20 +26,15 @@ describe("procedures manifest validation", () => {
 	});
 
 	it("requires each procedure to name its owning service", () => {
-		const manifest = structuredClone(VALID) as Record<string, never>;
-		// biome-ignore lint/performance/noDelete: exercising a missing field
-		delete (manifest.procedures as Record<string, Record<string, unknown>>)
-			.place_search.service;
+		const manifest = {
+			procedures: {
+				place_search: {
+					response: "rpc/placeSearch.response.schema.json",
+				},
+			},
+		};
 		expect(() => validateSchema(manifest)).toThrow(
 			"procedures.place_search.service must be a non-empty string",
-		);
-	});
-
-	it("rejects a rate limit that is not a positive integer", () => {
-		const manifest = structuredClone(VALID);
-		manifest.procedures.place_search.rateLimit.perMinute = 0;
-		expect(() => validateSchema(manifest)).toThrow(
-			"rateLimit.perMinute must be a positive integer",
 		);
 	});
 });
@@ -64,7 +58,7 @@ describe("result attributes", () => {
 });
 
 describe("generated registry", () => {
-	it("emits metadata and a null limit for unlimited procedures", async () => {
+	it("emits metadata for each procedure", async () => {
 		const output = await generateTypeScript(
 			{
 				procedures: {
@@ -83,8 +77,6 @@ describe("generated registry", () => {
 
 		expect(output).toContain('"sync"');
 		expect(output).toContain('"place_search"');
-		expect(output).toContain("perMinute: null");
-		expect(output).toContain("perMinute: 30");
 		expect(output).toContain('resultAttributes: ["id"]');
 	});
 });

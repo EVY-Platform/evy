@@ -21,7 +21,6 @@ import type {
 	DATA_EVY_Row,
 	DATA_EVY_Service,
 	DATA_EVY_ServiceProvider,
-	DATA_EVY_ServiceResource,
 } from "./generated/ts/data/data";
 import type {
 	FileUploadChunkMetadata,
@@ -36,6 +35,7 @@ import type { GetRequest } from "./generated/ts/rpc/get.request";
 import type { GetResponse } from "./generated/ts/rpc/get.response";
 import type { PlaceSearchRequest } from "./generated/ts/rpc/placeSearch.request";
 import type { PlaceSearchResponse } from "./generated/ts/rpc/placeSearch.response";
+import type { ResourcesResponse } from "./generated/ts/rpc/resources.response";
 import type { SyncRequest } from "./generated/ts/rpc/sync.request";
 import type { SyncResponse } from "./generated/ts/rpc/sync.response";
 import type { UpdateRequest } from "./generated/ts/rpc/update.request";
@@ -45,7 +45,7 @@ import {
 	SDUI_DEFINITIONS,
 	SDUI_ROW_TRIGGERS,
 } from "./generated/ts/sdui/definitions.generated";
-import type { UI_Flow, UI_Row, UI_RowActions } from "./generated/ts/sdui/evy";
+import type { UI_Flow, UI_Row } from "./generated/ts/sdui/evy";
 import type { DATA_MARKETPLACE_Item } from "./generated/ts/services/marketplace/item";
 
 import commonJsonRaw from "./schema/common/json.schema.json" with {
@@ -88,6 +88,9 @@ import placeSearchRequestRaw from "./schema/rpc/placeSearch.request.schema.json"
 	type: "json",
 };
 import placeSearchResponseRaw from "./schema/rpc/placeSearch.response.schema.json" with {
+	type: "json",
+};
+import resourcesResponseRaw from "./schema/rpc/resources.response.schema.json" with {
 	type: "json",
 };
 import syncRequestRaw from "./schema/rpc/sync.request.schema.json" with {
@@ -181,6 +184,10 @@ const RAW_SCHEMAS: Record<string, Record<string, unknown>> = {
 	>,
 	"rpc/sync.request.schema.json": syncRequestRaw as Record<string, unknown>,
 	"rpc/sync.response.schema.json": syncResponseRaw as Record<string, unknown>,
+	"rpc/resources.response.schema.json": resourcesResponseRaw as Record<
+		string,
+		unknown
+	>,
 	"rpc/get.response.schema.json": getResponseRaw as Record<string, unknown>,
 };
 
@@ -323,6 +330,7 @@ const ENTITY_SCHEMA_FILES = [
 	"rpc/update.response.schema.json",
 	"rpc/delete.response.schema.json",
 	"rpc/sync.response.schema.json",
+	"rpc/resources.response.schema.json",
 	"rpc/placeSearch.response.schema.json",
 ];
 
@@ -432,11 +440,6 @@ const getValidateDataEvyServiceProvider =
 		getEntityAjv,
 		`${fileId("data/data.schema.json")}#/$defs/DATA_EVY_ServiceProvider`,
 	);
-const getValidateDataEvyServiceResource =
-	lazyValidator<DATA_EVY_ServiceResource>(
-		getEntityAjv,
-		`${fileId("data/data.schema.json")}#/$defs/DATA_EVY_ServiceResource`,
-	);
 const getValidateDataEvyFile = lazyValidator<DATA_EVY_File>(
 	getEntityAjv,
 	`${fileId("data/data.schema.json")}#/$defs/DATA_EVY_File`,
@@ -464,6 +467,10 @@ const getValidateSyncRequest = lazyValidator<SyncRequest>(
 const getValidateSyncResponse = lazyValidator<SyncResponse>(
 	getEntityAjv,
 	fileId("rpc/sync.response.schema.json"),
+);
+const getValidateResourcesResponse = lazyValidator<ResourcesResponse>(
+	getEntityAjv,
+	fileId("rpc/resources.response.schema.json"),
 );
 const getValidatePlaceSearchRequest = lazyValidator<PlaceSearchRequest>(
 	getRequestAjv,
@@ -706,11 +713,6 @@ export const validateDataEvyServiceProvider =
 		"ServiceProvider",
 		getValidateDataEvyServiceProvider,
 	);
-export const validateDataEvyServiceResource =
-	makeValidator<DATA_EVY_ServiceResource>(
-		"ServiceResource",
-		getValidateDataEvyServiceResource,
-	);
 export const validateDataEvyFile = makeValidator<DATA_EVY_File>(
 	"File",
 	getValidateDataEvyFile,
@@ -738,6 +740,10 @@ export const validateSyncRequest = makeValidator<SyncRequest>(
 export const validateSyncResponse = makeValidator<SyncResponse>(
 	"SyncResponse",
 	getValidateSyncResponse,
+);
+export const validateResourcesResponse = makeValidator<ResourcesResponse>(
+	"ResourcesResponse",
+	getValidateResourcesResponse,
 );
 export const validatePlaceSearchRequest = makeValidator<PlaceSearchRequest>(
 	"PlaceSearchRequest",

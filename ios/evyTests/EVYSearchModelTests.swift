@@ -79,7 +79,7 @@ final class EVYSearchModelTests: XCTestCase {
   }
 
   func testLoadLocalResultsRefreshWhenMessageResourceChanges() throws {
-    let resource = MarketplaceTestFixture.messagesResourceId
+    let resource = EVYCoreResource.messages.rawValue
     let pendingId = UUID().uuidString
     try? EVY.publicStore.deleteAll(namespace: EVYNamespace.evy, resource: resource)
     try? EVY.privateStore.deleteAll(namespace: EVYNamespace.evy, resource: resource)

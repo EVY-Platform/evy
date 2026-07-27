@@ -303,10 +303,9 @@ function serializeExpressionMap(map: UI_ActionExpressionMap): string {
 }
 
 /**
- * Round-trips an invocation back to its legacy string. Used to prove the
- * conversion is lossless over the fixture corpus; not a runtime path.
+ * Round-trips an invocation back to its editor string for the web action editor.
  */
-export function serializeInvocationToLegacyString(
+export function serializeInvocationToEditorString(
 	invocation: UI_ActionInvocation,
 ): string {
 	const call = (args: string[]) => `{${invocation.fn}(${args.join(",")})}`;

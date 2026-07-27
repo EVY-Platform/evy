@@ -15,7 +15,7 @@ import {
 	ensureGroup,
 	normalizeExpression,
 } from "./actionExpressionEditorHelpers";
-import { OPERATOR_OPTIONS } from "./actionPopupConstants";
+import { BOOLEAN_OPTIONS, OPERATOR_OPTIONS } from "./actionPopupConstants";
 import { LogicalSegmentControl } from "./LogicalSegmentControl";
 import { OperandEditor } from "./OperandEditor";
 
@@ -86,6 +86,18 @@ export function ConditionGroupEditor({
 		[draft, group, onChange],
 	);
 
+	const handleBooleanChange = useCallback(
+		(rowIndex: number, value: boolean) => {
+			const child = group.children[rowIndex];
+			if (child.type !== "boolean") return;
+			const newChildren = group.children.map((c, i) =>
+				i === rowIndex ? { ...c, value } : c,
+			);
+			onChange(normalizeExpression({ ...group, children: newChildren }));
+		},
+		[group, onChange],
+	);
+
 	const handleRemoveCondition = useCallback(
 		(rowIndex: number) => {
 			const newChildren = group.children.filter((_, i) => i !== rowIndex);
@@ -129,7 +141,7 @@ export function ConditionGroupEditor({
 		[group, onChange],
 	);
 
-	const leafRows: (ConditionLeaf | ConditionGroup)[] = [...group.children];
+	const leafRows: ConditionExpression[] = [...group.children];
 
 	return (
 		<div
@@ -161,6 +173,48 @@ export function ConditionGroupEditor({
 								}
 								idPrefix={`${idPrefix}-${rowIndex}`}
 							/>
+						</span>
+					);
+				}
+
+				if (child.type === "boolean") {
+					return (
+						<span key={rowId}>
+							{rowIndex > 0 && (
+								<LogicalSegmentControl
+									value={group.logicalOperator}
+									onChange={handleLogicalToggle}
+									testId={`${idPrefix}-logical-toggle`}
+								/>
+							)}
+							<div className="evy-condition-row evy-condition-row--boolean">
+								<PopoverSelect
+									ariaLabel={`${rowId}-boolean`}
+									options={BOOLEAN_OPTIONS}
+									value={child.value ? "true" : "false"}
+									onChange={(v) =>
+										handleBooleanChange(
+											rowIndex,
+											v === "true",
+										)
+									}
+								/>
+
+								<button
+									type="button"
+									className="evy-bin-button evy-condition-remove evy-bg-transparent evy-border-none evy-cursor-pointer"
+									onClick={() =>
+										handleRemoveCondition(rowIndex)
+									}
+									aria-label={`Remove condition ${rowIndex + 1}`}
+								>
+									<Trash2
+										className="evy-h-4 evy-w-4"
+										strokeWidth={LUCIDE_STROKE_WIDTH}
+										aria-hidden
+									/>
+								</button>
+							</div>
 						</span>
 					);
 				}

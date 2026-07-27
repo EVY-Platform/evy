@@ -32,9 +32,13 @@ Uses the root `.env` (copy from [`.env.example`](../../.env.example)). See the [
 
 ## Scripts
 
-Same scripts as [`api`](../../api/README.md#available-scripts): `bun run dev`, `bun run db:migrate`, `bun run health`, etc.
+Same scripts as the root [`api`](../../api/README.md): `bun run dev`, `bun run db:migrate`, `bun run health`, etc.
 
-## Docker
+## Resource manifest
+
+Marketplace service and resource IDs are runtime values owned in `src/resources.ts`. External consumers discover them through the API gateway's `resources` JSON-RPC method (and the catalog included on successful `sync`); they must not import this module.
+
+The only non-service consumer is `scripts/seed.ts`, which reads the descriptor at bootstrap before the marketplace RPC server starts.
 
 From repo root:
 

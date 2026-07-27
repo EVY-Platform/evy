@@ -9,7 +9,7 @@ import { Trash2 } from "lucide-react";
 import { useCallback, useMemo, useState } from "react";
 import { LUCIDE_STROKE_WIDTH } from "../icons/iconSyntax";
 import { TRIGGER_LABELS } from "../rows/rowTriggers";
-import type { ServiceResource } from "../types/resources";
+import { useFlowsContext } from "../state/contexts/FlowsContext";
 import {
 	branchToEditableString,
 	formatBranchDisplay,
@@ -33,7 +33,6 @@ type ActionEditorProps = {
 	flowsById: Record<string, DATA_EVY_Flow>;
 	pagesById: Record<string, DATA_EVY_Page>;
 	rowsById: Record<string, DATA_EVY_Row>;
-	serviceResources: ServiceResource[];
 	defaultSheetRowId?: string;
 	onUpdate: (actions: UI_RowAction[]) => void;
 };
@@ -45,14 +44,20 @@ export function ActionEditor({
 	flowsById,
 	pagesById,
 	rowsById,
-	serviceResources,
 	defaultSheetRowId,
 	onUpdate,
 }: ActionEditorProps) {
+	const { serviceResources, serviceNamesById } = useFlowsContext();
 	const [editingIndex, setEditingIndex] = useState<number | null>(null);
 	const idCandidates = useMemo(
-		() => buildIdCandidates(flowsById, pagesById, serviceResources),
-		[flowsById, pagesById, serviceResources],
+		() =>
+			buildIdCandidates(
+				flowsById,
+				pagesById,
+				serviceResources,
+				serviceNamesById,
+			),
+		[flowsById, pagesById, serviceResources, serviceNamesById],
 	);
 
 	const updateAction = useCallback(
@@ -132,7 +137,6 @@ export function ActionEditor({
 							flowsById={flowsById}
 							pagesById={pagesById}
 							rowsById={rowsById}
-							serviceResources={serviceResources}
 							idCandidates={idCandidates}
 							onEdit={() => setEditingIndex(index)}
 							onRemove={() => removeAction(index)}
@@ -164,7 +168,6 @@ type ActionSummaryCardProps = {
 	flowsById: Record<string, DATA_EVY_Flow>;
 	pagesById: Record<string, DATA_EVY_Page>;
 	rowsById: Record<string, DATA_EVY_Row>;
-	serviceResources: ServiceResource[];
 	idCandidates: IdCandidate[];
 	onEdit: () => void;
 	onRemove: () => void;
@@ -176,11 +179,11 @@ function ActionSummaryCard({
 	flowsById,
 	pagesById,
 	rowsById,
-	serviceResources,
 	idCandidates,
 	onEdit,
 	onRemove,
 }: ActionSummaryCardProps) {
+	const { serviceResources } = useFlowsContext();
 	const conditionExpr = useMemo(
 		() => parseCondition(action.condition),
 		[action.condition],
