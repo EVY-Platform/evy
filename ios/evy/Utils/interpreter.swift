@@ -7,8 +7,6 @@
 
 import Foundation
 
-private let comparisonBlockPattern = "\\{[^{}\"]+\\}"
-private let comparisonBlockRegex = try! Regex(comparisonBlockPattern)
 private let comparisonOperators = [">=", "<=", "==", "!=", ">", "<"]
 private let propsPattern = "\\{(?!\")[^}^\"]*(?!\")\\}"
 /// Args may contain one level of nested calls, e.g. update(..., {archivedAt: now()})
@@ -457,6 +455,11 @@ private func parseText(
   if let (fullMatch, comparison) = parseComparisonFromText(input.value) {
     let comparisonResult = try evaluateBooleanExpression(comparison) { operand in
       let trimmedOperand = operand.trimmingCharacters(in: .whitespacesAndNewlines)
+      // A quoted operand is a string literal, never a data path - the same rule
+      // findFirst operands and if() branches already follow.
+      if trimmedOperand.first == "\"", trimmedOperand.last == "\"", trimmedOperand.count >= 2 {
+        return _stripOptionalSurroundingQuotes(trimmedOperand)
+      }
       let parsedOperand = try parseText(EVYValue(trimmedOperand, nil, nil), editing, scope)
       if parsedOperand.value != trimmedOperand {
         return parsedOperand.value
@@ -656,13 +659,17 @@ private func interpolations(in input: String) -> [(fullMatch: String, inner: Str
   return results
 }
 
+/// Finds the first `{…}` block that is a comparison.
+///
+/// Block boundaries come from the shared scanner rather than a regex, so quotes
+/// and nesting are respected: a quoted operand no longer stops a block being
+/// recognised, and an operator inside quotes or parentheses is not a top-level
+/// operator and so does not make a block a comparison.
 private func parseComparisonFromText(_ input: String) -> (fullMatch: String, content: String)? {
-  for match in input.matches(of: comparisonBlockRegex) {
-    let block = String(match.0)
-    let comparison = String(block.dropFirst().dropLast())
-      .trimmingCharacters(in: .whitespacesAndNewlines)
+  for block in interpolations(in: input) {
+    let comparison = block.inner.trimmingCharacters(in: .whitespacesAndNewlines)
     if firstTopLevelComparison(in: comparison) != nil {
-      return (block, comparison)
+      return (block.fullMatch, comparison)
     }
   }
   return nil

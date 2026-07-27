@@ -146,6 +146,10 @@ function resolvePreviewConditionOperand(operand: string): string {
 		return "0";
 	}
 	const unquoted = stripOptionalSurroundingQuotes(trimmed);
+	// A quoted operand is a string literal, never a path.
+	if (unquoted !== trimmed) {
+		return unquoted;
+	}
 	const mockValue = resolveMockPath(unquoted);
 	if (Array.isArray(mockValue)) {
 		return String(mockValue.length);

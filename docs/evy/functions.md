@@ -85,13 +85,14 @@ Earliest timeslot from a scalar datetime array:
 
 **Operand resolution** (each side of an atomic comparison, first match wins):
 
-1. **Record path** — property on the candidate record, including nested paths (`data.type`)
-2. **Global data path** — `item.id`, resource UUIDs, etc.
-3. **Unquoted literal** — bare words like `pending` / `accepted` (quotes are forbidden inside `{…}` blocks)
+1. **Quoted literal** — `"pending"`; always a string, never resolved as a path
+2. **Record path** — property on the candidate record, including nested paths (`data.type`)
+3. **Global data path** — `item.id`, resource UUIDs, etc.
+4. **Unquoted literal** — bare words like `pending` / `accepted`
 
 **`null`:** `archivedAt == null` / `archivedAt != null` match records where the path is **absent or JSON null**. Only `==` and `!=` are allowed with `null`. `null == null` is true.
 
-**Limitations:** string literals in expressions must be unquoted; grouping parentheses may nest only one level inside the `findFirst(...)` call (same as other functions); use `==` not `=`.
+**Limitations:** grouping parentheses may nest only one level inside the `findFirst(...)` call (same as other functions); use `==` not `=`.
 
 Collection: `cc2e6c74-a53a-4ed1-97a7-14aa9b9a3e3f` = `[{ "id": "c1", "value": "Excellent" }, ...]`
 
@@ -113,12 +114,13 @@ Comparison expressions resolve to `true` or `false` in display text. They are us
 - **Boolean combinators**: `||` (OR), `&&` (AND)
 - **Grouping**: `()` (parentheses)
 
-Both sides of a comparison are resolved as data paths, unquoted literals, numbers, or nested function calls before comparing. Numeric values compare numerically; strings compare lexicographically.
+Both sides of a comparison are resolved as quoted literals, data paths, unquoted literals, numbers, or nested function calls before comparing. Numeric values compare numerically; strings compare lexicographically.
 
-> **Quotes are forbidden inside comparison blocks.** A block containing a `"` is not recognised as a comparison at all: it is never evaluated, the raw text leaks into display, and as a `condition` it is treated as false. Write string literals bare — `{item.title == Amazing}`, not `{item.title == "Amazing"}`. Quotes *are* required elsewhere: in `create`/`update` action data (`status: "pending"`) and in format patterns (`formatDatetime(x, "HH:mm")`).
+> **A quoted operand is always a string literal.** `{item.status == "pending"}` compares against the text `pending` and never looks up a path called `pending` — the same rule `create`/`update` action data and `findFirst` operands already follow. Bare words still work (`{item.title == Amazing}`) and are tried as a data path first, falling back to the literal. Reach for quotes when the literal contains a space or an operator character, which bare words cannot express: `{item.status == "in progress"}`.
 
 ```
 {item.title == Amazing}
+{item.status == "in progress"}
 {count(item.photos) > 0}
 {item.price > 100 && item.price < 500}
 {(item.width == item.height) || item.type == square}

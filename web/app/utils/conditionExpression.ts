@@ -93,6 +93,21 @@ function tokenize(input: string): string[] {
 		let word = "";
 		while (i < input.length) {
 			const ch = input[i];
+			// A quoted run is literal text: spaces and operator characters
+			// inside it belong to the operand, not to the token stream.
+			if (ch === '"') {
+				word += ch;
+				i++;
+				while (i < input.length && input[i] !== '"') {
+					word += input[i];
+					i++;
+				}
+				if (i < input.length) {
+					word += input[i];
+					i++;
+				}
+				continue;
+			}
 			if (ch === " " || ch === "\t" || singleChars.has(ch)) break;
 			// Check if this position starts a multi-char operator
 			if (opStartChars.has(ch)) {

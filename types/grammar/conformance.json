@@ -181,7 +181,7 @@
 			}
 		},
 		{
-			"id": "comparison-quoted-literal-never-matches",
+			"id": "comparison-quoted-literal-matches",
 			"category": "comparison",
 			"platforms": ["ios"],
 			"input": "{status_holder.status == \"pending\"}",
@@ -191,9 +191,66 @@
 				}
 			},
 			"expect": {
-				"value": false
+				"value": true
 			},
-			"notes": "WART: quotes are excluded by the comparison regex, so the block is never evaluated and the condition reads false even though the values are equal. docs/evy/functions.md warns about this."
+			"notes": "A quoted operand is a string literal, never resolved as a data path. Same rule as findFirst operands and if() branches."
+		},
+		{
+			"id": "comparison-quoted-literal-mismatch",
+			"category": "comparison",
+			"platforms": ["ios"],
+			"input": "{status_holder.status == \"accepted\"}",
+			"data": {
+				"status_holder": {
+					"status": "pending"
+				}
+			},
+			"expect": {
+				"value": false
+			}
+		},
+		{
+			"id": "comparison-quoted-literal-with-space",
+			"category": "comparison",
+			"platforms": ["ios"],
+			"input": "{status_holder.status == \"in progress\"}",
+			"data": {
+				"status_holder": {
+					"status": "in progress"
+				}
+			},
+			"expect": {
+				"value": true
+			},
+			"notes": "Quotes are what make a literal containing spaces expressible at all."
+		},
+		{
+			"id": "comparison-quoted-operator-chars-are-literal",
+			"category": "comparison",
+			"platforms": ["ios"],
+			"input": "{status_holder.status == \"a && b\"}",
+			"data": {
+				"status_holder": {
+					"status": "a && b"
+				}
+			},
+			"expect": {
+				"value": true
+			},
+			"notes": "Combinators and comparison operators inside quotes do not split the expression."
+		},
+		{
+			"id": "comparison-quoted-format-function-operand",
+			"category": "comparison",
+			"platforms": ["ios"],
+			"input": "{formatDatetime(when_holder, \"HH:mm\") == 12:42}",
+			"data": {
+				"when_holder": "2024-01-19T12:42:52"
+			},
+			"expect": {
+				"value": true
+			},
+			"notes": "A quoted format pattern no longer stops the block being recognised as a comparison."
 		},
 		{
 			"id": "comparison-count-function-operand",
@@ -479,6 +536,36 @@
 					]
 				}
 			}
+		},
+		{
+			"id": "condition-parse-quoted-literal",
+			"category": "condition-parse",
+			"platforms": ["web"],
+			"input": "{a == \"x y\"}",
+			"expect": {
+				"ast": {
+					"kind": "leaf",
+					"left": "a",
+					"operator": "==",
+					"right": "\"x y\""
+				}
+			},
+			"notes": "Quotes survive into the AST verbatim, like action-data values - whether a bare word is a path or a literal is decided at execution. A quoted run is one operand even with spaces in it."
+		},
+		{
+			"id": "condition-parse-quoted-operator-chars",
+			"category": "condition-parse",
+			"platforms": ["web"],
+			"input": "{a == \"x > y\"}",
+			"expect": {
+				"ast": {
+					"kind": "leaf",
+					"left": "a",
+					"operator": "==",
+					"right": "\"x > y\""
+				}
+			},
+			"notes": "Operator characters inside quotes are literal text, not tokens."
 		},
 		{
 			"id": "condition-parse-empty-is-null",

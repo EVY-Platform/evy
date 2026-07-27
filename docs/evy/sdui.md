@@ -255,6 +255,7 @@ A row's action list for a given trigger runs **in order**. For each entry: if it
 - Grouping: use parentheses to control precedence:
 	`{(length(title) > 0 && price.value >= 1) || override == true}`
 - Boolean literals `true` and `false` are valid as standalone conditions or operands.
+- A quoted operand is a string literal, never a data path: `{item.status == "in progress"}`. Bare words are tried as a path first and fall back to the literal, so quotes are what you need when the literal contains a space or an operator character.
 - Condition helpers (used like functions in the expression):
 	- `count(var)` — number of elements in a list/array, e.g. `{count(photo_ids) > 0}`
 	- `length(var)` — number of characters in a string, e.g. `{length(title) > 0}`
