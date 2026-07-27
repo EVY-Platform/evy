@@ -30,6 +30,7 @@ struct EVYSearchRow: View {
       source: view.source,
       destination: view.destination,
       placeholder: view.placeholder,
+      noResults: view.no_results,
       resultTemplate: childRef?.templateRow(),
       scope: evyScope,
       onSelect: onSelect
@@ -49,6 +50,7 @@ struct EVYSearchRow: View {
         "actions": {},
         "title": "Search preview",
         "placeholder": "Search items...",
+        "no_results": "No items match your search",
         "child": {
           "id": "preview-search-result-template",
           "type": "Text",

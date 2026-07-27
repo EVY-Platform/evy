@@ -255,6 +255,7 @@ final class SduiRowAttributeContractTests: XCTestCase {
         source: "{items}",
         destination: "{query}",
         placeholder: nil,
+        no_results: nil,
         child: nil
       )
     )

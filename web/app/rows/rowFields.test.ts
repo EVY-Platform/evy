@@ -69,6 +69,18 @@ describe("rowFields", () => {
 		});
 	});
 
+	test("exposes Search no_results as an optional text field from the schema", () => {
+		const contentFields = getRowContentFields("Search");
+		const noResultsField = contentFields.find(
+			(f) => f.name === "no_results",
+		);
+		expect(noResultsField).toEqual({
+			name: "no_results",
+			kind: "text",
+			required: false,
+		});
+	});
+
 	test("exposes optional sheet on every row type", () => {
 		for (const type of ALL_ROW_TYPES) {
 			const sheetField = getRowContentFields(type).find(

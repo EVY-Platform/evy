@@ -22,9 +22,29 @@ final class EVYSearchModelTests: XCTestCase {
   private final class SearchRequestingSpy: EVYSearchRequesting, @unchecked Sendable {
     private(set) var inputs: [String] = []
     var response: EVYJson = .array([])
+    var shouldThrow = false
+    /// When true, `search(input:)` suspends until `openGate()` is called, letting tests
+    /// observe in-flight state before the response resolves. Off by default so existing
+    /// tests that call `search` synchronously are unaffected.
+    var gatesRequests = false
+
+    private var gate: CheckedContinuation<Void, Never>?
+
+    func openGate() {
+      gate?.resume()
+      gate = nil
+    }
 
     func search(input: String) async throws -> EVYJson {
       inputs.append(input)
+      if gatesRequests {
+        await withCheckedContinuation { continuation in
+          gate = continuation
+        }
+      }
+      if shouldThrow {
+        throw URLError(.badServerResponse)
+      }
       return response
     }
   }
@@ -76,6 +96,115 @@ final class EVYSearchModelTests: XCTestCase {
 
     model.clearResults()
     XCTAssertTrue(model.results.isEmpty)
+  }
+
+  func testIsSearchingIsTrueWhileRequestIsInFlight() async {
+    let spy = SearchRequestingSpy()
+    spy.gatesRequests = true
+    let resultTemplate = Self.makeResultTemplate()
+    let model = EVYSearchModel(
+      method: "place_search",
+      resultTemplate: resultTemplate,
+      scopeId: nil,
+      requester: spy
+    )
+
+    XCTAssertFalse(model.isSearching)
+
+    let searchTask = Task { await model.search(query: "Sydney") }
+
+    while spy.inputs.isEmpty {
+      await Task.yield()
+    }
+    XCTAssertTrue(model.isSearching)
+
+    spy.openGate()
+    await searchTask.value
+
+    XCTAssertFalse(model.isSearching)
+  }
+
+  func testHasSearchedBecomesTrueAfterAnEmptyResponse() async {
+    let spy = SearchRequestingSpy()
+    spy.gatesRequests = true
+    let resultTemplate = Self.makeResultTemplate()
+    let model = EVYSearchModel(
+      method: "place_search",
+      resultTemplate: resultTemplate,
+      scopeId: nil,
+      requester: spy
+    )
+    spy.response = .array([])
+
+    XCTAssertFalse(model.hasSearched)
+
+    let searchTask = Task { await model.search(query: "Nowhere") }
+    while spy.inputs.isEmpty {
+      await Task.yield()
+    }
+    spy.openGate()
+    await searchTask.value
+
+    XCTAssertTrue(model.results.isEmpty)
+    XCTAssertTrue(model.hasSearched)
+  }
+
+  func testHasSearchedBecomesTrueAfterAFailedRequest() async {
+    let spy = SearchRequestingSpy()
+    spy.shouldThrow = true
+    spy.gatesRequests = true
+    let resultTemplate = Self.makeResultTemplate()
+    let model = EVYSearchModel(
+      method: "place_search",
+      resultTemplate: resultTemplate,
+      scopeId: nil,
+      requester: spy
+    )
+
+    let searchTask = Task { await model.search(query: "Nowhere") }
+    while spy.inputs.isEmpty {
+      await Task.yield()
+    }
+    spy.openGate()
+    await searchTask.value
+
+    XCTAssertTrue(model.results.isEmpty)
+    XCTAssertTrue(model.hasSearched)
+    XCTAssertFalse(model.isSearching)
+  }
+
+  func testClearResultsResetsSearchState() async {
+    let spy = SearchRequestingSpy()
+    spy.gatesRequests = true
+    let resultTemplate = Self.makeResultTemplate()
+    let model = EVYSearchModel(
+      method: "place_search",
+      resultTemplate: resultTemplate,
+      scopeId: nil,
+      requester: spy
+    )
+    spy.response = .array([
+      .dictionary([
+        "id": .string("place-1"),
+        "street": .string("George Street"),
+        "city": .string("Sydney"),
+      ])
+    ])
+
+    let searchTask = Task { await model.search(query: "Sydney") }
+    while spy.inputs.isEmpty {
+      await Task.yield()
+    }
+    spy.openGate()
+    await searchTask.value
+
+    XCTAssertTrue(model.hasSearched)
+
+    model.clearResults()
+
+    XCTAssertTrue(model.results.isEmpty)
+    XCTAssertFalse(model.hasSearched)
+    XCTAssertFalse(model.isSearching)
   }
 
   func testLoadLocalResultsRefreshWhenMessageResourceChanges() throws {

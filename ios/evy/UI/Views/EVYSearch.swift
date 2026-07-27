@@ -10,6 +10,7 @@ import SwiftUI
 struct EVYSearch: View {
   let destination: String
   let placeholder: String?
+  let noResults: String?
   let scope: EVYScope
   let onSelect: ((EVYJson) -> Void)?
 
@@ -23,12 +24,14 @@ struct EVYSearch: View {
   private static let debounceMilliseconds = 300
 
   init(
-    source: String, destination: String, placeholder: String?, resultTemplate: UI_Row?,
+    source: String, destination: String, placeholder: String?, noResults: String? = nil,
+    resultTemplate: UI_Row?,
     scope: EVYScope = .empty,
     onSelect: ((EVYJson) -> Void)? = nil
   ) {
     self.destination = destination
     self.placeholder = placeholder
+    self.noResults = noResults
     self.scope = scope
     self.onSelect = onSelect
     searchSource = EVY.classifySource(source)
@@ -78,6 +81,26 @@ struct EVYSearch: View {
     }
   }
 
+  /// True only for API sources — local filtering is synchronous, so there is nothing to await.
+  private var isSearching: Bool {
+    guard case .api = searchSource else { return false }
+    return apiSearchModel?.isSearching == true
+  }
+
+  private var shouldShowNoResults: Bool {
+    let trimmedNoResults = (noResults ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
+    guard !trimmedNoResults.isEmpty, !isSearching, displayedResults.isEmpty else {
+      return false
+    }
+
+    switch searchSource {
+    case .api:
+      return apiSearchModel?.hasSearched == true
+    case .local:
+      return !searchText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+    }
+  }
+
   var body: some View {
     VStack(spacing: 0) {
       EVYTextInput(
@@ -87,15 +110,26 @@ struct EVYSearch: View {
       .autocorrectionDisabled()
       .textInputAutocapitalization(.never)
 
-      ForEach(displayedResults) { result in
-        EVYRow(row: result.displayRow, datum: result.datum)
+      if isSearching {
+        ProgressView()
+          .progressViewStyle(.circular)
           .padding(.vertical, Constants.majorPadding)
-          .contentShape(Rectangle())
-          .simultaneousGesture(
-            TapGesture().onEnded {
-              selectResult(result.datum)
-            }
-          )
+          .accessibilityIdentifier("searchLoadingIndicator")
+      } else if shouldShowNoResults {
+        EVYTextView(noResults ?? "", style: .info)
+          .padding(.vertical, Constants.majorPadding)
+          .accessibilityIdentifier("searchNoResults")
+      } else {
+        ForEach(displayedResults) { result in
+          EVYRow(row: result.displayRow, datum: result.datum)
+            .padding(.vertical, Constants.majorPadding)
+            .contentShape(Rectangle())
+            .simultaneousGesture(
+              TapGesture().onEnded {
+                selectResult(result.datum)
+              }
+            )
+        }
       }
     }
     .task(id: searchText) {

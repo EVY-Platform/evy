@@ -13,6 +13,7 @@ export default defineRow("SearchRow", {
 		visible: "true",
 		title: "Search row title",
 		placeholder: "",
+		no_results: "",
 		destination: "",
 	} satisfies RowConfig,
 	render: (row) => (

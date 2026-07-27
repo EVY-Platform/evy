@@ -1158,6 +1158,7 @@
 											},
 											"title": "",
 											"placeholder": "Search address",
+											"no_results": "No addresses found",
 											"source": "{$api:place_search}",
 											"visible": "true",
 											"name": "Find pickup address",
