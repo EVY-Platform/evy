@@ -33,7 +33,16 @@ export type ConditionGroup = {
 	children: ConditionExpression[];
 };
 
-export type ConditionExpression = ConditionLeaf | ConditionGroup;
+/** A bare `true`/`false`, valid standalone and as an atom inside a group. */
+export type ConditionBoolean = {
+	type: "boolean";
+	value: boolean;
+};
+
+export type ConditionExpression =
+	| ConditionLeaf
+	| ConditionGroup
+	| ConditionBoolean;
 
 export function parseCondition(
 	conditionString: string,
@@ -177,7 +186,23 @@ function parsePrimaryExpression(
 		return inner;
 	}
 
+	const booleanLiteral = parseBooleanLiteral(tokens, cursor);
+	if (booleanLiteral) return booleanLiteral;
+
 	return parseAtomicComparison(tokens, cursor);
+}
+
+function parseBooleanLiteral(
+	tokens: string[],
+	cursor: TokenCursor,
+): ConditionBoolean | null {
+	const token = tokens[cursor.pos];
+	if (token !== "true" && token !== "false") return null;
+	// `true == x` compares against the word `true`, which is how iOS resolves
+	// an operand in that position. Only a bare boolean is a boolean node.
+	if (isComparisonOp(tokens[cursor.pos + 1] ?? "")) return null;
+	cursor.pos++;
+	return { type: "boolean", value: token === "true" };
 }
 
 function parseAtomicComparison(
@@ -262,6 +287,10 @@ function evaluateConditionExpression(
 	expression: ConditionExpression,
 	resolveOperand: (operand: string) => string,
 ): boolean {
+	if (expression.type === "boolean") {
+		return expression.value;
+	}
+
 	if (expression.type === "leaf") {
 		const left = resolveOperand(expression.left);
 		const right = resolveOperand(expression.right);
@@ -297,6 +326,9 @@ export function serializeCondition(
 }
 
 function serializeExpressionInner(expr: ConditionExpression): string {
+	if (expr.type === "boolean") {
+		return expr.value ? "true" : "false";
+	}
 	if (expr.type === "leaf") {
 		return `${expr.left} ${expr.operator} ${expr.right}`;
 	}
@@ -325,12 +357,21 @@ export function formatExpressionSummary(
 ): ConditionSummaryLine[] {
 	if (!expr) return [];
 	const resourceNamesById = resourceNameById(serviceResources);
-	if (expr.type === "leaf") {
-		return [
-			{ prefix: "", text: formatLeafDisplay(expr, resourceNamesById) },
-		];
+	if (expr.type === "group") {
+		return formatGroupSummary(expr, true, resourceNamesById);
 	}
-	return formatGroupSummary(expr, true, resourceNamesById);
+	return [{ prefix: "", text: formatAtomDisplay(expr, resourceNamesById) }];
+}
+
+/** A leaf or a bare boolean — anything that is one summary line on its own. */
+function formatAtomDisplay(
+	atom: ConditionLeaf | ConditionBoolean,
+	resourceNamesById: Map<string, string>,
+): string {
+	if (atom.type === "boolean") {
+		return atom.value ? "always true" : "always false";
+	}
+	return formatLeafDisplay(atom, resourceNamesById);
 }
 
 function formatLeafDisplay(
@@ -366,14 +407,14 @@ function formatGroupSummary(
 		const child = group.children[i];
 		const prefix = i === 0 && isTopLevel ? "" : keyword;
 
-		if (child.type === "leaf") {
-			lines.push({
-				prefix,
-				text: formatLeafDisplay(child, resourceNamesById),
-			});
-		} else {
+		if (child.type === "group") {
 			const nested = formatGroupInline(child, resourceNamesById);
 			lines.push({ prefix, text: nested });
+		} else {
+			lines.push({
+				prefix,
+				text: formatAtomDisplay(child, resourceNamesById),
+			});
 		}
 	}
 	return lines;
@@ -385,10 +426,10 @@ function formatGroupInline(
 ): string {
 	const keyword = group.logicalOperator === "and" ? " and " : " or ";
 	const parts = group.children.map((child) => {
-		if (child.type === "leaf") {
-			return formatLeafDisplay(child, resourceNamesById);
+		if (child.type === "group") {
+			return `(${formatGroupInline(child, resourceNamesById)})`;
 		}
-		return `(${formatGroupInline(child, resourceNamesById)})`;
+		return formatAtomDisplay(child, resourceNamesById);
 	});
 	return parts.join(keyword);
 }

@@ -142,6 +142,16 @@
 			}
 		},
 		{
+			"id": "comparison-boolean-atom-in-group",
+			"category": "comparison",
+			"platforms": ["ios"],
+			"input": "{true && 1 > 0}",
+			"expect": {
+				"value": true
+			},
+			"notes": "A bare boolean is a valid atom inside a group. Web twin: condition-parse-boolean-atom-in-group."
+		},
+		{
 			"id": "comparison-unquoted-literal-match",
 			"category": "comparison",
 			"platforms": ["ios"],
@@ -481,14 +491,69 @@
 			"notes": "An empty condition means always true; it has no AST."
 		},
 		{
-			"id": "condition-parse-standalone-boolean-unrepresentable",
+			"id": "condition-parse-standalone-boolean-true",
 			"category": "condition-parse",
 			"platforms": ["web"],
 			"input": "{true}",
 			"expect": {
-				"ast": null
+				"ast": {
+					"kind": "boolean",
+					"value": true
+				}
 			},
-			"notes": "WART: the web condition editor cannot represent a standalone boolean, so opening and saving such an action silently drops it - even though iOS evaluates it correctly (see comparison-standalone-true)."
+			"notes": "Standalone booleans round-trip through the editor. Parity with comparison-standalone-true."
+		},
+		{
+			"id": "condition-parse-standalone-boolean-false",
+			"category": "condition-parse",
+			"platforms": ["web"],
+			"input": "{false}",
+			"expect": {
+				"ast": {
+					"kind": "boolean",
+					"value": false
+				}
+			}
+		},
+		{
+			"id": "condition-parse-boolean-atom-in-group",
+			"category": "condition-parse",
+			"platforms": ["web"],
+			"input": "{true && a > b}",
+			"expect": {
+				"ast": {
+					"kind": "group",
+					"operator": "and",
+					"children": [
+						{
+							"kind": "boolean",
+							"value": true
+						},
+						{
+							"kind": "leaf",
+							"left": "a",
+							"operator": ">",
+							"right": "b"
+						}
+					]
+				}
+			},
+			"notes": "A bare boolean is a valid atom inside a group, matching iOS _evaluateBooleanExpression."
+		},
+		{
+			"id": "condition-parse-boolean-word-as-operand",
+			"category": "condition-parse",
+			"platforms": ["web"],
+			"input": "{true == a}",
+			"expect": {
+				"ast": {
+					"kind": "leaf",
+					"left": "true",
+					"operator": "==",
+					"right": "a"
+				}
+			},
+			"notes": "A boolean word followed by a comparison operator is an operand, not a standalone boolean."
 		},
 		{
 			"id": "ast-convert-close",

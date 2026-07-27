@@ -746,6 +746,12 @@ label {
 	grid-template-columns: 1fr auto 1fr;
 }
 
+/* A bare true/false has no operands, so its select spans the operand columns
+   and the remove button stays aligned with the other rows'. */
+.evy-condition-row--boolean > :first-child {
+	grid-column: 1 / 4;
+}
+
 .evy-condition-logic-row {
 	display: flex;
 	align-items: center;
