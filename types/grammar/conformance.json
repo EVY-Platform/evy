@@ -464,7 +464,7 @@
 			"expect": {
 				"error": true
 			},
-			"notes": "The core resolver throws on an unresolvable root. The display layer swallows it - see display-missing-root-blanks-whole-string."
+			"notes": "The core resolver throws on an unresolvable root. The display layer swallows it per token - see display-missing-root-blanks-only-token."
 		},
 		{
 			"id": "display-plain-text-passthrough",
@@ -488,14 +488,27 @@
 			}
 		},
 		{
-			"id": "display-missing-root-blanks-whole-string",
+			"id": "display-missing-root-blanks-only-token",
 			"category": "display",
 			"platforms": ["ios"],
 			"input": "Hello {definitely_missing_root}!",
 			"expect": {
-				"text": ""
+				"text": "Hello !"
 			},
-			"notes": "WART: one unresolvable root empties the entire rendered string, including the literal text around it, instead of blanking just that token."
+			"notes": "An unresolvable token blanks to empty; the literal text around it survives. The core resolver still throws - see expression-missing-root-throws."
+		},
+		{
+			"id": "display-partial-failure-keeps-resolved-tokens",
+			"category": "display",
+			"platforms": ["ios"],
+			"input": "A {title_holder} B {definitely_missing_root} C",
+			"data": {
+				"title_holder": "Hello"
+			},
+			"expect": {
+				"text": "A Hello B  C"
+			},
+			"notes": "Each token succeeds or blanks on its own. No whitespace collapsing, so the blanked token leaves a double space."
 		},
 		{
 			"id": "condition-parse-simple-leaf",

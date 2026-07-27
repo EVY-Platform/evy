@@ -368,7 +368,7 @@ private func _resolvedText(fromSource source: String?, destination: String?, edi
   if let source {
     let trimmedSource = source.trimmingCharacters(in: .whitespacesAndNewlines)
     if !trimmedSource.isEmpty {
-      return (try? _getValueFromText(trimmedSource, editing: editing).toString()) ?? ""
+      return resolvedOrBlankedPerToken(trimmedSource, editing: editing)
     }
   }
 
@@ -381,12 +381,37 @@ private func _resolvedText(fromSource source: String?, destination: String?, edi
   if let (functionName, functionArgs) = _parseFunctionCall(inner),
     let formatFunction = formatFunctionsByBuildFunction[functionName]
   {
-    return
-      (try? _getValueFromText("{\(formatFunction)(\(functionArgs))}", editing: editing).toString())
-      ?? ""
+    return resolvedOrBlankedPerToken(
+      "{\(formatFunction)(\(functionArgs))}", editing: editing)
   }
 
-  return (try? _getValueFromText(wrapped, editing: editing).toString()) ?? ""
+  return resolvedOrBlankedPerToken(wrapped, editing: editing)
+}
+
+/// Resolves `text` whole, falling back to resolving each `{…}` token on its own.
+///
+/// The core resolver throws on an unresolvable root, so coalescing that throw
+/// for the whole string used to erase the literal text around a bad token too.
+/// Resolving token by token on the failure path keeps everything that did
+/// resolve and blanks only what did not. The happy path is unchanged: the
+/// whole-string pass also handles brace-less function text and mixed
+/// function/text expressions, whose semantics we do not re-derive per token.
+@MainActor
+private func resolvedOrBlankedPerToken(_ text: String, editing: Bool) -> String {
+  if let resolved = try? _getValueFromText(text, editing: editing).toString() {
+    return resolved
+  }
+
+  let blocks = interpolations(in: text)
+  guard !blocks.isEmpty else { return "" }
+
+  var output = text
+  for block in blocks {
+    let resolved =
+      (try? _getValueFromText(block.fullMatch, editing: editing).toString()) ?? ""
+    output = output.replacingOccurrences(of: block.fullMatch, with: resolved)
+  }
+  return output
 }
 
 @MainActor

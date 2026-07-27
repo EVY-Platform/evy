@@ -160,7 +160,8 @@ final class GrammarConformanceTests: XCTestCase {
     }
   }
 
-  /// The rendered-row layer, which swallows resolution errors into empty text.
+  /// The rendered-row layer, which swallows resolution errors per token: a token
+  /// that cannot resolve renders empty, the rest of the string survives.
   func testDisplayVectors() throws {
     for vector in try iosVectors(category: "display") {
       try seed(vector.data)
