@@ -9,6 +9,10 @@ import type {
 	ServiceResource,
 } from "../types/resources";
 import { ACTION_FUNCTIONS } from "./actionBranch";
+import {
+	findInterpolationRegions,
+	isRangeInsideRegions,
+} from "./interpolationRegions";
 import { ROW_ATTRIBUTE_STATIC_NAMES } from "./rowConstants";
 import { parseApiSourceMethod } from "./sourceBinding";
 import { unwrapOptionalBraces } from "./unwrapBraces";
@@ -49,6 +53,13 @@ export type IdDisplayPart =
 			start: number;
 			end: number;
 	  };
+
+/**
+ * Where a value's ids are meaningful. "text" is an EVY text attribute, which
+ * only interpolates inside `{…}`; "expression" is a whole-value expression
+ * (bindings, conditions, action arguments) where bare ids resolve anywhere.
+ */
+export type IdDisplayScope = "expression" | "text";
 
 type SuggestionFilterContext =
 	| { type: "root"; query: string }
@@ -322,8 +333,9 @@ function buildDisplayCandidates(candidates: IdCandidate[]): IdCandidate[] {
 export function getIdDisplayText(
 	value: string,
 	candidates: IdCandidate[],
+	scope: IdDisplayScope = "expression",
 ): string {
-	return getIdDisplayParts(value, candidates)
+	return getIdDisplayParts(value, candidates, scope)
 		.map((part) =>
 			part.type === "candidate" ? part.displayName : part.text,
 		)
@@ -333,8 +345,13 @@ export function getIdDisplayText(
 export function getIdDisplayParts(
 	value: string,
 	candidates: IdCandidate[],
+	scope: IdDisplayScope = "expression",
 ): IdDisplayPart[] {
 	const displayCandidates = buildDisplayCandidates(candidates);
+	// Text attributes only interpolate inside braces, so an id outside them is
+	// a prose word that happens to match (e.g. "No messages found").
+	const interpolationRegions =
+		scope === "text" ? findInterpolationRegions(value) : null;
 	const parts: IdDisplayPart[] = [];
 	let textStart = 0;
 	let index = 0;
@@ -342,6 +359,12 @@ export function getIdDisplayParts(
 	while (index < value.length) {
 		const candidate = displayCandidates.find(
 			(displayCandidate) =>
+				(interpolationRegions === null ||
+					isRangeInsideRegions(
+						interpolationRegions,
+						index,
+						index + displayCandidate.id.length,
+					)) &&
 				isIdBoundaryCharacter(value[index - 1]) &&
 				value.startsWith(displayCandidate.id, index) &&
 				isIdBoundaryCharacter(

@@ -49,6 +49,7 @@ Rows are what are put into pages. They are the building block of the EVY server-
 -   All attributes can include:
     -   variables surrounded with curly braces: "Hello {name}, how are you?"
     -   inline icons as [Lucide](https://lucide.dev/icons) names in kebab-case, wrapped in double colons: "EVY ::image-plus:: is the best!"
+    -   Builder consequence: in text attributes the web builder resolves ids to named chips **only inside `{…}`**, because everything outside braces is literal. Binding attributes (`source`, `destination`, `secondary`), `visible`, and action arguments are whole-value expressions, so bare ids resolve there. Core resource ids are plural words (`messages`, `files`, `addresses`), so without that distinction prose like "No messages found" would be mistaken for a resource reference.
 -   [ x ]
     -   Denotes a type array of x
 	-   Objects and arrays

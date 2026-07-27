@@ -61,6 +61,9 @@ const candidates: IdCandidate[] = [
 	{ id: "service-1", name: "Marketplace", category: "Service" },
 	{ id: "flow-1", name: "Edit item", category: "Flow" },
 	{ id: "page-1", name: "Checkout", category: "Page" },
+	// Core resources use plural word ids and singular names, so their ids
+	// collide with ordinary prose (see types/generated/ts/coreResources.ts).
+	{ id: "messages", name: "message", category: "Resource" },
 ];
 
 function makeAttributeCandidate(name: string): IdCandidate {
@@ -352,6 +355,77 @@ describe("idCandidates", () => {
 		]);
 		expect(getIdDisplayParts("length()", [functionCandidate])).toEqual([
 			{ type: "text", text: "length()", start: 0, end: 8 },
+		]);
+	});
+
+	test("getIdDisplayParts leaves prose matching a resource id as plain text", () => {
+		expect(
+			getIdDisplayParts("No messages found", candidates, "text"),
+		).toEqual([
+			{ type: "text", text: "No messages found", start: 0, end: 17 },
+		]);
+	});
+
+	test("getIdDisplayParts resolves only the braced occurrence in text", () => {
+		expect(
+			getIdDisplayParts(
+				"Filter messages by {messages}",
+				candidates,
+				"text",
+			),
+		).toEqual([
+			{ type: "text", text: "Filter messages by {", start: 0, end: 20 },
+			{
+				type: "candidate",
+				rawId: "messages",
+				displayName: "message",
+				start: 20,
+				end: 28,
+			},
+			{ type: "text", text: "}", start: 28, end: 29 },
+		]);
+	});
+
+	test("getIdDisplayParts resolves inside an unterminated interpolation in text", () => {
+		expect(getIdDisplayParts("Total: {res-1", candidates, "text")).toEqual([
+			{ type: "text", text: "Total: {", start: 0, end: 8 },
+			{
+				type: "candidate",
+				rawId: "res-1",
+				displayName: "item",
+				start: 8,
+				end: 13,
+			},
+		]);
+	});
+
+	test("getIdDisplayParts keeps trailing text after an interpolation plain in text", () => {
+		expect(
+			getIdDisplayParts("{res-1.title} hello", candidates, "text"),
+		).toEqual([
+			{ type: "text", text: "{", start: 0, end: 1 },
+			{
+				type: "candidate",
+				rawId: "res-1",
+				displayName: "item",
+				start: 1,
+				end: 6,
+			},
+			{ type: "text", text: ".", start: 6, end: 7 },
+			{ type: "attribute", text: "title", start: 7, end: 12 },
+			{ type: "text", text: "} hello", start: 12, end: 19 },
+		]);
+	});
+
+	test("getIdDisplayParts resolves unbraced ids in expression scope", () => {
+		expect(getIdDisplayParts("messages", candidates)).toEqual([
+			{
+				type: "candidate",
+				rawId: "messages",
+				displayName: "message",
+				start: 0,
+				end: 8,
+			},
 		]);
 	});
 
