@@ -300,7 +300,7 @@
 			"expect": {
 				"text": "0"
 			},
-			"notes": "length is string-only; non-strings count as 0 (functions.md). Use count for collections."
+			"notes": "length is string-only; non-strings count as 0 (methods.md). Use count for collections."
 		},
 		{
 			"id": "expression-length-of-number-is-zero",
@@ -348,7 +348,7 @@
 			"expect": {
 				"text": "42"
 			},
-			"notes": "count returns the number itself (functions.md)."
+			"notes": "count returns the number itself (methods.md)."
 		},
 		{
 			"id": "comparison-missing-path-is-false",

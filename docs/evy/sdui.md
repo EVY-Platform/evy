@@ -4,52 +4,21 @@ All UI in EVY is server-driven. On the API service we store SDUI as flat `flows`
 
 All attributes in SDUI are strings, and most are required.
 
-Row types are defined as standard JSON Schema files in `types/schema/sdui/definitions/*.schema.json`. Each row schema combines the common `UI_RowBase` shape from `types/schema/sdui/evy.schema.json` with row-specific properties and a unique `type.const` discriminator:
-
-```json
-{
-    "$schema": "https://json-schema.org/draft/2020-12/schema",
-    "$id": "sdui/definitions/Calendar",
-    "title": "Calendar_Row",
-    "allOf": [
-        { "$ref": "../evy.schema.json#/$defs/UI_RowBase" },
-        {
-            "type": "object",
-            "required": [
-                "type",
-                "start_time",
-                "end_time",
-                "timeslot_interval_minutes",
-                "label_interval_minutes",
-                "header_format",
-                "timeslot_format",
-                "source",
-                "destination"
-            ],
-            "properties": {
-                "type": { "const": "Calendar" },
-                "title": { "type": "string" },
-                "source": { "type": "string" },
-                "destination": { "type": "string" },
-                "secondary": { "type": "string" },
-                "start_time": { "type": "string" },
-                "end_time": { "type": "string" },
-                "timeslot_interval_minutes": { "type": "string" },
-                "label_interval_minutes": { "type": "string" },
-                "header_format": { "type": "string" },
-                "timeslot_format": { "type": "string" }
-            }
-        }
-    ],
-    "unevaluatedProperties": false
-}
-```
+Row types are defined as standard JSON Schema files in
+[`types/schema/sdui/definitions/*.schema.json`](../../types/schema/sdui/definitions/). Each row
+schema combines the common `UI_RowBase` shape from
+[`types/schema/sdui/evy.schema.json`](../../types/schema/sdui/evy.schema.json) with row-specific
+properties, a unique `type.const` discriminator, and a top-level `triggers` block declaring
+which action triggers that row type supports and whether each is `"required"` or `"optional"`
+(see [Trigger matrix](#trigger-matrix) below). See
+[`Calendar.schema.json`](../../types/schema/sdui/definitions/Calendar.schema.json) for an
+example.
 
 ## Flow
 
 Flows represent a full user journey (eg: creating an item, placing an order, etc). They are needed to correctly submit data from a set of pages with a single end state.
 
-The canonical shape matches `types/schema/sdui/evy.schema.json`:
+The canonical shape matches [`types/schema/sdui/evy.schema.json`](../../types/schema/sdui/evy.schema.json):
 
 ```
 {
@@ -149,9 +118,9 @@ Every row may declare an optional nested `sheet` row. At runtime, a `show` actio
 
 | Row type | `source` | `destination` | `secondary` | `value` | Notes |
 | --- | --- | --- | --- | --- | --- |
-| `Input`, `TextArea` | yes | yes | no | no | Display reads `source`; writes pass raw text to `destination`. Optional `initial` seeds literal text into the draft on activation. For `Input` and `TextArea`, `actions.submit` (when present) runs after the user commits a value (return key or blur), after the destination write. Optional `actions.tap` runs on an actual row tap via the generic whole-row tap path (the embedded text field consumes taps on the field to begin editing). |
+| `Input`, `TextArea` | yes | yes | no | no | Display reads `source`; writes pass raw text to `destination`. Optional `initial` seeds literal text into the draft on activation. |
 | `Dropdown`, `InlinePicker` | yes | yes | no | yes | `source` = options; `value` = `$datum` display template; selection writes raw datum to `destination`. Optional `initial` seeds the default selection — a single option identifier for `Dropdown`, and a one-element identifier array for `InlinePicker`. |
-| `Search` | yes | yes | no | no | `destination` stores the selected raw datum (builder-aware), stripping external `id` and merging over any existing draft so omitted keys (e.g. instructions) are preserved. Optional `child` is the search **result template** only (not a sheet). Optional `sheet` uses the universal overlay relationship. On result select, iOS also runs `actions.tap` with `$datum` set to the selected result (after the destination write). |
+| `Search` | yes | yes | no | no | `destination` stores the selected raw datum (builder-aware), stripping external `id` and merging over any existing draft so omitted keys (e.g. instructions) are preserved. Optional `child` is the search **result template** only (not a sheet). Optional `sheet` uses the universal overlay relationship. |
 | `Calendar` | yes | yes | yes | no | `source` = main timeslots to display (same binding as `destination`); `destination` = edited selection; `secondary` = greyed background slots. |
 | `TimeslotPicker` | yes | yes | no | no | Single selected timeslot string in `destination`. Optional `sheet` for confirmation overlays via a `show` action. |
 | `SelectPhoto` | yes | yes | no | no | `source` = shown images; `destination` = written image IDs. |
@@ -159,7 +128,7 @@ Every row may declare an optional nested `sheet` row. At runtime, a `show` actio
 | `PhotoGallery`, `Map`, `VerticalContainer`, `HorizontalContainer`, `TabContainer`, `InputList` | yes | no | no | no | Read-only or collection `source`. Containers render static `children` only (`TabContainer`: `segments` paired with `children`). Optional `sheet` on any row type. |
 | `Button`, `Text`, `TextAction`, `Heading` | no | no | no | no | `Button` accepts optional `style` `"primary"` (default) or `"danger"` (red on iOS). Any row type may attach optional `sheet`; `TextAction` commonly pairs with a `show` action. |
 
-Formatted vs raw: the runtime resolves `source` for display (including `{formatCurrency(...)}` expressions) and exposes raw values for writes. `destination` may use builder functions such as `{buildCurrency(item.price)}` — writes pass raw user/selection data into the builder.
+Formatted vs raw: the runtime resolves `source` for display (including `{formatCurrency(...)}` expressions) and exposes raw values for writes. `destination` may use builder functions such as `{buildCurrency(item.price)}` — writes pass raw user/selection data into the builder. See [formatting.md](./formatting.md) for formatter and builder function reference.
 
 ### Initial values
 
@@ -180,7 +149,7 @@ Builder destinations (e.g. `{buildCurrency(item.price)}`) transform an `initial`
 
 ### Actions
 
-Each row has an `actions` attribute: an object keyed by **trigger** name. Each trigger maps to an ordered list of `UI_RowAction` objects (condition / `true` / `false` branches). Supported triggers in this release are `tap`, `delete`, `tap-row`, `tap-column`, `swipe-left`, and `submit`; each row type declares which triggers it supports and whether a trigger is **required** (flow validation requires at least one action on that trigger) or **optional** (may be omitted or empty). The `submit` trigger runs when a row's typed value is committed (return key or blur, after the destination write). It is available on `Input` and `TextArea` only.
+Each row has an `actions` attribute: an object keyed by **trigger** name. Each trigger maps to an ordered list of `UI_RowAction` objects (condition / `true` / `false` branches). Supported triggers in this release are `tap`, `delete`, `tap-row`, `tap-column`, `swipe-left`, and `submit`. The `submit` trigger runs when a row's typed value is committed (return key or blur, after the destination write). It is available on `Input` and `TextArea` only.
 
 ```jsonc
 "actions": {
@@ -197,33 +166,19 @@ An empty object `{}` is the canonical “no actions” state (do not use `{"tap"
 
 The **shape** of `actions` is validated by the API on every `create`/`update` of a row: only the six trigger names are accepted, each must map to a list, and each entry must have exactly `condition`, `true`, and `false`. A malformed shape is rejected at write time with the offending path (e.g. `/data/actions/tap/0`) rather than being stored and then silently dropped when a client fails to decode the row. Branch contents are validated too: a branch is either the empty string or one of the structured invocations in [`action.schema.json`](../../types/schema/sdui/action.schema.json), so an unknown `fn` or a missing field is rejected at write time along with a malformed shape.
 
+See [actions.md](./actions.md) for the reference on every action function (`create`, `update`, `show`, `select`, `navigate`, …).
+
 #### Trigger matrix
 
-| Row type | `tap` | `submit` | `delete` | `tap-row` | `tap-column` | `swipe-left` |
-| --- | --- | --- | --- | --- | --- | --- |
-| Button | **required** | — | — | — | — | — |
-| Calendar | **required** | — | — | **required** | **required** | — |
-| Dropdown | **required** | — | — | — | — | — |
-| InlinePicker | **required** | — | — | — | — | — |
-| InputList | **required** | — | — | — | — | — |
-| PhotoGallery | **required** | — | — | — | — | — |
-| SelectPhoto | **required** | — | **required** | — | — | — |
-| TextAction | **required** | — | — | — | — | — |
-| TextExpand | **required** | — | — | — | — | — |
-| TextSelect | **required** | — | — | — | — | — |
-| TimeslotPicker | **required** | — | — | — | — | — |
-| Heading | optional | — | — | — | — | optional |
-| HorizontalContainer | optional | — | — | — | — | — |
-| Input | optional | optional | — | — | — | optional |
-| ListItem | optional | — | — | — | — | optional |
-| Map | optional | — | — | — | — | — |
-| Search | optional | — | — | — | — | — |
-| TabContainer | optional | — | — | — | — | — |
-| Text | optional | — | — | — | — | optional |
-| TextArea | optional | optional | — | — | — | — |
-| VerticalContainer | optional | — | — | — | — | — |
-
-Required triggers are enforced in `validateUiFlow` (fixtures, seed, tests). The web builder shows a required badge and warning when a required trigger has no actions but still allows saving.
+Which triggers each row type supports, and whether they're required, is declared per row type
+in its `triggers` block in [`types/schema/sdui/definitions/*.schema.json`](../../types/schema/sdui/definitions/)
+(e.g. `Calendar.schema.json` declares `tap`, `tap-row`, and `tap-column` all `"required"`). This
+is generated into `SDUI_ROW_TRIGGERS` in
+[`types/generated/ts/sdui/definitions.generated.ts`](../../types/generated/ts/sdui/definitions.generated.ts)
+and enforced in `validateUiFlow` (`types/validators.ts`) — a row with actions on an
+undeclared trigger, or missing actions on a required trigger, is rejected at write time. The web
+builder shows a required badge and warning when a required trigger has no actions but still
+allows saving.
 
 All action functions dispatch through a single client-side action channel; navigation (`navigate`, `close`) and non-navigation effects (`create`, `highlight_required`, `select`, `select_photo`, `delete_photo`, `expand_photo`, `expand_text`) are handled by the same runner. **Which list runs** depends on the trigger: row tap gestures and control-specific taps use `actions.tap`; value commit on `Input` and `TextArea` uses `actions.submit`; the `SelectPhoto` remove control uses `actions.delete`; Calendar day headers use `actions.tap-column` and time-axis labels use `actions.tap-row`; swipe-to-reveal on Heading/Input/ListItem/Text uses `actions.swipe-left`.
 
@@ -241,25 +196,20 @@ Inside a sheet overlay, `close` dismisses the sheet instead of popping navigatio
 
 #### Sequencing
 
-A row's action list for a given trigger runs **in order**. For each entry: if its `condition` is empty or evaluates true, the `true` branch runs and the runner moves on to the next entry; if the condition evaluates false, the `false` branch runs and the array stops (no later entries execute). If a branch's function throws (e.g. malformed arguments), the error is surfaced and the array also stops — later entries do not run. A condition that **cannot be evaluated** (malformed expression) is likewise an error, not a false result: the error is surfaced and the array stops without running either branch. This is what makes multi-step sequences like "create, then close" or "select timeslot, then show confirmation sheet" expressible as separate action entries. When a sheet interpolates the new selection (e.g. `Request {formatDatetime(selected_pickup_timeslot, "HH:mm")}`), put the `select` action **before** the `show`.
+A row's action list for a given trigger runs **in order**. For each entry: if its `condition` is empty or evaluates true, the `true` branch runs and the runner moves on to the next entry; if the condition evaluates false, the `false` branch runs and the array stops (no later entries execute). If a branch's function throws (e.g. malformed arguments), the error is surfaced and the array also stops — later entries do not run. A condition that **cannot be evaluated** (malformed expression) is likewise an error, not a false result: the error is surfaced and the array stops without running either branch. This is what makes multi-step sequences like "create, then close" or "select timeslot, then show confirmation sheet" expressible as separate action entries. When a sheet interpolates the new selection (e.g. `Request {formatDatetime(selected_pickup_timeslot, "HH:mm")}`), put the `select` action **before** the `show`. See [`ios/evy/UI/EVYActionRunner.swift`](../../ios/evy/UI/EVYActionRunner.swift) for the reference runner.
 
 #### Conditions
 
-- Empty `condition` — treated as always true (the `true` branch is taken unless you rely on client-specific rules).
-- A malformed condition is an **error**, not `false` — it surfaces to the user and stops the action array. A condition whose data paths simply do not resolve is not malformed; it evaluates false as usual.
-- Operators: `==`, `!=`, `>`, `<`, `>=`, `<=`
-- AND: join comparisons with `&&` inside the braces:
-	`{length(title) > 0 && price.value >= 1}`
-- OR: join comparisons with `||` inside the braces:
-	`{count(pickup_selection) > 0 || count(delivery_selection) > 0 || count(shipping_destination_areas) > 0}`
-- Grouping: use parentheses to control precedence:
-	`{(length(title) > 0 && price.value >= 1) || override == true}`
-- Boolean literals `true` and `false` are valid as standalone conditions or operands.
-- A quoted operand is a string literal, never a data path: `{item.status == "in progress"}`. Bare words are tried as a path first and fall back to the literal, so quotes are what you need when the literal contains a space or an operator character.
-- Condition helpers (used like functions in the expression):
-	- `count(var)` — number of elements in a list/array, e.g. `{count(photo_ids) > 0}`
-	- `length(var)` — number of characters in a string, e.g. `{length(title) > 0}`
-	- `sort(var, asc|desc [, field])` — stable sort of a collection, e.g. `{findFirst(sort(item.pickup_selection, asc))}` for the earliest timeslot
+Conditions are [comparison expressions](./comparisons.md); an empty `condition` is treated as
+always true. A malformed condition is an **error**, not `false` — it surfaces to the user and
+stops the action array. A condition whose data paths simply do not resolve is not malformed; it
+evaluates false as usual.
+
+```
+{length(title) > 0 && price.value >= 1}
+{count(pickup_selection) > 0 || count(delivery_selection) > 0 || count(shipping_destination_areas) > 0}
+{(length(title) > 0 && price.value >= 1) || override == true}
+```
 
 #### Branches (`true` / `false`)
 
@@ -280,23 +230,8 @@ Legacy `{functionName(arg1, arg2)}` **strings are no longer accepted** — the A
 
 Value expressions inside `data`, `filter`, `changes` and `query` remain strings and resolve exactly as before (data path, `$datum`, quoted literal, bare word), because whether a bare word is a path or a literal depends on the data present when the action runs.
 
-Supported invocations. The `fn` value selects the shape; every field below is required unless marked optional.
-
-| `fn` | Fields | Meaning |
-| --- | --- | --- |
-| `close` | — | Close the current UI. Inside a sheet overlay, dismisses the sheet only. |
-| `select_photo` | — | Ask the triggering `SelectPhoto` row to present the photo picker. |
-| `delete_photo` | — | Remove the photo tile that was tapped. |
-| `expand_photo` | — | Present the current `PhotoGallery` photo full screen. |
-| `show` | `rowId` | Present that row in a sheet overlay. The target may be on any synced page. |
-| `expand_text` | `rowId` | Expand the `TextExpand` row with that id, wherever it is on screen. |
-| `highlight_required` | `field` | Mark a field as required / show validation. |
-| `select` | `value` | Ask the triggering row to select `value`, usually `$datum`. |
-| `navigate` | `flowId`, `pageId`, `query` (optional) | Go to a page within a flow. `query` is a map of value expressions. |
-| `create` | `service`, `resource`, `mode`, plus mode fields | Create a domain entity. **Never changes routes** — follow with `close` to dismiss. `mode: "submit"` merges the active flow's create drafts into the entity and cleans them up. `mode: "inline"` takes a `data` map: its values resolve as data paths or `$datum`, unresolved bare words stay literals (bare `true`/`false` become booleans, bare `null` becomes JSON null, quoted `"…"` stays a literal string, and `{…}` values resolve as nested objects). `mode: "fromPath"` takes a `dataPath` and sends the whole resolved object from drafts or synced data. Both non-submit modes accept an optional `idDestination`, which writes the generated uuid to a draft-aware path (e.g. `pickup_address.id`) — use it in **create flows** where the target record does not exist yet. When the target already exists, link it with a follow-up store-mode `update` instead of writing onto the live record path. |
-| `update` | `service`, `resource`, `mode`, `filter`, `changes` \| `changesPath` | `mode: "store"` requires a non-empty `filter` and updates matching records immediately; `mode: "draft"` takes no filter and writes into the active create draft. Changes are either a map or a whole-object path, never both; a path-resolved object has any `id` key stripped before merging. Filter and change values resolve like inline `create` data. Change keys may use dotted paths (e.g. `transfer_options.pickup.address_id`) to patch nested fields without clobbering siblings. A filter value of `null` matches records where the property is absent or JSON `null`. A store-mode update matching nothing is a no-op. |
-
-The web builder does not execute actions; it edits the structured invocations above and displays mocks. See [`types/schema/sdui/action.schema.json`](../../types/schema/sdui/action.schema.json) for the authoritative shape of each variant.
+See [actions.md](./actions.md) for the full per-function reference (fields, semantics, and the
+Address save pattern for linking a newly created record to its parent entity).
 
 #### Examples (from `scripts/fixtures/services/service_sdui.json`)
 
@@ -317,27 +252,6 @@ Final “Next” after validations:
 	"condition": "",
 	"false": "",
 	"true": { "fn": "navigate", "flowId": "[flow_id]", "pageId": "[page_id]" }
-}
-```
-
-Navigate with query params (selects an entity from synced data):
-
-```json
-{
-	"condition": "",
-	"false": "",
-	"true": { "fn": "navigate", "flowId": "[flow_id]", "pageId": "[page_id]",
-	          "query": { "id": "$datum.id" } }
-}
-```
-
-OR condition with navigate on success:
-
-```json
-{
-	"condition": "{count(pickup_selection) > 0 || count(delivery_selection) > 0 || count(shipping_destination_areas) > 0}",
-	"false": { "fn": "highlight_required", "field": "pickup_selection" },
-	"true": { "fn": "navigate", "flowId": "[flow_id]", "pageId": "[another_page_id]" }
 }
 ```
 
@@ -390,50 +304,8 @@ Open a confirmation sheet after selecting a timeslot (`select` must run first so
 
 Search result template (`child` only on Search; separate from `sheet`).
 
-### Address save pattern (create and edit flows)
-
-Use the same two-action `tap` array on the pickup Search row for create and edit flows, but the **link** step differs by flow type.
-
-1. **Create or update the address** — if `address_id` is empty, a `create` on `core/addresses` with `mode: "fromPath"`, `dataPath: "pickup_address"` and `idDestination: "pickup_address.id"` persists the address and writes the generated id to the page-local `pickup_address` buffer; otherwise a store-mode `update` on `core/addresses` filtered by `id: item.transfer_options.pickup.address_id` with `changesPath: "pickup_address"` updates the existing row.
-2. **Link the item** — on **edit** flows where the item row already exists: a store-mode `update` on `marketplace/items` filtered by `id: item.id`, changing `transfer_options.pickup.address_id` to `pickup_address.id`, matches the row and syncs immediately. On **create** flows: the same change in `mode: "draft"` writes into the create draft (picked up by submit `create`). A page shared across both flow types needs condition-branched actions (store vs draft link) because one invocation cannot serve both.
-
-When an address already exists, the first action's `false` branch runs and **stops the action array** (runner semantics), so the link step does not run again on re-pick.
-
-```json
-{
-	"id": "search-row-id",
-	"type": "Search",
-	"source": "{$api:place_search}",
-	"destination": "{pickup_address}",
-	"actions": {
-		"tap": [
-			{
-				"condition": "{length(item.transfer_options.pickup.address_id) == 0}",
-				"true": { "fn": "create", "service": "core", "resource": "addresses",
-				          "mode": "fromPath", "dataPath": "pickup_address",
-				          "idDestination": "{pickup_address.id}" },
-				"false": { "fn": "update", "service": "core", "resource": "addresses",
-				           "mode": "store",
-				           "filter": { "id": "item.transfer_options.pickup.address_id" },
-				           "changesPath": "pickup_address" }
-			},
-			{
-				"condition": "",
-				"true": { "fn": "update", "service": "marketplace", "resource": "items",
-				          "mode": "draft",
-				          "changes": { "transfer_options.pickup.address_id": "pickup_address.id" } },
-				"false": ""
-			}
-		]
-	},
-	"child": {
-		"id": "387ebe5b-b5b5-4be9-b5db-918bb9db706f",
-		"type": "Text",
-		"title": "{$datum.unit} {$datum.street}",
-		"subtitle": "{$datum.postcode} {$datum.city}, {$datum.state}"
-	}
-}
-```
+For the multi-step "create or update address, then link the item" pattern, see the **Address
+save pattern** in [actions.md](./actions.md#address-save-pattern-create-and-edit-flows).
 
 ---
 
