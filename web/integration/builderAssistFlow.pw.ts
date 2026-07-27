@@ -1,5 +1,5 @@
 import { expect, type Locator, test } from "@playwright/test";
-import type { UI_Flow as ServerFlow } from "evy-types";
+import type { UI_Flow as ServerFlow, UI_ActionBranch } from "evy-types";
 import { MARKETPLACE_SERVICE } from "../../services/marketplace/src/resources";
 import type { ServiceResource } from "../app/api/sync";
 import { openAppWithFullFlows } from "./flowFixtures";
@@ -67,8 +67,14 @@ function getBuilderAssistToken(field: Locator, text: string): Locator {
 	});
 }
 
+type BuilderAssistAction = {
+	condition: string;
+	false: UI_ActionBranch;
+	true: UI_ActionBranch;
+};
+
 function buildBuilderAssistFlow(
-	buttonActions: { condition: string; false: string; true: string }[] = [
+	buttonActions: BuilderAssistAction[] = [
 		{ condition: "", false: "", true: "" },
 	],
 ): ServerFlow[] {
@@ -116,7 +122,7 @@ function buildBuilderAssistFlow(
 
 async function openBuilderAssistFlow(
 	page: Parameters<typeof openAppWithFullFlows>[0],
-	buttonActions?: { condition: string; false: string; true: string }[],
+	buttonActions?: BuilderAssistAction[],
 ) {
 	await openAppWithFullFlows(
 		page,
@@ -334,9 +340,24 @@ test.describe("Builder Assist flows", () => {
 	test("shows resource ids as named chips in update() argument fields", async ({
 		page,
 	}) => {
-		const updateBranch = `{update(${MARKETPLACE_SERVICE},${ITEM_RESOURCE_ID},{fk: ${ITEM_RESOURCE_ID}.id, archivedAt: null},{archivedAt: now()})}`;
 		await openBuilderAssistFlow(page, [
-			{ condition: "", false: "", true: updateBranch },
+			{
+				condition: "",
+				false: "",
+				true: {
+					fn: "update",
+					service: MARKETPLACE_SERVICE,
+					resource: ITEM_RESOURCE_ID,
+					mode: "store",
+					filter: {
+						fk: `${ITEM_RESOURCE_ID}.id`,
+						archivedAt: "null",
+					},
+					changes: {
+						archivedAt: "now()",
+					},
+				},
+			},
 		]);
 
 		await page.getByText("Open checkout", { exact: true }).first().click();

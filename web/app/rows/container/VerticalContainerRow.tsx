@@ -11,7 +11,6 @@ export default defineRow(typeName, {
 		actions: {},
 		visible: "true",
 		title: "Vertical container row title",
-		children: [],
 	} satisfies RowConfig,
 	render: (row) => {
 		const title = row.config.title;

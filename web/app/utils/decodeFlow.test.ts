@@ -32,7 +32,9 @@ describe("normalizeServerRow", () => {
 		const partial = makeServerRow({
 			type: "Button",
 			label: "OK",
-			actions: { tap: [{ condition: "", false: "", true: "{close()}" }] },
+			actions: {
+				tap: [{ condition: "", false: "", true: { fn: "close" } }],
+			},
 		});
 
 		const n = normalizeServerRow(partial);

@@ -166,7 +166,7 @@ function generateSwift(schema: CoreResourcesSchema): string {
 
 	lines.push("");
 
-	// All resource names (legacy compat / set-style access)
+	// All resource names (set-style access)
 	lines.push(
 		"public let EVY_CORE_RESOURCE_NAMES: Set<String> = Set(EVYCoreResource.allCases.map { $0.rawValue })",
 	);

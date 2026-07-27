@@ -6,7 +6,7 @@ import type {
 } from "evy-types";
 import {
 	parseActionStringToInvocation,
-	serializeInvocationToLegacyString,
+	serializeInvocationToEditorString,
 } from "evy-types/actionAst";
 import { splitFunctionArguments } from "./functionArgs";
 import { forEachRowInFlows, rowLocationLabel } from "./rowTraversal";
@@ -68,8 +68,13 @@ function isActionFunction(name: string): name is ActionFunction {
  * never persisted, and the API rejects it.
  */
 export function branchToEditableString(branch: UI_ActionBranch): string {
-	if (typeof branch === "string") return branch;
-	return serializeInvocationToLegacyString(branch);
+	if (typeof branch === "string") {
+		if (branch === "") return "";
+		throw new Error(
+			`Stored action branches must be structured invocations, got string: ${branch}`,
+		);
+	}
+	return serializeInvocationToEditorString(branch);
 }
 
 /**

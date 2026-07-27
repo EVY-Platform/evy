@@ -117,9 +117,7 @@ final class SduiRowAttributeContractTests: XCTestCase {
     XCTAssertTrue(row.actions.delete.isEmpty)
   }
 
-  /// The dual-read window: a row may store either branch form, and both must
-  /// decode. A structured branch failing to decode would make the whole row
-  /// vanish, which is the failure this migration exists to remove.
+  /// Structured action branches decode into the row model without a string fallback.
   func testRowDecodesStructuredActionBranches() throws {
     let rowData = try JSONSerialization.data(
       withJSONObject: [

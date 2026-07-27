@@ -33,7 +33,6 @@ export default defineRow(typeName, {
 		visible: "true",
 		title: "Tab container row title",
 		segments: ["X", "Y", "Z"],
-		children: [],
 	} satisfies RowConfig,
 	Component: function TabContainerRowInner({ rowId }: { rowId: string }) {
 		const row = useRowById(rowId);

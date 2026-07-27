@@ -125,6 +125,22 @@ export async function installMockWebSocket(
 					});
 					return;
 				}
+				if (request.method === "resources") {
+					this.respond({
+						jsonrpc: "2.0",
+						id: request.id,
+						result: {
+							services: [
+								{
+									id: EVY_CORE_SERVICE,
+									name: "EVY",
+									resources: [],
+								},
+							],
+						},
+					});
+					return;
+				}
 
 				if (
 					request.method !== "create" &&

@@ -5,6 +5,7 @@ declare global {
 	interface Window {
 		__TEST_FLOWS__?: UI_Flow[];
 		__TEST_SERVICE_RESOURCES__?: ServiceResource[];
+		__TEST_SERVICE_NAMES__?: Record<string, string>;
 		__TEST_RESOURCE_ATTRIBUTE_METADATA__?: ResourceAttributeMetadata[];
 	}
 }

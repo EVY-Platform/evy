@@ -275,7 +275,7 @@ Each branch is either the empty string, meaning "do nothing", or a **structured 
 
 The shape of every invocation is defined in [`types/schema/sdui/action.schema.json`](../../types/schema/sdui/action.schema.json) and enforced by the API on write, so a malformed action is rejected at the source rather than failing silently when tapped.
 
-Legacy `{functionName(arg1, arg2)}` **strings are no longer accepted** — the API rejects them on write, and clients cannot decode them. Stored rows were migrated to structured invocations and the one-off migration script has been removed; a regression test keeps the shipped fixtures from drifting back.
+Legacy `{functionName(arg1, arg2)}` **strings are no longer accepted** — the API rejects them on write, and clients cannot decode them. Stored rows use structured invocations only; a regression test keeps the shipped fixtures from drifting back.
 
 Value expressions inside `data`, `filter`, `changes` and `query` remain strings and resolve exactly as before (data path, `$datum`, quoted literal, bare word), because whether a bare word is a path or a literal depends on the data present when the action runs.
 

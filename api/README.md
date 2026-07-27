@@ -75,7 +75,7 @@ When discovery succeeds, sync includes the aggregated service/resource catalog a
 
 ### Flow submissions
 
-A flow that contains a `create(...,submit)` action must declare `submits` on its `DATA_EVY_Flow` record. The web builder validates the full flat graph before saving; iOS uses the declaration for draft scope. A one-off data migration backfills missing declarations for flows with exactly one submit target.
+A flow that contains a `create(...,submit)` action must declare `submits` on its `DATA_EVY_Flow` record. The web builder validates the full flat graph before saving; iOS uses the declaration for draft scope.
 
 ### Notifications
 

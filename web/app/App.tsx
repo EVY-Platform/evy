@@ -366,9 +366,15 @@ export function App() {
 		: resourceAttributeMetadata;
 	const initialServiceNamesById = testFlows
 		? new Map(
-				(testServiceResources ?? []).map((resource) => [
-					resource.fkServiceId,
-					resource.fkServiceId,
+				[
+					...new Set(
+						(testServiceResources ?? []).map(
+							(resource) => resource.fkServiceId,
+						),
+					),
+				].map((serviceId) => [
+					serviceId,
+					window.__TEST_SERVICE_NAMES__?.[serviceId] ?? serviceId,
 				]),
 			)
 		: serviceNamesById;
