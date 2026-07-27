@@ -28,6 +28,11 @@ function evyFindFirst(args: string): EVYFunctionOutput {
 	return { value: data?.trim() ?? "" };
 }
 
+function evySort(args: string): EVYFunctionOutput {
+	const [data] = args.split(",");
+	return { value: data?.trim() ?? "" };
+}
+
 function evyFormatCurrency(): EVYFunctionOutput {
 	return { value: "1.00", prefix: "$" };
 }
@@ -179,6 +184,7 @@ const functionHandlers: Record<string, EVYFunctionHandler> = {
 	count: evyCount,
 	length: evyLength,
 	findFirst: evyFindFirst,
+	sort: evySort,
 	formatCurrency: evyFormatCurrency,
 	formatDimension: evyFormatDimension,
 	formatWeight: evyFormatWeight,

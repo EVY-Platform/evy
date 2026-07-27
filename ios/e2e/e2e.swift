@@ -1512,7 +1512,7 @@ class E2ETestBase: XCTestCase {
           subtitle:
             "Be advised someone may request to pick up {\(MARKETPLACE_ITEMS_RESOURCE_ID).title} earlier than your selected timeslot.",
           visible:
-            "{selected_pickup_timeslot != earliestDatetime(\(MARKETPLACE_ITEMS_RESOURCE_ID).pickup_selection)}",
+            "{selected_pickup_timeslot != findFirst(sort(\(MARKETPLACE_ITEMS_RESOURCE_ID).pickup_selection, asc))}",
           name: "Pickup earlier timeslot warning"
         ),
       ],

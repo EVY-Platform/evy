@@ -169,6 +169,7 @@ describe("idCandidates", () => {
 
 		expect(functionNames).toContain("length()");
 		expect(functionNames).toContain("count()");
+		expect(functionNames).toContain("sort()");
 		expect(functionNames).toContain("navigate()");
 		expect(functionNames).toContain("buildCurrency()");
 		expect(functionNames).toContain("formatDatetime()");

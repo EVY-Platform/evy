@@ -627,7 +627,7 @@ final class InterpreterTests: XCTestCase {
     XCTAssertEqual(time.value, "09:30")
   }
 
-  func testEarliestDatetimeReturnsChronologicallyFirstSlotFromUnsortedArray() throws {
+  func testSortScalarAscendingReturnsChronologicallyFirstSlot() throws {
     let itemKey = uniqueKey("item")
     try store(
       .dictionary([
@@ -641,7 +641,8 @@ final class InterpreterTests: XCTestCase {
       at: itemKey
     )
 
-    let earliest = try parseTextFromText("{earliestDatetime(\(itemKey).pickup_selection)}")
+    let earliest = try parseTextFromText(
+      "{findFirst(sort(\(itemKey).pickup_selection, asc))}")
     XCTAssertEqual(earliest.value, "2026-06-03T09:00:00")
 
     let scopeId = EVYDraft.ephemeralScopeId(forPageId: testPageId)
@@ -656,7 +657,7 @@ final class InterpreterTests: XCTestCase {
     )
     XCTAssertTrue(
       try EVY.evaluateFromText(
-        "{\(selectedTimeslotKey) != earliestDatetime(\(itemKey).pickup_selection)}"
+        "{\(selectedTimeslotKey) != findFirst(sort(\(itemKey).pickup_selection, asc))}"
       )
     )
 
@@ -667,8 +668,89 @@ final class InterpreterTests: XCTestCase {
     )
     XCTAssertFalse(
       try EVY.evaluateFromText(
-        "{\(selectedTimeslotKey) != earliestDatetime(\(itemKey).pickup_selection)}"
+        "{\(selectedTimeslotKey) != findFirst(sort(\(itemKey).pickup_selection, asc))}"
       )
+    )
+  }
+
+  func testSortScalarDescendingReversesOrder() throws {
+    let key = uniqueKey("times")
+    try store(
+      .array([
+        .string("2026-06-03T09:00:00"),
+        .string("2026-06-04T09:30:00"),
+      ]),
+      at: key
+    )
+
+    let latest = try parseTextFromText("{findFirst(sort(\(key), desc))}")
+    XCTAssertEqual(latest.value, "2026-06-04T09:30:00")
+  }
+
+  func testSortNumericAscendingUsesNumericComparison() throws {
+    let key = uniqueKey("amounts")
+    try store(
+      .array([
+        .int(150),
+        .int(9),
+        .int(42),
+      ]),
+      at: key
+    )
+
+    let smallest = try parseTextFromText("{findFirst(sort(\(key), asc))}")
+    XCTAssertEqual(smallest.value, "9")
+  }
+
+  func testSortKeyedRecordsPlacesMissingValuesLast() throws {
+    let key = uniqueKey("records")
+    try store(
+      .array([
+        .dictionary(["id": .string("a"), "price": .int(50)]),
+        .dictionary(["id": .string("b")]),
+        .dictionary(["id": .string("c"), "price": .int(10)]),
+      ]),
+      at: key
+    )
+
+    let cheapest = try parseTextFromText("{findFirst(sort(\(key), asc, price)).id}")
+    XCTAssertEqual(cheapest.value, "c")
+  }
+
+  func testSortKeyedRecordsIsStableForEqualKeys() throws {
+    let key = uniqueKey("records")
+    try store(
+      .array([
+        .dictionary(["id": .string("first"), "rank": .int(1)]),
+        .dictionary(["id": .string("second"), "rank": .int(1)]),
+      ]),
+      at: key
+    )
+
+    let first = try parseTextFromText("{findFirst(sort(\(key), asc, rank)).id}")
+    XCTAssertEqual(first.value, "first")
+  }
+
+  func testFindFirstOneArgReturnsFirstElement() throws {
+    let key = uniqueKey("items")
+    try store(
+      .array([
+        .dictionary(["id": .string("first"), "value": .string("A")]),
+        .dictionary(["id": .string("second"), "value": .string("B")]),
+      ]),
+      at: key
+    )
+
+    let result = try parseTextFromText("{findFirst(\(key)).id}")
+    XCTAssertEqual(result.value, "first")
+  }
+
+  func testSortRejectsInvalidDirection() throws {
+    let key = uniqueKey("times")
+    try store(.array([.string("2026-06-03T09:00:00")]), at: key)
+
+    XCTAssertThrowsError(
+      try parseTextFromText("{findFirst(sort(\(key), sideways))}")
     )
   }
 

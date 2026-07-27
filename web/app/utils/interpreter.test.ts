@@ -105,6 +105,20 @@ describe("parseText", () => {
 		).toBe(MARKETPLACE_RESOURCE.SELLING_REASONS);
 	});
 
+	it("resolves findFirst(sort(collection, asc)) to the collection argument", () => {
+		expect(
+			parseText(
+				`{findFirst(sort(${MARKETPLACE_RESOURCE.SELLING_REASONS}, asc))}`,
+			),
+		).toBe(MARKETPLACE_RESOURCE.SELLING_REASONS);
+	});
+
+	it("resolves sort to the collection argument for mock preview", () => {
+		expect(
+			parseText(`{sort(${MARKETPLACE_RESOURCE.SELLING_REASONS}, asc)}`),
+		).toBe(MARKETPLACE_RESOURCE.SELLING_REASONS);
+	});
+
 	it("keeps text after findFirst as a normal suffix", () => {
 		expect(
 			parseText(

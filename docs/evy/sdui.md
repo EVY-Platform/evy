@@ -258,7 +258,7 @@ A row's action list for a given trigger runs **in order**. For each entry: if it
 - Condition helpers (used like functions in the expression):
 	- `count(var)` — number of elements in a list/array, e.g. `{count(photo_ids) > 0}`
 	- `length(var)` — number of characters in a string, e.g. `{length(title) > 0}`
-	- `earliestDatetime(var)` — chronologically earliest ISO datetime string in an array, e.g. `{selected_pickup_timeslot != earliestDatetime(item.pickup_selection)}`
+	- `sort(var, asc|desc [, field])` — stable sort of a collection, e.g. `{findFirst(sort(item.pickup_selection, asc))}` for the earliest timeslot
 
 #### Branches (`true` / `false`)
 

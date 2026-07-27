@@ -34,7 +34,6 @@ describe("procedures manifest validation", () => {
 			"procedures.place_search.service must be a non-empty string",
 		);
 	});
-
 });
 
 describe("result attributes", () => {

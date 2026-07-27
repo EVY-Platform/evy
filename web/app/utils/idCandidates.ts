@@ -62,6 +62,7 @@ const functionCandidateNames = [
 	"count",
 	"length",
 	"findFirst",
+	"sort",
 	"if",
 	"formatDecimal",
 	"formatMetricLength",

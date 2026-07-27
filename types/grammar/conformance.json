@@ -658,6 +658,102 @@
 				"ast": null
 			},
 			"notes": "Store mode requires a non-empty filter."
+		},
+		{
+			"id": "expression-sort-scalar-asc-first",
+			"category": "expression",
+			"platforms": ["ios"],
+			"input": "{findFirst(sort(times_holder, asc))}",
+			"data": {
+				"times_holder": [
+					"2026-06-04T09:30:00",
+					"2026-06-03T09:00:00",
+					"2026-06-03T10:00:00"
+				]
+			},
+			"expect": {
+				"text": "2026-06-03T09:00:00"
+			},
+			"notes": "Scalar datetime strings sort chronologically via lexicographic asc."
+		},
+		{
+			"id": "expression-sort-keyed-asc-missing-last",
+			"category": "expression",
+			"platforms": ["ios"],
+			"input": "{findFirst(sort(records_holder, asc, price)).id}",
+			"data": {
+				"records_holder": [
+					{ "id": "a", "price": 50 },
+					{ "id": "b" },
+					{ "id": "c", "price": 10 }
+				]
+			},
+			"expect": {
+				"text": "c"
+			},
+			"notes": "Missing/null keyed values are always last regardless of direction."
+		},
+		{
+			"id": "expression-find-first-one-arg",
+			"category": "expression",
+			"platforms": ["ios"],
+			"input": "{findFirst(records_holder).id}",
+			"data": {
+				"records_holder": [
+					{ "id": "first", "value": "A" },
+					{ "id": "second", "value": "B" }
+				]
+			},
+			"expect": {
+				"text": "first"
+			}
+		},
+		{
+			"id": "comparison-earliest-timeslot-warning",
+			"category": "comparison",
+			"platforms": ["ios"],
+			"input": "{selected_timeslot != findFirst(sort(times_holder, asc))}",
+			"data": {
+				"selected_timeslot": "2026-06-03T10:00:00",
+				"times_holder": [
+					"2026-06-04T09:30:00",
+					"2026-06-03T09:00:00",
+					"2026-06-03T10:00:00"
+				]
+			},
+			"expect": {
+				"value": true
+			},
+			"notes": "Pickup warning visibility when selected slot is not the earliest."
+		},
+		{
+			"id": "comparison-earliest-timeslot-selected",
+			"category": "comparison",
+			"platforms": ["ios"],
+			"input": "{selected_timeslot != findFirst(sort(times_holder, asc))}",
+			"data": {
+				"selected_timeslot": "2026-06-03T09:00:00",
+				"times_holder": [
+					"2026-06-04T09:30:00",
+					"2026-06-03T09:00:00",
+					"2026-06-03T10:00:00"
+				]
+			},
+			"expect": {
+				"value": false
+			}
+		},
+		{
+			"id": "expression-sort-invalid-direction-throws",
+			"category": "expression",
+			"platforms": ["ios"],
+			"input": "{findFirst(sort(times_holder, sideways))}",
+			"data": {
+				"times_holder": ["2026-06-03T09:00:00"]
+			},
+			"expect": {
+				"error": true
+			}
 		}
 	]
 }

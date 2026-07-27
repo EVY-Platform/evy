@@ -41,15 +41,22 @@ Variable: "Hello"
 Output: 5
 ```
 
-#### earliestDatetime
+#### sort
 
-Returns the chronologically earliest local ISO datetime string from an array of timeslot strings. Sorts lexicographically (valid for `yyyy-MM-ddTHH:mm:ss` values). Empty or missing arrays return an empty string.
+Returns a new array sorted from a collection. Direction is `asc` or `desc`. With an optional field path, sorts record arrays by that field; omit the field for scalar arrays (strings, numbers). Sorting is stable. Missing or null keyed values are always placed last. Numeric values compare numerically; strings compare lexicographically.
 
 ```
-earliestDatetime({_variable_type_string_collection_})
-Collection: ["2026-06-04T09:30:00", "2026-06-03T09:00:00"]
-Output: 2026-06-03T09:00:00
+sort({_collection_}, asc)
+sort({_collection_}, desc)
+sort({_collection_}, asc, {_field_})
+sort({_collection_}, desc, {_nested.field_})
 ```
+
+Collection: `["2026-06-04T09:30:00", "2026-06-03T09:00:00"]`
+
+`sort(collection, asc)` → `["2026-06-03T09:00:00", "2026-06-04T09:30:00"]`
+
+ISO datetime strings in `yyyy-MM-ddTHH:mm:ss` form sort chronologically via lexicographic comparison.
 
 #### now
 
@@ -62,11 +69,18 @@ Output: 2026-07-17T03:12:45Z
 
 #### findFirst
 
-Finds the first datum in a collection that matches. With two arguments and no comparison operators in the second, matches on the record `id` field (id shorthand). With a boolean expression as the second argument, evaluates that expression against each record and returns the first match. The returned datum can be chained with a property accessor (`.value`, `.fk`, `.data.time`, …).
+Finds the first datum in a collection. With one argument, returns the first element. With two arguments and no comparison operators in the second, matches on the record `id` field (id shorthand). With a boolean expression as the second argument, evaluates that expression against each record and returns the first match. The returned datum can be chained with a property accessor (`.value`, `.fk`, `.data.time`, …).
 
 ```
+findFirst({_collection_})
 findFirst({_collection_}, {_id_})
 findFirst({_collection_}, {_expression_})
+```
+
+Earliest timeslot from a scalar datetime array:
+
+```
+{findFirst(sort(item.pickup_selection, asc))}
 ```
 
 **Operand resolution** (each side of an atomic comparison, first match wins):
