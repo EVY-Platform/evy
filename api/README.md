@@ -41,11 +41,10 @@ sequenceDiagram
 
 ### Procedures
 
-`api{service, method, data}` calls a procedure rather than reading a resource. Which procedures exist, who owns them, what they accept and return, and how often they may be called are all declared in `types/schema/resources/procedures.json` and generated into `evy-types/procedures`.
+`api{service, method, data}` calls a procedure rather than reading a resource. Which procedures exist, who owns them, and what they accept and return are all declared in `types/schema/resources/procedures.json` and generated into `evy-types/procedures`.
 
-- `procedures/coreApi.ts` dispatches the procedures the gateway owns, validating request and response against the declared schemas. It asserts at load that its handler set matches the registry, so a procedure cannot become reachable without being declared — and therefore cannot skip its rate limit.
+- `procedures/coreApi.ts` dispatches the procedures the gateway owns, validating request and response against the declared schemas. It asserts at load that its handler set matches the registry, so a procedure cannot become reachable without being declared.
 - `procedures/rpc.ts` forwards a procedure declared for another service to that service's `api` method. A method the registry does not pair with the target service is rejected by name.
-- `procedures/rateLimit.ts` enforces `rateLimit.perMinute` per socket, in fixed one-minute windows. `place_search` is capped because each result costs two Google Places lookups.
 
 See [docs/evy/data.md](../docs/evy/data.md#procedures) for the manifest fields and how to add one.
 

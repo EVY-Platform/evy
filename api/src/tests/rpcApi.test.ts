@@ -1,6 +1,5 @@
 import {
 	afterAll,
-	afterEach,
 	beforeAll,
 	beforeEach,
 	describe,
@@ -15,11 +14,6 @@ import {
 	MARKETPLACE_SERVICE,
 } from "../../../services/marketplace/src/resources";
 import { assertHandlersMatchRegistry } from "../procedures/coreApi";
-import {
-	type PlacesClientLike,
-	setPlacesClientForTests,
-} from "../procedures/placeSearch";
-import { rateLimiter } from "../procedures/rateLimit";
 import {
 	asEvyDb,
 	clearAllTestTables,
@@ -145,7 +139,7 @@ describe("core procedure registry", () => {
 	});
 
 	it("fails when a handler is reachable but undeclared", () => {
-		// The dangerous direction: undeclared means no rate limit was applied.
+		// The dangerous direction: undeclared means it bypassed the registry contract.
 		expect(() =>
 			assertHandlersMatchRegistry(
 				["place_search"],
@@ -154,72 +148,7 @@ describe("core procedure registry", () => {
 		).toThrow("handled but not declared");
 	});
 
-	it("carries the rate limit and result attributes for place_search", () => {
-		expect(PROCEDURES.place_search.perMinute).toBe(30);
+	it("carries the result attributes for place_search", () => {
 		expect(PROCEDURES.place_search.resultAttributes).toContain("street");
-	});
-});
-
-describe("api rate limiting", () => {
-	// A stub client, so the limit is reached without making real Places calls.
-	beforeEach(() => {
-		rateLimiter.reset();
-		setPlacesClientForTests({
-			autocompletePlaces: async () => [{ suggestions: [] }],
-			getPlace: async () => [{}],
-		} as unknown as PlacesClientLike);
-	});
-
-	afterEach(() => {
-		setPlacesClientForTests(undefined);
-	});
-
-	it("stops a caller that exceeds a procedure's declared limit", async () => {
-		const perMinute = PROCEDURES.place_search.perMinute ?? 0;
-		const call = () =>
-			api(
-				{
-					service: EVY_CORE_SERVICE,
-					method: "place_search",
-					data: { input: "Sydney" },
-				},
-				dataDb,
-				"socket-limit",
-			);
-
-		for (let i = 0; i < perMinute; i++) {
-			await call();
-		}
-
-		await expect(call()).rejects.toThrow(
-			'Rate limit exceeded for "place_search"',
-		);
-	});
-
-	it("does not let one caller exhaust another caller's budget", async () => {
-		const perMinute = PROCEDURES.place_search.perMinute ?? 0;
-		for (let i = 0; i < perMinute; i++) {
-			await api(
-				{
-					service: EVY_CORE_SERVICE,
-					method: "place_search",
-					data: { input: "Sydney" },
-				},
-				dataDb,
-				"socket-noisy",
-			);
-		}
-
-		await expect(
-			api(
-				{
-					service: EVY_CORE_SERVICE,
-					method: "place_search",
-					data: { input: "Sydney" },
-				},
-				dataDb,
-				"socket-quiet",
-			),
-		).resolves.toBeDefined();
 	});
 });

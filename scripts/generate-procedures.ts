@@ -25,14 +25,9 @@ const PROCEDURES_SCHEMA_PATH = join(SCHEMA_DIR, "resources", "procedures.json");
 const OUT_TS_PATH = join(OUT_TS, "procedures.ts");
 const SOURCE_LABEL = "types/schema/resources/procedures.json";
 
-interface RateLimitMeta {
-	perMinute: number;
-}
-
 interface ProcedureMeta {
 	service: string;
 	response: string;
-	rateLimit?: RateLimitMeta;
 }
 
 interface ProceduresSchema {
@@ -78,20 +73,6 @@ export function validateSchema(
 				);
 			}
 		}
-		if (m.rateLimit !== undefined) {
-			const limit = m.rateLimit as Record<string, unknown>;
-			if (
-				typeof limit !== "object" ||
-				limit === null ||
-				typeof limit.perMinute !== "number" ||
-				!Number.isInteger(limit.perMinute) ||
-				limit.perMinute <= 0
-			) {
-				throw new Error(
-					`${SOURCE_LABEL}: procedures.${name}.rateLimit.perMinute must be a positive integer`,
-				);
-			}
-		}
 	}
 }
 
@@ -126,10 +107,6 @@ export async function generateTypeScript(
 		);
 		lines.push(`\t\tservice: ${JSON.stringify(meta.service)},`);
 		lines.push(
-			"\t\t/** Calls allowed per socket per minute; null means unmetered. */",
-		);
-		lines.push(`\t\tperMinute: ${meta.rateLimit?.perMinute ?? "null"},`);
-		lines.push(
 			"\t\t/** Bindable attribute names; empty when not a bindable source. */",
 		);
 		lines.push(
@@ -141,7 +118,6 @@ export async function generateTypeScript(
 	lines.push("");
 	lines.push("interface ProcedureMeta {");
 	lines.push("\treadonly service: string;");
-	lines.push("\treadonly perMinute: number | null;");
 	lines.push("\treadonly resultAttributes: readonly string[];");
 	lines.push("}");
 	lines.push("");

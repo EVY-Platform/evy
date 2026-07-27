@@ -59,11 +59,10 @@ A procedure is an RPC call that runs code rather than reading or writing a resou
 | --- | --- |
 | `service` | The service UUID that owns it. Core procedures run in the gateway; anything else is forwarded to that service. |
 | `response` | Schema path, relative to `types/schema/`. The generator reads it for the result attributes the builder offers. Request and response are both validated at dispatch, but by handlers wired in code rather than from this file. |
-| `rateLimit.perMinute` | Optional. Calls allowed per socket per minute. Omit for unmetered. |
 
 The manifest is the single source of truth for which procedures exist:
 
-- `api/src/procedures/coreApi.ts` refuses to load if its handlers and the registry disagree. A handler with no declaration is the dangerous direction — it would be reachable while skipping the rate limit.
+- `api/src/procedures/coreApi.ts` refuses to load if its handlers and the registry disagree. A handler with no declaration is the dangerous direction — it would be reachable without a declared contract.
 - `api/src/procedures/rpc.ts` will only forward a procedure to the service that declares it.
 - The web builder offers a `{$api:<method>}` source's attributes from the registry, derived from the response schema at generation time. Only array-of-object responses have them; `sync` is callable but its envelope is not a bindable source.
 

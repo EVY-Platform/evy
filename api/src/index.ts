@@ -29,9 +29,7 @@ async function startServer(): Promise<void> {
 	initCoreNotifications(broadcast);
 	await initServiceAdapters(appDb, broadcast);
 
-	server.register("api", (params: unknown, socketId: string) =>
-		api(params, appDb, socketId),
-	);
+	server.register("api", (params: unknown) => api(params, appDb));
 	server.register("sync", (params: unknown) => syncMethod(params, appDb));
 	server.register("resources", () => resourcesMethod(appDb));
 	server.register("cancelUpload", cancelUpload).protected();

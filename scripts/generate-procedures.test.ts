@@ -10,7 +10,6 @@ const VALID = {
 		place_search: {
 			service: "svc-1",
 			response: "rpc/placeSearch.response.schema.json",
-			rateLimit: { perMinute: 30 },
 		},
 	},
 };
@@ -36,13 +35,6 @@ describe("procedures manifest validation", () => {
 		);
 	});
 
-	it("rejects a rate limit that is not a positive integer", () => {
-		const manifest = structuredClone(VALID);
-		manifest.procedures.place_search.rateLimit.perMinute = 0;
-		expect(() => validateSchema(manifest)).toThrow(
-			"rateLimit.perMinute must be a positive integer",
-		);
-	});
 });
 
 describe("result attributes", () => {
@@ -64,7 +56,7 @@ describe("result attributes", () => {
 });
 
 describe("generated registry", () => {
-	it("emits metadata and a null limit for unlimited procedures", async () => {
+	it("emits metadata for each procedure", async () => {
 		const output = await generateTypeScript(
 			{
 				procedures: {
@@ -83,8 +75,6 @@ describe("generated registry", () => {
 
 		expect(output).toContain('"sync"');
 		expect(output).toContain('"place_search"');
-		expect(output).toContain("perMinute: null");
-		expect(output).toContain("perMinute: 30");
 		expect(output).toContain('resultAttributes: ["id"]');
 	});
 });
