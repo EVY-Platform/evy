@@ -692,19 +692,6 @@ private func evyFormatIsoDatetime(
   return EVYFunctionOutput(value: formatted, prefix: nil, suffix: nil)
 }
 
-@MainActor
-func evyBuildCurrency(
-  _ args: String,
-  _ value: String
-) throws -> Data {
-  let existingCurrency = evyExistingCurrency(for: args) ?? "AUD"
-  let builtCurrency = EVYJson.dictionary([
-    "currency": .string(existingCurrency),
-    "value": evyJsonValue(from: value),
-  ])
-  return try JSONEncoder().encode(builtCurrency)
-}
-
 private func evyDoubleValue(from json: EVYJson, type: String) throws -> Double {
   switch json {
   case .int(let intValue):
@@ -854,7 +841,8 @@ private func evyNumericValue(_ value: String) -> Decimal? {
   return Decimal(string: trimmed)
 }
 
-private func evyJsonValue(from value: String) -> EVYJson {
+@MainActor
+func evyJsonValue(from value: String) -> EVYJson {
   let trimmedValue = value.trimmingCharacters(in: .whitespacesAndNewlines)
   if trimmedValue.isEmpty {
     return .string("")
@@ -866,17 +854,6 @@ private func evyJsonValue(from value: String) -> EVYJson {
     return .decimal(decimalValue)
   }
   return .string(trimmedValue)
-}
-
-@MainActor
-private func evyExistingCurrency(for props: String) -> String? {
-  guard let existingData = try? EVY.getDataFromProps(props),
-    case .dictionary(let dictValue) = existingData,
-    let currencyValue = dictValue["currency"]
-  else {
-    return nil
-  }
-  return currencyValue.toString()
 }
 
 private func evyCompareValues<T: Comparable>(

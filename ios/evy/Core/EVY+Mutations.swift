@@ -355,11 +355,16 @@ extension EVY {
     destination: String
   ) throws -> (variableName: String, data: Data) {
     let destinationProps = _parsePropsFromText(destination)
-    if let (functionName, functionArgs) = EVY.parseFunctionCall(destinationProps),
-      let builtData = try dataForBuildFunction(
-        functionName, functionArgs: functionArgs, value: value.toString())
-    {
-      return (functionArgs, builtData)
+    if let (path, template) = try EVYObjectLiteral.parseDestination(from: destinationProps) {
+      let datum: EVYJson
+      if case .string(let stringValue) = value {
+        datum = evyJsonValue(from: stringValue)
+      } else {
+        datum = value
+      }
+      let resolved = EVYPlainTextResolution.resolveValues(template, datum: datum)
+      let encoded = try JSONEncoder().encode(EVYJson.dictionary(resolved))
+      return (path, encoded)
     }
     let encoded = try JSONEncoder().encode(value)
     return (destinationProps, encoded)
@@ -374,7 +379,7 @@ extension EVY {
     try updateData(data, destination: variableName, scopeId: scopeId)
   }
 
-  /// Writes a string destination value, quoting plain text when the destination is not a build* function call.
+  /// Writes a string destination value, quoting plain text when the destination is not an object template.
   static func writeRawStringValue(
     _ value: String,
     to destination: String,
@@ -389,29 +394,14 @@ extension EVY {
     scopeId: String? = nil
   ) throws {
     let destinationProps = _parsePropsFromText(destination)
-    if let (functionName, functionArgs) = EVY.parseFunctionCall(destinationProps),
-      let builtData = try dataForBuildFunction(
-        functionName, functionArgs: functionArgs, value: value)
-    {
-      try updateData(builtData, destination: functionArgs, scopeId: scopeId)
+    if let (path, template) = try EVYObjectLiteral.parseDestination(from: destinationProps) {
+      let datum = evyJsonValue(from: value)
+      let resolved = EVYPlainTextResolution.resolveValues(template, datum: datum)
+      let encoded = try JSONEncoder().encode(EVYJson.dictionary(resolved))
+      try updateData(encoded, destination: "{\(path)}", scopeId: scopeId)
       return
     }
     try updateData("\"\(value)\"".data(using: .utf8)!, destination: destination, scopeId: scopeId)
-  }
-
-  private static func dataForBuildFunction(
-    _ functionName: String,
-    functionArgs: String,
-    value: String
-  ) throws -> Data? {
-    switch functionName {
-    case "buildCurrency":
-      return try evyBuildCurrency(functionArgs, value)
-    case "buildAddress":
-      return try evyBuildAddress(functionArgs, value)
-    default:
-      return nil
-    }
   }
 
   static func updateData(_ newData: Data, destination: String, scopeId: String? = nil) throws {

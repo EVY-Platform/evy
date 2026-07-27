@@ -13,8 +13,7 @@ Formatting functions convert an input into display text. For example formatting 
   via JSON config to the clients.
 - We need to avoid defining custom coded formatting functions in mobile clients as much as
   possible due to the constraints of mobile release cycles.
-- `length`, `formatDimension`, `formatWeight`, and the Builder functions (`buildCurrency`,
-  `buildAddress`) below describe behavior as implemented in the iOS client today
+- `length`, `formatDimension`, and `formatWeight` below describe behavior as implemented in the iOS client today
   ([`ios/evy/Utils/functions.swift`](../../ios/evy/Utils/functions.swift)). Formatting
   functions here are the broader target model; web may still use stubs for some functions.
 
@@ -158,41 +157,21 @@ Outputs: {unit} {street}, {postcode} {city} {state}
 
 </details>
 
-## Builder functions
+## Destination object templates
 
-Implemented in iOS. These are not used inside `{…}` display strings the same way as formatters.
-They appear as the destination when persisting typed field text into structured data: the
-client parses the destination prop (e.g. `{buildCurrency(item.price)}`), passes the first
-argument as the prop path to the value being updated, and supplies the user's typed string as
-the second input when committing the field (see
-[`ios/evy/EVY.swift`](../../ios/evy/EVY.swift) `updateValue`).
+Implemented in iOS. Row `destination` may be a plain data path or a **path + template**
+object literal. On write, the client resolves the template with the user's typed or selected
+value bound to `$datum`, then persists the result at the path key.
 
-#### buildCurrency
-
-Builds a price JSON object `{ "currency", "value" }` from the current field text.
-
--   `currency`: taken from the existing value at the destination path when present; otherwise
-    defaults to `"AUD"`.
--   `value`: parsed from the typed string (empty → empty string; otherwise int, decimal, or
-    string as appropriate).
+Template values resolve like nested create/update action values: quoted strings stay literal,
+`$datum` is the write payload (coerced to int/decimal/string when appropriate), and bare words
+are data paths when they resolve.
 
 ```
-Destination pattern: {buildCurrency(item.price)}
+Destination pattern: {item.price: {value: $datum, currency: "AUD"}}
 Typed text: "13.50"
-Resulting data: { "currency": "AUD", "value": "13.50" }  // shape; actual storage is JSON-encoded
+Resulting data at item.price: { "currency": "AUD", "value": 13.50 }
 ```
 
-#### buildAddress
-
-Builds or updates an address object from multi-line or comma-separated typed text, merging with
-any existing address at the destination path (missing keys default to empty strings). Parsing
-supports two-line addresses, single-line comma forms, and simple street-only updates; see
-[`EVYAddressParsing.swift`](../../ios/evy/Utils/EVYAddressParsing.swift) (`evyAddressFields` /
-`evyParsedAddressFields`).
-
-```
-Destination pattern: {buildAddress(user.address)}
-Typed text (example):
-  "23-25 Rosebery Avenue, 2018\nRosebery, NSW"
-Result: address dictionary with unit, street, city, postcode, state populated per parser rules
-```
+The same object-literal syntax works in create/update `data`, `changes`, and `filter` when a
+structured object is needed outside a row destination.

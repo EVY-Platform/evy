@@ -356,11 +356,6 @@ private func standaloneBooleanLiteral(in input: String) -> Bool? {
   }
 }
 
-private let formatFunctionsByBuildFunction = [
-  "buildCurrency": "formatCurrency",
-  "buildAddress": "formatAddress",
-]
-
 func wrappedExpression(_ raw: String) -> String {
   raw.hasPrefix("{") ? raw : "{\(raw)}"
 }
@@ -381,14 +376,6 @@ private func _resolvedText(fromSource source: String?, destination: String?, edi
   guard !trimmedDestination.isEmpty else { return "" }
 
   let wrapped = wrappedExpression(trimmedDestination)
-  let inner = _parsePropsFromText(wrapped)
-  if let (functionName, functionArgs) = _parseFunctionCall(inner),
-    let formatFunction = formatFunctionsByBuildFunction[functionName]
-  {
-    return resolvedOrBlankedPerToken(
-      "{\(formatFunction)(\(functionArgs))}", editing: editing)
-  }
-
   return resolvedOrBlankedPerToken(wrapped, editing: editing)
 }
 
@@ -558,8 +545,6 @@ private func parseText(
       value = try evyFormatDuration(funcArgs, editing)
     case "formatDatetime":
       value = try evyFormatDatetime(funcArgs, editing)
-    case "buildCurrency", "buildAddress":
-      value = nil
     default:
       value = nil
     }

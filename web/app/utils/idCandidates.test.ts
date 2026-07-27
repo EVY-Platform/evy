@@ -162,7 +162,7 @@ describe("idCandidates", () => {
 		).toBe(true);
 	});
 
-	test("buildFunctionCandidates returns action, expression, formatting, and builder functions", () => {
+	test("buildFunctionCandidates returns action, expression, and formatting functions", () => {
 		const functionNames = buildFunctionCandidates().map(
 			(candidate) => candidate.name,
 		);
@@ -171,7 +171,6 @@ describe("idCandidates", () => {
 		expect(functionNames).toContain("count()");
 		expect(functionNames).toContain("sort()");
 		expect(functionNames).toContain("navigate()");
-		expect(functionNames).toContain("buildCurrency()");
 		expect(functionNames).toContain("formatDatetime()");
 		expect(new Set(functionNames).size).toBe(functionNames.length);
 		expect(

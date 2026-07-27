@@ -109,7 +109,7 @@ enum EVYActionRunner {
       action(.highlightRequired(readableFieldName(from: field)))
 
     case .select(let value):
-      try rowOperation(.select(resolvePlainTextValue(value, datum: datum)))
+      try rowOperation(.select(EVYPlainTextResolution.resolveValue(value, datum: datum)))
 
     case .navigate(let flowId, let pageId, let query):
       let expanded = try expandQueryValues(query)
@@ -157,7 +157,7 @@ enum EVYActionRunner {
         try EVY.update(
           namespace: service,
           resource: resource,
-          matching: resolvePlainTextValues(filter, datum: datum),
+          matching: EVYPlainTextResolution.resolveValues(filter, datum: datum),
           changes: resolvedChanges
         )
       case .draft:
@@ -189,13 +189,6 @@ enum EVYActionRunner {
     return expanded
   }
 
-  private static func resolvePlainTextValues(
-    _ data: [String: String],
-    datum: EVYJson?
-  ) -> [String: EVYJson] {
-    data.mapValues { resolvePlainTextValue($0, datum: datum) }
-  }
-
   private static func resolveObjectArgument(
     _ argument: EVYObjectArgument,
     datum: EVYJson?,
@@ -203,9 +196,9 @@ enum EVYActionRunner {
   ) throws -> [String: EVYJson] {
     switch argument {
     case .literal(let object):
-      return resolvePlainTextValues(object, datum: datum)
+      return EVYPlainTextResolution.resolveValues(object, datum: datum)
     case .path(let path):
-      let resolved = resolvePlainTextValue(path, datum: datum)
+      let resolved = EVYPlainTextResolution.resolveValue(path, datum: datum)
       guard case .dictionary(var dictionary) = resolved else {
         throw EVYError.invalidData(context: "data path must resolve to an object: \(path)")
       }
@@ -214,46 +207,6 @@ enum EVYActionRunner {
       }
       return dictionary
     }
-  }
-
-  private static func resolvePlainTextValue(
-    _ value: String,
-    datum: EVYJson?
-  ) -> EVYJson {
-    let trimmedValue = value.trimmingCharacters(in: .whitespacesAndNewlines)
-    if trimmedValue == EVY.datumToken, let datum {
-      return datum
-    }
-    if trimmedValue.hasPrefix(EVY.datumPrefix), let datum {
-      let props = String(trimmedValue.dropFirst(EVY.datumPrefix.count)).split(separator: ".").map(
-        String.init)
-      if let resolvedValue = datum.parsePropStrict(props: props) {
-        return resolvedValue
-      }
-    }
-
-    if value == "true" {
-      return .bool(true)
-    }
-    if value == "false" {
-      return .bool(false)
-    }
-    if value == "null" {
-      return .null
-    }
-    // Quoted values are literal strings, never data paths
-    if value.count >= 2, value.hasPrefix("\""), value.hasSuffix("\"") {
-      return .string(EVY.stripOptionalSurroundingQuotes(value))
-    }
-    // Nested object literal, e.g. data: {type: pickup, time: selected_timeslot}
-    if value.hasPrefix("{"), value.hasSuffix("}"),
-      let nestedObject = try? EVYObjectLiteral.parse(
-        from: value, context: "nested action data")
-    {
-      return .dictionary(resolvePlainTextValues(nestedObject, datum: datum))
-    }
-
-    return (try? EVY.getDataFromText("{\(value)}")) ?? .string(value)
   }
 
   private static func parsePlainTextQueryValue(_ value: String) throws -> [String] {

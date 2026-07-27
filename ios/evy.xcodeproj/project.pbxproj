@@ -7,7 +7,6 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		B6C3D4E5F60718293A4C01 /* EVYAddressParsing.swift in Sources */ = {isa = PBXBuildFile; fileRef = B6C3D4E5F60718293A4C11 /* EVYAddressParsing.swift */; };
 		B6C3D4E5F60718293A4C02 /* EVYInterpreterPreviews.swift in Sources */ = {isa = PBXBuildFile; fileRef = B6C3D4E5F60718293A4C12 /* EVYInterpreterPreviews.swift */; };
 		B6C3D4E5F60718293A4C03 /* EVYFunctionsPreviews.swift in Sources */ = {isa = PBXBuildFile; fileRef = B6C3D4E5F60718293A4C13 /* EVYFunctionsPreviews.swift */; };
 		A6B2C3D4E5F60718293A4B01 /* EVYFieldChrome.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6B2C3D4E5F60718293A4B11 /* EVYFieldChrome.swift */; };
@@ -170,7 +169,6 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
-		B6C3D4E5F60718293A4C11 /* EVYAddressParsing.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EVYAddressParsing.swift; sourceTree = "<group>"; };
 		B6C3D4E5F60718293A4C12 /* EVYInterpreterPreviews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EVYInterpreterPreviews.swift; sourceTree = "<group>"; };
 		B6C3D4E5F60718293A4C13 /* EVYFunctionsPreviews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EVYFunctionsPreviews.swift; sourceTree = "<group>"; };
 		A6B2C3D4E5F60718293A4B11 /* EVYFieldChrome.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EVYFieldChrome.swift; sourceTree = "<group>"; };
@@ -371,7 +369,6 @@
 				A6B2C3D4E5F60718293A4B12 /* EVYOptionLoading.swift */,
 				A6B2C3D4E5F60718293A4B15 /* EVYSelectionHelpers.swift */,
 				C6B2C3D4E5F60718293A4B16 /* EVYFileIdSanitizer.swift */,
-				B6C3D4E5F60718293A4C11 /* EVYAddressParsing.swift */,
 			);
 			path = Utils;
 			sourceTree = "<group>";
@@ -833,7 +830,6 @@
 				A6B2C3D4E5F60718293A4B02 /* EVYOptionLoading.swift in Sources */,
 				A6B2C3D4E5F60718293A4B05 /* EVYSelectionHelpers.swift in Sources */,
 				C6B2C3D4E5F60718293A4B06 /* EVYFileIdSanitizer.swift in Sources */,
-				B6C3D4E5F60718293A4C01 /* EVYAddressParsing.swift in Sources */,
 				B6C3D4E5F60718293A4C02 /* EVYInterpreterPreviews.swift in Sources */,
 				B6C3D4E5F60718293A4C03 /* EVYFunctionsPreviews.swift in Sources */,
 				737334FB2B7B671100D2E1CF /* EVYTextField.swift in Sources */,

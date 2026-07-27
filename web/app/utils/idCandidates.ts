@@ -75,8 +75,6 @@ const functionCandidateNames = [
 	"formatAddress",
 	"formatAddressLine1",
 	"formatAddressLine2",
-	"buildCurrency",
-	"buildAddress",
 ];
 
 function isIdBoundaryCharacter(character: string | undefined): boolean {
