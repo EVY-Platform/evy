@@ -23,7 +23,8 @@
 			"!**/node_modules",
 			"!**/test-results",
 			"!**/playwright-report",
-			"!ios/build"
+			"!ios/build",
+			"!types/generated"
 		]
 	}
 }

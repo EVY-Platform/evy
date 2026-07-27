@@ -161,7 +161,7 @@ actor EVYAPIManager {
     reconnectTask = Task { [weak self] in
       guard let self else { return }
       var delay = await self.reconnectBaseDelayNanos
-      let maxDelay = await self.reconnectMaxDelayNanos
+      let maxDelay = self.reconnectMaxDelayNanos
       while !Task.isCancelled {
         try? await Task.sleep(nanoseconds: delay)
         if Task.isCancelled { return }

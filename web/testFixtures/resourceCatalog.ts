@@ -16,14 +16,22 @@ const TEST_RESOURCE_CATALOG: ResourcesResponse = {
 				{
 					id: TEST_RESOURCE_ID.SELLING_REASONS,
 					name: "selling_reasons",
+					attributes: ["id", "value"],
 				},
 				{
 					id: TEST_RESOURCE_ID.CONDITIONS,
 					name: "conditions",
+					attributes: ["id", "value"],
 				},
 				{
 					id: TEST_RESOURCE_ID.RECORDS,
 					name: "records",
+					attributes: [
+						"id",
+						"price.currency",
+						"price.value",
+						"title",
+					],
 				},
 			],
 		},

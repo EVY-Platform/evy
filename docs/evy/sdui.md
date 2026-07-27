@@ -49,10 +49,11 @@ Rows are what are put into pages. They are the building block of the EVY server-
 -   All attributes can include:
     -   variables surrounded with curly braces: "Hello {name}, how are you?"
     -   inline icons as [Lucide](https://lucide.dev/icons) names in kebab-case, wrapped in double colons: "EVY ::image-plus:: is the best!"
+    -   Builder consequence: in text attributes the web builder resolves ids to named chips **only inside `{…}`**, because everything outside braces is literal. Binding attributes (`source`, `destination`, `secondary`), `visible`, and action arguments are whole-value expressions, so bare ids resolve there. Core resource ids are plural words (`messages`, `files`, `addresses`), so without that distinction prose like "No messages found" would be mistaken for a resource reference.
 -   [ x ]
     -   Denotes a type array of x
--   Objects and arrays
-    -   When objects or arrays are interpolated (e.g. `{[resource_id].tags}`), the UI runtime resolves the binding to structured data (e.g. a JSON array of tag objects) before rendering—use the schema and client behavior for the exact shape, not a hand-written JSON fragment in the flow string.
+	-   Objects and arrays
+	    -   When objects or arrays are interpolated (e.g. `{[resource_id].dimensions}`), the UI runtime resolves the binding to structured data before rendering—use the schema and client behavior for the exact shape, not a hand-written JSON fragment in the flow string.
 
 ```
 {
@@ -78,7 +79,7 @@ Rows are what are put into pages. They are the building block of the EVY server-
 
     // Binding fields (only on row types that declare them — see table below):
     // source — where the row reads data (display text, options, collections, or location objects)
-    // destination — where writes go; may be a builder expression such as "{buildCurrency(item.price)}"
+    // destination — where writes go; may be a plain path or an object template such as "{item.price: {value: $datum, currency: \"AUD\"}}"
     // secondary — greyed-out secondary data (Calendar only)
     // value — datum display template for option rows, e.g. "{formatCurrency($datum.price)}"
     //
@@ -110,7 +111,7 @@ Every row may declare an optional nested `sheet` row. At runtime, a `show` actio
 
 `VerticalContainer`, `HorizontalContainer`, and `TabContainer` support static `children` (and `TabContainer` uses `segments` paired with those children). Dynamic `source` + per-item `child` templates are not supported; collection-driven layouts must use static structure or row types that bind their own `source`.
 
-**Web builder:** Secondary builder pages edit a row's optional `sheet` only. For Search, the configured `child` template renders **once** inline directly under the search input as a layout sample—it is not a live search and does not mirror API results. When you add or edit a Show action, the row argument defaults to the currently configured row's `sheet` row ID when one exists; you can pick any row from any loaded flow/page instead. Show requires an explicit row ID—a `show` with no row id is not a valid invocation.
+**Web builder:** Secondary builder pages edit a row's optional `sheet` only. For Search, the configured `child` template renders **once** inline directly under the search input as a layout sample—it is not a live search and does not mirror API results. The loading spinner and `no_results` empty-state text described below are runtime-only behavior and are not previewed in the builder. When you add or edit a Show action, the row argument defaults to the currently configured row's `sheet` row ID when one exists; you can pick any row from any loaded flow/page instead. Show requires an explicit row ID—a `show` with no row id is not a valid invocation.
 
 #### Row binding fields
 
@@ -120,7 +121,7 @@ Every row may declare an optional nested `sheet` row. At runtime, a `show` actio
 | --- | --- | --- | --- | --- | --- |
 | `Input`, `TextArea` | yes | yes | no | no | Display reads `source`; writes pass raw text to `destination`. Optional `initial` seeds literal text into the draft on activation. |
 | `Dropdown`, `InlinePicker` | yes | yes | no | yes | `source` = options; `value` = `$datum` display template; selection writes raw datum to `destination`. Optional `initial` seeds the default selection — a single option identifier for `Dropdown`, and a one-element identifier array for `InlinePicker`. |
-| `Search` | yes | yes | no | no | `destination` stores the selected raw datum (builder-aware), stripping external `id` and merging over any existing draft so omitted keys (e.g. instructions) are preserved. Optional `child` is the search **result template** only (not a sheet). Optional `sheet` uses the universal overlay relationship. |
+| `Search` | yes | yes | no | no | `destination` stores the selected raw datum, stripping external `id` and merging over any existing draft so omitted keys (e.g. instructions) are preserved. Optional `child` is the search **result template** only (not a sheet). Optional `sheet` uses the universal overlay relationship. Optional `no_results` text renders under the search input in place of the result list once a search completes with zero results (iOS shows a spinner while an API-backed search is in flight). |
 | `Calendar` | yes | yes | yes | no | `source` = main timeslots to display (same binding as `destination`); `destination` = edited selection; `secondary` = greyed background slots. |
 | `TimeslotPicker` | yes | yes | no | no | Single selected timeslot string in `destination`. Optional `sheet` for confirmation overlays via a `show` action. |
 | `SelectPhoto` | yes | yes | no | no | `source` = shown images; `destination` = written image IDs. |
@@ -128,7 +129,7 @@ Every row may declare an optional nested `sheet` row. At runtime, a `show` actio
 | `PhotoGallery`, `Map`, `VerticalContainer`, `HorizontalContainer`, `TabContainer`, `InputList` | yes | no | no | no | Read-only or collection `source`. Containers render static `children` only (`TabContainer`: `segments` paired with `children`). Optional `sheet` on any row type. |
 | `Button`, `Text`, `TextAction`, `Heading` | no | no | no | no | `Button` accepts optional `style` `"primary"` (default) or `"danger"` (red on iOS). Any row type may attach optional `sheet`; `TextAction` commonly pairs with a `show` action. |
 
-Formatted vs raw: the runtime resolves `source` for display (including `{formatCurrency(...)}` expressions) and exposes raw values for writes. `destination` may use builder functions such as `{buildCurrency(item.price)}` — writes pass raw user/selection data into the builder. See [formatting.md](./formatting.md) for formatter and builder function reference.
+Formatted vs raw: the runtime resolves `source` for display (including `{formatCurrency(...)}` expressions) and exposes raw values for writes. `destination` may be a plain data path or an object template such as `{item.price: {value: $datum, currency: "AUD"}}` — writes substitute the user's typed or selected value for `$datum`. See [formatting.md](./formatting.md) for formatter and destination template reference.
 
 ### Initial values
 
@@ -145,7 +146,7 @@ Value meaning per control:
 
 Precedence: concrete destination data > an existing draft (including a prior user edit) > `initial` > the row type's existing empty bootstrap value. Reappearing or re-rendering a row never restores `initial` over a user change.
 
-Builder destinations (e.g. `{buildCurrency(item.price)}`) transform an `initial` value in the same way as an explicit user edit, so the seeded draft has the same structured shape.
+Object-template destinations (e.g. `{item.price: {value: $datum, currency: "AUD"}}`) transform an `initial` value in the same way as an explicit user edit, so the seeded draft has the same structured shape.
 
 ### Actions
 

@@ -37,21 +37,21 @@ export function makeCoreResource<
 		id: string;
 		createdAt: string;
 		updatedAt: string;
-		visibility: "public" | "private";
 	},
 >(config: {
 	table: ResourceTable;
 	validate: (raw: unknown) => T;
 	toUpdateSet: (validated: T, nowIso: string) => Record<string, unknown>;
 	normalize?: (raw: unknown) => T;
-	defaultVisibility?: "public" | "private";
+	/** Default for the payload's `visibility`; `false` for tables without the column. */
+	visibility?: "public" | "private" | false;
 }) {
 	const {
 		table,
 		validate,
 		toUpdateSet,
 		normalize,
-		defaultVisibility = "public",
+		visibility = "public",
 	} = config;
 	// Nullable columns come back from Drizzle as null, which the schemas do not
 	// allow for optional fields, so stripping nulls is the default rather than
@@ -70,15 +70,16 @@ export function makeCoreResource<
 			dataPayload !== null && typeof dataPayload === "object"
 				? (dataPayload as Record<string, unknown>)
 				: {};
-		return validate({
+		const payload: Record<string, unknown> = {
 			...record,
 			id: idOverride ?? record.id ?? crypto.randomUUID(),
 			createdAt: createdAtOverride ?? record.createdAt ?? nowIso,
 			updatedAt: nowIso,
-			visibility:
-				(record.visibility as "public" | "private" | undefined) ??
-				defaultVisibility,
-		});
+		};
+		if (visibility !== false) {
+			payload.visibility = record.visibility ?? visibility;
+		}
+		return validate(payload);
 	}
 
 	async function list(

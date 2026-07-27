@@ -54,10 +54,13 @@ import Observation
       ) { [weak self] notification in
         guard let self else { return }
         let change = EVYValueChange(notification: notification)
-        if watches.contains(where: { $0.isAffected(by: change) }) {
-          MainActor.assumeIsolated {
-            self.value = EVY.withScope(self.scope) { recompute() }
+        // `Watch.isAffected` is main-actor isolated like the recompute below,
+        // so both run inside the same asserted region.
+        MainActor.assumeIsolated {
+          guard watches.contains(where: { $0.isAffected(by: change) }) else {
+            return
           }
+          self.value = EVY.withScope(self.scope) { recompute() }
         }
       }
     )

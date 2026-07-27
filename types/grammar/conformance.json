@@ -733,12 +733,12 @@
 					"resource": "messages",
 					"mode": "inline",
 					"data": {
-						"status": "\"pending\"",
+						"status": "pending",
 						"type": "pickup"
 					}
 				}
 			},
-			"notes": "Value expressions cross over verbatim, quotes included: whether `pickup` is a path or a literal is decided at execution, not at conversion."
+			"notes": "Surrounding quotes on map values are stripped at conversion; whether `pickup` is a path or a literal is decided at execution."
 		},
 		{
 			"id": "ast-convert-create-from-path",

@@ -167,16 +167,6 @@
 				"length": 600,
 				"weight": 10
 			},
-			"tags": [
-				{
-					"id": "8e1cd2bf-d94f-4bb0-bd68-fc74434deabe",
-					"value": "iPhone"
-				},
-				{
-					"id": "1eedac33-eb0b-4796-9853-50ad4036179f",
-					"value": "Apple"
-				}
-			],
 			"payment_methods": {
 				"cash": true,
 				"app": true
@@ -224,16 +214,6 @@
 				"length": 600,
 				"weight": 10
 			},
-			"tags": [
-				{
-					"id": "8e1cd2bf-d94f-4bb0-bd68-fc74434deabe",
-					"value": "iPhone"
-				},
-				{
-					"id": "3d9f5f37-ff23-40fb-8260-2f67a67f2d90",
-					"value": "Appliance"
-				}
-			],
 			"payment_methods": {
 				"cash": true,
 				"app": false

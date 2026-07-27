@@ -1,4 +1,5 @@
 import { describe, expect, it } from "bun:test";
+import { STANDARD_FORMATTERS } from "evy-types/standardFormatters";
 import { TEST_RESOURCE_ID } from "../../testFixtures/resourceCatalog";
 import { parseText } from "./interpreter";
 
@@ -11,7 +12,12 @@ describe("parseText", () => {
 	});
 
 	it("resolves formatCurrency placeholder", () => {
-		expect(parseText("{formatCurrency()}")).toContain("$");
+		expect(
+			parseText("{formatCurrency()}", {
+				formatters: STANDARD_FORMATTERS,
+				resolvePath: () => ({ currency: "AUD", value: "1.00" }),
+			}),
+		).toContain("$");
 	});
 
 	it("formats an RFC3339 datetime with a date pattern", () => {

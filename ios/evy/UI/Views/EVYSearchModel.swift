@@ -80,6 +80,10 @@ struct EVYSearchResult: Equatable, Identifiable {
 @Observable
 final class EVYSearchModel {
   private(set) var results: [EVYSearchResult] = []
+  /// True while an API search request is in flight.
+  private(set) var isSearching = false
+  /// True once a search has completed (success or failure) since the last `clearResults()`.
+  private(set) var hasSearched = false
 
   private let resultTemplate: UI_Row?
   private let scopeId: String?
@@ -98,9 +102,14 @@ final class EVYSearchModel {
 
   func clearResults() {
     results = []
+    hasSearched = false
+    isSearching = false
   }
 
   func search(query: String) async {
+    isSearching = true
+    defer { isSearching = false }
+
     do {
       let response = try await requester.search(input: query)
 
@@ -111,9 +120,11 @@ final class EVYSearchModel {
         resultTemplate: resultTemplate,
         scopeId: scopeId
       )
+      hasSearched = true
     } catch {
       guard !Task.isCancelled else { return }
       results = []
+      hasSearched = true
       NotificationCenter.default.post(name: .evyErrorOccurred, object: error)
     }
   }

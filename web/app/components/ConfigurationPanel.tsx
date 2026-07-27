@@ -22,6 +22,7 @@ import {
 	buildRowAttributeCandidates,
 	createGetAttributeCandidatesForQualifier,
 	type IdCandidate,
+	type IdDisplayScope,
 } from "../utils/idCandidates";
 import {
 	findPageReferences,
@@ -47,6 +48,7 @@ function ConfigTextField({
 	labelClassName,
 	fieldClassName = "evy-mb-2",
 	candidates,
+	scope,
 	getAttributeCandidatesForQualifier,
 }: {
 	id: string;
@@ -54,6 +56,9 @@ function ConfigTextField({
 	value: string;
 	onChange: (next: string) => void;
 	candidates: IdCandidate[];
+	// Required: content fields are EVY text, bindings and conditions are
+	// expressions, and the two resolve ids differently.
+	scope: IdDisplayScope;
 	placeholder?: string;
 	ariaLabel?: string;
 	labelClassName?: string;
@@ -71,6 +76,7 @@ function ConfigTextField({
 				placeholder={placeholder}
 				ariaLabel={ariaLabel}
 				labelClassName={labelClassName}
+				scope={scope}
 				getAttributeCandidatesForQualifier={
 					getAttributeCandidatesForQualifier
 				}
@@ -345,6 +351,7 @@ export function ConfigurationPanel() {
 							updateRowContent(field.name, next, configRow.id)
 						}
 						candidates={builderAssistCandidates}
+						scope="text"
 						getAttributeCandidatesForQualifier={
 							getAttributeCandidatesForQualifier
 						}
@@ -432,6 +439,7 @@ export function ConfigurationPanel() {
 							updateRowRoot(field, next, configRow.id)
 						}
 						candidates={builderAssistCandidates}
+						scope="expression"
 						getAttributeCandidatesForQualifier={
 							getAttributeCandidatesForQualifier
 						}
@@ -458,6 +466,7 @@ export function ConfigurationPanel() {
 							updateRowRoot("visible", next, configRow.id)
 						}
 						candidates={builderAssistCandidates}
+						scope="expression"
 						getAttributeCandidatesForQualifier={
 							getAttributeCandidatesForQualifier
 						}

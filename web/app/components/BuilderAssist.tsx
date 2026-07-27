@@ -21,6 +21,7 @@ import {
 	getCandidateInsertValue,
 	getIdDisplayParts,
 	type IdCandidate,
+	type IdDisplayScope,
 } from "../utils/idCandidates";
 import {
 	findSuggestionContextAtCursor,
@@ -39,6 +40,7 @@ type BuilderAssistProps = {
 	ariaLabel?: string;
 	labelClassName?: string;
 	multiline?: boolean;
+	scope?: IdDisplayScope;
 	getAttributeCandidatesForQualifier?: (qualifier: string) => IdCandidate[];
 };
 
@@ -52,6 +54,7 @@ export function BuilderAssist({
 	ariaLabel,
 	labelClassName,
 	multiline,
+	scope = "expression",
 	getAttributeCandidatesForQualifier,
 }: BuilderAssistProps) {
 	const generatedId = useId();
@@ -77,8 +80,8 @@ export function BuilderAssist({
 	const isSelectingOptionRef = useRef(false);
 
 	const displayParts = useMemo(
-		() => getIdDisplayParts(value, candidates),
-		[value, candidates],
+		() => getIdDisplayParts(value, candidates, scope),
+		[value, candidates, scope],
 	);
 
 	const filteredCandidates = useMemo(() => {

@@ -34,3 +34,14 @@ export function consumeCapturedPosition(): { x: number; y: number } | null {
 	capturedCenter = null;
 	return pos;
 }
+
+/**
+ * Same as capturePageFramePosition, but for nested rows that don't know
+ * their pageId — resolves the enclosing page frame from the DOM instead.
+ */
+export function capturePageFrameForElement(element: Element): void {
+	const el = element.closest("[data-canvas-page-frame][data-page-id]");
+	if (el instanceof HTMLElement) {
+		capturedCenter = getElementCenter(el);
+	}
+}

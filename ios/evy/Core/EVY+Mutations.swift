@@ -350,19 +350,40 @@ extension EVY {
     }
   }
 
+  /// Resolves an object-template destination (`{path: {…$datum…}}`) into the
+  /// path it writes to and the encoded record to write. Returns nil when the
+  /// destination is a plain path rather than a template.
+  private static func resolveObjectTemplateDestination(
+    destinationProps: String,
+    datum: EVYJson
+  ) throws -> (path: String, data: Data)? {
+    guard let (path, template) = try EVYObjectLiteral.parseDestination(from: destinationProps)
+    else {
+      return nil
+    }
+    let resolved = EVYPlainTextResolution.resolveValues(template, datum: datum)
+    return (path, try JSONEncoder().encode(EVYJson.dictionary(resolved)))
+  }
+
   static func prepareDraftData(
     value: EVYJson,
     destination: String
   ) throws -> (variableName: String, data: Data) {
     let destinationProps = _parsePropsFromText(destination)
-    if let (functionName, functionArgs) = EVY.parseFunctionCall(destinationProps),
-      let builtData = try dataForBuildFunction(
-        functionName, functionArgs: functionArgs, value: value.toString())
-    {
-      return (functionArgs, builtData)
+    // A plain string is re-parsed so numeric text lands in the record as a number.
+    let datum: EVYJson
+    if case .string(let stringValue) = value {
+      datum = evyJsonValue(from: stringValue)
+    } else {
+      datum = value
     }
-    let encoded = try JSONEncoder().encode(value)
-    return (destinationProps, encoded)
+    if let (path, data) = try resolveObjectTemplateDestination(
+      destinationProps: destinationProps,
+      datum: datum
+    ) {
+      return (path, data)
+    }
+    return (destinationProps, try JSONEncoder().encode(value))
   }
 
   static func writeRawValue(
@@ -374,7 +395,7 @@ extension EVY {
     try updateData(data, destination: variableName, scopeId: scopeId)
   }
 
-  /// Writes a string destination value, quoting plain text when the destination is not a build* function call.
+  /// Writes a string destination value, quoting plain text when the destination is not an object template.
   static func writeRawStringValue(
     _ value: String,
     to destination: String,
@@ -389,34 +410,19 @@ extension EVY {
     scopeId: String? = nil
   ) throws {
     let destinationProps = _parsePropsFromText(destination)
-    if let (functionName, functionArgs) = EVY.parseFunctionCall(destinationProps),
-      let builtData = try dataForBuildFunction(
-        functionName, functionArgs: functionArgs, value: value)
-    {
-      try updateData(builtData, destination: functionArgs, scopeId: scopeId)
+    if let (path, data) = try resolveObjectTemplateDestination(
+      destinationProps: destinationProps,
+      datum: evyJsonValue(from: value)
+    ) {
+      try updateData(data, destination: "{\(path)}", scopeId: scopeId)
       return
     }
     try updateData("\"\(value)\"".data(using: .utf8)!, destination: destination, scopeId: scopeId)
   }
 
-  private static func dataForBuildFunction(
-    _ functionName: String,
-    functionArgs: String,
-    value: String
-  ) throws -> Data? {
-    switch functionName {
-    case "buildCurrency":
-      return try evyBuildCurrency(functionArgs, value)
-    case "buildAddress":
-      return try evyBuildAddress(functionArgs, value)
-    default:
-      return nil
-    }
-  }
-
   static func updateData(_ newData: Data, destination: String, scopeId: String? = nil) throws {
     let variableName = _parsePropsFromText(destination)
-    let (store, cleanVariableName) = store(for: variableName)
+    let (_, cleanVariableName) = store(for: variableName)
     let splitProps = try splitPropsFromText(cleanVariableName)
     let rootVariable = splitProps.first!
     let resolvedScopeId = scopeId ?? draftStore.activeScopeId

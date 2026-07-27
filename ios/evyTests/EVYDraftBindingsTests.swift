@@ -202,12 +202,13 @@ final class EVYDraftBindingTests: XCTestCase {
     XCTAssertEqual(notificationKeys, ["item.condition"])
   }
 
-  func testWriteRawValueBuildsCurrencyAtDestination() throws {
+  func testWriteRawValueWritesDestinationObjectTemplate() throws {
     let key = uniqueKey("item_price")
     let scopeId = "scope_\(UUID().uuidString)"
     EVY.draftStore.activeScopeId = scopeId
+    let destination = "{\(key): {value: $datum, currency: \"AUD\"}}"
 
-    try EVY.writeRawStringValue("99", to: "{buildCurrency(\(key))}", scopeId: scopeId)
+    try EVY.writeRawStringValue("99", to: destination, scopeId: scopeId)
 
     let stored = try EVY.getDataFromText("{\(key)}")
     XCTAssertEqual(
@@ -217,6 +218,23 @@ final class EVYDraftBindingTests: XCTestCase {
         "value": .int(99),
       ])
     )
+  }
+
+  func testWriteRawValueStillWritesPlainPathDestination() throws {
+    let key = uniqueKey("item_title")
+    let scopeId = "scope_\(UUID().uuidString)"
+    EVY.draftStore.activeScopeId = scopeId
+
+    try EVY.writeRawStringValue("Geo", to: "{\(key)}", scopeId: scopeId)
+
+    XCTAssertEqual(try EVY.getDataFromText("{\(key)}"), .string("Geo"))
+  }
+
+  func testParseDestinationReturnsNilForPlainPath() throws {
+    XCTAssertNil(try EVYObjectLiteral.parseDestination(from: "item.title"))
+    XCTAssertNil(
+      try EVYObjectLiteral.parseDestination(
+        from: "dc28ed59-298e-493c-8ff3-3e60f2ebccbd.title"))
   }
 
   func testEphemeralScopeSharesWriteThenReadWithoutSyncedBacking() throws {

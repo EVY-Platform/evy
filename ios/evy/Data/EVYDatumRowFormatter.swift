@@ -83,7 +83,7 @@ final class EVYDatumRowFormatter {
 
   func formattedResult(datum: EVYJson) throws -> (row: UI_Row, searchableValues: [String]) {
     guard
-      var root = Self.formatDatumReferencesInJSONValue(
+      let root = Self.formatDatumReferencesInJSONValue(
         deepCopyJSONValue(rootPrototype),
         datum: datum
       ) as? [String: Any]

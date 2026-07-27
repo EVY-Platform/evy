@@ -33,6 +33,9 @@
 		},
 		"messages": {
 			"singular": "message"
+		},
+		"formatters": {
+			"singular": "formatter"
 		}
 	}
 }

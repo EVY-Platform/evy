@@ -92,6 +92,17 @@
 			"primaryKey": "id",
 			"defaultRandom": ["id"],
 			"uniqueIndexes": []
+		},
+		"DATA_EVY_Formatter": {
+			"tableName": "Formatter",
+			"primaryKey": "id",
+			"defaultRandom": ["id"],
+			"uniqueIndexes": [
+				{
+					"name": "Formatter_name_key",
+					"columns": ["name"]
+				}
+			]
 		}
 	},
 	"relations": [

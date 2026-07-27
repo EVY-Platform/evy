@@ -7,6 +7,7 @@ import {
 	it,
 } from "bun:test";
 import { migrate } from "drizzle-orm/pglite/migrator";
+import type { ResourcesResponse } from "evy-types";
 import { getFreePort } from "evy-types/wsTestHelpers";
 import { Client } from "rpc-websockets";
 import { schema } from "../db";
@@ -96,6 +97,30 @@ describe("marketplace JSON-RPC server", () => {
 		expect(discovered.serviceId).toBeTruthy();
 		expect(discovered.resourceIds.items).toBeTruthy();
 		expect(discovered.resourceIds.conditions).toBeTruthy();
+		client.close();
+	});
+
+	// The builder reads attributes off the manifest rather than guessing them
+	// from whatever rows happened to sync, so they have to survive the wire.
+	it("declares bindable attributes for each resource", async () => {
+		const client = createClient();
+		await waitForOpen(client);
+
+		const response = (await client.call(
+			"resources",
+			{},
+		)) as ResourcesResponse;
+		const resources = response.services[0]?.resources ?? [];
+		const items = resources.find((entry) => entry.name === "items");
+		const conditions = resources.find(
+			(entry) => entry.name === "conditions",
+		);
+
+		expect(items?.attributes).toContain("price.currency");
+		expect(items?.attributes).toContain(
+			"transfer_options.pickup.address_id",
+		);
+		expect(conditions?.attributes).toEqual(["id", "value"]);
 		client.close();
 	});
 });

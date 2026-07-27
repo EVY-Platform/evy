@@ -255,6 +255,7 @@ final class SduiRowAttributeContractTests: XCTestCase {
         source: "{items}",
         destination: "{query}",
         placeholder: nil,
+        no_results: nil,
         child: nil
       )
     )
@@ -432,6 +433,11 @@ final class SduiRowAttributeContractTests: XCTestCase {
 @MainActor
 final class SduiRowInitialBootstrapTests: XCTestCase {
 
+  override func setUpWithError() throws {
+    try super.setUpWithError()
+    try evySeedStandardFormattersForTests()
+  }
+
   override func tearDownWithError() throws {
     EVY.draftStore.deleteDrafts()
     EVY.draftStore.activeScopeId = nil
@@ -549,13 +555,14 @@ final class SduiRowInitialBootstrapTests: XCTestCase {
     XCTAssertEqual(try EVY.getDataFromText("{\(entityId).title}"), .string("Existing title"))
   }
 
-  func testBuildCurrencyInitialProducesSameShapeAsExplicitEdit() throws {
-    let priceKey = uniqueKey("build_currency_price")
+  func testDestinationObjectInitialProducesSameShapeAsExplicitEdit() throws {
+    let priceKey = uniqueKey("destination_object_price")
     let scopeId = "scope_\(UUID().uuidString)"
     EVY.draftStore.activeScopeId = scopeId
+    let destination = "{\(priceKey): {value: $datum, currency: \"AUD\"}}"
 
     let initialRow = try makeRow(
-      type: "Input", destination: "{buildCurrency(\(priceKey))}", initial: "0",
+      type: "Input", destination: destination, initial: "0",
       extraFields: ["source": "{formatCurrency(\(priceKey))}"]
     )
     bootstrapRowDraft(row: initialRow, scopeId: scopeId)
@@ -564,16 +571,16 @@ final class SduiRowInitialBootstrapTests: XCTestCase {
     EVY.draftStore.deleteDrafts()
 
     let editRow = try makeRow(
-      type: "Input", destination: "{buildCurrency(\(priceKey))}", initial: "",
+      type: "Input", destination: destination, initial: "",
       extraFields: ["source": "{formatCurrency(\(priceKey))}"]
     )
     bootstrapRowDraft(row: editRow, scopeId: scopeId)
-    try EVY.writeRawStringValue("0", to: "{buildCurrency(\(priceKey))}", scopeId: scopeId)
+    try EVY.writeRawStringValue("0", to: destination, scopeId: scopeId)
     let editedValue = try EVY.getDataFromText("{\(priceKey)}")
 
     XCTAssertEqual(seededValue, editedValue)
     guard case .dictionary(let dict) = seededValue else {
-      XCTFail("Expected dictionary from buildCurrency")
+      XCTFail("Expected dictionary from destination object template")
       return
     }
     XCTAssertEqual(dict["currency"], .string("AUD"))

@@ -9,6 +9,10 @@ import type {
 	ServiceResource,
 } from "../types/resources";
 import { ACTION_FUNCTIONS } from "./actionBranch";
+import {
+	findInterpolationRegions,
+	isRangeInsideRegions,
+} from "./interpolationRegions";
 import { ROW_ATTRIBUTE_STATIC_NAMES } from "./rowConstants";
 import { parseApiSourceMethod } from "./sourceBinding";
 import { unwrapOptionalBraces } from "./unwrapBraces";
@@ -50,6 +54,13 @@ export type IdDisplayPart =
 			end: number;
 	  };
 
+/**
+ * Where a value's ids are meaningful. "text" is an EVY text attribute, which
+ * only interpolates inside `{…}`; "expression" is a whole-value expression
+ * (bindings, conditions, action arguments) where bare ids resolve anywhere.
+ */
+export type IdDisplayScope = "expression" | "text";
+
 type SuggestionFilterContext =
 	| { type: "root"; query: string }
 	| { type: "attribute"; query: string }
@@ -75,8 +86,6 @@ const functionCandidateNames = [
 	"formatAddress",
 	"formatAddressLine1",
 	"formatAddressLine2",
-	"buildCurrency",
-	"buildAddress",
 ];
 
 function isIdBoundaryCharacter(character: string | undefined): boolean {
@@ -335,20 +344,39 @@ export function getIdDisplayText(
 export function getIdDisplayParts(
 	value: string,
 	candidates: IdCandidate[],
+	scope: IdDisplayScope = "expression",
 ): IdDisplayPart[] {
 	const displayCandidates = buildDisplayCandidates(candidates);
+	// Text attributes only interpolate inside braces, so an id outside them is
+	// a prose word that happens to match (e.g. "No messages found").
+	const interpolationRegions =
+		scope === "text" ? findInterpolationRegions(value) : null;
 	const parts: IdDisplayPart[] = [];
 	let textStart = 0;
 	let index = 0;
 
 	while (index < value.length) {
+		// Candidate-independent, so it gates the whole position rather than
+		// being re-tested per candidate.
+		if (!isIdBoundaryCharacter(value[index - 1])) {
+			index++;
+			continue;
+		}
+
+		// Ordered cheapest-first: startsWith rejects nearly every candidate
+		// before the region scan runs.
 		const candidate = displayCandidates.find(
 			(displayCandidate) =>
-				isIdBoundaryCharacter(value[index - 1]) &&
 				value.startsWith(displayCandidate.id, index) &&
 				isIdBoundaryCharacter(
 					value[index + displayCandidate.id.length],
-				),
+				) &&
+				(interpolationRegions === null ||
+					isRangeInsideRegions(
+						interpolationRegions,
+						index,
+						index + displayCandidate.id.length,
+					)),
 		);
 
 		if (!candidate) {

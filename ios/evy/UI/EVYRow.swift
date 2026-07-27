@@ -76,7 +76,8 @@ func bootstrapRowDraft(row: UI_Row, scopeId: String?, payload: UI_RowPayload? = 
   else { return }
 
   let destinationProps = EVY.parsePropsFromText(destination)
-  let variableName = EVY.parseFunctionCall(destinationProps)?.functionArgs ?? destinationProps
+  let variableName =
+    (try? EVYObjectLiteral.parseDestination(from: destinationProps))?.path ?? destinationProps
   guard !variableName.isEmpty else { return }
 
   let initialData =

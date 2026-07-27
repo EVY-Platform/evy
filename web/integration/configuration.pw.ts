@@ -141,6 +141,38 @@ test.describe("Row configuration", () => {
 		await expect(sourceInput).toHaveText("{items}");
 	});
 
+	test("should display and edit no_results text on a Search row in configuration panel", async ({
+		page,
+	}) => {
+		await openAppWithTestFlows(page, [
+			{
+				id: "step_1",
+				title: "Test Page",
+				rows: [
+					{
+						type: "Search",
+						source: "{$api:place_search}",
+						destination: "{selected_item}",
+						title: "Search row",
+						placeholder: "Search address",
+					},
+				],
+			},
+		]);
+		await page.getByText("Search row", { exact: true }).first().click();
+
+		const configPanel = getConfigPanel(page);
+		const noResultsInput = configPanel.getByLabel("no_results", {
+			exact: true,
+		});
+		await expect(noResultsInput).toBeVisible();
+		await expect(noResultsInput).toHaveText("");
+
+		await noResultsInput.fill("No addresses found");
+
+		await expect(noResultsInput).toHaveText("No addresses found");
+	});
+
 	test("should display InputList format in configuration panel", async ({
 		page,
 	}) => {
@@ -151,14 +183,17 @@ test.describe("Row configuration", () => {
 				rows: [
 					{
 						type: "InputList",
-						title: "Tags",
-						placeholder: "Search for tags",
+						title: "Selling Reasons",
+						placeholder: "Search for reasons",
 						format: "{$datum.value}",
 					},
 				],
 			},
 		]);
-		await page.getByText("Tags", { exact: true }).first().click();
+		await page
+			.getByText("Selling Reasons", { exact: true })
+			.first()
+			.click();
 
 		const configPanel = getConfigPanel(page);
 		const formatInput = configPanel.getByLabel("format");

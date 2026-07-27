@@ -256,7 +256,7 @@ test.describe("Row Selection with Containers", () => {
 		).toHaveText("Container Row");
 	});
 
-	test("should select child row inside container when clicked", async ({
+	test("should select the nested child row itself when clicked", async ({
 		page,
 	}) => {
 		await openAppWithTestFlows(page, [
@@ -284,10 +284,116 @@ test.describe("Row Selection with Containers", () => {
 		await childRow.click();
 
 		const configPanel = getConfigPanel(page);
-		await configPanel.getByRole("button", { name: /: Text$/ }).click();
 		await expect(
 			configPanel.getByLabel("title", { exact: true }).first(),
 		).toHaveText("Child Text Row");
+		await expect(configPanel.getByLabel("Page title")).toHaveCount(0);
+		await expect(
+			page.getByRole("button", {
+				name: "Configure nested row at depth 1: Child Text Row",
+			}),
+		).toBeVisible();
+	});
+
+	test("should select the deepest row when containers are nested", async ({
+		page,
+	}) => {
+		await openAppWithTestFlows(page, [
+			{
+				id: "step_1",
+				title: "Test Page",
+				rows: [
+					{
+						type: "VerticalContainer",
+						title: "Outer Container",
+						children: [
+							{
+								type: "HorizontalContainer",
+								title: "Inner Container",
+								children: [
+									{
+										type: "Text",
+										title: "Deep Text Row",
+										text: "deep",
+									},
+								],
+							},
+						],
+					},
+				],
+			},
+		]);
+		await page.getByText("Deep Text Row", { exact: true }).first().click();
+
+		const configPanel = getConfigPanel(page);
+		await expect(
+			configPanel.getByLabel("title", { exact: true }).first(),
+		).toHaveText("Deep Text Row");
+		await expect(
+			page.getByRole("button", {
+				name: "Configure nested row at depth 2: Deep Text Row",
+			}),
+		).toBeVisible();
+	});
+
+	test("should select the row that owns a clicked element", async ({
+		page,
+	}) => {
+		await openAppWithTestFlows(page, [
+			{
+				id: "step_1",
+				title: "Test Page",
+				rows: [
+					{
+						type: "VerticalContainer",
+						title: "Container Row",
+						children: [
+							{
+								type: "Input",
+								title: "Child Input Row",
+								placeholder: "type here",
+							},
+						],
+					},
+				],
+			},
+		]);
+		await getFirstPage(page).locator("input[readonly]").first().click();
+
+		const configPanel = getConfigPanel(page);
+		await expect(
+			configPanel.getByLabel("title", { exact: true }).first(),
+		).toHaveText("Child Input Row");
+	});
+
+	test("should still select a container when its own title is clicked", async ({
+		page,
+	}) => {
+		await openAppWithTestFlows(page, [
+			{
+				id: "step_1",
+				title: "Test Page",
+				rows: [
+					{
+						type: "VerticalContainer",
+						title: "Container Row",
+						children: [
+							{
+								type: "Text",
+								title: "Child Text Row",
+								text: "Child row text",
+							},
+						],
+					},
+				],
+			},
+		]);
+		await page.getByText("Container Row", { exact: true }).first().click();
+
+		const configPanel = getConfigPanel(page);
+		await expect(
+			configPanel.getByLabel("title", { exact: true }).first(),
+		).toHaveText("Container Row");
 	});
 
 	test("should switch selection between container and child", async ({
@@ -319,7 +425,6 @@ test.describe("Row Selection with Containers", () => {
 			.getByText("Child Text Row", { exact: true })
 			.first();
 		await childRow.click();
-		await configPanel.getByRole("button", { name: /: Text$/ }).click();
 		await expect(
 			configPanel.getByLabel("title", { exact: true }).first(),
 		).toHaveText("Child Text Row");

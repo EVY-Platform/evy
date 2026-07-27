@@ -81,7 +81,7 @@ function parsePlainTextObject(
 		const value = pair.slice(colonIndex + 1).trim();
 		if (!key) return null;
 		if (!allowEmptyValues && !value) return null;
-		object[key] = value;
+		object[key] = stripOptionalSurroundingQuotes(value);
 	}
 	return object;
 }

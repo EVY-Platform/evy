@@ -526,7 +526,8 @@ class E2ETestBase: XCTestCase {
               title: "Price",
               source: "{formatCurrency(price)}",
               placeholder: "0",
-              destination: "{buildCurrency(\(MARKETPLACE_ITEMS_RESOURCE_ID).price)}"
+              destination:
+                "{\(MARKETPLACE_ITEMS_RESOURCE_ID).price: {value: $datum, currency: \"AUD\"}}"
             ),
             Self.inputRow(
               id: "2a9b22a0-b0eb-4648-83ca-77b2b8748816",
@@ -2978,10 +2979,9 @@ final class WebSocketE2ETests: E2ETestBase {
     let priceTextField = try XCTUnwrap(
       findElementWithScroll(
         identifiers: [
-          "textField_{\(MARKETPLACE_ITEMS_RESOURCE_ID).price}",
-          "textField_{buildCurrency(\(MARKETPLACE_ITEMS_RESOURCE_ID).price)}",
+          "textField_{\(MARKETPLACE_ITEMS_RESOURCE_ID).price: {value: $datum, currency: \"AUD\"}}"
         ],
-        containsAny: ["\(MARKETPLACE_ITEMS_RESOURCE_ID).price", "buildCurrency"],
+        containsAny: ["\(MARKETPLACE_ITEMS_RESOURCE_ID).price"],
         in: pageScrollView
       ), "Price field")
     let priceField = try XCTUnwrap(
@@ -3591,7 +3591,7 @@ final class WebSocketE2ETests: E2ETestBase {
       var firstRow = rows.first,
       var children = firstRow["children"] as? [[String: Any]],
       let buttonIndex = children.firstIndex(where: { ($0["label"] as? String) == buttonLabel }),
-      var actionsObject = children[buttonIndex]["actions"] as? [String: Any],
+      let actionsObject = children[buttonIndex]["actions"] as? [String: Any],
       var actions = actionsObject["tap"] as? [[String: Any]],
       var firstAction = actions.first
     else {

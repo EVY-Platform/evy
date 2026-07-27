@@ -13,6 +13,11 @@ enum EVYDataError: Error {
   case keyAlreadyExists
 }
 
+/// Bumped on every persisted mutation across every store, so caches derived
+/// from stored rows can tell in O(1) whether they are stale.
+@MainActor
+private(set) var evyDataStoreGeneration = 0
+
 @MainActor
 final class EVYDataStore {
   private let context: ModelContext
@@ -94,6 +99,7 @@ final class EVYDataStore {
   /// in-place `row.data` edits) that bypass create/update/delete.
   func persistChanges() throws {
     try context.save()
+    evyDataStoreGeneration += 1
   }
 
   func create(namespace: String, resource: String, id: String, value: Data, sortIndex: Int = 0)

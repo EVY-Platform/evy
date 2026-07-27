@@ -23,8 +23,7 @@ enum EVYPreviewMockData {
         "depth": 65,
         "weight": 75
       },
-      "photo_ids": ["photo-1", "photo-2", "photo-3"],
-      "tags": ["energy-efficient", "frost-free"]
+      "photo_ids": ["photo-1", "photo-2", "photo-3"]
     }
     """
 
@@ -50,14 +49,6 @@ enum EVYPreviewMockData {
       { "id": "reason-2", "value": "Upgrading" },
       { "id": "reason-3", "value": "No longer needed" },
       { "id": "reason-4", "value": "Other" }
-    ]
-    """
-
-  static let tags = """
-    [
-      "energy-efficient",
-      "frost-free",
-      "stainless-steel"
     ]
     """
 
@@ -160,7 +151,6 @@ enum EVYPreviewMockData {
     seed(key: "conditions", json: conditions)
     seed(key: "durations", json: durations)
     seed(key: "selling_reasons", json: sellingReasons)
-    seed(key: "tags", json: tags)
     seedCurrentUser()
   }
 

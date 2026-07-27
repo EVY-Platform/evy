@@ -22,6 +22,7 @@ import {
 	address as addressTable,
 	file as fileTable,
 	flow as flowTable,
+	formatter as formatterTable,
 	message as messageTable,
 	organization as organizationTable,
 	page as pageTable,
@@ -29,6 +30,7 @@ import {
 	serviceProvider as serviceProviderTable,
 	service as serviceTable,
 } from "../types/generated/ts/db/schema.generated";
+import { STANDARD_FORMATTERS } from "../types/standardFormatters";
 import { validateUiFlow } from "../types/validators";
 import { copySeedFileBinaries } from "./seed-files";
 
@@ -80,6 +82,7 @@ const coreSchema = {
 	row: rowTable,
 	file: fileTable,
 	address: addressTable,
+	formatter: formatterTable,
 	message: messageTable,
 };
 const marketplaceSchema = { data: marketplaceDataTable };
@@ -290,6 +293,13 @@ function seedTimestamps(
 
 function timestamped(now: string): { createdAt: string; updatedAt: string } {
 	return { createdAt: now, updatedAt: now };
+}
+
+function buildFormatterRows(now: string) {
+	return STANDARD_FORMATTERS.map((formatter) => ({
+		...formatter,
+		...timestamped(now),
+	}));
 }
 
 type SeedMessageRow = {
@@ -581,6 +591,7 @@ async function seedDatabase({
 	const fileRows = buildFileRows(evyFiles, now);
 	const addressRows = buildAddressRows(evyAddresses, now);
 	const messageRows = buildMessageRows(evyMessages, now);
+	const formatterRows = buildFormatterRows(now);
 	await copySeedFileBinaries({
 		files: fileRows,
 		repoRoot: REPO_ROOT,
@@ -674,6 +685,11 @@ async function seedDatabase({
 		await tx.delete(coreSchema.message);
 		if (messageRows.length > 0) {
 			await tx.insert(coreSchema.message).values(messageRows);
+		}
+
+		await tx.delete(coreSchema.formatter);
+		if (formatterRows.length > 0) {
+			await tx.insert(coreSchema.formatter).values(formatterRows);
 		}
 	});
 

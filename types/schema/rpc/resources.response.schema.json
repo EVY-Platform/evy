@@ -37,6 +37,14 @@
 					"type": "string",
 					"minLength": 1,
 					"maxLength": 50
+				},
+				"attributes": {
+					"description": "Bindable attribute names as dotted paths, declared by the service that owns the resource. The builder uses these for id interpolation instead of guessing from whatever rows happen to have synced, so a resource with no rows yet still offers its attributes. Omitted when the owning service does not declare them.",
+					"type": "array",
+					"items": {
+						"type": "string",
+						"minLength": 1
+					}
 				}
 			}
 		},

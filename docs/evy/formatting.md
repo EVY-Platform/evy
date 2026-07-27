@@ -13,8 +13,7 @@ Formatting functions convert an input into display text. For example formatting 
   via JSON config to the clients.
 - We need to avoid defining custom coded formatting functions in mobile clients as much as
   possible due to the constraints of mobile release cycles.
-- `length`, `formatDimension`, `formatWeight`, and the Builder functions (`buildCurrency`,
-  `buildAddress`) below describe behavior as implemented in the iOS client today
+- `length`, `formatDimension`, and `formatWeight` below describe behavior as implemented in the iOS client today
   ([`ios/evy/Utils/functions.swift`](../../ios/evy/Utils/functions.swift)). Formatting
   functions here are the broader target model; web may still use stubs for some functions.
 
@@ -110,11 +109,23 @@ the exact thresholds.
 
 ## Dynamic formatting functions
 
-These are formats configured by passing dynamic JSON and using region or device configs.
-Current clients hardcode the formatting in practice (e.g. `formatCurrency` always uses `$`);
-the shape below is the intended config for region-aware formatting, keyed by a
-`formatting_config` value resolved from input (e.g. `{input.currency}` or `{input.country}`)
-against a `formatting` map of per-region templates.
+These are configured as synced `formatters` core resource rows (one row per function
+name) and evaluated at runtime by web and iOS. Each formatter row has:
+
+- `name` — expression function id, e.g. `formatCurrency` or `formatAddress`
+- `formatting_config` — template resolved against the input object to choose a map key
+  (e.g. `{input.currency}` or `{input.country}`)
+- `formatting` — map of region key → display template. Keys are matched
+  case-insensitively against the resolved config value. A `default` entry is used
+  when the resolved key is missing.
+
+Templates may call built-in formatters such as `{formatDecimal(input.value, 2)}` and
+may interpolate `{input.field}` paths. Empty `{input.*}` segments are omitted and
+leftover separators are tidied before display.
+
+`formatCurrency` and `formatAddress` are dynamic. `formatAddressLine1` and
+`formatAddressLine2` remain hard-coded helpers. While editing a currency field, clients
+return the bare `value` string instead of running the display template.
 
 ```
 formatCurrency(_variable_type_price_)
@@ -124,75 +135,57 @@ Outputs: $13.23
 formatAddress(_variable_type_address_)
 Variable: { "unit": "23-25", "street": "Rosebery Avenue", "city": "Rosebery",
             "postcode": "2018", "state": "NSW", "country": "Australia", "location": ... }
-Outputs: {unit} {street}, {postcode} {city} {state}
+Outputs: 23-25 Rosebery Avenue, 2018 Rosebery NSW
 ```
 
 `formatAddressLine1` renders `{unit} {street}`; `formatAddressLine2` renders
 `{city}, {state} {postcode}`.
 
 <details>
-<summary>Sample config shape</summary>
+<summary>Sample formatter rows</summary>
 
 ```json
-{
-    "formatCurrency": {
-        "input_type": "price",
-        "keyboard": "numeric_detailed",
-        "formatting_config": "{input.currency}",
-        "formatting": {
-            "aud": "$ {formatDecimal(input.value, 2)}",
-            "eur": "€ {formatDecimal(input.value, 2)}"
-        }
-    },
-    "formatAddress": {
-        "input_type": "address",
-        "keyboard": "text",
-        "formatting_config": "{input.country}",
-        "formatting": {
-            "au": "{input.unit} {input.street}, {input.city} {input.postcode} {input.state}",
-            "us": "{input.unit} {input.street}, {input.city} {input.state} {input.postcode}"
-        }
+[
+  {
+    "id": "f1e2d3c4-b5a6-4789-8abc-def012345601",
+    "name": "formatCurrency",
+    "formatting_config": "{input.currency}",
+    "formatting": {
+      "AUD": "${formatDecimal(input.value, 2)}",
+      "EUR": "€{formatDecimal(input.value, 2)}",
+      "default": "${formatDecimal(input.value, 2)}"
     }
-}
+  },
+  {
+    "id": "f1e2d3c4-b5a6-4789-8abc-def012345602",
+    "name": "formatAddress",
+    "formatting_config": "{input.country}",
+    "formatting": {
+      "Australia": "{input.unit} {input.street}, {input.postcode} {input.city} {input.state}",
+      "United States": "{input.unit} {input.street}, {input.city} {input.state} {input.postcode}",
+      "default": "{input.unit} {input.street}, {input.postcode} {input.city} {input.state}"
+    }
+  }
+]
 ```
 
 </details>
 
-## Builder functions
+## Destination object templates
 
-Implemented in iOS. These are not used inside `{…}` display strings the same way as formatters.
-They appear as the destination when persisting typed field text into structured data: the
-client parses the destination prop (e.g. `{buildCurrency(item.price)}`), passes the first
-argument as the prop path to the value being updated, and supplies the user's typed string as
-the second input when committing the field (see
-[`ios/evy/EVY.swift`](../../ios/evy/EVY.swift) `updateValue`).
+Implemented in iOS. Row `destination` may be a plain data path or a **path + template**
+object literal. On write, the client resolves the template with the user's typed or selected
+value bound to `$datum`, then persists the result at the path key.
 
-#### buildCurrency
-
-Builds a price JSON object `{ "currency", "value" }` from the current field text.
-
--   `currency`: taken from the existing value at the destination path when present; otherwise
-    defaults to `"AUD"`.
--   `value`: parsed from the typed string (empty → empty string; otherwise int, decimal, or
-    string as appropriate).
+Template values resolve like nested create/update action values: quoted strings stay literal,
+`$datum` is the write payload (coerced to int/decimal/string when appropriate), and bare words
+are data paths when they resolve.
 
 ```
-Destination pattern: {buildCurrency(item.price)}
+Destination pattern: {item.price: {value: $datum, currency: "AUD"}}
 Typed text: "13.50"
-Resulting data: { "currency": "AUD", "value": "13.50" }  // shape; actual storage is JSON-encoded
+Resulting data at item.price: { "currency": "AUD", "value": 13.50 }
 ```
 
-#### buildAddress
-
-Builds or updates an address object from multi-line or comma-separated typed text, merging with
-any existing address at the destination path (missing keys default to empty strings). Parsing
-supports two-line addresses, single-line comma forms, and simple street-only updates; see
-[`EVYAddressParsing.swift`](../../ios/evy/Utils/EVYAddressParsing.swift) (`evyAddressFields` /
-`evyParsedAddressFields`).
-
-```
-Destination pattern: {buildAddress(user.address)}
-Typed text (example):
-  "23-25 Rosebery Avenue, 2018\nRosebery, NSW"
-Result: address dictionary with unit, street, city, postcode, state populated per parser rules
-```
+The same object-literal syntax works in create/update `data`, `changes`, and `filter` when a
+structured object is needed outside a row destination.

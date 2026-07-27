@@ -88,22 +88,6 @@
 				}
 			}
 		},
-		"tags": {
-			"type": "array",
-			"items": {
-				"type": "object",
-				"additionalProperties": false,
-				"properties": {
-					"id": {
-						"type": "string",
-						"format": "uuid"
-					},
-					"value": {
-						"type": "string"
-					}
-				}
-			}
-		},
 		"payment_methods": {
 			"type": "object",
 			"additionalProperties": false,
@@ -178,7 +162,7 @@
 	},
 	"$defs": {
 		"Price": {
-			"description": "Currency amount. Both keys are optional: an unset fee persists as {}. `value` may be a number (seeded data) or a string (buildCurrency writes the user's typed text).",
+			"description": "Currency amount. Both keys are optional: an unset fee persists as {}. `value` may be a number (seeded data) or a string (destination object templates write the user's typed text).",
 			"type": "object",
 			"additionalProperties": false,
 			"properties": {

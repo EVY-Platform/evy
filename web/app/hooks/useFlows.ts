@@ -1,3 +1,4 @@
+import type { DATA_EVY_Formatter } from "evy-types";
 import { useEffect, useState } from "react";
 import { syncWebData } from "../api/sync";
 import type {
@@ -11,6 +12,7 @@ type UseFlowsResult = {
 	serviceResources: ServiceResource[];
 	resourceAttributeMetadata: ResourceAttributeMetadata[];
 	serviceNamesById: Map<string, string>;
+	formatters: DATA_EVY_Formatter[];
 	loading: boolean;
 	error: Error | null;
 };
@@ -28,6 +30,7 @@ export function useFlows(): UseFlowsResult {
 	const [serviceNamesById, setServiceNamesById] = useState<
 		Map<string, string>
 	>(new Map());
+	const [formatters, setFormatters] = useState<DATA_EVY_Formatter[]>([]);
 	const [loading, setLoading] = useState(true);
 	const [error, setError] = useState<Error | null>(null);
 
@@ -46,6 +49,7 @@ export function useFlows(): UseFlowsResult {
 					serviceResources: fetchedResources,
 					resourceAttributeMetadata: fetchedResourceAttributeMetadata,
 					serviceNamesById: fetchedServiceNamesById,
+					formatters: fetchedFormatters,
 				} = await syncWebData();
 				if (!cancelled) {
 					setFlowGraph(fetchedFlowGraph);
@@ -54,6 +58,7 @@ export function useFlows(): UseFlowsResult {
 						fetchedResourceAttributeMetadata,
 					);
 					setServiceNamesById(fetchedServiceNamesById);
+					setFormatters(fetchedFormatters);
 					setLoading(false);
 				}
 			} catch (err) {
@@ -78,6 +83,7 @@ export function useFlows(): UseFlowsResult {
 		serviceResources,
 		resourceAttributeMetadata,
 		serviceNamesById,
+		formatters,
 		loading,
 		error,
 	};

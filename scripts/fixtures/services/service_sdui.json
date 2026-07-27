@@ -219,10 +219,10 @@
 																	"mode": "inline",
 																	"data": {
 																		"fk": "dc28ed59-298e-493c-8ff3-3e60f2ebccbd.id",
-																		"service": "\"66b092ae-7cd8-4d67-95b7-30b03568fd90\"",
-																		"resource": "\"dc28ed59-298e-493c-8ff3-3e60f2ebccbd\"",
+																		"service": "66b092ae-7cd8-4d67-95b7-30b03568fd90",
+																		"resource": "dc28ed59-298e-493c-8ff3-3e60f2ebccbd",
 																		"archivedAt": "null",
-																		"status": "\"pending\"",
+																		"status": "pending",
 																		"data": "{type: pickup, time: selected_pickup_timeslot}"
 																	}
 																},
@@ -330,10 +330,10 @@
 																	"mode": "inline",
 																	"data": {
 																		"fk": "dc28ed59-298e-493c-8ff3-3e60f2ebccbd.id",
-																		"service": "\"66b092ae-7cd8-4d67-95b7-30b03568fd90\"",
-																		"resource": "\"dc28ed59-298e-493c-8ff3-3e60f2ebccbd\"",
+																		"service": "66b092ae-7cd8-4d67-95b7-30b03568fd90",
+																		"resource": "dc28ed59-298e-493c-8ff3-3e60f2ebccbd",
 																		"archivedAt": "null",
-																		"status": "\"pending\"",
+																		"status": "pending",
 																		"data": "{type: delivery, time: selected_delivery_timeslot}"
 																	}
 																},
@@ -446,10 +446,10 @@
 																	"mode": "inline",
 																	"data": {
 																		"fk": "dc28ed59-298e-493c-8ff3-3e60f2ebccbd.id",
-																		"service": "\"66b092ae-7cd8-4d67-95b7-30b03568fd90\"",
-																		"resource": "\"dc28ed59-298e-493c-8ff3-3e60f2ebccbd\"",
+																		"service": "66b092ae-7cd8-4d67-95b7-30b03568fd90",
+																		"resource": "dc28ed59-298e-493c-8ff3-3e60f2ebccbd",
 																		"archivedAt": "null",
-																		"status": "\"pending\"",
+																		"status": "pending",
 																		"data": "{type: shipping, postalcode: shipping_address.postcode}"
 																	}
 																},
@@ -556,7 +556,7 @@
 															"filter": {
 																"fk": "dc28ed59-298e-493c-8ff3-3e60f2ebccbd.id",
 																"archivedAt": "null",
-																"status": "\"pending\""
+																"status": "pending"
 															},
 															"changes": {
 																"archivedAt": "now()"
@@ -662,7 +662,7 @@
 															"filter": {
 																"fk": "dc28ed59-298e-493c-8ff3-3e60f2ebccbd.id",
 																"archivedAt": "null",
-																"status": "\"pending\""
+																"status": "pending"
 															},
 															"changes": {
 																"archivedAt": "now()"
@@ -768,7 +768,7 @@
 															"filter": {
 																"fk": "dc28ed59-298e-493c-8ff3-3e60f2ebccbd.id",
 																"archivedAt": "null",
-																"status": "\"pending\""
+																"status": "pending"
 															},
 															"changes": {
 																"archivedAt": "now()"
@@ -864,7 +864,7 @@
 						"id": "d4e5f6a7-b8c9-4d0e-8f2a-3b4c5d6e7f8a",
 						"type": "Input",
 						"source": "{formatCurrency(dc28ed59-298e-493c-8ff3-3e60f2ebccbd.price)}",
-						"destination": "{buildCurrency(dc28ed59-298e-493c-8ff3-3e60f2ebccbd.price)}",
+						"destination": "{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.price: {value: $datum, currency: \"AUD\"}}",
 						"title": "Price",
 						"placeholder": "",
 						"visible": "true",
@@ -1158,6 +1158,7 @@
 											},
 											"title": "",
 											"placeholder": "Search address",
+											"no_results": "No addresses found",
 											"source": "{$api:place_search}",
 											"visible": "true",
 											"name": "Find pickup address",

@@ -3,6 +3,10 @@ import { splitFunctionArguments } from "./functionArgs";
 // functions.ts can depend on datetime.ts without a cycle.
 export type EVYFunctionContext = {
 	datum?: string;
+	formatters?: import("./dynamicFormatters").EVYFormatterDefinition[];
+	input?: Record<string, unknown>;
+	editing?: boolean;
+	resolvePath?: (path: string) => unknown;
 };
 
 export type EVYFunctionOutput = {

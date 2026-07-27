@@ -1,4 +1,9 @@
-import type { DATA_EVY_Flow, DATA_EVY_Page, DATA_EVY_Row } from "evy-types";
+import type {
+	DATA_EVY_Flow,
+	DATA_EVY_Formatter,
+	DATA_EVY_Page,
+	DATA_EVY_Row,
+} from "evy-types";
 import { createContext, type Dispatch, useContext } from "react";
 import type { RowAction } from "../../types/actions";
 import type {
@@ -15,6 +20,7 @@ type FlowsContextValue = {
 	serviceResources: ServiceResource[];
 	resourceAttributeMetadata: ResourceAttributeMetadata[];
 	serviceNamesById: Map<string, string>;
+	formatters: DATA_EVY_Formatter[];
 	resourceIdToEntityName: Map<string, string>;
 	activeFlowId?: string;
 	activeRowId?: string;
@@ -31,6 +37,7 @@ export const FlowsContext = createContext<FlowsContextValue>({
 	serviceResources: [],
 	resourceAttributeMetadata: [],
 	serviceNamesById: new Map(),
+	formatters: [],
 	resourceIdToEntityName: new Map(),
 	configStack: [],
 	dispatchRow: () => {},

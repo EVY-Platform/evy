@@ -7,6 +7,9 @@ import { getConfigPanel, popoverSelect } from "./utils";
 
 const ITEM_RESOURCE_ID = "res-item";
 const ORDER_RESOURCE_ID = "res-order";
+// Core resources are identified by plural words and named by the singular, so
+// their ids collide with ordinary prose (types/generated/ts/coreResources.ts).
+const MESSAGES_RESOURCE_ID = "messages";
 
 const SERVICE_RESOURCES: ServiceResource[] = [
 	{
@@ -18,6 +21,11 @@ const SERVICE_RESOURCES: ServiceResource[] = [
 		id: ORDER_RESOURCE_ID,
 		serviceId: TEST_SERVICE_ID,
 		name: "order",
+	},
+	{
+		id: MESSAGES_RESOURCE_ID,
+		serviceId: TEST_SERVICE_ID,
+		name: "message",
 	},
 ];
 
@@ -98,6 +106,21 @@ function buildBuilderAssistFlow(
 							destination: `{${ITEM_RESOURCE_ID}.title}`,
 							title: "Editable title",
 							placeholder: "Title",
+						},
+						{
+							id: "row-search",
+							type: "Search",
+							title: "Search messages",
+							source: `{${MESSAGES_RESOURCE_ID}}`,
+							destination: "",
+							placeholder: "Filter messages by type",
+							no_results: "No messages found",
+						},
+						{
+							id: "row-mixed",
+							type: "Text",
+							title: "Mixed row",
+							subtitle: `None for {${MESSAGES_RESOURCE_ID}}`,
 						},
 						{
 							id: "row-button",
@@ -335,6 +358,63 @@ test.describe("Builder Assist flows", () => {
 				),
 			)
 			.toBe("{items: [$datum.id]}");
+	});
+
+	test("keeps prose matching a resource id as plain text in content fields", async ({
+		page,
+	}) => {
+		await openBuilderAssistFlow(page);
+
+		await page
+			.getByText("Search messages", { exact: true })
+			.first()
+			.click();
+		const configPanel = getConfigPanel(page);
+
+		const noResults = configPanel.getByLabel("no_results", { exact: true });
+		await expect(getBuilderAssistToken(noResults, "message")).toHaveCount(
+			0,
+		);
+		await expect(noResults).toHaveText("No messages found");
+		await expect
+			.poll(() => readBuilderAssistRawValue(noResults))
+			.toBe("No messages found");
+
+		const placeholder = configPanel.getByLabel("placeholder", {
+			exact: true,
+		});
+		await expect(getBuilderAssistToken(placeholder, "message")).toHaveCount(
+			0,
+		);
+		await expect(placeholder).toHaveText("Filter messages by type");
+		await expect
+			.poll(() => readBuilderAssistRawValue(placeholder))
+			.toBe("Filter messages by type");
+	});
+
+	test("still chips resource ids in bindings and inside interpolations", async ({
+		page,
+	}) => {
+		await openBuilderAssistFlow(page);
+
+		await page
+			.getByText("Search messages", { exact: true })
+			.first()
+			.click();
+		const configPanel = getConfigPanel(page);
+
+		const sourceInput = configPanel.getByLabel("Row data source");
+		await expect(
+			getBuilderAssistToken(sourceInput, "message"),
+		).toHaveAttribute("data-value", MESSAGES_RESOURCE_ID);
+
+		await page.getByText("Mixed row", { exact: true }).first().click();
+		const subtitle = configPanel.getByLabel("subtitle", { exact: true });
+		await expect(getBuilderAssistToken(subtitle, "message")).toHaveCount(1);
+		await expect(subtitle).toHaveText("None for {message}");
+		await expect
+			.poll(() => readBuilderAssistRawValue(subtitle))
+			.toBe(`None for {${MESSAGES_RESOURCE_ID}}`);
 	});
 
 	test("shows resource ids as named chips in update() argument fields", async ({

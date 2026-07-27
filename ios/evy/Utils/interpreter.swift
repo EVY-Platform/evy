@@ -26,6 +26,19 @@ let PROP_SEPARATOR = "."
 private var ephemeralDatumRegistry: [String: EVYJson] = [:]
 
 @MainActor
+func evyWithEphemeralDatum<T>(
+  key: String,
+  value: EVYJson,
+  _ body: () throws -> T
+) rethrows -> T {
+  ephemeralDatumRegistry[key] = value
+  defer {
+    ephemeralDatumRegistry.removeValue(forKey: key)
+  }
+  return try body()
+}
+
+@MainActor
 func splitPropsFromText(_ props: String) throws -> [String] {
   if props.count < 1 {
     throw EVYParamError.invalidProps
@@ -356,11 +369,6 @@ private func standaloneBooleanLiteral(in input: String) -> Bool? {
   }
 }
 
-private let formatFunctionsByBuildFunction = [
-  "buildCurrency": "formatCurrency",
-  "buildAddress": "formatAddress",
-]
-
 func wrappedExpression(_ raw: String) -> String {
   raw.hasPrefix("{") ? raw : "{\(raw)}"
 }
@@ -381,14 +389,6 @@ private func _resolvedText(fromSource source: String?, destination: String?, edi
   guard !trimmedDestination.isEmpty else { return "" }
 
   let wrapped = wrappedExpression(trimmedDestination)
-  let inner = _parsePropsFromText(wrapped)
-  if let (functionName, functionArgs) = _parseFunctionCall(inner),
-    let formatFunction = formatFunctionsByBuildFunction[functionName]
-  {
-    return resolvedOrBlankedPerToken(
-      "{\(formatFunction)(\(functionArgs))}", editing: editing)
-  }
-
   return resolvedOrBlankedPerToken(wrapped, editing: editing)
 }
 
@@ -460,13 +460,9 @@ func _formatData(json: EVYJson, format: String) throws -> String {
 
   if formatWithNewData.isEmpty { return "" }
 
-  ephemeralDatumRegistry[temporaryId] = json
-  defer {
-    ephemeralDatumRegistry.removeValue(forKey: temporaryId)
+  return try evyWithEphemeralDatum(key: temporaryId, value: json) {
+    try _getValueFromText(formatWithNewData).toString()
   }
-
-  let returnText = try _getValueFromText(formatWithNewData)
-  return returnText.toString()
 }
 
 // MARK: - Private parsing
@@ -558,8 +554,6 @@ private func parseText(
       value = try evyFormatDuration(funcArgs, editing)
     case "formatDatetime":
       value = try evyFormatDatetime(funcArgs, editing)
-    case "buildCurrency", "buildAddress":
-      value = nil
     default:
       value = nil
     }

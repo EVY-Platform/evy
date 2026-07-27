@@ -34,11 +34,11 @@ struct EVYInputListRow: View {
       {
         "id": "preview-inputlist-row",
         "type": "InputList",
-        "source": "{tags}",
-        "actions": {},
-        "title": "Tags",
-        "format": "{$datum}",
-        "placeholder": "Add tags to improve search"
+        		"source": "{selling_reasons}",
+        		"actions": {},
+        		"title": "Selling Reasons",
+        		"format": "{$datum.value}",
+        		"placeholder": "Search for reasons"
       }
       """,
     failureMessage: "Unable to build input list row preview"

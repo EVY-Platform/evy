@@ -3,6 +3,7 @@ import type {
 	BaseEventPayload,
 	ElementDragType,
 } from "@atlaskit/pragmatic-drag-and-drop/types";
+import type { DATA_EVY_Formatter } from "evy-types";
 import { FileSliders, Rows3 } from "lucide-react";
 import {
 	Fragment,
@@ -45,6 +46,8 @@ import { buildActiveSheetPages } from "./utils/sheetPageHelpers";
 
 const COLLAPSED_PANEL_ICON_STYLE = { color: "var(--color-evy-gray)" };
 const noop = () => {};
+// Stable identity, so test mode does not invalidate the provider's memo each render.
+const NO_FORMATTERS: DATA_EVY_Formatter[] = [];
 
 type SidePanelsProps =
 	| { mode: "loading" }
@@ -348,6 +351,7 @@ export function App() {
 		serviceResources,
 		resourceAttributeMetadata,
 		serviceNamesById,
+		formatters,
 		loading,
 		error,
 	} = useFlows();
@@ -378,6 +382,7 @@ export function App() {
 				]),
 			)
 		: serviceNamesById;
+	const initialFormatters = testFlows ? NO_FORMATTERS : formatters;
 
 	const [minTimeElapsed, setMinTimeElapsed] = useState(Boolean(testFlows));
 	const [exiting, setExiting] = useState(false);
@@ -430,6 +435,7 @@ export function App() {
 			serviceResources={initialServiceResources}
 			resourceAttributeMetadata={initialResourceAttributeMetadata}
 			serviceNamesById={initialServiceNamesById}
+			formatters={initialFormatters}
 			syncWithApi={!testFlows}
 		>
 			<AppShell>
