@@ -109,18 +109,20 @@ struct EVYSelectPhoto: View {
 
   var body: some View {
     VStack(alignment: .leading) {
-      if title?.count ?? 0 > 0 {
-        EVYTextView(title!)
-      }
-
       if photoTiles.isEmpty {
         EVYSelectPhotoButton(
           fullScreen: true,
+          title: title,
+          subtitle: subtitle,
           icon: icon,
           content: content,
           onAddPhotoTapped: onAddPhotoTapped,
           photoTiles: $photoTiles)
       } else {
+        if title?.count ?? 0 > 0 {
+          EVYTextView(title!)
+        }
+
         ScrollView(.horizontal, showsIndicators: false) {
           HStack {
             ForEach(photoTiles) { tile in
@@ -138,11 +140,11 @@ struct EVYSelectPhoto: View {
               photoTiles: $photoTiles)
           }
         }
-      }
 
-      if let subtitle {
-        EVYTextView(subtitle, style: .info)
-          .padding(.vertical, Constants.padding)
+        if let subtitle {
+          EVYTextView(subtitle, style: .info)
+            .padding(.vertical, Constants.padding)
+        }
       }
     }
     .onChange(of: photoTiles) {
@@ -196,6 +198,8 @@ struct EVYSelectPhoto: View {
 
 private struct EVYSelectPhotoButton: View {
   let fullScreen: Bool
+  let title: String?
+  let subtitle: String?
   let icon: String?
   let content: String?
   let onAddPhotoTapped: (@escaping EVYRowOperationHandler) -> Void
@@ -203,28 +207,61 @@ private struct EVYSelectPhotoButton: View {
   @State private var selectedItem: PhotosPickerItem?
   @Binding var photoTiles: [EVYPhotoTile]
 
+  init(
+    fullScreen: Bool,
+    title: String? = nil,
+    subtitle: String? = nil,
+    icon: String?,
+    content: String?,
+    onAddPhotoTapped: @escaping (@escaping EVYRowOperationHandler) -> Void,
+    photoTiles: Binding<[EVYPhotoTile]>
+  ) {
+    self.fullScreen = fullScreen
+    self.title = title
+    self.subtitle = subtitle
+    self.icon = icon
+    self.content = content
+    self.onAddPhotoTapped = onAddPhotoTapped
+    _photoTiles = photoTiles
+  }
+
   var body: some View {
     PhotosPicker(
       selection: $selectedItem,
       matching: .images,
       label: {
-        let stack = VStack {
-          if let icon { EVYTextView(icon) }
-          if let content { EVYTextView(content) }
-        }
         if fullScreen {
-          stack
+          VStack(alignment: .leading) {
+            if let title, title.count > 0 {
+              EVYTextView(title)
+            }
+
+            VStack {
+              if let icon { EVYTextView(icon) }
+              if let content { EVYTextView(content) }
+            }
             .frame(maxWidth: .infinity)
             .frame(height: carouselElementSize)
             .background(
               RoundedRectangle(cornerRadius: Constants.mainCornerRadius)
                 .strokeBorder(Constants.borderColor, lineWidth: Constants.borderWidth))
+
+            if let subtitle {
+              EVYTextView(subtitle, style: .info)
+                .padding(.vertical, Constants.padding)
+            }
+          }
+          .frame(maxWidth: .infinity, alignment: .leading)
+          .contentShape(Rectangle())
         } else {
-          stack
-            .frame(width: carouselElementSize, height: carouselElementSize)
-            .background(
-              RoundedRectangle(cornerRadius: Constants.mainCornerRadius)
-                .strokeBorder(Constants.borderColor, lineWidth: Constants.borderWidth))
+          VStack {
+            if let icon { EVYTextView(icon) }
+            if let content { EVYTextView(content) }
+          }
+          .frame(width: carouselElementSize, height: carouselElementSize)
+          .background(
+            RoundedRectangle(cornerRadius: Constants.mainCornerRadius)
+              .strokeBorder(Constants.borderColor, lineWidth: Constants.borderWidth))
         }
       }
     )
