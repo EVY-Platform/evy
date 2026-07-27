@@ -2,6 +2,7 @@ import { afterAll, beforeAll, describe, expect, it } from "bun:test";
 import { EVY_CORE_RESOURCE, EVY_CORE_SERVICE } from "evy-types/coreResources";
 import { waitForClientOpen } from "evy-types/wsTestHelpers";
 import { Client } from "rpc-websockets";
+import { discoverMarketplaceIds } from "../src/tests/discoverMarketplaceIds";
 
 type WSClient = InstanceType<typeof Client>;
 
@@ -18,47 +19,6 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 	return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
-type DiscoveredMarketplaceIds = {
-	serviceId: string;
-	itemsResourceId: string;
-};
-
-async function discoverMarketplaceIds(
-	client: WSClient,
-): Promise<DiscoveredMarketplaceIds> {
-	const response = await client.call("resources", {});
-	if (
-		typeof response !== "object" ||
-		response === null ||
-		!("services" in response) ||
-		!Array.isArray(response.services)
-	) {
-		throw new Error("Expected resources response with services array");
-	}
-
-	const marketplaceService = response.services.find(
-		(service: { name?: string }) => service.name === "marketplace",
-	);
-	if (!marketplaceService || typeof marketplaceService.id !== "string") {
-		throw new Error("Expected marketplace service in resources response");
-	}
-
-	const resources = Array.isArray(marketplaceService.resources)
-		? marketplaceService.resources
-		: [];
-	const itemsResource = resources.find(
-		(resource: { name?: string }) => resource.name === "items",
-	);
-	if (!itemsResource || typeof itemsResource.id !== "string") {
-		throw new Error("Expected items resource in marketplace manifest");
-	}
-
-	return {
-		serviceId: marketplaceService.id,
-		itemsResourceId: itemsResource.id,
-	};
-}
-
 describe("Marketplace E2E (via API WebSocket)", () => {
 	let client: WSClient;
 	let marketplaceServiceId: string;
@@ -69,9 +29,10 @@ describe("Marketplace E2E (via API WebSocket)", () => {
 		await waitForClientOpen(client, CONNECTION_TIMEOUT_MS);
 		await client.login({ token: TEST_TOKEN, os: TEST_OS });
 
-		const discovered = await discoverMarketplaceIds(client);
+		const response = await client.call("resources", {});
+		const discovered = discoverMarketplaceIds(response, ["items"]);
 		marketplaceServiceId = discovered.serviceId;
-		itemsResourceId = discovered.itemsResourceId;
+		itemsResourceId = discovered.resourceIds.items;
 	});
 
 	afterAll(() => {

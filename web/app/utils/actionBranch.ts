@@ -157,7 +157,7 @@ export function serializeBranch(
 	return `{${functionName}(${trimmedArgs.join(",")})}`;
 }
 
-export function createUsesSubmitMarker(args: string[]): boolean {
+function createUsesSubmitMarker(args: string[]): boolean {
 	return args[2]?.trim() === "submit";
 }
 
@@ -170,7 +170,7 @@ export function updateUsesDraftMarker(args: string[]): boolean {
 	return args[4]?.trim() === "draft";
 }
 
-export function applyCreateModeForDraftSignals(
+function applyCreateModeForDraftSignals(
 	args: string[],
 	offerSubmitWithFlow: boolean,
 ): string[] {
@@ -199,7 +199,7 @@ export function applyCreateModeForDraftSignals(
 	return args;
 }
 
-export function isValidCreateBranchForSave(
+function isValidCreateBranchForSave(
 	args: string[],
 	offerSubmitWithFlow: boolean,
 ): boolean {

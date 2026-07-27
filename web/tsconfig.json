@@ -13,5 +13,5 @@
 		"baseUrl": ".",
 		"customConditions": ["node"]
 	},
-	"include": ["app/**/*", "dev/**/*"]
+	"include": ["app/**/*", "dev/**/*", "testFixtures/**/*"]
 }

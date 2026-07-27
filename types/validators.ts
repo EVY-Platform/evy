@@ -45,7 +45,7 @@ import {
 	SDUI_DEFINITIONS,
 	SDUI_ROW_TRIGGERS,
 } from "./generated/ts/sdui/definitions.generated";
-import type { UI_Flow, UI_Row, UI_RowActions } from "./generated/ts/sdui/evy";
+import type { UI_Flow, UI_Row } from "./generated/ts/sdui/evy";
 import type { DATA_MARKETPLACE_Item } from "./generated/ts/services/marketplace/item";
 
 import commonJsonRaw from "./schema/common/json.schema.json" with {

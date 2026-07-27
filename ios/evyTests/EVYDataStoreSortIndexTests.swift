@@ -67,10 +67,10 @@ final class EVYDataStoreSortIndexTests: XCTestCase {
 
   func testCollectionResolvesFromExactResourceId() throws {
     let resourceId = UUID().uuidString
-    resourcesToDelete.append((namespace: EVYNamespace.marketplace, resource: resourceId))
+    resourcesToDelete.append((namespace: MarketplaceTestFixture.serviceId, resource: resourceId))
 
     try EVY.publicStore.applySyncedValue(
-      namespace: EVYNamespace.marketplace,
+      namespace: MarketplaceTestFixture.serviceId,
       resource: resourceId,
       value: .array([
         .dictionary([
@@ -95,10 +95,10 @@ final class EVYDataStoreSortIndexTests: XCTestCase {
     let resourceId = UUID().uuidString
     let resourceName =
       "evy_data_store_sort_index_test_\(UUID().uuidString.replacingOccurrences(of: "-", with: "_"))"
-    resourcesToDelete.append((namespace: EVYNamespace.marketplace, resource: resourceId))
+    resourcesToDelete.append((namespace: MarketplaceTestFixture.serviceId, resource: resourceId))
 
     try EVY.publicStore.applySyncedValue(
-      namespace: EVYNamespace.marketplace,
+      namespace: MarketplaceTestFixture.serviceId,
       resource: resourceId,
       value: .array([
         .dictionary([

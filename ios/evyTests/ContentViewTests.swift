@@ -619,7 +619,7 @@ final class ContentViewTests: XCTestCase {
 
   /// The declaration wins over the actions, so scope no longer depends on
   /// re-parsing every branch in the flow.
-  func testDeclaredSubmitsTakesPrecedenceOverScrapedActions() throws {
+  func testDeclaredSubmitsTakesPrecedenceOverActionBranches() throws {
     let store = makeStore()
     try seedSubmittingFlow(
       store: store, flowId: "precedence-flow",

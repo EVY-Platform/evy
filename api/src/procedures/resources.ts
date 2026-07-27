@@ -35,22 +35,23 @@ export async function discoverResources(db: EvyDb): Promise<ResourcesResponse> {
 	];
 	const errors: NonNullable<ResourcesResponse["errors"]> = [];
 
-	for (const service of externalServices) {
-		if (service.id === EVY_CORE_SERVICE) continue;
+	for (const externalService of externalServices) {
 		try {
-			const response = await services.forwardResources(service.id);
+			const response = await services.forwardResources(
+				externalService.id,
+			);
 			const serviceDescriptor = response.services.find(
-				(descriptor) => descriptor.id === service.id,
+				(descriptor) => descriptor.id === externalService.id,
 			);
 			if (!serviceDescriptor) {
 				throw new Error(
-					`Service "${service.name}" (${service.id}) did not include itself in its resources response`,
+					`Service "${externalService.name}" (${externalService.id}) did not include itself in its resources response`,
 				);
 			}
 			servicesOut.push(serviceDescriptor);
 		} catch (error) {
 			errors.push({
-				service: service.id,
+				service: externalService.id,
 				message: describe(error),
 			});
 		}
@@ -60,8 +61,4 @@ export async function discoverResources(db: EvyDb): Promise<ResourcesResponse> {
 		services: servicesOut,
 		...(errors.length > 0 ? { errors } : {}),
 	});
-}
-
-export async function resourcesMethod(db: EvyDb): Promise<ResourcesResponse> {
-	return discoverResources(db);
 }

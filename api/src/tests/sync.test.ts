@@ -1,6 +1,10 @@
 import { afterEach, beforeEach, describe, expect, it, spyOn } from "bun:test";
 import type { GetRequest, GetResponse } from "evy-types";
-import { EVY_CORE_RESOURCE, EVY_CORE_SERVICE } from "evy-types/coreResources";
+import {
+	EVY_CORE_RESOURCE,
+	EVY_CORE_RESOURCES,
+	EVY_CORE_SERVICE,
+} from "evy-types/coreResources";
 import * as data from "../data/data";
 import type { EvyDb } from "../database/db";
 import * as resources from "../procedures/resources";
@@ -26,36 +30,9 @@ function buildMockCatalog(): Awaited<
 			{
 				id: EVY_CORE_SERVICE,
 				name: "evy",
-				resources: [
-					{ id: "flows", name: "flow" },
-					{ id: "pages", name: "page" },
-					{ id: "rows", name: "row" },
-					{ id: "devices", name: "device" },
-					{ id: "organisations", name: "organisation" },
-					{ id: "services", name: "service" },
-					{ id: "providers", name: "provider" },
-					{ id: EVY_CORE_RESOURCE.RESOURCES, name: "resource" },
-					{ id: "files", name: "file" },
-					{ id: "addresses", name: "address" },
-					{ id: "messages", name: "message" },
-				],
+				resources: [...EVY_CORE_RESOURCES],
 			},
-			{
-				...EXTERNAL_TEST_SERVICE_DESCRIPTOR,
-				resources: [
-					{
-						id: EXTERNAL_TEST_RESOURCE.SELLING_REASONS,
-						name: "selling_reasons",
-					},
-					{
-						id: EXTERNAL_TEST_RESOURCE.CONDITIONS,
-						name: "conditions",
-					},
-					{ id: EXTERNAL_TEST_RESOURCE.DURATIONS, name: "durations" },
-					{ id: EXTERNAL_TEST_RESOURCE.AREAS, name: "areas" },
-					{ id: EXTERNAL_TEST_RESOURCE.RECORDS, name: "records" },
-				],
-			},
+			EXTERNAL_TEST_SERVICE_DESCRIPTOR,
 		],
 	};
 }

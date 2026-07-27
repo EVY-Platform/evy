@@ -7,13 +7,10 @@ import type {
 } from "evy-types";
 import { EVY_CORE_RESOURCE, EVY_CORE_SERVICE } from "evy-types/coreResources";
 import {
-	flattenServiceResources,
-	serviceNameById,
-} from "evy-types/serviceManifest";
-import {
 	validateDataEvyFlow,
 	validateDataEvyPage,
 	validateDataEvyRow,
+	validateResourcesResponse,
 } from "evy-types/validators";
 import type {
 	ResourceAttributeMetadata,
@@ -23,6 +20,24 @@ import type { FlowEntityCollections } from "../utils/flowEntities";
 import { wsClient } from "./wsClient";
 
 const MAX_ATTRIBUTE_DEPTH = 5;
+
+function flattenServiceResources(
+	response: ResourcesResponse,
+): ServiceResource[] {
+	return response.services.flatMap((service) =>
+		service.resources.map((resource) => ({
+			id: resource.id,
+			serviceId: service.id,
+			name: resource.name,
+		})),
+	);
+}
+
+function serviceNamesById(response: ResourcesResponse): Map<string, string> {
+	return new Map(
+		response.services.map((service) => [service.id, service.name]),
+	);
+}
 
 function extractFlatResourceRows<T>(
 	response: SyncResponse,
@@ -150,7 +165,7 @@ function extractResourceCatalog(
 	) {
 		return undefined;
 	}
-	return row.value as unknown as ResourcesResponse;
+	return validateResourcesResponse(row.value);
 }
 
 export async function syncWebData(): Promise<{
@@ -159,10 +174,7 @@ export async function syncWebData(): Promise<{
 	resourceAttributeMetadata: ResourceAttributeMetadata[];
 	serviceNamesById: Map<string, string>;
 }> {
-	const [resourcesResponse, syncResponse] = await Promise.all([
-		wsClient.resources(),
-		wsClient.sync(),
-	]);
+	const syncResponse = await wsClient.sync();
 
 	if (syncResponse.errors?.length) {
 		console.warn(
@@ -173,14 +185,18 @@ export async function syncWebData(): Promise<{
 		);
 	}
 
-	const catalog = extractResourceCatalog(syncResponse) ?? resourcesResponse;
-	if (resourcesResponse.errors?.length) {
-		console.warn(
-			"resource discovery was incomplete:",
-			resourcesResponse.errors
-				.map((entry) => `${entry.service}: ${entry.message}`)
-				.join("; "),
-		);
+	let catalog = extractResourceCatalog(syncResponse);
+	if (!catalog) {
+		const resourcesResponse = await wsClient.resources();
+		catalog = resourcesResponse;
+		if (resourcesResponse.errors?.length) {
+			console.warn(
+				"resource discovery was incomplete:",
+				resourcesResponse.errors
+					.map((entry) => `${entry.service}: ${entry.message}`)
+					.join("; "),
+			);
+		}
 	}
 
 	return {
@@ -188,6 +204,6 @@ export async function syncWebData(): Promise<{
 		serviceResources: flattenServiceResources(catalog),
 		resourceAttributeMetadata:
 			extractResourceAttributeMetadata(syncResponse),
-		serviceNamesById: serviceNameById(catalog),
+		serviceNamesById: serviceNamesById(catalog),
 	};
 }

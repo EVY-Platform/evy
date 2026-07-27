@@ -369,7 +369,7 @@ export function App() {
 				[
 					...new Set(
 						(testServiceResources ?? []).map(
-							(resource) => resource.fkServiceId,
+							(resource) => resource.serviceId,
 						),
 					),
 				].map((serviceId) => [

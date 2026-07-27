@@ -32,7 +32,7 @@ Uses the root `.env` (copy from [`.env.example`](../../.env.example)). See the [
 
 ## Scripts
 
-Same scripts as [`api`](../../api/README.md#available-scripts): `bun run dev`, `bun run db:migrate`, `bun run health`, etc.
+Same scripts as the root [`api`](../../api/README.md): `bun run dev`, `bun run db:migrate`, `bun run health`, etc.
 
 ## Resource manifest
 

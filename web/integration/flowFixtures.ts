@@ -5,13 +5,13 @@ import type {
 	UI_ActionBranch,
 	UI_RowActions,
 } from "evy-types";
+import { getRowBindingFields } from "../app/rows/rowFields";
 import type {
 	ResourceAttributeMetadata,
 	ServiceResource,
-} from "../app/api/sync";
-import { getRowBindingFields } from "../app/rows/rowFields";
+} from "../app/types/resources";
 import { rowAction } from "../app/utils/rowActions";
-import { TEST_SERVICE_ID } from "../testFixtures/resourceCatalog";
+import { TEST_SERVICE_NAMES } from "../testFixtures/resourceCatalog";
 
 export function tapAction(branch: UI_ActionBranch): UI_RowActions {
 	return { tap: [rowAction(branch)] };
@@ -154,9 +154,7 @@ export async function initFullFlows(
 	await initResourceAttributeMetadata(page, metadata);
 }
 
-const DEFAULT_TEST_SERVICE_NAMES: Record<string, string> = {
-	[TEST_SERVICE_ID]: "Test Service",
-};
+const DEFAULT_TEST_SERVICE_NAMES = TEST_SERVICE_NAMES;
 
 async function initServiceResources(
 	page: Page,

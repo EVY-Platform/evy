@@ -329,13 +329,13 @@ final class EVYDraftBindingTests: XCTestCase {
     ])
 
     try EVY.publicStore.applySyncedValue(
-      namespace: EVYNamespace.marketplace,
+      namespace: MarketplaceTestFixture.serviceId,
       resource: resourceId,
       value: .array([otherItem, selectedItem])
     )
     defer {
       try? EVY.publicStore.deleteAll(
-        namespace: EVYNamespace.marketplace, resource: resourceId)
+        namespace: MarketplaceTestFixture.serviceId, resource: resourceId)
     }
 
     EVY.activeCacheScopeId = pageId
@@ -372,7 +372,7 @@ final class EVYDraftBindingTests: XCTestCase {
     )
 
     let otherRow = try EVY.publicStore.get(
-      namespace: EVYNamespace.marketplace,
+      namespace: MarketplaceTestFixture.serviceId,
       resource: resourceId,
       id: otherItemId
     )
@@ -383,7 +383,7 @@ final class EVYDraftBindingTests: XCTestCase {
     )
 
     let selectedPublicRow = try EVY.publicStore.get(
-      namespace: EVYNamespace.marketplace,
+      namespace: MarketplaceTestFixture.serviceId,
       resource: resourceId,
       id: selectedItemId
     )

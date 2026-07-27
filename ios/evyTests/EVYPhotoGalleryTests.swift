@@ -54,13 +54,14 @@ final class EVYPhotoGalleryTests: XCTestCase {
     ])
 
     defer {
-      try? EVY.publicStore.deleteAll(namespace: EVYNamespace.marketplace, resource: itemsKey)
+      try? EVY.publicStore.deleteAll(
+        namespace: MarketplaceTestFixture.serviceId, resource: itemsKey)
       try? EVY.cacheStore.deleteAll(namespace: EVYNamespace.cache, resource: detailPageId)
       EVY.activeCacheScopeId = nil
     }
 
     try EVY.publicStore.applySyncedValue(
-      namespace: EVYNamespace.marketplace,
+      namespace: MarketplaceTestFixture.serviceId,
       resource: itemsKey,
       value: .array([item])
     )

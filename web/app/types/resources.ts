@@ -5,7 +5,7 @@
  */
 export type ServiceResource = {
 	id: string;
-	fkServiceId: string;
+	serviceId: string;
 	name: string;
 };
 

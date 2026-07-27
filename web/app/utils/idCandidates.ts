@@ -120,7 +120,7 @@ export function buildIdCandidates(
 	}));
 
 	const serviceCandidates = Array.from(
-		new Set(serviceResources.map((resource) => resource.fkServiceId)),
+		new Set(serviceResources.map((resource) => resource.serviceId)),
 	).map((serviceId) => ({
 		id: serviceId,
 		name: serviceNamesById.get(serviceId) ?? serviceId,

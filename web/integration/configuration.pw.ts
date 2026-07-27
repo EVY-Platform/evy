@@ -16,7 +16,7 @@ import {
 const TEST_SERVICE_RESOURCES = [
 	{
 		id: TEST_RESOURCE_ID.RECORDS,
-		fkServiceId: TEST_SERVICE_ID,
+		serviceId: TEST_SERVICE_ID,
 		name: "item",
 	},
 ];

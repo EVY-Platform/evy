@@ -32,8 +32,6 @@ struct EVYValue: Equatable {
 
 enum EVYNamespace {
   static let evy = EVY_CORE_SERVICE
-  // Seeded marketplace service id used by tests and e2e fixtures.
-  static let marketplace = "66b092ae-7cd8-4d67-95b7-30b03568fd90"
   static let local = "local"
   static let cache = "cache"
   static let draft = "draft"

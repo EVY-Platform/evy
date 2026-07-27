@@ -8,10 +8,14 @@
 import Foundation
 
 private let comparisonOperators = [">=", "<=", "==", "!=", ">", "<"]
+// Matches a props object literal with no quoted values. e.g. {archivedAt: now()}, {name: test}
 private let propsPattern = "\\{(?!\")[^}^\"]*(?!\")\\}"
-/// Args may contain one level of nested calls, e.g. update(..., {archivedAt: now()})
+// Matches a parenthesized arg list allowing one level of nested calls,
+// e.g. update(..., {archivedAt: now()}) — matches (a, b), (x, foo(y))
 private let functionParamsPattern = "\\((?:[^()]|\\([^()]*\\))*\\)"
+// Matches a function call: identifier followed by its params. e.g. now(), update(id, {archivedAt: now()})
 private let functionPattern = "[a-zA-Z_][a-zA-Z0-9_]*\(functionParamsPattern)"
+// Matches a numeric array index accessor. e.g. [0], [123]
 private let arrayPattern = "\\[([\\d]*)\\]"
 let PROP_SEPARATOR = "."
 

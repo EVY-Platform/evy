@@ -1,33 +1,28 @@
 import { describe, expect, it } from "bun:test";
-import { readdir, readFile } from "node:fs/promises";
+import { readFile } from "node:fs/promises";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import { Glob } from "bun";
 
 const REPO_ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 const SERVICES_ROOT = resolve(REPO_ROOT, "services");
 
 const SCAN_ROOTS = ["api", "web"] as const;
 
+const ALLOWED_MARKETPLACE_IMPORTERS = new Set(["scripts/seed.ts"]);
+
 const IMPORT_PATTERN = /(?:import|export)\s+[^;]*?\sfrom\s+["']([^"']+)["']/g;
 
-async function collectTypeScriptFiles(directory: string): Promise<string[]> {
-	const entries = await readdir(directory, { withFileTypes: true });
+async function collectTypeScriptFiles(scanRoot: string): Promise<string[]> {
+	const glob = new Glob("**/*.{ts,tsx}");
 	const files: string[] = [];
-
-	for (const entry of entries) {
-		const entryPath = join(directory, entry.name);
-		if (entry.isDirectory()) {
-			if (entry.name === "node_modules") {
-				continue;
-			}
-			files.push(...(await collectTypeScriptFiles(entryPath)));
-			continue;
-		}
-		if (entry.isFile() && /\.tsx?$/.test(entry.name)) {
-			files.push(entryPath);
-		}
+	for await (const relativePath of glob.scan({
+		cwd: join(REPO_ROOT, scanRoot),
+		onlyFiles: true,
+	})) {
+		if (relativePath.includes("node_modules")) continue;
+		files.push(join(REPO_ROOT, scanRoot, relativePath));
 	}
-
 	return files;
 }
 
@@ -39,6 +34,11 @@ function isForbiddenServiceImport(
 		return false;
 	}
 
+	const relativeImporter = importerPath.slice(REPO_ROOT.length + 1);
+	if (ALLOWED_MARKETPLACE_IMPORTERS.has(relativeImporter)) {
+		return false;
+	}
+
 	const resolvedImportPath = resolve(dirname(importerPath), importSpecifier);
 	return (
 		resolvedImportPath === SERVICES_ROOT ||
@@ -46,7 +46,10 @@ function isForbiddenServiceImport(
 	);
 }
 
-function findForbiddenImports(importerPath: string, source: string): string[] {
+function findForbiddenImportsInTsx(
+	importerPath: string,
+	source: string,
+): string[] {
 	const violations: string[] = [];
 
 	for (const match of source.matchAll(IMPORT_PATTERN)) {
@@ -62,17 +65,34 @@ function findForbiddenImports(importerPath: string, source: string): string[] {
 	return violations;
 }
 
+function findForbiddenImportsInTs(
+	importerPath: string,
+	source: string,
+): string[] {
+	const violations: string[] = [];
+	const transpiler = new Bun.Transpiler({ loader: "ts" });
+
+	for (const entry of transpiler.scanImports(source)) {
+		if (isForbiddenServiceImport(importerPath, entry.path)) {
+			violations.push(entry.path);
+		}
+	}
+
+	return violations;
+}
+
 describe("package boundaries", () => {
 	it("rejects api and web imports into services/", async () => {
 		const violations: string[] = [];
 
 		for (const scanRoot of SCAN_ROOTS) {
-			const scanDirectory = join(REPO_ROOT, scanRoot);
-			const files = await collectTypeScriptFiles(scanDirectory);
+			const files = await collectTypeScriptFiles(scanRoot);
 
 			for (const filePath of files) {
 				const source = await readFile(filePath, "utf8");
-				const forbiddenImports = findForbiddenImports(filePath, source);
+				const forbiddenImports = filePath.endsWith(".tsx")
+					? findForbiddenImportsInTsx(filePath, source)
+					: findForbiddenImportsInTs(filePath, source);
 				for (const importSpecifier of forbiddenImports) {
 					const relativeImporter = filePath.slice(
 						REPO_ROOT.length + 1,

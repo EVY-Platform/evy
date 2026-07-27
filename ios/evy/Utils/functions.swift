@@ -138,42 +138,39 @@ func evySort(_ args: String) throws -> EVYJson {
   }
 
   let indexedItems = Array(items.enumerated())
-  let sortedItems: [EVYJson]
+  let keyExtractor: (EVYJson) throws -> SortableKey
   if let fieldArg {
-    let keyedItems = try indexedItems.map {
-      indexedItem -> (offset: Int, item: EVYJson, key: SortableKey) in
-      let key = sortableKey(from: indexedItem.element, fieldPath: fieldArg)
+    keyExtractor = { item in
+      let key = sortableKey(from: item, fieldPath: fieldArg)
       if key == .unsupported {
         throw EVYError.invalidData(
           context: "sort field values must be numbers or strings")
       }
-      return (indexedItem.offset, indexedItem.element, key)
+      return key
     }
-    sortedItems = keyedItems.sorted { left, right in
-      let comparison = compareSortableKeys(left.key, right.key)
-      if comparison == .orderedSame {
-        return left.offset < right.offset
-      }
-      return ascending ? comparison == .orderedAscending : comparison == .orderedDescending
-    }.map(\.item)
   } else {
-    let keyedItems = try indexedItems.map {
-      indexedItem -> (offset: Int, item: EVYJson, key: SortableKey) in
-      let key = sortableKey(from: indexedItem.element)
+    keyExtractor = { item in
+      let key = sortableKey(from: item)
       if key == .unsupported {
         throw EVYError.invalidData(
           context: "sort values must be numbers or strings")
       }
-      return (indexedItem.offset, indexedItem.element, key)
+      return key
     }
-    sortedItems = keyedItems.sorted { left, right in
-      let comparison = compareSortableKeys(left.key, right.key)
-      if comparison == .orderedSame {
-        return left.offset < right.offset
-      }
-      return ascending ? comparison == .orderedAscending : comparison == .orderedDescending
-    }.map(\.item)
   }
+
+  let keyedItems = try indexedItems.map {
+    indexedItem -> (offset: Int, item: EVYJson, key: SortableKey) in
+    let key = try keyExtractor(indexedItem.element)
+    return (indexedItem.offset, indexedItem.element, key)
+  }
+  let sortedItems = keyedItems.sorted { left, right in
+    let comparison = compareSortableKeys(left.key, right.key)
+    if comparison == .orderedSame {
+      return left.offset < right.offset
+    }
+    return ascending ? comparison == .orderedAscending : comparison == .orderedDescending
+  }.map(\.item)
 
   return .array(sortedItems)
 }

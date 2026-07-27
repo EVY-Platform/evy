@@ -1,6 +1,6 @@
 import { expect, type Locator, test } from "@playwright/test";
 import type { UI_Flow as ServerFlow, UI_ActionBranch } from "evy-types";
-import type { ServiceResource } from "../app/api/sync";
+import type { ServiceResource } from "../app/types/resources";
 import { TEST_SERVICE_ID } from "../testFixtures/resourceCatalog";
 import { openAppWithFullFlows } from "./flowFixtures";
 import { getConfigPanel, popoverSelect } from "./utils";
@@ -11,12 +11,12 @@ const ORDER_RESOURCE_ID = "res-order";
 const SERVICE_RESOURCES: ServiceResource[] = [
 	{
 		id: ITEM_RESOURCE_ID,
-		fkServiceId: TEST_SERVICE_ID,
+		serviceId: TEST_SERVICE_ID,
 		name: "item",
 	},
 	{
 		id: ORDER_RESOURCE_ID,
-		fkServiceId: TEST_SERVICE_ID,
+		serviceId: TEST_SERVICE_ID,
 		name: "order",
 	},
 ];

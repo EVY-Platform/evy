@@ -15,9 +15,6 @@ export const MARKETPLACE_SERVICE_DESCRIPTOR = {
 
 export const MARKETPLACE_SERVICE = MARKETPLACE_SERVICE_DESCRIPTOR.id;
 
-export const MARKETPLACE_RESOURCE_MANIFEST =
-	MARKETPLACE_SERVICE_DESCRIPTOR.resources;
-
 function marketplaceResourceId(name: string): string {
 	const resource = MARKETPLACE_SERVICE_DESCRIPTOR.resources.find(
 		(entry) => entry.name === name,
@@ -40,8 +37,10 @@ export const MARKETPLACE_SEED_RESOURCES: ReadonlySet<string> = new Set(
 	MARKETPLACE_SERVICE_DESCRIPTOR.resources.map((resource) => resource.id),
 );
 
+const MARKETPLACE_RESOURCES_RESPONSE = validateResourcesResponse({
+	services: [MARKETPLACE_SERVICE_DESCRIPTOR],
+});
+
 export function getMarketplaceResourcesResponse(): ResourcesResponse {
-	return validateResourcesResponse({
-		services: [MARKETPLACE_SERVICE_DESCRIPTOR],
-	});
+	return MARKETPLACE_RESOURCES_RESPONSE;
 }

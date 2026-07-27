@@ -32,6 +32,11 @@ export function useFlows(): UseFlowsResult {
 	const [error, setError] = useState<Error | null>(null);
 
 	useEffect(() => {
+		if (window.__TEST_FLOWS__) {
+			setLoading(false);
+			return;
+		}
+
 		let cancelled = false;
 
 		async function fetchFlows() {

@@ -597,8 +597,6 @@ export function ConfigurationPanel() {
 										flowsById={flowsById}
 										pagesById={pagesById}
 										rowsById={rowsById}
-										serviceResources={serviceResources}
-										serviceNamesById={serviceNamesById}
 										defaultSheetRowId={
 											currentConfigRow.config.sheetRowId
 										}

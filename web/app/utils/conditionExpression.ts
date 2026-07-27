@@ -34,7 +34,7 @@ export type ConditionGroup = {
 };
 
 /** A bare `true`/`false`, valid standalone and as an atom inside a group. */
-export type ConditionBoolean = {
+type ConditionBoolean = {
 	type: "boolean";
 	value: boolean;
 };

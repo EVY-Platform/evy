@@ -1,6 +1,7 @@
 import type {
 	GetRequest,
 	GetResponse,
+	ResourcesResponse,
 	SyncRequest,
 	SyncResponse,
 } from "evy-types";
@@ -9,7 +10,6 @@ import {
 	EVY_CORE_RESOURCE_NAMES,
 	EVY_CORE_SERVICE,
 } from "evy-types/coreResources";
-import { externalResourceRefs } from "evy-types/serviceManifest";
 import * as data from "../data/data";
 import type { EvyDb } from "../database/db";
 import { discoverResources } from "./resources";
@@ -85,6 +85,19 @@ async function fetchResources(
 	}
 
 	return { rows, errors };
+}
+
+function externalResourceRefs(
+	response: ResourcesResponse,
+	coreServiceId: string,
+): ResourceRef[] {
+	return response.services.flatMap((service) => {
+		if (service.id === coreServiceId) return [];
+		return service.resources.map((resource) => ({
+			service: service.id,
+			resource: resource.id,
+		}));
+	});
 }
 
 /** Devices and the resource catalog are handled outside the core fetch loop. */

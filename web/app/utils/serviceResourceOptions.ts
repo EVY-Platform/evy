@@ -6,7 +6,6 @@
  * once because a half-chosen target is not a valid declaration.
  */
 
-import { serviceOptions } from "evy-types/serviceManifest";
 import type { PopoverOption } from "../components/PopoverSelect";
 import type { ServiceResource } from "../types/resources";
 import { displayLabel } from "./labelFormatting";
@@ -14,16 +13,12 @@ import { displayLabel } from "./labelFormatting";
 export function toServiceOptions(
 	serviceNamesById: Map<string, string>,
 ): PopoverOption[] {
-	return serviceOptions({
-		services: [...serviceNamesById.entries()].map(([id, name]) => ({
-			id,
-			name,
-			resources: [],
-		})),
-	}).map((option) => ({
-		value: option.value,
-		label: displayLabel(option.label),
-	}));
+	return [...serviceNamesById.entries()]
+		.map(([id, name]) => ({
+			value: id,
+			label: displayLabel(name),
+		}))
+		.toSorted((a, b) => a.label.localeCompare(b.label));
 }
 
 export function toResourceOptions(
@@ -31,7 +26,7 @@ export function toResourceOptions(
 	serviceId: string,
 ): PopoverOption[] {
 	return serviceResources
-		.filter((resource) => resource.fkServiceId === serviceId)
+		.filter((resource) => resource.serviceId === serviceId)
 		.map((resource) => ({
 			value: resource.id,
 			label: displayLabel(resource.name),

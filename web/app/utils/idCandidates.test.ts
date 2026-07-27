@@ -50,7 +50,7 @@ const pagesById: Record<string, DATA_EVY_Page> = {
 };
 
 const serviceResources = [
-	{ id: "res-1", fkServiceId: "service-1", name: "item" },
+	{ id: "res-1", serviceId: "service-1", name: "item" },
 ] satisfies ServiceResource[];
 
 const serviceNamesById = new Map([["service-1", "Marketplace"]]);

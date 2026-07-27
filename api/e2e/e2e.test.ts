@@ -80,8 +80,19 @@ describe("API E2E Tests", () => {
 				cursor: first.cursor,
 			})) as { data: unknown[]; cursor: string };
 
-			// Nothing changed in between, so the cursor holds and no rows repeat.
-			expect(second.data).toEqual([]);
+			const incrementalRows = second.data.filter(
+				(row) =>
+					!(
+						typeof row === "object" &&
+						row !== null &&
+						"resource" in row &&
+						row.resource === EVY_CORE_RESOURCE.RESOURCES
+					),
+			);
+
+			// Nothing changed in between, so the cursor holds and no data rows repeat.
+			// The resource catalog singleton is re-sent whenever discovery succeeds.
+			expect(incrementalRows).toEqual([]);
 			expect(second.cursor).toBe(first.cursor);
 		});
 

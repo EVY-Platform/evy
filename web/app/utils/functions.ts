@@ -1,13 +1,13 @@
 import { evaluateConditionForPreview } from "./conditionExpression";
+import type { EVYFunctionOutput } from "./datetime";
 import {
 	type EVYFunctionContext,
-	type EVYFunctionOutput,
 	evyFormatDatetime,
 	stripOptionalSurroundingQuotes,
 } from "./datetime";
 import { splitFunctionArguments } from "./functionArgs";
 
-export type { EVYFunctionContext, EVYFunctionOutput };
+export type { EVYFunctionContext };
 
 type EVYFunctionHandler = (
 	args: string,
@@ -23,12 +23,7 @@ function evyLength(): EVYFunctionOutput {
 	return { value: "1" };
 }
 
-function evyFindFirst(args: string): EVYFunctionOutput {
-	const [data] = args.split(",");
-	return { value: data?.trim() ?? "" };
-}
-
-function evySort(args: string): EVYFunctionOutput {
+function evyCollectionPlaceholder(args: string): EVYFunctionOutput {
 	const [data] = args.split(",");
 	return { value: data?.trim() ?? "" };
 }
@@ -187,8 +182,8 @@ function evyIfStub(args: string): EVYFunctionOutput {
 const functionHandlers: Record<string, EVYFunctionHandler> = {
 	count: evyCount,
 	length: evyLength,
-	findFirst: evyFindFirst,
-	sort: evySort,
+	findFirst: evyCollectionPlaceholder,
+	sort: evyCollectionPlaceholder,
 	formatCurrency: evyFormatCurrency,
 	formatDimension: evyFormatDimension,
 	formatWeight: evyFormatWeight,

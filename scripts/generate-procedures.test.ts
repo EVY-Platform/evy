@@ -26,10 +26,13 @@ describe("procedures manifest validation", () => {
 	});
 
 	it("requires each procedure to name its owning service", () => {
-		const manifest = structuredClone(VALID) as Record<string, never>;
-		// biome-ignore lint/performance/noDelete: exercising a missing field
-		delete (manifest.procedures as Record<string, Record<string, unknown>>)
-			.place_search.service;
+		const manifest = {
+			procedures: {
+				place_search: {
+					response: "rpc/placeSearch.response.schema.json",
+				},
+			},
+		};
 		expect(() => validateSchema(manifest)).toThrow(
 			"procedures.place_search.service must be a non-empty string",
 		);
