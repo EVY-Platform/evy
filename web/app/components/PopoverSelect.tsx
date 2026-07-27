@@ -85,19 +85,29 @@ export function PopoverSelect({
 		}
 	}, []);
 
-	const close = useCallback(() => {
-		clearHoverCloseTimer();
-		setActiveIndex(-1);
-		setSearchQuery("");
-		setIsOpen(false);
-		triggerRef.current?.focus();
-	}, [clearHoverCloseTimer]);
+	const close = useCallback(
+		(restoreFocus = true) => {
+			clearHoverCloseTimer();
+			setActiveIndex(-1);
+			setSearchQuery("");
+			setIsOpen(false);
+			if (restoreFocus) {
+				triggerRef.current?.focus();
+			}
+		},
+		[clearHoverCloseTimer],
+	);
+
+	const focusSearch = useCallback(() => {
+		requestAnimationFrame(() => searchRef.current?.focus());
+	}, []);
 
 	const scheduleHoverClose = useCallback(() => {
 		clearHoverCloseTimer();
 		hoverCloseTimerRef.current = setTimeout(() => {
 			hoverCloseTimerRef.current = null;
-			close();
+			// Hover dismiss should not move focus onto the trigger label.
+			close(false);
 		}, HOVER_CLOSE_DELAY_MS);
 	}, [clearHoverCloseTimer, close]);
 
@@ -140,10 +150,10 @@ export function PopoverSelect({
 	useOutsideClick(isOpen, isInsidePopover, close);
 
 	useEffect(() => {
-		if (isOpen) {
-			requestAnimationFrame(() => searchRef.current?.focus());
+		if (isOpen && position) {
+			focusSearch();
 		}
-	}, [isOpen]);
+	}, [isOpen, position, focusSearch]);
 
 	useEffect(() => {
 		if (activeIndex < 0 || !menuRef.current) return;
@@ -156,8 +166,8 @@ export function PopoverSelect({
 	const handleTriggerPointerEnter = useCallback(() => {
 		if (!openOnHover) return;
 		clearHoverCloseTimer();
-		open();
-	}, [openOnHover, clearHoverCloseTimer, open]);
+		if (!isOpen) open();
+	}, [openOnHover, clearHoverCloseTimer, isOpen, open]);
 
 	const handleTriggerPointerLeave = useCallback(() => {
 		if (!openOnHover) return;
@@ -217,13 +227,26 @@ export function PopoverSelect({
 			if (event.key === "ArrowDown") {
 				event.preventDefault();
 				if (!isOpen) open();
+				else focusSearch();
 			} else if (event.key === "Escape" && isOpen) {
 				event.preventDefault();
 				event.stopPropagation();
 				close();
+			} else if (
+				isOpen &&
+				event.key.length === 1 &&
+				!event.ctrlKey &&
+				!event.metaKey &&
+				!event.altKey
+			) {
+				// Typeahead while focus is still on the trigger (e.g. after click).
+				event.preventDefault();
+				setSearchQuery((currentQuery) => currentQuery + event.key);
+				setActiveIndex(-1);
+				focusSearch();
 			}
 		},
-		[isOpen, open, close],
+		[isOpen, open, close, focusSearch],
 	);
 
 	const selectedOption = options.find((o) => o.value === value);
@@ -249,11 +272,18 @@ export function PopoverSelect({
 				onMouseEnter={handleTriggerPointerEnter}
 				onMouseLeave={handleTriggerPointerLeave}
 				onKeyDown={handleTriggerKeyDown}
+				onMouseDown={(event) => {
+					// Keep focus in the search field when the menu is already open on hover.
+					if (openOnHover && isOpen) {
+						event.preventDefault();
+					}
+				}}
 				onClick={() => {
 					// With hover-open, pointer hover may open the menu before click; toggling
 					// closed here races with Playwright (hover → click) and flakes tests.
 					if (openOnHover) {
 						if (!isOpen) open();
+						else focusSearch();
 					} else if (isOpen) close();
 					else open();
 				}}
@@ -296,6 +326,8 @@ export function PopoverSelect({
 								setActiveIndex(-1);
 							}}
 							onKeyDown={handleSearchKeyDown}
+							onMouseEnter={handleMenuPointerEnter}
+							onMouseLeave={handleMenuPointerLeave}
 						/>
 						<div
 							className="evy-popover-menu-scroll"
