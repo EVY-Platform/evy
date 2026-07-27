@@ -6,6 +6,7 @@
 		"./coreResources": "./generated/ts/coreResources.ts",
 		"./procedures": "./generated/ts/procedures.ts",
 		"./serviceManifest": "./serviceManifest.ts",
+		"./marketplaceResources": "./marketplaceResources.ts",
 		"./db/schema.generated": "./generated/ts/db/schema.generated.ts",
 		"./functionArgs": "./functionArgs.ts",
 		"./actionAst": "./actionAst.ts",
