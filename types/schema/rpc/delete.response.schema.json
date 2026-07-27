@@ -32,6 +32,9 @@
 			"$ref": "../data/data.schema.json#/$defs/DATA_EVY_Message"
 		},
 		{
+			"$ref": "../data/data.schema.json#/$defs/DATA_EVY_Formatter"
+		},
+		{
 			"$ref": "../data/primitive.schema.json"
 		}
 	]

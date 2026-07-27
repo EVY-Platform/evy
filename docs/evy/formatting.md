@@ -109,11 +109,23 @@ the exact thresholds.
 
 ## Dynamic formatting functions
 
-These are formats configured by passing dynamic JSON and using region or device configs.
-Current clients hardcode the formatting in practice (e.g. `formatCurrency` always uses `$`);
-the shape below is the intended config for region-aware formatting, keyed by a
-`formatting_config` value resolved from input (e.g. `{input.currency}` or `{input.country}`)
-against a `formatting` map of per-region templates.
+These are configured as synced `formatters` core resource rows (one row per function
+name) and evaluated at runtime by web and iOS. Each formatter row has:
+
+- `name` — expression function id, e.g. `formatCurrency` or `formatAddress`
+- `formatting_config` — template resolved against the input object to choose a map key
+  (e.g. `{input.currency}` or `{input.country}`)
+- `formatting` — map of region key → display template. Keys are matched
+  case-insensitively against the resolved config value. A `default` entry is used
+  when the resolved key is missing.
+
+Templates may call built-in formatters such as `{formatDecimal(input.value, 2)}` and
+may interpolate `{input.field}` paths. Empty `{input.*}` segments are omitted and
+leftover separators are tidied before display.
+
+`formatCurrency` and `formatAddress` are dynamic. `formatAddressLine1` and
+`formatAddressLine2` remain hard-coded helpers. While editing a currency field, clients
+return the bare `value` string instead of running the display template.
 
 ```
 formatCurrency(_variable_type_price_)
@@ -123,36 +135,38 @@ Outputs: $13.23
 formatAddress(_variable_type_address_)
 Variable: { "unit": "23-25", "street": "Rosebery Avenue", "city": "Rosebery",
             "postcode": "2018", "state": "NSW", "country": "Australia", "location": ... }
-Outputs: {unit} {street}, {postcode} {city} {state}
+Outputs: 23-25 Rosebery Avenue, 2018 Rosebery NSW
 ```
 
 `formatAddressLine1` renders `{unit} {street}`; `formatAddressLine2` renders
 `{city}, {state} {postcode}`.
 
 <details>
-<summary>Sample config shape</summary>
+<summary>Sample formatter rows</summary>
 
 ```json
-{
-    "formatCurrency": {
-        "input_type": "price",
-        "keyboard": "numeric_detailed",
-        "formatting_config": "{input.currency}",
-        "formatting": {
-            "aud": "$ {formatDecimal(input.value, 2)}",
-            "eur": "€ {formatDecimal(input.value, 2)}"
-        }
-    },
-    "formatAddress": {
-        "input_type": "address",
-        "keyboard": "text",
-        "formatting_config": "{input.country}",
-        "formatting": {
-            "au": "{input.unit} {input.street}, {input.city} {input.postcode} {input.state}",
-            "us": "{input.unit} {input.street}, {input.city} {input.state} {input.postcode}"
-        }
+[
+  {
+    "id": "f1e2d3c4-b5a6-4789-8abc-def012345601",
+    "name": "formatCurrency",
+    "formatting_config": "{input.currency}",
+    "formatting": {
+      "AUD": "${formatDecimal(input.value, 2)}",
+      "EUR": "€{formatDecimal(input.value, 2)}",
+      "default": "${formatDecimal(input.value, 2)}"
     }
-}
+  },
+  {
+    "id": "f1e2d3c4-b5a6-4789-8abc-def012345602",
+    "name": "formatAddress",
+    "formatting_config": "{input.country}",
+    "formatting": {
+      "Australia": "{input.unit} {input.street}, {input.postcode} {input.city} {input.state}",
+      "United States": "{input.unit} {input.street}, {input.city} {input.state} {input.postcode}",
+      "default": "{input.unit} {input.street}, {input.postcode} {input.city} {input.state}"
+    }
+  }
+]
 ```
 
 </details>

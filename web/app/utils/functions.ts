@@ -5,8 +5,13 @@ import {
 	evyFormatDatetime,
 	stripOptionalSurroundingQuotes,
 } from "./datetime";
+import {
+	evaluateDynamicFormatter,
+	evyFormatDecimal,
+} from "./dynamicFormatters";
 import { splitFunctionArguments } from "./functionArgs";
 
+export type { EVYFormatterDefinition } from "./dynamicFormatters";
 export type { EVYFunctionContext };
 
 type EVYFunctionHandler = (
@@ -28,8 +33,36 @@ function evyCollectionPlaceholder(args: string): EVYFunctionOutput {
 	return { value: data?.trim() ?? "" };
 }
 
-function evyFormatCurrency(): EVYFunctionOutput {
-	return { value: "1.00", prefix: "$" };
+function resolvePreviewPath(
+	path: string,
+	context?: EVYFunctionContext,
+): unknown {
+	if (context?.resolvePath) {
+		return context.resolvePath(path);
+	}
+	return resolveMockPath(path);
+}
+
+function evyFormatCurrency(
+	args: string,
+	context?: EVYFunctionContext,
+): EVYFunctionOutput {
+	if (!context?.formatters?.length) {
+		return { value: "1.00", prefix: "$" };
+	}
+	try {
+		const formatterContext: EVYFunctionContext = {
+			...context,
+			resolvePath: (path) => resolvePreviewPath(path, context),
+		};
+		return evaluateDynamicFormatter(
+			"formatCurrency",
+			args,
+			formatterContext,
+		);
+	} catch {
+		return { value: "1.00", prefix: "$" };
+	}
 }
 
 const fallbackDimensionOutput: EVYFunctionOutput = {
@@ -103,8 +136,26 @@ function evyFormatWeight(): EVYFunctionOutput {
 	return { value: "500", suffix: "g" };
 }
 
-function evyFormatAddress(): EVYFunctionOutput {
-	return { value: "1 Main Street, 2000 Sydney NSW" };
+function evyFormatAddress(
+	args: string,
+	context?: EVYFunctionContext,
+): EVYFunctionOutput {
+	if (!context?.formatters?.length) {
+		return { value: "1 Main Street, 2000 Sydney NSW" };
+	}
+	try {
+		const formatterContext: EVYFunctionContext = {
+			...context,
+			resolvePath: (path) => resolvePreviewPath(path, context),
+		};
+		return evaluateDynamicFormatter(
+			"formatAddress",
+			args,
+			formatterContext,
+		);
+	} catch {
+		return { value: "1 Main Street, 2000 Sydney NSW" };
+	}
 }
 
 function evyFormatAddressLine1(): EVYFunctionOutput {
@@ -115,7 +166,6 @@ function evyFormatAddressLine2(): EVYFunctionOutput {
 	return { value: "Sydney, NSW 2000" };
 }
 
-const evyFormatDecimalStub = (): EVYFunctionOutput => ({ value: "20.04" });
 const evyFormatMetricLengthStub = (): EVYFunctionOutput => ({
 	value: "23.24",
 	suffix: "m",
@@ -190,7 +240,7 @@ const functionHandlers: Record<string, EVYFunctionHandler> = {
 	formatAddress: evyFormatAddress,
 	formatAddressLine1: evyFormatAddressLine1,
 	formatAddressLine2: evyFormatAddressLine2,
-	formatDecimal: evyFormatDecimalStub,
+	formatDecimal: evyFormatDecimal,
 	formatMetricLength: evyFormatMetricLengthStub,
 	formatImperialLength: evyFormatImperialLengthStub,
 	formatDuration: evyFormatDurationStub,

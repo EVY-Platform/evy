@@ -15,6 +15,7 @@ final class InterpreterTests: XCTestCase {
     try super.setUpWithError()
     testPageId = "test_page_\(UUID().uuidString)"
     EVY.activeCacheScopeId = testPageId
+    try evySeedStandardFormattersForTests()
   }
 
   override func tearDownWithError() throws {

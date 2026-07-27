@@ -1,6 +1,7 @@
 import { describe, expect, it } from "bun:test";
 import { TEST_RESOURCE_ID } from "../../testFixtures/resourceCatalog";
 import { parseText } from "./interpreter";
+import { STANDARD_FORMATTERS } from "./standardFormatters";
 
 const compoundDimensionsText =
 	"{formatDimension(item.width) (w) x formatDimension(item.height) (h) x formatDimension(item.length) (l)}";
@@ -11,7 +12,12 @@ describe("parseText", () => {
 	});
 
 	it("resolves formatCurrency placeholder", () => {
-		expect(parseText("{formatCurrency()}")).toContain("$");
+		expect(
+			parseText("{formatCurrency()}", {
+				formatters: STANDARD_FORMATTERS,
+				resolvePath: () => ({ currency: "AUD", value: "1.00" }),
+			}),
+		).toContain("$");
 	});
 
 	it("formats an RFC3339 datetime with a date pattern", () => {

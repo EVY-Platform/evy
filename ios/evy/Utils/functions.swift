@@ -309,38 +309,7 @@ func evyFormatCurrency(
   _ args: String,
   _ editing: Bool = false
 ) throws -> EVYFunctionOutput {
-  let res = try EVY.getDataFromProps(args)
-
-  let rawValue: String
-  switch res {
-  case .dictionary(let dictValue):
-    guard let value = dictValue["value"] else {
-      throw EVYError.formatFailed(type: "currency", reason: "missing 'value' field")
-    }
-    rawValue = value.toString()
-  case .string(let stringValue):
-    rawValue = stringValue
-  case .int(let intValue):
-    rawValue = String(intValue)
-  case .decimal(let decimalValue):
-    rawValue = "\(decimalValue)"
-  default:
-    throw EVYError.formatFailed(type: "currency", reason: "expected dictionary, got \(res)")
-  }
-
-  let trimmedValue = rawValue.trimmingCharacters(in: .whitespacesAndNewlines)
-  if trimmedValue.isEmpty {
-    return EVYFunctionOutput(value: "", prefix: nil, suffix: nil)
-  }
-  if editing {
-    return EVYFunctionOutput(value: trimmedValue, prefix: nil, suffix: nil)
-  }
-  guard let number = NumberFormatter().number(from: trimmedValue) else {
-    throw EVYError.formatFailed(
-      type: "currency", reason: "could not parse number from '\(trimmedValue)'")
-  }
-  return EVYFunctionOutput(
-    value: String(format: "%.2f", CGFloat(truncating: number)), prefix: "$", suffix: nil)
+  try evyEvaluateDynamicFormatter(name: "formatCurrency", args: args, editing: editing)
 }
 
 @MainActor
@@ -516,23 +485,7 @@ func evyFormatAddressLine2(_ args: String) throws -> EVYFunctionOutput {
 
 @MainActor
 func evyFormatAddress(_ args: String) throws -> EVYFunctionOutput {
-  let fields = try evyAddressDisplayOutput(from: args)
-  let streetPortion = fields.streetPortion
-  let locationPortion = evyJoinedAddressParts(
-    [fields.postcode, fields.city, fields.state],
-    separator: " "
-  )
-
-  let value: String
-  if streetPortion.isEmpty {
-    value = locationPortion
-  } else if locationPortion.isEmpty {
-    value = streetPortion
-  } else {
-    value = "\(streetPortion), \(locationPortion)"
-  }
-
-  return EVYFunctionOutput(value: value, prefix: nil, suffix: nil)
+  try evyEvaluateDynamicFormatter(name: "formatAddress", args: args)
 }
 
 @MainActor

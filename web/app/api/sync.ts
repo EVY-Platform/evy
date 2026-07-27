@@ -1,5 +1,6 @@
 import type {
 	DATA_EVY_Flow,
+	DATA_EVY_Formatter,
 	DATA_EVY_Page,
 	DATA_EVY_Row,
 	ResourcesResponse,
@@ -8,6 +9,7 @@ import type {
 import { EVY_CORE_RESOURCE, EVY_CORE_SERVICE } from "evy-types/coreResources";
 import {
 	validateDataEvyFlow,
+	validateDataEvyFormatter,
 	validateDataEvyPage,
 	validateDataEvyRow,
 	validateResourcesResponse,
@@ -97,6 +99,10 @@ function isDataEvyRow(item: unknown): item is DATA_EVY_Row {
 	return isValid(validateDataEvyRow, item);
 }
 
+function isDataEvyFormatter(item: unknown): item is DATA_EVY_Formatter {
+	return isValid(validateDataEvyFormatter, item);
+}
+
 function isRecord(value: unknown): value is Record<string, unknown> {
 	return typeof value === "object" && value !== null && !Array.isArray(value);
 }
@@ -173,6 +179,7 @@ export async function syncWebData(): Promise<{
 	serviceResources: ServiceResource[];
 	resourceAttributeMetadata: ResourceAttributeMetadata[];
 	serviceNamesById: Map<string, string>;
+	formatters: DATA_EVY_Formatter[];
 }> {
 	const syncResponse = await wsClient.sync();
 
@@ -205,5 +212,10 @@ export async function syncWebData(): Promise<{
 		resourceAttributeMetadata:
 			extractResourceAttributeMetadata(syncResponse),
 		serviceNamesById: serviceNamesById(catalog),
+		formatters: extractFlatResourceRows(
+			syncResponse,
+			EVY_CORE_RESOURCE.FORMATTERS,
+			isDataEvyFormatter,
+		),
 	};
 }

@@ -433,6 +433,11 @@ final class SduiRowAttributeContractTests: XCTestCase {
 @MainActor
 final class SduiRowInitialBootstrapTests: XCTestCase {
 
+  override func setUpWithError() throws {
+    try super.setUpWithError()
+    try evySeedStandardFormattersForTests()
+  }
+
   override func tearDownWithError() throws {
     EVY.draftStore.deleteDrafts()
     EVY.draftStore.activeScopeId = nil

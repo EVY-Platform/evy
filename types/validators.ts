@@ -15,6 +15,7 @@ import type {
 	DATA_EVY_Address,
 	DATA_EVY_File,
 	DATA_EVY_Flow,
+	DATA_EVY_Formatter,
 	DATA_EVY_Message,
 	DATA_EVY_Organization,
 	DATA_EVY_Page,
@@ -411,6 +412,10 @@ const getValidateDataEvyMessage = lazyValidator<DATA_EVY_Message>(
 	getEntityAjv,
 	`${fileId("data/data.schema.json")}#/$defs/DATA_EVY_Message`,
 );
+const getValidateDataEvyFormatter = lazyValidator<DATA_EVY_Formatter>(
+	getEntityAjv,
+	`${fileId("data/data.schema.json")}#/$defs/DATA_EVY_Formatter`,
+);
 const getValidateDataMarketplaceItem = lazyValidator<DATA_MARKETPLACE_Item>(
 	getEntityAjv,
 	fileId("services/marketplace/item.schema.json"),
@@ -683,6 +688,10 @@ export const validateDataEvyAddress = makeValidator<DATA_EVY_Address>(
 export const validateDataEvyMessage = makeValidator<DATA_EVY_Message>(
 	"Message",
 	getValidateDataEvyMessage,
+);
+export const validateDataEvyFormatter = makeValidator<DATA_EVY_Formatter>(
+	"Formatter",
+	getValidateDataEvyFormatter,
 );
 export const validateDataMarketplaceItem = makeValidator<DATA_MARKETPLACE_Item>(
 	"MarketplaceItem",

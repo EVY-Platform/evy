@@ -348,6 +348,7 @@ export function App() {
 		serviceResources,
 		resourceAttributeMetadata,
 		serviceNamesById,
+		formatters,
 		loading,
 		error,
 	} = useFlows();
@@ -378,6 +379,7 @@ export function App() {
 				]),
 			)
 		: serviceNamesById;
+	const initialFormatters = testFlows ? [] : formatters;
 
 	const [minTimeElapsed, setMinTimeElapsed] = useState(Boolean(testFlows));
 	const [exiting, setExiting] = useState(false);
@@ -430,6 +432,7 @@ export function App() {
 			serviceResources={initialServiceResources}
 			resourceAttributeMetadata={initialResourceAttributeMetadata}
 			serviceNamesById={initialServiceNamesById}
+			formatters={initialFormatters}
 			syncWithApi={!testFlows}
 		>
 			<AppShell>

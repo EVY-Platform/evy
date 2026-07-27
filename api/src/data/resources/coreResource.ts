@@ -37,7 +37,6 @@ export function makeCoreResource<
 		id: string;
 		createdAt: string;
 		updatedAt: string;
-		visibility: "public" | "private";
 	},
 >(config: {
 	table: ResourceTable;
@@ -45,6 +44,7 @@ export function makeCoreResource<
 	toUpdateSet: (validated: T, nowIso: string) => Record<string, unknown>;
 	normalize?: (raw: unknown) => T;
 	defaultVisibility?: "public" | "private";
+	withVisibility?: boolean;
 }) {
 	const {
 		table,
@@ -52,6 +52,7 @@ export function makeCoreResource<
 		toUpdateSet,
 		normalize,
 		defaultVisibility = "public",
+		withVisibility = true,
 	} = config;
 	// Nullable columns come back from Drizzle as null, which the schemas do not
 	// allow for optional fields, so stripping nulls is the default rather than
@@ -75,9 +76,15 @@ export function makeCoreResource<
 			id: idOverride ?? record.id ?? crypto.randomUUID(),
 			createdAt: createdAtOverride ?? record.createdAt ?? nowIso,
 			updatedAt: nowIso,
-			visibility:
-				(record.visibility as "public" | "private" | undefined) ??
-				defaultVisibility,
+			...(withVisibility
+				? {
+						visibility:
+							(record.visibility as
+								| "public"
+								| "private"
+								| undefined) ?? defaultVisibility,
+					}
+				: {}),
 		});
 	}
 

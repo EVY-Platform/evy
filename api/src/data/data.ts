@@ -25,6 +25,7 @@ import {
 	listFileRows,
 } from "./resources/files";
 import { flowsResource } from "./resources/flows";
+import { formattersResource } from "./resources/formatters";
 import { messagesResource } from "./resources/messages";
 import { organisationsResource } from "./resources/organisation";
 import { pagesResource } from "./resources/pages";
@@ -68,6 +69,7 @@ const CORE_RESOURCE_REGISTRY: Record<string, CoreResourceOps> = {
 	[EVY_CORE_RESOURCE.PAGES]: pagesResource,
 	[EVY_CORE_RESOURCE.ROWS]: rowsResource,
 	[EVY_CORE_RESOURCE.ADDRESSES]: addressesResource,
+	[EVY_CORE_RESOURCE.FORMATTERS]: formattersResource,
 	[EVY_CORE_RESOURCE.MESSAGES]: messagesResource,
 	[EVY_CORE_RESOURCE.SERVICES]: {
 		list: servicesResource.list,

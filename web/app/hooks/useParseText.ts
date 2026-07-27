@@ -4,11 +4,18 @@ import type { EVYFunctionContext } from "../utils/functions";
 import { parseText } from "../utils/interpreter";
 
 export function useParseText() {
-	const { resourceIdToEntityName } = useFlowsContext();
+	const { resourceIdToEntityName, formatters } = useFlowsContext();
 
 	return useCallback(
 		(input: string, context?: EVYFunctionContext) =>
-			parseText(input, context, resourceIdToEntityName),
-		[resourceIdToEntityName],
+			parseText(
+				input,
+				{
+					...context,
+					formatters: context?.formatters ?? formatters,
+				},
+				resourceIdToEntityName,
+			),
+		[formatters, resourceIdToEntityName],
 	);
 }

@@ -49,6 +49,7 @@ const PAGE_RESOURCE = EVY_CORE_RESOURCE.PAGES;
 const ROW_RESOURCE = EVY_CORE_RESOURCE.ROWS;
 const ADDRESS_RESOURCE = EVY_CORE_RESOURCE.ADDRESSES;
 const MESSAGE_RESOURCE = EVY_CORE_RESOURCE.MESSAGES;
+const FORMATTER_RESOURCE = EVY_CORE_RESOURCE.FORMATTERS;
 
 function nowIso(): string {
 	return new Date().toISOString();
@@ -804,5 +805,92 @@ describe("tombstones", () => {
 				resource: EVY_CORE_RESOURCE.FILES,
 			}),
 		).toEqual([]);
+	});
+});
+
+describe("formatter resources", () => {
+	beforeEach(async () => {
+		await clearAllTestTables(testDb);
+	});
+
+	it("creates, lists, updates, and deletes formatters", async () => {
+		const currencyAudTemplate = "$" + "{formatDecimal(input.value, 2)}";
+		const payload = {
+			id: crypto.randomUUID(),
+			name: "formatCurrency",
+			formatting_config: "{input.currency}",
+			formatting: {
+				AUD: currencyAudTemplate,
+				default: currencyAudTemplate,
+			},
+			...timestamps(),
+		};
+
+		const created = await create(dataDb, {
+			service: EVY_CORE_SERVICE,
+			resource: FORMATTER_RESOURCE,
+			data: payload,
+		});
+		expect(created).toMatchObject({
+			id: payload.id,
+			name: "formatCurrency",
+		});
+
+		const listed = await get(dataDb, {
+			service: EVY_CORE_SERVICE,
+			resource: FORMATTER_RESOURCE,
+		});
+		expect(listed).toHaveLength(1);
+
+		const updated = await update(dataDb, {
+			service: EVY_CORE_SERVICE,
+			resource: FORMATTER_RESOURCE,
+			filter: { id: payload.id },
+			data: {
+				...payload,
+				formatting: {
+					...payload.formatting,
+					EUR: "€{formatDecimal(input.value, 2)}",
+				},
+			},
+		});
+		expect(updated.formatting.EUR).toBe("€{formatDecimal(input.value, 2)}");
+
+		await deleteCore(dataDb, {
+			service: EVY_CORE_SERVICE,
+			resource: FORMATTER_RESOURCE,
+			filter: { id: payload.id },
+		});
+		expect(
+			await get(dataDb, {
+				service: EVY_CORE_SERVICE,
+				resource: FORMATTER_RESOURCE,
+			}),
+		).toEqual([]);
+	});
+
+	it("rejects duplicate formatter names", async () => {
+		const payload = {
+			id: crypto.randomUUID(),
+			name: "formatAddress",
+			formatting_config: "{input.country}",
+			formatting: { default: "{input.street}" },
+			...timestamps(),
+		};
+		await create(dataDb, {
+			service: EVY_CORE_SERVICE,
+			resource: FORMATTER_RESOURCE,
+			data: payload,
+		});
+		await expect(
+			create(dataDb, {
+				service: EVY_CORE_SERVICE,
+				resource: FORMATTER_RESOURCE,
+				data: {
+					...payload,
+					id: crypto.randomUUID(),
+				},
+			}),
+		).rejects.toThrow("Resource already exists");
 	});
 });

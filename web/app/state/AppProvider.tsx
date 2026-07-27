@@ -1,3 +1,4 @@
+import type { DATA_EVY_Formatter } from "evy-types";
 import {
 	createElement,
 	type ReactNode,
@@ -47,6 +48,7 @@ export function AppProvider({
 	serviceResources = [],
 	resourceAttributeMetadata = [],
 	serviceNamesById = new Map(),
+	formatters = [],
 	syncWithApi = true,
 }: {
 	children: ReactNode;
@@ -54,6 +56,7 @@ export function AppProvider({
 	serviceResources?: ServiceResource[];
 	resourceAttributeMetadata?: ResourceAttributeMetadata[];
 	serviceNamesById?: Map<string, string>;
+	formatters?: DATA_EVY_Formatter[];
 	syncWithApi?: boolean;
 }) {
 	const resourceIdToEntityName = useMemo(
@@ -237,6 +240,7 @@ export function AppProvider({
 			serviceResources,
 			resourceAttributeMetadata,
 			serviceNamesById,
+			formatters,
 			resourceIdToEntityName,
 			activeFlowId: appState.activeFlowId,
 			activeRowId: appState.activeRowId,
@@ -251,6 +255,7 @@ export function AppProvider({
 			serviceResources,
 			resourceAttributeMetadata,
 			serviceNamesById,
+			formatters,
 			resourceIdToEntityName,
 			appState.activeFlowId,
 			appState.activeRowId,

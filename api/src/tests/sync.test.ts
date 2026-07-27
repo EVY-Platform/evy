@@ -133,6 +133,7 @@ describe("sync", () => {
 		expect(evyResourceNames).toContain("files");
 		expect(evyResourceNames).toContain("addresses");
 		expect(evyResourceNames).toContain("messages");
+		expect(evyResourceNames).toContain("formatters");
 		expect(evyResourceNames).not.toContain("devices");
 		expect(evyResourceNames).toContain(EVY_CORE_RESOURCE.RESOURCES);
 

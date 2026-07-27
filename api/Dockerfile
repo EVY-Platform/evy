@@ -24,7 +24,6 @@ COPY --from=deps /app/api/node_modules ./node_modules
 COPY api/package.json api/bun.lock* ./
 COPY api/tsconfig.json ./tsconfig.json
 COPY api/src ./src
-COPY api/scripts ./scripts
 COPY api/drizzle.config.ts ./
 COPY api/drizzle ./drizzle
 COPY --from=typesgen /app/types /app/types
@@ -37,7 +36,6 @@ WORKDIR /app/api
 COPY --from=builder /app/api/node_modules /app/node_modules
 COPY --from=builder /app/api/package.json ./
 COPY --from=builder /app/api/src ./src
-COPY --from=builder /app/api/scripts ./scripts
 COPY --from=builder /app/api/tsconfig.json ./tsconfig.json
 COPY --from=builder /app/types ../types
 COPY --from=builder /app/api/drizzle.config.ts ./

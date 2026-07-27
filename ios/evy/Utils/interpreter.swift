@@ -26,6 +26,19 @@ let PROP_SEPARATOR = "."
 private var ephemeralDatumRegistry: [String: EVYJson] = [:]
 
 @MainActor
+func evyWithEphemeralDatum<T>(
+  key: String,
+  value: EVYJson,
+  _ body: () throws -> T
+) rethrows -> T {
+  ephemeralDatumRegistry[key] = value
+  defer {
+    ephemeralDatumRegistry.removeValue(forKey: key)
+  }
+  return try body()
+}
+
+@MainActor
 func splitPropsFromText(_ props: String) throws -> [String] {
   if props.count < 1 {
     throw EVYParamError.invalidProps

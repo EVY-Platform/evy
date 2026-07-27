@@ -22,6 +22,7 @@ import {
 	address as addressTable,
 	file as fileTable,
 	flow as flowTable,
+	formatter as formatterTable,
 	message as messageTable,
 	organization as organizationTable,
 	page as pageTable,
@@ -80,6 +81,7 @@ const coreSchema = {
 	row: rowTable,
 	file: fileTable,
 	address: addressTable,
+	formatter: formatterTable,
 	message: messageTable,
 };
 const marketplaceSchema = { data: marketplaceDataTable };
@@ -99,6 +101,8 @@ const SEED_IDS = {
 	evyOrganization: "09f07052-c27c-4116-a508-a2bcb074c827",
 	evyMarketplaceProvider: "be00fb53-80e9-4a09-a43f-4588b4ffc851",
 	logo: "ec3a7609-e2bc-484e-aab1-acef6777595c",
+	formatCurrency: "f1e2d3c4-b5a6-4789-8abc-def012345601",
+	formatAddress: "f1e2d3c4-b5a6-4789-8abc-def012345602",
 } as const;
 
 const MARKETPLACE_SERVICE = MARKETPLACE_SERVICE_DESCRIPTOR.id;
@@ -290,6 +294,46 @@ function seedTimestamps(
 
 function timestamped(now: string): { createdAt: string; updatedAt: string } {
 	return { createdAt: now, updatedAt: now };
+}
+
+type SeedFormatterRow = {
+	id: string;
+	name: string;
+	formatting_config: string;
+	formatting: Record<string, string>;
+	createdAt: string;
+	updatedAt: string;
+};
+
+function buildFormatterRows(now: string): SeedFormatterRow[] {
+	const currencyAudTemplate = "$" + "{formatDecimal(input.value, 2)}";
+	return [
+		{
+			id: SEED_IDS.formatCurrency,
+			name: "formatCurrency",
+			formatting_config: "{input.currency}",
+			formatting: {
+				AUD: currencyAudTemplate,
+				EUR: "€{formatDecimal(input.value, 2)}",
+				default: currencyAudTemplate,
+			},
+			...timestamped(now),
+		},
+		{
+			id: SEED_IDS.formatAddress,
+			name: "formatAddress",
+			formatting_config: "{input.country}",
+			formatting: {
+				Australia:
+					"{input.unit} {input.street}, {input.postcode} {input.city} {input.state}",
+				"United States":
+					"{input.unit} {input.street}, {input.city} {input.state} {input.postcode}",
+				default:
+					"{input.unit} {input.street}, {input.postcode} {input.city} {input.state}",
+			},
+			...timestamped(now),
+		},
+	];
 }
 
 type SeedMessageRow = {
@@ -569,6 +613,7 @@ async function seedDatabase({
 		files: evyFiles = [],
 		addresses: evyAddresses = [],
 		messages: evyMessages = [],
+		formatters: _seedFormatters = [],
 		...unsupportedEvy
 	} = evyDataJson;
 	const unsupportedResources = Object.keys(unsupportedEvy);
@@ -581,6 +626,7 @@ async function seedDatabase({
 	const fileRows = buildFileRows(evyFiles, now);
 	const addressRows = buildAddressRows(evyAddresses, now);
 	const messageRows = buildMessageRows(evyMessages, now);
+	const formatterRows = buildFormatterRows(now);
 	await copySeedFileBinaries({
 		files: fileRows,
 		repoRoot: REPO_ROOT,
@@ -674,6 +720,11 @@ async function seedDatabase({
 		await tx.delete(coreSchema.message);
 		if (messageRows.length > 0) {
 			await tx.insert(coreSchema.message).values(messageRows);
+		}
+
+		await tx.delete(coreSchema.formatter);
+		if (formatterRows.length > 0) {
+			await tx.insert(coreSchema.formatter).values(formatterRows);
 		}
 	});
 
