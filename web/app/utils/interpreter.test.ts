@@ -1,5 +1,5 @@
 import { describe, expect, it } from "bun:test";
-import { MARKETPLACE_RESOURCE } from "evy-types/marketplaceResources";
+import { TEST_RESOURCE_ID } from "../../testFixtures/resourceCatalog";
 import { parseText } from "./interpreter";
 
 const compoundDimensionsText =
@@ -100,31 +100,31 @@ describe("parseText", () => {
 	it("resolves findFirst to the data argument for mock data", () => {
 		expect(
 			parseText(
-				`{findFirst(${MARKETPLACE_RESOURCE.SELLING_REASONS}, item.selling_reason_id)}`,
+				`{findFirst(${TEST_RESOURCE_ID.SELLING_REASONS}, item.selling_reason_id)}`,
 			),
-		).toBe(MARKETPLACE_RESOURCE.SELLING_REASONS);
+		).toBe(TEST_RESOURCE_ID.SELLING_REASONS);
 	});
 
 	it("resolves findFirst(sort(collection, asc)) to the collection argument", () => {
 		expect(
 			parseText(
-				`{findFirst(sort(${MARKETPLACE_RESOURCE.SELLING_REASONS}, asc))}`,
+				`{findFirst(sort(${TEST_RESOURCE_ID.SELLING_REASONS}, asc))}`,
 			),
-		).toBe(MARKETPLACE_RESOURCE.SELLING_REASONS);
+		).toBe(TEST_RESOURCE_ID.SELLING_REASONS);
 	});
 
 	it("resolves sort to the collection argument for mock preview", () => {
 		expect(
-			parseText(`{sort(${MARKETPLACE_RESOURCE.SELLING_REASONS}, asc)}`),
-		).toBe(MARKETPLACE_RESOURCE.SELLING_REASONS);
+			parseText(`{sort(${TEST_RESOURCE_ID.SELLING_REASONS}, asc)}`),
+		).toBe(TEST_RESOURCE_ID.SELLING_REASONS);
 	});
 
 	it("keeps text after findFirst as a normal suffix", () => {
 		expect(
 			parseText(
-				`{findFirst(${MARKETPLACE_RESOURCE.SELLING_REASONS}, item.selling_reason_id)}.value`,
+				`{findFirst(${TEST_RESOURCE_ID.SELLING_REASONS}, item.selling_reason_id)}.value`,
 			),
-		).toBe(`${MARKETPLACE_RESOURCE.SELLING_REASONS}.value`);
+		).toBe(`${TEST_RESOURCE_ID.SELLING_REASONS}.value`);
 	});
 
 	it("keeps dimension preview safe for unresolved values", () => {
@@ -136,12 +136,12 @@ describe("parseText", () => {
 	});
 
 	it("displays resource ID-prefixed paths with mapped entity names", () => {
-		const resourceMap = new Map([[MARKETPLACE_RESOURCE.ITEMS, "item"]]);
-		const otherMap = new Map([[MARKETPLACE_RESOURCE.ITEMS, "listing"]]);
+		const resourceMap = new Map([[TEST_RESOURCE_ID.RECORDS, "item"]]);
+		const otherMap = new Map([[TEST_RESOURCE_ID.RECORDS, "listing"]]);
 
 		expect(
 			parseText(
-				`Hello {${MARKETPLACE_RESOURCE.ITEMS}.title}`,
+				`Hello {${TEST_RESOURCE_ID.RECORDS}.title}`,
 				undefined,
 				resourceMap,
 			),
@@ -150,7 +150,7 @@ describe("parseText", () => {
 		// Different map, different result — no global state leakage
 		expect(
 			parseText(
-				`Hello {${MARKETPLACE_RESOURCE.ITEMS}.title}`,
+				`Hello {${TEST_RESOURCE_ID.RECORDS}.title}`,
 				undefined,
 				otherMap,
 			),

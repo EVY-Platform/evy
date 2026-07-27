@@ -1,13 +1,14 @@
 import { afterEach, beforeEach, describe, expect, it, spyOn } from "bun:test";
 import { EVY_CORE_RESOURCE, EVY_CORE_SERVICE } from "evy-types/coreResources";
-import {
-	MARKETPLACE_RESOURCE,
-	MARKETPLACE_SERVICE,
-} from "../../../services/marketplace/src/resources";
 import * as data from "../data/data";
 import type { EvyDb } from "../database/db";
 import { discoverResources } from "../procedures/resources";
 import * as services from "../procedures/services";
+import {
+	EXTERNAL_TEST_RESOURCE,
+	EXTERNAL_TEST_SERVICE_DESCRIPTOR,
+	EXTERNAL_TEST_SERVICE_ID,
+} from "./externalServiceFixture";
 
 const db = {
 	select: () => ({
@@ -29,8 +30,8 @@ describe("resources", () => {
 			"listExternalServices",
 		).mockResolvedValue([
 			{
-				id: MARKETPLACE_SERVICE,
-				name: "marketplace",
+				id: EXTERNAL_TEST_SERVICE_ID,
+				name: EXTERNAL_TEST_SERVICE_DESCRIPTOR.name,
 				description: "Marketplace",
 				wsHost: null,
 				wsPort: null,
@@ -45,10 +46,12 @@ describe("resources", () => {
 		).mockResolvedValue({
 			services: [
 				{
-					id: MARKETPLACE_SERVICE,
-					name: "marketplace",
+					...EXTERNAL_TEST_SERVICE_DESCRIPTOR,
 					resources: [
-						{ id: MARKETPLACE_RESOURCE.ITEMS, name: "items" },
+						{
+							id: EXTERNAL_TEST_RESOURCE.RECORDS,
+							name: "records",
+						},
 					],
 				},
 			],
@@ -74,10 +77,12 @@ describe("resources", () => {
 					]),
 				}),
 				expect.objectContaining({
-					id: MARKETPLACE_SERVICE,
-					name: "marketplace",
+					...EXTERNAL_TEST_SERVICE_DESCRIPTOR,
 					resources: [
-						{ id: MARKETPLACE_RESOURCE.ITEMS, name: "items" },
+						{
+							id: EXTERNAL_TEST_RESOURCE.RECORDS,
+							name: "records",
+						},
 					],
 				}),
 			]),
@@ -87,7 +92,7 @@ describe("resources", () => {
 
 	it("returns attributed errors when an external service is unavailable", async () => {
 		forwardResourcesSpy.mockRejectedValue(
-			new Error("marketplace unavailable"),
+			new Error("test-service unavailable"),
 		);
 
 		const result = await discoverResources(db);
@@ -97,8 +102,8 @@ describe("resources", () => {
 		).toBe(true);
 		expect(result.errors).toEqual([
 			{
-				service: MARKETPLACE_SERVICE,
-				message: "marketplace unavailable",
+				service: EXTERNAL_TEST_SERVICE_ID,
+				message: "test-service unavailable",
 			},
 		]);
 	});

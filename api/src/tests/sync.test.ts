@@ -1,19 +1,20 @@
 import { afterEach, beforeEach, describe, expect, it, spyOn } from "bun:test";
 import type { GetRequest, GetResponse } from "evy-types";
 import { EVY_CORE_RESOURCE, EVY_CORE_SERVICE } from "evy-types/coreResources";
-import {
-	MARKETPLACE_RESOURCE,
-	MARKETPLACE_SERVICE,
-} from "../../../services/marketplace/src/resources";
 import * as data from "../data/data";
 import type { EvyDb } from "../database/db";
 import * as resources from "../procedures/resources";
 import * as services from "../procedures/services";
 import { sync } from "../procedures/sync";
+import {
+	EXTERNAL_TEST_RESOURCE,
+	EXTERNAL_TEST_SERVICE_DESCRIPTOR,
+	EXTERNAL_TEST_SERVICE_ID,
+} from "./externalServiceFixture";
 
 const db = null as unknown as EvyDb;
 
-const MARKETPLACE_SERVICE_ID = MARKETPLACE_SERVICE;
+const EXTERNAL_SERVICE_ID = EXTERNAL_TEST_SERVICE_ID;
 const EPOCH = "1970-01-01T00:00:00.000Z";
 const RECENT_CURSOR = new Date(Date.now() - 86_400_000).toISOString();
 
@@ -40,17 +41,19 @@ function buildMockCatalog(): Awaited<
 				],
 			},
 			{
-				id: MARKETPLACE_SERVICE_ID,
-				name: "marketplace",
+				...EXTERNAL_TEST_SERVICE_DESCRIPTOR,
 				resources: [
 					{
-						id: MARKETPLACE_RESOURCE.SELLING_REASONS,
+						id: EXTERNAL_TEST_RESOURCE.SELLING_REASONS,
 						name: "selling_reasons",
 					},
-					{ id: MARKETPLACE_RESOURCE.CONDITIONS, name: "conditions" },
-					{ id: MARKETPLACE_RESOURCE.DURATIONS, name: "durations" },
-					{ id: MARKETPLACE_RESOURCE.AREAS, name: "areas" },
-					{ id: MARKETPLACE_RESOURCE.ITEMS, name: "items" },
+					{
+						id: EXTERNAL_TEST_RESOURCE.CONDITIONS,
+						name: "conditions",
+					},
+					{ id: EXTERNAL_TEST_RESOURCE.DURATIONS, name: "durations" },
+					{ id: EXTERNAL_TEST_RESOURCE.AREAS, name: "areas" },
+					{ id: EXTERNAL_TEST_RESOURCE.RECORDS, name: "records" },
 				],
 			},
 		],
@@ -181,15 +184,15 @@ describe("sync", () => {
 		const result = await sync({ cursor: EPOCH }, db);
 
 		const marketplaceRows = result.data.filter(
-			(row) => row.service === MARKETPLACE_SERVICE_ID,
+			(row) => row.service === EXTERNAL_SERVICE_ID,
 		);
 		const rowResources = marketplaceRows.map((row) => row.resource);
 
-		expect(rowResources).toContain(MARKETPLACE_RESOURCE.SELLING_REASONS);
-		expect(rowResources).toContain(MARKETPLACE_RESOURCE.CONDITIONS);
-		expect(rowResources).toContain(MARKETPLACE_RESOURCE.DURATIONS);
-		expect(rowResources).toContain(MARKETPLACE_RESOURCE.AREAS);
-		expect(rowResources).toContain(MARKETPLACE_RESOURCE.ITEMS);
+		expect(rowResources).toContain(EXTERNAL_TEST_RESOURCE.SELLING_REASONS);
+		expect(rowResources).toContain(EXTERNAL_TEST_RESOURCE.CONDITIONS);
+		expect(rowResources).toContain(EXTERNAL_TEST_RESOURCE.DURATIONS);
+		expect(rowResources).toContain(EXTERNAL_TEST_RESOURCE.AREAS);
+		expect(rowResources).toContain(EXTERNAL_TEST_RESOURCE.RECORDS);
 		expect(rowResources).not.toContain("messages");
 	});
 
@@ -224,8 +227,8 @@ describe("sync", () => {
 
 	it("reports an unreachable service instead of failing the sync", async () => {
 		forwardGetImpl = async (serviceName) => {
-			if (serviceName === MARKETPLACE_SERVICE_ID) {
-				throw new Error("marketplace service unavailable");
+			if (serviceName === EXTERNAL_SERVICE_ID) {
+				throw new Error("test-service unavailable");
 			}
 			return buildMockGetResponse([]);
 		};
@@ -234,7 +237,7 @@ describe("sync", () => {
 
 		expect(result.errors?.length).toBeGreaterThan(0);
 		expect(result.errors?.[0]?.message).toContain(
-			"marketplace service unavailable",
+			"test-service unavailable",
 		);
 	});
 
@@ -272,8 +275,8 @@ describe("sync", () => {
 			...buildMockCatalog(),
 			errors: [
 				{
-					service: MARKETPLACE_SERVICE_ID,
-					message: "marketplace unavailable",
+					service: EXTERNAL_SERVICE_ID,
+					message: "test-service unavailable",
 				},
 			],
 		});

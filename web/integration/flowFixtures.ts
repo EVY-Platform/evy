@@ -5,13 +5,13 @@ import type {
 	UI_ActionBranch,
 	UI_RowActions,
 } from "evy-types";
-import { MARKETPLACE_SERVICE } from "../../services/marketplace/src/resources";
 import type {
 	ResourceAttributeMetadata,
 	ServiceResource,
 } from "../app/api/sync";
 import { getRowBindingFields } from "../app/rows/rowFields";
 import { rowAction } from "../app/utils/rowActions";
+import { TEST_SERVICE_ID } from "../testFixtures/resourceCatalog";
 
 export function tapAction(branch: UI_ActionBranch): UI_RowActions {
 	return { tap: [rowAction(branch)] };
@@ -155,7 +155,7 @@ export async function initFullFlows(
 }
 
 const DEFAULT_TEST_SERVICE_NAMES: Record<string, string> = {
-	[MARKETPLACE_SERVICE]: "Marketplace",
+	[TEST_SERVICE_ID]: "Test Service",
 };
 
 async function initServiceResources(

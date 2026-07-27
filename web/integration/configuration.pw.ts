@@ -1,9 +1,9 @@
 import { expect, test } from "@playwright/test";
 import type { UI_RowActions } from "evy-types";
 import {
-	MARKETPLACE_RESOURCE,
-	MARKETPLACE_SERVICE,
-} from "../../services/marketplace/src/resources";
+	TEST_RESOURCE_ID,
+	TEST_SERVICE_ID,
+} from "../testFixtures/resourceCatalog";
 import { initFullFlows, openAppWithTestFlows, tapAction } from "./flowFixtures";
 import {
 	getConfigPanel,
@@ -15,8 +15,8 @@ import {
 
 const TEST_SERVICE_RESOURCES = [
 	{
-		id: MARKETPLACE_RESOURCE.ITEMS,
-		fkServiceId: MARKETPLACE_SERVICE,
+		id: TEST_RESOURCE_ID.RECORDS,
+		fkServiceId: TEST_SERVICE_ID,
 		name: "item",
 	},
 ];
@@ -203,10 +203,10 @@ test.describe("Row configuration", () => {
 		await expect(targetSelect).toBeVisible();
 		await expect(targetSelect).toHaveAttribute("data-value", "");
 
-		await popoverSelect(page, targetSelect, "Marketplace / Item");
+		await popoverSelect(page, targetSelect, "Test Service / Item");
 		await expect(targetSelect).toHaveAttribute(
 			"data-value",
-			`${MARKETPLACE_SERVICE}/${MARKETPLACE_RESOURCE.ITEMS}`,
+			`${TEST_SERVICE_ID}/${TEST_RESOURCE_ID.RECORDS}`,
 		);
 
 		await popoverSelect(page, targetSelect, "None");
@@ -371,9 +371,9 @@ test.describe("Row configuration", () => {
 									type: "Input",
 									source: "",
 									title: "Name",
-									value: `{${MARKETPLACE_RESOURCE.ITEMS}.name}`,
+									value: `{${TEST_RESOURCE_ID.RECORDS}.name}`,
 									placeholder: "Enter name",
-									destination: `{${MARKETPLACE_RESOURCE.ITEMS}.name}`,
+									destination: `{${TEST_RESOURCE_ID.RECORDS}.name}`,
 								},
 								{
 									id: "submit_button",
@@ -437,7 +437,7 @@ test.describe("Row configuration", () => {
 
 		await expect(committedLeft).toHaveAttribute(
 			"data-value",
-			`${MARKETPLACE_RESOURCE.ITEMS}.name`,
+			`${TEST_RESOURCE_ID.RECORDS}.name`,
 		);
 		await expect(committedOp).toHaveAttribute("data-value", "!=");
 		await expect(committedRight).toHaveAttribute(
@@ -717,8 +717,8 @@ test.describe("Row configuration", () => {
 									false: "",
 									true: {
 										fn: "create",
-										service: MARKETPLACE_SERVICE,
-										resource: MARKETPLACE_RESOURCE.ITEMS,
+										service: TEST_SERVICE_ID,
+										resource: TEST_RESOURCE_ID.RECORDS,
 										mode: "submit",
 									},
 								},
@@ -760,8 +760,8 @@ test.describe("Row configuration", () => {
 							label: "Inline Create",
 							actions: tapAction({
 								fn: "create",
-								service: MARKETPLACE_SERVICE,
-								resource: MARKETPLACE_RESOURCE.ITEMS,
+								service: TEST_SERVICE_ID,
+								resource: TEST_RESOURCE_ID.RECORDS,
 								mode: "submit",
 							}),
 						},
@@ -786,9 +786,12 @@ test.describe("Row configuration", () => {
 		await expect(popup).not.toBeVisible();
 
 		await expect(
-			configPanel.getByText("create(Marketplace, item, pickup_address)", {
-				exact: true,
-			}),
+			configPanel.getByText(
+				"create(Test Service, item, pickup_address)",
+				{
+					exact: true,
+				},
+			),
 		).toBeVisible();
 	});
 
@@ -807,8 +810,8 @@ test.describe("Row configuration", () => {
 							label: "Inline Create",
 							actions: tapAction({
 								fn: "create",
-								service: MARKETPLACE_SERVICE,
-								resource: MARKETPLACE_RESOURCE.ITEMS,
+								service: TEST_SERVICE_ID,
+								resource: TEST_RESOURCE_ID.RECORDS,
 								mode: "submit",
 							}),
 						},
@@ -832,7 +835,7 @@ test.describe("Row configuration", () => {
 		await expect(popup).not.toBeVisible();
 
 		await expect(
-			configPanel.getByText("create(Marketplace, item, submit)", {
+			configPanel.getByText("create(Test Service, item, submit)", {
 				exact: true,
 			}),
 		).toBeVisible();
@@ -852,7 +855,7 @@ test.describe("Row configuration", () => {
 							title: "Title",
 							value: "",
 							placeholder: "",
-							destination: `{${MARKETPLACE_RESOURCE.ITEMS}.title}`,
+							destination: `{${TEST_RESOURCE_ID.RECORDS}.title}`,
 						},
 						{
 							type: "Button",
@@ -860,8 +863,8 @@ test.describe("Row configuration", () => {
 							label: "Submit Create",
 							actions: tapAction({
 								fn: "create",
-								service: MARKETPLACE_SERVICE,
-								resource: MARKETPLACE_RESOURCE.ITEMS,
+								service: TEST_SERVICE_ID,
+								resource: TEST_RESOURCE_ID.RECORDS,
 								mode: "submit",
 							}),
 						},
@@ -871,8 +874,8 @@ test.describe("Row configuration", () => {
 			TEST_SERVICE_RESOURCES,
 			[],
 			{
-				service: MARKETPLACE_SERVICE,
-				resource: MARKETPLACE_RESOURCE.ITEMS,
+				service: TEST_SERVICE_ID,
+				resource: TEST_RESOURCE_ID.RECORDS,
 			},
 		);
 
@@ -891,7 +894,7 @@ test.describe("Row configuration", () => {
 		await expect(popup).not.toBeVisible();
 
 		await expect(
-			configPanel.getByText("create(Marketplace, item, submit)", {
+			configPanel.getByText("create(Test Service, item, submit)", {
 				exact: true,
 			}),
 		).toBeVisible();
@@ -1010,7 +1013,7 @@ test.describe("Row configuration", () => {
 									actions: {
 										tap: [
 											{
-												condition: `{count(${MARKETPLACE_RESOURCE.ITEMS}.pickup_timeslots) > 0 || count(${MARKETPLACE_RESOURCE.ITEMS}.delivery_timeslots) > 0}`,
+												condition: `{count(${TEST_RESOURCE_ID.RECORDS}.pickup_timeslots) > 0 || count(${TEST_RESOURCE_ID.RECORDS}.delivery_timeslots) > 0}`,
 												false: "",
 												true: { fn: "close" },
 											},
@@ -1062,7 +1065,7 @@ test.describe("Row configuration", () => {
 									actions: {
 										tap: [
 											{
-												condition: `{count(${MARKETPLACE_RESOURCE.ITEMS}.pickup_timeslots) > 0 && (count(${MARKETPLACE_RESOURCE.ITEMS}.delivery_timeslots) > 0 || count(${MARKETPLACE_RESOURCE.ITEMS}.shipping_destination_areas) > 0)}`,
+												condition: `{count(${TEST_RESOURCE_ID.RECORDS}.pickup_timeslots) > 0 && (count(${TEST_RESOURCE_ID.RECORDS}.delivery_timeslots) > 0 || count(${TEST_RESOURCE_ID.RECORDS}.shipping_destination_areas) > 0)}`,
 												false: "",
 												true: { fn: "close" },
 											},

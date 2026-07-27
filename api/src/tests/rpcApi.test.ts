@@ -9,11 +9,11 @@ import {
 import { migrate } from "drizzle-orm/pglite/migrator";
 import { EVY_CORE_SERVICE } from "evy-types/coreResources";
 import { PROCEDURES, proceduresForService } from "evy-types/procedures";
-import {
-	MARKETPLACE_RESOURCE,
-	MARKETPLACE_SERVICE,
-} from "../../../services/marketplace/src/resources";
 import { assertHandlersMatchRegistry } from "../procedures/coreApi";
+import {
+	EXTERNAL_TEST_RESOURCE,
+	EXTERNAL_TEST_SERVICE_ID,
+} from "./externalServiceFixture";
 import {
 	asEvyDb,
 	clearAllTestTables,
@@ -42,8 +42,8 @@ describe("api JSON-RPC handler", () => {
 		await expect(
 			api(
 				{
-					service: MARKETPLACE_SERVICE,
-					resource: MARKETPLACE_RESOURCE.ITEMS,
+					service: EXTERNAL_TEST_SERVICE_ID,
+					resource: EXTERNAL_TEST_RESOURCE.RECORDS,
 					method: "not-search",
 					filter: {
 						id: crypto.randomUUID(),
@@ -60,7 +60,7 @@ describe("api JSON-RPC handler", () => {
 		await expect(
 			api(
 				{
-					service: MARKETPLACE_SERVICE,
+					service: EXTERNAL_TEST_SERVICE_ID,
 					method: "place_search",
 					data: { input: "Sydney" },
 				},
@@ -75,8 +75,8 @@ describe("api JSON-RPC handler", () => {
 		await expect(
 			api(
 				{
-					service: MARKETPLACE_SERVICE,
-					resource: MARKETPLACE_RESOURCE.ITEMS,
+					service: EXTERNAL_TEST_SERVICE_ID,
+					resource: EXTERNAL_TEST_RESOURCE.RECORDS,
 					filter: {
 						id: crypto.randomUUID(),
 					},

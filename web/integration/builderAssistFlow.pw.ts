@@ -1,7 +1,7 @@
 import { expect, type Locator, test } from "@playwright/test";
 import type { UI_Flow as ServerFlow, UI_ActionBranch } from "evy-types";
-import { MARKETPLACE_SERVICE } from "../../services/marketplace/src/resources";
 import type { ServiceResource } from "../app/api/sync";
+import { TEST_SERVICE_ID } from "../testFixtures/resourceCatalog";
 import { openAppWithFullFlows } from "./flowFixtures";
 import { getConfigPanel, popoverSelect } from "./utils";
 
@@ -11,24 +11,24 @@ const ORDER_RESOURCE_ID = "res-order";
 const SERVICE_RESOURCES: ServiceResource[] = [
 	{
 		id: ITEM_RESOURCE_ID,
-		fkServiceId: MARKETPLACE_SERVICE,
+		fkServiceId: TEST_SERVICE_ID,
 		name: "item",
 	},
 	{
 		id: ORDER_RESOURCE_ID,
-		fkServiceId: MARKETPLACE_SERVICE,
+		fkServiceId: TEST_SERVICE_ID,
 		name: "order",
 	},
 ];
 
 const RESOURCE_ATTRIBUTE_METADATA = [
 	{
-		serviceId: MARKETPLACE_SERVICE,
+		serviceId: TEST_SERVICE_ID,
 		resourceId: ITEM_RESOURCE_ID,
 		attributeNames: ["price", "title"],
 	},
 	{
-		serviceId: MARKETPLACE_SERVICE,
+		serviceId: TEST_SERVICE_ID,
 		resourceId: ORDER_RESOURCE_ID,
 		attributeNames: ["status"],
 	},
@@ -83,7 +83,7 @@ function buildBuilderAssistFlow(
 			id: "flow-builder",
 			name: "Builder Flow",
 			submits: {
-				service: MARKETPLACE_SERVICE,
+				service: TEST_SERVICE_ID,
 				resource: ITEM_RESOURCE_ID,
 			},
 			pages: [
@@ -292,7 +292,7 @@ test.describe("Builder Assist flows", () => {
 
 		const namespaceArg = popup.getByLabel("false-0-arg-0");
 		await expect(namespaceArg).toBeVisible();
-		await popoverSelect(page, namespaceArg, "Marketplace");
+		await popoverSelect(page, namespaceArg, "Test Service");
 
 		const resourceArg = popup.getByLabel("false-0-arg-1");
 		await expect(resourceArg).toBeVisible();
@@ -307,7 +307,7 @@ test.describe("Builder Assist flows", () => {
 			),
 		).toBeVisible();
 		await expect(
-			configPanel.getByText("create(Marketplace, item, submit)", {
+			configPanel.getByText("create(Test Service, item, submit)", {
 				exact: true,
 			}),
 		).toBeVisible();
@@ -346,7 +346,7 @@ test.describe("Builder Assist flows", () => {
 				false: "",
 				true: {
 					fn: "update",
-					service: MARKETPLACE_SERVICE,
+					service: TEST_SERVICE_ID,
 					resource: ITEM_RESOURCE_ID,
 					mode: "store",
 					filter: {
@@ -384,7 +384,7 @@ test.describe("Builder Assist flows", () => {
 
 		await expect(
 			configPanel.getByText(
-				"update(Marketplace, item, {fk: item.id, archivedAt: null}, {archivedAt: now()})",
+				"update(Test Service, item, {fk: item.id, archivedAt: null}, {archivedAt: now()})",
 				{ exact: true },
 			),
 		).toBeVisible();

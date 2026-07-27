@@ -36,7 +36,9 @@ Same scripts as [`api`](../../api/README.md#available-scripts): `bun run dev`, `
 
 ## Resource manifest
 
-The marketplace service owns its resource manifest in `src/resources.ts` and exposes it through the required `resources` JSON-RPC method. The API gateway aggregates that manifest with the core catalog and includes the full result on successful sync.
+Marketplace service and resource IDs are runtime values owned in `src/resources.ts`. External consumers discover them through the API gateway's `resources` JSON-RPC method (and the catalog included on successful `sync`); they must not import this module.
+
+The only non-service consumer is `scripts/seed.ts`, which reads the descriptor at bootstrap before the marketplace RPC server starts.
 
 From repo root:
 

@@ -2,9 +2,9 @@ import { describe, expect, it } from "bun:test";
 import type { DATA_EVY_Flow, DATA_EVY_Page, DATA_EVY_Row } from "evy-types";
 import { EVY_CORE_RESOURCE, EVY_CORE_SERVICE } from "evy-types/coreResources";
 import {
-	MARKETPLACE_RESOURCE,
-	MARKETPLACE_SERVICE,
-} from "evy-types/marketplaceResources";
+	TEST_RESOURCE_ID,
+	TEST_SERVICE_ID,
+} from "../../testFixtures/resourceCatalog";
 import {
 	applyCreateModeForDraftSignals,
 	branchForStorage,
@@ -21,8 +21,8 @@ import {
 } from "./actionBranch";
 
 describe("action branch helpers", () => {
-	const serviceId = MARKETPLACE_SERVICE;
-	const resourceId = MARKETPLACE_RESOURCE.ITEMS;
+	const serviceId = TEST_SERVICE_ID;
+	const resourceId = TEST_RESOURCE_ID.RECORDS;
 
 	describe("create mode helpers", () => {
 		it("detects explicit submit marker", () => {
@@ -157,34 +157,26 @@ describe("action branch helpers", () => {
 
 	it("parses create with submit marker", () => {
 		expect(
-			parseBranchText(
-				`{create(${MARKETPLACE_SERVICE},${MARKETPLACE_RESOURCE.ITEMS},submit)}`,
-			),
+			parseBranchText(`{create(${serviceId},${resourceId},submit)}`),
 		).toEqual({
 			functionName: "create",
-			args: [MARKETPLACE_SERVICE, MARKETPLACE_RESOURCE.ITEMS, "submit"],
+			args: [serviceId, resourceId, "submit"],
 		});
 	});
 
 	it("serializes create with submit marker", () => {
 		expect(
-			serializeBranch("create", [
-				MARKETPLACE_SERVICE,
-				MARKETPLACE_RESOURCE.ITEMS,
-				"submit",
-			]),
-		).toBe(
-			`{create(${MARKETPLACE_SERVICE},${MARKETPLACE_RESOURCE.ITEMS},submit)}`,
-		);
+			serializeBranch("create", [serviceId, resourceId, "submit"]),
+		).toBe(`{create(${serviceId},${resourceId},submit)}`);
 	});
 
 	it("round-trips draft-mode update with empty filter", () => {
-		const branch = `{update(${MARKETPLACE_SERVICE},${MARKETPLACE_RESOURCE.ITEMS},{},{transfer_options.pickup.address_id: pickup_address.id},draft)}`;
+		const branch = `{update(${serviceId},${resourceId},{},{transfer_options.pickup.address_id: pickup_address.id},draft)}`;
 		expect(parseBranchText(branch)).toEqual({
 			functionName: "update",
 			args: [
-				MARKETPLACE_SERVICE,
-				MARKETPLACE_RESOURCE.ITEMS,
+				serviceId,
+				resourceId,
 				"{}",
 				"{transfer_options.pickup.address_id: pickup_address.id}",
 				"draft",
@@ -192,8 +184,8 @@ describe("action branch helpers", () => {
 		});
 		expect(
 			serializeBranch("update", [
-				MARKETPLACE_SERVICE,
-				MARKETPLACE_RESOURCE.ITEMS,
+				serviceId,
+				resourceId,
 				"{}",
 				"{transfer_options.pickup.address_id: pickup_address.id}",
 				"draft",
@@ -202,24 +194,17 @@ describe("action branch helpers", () => {
 	});
 
 	it("parses create with namespace and resource", () => {
-		expect(
-			parseBranchText(
-				`{create(${MARKETPLACE_SERVICE},${MARKETPLACE_RESOURCE.ITEMS})}`,
-			),
-		).toEqual({
-			functionName: "create",
-			args: [MARKETPLACE_SERVICE, MARKETPLACE_RESOURCE.ITEMS],
-		});
+		expect(parseBranchText(`{create(${serviceId},${resourceId})}`)).toEqual(
+			{
+				functionName: "create",
+				args: [serviceId, resourceId],
+			},
+		);
 	});
 
 	it("serializes create with namespace and resource", () => {
-		expect(
-			serializeBranch("create", [
-				MARKETPLACE_SERVICE,
-				MARKETPLACE_RESOURCE.ITEMS,
-			]),
-		).toBe(
-			`{create(${MARKETPLACE_SERVICE},${MARKETPLACE_RESOURCE.ITEMS})}`,
+		expect(serializeBranch("create", [serviceId, resourceId])).toBe(
+			`{create(${serviceId},${resourceId})}`,
 		);
 	});
 

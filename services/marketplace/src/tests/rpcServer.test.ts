@@ -19,8 +19,6 @@ const { pgliteClient, testDb } = createPgliteTestDatabase();
 
 registerMarketplaceTestDb(testDb);
 
-import { MARKETPLACE_RESOURCE, MARKETPLACE_SERVICE } from "../resources";
-
 const { startMarketplaceRpcServer, stopMarketplaceRpcServer } = await import(
 	"../rpc"
 );
@@ -61,21 +59,75 @@ async function waitForOpen(client: InstanceType<typeof Client>): Promise<void> {
 	});
 }
 
+type DiscoveredMarketplaceIds = {
+	serviceId: string;
+	conditionsResourceId: string;
+	itemsResourceId: string;
+};
+
+async function discoverMarketplaceIds(
+	client: InstanceType<typeof Client>,
+): Promise<DiscoveredMarketplaceIds> {
+	const response = await client.call("resources", {});
+	if (
+		typeof response !== "object" ||
+		response === null ||
+		!("services" in response) ||
+		!Array.isArray(response.services)
+	) {
+		throw new Error("Expected resources response with services array");
+	}
+
+	const marketplaceService = response.services.find(
+		(service: { name?: string }) => service.name === "marketplace",
+	);
+	if (!marketplaceService || typeof marketplaceService.id !== "string") {
+		throw new Error("Expected marketplace service in resources response");
+	}
+
+	const resources = Array.isArray(marketplaceService.resources)
+		? marketplaceService.resources
+		: [];
+	const conditionsResource = resources.find(
+		(resource: { name?: string }) => resource.name === "conditions",
+	);
+	const itemsResource = resources.find(
+		(resource: { name?: string }) => resource.name === "items",
+	);
+	if (
+		!conditionsResource ||
+		typeof conditionsResource.id !== "string" ||
+		!itemsResource ||
+		typeof itemsResource.id !== "string"
+	) {
+		throw new Error(
+			"Expected conditions and items resources in marketplace manifest",
+		);
+	}
+
+	return {
+		serviceId: marketplaceService.id,
+		conditionsResourceId: conditionsResource.id,
+		itemsResourceId: itemsResource.id,
+	};
+}
+
 describe("marketplace JSON-RPC server", () => {
 	it("Create and Get round-trip typed params", async () => {
 		const client = createClient();
 		await waitForOpen(client);
+		const discovered = await discoverMarketplaceIds(client);
 		const row = { id: crypto.randomUUID(), value: "rpc-condition" };
 
 		await client.call("create", {
-			service: MARKETPLACE_SERVICE,
-			resource: MARKETPLACE_RESOURCE.CONDITIONS,
+			service: discovered.serviceId,
+			resource: discovered.conditionsResourceId,
 			data: row,
 		});
 
 		const got = await client.call("get", {
-			service: MARKETPLACE_SERVICE,
-			resource: MARKETPLACE_RESOURCE.CONDITIONS,
+			service: discovered.serviceId,
+			resource: discovered.conditionsResourceId,
 		});
 
 		expect(got).toEqual([row]);
@@ -90,17 +142,13 @@ describe("marketplace JSON-RPC server", () => {
 
 		expect(response).toEqual({
 			services: [
-				{
-					id: MARKETPLACE_SERVICE,
+				expect.objectContaining({
 					name: "marketplace",
 					resources: expect.arrayContaining([
-						{ id: MARKETPLACE_RESOURCE.ITEMS, name: "items" },
-						{
-							id: MARKETPLACE_RESOURCE.CONDITIONS,
-							name: "conditions",
-						},
+						expect.objectContaining({ name: "items" }),
+						expect.objectContaining({ name: "conditions" }),
 					]),
-				},
+				}),
 			],
 		});
 		client.close();

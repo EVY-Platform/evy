@@ -6,10 +6,7 @@ import { fileURLToPath } from "node:url";
 import { SQL } from "bun";
 import { drizzle } from "drizzle-orm/bun-sql";
 import { migrate as migratePg } from "drizzle-orm/bun-sql/migrator";
-import {
-	MARKETPLACE_RESOURCE_MANIFEST,
-	MARKETPLACE_SERVICE,
-} from "../services/marketplace/src/resources";
+import { MARKETPLACE_SERVICE_DESCRIPTOR } from "../services/marketplace/src/resources";
 import { data as marketplaceDataTable } from "../services/marketplace/src/schema";
 import { getPostgresConnectionUrl, requireEnv } from "../types/env";
 import type {
@@ -104,9 +101,11 @@ const SEED_IDS = {
 	logo: "ec3a7609-e2bc-484e-aab1-acef6777595c",
 } as const;
 
+const MARKETPLACE_SERVICE = MARKETPLACE_SERVICE_DESCRIPTOR.id;
+
 const MARKETPLACE_SEED_RESOURCE_KEY_TO_ID: Record<string, string> =
 	Object.fromEntries(
-		MARKETPLACE_RESOURCE_MANIFEST.map((resource) => [
+		MARKETPLACE_SERVICE_DESCRIPTOR.resources.map((resource) => [
 			resource.name,
 			resource.id,
 		]),

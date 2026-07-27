@@ -1,18 +1,18 @@
 import { describe, expect, it } from "bun:test";
 import {
-	MARKETPLACE_RESOURCE,
-	MARKETPLACE_SERVICE,
-} from "evy-types/marketplaceResources";
+	TEST_RESOURCE_ID,
+	TEST_SERVICE_ID,
+} from "../../testFixtures/resourceCatalog";
 import { shouldOfferCreateSubmitWithFlow } from "./createDraftSignals";
 
 describe("createDraftSignals", () => {
-	const itemResourceId = MARKETPLACE_RESOURCE.ITEMS;
-	const declared = `${MARKETPLACE_SERVICE}/${itemResourceId}`;
+	const itemResourceId = TEST_RESOURCE_ID.RECORDS;
+	const declared = `${TEST_SERVICE_ID}/${itemResourceId}`;
 
 	it("offers submit create only for the declared target", () => {
 		expect(
 			shouldOfferCreateSubmitWithFlow(
-				MARKETPLACE_SERVICE,
+				TEST_SERVICE_ID,
 				itemResourceId,
 				declared,
 			),
@@ -22,7 +22,7 @@ describe("createDraftSignals", () => {
 	it("does not offer submit create without a declaration", () => {
 		expect(
 			shouldOfferCreateSubmitWithFlow(
-				MARKETPLACE_SERVICE,
+				TEST_SERVICE_ID,
 				itemResourceId,
 				null,
 			),
@@ -32,7 +32,7 @@ describe("createDraftSignals", () => {
 	it("does not offer submit create for a different resource", () => {
 		expect(
 			shouldOfferCreateSubmitWithFlow(
-				MARKETPLACE_SERVICE,
+				TEST_SERVICE_ID,
 				"addresses",
 				declared,
 			),
