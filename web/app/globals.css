@@ -418,6 +418,15 @@ label {
 	filter: brightness(0.9);
 }
 
+/*
+ * Canvas rows nest, and :hover matches every ancestor, so a plain hover rule
+ * highlights the whole outer row. Highlight only the innermost hovered row,
+ * matching what a click selects.
+ */
+.evy-row-hover:hover:not(:has(.evy-row-hover:hover)) {
+	background-color: var(--color-evy-gray-light);
+}
+
 /* ---- Shared component styles ---- */
 
 .evy-desktop-width-message {

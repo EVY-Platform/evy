@@ -401,3 +401,112 @@ test.describe("Drag Hover Indicator Behavior", () => {
 		await page.mouse.up();
 	});
 });
+
+const TRANSPARENT = "rgba(0, 0, 0, 0)";
+
+/** Computed background of the row wrapper that owns the given title text. */
+async function getRowBackground(
+	page: Parameters<typeof getSidebarRow>[0],
+	title: string,
+): Promise<string> {
+	return page
+		.getByText(title, { exact: true })
+		.first()
+		.evaluate((el: HTMLElement) => {
+			const row = el.closest("[data-row-id]");
+			return row ? getComputedStyle(row).backgroundColor : "";
+		});
+}
+
+test.describe("Row Hover Highlight", () => {
+	test("should highlight only the innermost row when hovering nested rows", async ({
+		page,
+	}) => {
+		await openAppWithTestFlows(page, [
+			{
+				id: "step_1",
+				title: "Test Page",
+				rows: [
+					{
+						type: "VerticalContainer",
+						title: "Outer Container",
+						children: [
+							{
+								type: "HorizontalContainer",
+								title: "Inner Container",
+								children: [
+									{
+										type: "Text",
+										title: "Deep Text Row",
+										text: "deep",
+									},
+								],
+							},
+						],
+					},
+					{
+						type: "Text",
+						title: "Sibling Text Row",
+						subtitle: "sibling",
+					},
+				],
+			},
+		]);
+
+		const deepRow = page
+			.getByText("Deep Text Row", { exact: true })
+			.first();
+		await expect(deepRow).toBeVisible();
+		await deepRow.hover();
+
+		await expect
+			.poll(() => getRowBackground(page, "Deep Text Row"))
+			.not.toBe(TRANSPARENT);
+		expect(await getRowBackground(page, "Inner Container")).toBe(
+			TRANSPARENT,
+		);
+		expect(await getRowBackground(page, "Outer Container")).toBe(
+			TRANSPARENT,
+		);
+		expect(await getRowBackground(page, "Sibling Text Row")).toBe(
+			TRANSPARENT,
+		);
+	});
+
+	test("should highlight the container itself when hovering its own title", async ({
+		page,
+	}) => {
+		await openAppWithTestFlows(page, [
+			{
+				id: "step_1",
+				title: "Test Page",
+				rows: [
+					{
+						type: "VerticalContainer",
+						title: "Outer Container",
+						children: [
+							{
+								type: "Text",
+								title: "Child Text Row",
+								text: "child",
+							},
+						],
+					},
+				],
+			},
+		]);
+
+		const containerTitle = page
+			.getByText("Outer Container", { exact: true })
+			.first();
+		await expect(containerTitle).toBeVisible();
+		await containerTitle.hover();
+
+		await expect
+			.poll(() => getRowBackground(page, "Outer Container"))
+			.not.toBe(TRANSPARENT);
+		expect(await getRowBackground(page, "Child Text Row")).toBe(
+			TRANSPARENT,
+		);
+	});
+});

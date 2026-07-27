@@ -64,7 +64,7 @@ export const RowPrimitive = forwardRef<HTMLDivElement, RowPrimitiveProps>(
 		return (
 			// biome-ignore lint/a11y/useSemanticElements: This is a drag-and-drop container that requires a div for proper layout
 			<div
-				className={`evy-flex evy-flex-col evy-w-full evy-relative evy-hover:bg-gray-light${className ? ` ${className}` : ""}`}
+				className={`evy-flex evy-flex-col evy-w-full evy-relative evy-row-hover${className ? ` ${className}` : ""}`}
 				style={{ cursor, ...style }}
 				ref={ref}
 				onClick={selectRow ? handleSelect : undefined}
