@@ -124,7 +124,7 @@ Persisted row record. Row-type-specific SDUI fields live in `data`. Nested row r
 | Flat key | SDUI field | Ownership |
 | --- | --- | --- |
 | `sheet_row_id` | `sheet` | Optional on **every** row type — overlay content for `{show(rowId)}` |
-| `child_row_id` | `child` | **Search only** — one result-row template (not a sheet) |
+| `child_row_id` | `child` | One result-row template (not a sheet), for example for search row |
 | `children_row_ids` | `children` | Container rows with static nested children |
 
 A Search row may persist both `child_row_id` and `sheet_row_id`. Relationship kind is explicit in storage; do not infer it from row type alone beyond the Search-only rule for `child`.
