@@ -28,10 +28,10 @@
 										"mode": "store",
 										"filter": {
 											"id": "$datum.id",
-											"status": "\"pending\""
+											"status": "pending"
 										},
 										"changes": {
-											"status": "\"accepted\""
+											"status": "accepted"
 										}
 									}
 								}
