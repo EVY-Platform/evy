@@ -6,18 +6,27 @@ import {
 	stripOptionalSurroundingQuotes,
 } from "./datetime";
 import {
-	evaluateDynamicFormatter,
 	evyFormatDecimal,
+	INPUT_PROP_PATTERN,
+	lookupFormatterTemplate,
+	normalizePriceInput,
+	resolveBindingPath,
+	resolvePathOnObject,
+	sanitizeFormatterTemplate,
+	valueToString,
 } from "./dynamicFormatters";
 import { splitFunctionArguments } from "./functionArgs";
 
-export type { EVYFormatterDefinition } from "./dynamicFormatters";
 export type { EVYFunctionContext };
 
 type EVYFunctionHandler = (
 	args: string,
 	context?: EVYFunctionContext,
 ) => EVYFunctionOutput | null;
+
+const WRAPPED_FUNCTION_CALL_PATTERN =
+	/\{([a-zA-Z_][a-zA-Z0-9_]*)\(([^()]*)\)\}/;
+const FUNCTION_CALL_PATTERN = /([a-zA-Z_][a-zA-Z0-9_]*)\(([^()]*)\)/;
 
 /** Web intentionally returns doc-shaped placeholders for functions that need runtime data. */
 function evyCount(): EVYFunctionOutput {
@@ -33,37 +42,136 @@ function evyCollectionPlaceholder(args: string): EVYFunctionOutput {
 	return { value: data?.trim() ?? "" };
 }
 
-function resolvePreviewPath(
-	path: string,
-	context?: EVYFunctionContext,
-): unknown {
-	if (context?.resolvePath) {
-		return context.resolvePath(path);
+/**
+ * Runs a synced formatter template. Templates may call any built-in, so the
+ * function table is reused here rather than forked - matching iOS, which
+ * evaluates templates through its own interpreter.
+ */
+function evaluateFormatterExpression(
+	expression: string,
+	context: EVYFunctionContext,
+): string {
+	let text = expression;
+	let safety = 0;
+
+	while (safety++ < 50) {
+		// A braced call consumes its braces; a bare one does not.
+		const wrappedFnMatch = WRAPPED_FUNCTION_CALL_PATTERN.exec(text);
+		const resolvedWrapped = wrappedFnMatch
+			? callFunction(wrappedFnMatch[1], wrappedFnMatch[2], context)
+			: null;
+		if (wrappedFnMatch && resolvedWrapped) {
+			text = replaceMatch(text, wrappedFnMatch, resolvedWrapped);
+			continue;
+		}
+
+		const inputPropMatch = INPUT_PROP_PATTERN.exec(text);
+		if (inputPropMatch) {
+			text = text.replace(
+				inputPropMatch[0],
+				valueToString(
+					resolveBindingPath(`input.${inputPropMatch[1]}`, context),
+				),
+			);
+			continue;
+		}
+
+		const fnMatch = FUNCTION_CALL_PATTERN.exec(text);
+		const resolvedFn = fnMatch
+			? callFunction(fnMatch[1], fnMatch[2], context)
+			: null;
+		if (fnMatch && resolvedFn) {
+			text = replaceMatch(text, fnMatch, resolvedFn);
+			continue;
+		}
+
+		break;
 	}
-	return resolveMockPath(path);
+
+	return text.replace(/\\n/g, "\n");
 }
 
-function evyFormatCurrency(
+function replaceMatch(
+	text: string,
+	match: RegExpExecArray,
+	output: EVYFunctionOutput,
+): string {
+	const resolved = `${output.prefix ?? ""}${output.value}${output.suffix ?? ""}`;
+	return `${text.slice(0, match.index)}${resolved}${text.slice(match.index + match[0].length)}`;
+}
+
+export function evaluateDynamicFormatter(
+	formatterName: string,
 	args: string,
 	context?: EVYFunctionContext,
 ): EVYFunctionOutput {
-	if (!context?.formatters?.length) {
-		return { value: "1.00", prefix: "$" };
+	const formatter = context?.formatters?.find(
+		(candidate) => candidate.name === formatterName,
+	);
+	if (!formatter) {
+		throw new Error(`Formatter ${formatterName} is not available`);
 	}
-	try {
-		const formatterContext: EVYFunctionContext = {
-			...context,
-			resolvePath: (path) => resolvePreviewPath(path, context),
-		};
-		return evaluateDynamicFormatter(
-			"formatCurrency",
-			args,
+
+	const resolvedArg = context?.resolvePath?.(args.trim());
+	const argValue = resolvedArg === undefined ? context?.input : resolvedArg;
+
+	// Currency is the one formatter whose input shape and editing representation
+	// are not expressible in a synced template.
+	let input: Record<string, unknown>;
+	if (formatterName === "formatCurrency") {
+		input = normalizePriceInput(argValue);
+		const rawValue = valueToString(input.value).trim();
+		if (context?.editing) return { value: rawValue };
+		if (rawValue === "") return { value: "" };
+	} else {
+		input =
+			argValue && typeof argValue === "object" && !Array.isArray(argValue)
+				? (argValue as Record<string, unknown>)
+				: {};
+	}
+
+	const formatterContext: EVYFunctionContext = { ...context, input };
+	const template = lookupFormatterTemplate(
+		formatter.formatting,
+		evaluateFormatterExpression(
+			formatter.formatting_config,
 			formatterContext,
-		);
-	} catch {
-		return { value: "1.00", prefix: "$" };
-	}
+		),
+		formatterName,
+	);
+	return {
+		value: evaluateFormatterExpression(
+			sanitizeFormatterTemplate(template, input),
+			formatterContext,
+		),
+	};
 }
+
+function makeDynamicFormatter(
+	formatterName: string,
+	fallback: EVYFunctionOutput,
+): EVYFunctionHandler {
+	return (args, context) => {
+		if (!context?.formatters?.length) return fallback;
+		try {
+			return evaluateDynamicFormatter(formatterName, args, {
+				...context,
+				resolvePath: context.resolvePath ?? resolveMockPath,
+			});
+		} catch {
+			return fallback;
+		}
+	};
+}
+
+const evyFormatCurrency = makeDynamicFormatter("formatCurrency", {
+	value: "1.00",
+	prefix: "$",
+});
+
+const evyFormatAddress = makeDynamicFormatter("formatAddress", {
+	value: "1 Main Street, 2000 Sydney NSW",
+});
 
 const fallbackDimensionOutput: EVYFunctionOutput = {
 	value: "100",
@@ -87,21 +195,8 @@ const previewMockData = {
 	...previewDimensions,
 };
 
-function splitDotAndBracketPath(path: string): string[] {
-	return path
-		.split(".")
-		.flatMap((part) => part.split(/\[|\]/).filter(Boolean));
-}
-
 function resolveMockPath(path: string): unknown {
-	return splitDotAndBracketPath(path).reduce<unknown>((current, part) => {
-		if (Array.isArray(current)) {
-			const index = Number(part);
-			return Number.isInteger(index) ? current[index] : undefined;
-		}
-		if (!current || typeof current !== "object") return undefined;
-		return (current as Record<string, unknown>)[part];
-	}, previewMockData);
+	return resolvePathOnObject(previewMockData, path);
 }
 
 function formatDimensionMillimetres(mm: number): EVYFunctionOutput {
@@ -134,28 +229,6 @@ function evyFormatDimension(
 
 function evyFormatWeight(): EVYFunctionOutput {
 	return { value: "500", suffix: "g" };
-}
-
-function evyFormatAddress(
-	args: string,
-	context?: EVYFunctionContext,
-): EVYFunctionOutput {
-	if (!context?.formatters?.length) {
-		return { value: "1 Main Street, 2000 Sydney NSW" };
-	}
-	try {
-		const formatterContext: EVYFunctionContext = {
-			...context,
-			resolvePath: (path) => resolvePreviewPath(path, context),
-		};
-		return evaluateDynamicFormatter(
-			"formatAddress",
-			args,
-			formatterContext,
-		);
-	} catch {
-		return { value: "1 Main Street, 2000 Sydney NSW" };
-	}
 }
 
 function evyFormatAddressLine1(): EVYFunctionOutput {

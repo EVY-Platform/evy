@@ -6,7 +6,6 @@ export type EVYFunctionContext = {
 	formatters?: import("./dynamicFormatters").EVYFormatterDefinition[];
 	input?: Record<string, unknown>;
 	editing?: boolean;
-	resolveBinding?: (path: string) => string | undefined;
 	resolvePath?: (path: string) => unknown;
 };
 

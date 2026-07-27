@@ -53,14 +53,6 @@ export function parseText(
 				continue;
 			}
 
-			if (context?.resolveBinding) {
-				const resolved = context.resolveBinding(inner);
-				if (resolved !== undefined) {
-					text = text.replace(propsMatch[0], resolved);
-					continue;
-				}
-			}
-
 			text = text.replace(
 				propsMatch[0],
 				formatResourcePathForDisplay(inner, resourceIdToEntityName),

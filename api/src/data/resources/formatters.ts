@@ -6,7 +6,7 @@ import { makeCoreResource } from "./coreResource";
 export const formattersResource = makeCoreResource<DATA_EVY_Formatter>({
 	table: formatter,
 	validate: validateDataEvyFormatter,
-	withVisibility: false,
+	visibility: false,
 	toUpdateSet: (v) => ({
 		name: v.name,
 		formatting_config: v.formatting_config,

@@ -1,10 +1,10 @@
 import { describe, expect, it } from "bun:test";
+import { STANDARD_FORMATTERS } from "evy-types/standardFormatters";
 import {
-	evaluateDynamicFormatter,
 	lookupFormatterTemplate,
 	sanitizeFormatterTemplate,
 } from "./dynamicFormatters";
-import { STANDARD_FORMATTERS } from "./standardFormatters";
+import { evaluateDynamicFormatter } from "./functions";
 
 describe("dynamicFormatters", () => {
 	it("looks up templates case-insensitively and falls back to default", () => {

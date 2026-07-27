@@ -350,24 +350,40 @@ extension EVY {
     }
   }
 
+  /// Resolves an object-template destination (`{path: {…$datum…}}`) into the
+  /// path it writes to and the encoded record to write. Returns nil when the
+  /// destination is a plain path rather than a template.
+  private static func resolveObjectTemplateDestination(
+    destinationProps: String,
+    datum: EVYJson
+  ) throws -> (path: String, data: Data)? {
+    guard let (path, template) = try EVYObjectLiteral.parseDestination(from: destinationProps)
+    else {
+      return nil
+    }
+    let resolved = EVYPlainTextResolution.resolveValues(template, datum: datum)
+    return (path, try JSONEncoder().encode(EVYJson.dictionary(resolved)))
+  }
+
   static func prepareDraftData(
     value: EVYJson,
     destination: String
   ) throws -> (variableName: String, data: Data) {
     let destinationProps = _parsePropsFromText(destination)
-    if let (path, template) = try EVYObjectLiteral.parseDestination(from: destinationProps) {
-      let datum: EVYJson
-      if case .string(let stringValue) = value {
-        datum = evyJsonValue(from: stringValue)
-      } else {
-        datum = value
-      }
-      let resolved = EVYPlainTextResolution.resolveValues(template, datum: datum)
-      let encoded = try JSONEncoder().encode(EVYJson.dictionary(resolved))
-      return (path, encoded)
+    // A plain string is re-parsed so numeric text lands in the record as a number.
+    let datum: EVYJson
+    if case .string(let stringValue) = value {
+      datum = evyJsonValue(from: stringValue)
+    } else {
+      datum = value
     }
-    let encoded = try JSONEncoder().encode(value)
-    return (destinationProps, encoded)
+    if let (path, data) = try resolveObjectTemplateDestination(
+      destinationProps: destinationProps,
+      datum: datum
+    ) {
+      return (path, data)
+    }
+    return (destinationProps, try JSONEncoder().encode(value))
   }
 
   static func writeRawValue(
@@ -394,11 +410,11 @@ extension EVY {
     scopeId: String? = nil
   ) throws {
     let destinationProps = _parsePropsFromText(destination)
-    if let (path, template) = try EVYObjectLiteral.parseDestination(from: destinationProps) {
-      let datum = evyJsonValue(from: value)
-      let resolved = EVYPlainTextResolution.resolveValues(template, datum: datum)
-      let encoded = try JSONEncoder().encode(EVYJson.dictionary(resolved))
-      try updateData(encoded, destination: "{\(path)}", scopeId: scopeId)
+    if let (path, data) = try resolveObjectTemplateDestination(
+      destinationProps: destinationProps,
+      datum: evyJsonValue(from: value)
+    ) {
+      try updateData(data, destination: "{\(path)}", scopeId: scopeId)
       return
     }
     try updateData("\"\(value)\"".data(using: .utf8)!, destination: destination, scopeId: scopeId)

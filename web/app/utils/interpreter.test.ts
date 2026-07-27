@@ -1,7 +1,7 @@
 import { describe, expect, it } from "bun:test";
+import { STANDARD_FORMATTERS } from "evy-types/standardFormatters";
 import { TEST_RESOURCE_ID } from "../../testFixtures/resourceCatalog";
 import { parseText } from "./interpreter";
-import { STANDARD_FORMATTERS } from "./standardFormatters";
 
 const compoundDimensionsText =
 	"{formatDimension(item.width) (w) x formatDimension(item.height) (h) x formatDimension(item.length) (l)}";

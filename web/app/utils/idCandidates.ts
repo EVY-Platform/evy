@@ -333,9 +333,8 @@ function buildDisplayCandidates(candidates: IdCandidate[]): IdCandidate[] {
 export function getIdDisplayText(
 	value: string,
 	candidates: IdCandidate[],
-	scope: IdDisplayScope = "expression",
 ): string {
-	return getIdDisplayParts(value, candidates, scope)
+	return getIdDisplayParts(value, candidates)
 		.map((part) =>
 			part.type === "candidate" ? part.displayName : part.text,
 		)
@@ -357,19 +356,27 @@ export function getIdDisplayParts(
 	let index = 0;
 
 	while (index < value.length) {
+		// Candidate-independent, so it gates the whole position rather than
+		// being re-tested per candidate.
+		if (!isIdBoundaryCharacter(value[index - 1])) {
+			index++;
+			continue;
+		}
+
+		// Ordered cheapest-first: startsWith rejects nearly every candidate
+		// before the region scan runs.
 		const candidate = displayCandidates.find(
 			(displayCandidate) =>
+				value.startsWith(displayCandidate.id, index) &&
+				isIdBoundaryCharacter(
+					value[index + displayCandidate.id.length],
+				) &&
 				(interpolationRegions === null ||
 					isRangeInsideRegions(
 						interpolationRegions,
 						index,
 						index + displayCandidate.id.length,
-					)) &&
-				isIdBoundaryCharacter(value[index - 1]) &&
-				value.startsWith(displayCandidate.id, index) &&
-				isIdBoundaryCharacter(
-					value[index + displayCandidate.id.length],
-				),
+					)),
 		);
 
 		if (!candidate) {

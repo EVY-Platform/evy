@@ -134,6 +134,8 @@ struct EVYSelectPhoto: View {
             }
             EVYSelectPhotoButton(
               fullScreen: false,
+              title: nil,
+              subtitle: nil,
               icon: icon,
               content: content,
               onAddPhotoTapped: onAddPhotoTapped,
@@ -207,22 +209,17 @@ private struct EVYSelectPhotoButton: View {
   @State private var selectedItem: PhotosPickerItem?
   @Binding var photoTiles: [EVYPhotoTile]
 
-  init(
-    fullScreen: Bool,
-    title: String? = nil,
-    subtitle: String? = nil,
-    icon: String?,
-    content: String?,
-    onAddPhotoTapped: @escaping (@escaping EVYRowOperationHandler) -> Void,
-    photoTiles: Binding<[EVYPhotoTile]>
-  ) {
-    self.fullScreen = fullScreen
-    self.title = title
-    self.subtitle = subtitle
-    self.icon = icon
-    self.content = content
-    self.onAddPhotoTapped = onAddPhotoTapped
-    _photoTiles = photoTiles
+  private var addTileContent: some View {
+    VStack {
+      if let icon { EVYTextView(icon) }
+      if let content { EVYTextView(content) }
+    }
+  }
+
+  // Applied after each branch's frame so the border traces the sized tile.
+  private var tileBorder: some View {
+    RoundedRectangle(cornerRadius: Constants.mainCornerRadius)
+      .strokeBorder(Constants.borderColor, lineWidth: Constants.borderWidth)
   }
 
   var body: some View {
@@ -236,15 +233,10 @@ private struct EVYSelectPhotoButton: View {
               EVYTextView(title)
             }
 
-            VStack {
-              if let icon { EVYTextView(icon) }
-              if let content { EVYTextView(content) }
-            }
-            .frame(maxWidth: .infinity)
-            .frame(height: carouselElementSize)
-            .background(
-              RoundedRectangle(cornerRadius: Constants.mainCornerRadius)
-                .strokeBorder(Constants.borderColor, lineWidth: Constants.borderWidth))
+            addTileContent
+              .frame(maxWidth: .infinity)
+              .frame(height: carouselElementSize)
+              .background(tileBorder)
 
             if let subtitle {
               EVYTextView(subtitle, style: .info)
@@ -254,14 +246,9 @@ private struct EVYSelectPhotoButton: View {
           .frame(maxWidth: .infinity, alignment: .leading)
           .contentShape(Rectangle())
         } else {
-          VStack {
-            if let icon { EVYTextView(icon) }
-            if let content { EVYTextView(content) }
-          }
-          .frame(width: carouselElementSize, height: carouselElementSize)
-          .background(
-            RoundedRectangle(cornerRadius: Constants.mainCornerRadius)
-              .strokeBorder(Constants.borderColor, lineWidth: Constants.borderWidth))
+          addTileContent
+            .frame(width: carouselElementSize, height: carouselElementSize)
+            .background(tileBorder)
         }
       }
     )

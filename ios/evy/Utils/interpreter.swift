@@ -460,13 +460,9 @@ func _formatData(json: EVYJson, format: String) throws -> String {
 
   if formatWithNewData.isEmpty { return "" }
 
-  ephemeralDatumRegistry[temporaryId] = json
-  defer {
-    ephemeralDatumRegistry.removeValue(forKey: temporaryId)
+  return try evyWithEphemeralDatum(key: temporaryId, value: json) {
+    try _getValueFromText(formatWithNewData).toString()
   }
-
-  let returnText = try _getValueFromText(formatWithNewData)
-  return returnText.toString()
 }
 
 // MARK: - Private parsing

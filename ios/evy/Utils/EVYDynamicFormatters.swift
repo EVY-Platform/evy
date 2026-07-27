@@ -10,6 +10,10 @@ private struct EVYFormatterDefinition {
   let formatting: [String: String]
 }
 
+private let evyInputInterpolationRegex = try! NSRegularExpression(
+  pattern: #"\{input\.([a-zA-Z_][a-zA-Z0-9_]*)\}"#
+)
+
 private func evyResolveInputInterpolations(
   _ template: String,
   input: EVYJson
@@ -18,14 +22,9 @@ private func evyResolveInputInterpolations(
     return template
   }
 
-  let pattern = #"\{input\.([a-zA-Z_][a-zA-Z0-9_]*)\}"#
-  guard let regex = try? NSRegularExpression(pattern: pattern) else {
-    return template
-  }
-
   let nsTemplate = template as NSString
   var resolved = template
-  let matches = regex.matches(
+  let matches = evyInputInterpolationRegex.matches(
     in: template,
     range: NSRange(location: 0, length: nsTemplate.length)
   ).reversed()
@@ -45,8 +44,20 @@ private func evyResolveInputInterpolations(
   return resolved
 }
 
+/// Formatter rows change once per sync but are read on every interpolation, so
+/// the decoded definitions are held until any store write bumps the generation.
 @MainActor
-private func evyLookupFormatterDefinition(named name: String) throws -> EVYFormatterDefinition {
+private var evyFormatterDefinitionCache:
+  (generation: Int, definitions: [String: EVYFormatterDefinition])?
+
+@MainActor
+private func evyFormatterDefinitions(requestedBy name: String) throws
+  -> [String: EVYFormatterDefinition]
+{
+  if let cache = evyFormatterDefinitionCache, cache.generation == evyDataStoreGeneration {
+    return cache.definitions
+  }
+
   guard let namespace = EVY.namespaceForSyncedResource("formatters") else {
     throw EVYError.formatFailed(type: name, reason: "formatters resource not synced")
   }
@@ -58,26 +69,37 @@ private func evyLookupFormatterDefinition(named name: String) throws -> EVYForma
     throw EVYError.formatFailed(type: name, reason: "formatters collection missing")
   }
 
+  var definitions: [String: EVYFormatterDefinition] = [:]
   for item in items {
     guard case .dictionary(let dict) = item,
       case .string(let formatterName) = dict["name"],
-      formatterName == name,
       case .string(let formattingConfig) = dict["formatting_config"],
       case .dictionary(let formattingDict) = dict["formatting"]
     else {
       continue
     }
 
-    let formatting = formattingDict.reduce(into: [String: String]()) { result, entry in
-      result[entry.key] = entry.value.toString()
-    }
-    return EVYFormatterDefinition(
+    definitions[formatterName] = EVYFormatterDefinition(
       formattingConfig: formattingConfig,
-      formatting: formatting
+      formatting: formattingDict.mapValues { $0.toString() }
     )
   }
 
-  throw EVYError.formatFailed(type: name, reason: "formatter not found")
+  evyFormatterDefinitionCache = (evyDataStoreGeneration, definitions)
+  return definitions
+}
+
+@MainActor
+private func evyLookupFormatterDefinition(named name: String) throws -> EVYFormatterDefinition {
+  guard let definition = try evyFormatterDefinitions(requestedBy: name)[name] else {
+    throw EVYError.formatFailed(type: name, reason: "formatter not found")
+  }
+  return definition
+}
+
+private func evyFormattingTemplate(_ formatting: [String: String], _ key: String) -> String? {
+  formatting[key]
+    ?? formatting.first { $0.key.caseInsensitiveCompare(key) == .orderedSame }?.value
 }
 
 private func evyLookupFormatterTemplate(
@@ -86,66 +108,25 @@ private func evyLookupFormatterTemplate(
   formatterName: String
 ) throws -> String {
   let trimmedKey = key.trimmingCharacters(in: .whitespacesAndNewlines)
-  if let exact = formatting[trimmedKey] {
-    return exact
+  guard
+    let template = evyFormattingTemplate(formatting, trimmedKey)
+      ?? evyFormattingTemplate(formatting, "default")
+  else {
+    throw EVYError.formatFailed(
+      type: formatterName,
+      reason: "no formatting template for key '\(trimmedKey)' and no default"
+    )
   }
-  for (candidateKey, template) in formatting {
-    if candidateKey.caseInsensitiveCompare(trimmedKey) == .orderedSame {
-      return template
-    }
-  }
-  if let defaultTemplate = formatting["default"] {
-    return defaultTemplate
-  }
-  for (candidateKey, template) in formatting
-  where candidateKey.caseInsensitiveCompare("default")
-    == .orderedSame
-  {
-    return template
-  }
-  throw EVYError.formatFailed(
-    type: formatterName,
-    reason: "no formatting template for key '\(trimmedKey)' and no default"
-  )
+  return template
 }
 
 private func evySanitizeFormatterTemplate(_ template: String, input: EVYJson) -> String {
-  guard case .dictionary(let dict) = input else {
-    return evyTidyFormatterSeparators(template)
-  }
-
-  let pattern = #"\{input\.([a-zA-Z_][a-zA-Z0-9_]*)\}"#
-  guard let regex = try? NSRegularExpression(pattern: pattern) else {
-    return evyTidyFormatterSeparators(template)
-  }
-
-  let nsTemplate = template as NSString
-  var sanitized = template
-  let matches = regex.matches(
-    in: template,
-    range: NSRange(location: 0, length: nsTemplate.length)
-  ).reversed()
-
-  for match in matches {
-    guard match.numberOfRanges >= 2 else { continue }
-    let fieldRange = match.range(at: 1)
-    let fieldName = nsTemplate.substring(with: fieldRange)
-    let fieldValue =
-      dict[fieldName]?.toString().trimmingCharacters(in: .whitespacesAndNewlines)
-      ?? ""
-    let replacement = fieldValue.isEmpty ? "" : fieldValue
-    let fullRange = match.range(at: 0)
-    sanitized = (sanitized as NSString).replacingCharacters(in: fullRange, with: replacement)
-  }
-
-  return evyTidyFormatterSeparators(sanitized)
+  evyTidyFormatterSeparators(evyResolveInputInterpolations(template, input: input))
 }
 
 private func evyTidyFormatterSeparators(_ text: String) -> String {
-  var sanitized = text
-  while sanitized.contains("  ") {
-    sanitized = sanitized.replacingOccurrences(of: "  ", with: " ")
-  }
+  var sanitized = text.replacingOccurrences(
+    of: " {2,}", with: " ", options: .regularExpression)
   while sanitized.contains(", ,") {
     sanitized = sanitized.replacingOccurrences(of: ", ,", with: ", ")
   }
@@ -165,23 +146,24 @@ func evyEvaluateDynamicFormatter(
   args: String,
   editing: Bool = false
 ) throws -> EVYFunctionOutput {
-  let formatter = try evyLookupFormatterDefinition(named: name)
   var input = try EVY.getDataFromProps(args)
+
+  // Currency is the one formatter whose input shape and editing representation
+  // are not expressible in a synced template, so it shortcuts before the
+  // template lookup - which is also the expensive part on the per-keystroke path.
   if name == "formatCurrency" {
     input = evyNormalizePriceInput(input)
-  }
-
-  if editing, name == "formatCurrency" {
-    return try evyCurrencyEditingOutput(from: input)
-  }
-
-  if name == "formatCurrency", case .dictionary(let dict) = input {
-    let rawValue = dict["value"]?.toString().trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
-    if rawValue.isEmpty {
+    if editing {
+      return try evyCurrencyEditingOutput(from: input)
+    }
+    if case .dictionary(let dict) = input,
+      (dict["value"]?.toString().trimmingCharacters(in: .whitespacesAndNewlines) ?? "").isEmpty
+    {
       return EVYFunctionOutput(value: "", prefix: nil, suffix: nil)
     }
   }
 
+  let formatter = try evyLookupFormatterDefinition(named: name)
   return try evyWithEphemeralDatum(key: "input", value: input) {
     let configKey = evyResolveInputInterpolations(formatter.formattingConfig, input: input)
     let template = try evyLookupFormatterTemplate(
@@ -205,20 +187,10 @@ private func evyNormalizePriceInput(_ input: EVYJson) -> EVYJson {
       return input
     }
     return .dictionary(dictValue.merging(["currency": .string("AUD")]) { _, new in new })
-  case .string(let stringValue):
+  case .string, .int, .decimal:
     return .dictionary([
       "currency": .string("AUD"),
-      "value": .string(stringValue),
-    ])
-  case .int(let intValue):
-    return .dictionary([
-      "currency": .string("AUD"),
-      "value": .string(String(intValue)),
-    ])
-  case .decimal(let decimalValue):
-    return .dictionary([
-      "currency": .string("AUD"),
-      "value": .string("\(decimalValue)"),
+      "value": .string(input.toString()),
     ])
   default:
     return input
@@ -234,12 +206,8 @@ private func evyCurrencyEditingOutput(from input: EVYJson) throws -> EVYFunction
       throw EVYError.formatFailed(type: "currency", reason: "missing 'value' field")
     }
     rawValue = value.toString()
-  case .string(let stringValue):
-    rawValue = stringValue
-  case .int(let intValue):
-    rawValue = String(intValue)
-  case .decimal(let decimalValue):
-    rawValue = "\(decimalValue)"
+  case .string, .int, .decimal:
+    rawValue = input.toString()
   default:
     throw EVYError.formatFailed(type: "currency", reason: "expected dictionary, got \(input)")
   }
@@ -249,6 +217,9 @@ private func evyCurrencyEditingOutput(from input: EVYJson) throws -> EVYFunction
 }
 
 #if DEBUG
+  /// Mirrors types/standardFormatters.ts, which is what the seed script actually
+  /// inserts. Swift cannot import it, so the rows are repeated here - keep both
+  /// in step when a standard formatter changes.
   @MainActor
   func evySeedStandardFormattersForTests() throws {
     let now = ISO8601DateFormatter().string(from: Date())

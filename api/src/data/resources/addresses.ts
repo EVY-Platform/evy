@@ -6,7 +6,7 @@ import { makeCoreResource } from "./coreResource";
 export const addressesResource = makeCoreResource<DATA_EVY_Address>({
 	table: address,
 	validate: validateDataEvyAddress,
-	defaultVisibility: "private",
+	visibility: "private",
 	toUpdateSet: (v) => ({
 		unit: v.unit,
 		street: v.street,
