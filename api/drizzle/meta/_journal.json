@@ -29,6 +29,13 @@
 			"when": 1784986730325,
 			"tag": "0003_create_formatter",
 			"breakpoints": true
+		},
+		{
+			"idx": 4,
+			"version": "7",
+			"when": 1784986730326,
+			"tag": "0004_message_private_visibility",
+			"breakpoints": true
 		}
 	]
 }

@@ -203,7 +203,7 @@
 				},
 				"visibility": {
 					"$ref": "#/$defs/Visibility",
-					"default": "public"
+					"default": "private"
 				}
 			}
 		},

@@ -521,7 +521,7 @@ describe("message resources", () => {
 		expect(created.id).toBeDefined();
 		expect(created.updatedAt).toBeDefined();
 		expect(created.status).toBe("pending");
-		expect(created.visibility).toBe("public");
+		expect(created.visibility).toBe("private");
 
 		const listed = (await get(dataDb, {
 			service: EVY_CORE_SERVICE,

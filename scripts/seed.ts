@@ -360,7 +360,10 @@ function buildMessageRows(
 			updatedAt,
 			status: item.status,
 			data,
-			visibility: "public",
+			visibility:
+				item.visibility === "private" || item.visibility === "public"
+					? item.visibility
+					: "private",
 		};
 	});
 }

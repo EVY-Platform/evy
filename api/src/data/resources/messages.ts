@@ -11,6 +11,9 @@ import { makeCoreResource, omitNulls } from "./coreResource";
 export const messagesResource = makeCoreResource<DATA_EVY_Message>({
 	table: message,
 	validate: validateDataEvyMessage,
+	// A message is private: it reaches only its creator and its recipient, and on
+	// iOS the private store is part of what the device declares as owned.
+	visibility: "private",
 	toUpdateSet: (v) => ({
 		fk: v.fk,
 		service: v.service,
