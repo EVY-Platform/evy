@@ -70,14 +70,11 @@ enum EVYObjectLiteral {
 
 @MainActor
 enum EVYPlainTextResolution {
-  /// Resource ids are uuids, and so are the binding keys that name those resources.
-  /// A bare uuid in a value position is therefore ambiguous, and this is what
-  /// disambiguates it - see `resolveValue`.
-  private static let bareIdPattern =
-    /[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}/
-
+  /// A record id with no property path after it. Resource ids are uuids, and so are the
+  /// binding keys that name those resources, so a bare uuid in a value position is
+  /// ambiguous - this is what disambiguates it. See `resolveValue`.
   private static func isBareIdToken(_ value: String) -> Bool {
-    !value.contains(".") && value.wholeMatch(of: bareIdPattern) != nil
+    !value.contains(".") && isEvyRecordId(value)
   }
 
   static func resolveValues(

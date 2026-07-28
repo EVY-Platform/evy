@@ -5,39 +5,87 @@
 
 import Foundation
 
+/// Records this device created, as `(service, resource, id)`.
+///
+/// A created record is owned however it is stored. A marketplace item is public so
+/// every device can see the catalogue, and its seller still has to own it to receive
+/// messages about it - `visibility` cannot express that, because it is one global
+/// column saying which store a row goes in, not who it belongs to. So it is recorded
+/// here.
+///
+/// Kept in `UserDefaults` beside the sync cursor: a small set of ids, never queried,
+/// so an `EVYDataStore` would be a container, a schema and a migration surface for no
+/// gain.
+enum EVYOwnershipLedger {
+  private static let key = "ownedRecords"
+
+  private struct Entry: Codable, Hashable {
+    let service: String
+    let resource: String
+    let id: String
+  }
+
+  private static var entries: Set<Entry> {
+    get {
+      guard let data = UserDefaults.standard.data(forKey: key),
+        let decoded = try? JSONDecoder().decode(Set<Entry>.self, from: data)
+      else {
+        return []
+      }
+      return decoded
+    }
+    set {
+      guard let data = try? JSONEncoder().encode(newValue) else { return }
+      UserDefaults.standard.set(data, forKey: key)
+    }
+  }
+
+  /// Idempotent: a `Set` means recording the same record twice is a no-op.
+  static func record(service: String, resource: String, id: String) {
+    entries.insert(Entry(service: service, resource: resource, id: id))
+  }
+
+  static func recordedIds() -> [(service: String, resource: String, id: String)] {
+    entries.map { ($0.service, $0.resource, $0.id) }
+  }
+
+  // used by tests
+  static func reset() {
+    UserDefaults.standard.removeObject(forKey: key)
+  }
+}
+
 extension EVY {
   private struct OwnedServiceResourceKey: Hashable {
     let service: String
     let resource: String
   }
 
-  /// Records that this device owns a record it just created.
-  ///
-  /// The ledger is what sync sends as `ownedServiceResources`: it is how the server knows
-  /// which messages to return, both the ones this device created and the ones addressed to
-  /// records it owns. Ownership is only ever established here, at create time - holding a
-  /// synced row is not owning it.
-  ///
-  /// Kept in its own store rather than a namespace inside `privateStore` because
-  /// `EVYDataStore.namespace(forSyncedResource:)` resolves a bare binding key like `{items}`
-  /// by scanning every non-local namespace for a matching resource name, so a ledger keyed
-  /// by resource name would shadow real data.
+  /// Records that this device owns a record it just created. See `EVYOwnershipLedger`
+  /// for why a created record has to be recorded rather than inferred from its
+  /// visibility.
   static func recordOwnership(service: String, resource: String, id: String) {
-    // Best effort: failing to record ownership costs this record its messages, which is
-    // not worth failing the create the user just made.
-    try? ownedStore.upsert(
-      namespace: service,
-      resource: resource,
-      id: id,
-      value: Data("{}".utf8)
-    )
+    EVYOwnershipLedger.record(service: service, resource: resource, id: id)
   }
 
-  /// One entry per (service, resource) this device owns records in.
+  /// One entry per (service, resource) this device owns records in, from three sources.
+  ///
+  /// - the **ledger**: records this device created. The only thing that can say "mine"
+  ///   about a public record, which is what keeps a seller entitled to messages about
+  ///   an item they listed.
+  /// - the **private store**: records this device holds privately. A message that
+  ///   arrives for you lands there, so it stays owned and its later updates keep
+  ///   coming even when nothing else entitles you to it.
+  /// - the **launch override**: ownership an account would confer, until auth lands.
   static func ownedServiceResources() -> [OwnedServiceResource] {
     var idsByKey: [OwnedServiceResourceKey: Set<String>] = [:]
 
-    for row in (try? ownedStore.getAll()) ?? [] {
+    for record in EVYOwnershipLedger.recordedIds() {
+      idsByKey[.init(service: record.service, resource: record.resource), default: []]
+        .insert(record.id)
+    }
+    for row in (try? privateStore.getAll()) ?? []
+    where isSyncedNamespace(row.namespace) {
       idsByKey[.init(service: row.namespace, resource: row.resource), default: []]
         .insert(row.id)
     }
@@ -46,14 +94,32 @@ extension EVY {
         .formUnion(declared.ids)
     }
 
-    // Sorted so an unchanged ledger produces an identical request payload between syncs.
-    return
+    // Sorted so an unchanged ownership set produces an identical request payload
+    // between syncs.
+    let owned =
       idsByKey
       .map {
         OwnedServiceResource(
           service: $0.key.service, resource: $0.key.resource, ids: $0.value.sorted())
       }
       .sorted { ($0.service, $0.resource) < ($1.service, $1.resource) }
+
+    // The request schema requires uuids, and one bad id fails the whole sync - every
+    // resource, not just messages. Fail here instead, where the source is visible.
+    assert(
+      owned.allSatisfy { $0.ids.allSatisfy(isEvyRecordId) },
+      "ownedServiceResources must only contain record ids: \(owned)")
+
+    return owned
+  }
+
+  /// Local singletons and scratch scopes share the private store but are not records
+  /// the server knows, so they are not ownership candidates. Their id is
+  /// `EVYNamespace.singletonId`, which is not a uuid.
+  private static func isSyncedNamespace(_ namespace: String) -> Bool {
+    namespace != EVYNamespace.local
+      && namespace != EVYNamespace.cache
+      && namespace != EVYNamespace.draft
   }
 
   /// Ownership this device holds without having created the record locally.

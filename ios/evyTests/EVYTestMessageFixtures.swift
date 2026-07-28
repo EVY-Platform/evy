@@ -41,7 +41,8 @@ enum EVYTestMessageFixtures {
     if !data.isEmpty {
       dict["data"] = .dictionary(data)
     }
-    dict["visibility"] = .string("public")
+    // Messages are private records, so a realistic fixture routes to the private store.
+    dict["visibility"] = .string("private")
     return .dictionary(dict)
   }
 }

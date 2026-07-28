@@ -982,8 +982,8 @@ final class EVYActionRunnerTests: XCTestCase {
     let pendingMessageId = UUID().uuidString
     let otherPendingMessageId = UUID().uuidString
     let acceptedMessageId = UUID().uuidString
-    try? EVY.publicStore.deleteAll(namespace: namespace, resource: resource)
-    defer { try? EVY.publicStore.deleteAll(namespace: namespace, resource: resource) }
+    deleteFromSyncedStores(namespace: namespace, resource: resource)
+    defer { deleteFromSyncedStores(namespace: namespace, resource: resource) }
 
     let messages = EVYJson.array([
       EVYTestMessageFixtures.message(
@@ -1038,8 +1038,16 @@ final class EVYActionRunnerTests: XCTestCase {
     XCTAssertEqual(afterNoOp[acceptedMessageId], "accepted")
   }
 
+  private func deleteFromSyncedStores(namespace: String, resource: String) {
+    for store in EVY.syncedStores() {
+      try? store.deleteAll(namespace: namespace, resource: resource)
+    }
+  }
+
   private func statusByMessageId(namespace: String, resource: String) throws -> [String: String] {
-    let rows = try EVY.publicStore.getAll(namespace: namespace, resource: resource)
+    let rows = EVY.syncedStores().flatMap {
+      (try? $0.getAll(namespace: namespace, resource: resource)) ?? []
+    }
     return Dictionary(
       uniqueKeysWithValues: rows.compactMap { row -> (String, String)? in
         guard let decoded = try? row.decoded(),
@@ -1505,8 +1513,8 @@ final class EVYActionRunnerTests: XCTestCase {
     let namespace = EVYNamespace.evy
     let resource = EVYCoreResource.messages.rawValue
     let pendingMessageId = UUID().uuidString
-    try? EVY.publicStore.deleteAll(namespace: namespace, resource: resource)
-    defer { try? EVY.publicStore.deleteAll(namespace: namespace, resource: resource) }
+    deleteFromSyncedStores(namespace: namespace, resource: resource)
+    defer { deleteFromSyncedStores(namespace: namespace, resource: resource) }
 
     let message = EVYTestMessageFixtures.message(
       id: pendingMessageId,
@@ -1514,7 +1522,8 @@ final class EVYActionRunnerTests: XCTestCase {
       type: "pickup",
       time: "2026-06-03T09:00:00"
     )
-    try EVY.publicStore.applySyncedValue(
+    // Routed by visibility, the way a synced message actually arrives.
+    try EVY.applySyncedValue(
       namespace: namespace, resource: resource, value: .array([message]))
 
     let template = try decodeRow(

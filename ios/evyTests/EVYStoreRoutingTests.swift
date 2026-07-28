@@ -12,16 +12,16 @@ final class EVYStoreRoutingTests: XCTestCase {
   override func setUpWithError() throws {
     // Without this the create/update cases below fire real RPCs at localhost:8000.
     installHermeticMutationSync()
-    // Other classes create records, which records ownership, and do not wipe this
-    // store - so the ownership cases below need a clean one they own.
-    try? EVY.ownedStore.wipeAll()
+    // Other classes create records, which records ownership, and do not reset the
+    // ledger - so the ownership cases below need a clean one they own.
+    EVYOwnershipLedger.reset()
   }
 
   override func tearDownWithError() throws {
     resetHermeticMutationSync()
     try? EVY.publicStore.wipeAll()
     try? EVY.privateStore.wipeAll()
-    try? EVY.ownedStore.wipeAll()
+    EVYOwnershipLedger.reset()
   }
 
   func testApplySyncedValueRoutesByVisibility() throws {
@@ -523,7 +523,6 @@ final class EVYStoreRoutingTests: XCTestCase {
   // MARK: - Ownership ledger
 
   func testOwnedServiceResourcesIsEmptyOnACleanStore() throws {
-
     XCTAssertTrue(EVY.ownedServiceResources().isEmpty)
   }
 
@@ -569,12 +568,10 @@ final class EVYStoreRoutingTests: XCTestCase {
     XCTAssertEqual(owned[0].ids, [createdId])
   }
 
-  func testSyncedRecordsAreNotOwned() throws {
-    let resource = EVYCoreResource.messages.rawValue
-
+  func testSyncedPublicRecordsAreNotOwned() throws {
     try EVY.applySyncedValue(
       namespace: EVYNamespace.evy,
-      resource: resource,
+      resource: EVYCoreResource.messages.rawValue,
       value: .dictionary([
         "id": .string(UUID().uuidString.lowercased()),
         "visibility": .string("public"),
@@ -582,5 +579,62 @@ final class EVYStoreRoutingTests: XCTestCase {
     )
 
     XCTAssertTrue(EVY.ownedServiceResources().isEmpty)
+  }
+
+  /// A message that reaches this device lands in the private store, and holding it
+  /// privately is what keeps its later updates arriving.
+  func testSyncedPrivateRecordsAreOwned() throws {
+    let recordId = UUID().uuidString.lowercased()
+
+    try EVY.applySyncedValue(
+      namespace: EVYNamespace.evy,
+      resource: EVYCoreResource.messages.rawValue,
+      value: .dictionary([
+        "id": .string(recordId),
+        "visibility": .string("private"),
+      ])
+    )
+
+    let owned = EVY.ownedServiceResources()
+    XCTAssertEqual(owned.count, 1)
+    XCTAssertEqual(owned[0].service, EVYNamespace.evy)
+    XCTAssertEqual(owned[0].resource, EVYCoreResource.messages.rawValue)
+    XCTAssertEqual(owned[0].ids, [recordId])
+  }
+
+  /// `visibility` cannot express "mine" - a marketplace item is public so every
+  /// device sees the catalogue - so the ledger is the only thing that keeps a
+  /// seller entitled to messages about an item they created.
+  func testCreatedPublicRecordsAreOwned() throws {
+    let namespace = MarketplaceTestFixture.serviceId
+    let resource = "ownership-public-create-test"
+    defer { try? EVY.publicStore.deleteAll(namespace: namespace, resource: resource) }
+
+    let createdId = try EVY.create(
+      namespace: namespace, resource: resource, data: ["visibility": .string("public")])
+
+    XCTAssertEqual(
+      try EVY.publicStore.getAll(namespace: namespace, resource: resource).count, 1)
+    let owned = EVY.ownedServiceResources().filter { $0.resource == resource }
+    XCTAssertEqual(owned.count, 1)
+    XCTAssertEqual(owned[0].ids, [createdId])
+  }
+
+  /// Local singletons share the private store but are not records the server knows,
+  /// and their `current` id is not a uuid. Declaring one would fail the sync request
+  /// schema and take every resource down with it, not just messages.
+  func testLocalSingletonsInThePrivateStoreAreNotOwned() throws {
+    let key = uniqueKey("local_ownership")
+    let (localStore, localKey) = EVY.store(for: "$local:\(key)")
+    try localStore.create(
+      namespace: EVYNamespace.local,
+      resource: localKey,
+      id: EVYNamespace.singletonId,
+      value: try JSONEncoder().encode(EVYJson.string("private"))
+    )
+
+    let owned = EVY.ownedServiceResources()
+    XCTAssertFalse(owned.contains { $0.service == EVYNamespace.local })
+    XCTAssertFalse(owned.flatMap(\.ids).contains(EVYNamespace.singletonId))
   }
 }

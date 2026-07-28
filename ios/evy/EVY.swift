@@ -100,9 +100,6 @@ struct EVY {
   static let publicStore = EVYDataStore(name: "public")
   static let privateStore = EVYDataStore(name: "private")
   static let cacheStore = EVYDataStore(name: "cache", inMemoryOnly: true)
-  /// Ledger of records this device created, declared to sync as `ownedServiceResources`.
-  /// Deliberately not one of `syncedStores()` - it is bookkeeping, not synced data.
-  static let ownedStore = EVYDataStore(name: "owned")
   static let draftStore = EVYDraftStore(dataStore: cacheStore)
   static var activeCacheScopeId: String?
 
