@@ -32,6 +32,7 @@
 		7333F45B2FAA2D1C006BEA92 /* EVY+QueryParams.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7333F4502FAA2D1C006BEA92 /* EVY+QueryParams.swift */; };
 		7333F45C2FAA2D1C006BEA92 /* EVYFlowStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7333F4512FAA2D1C006BEA92 /* EVYFlowStore.swift */; };
 		7333F45D2FAA2D1C006BEA92 /* EVY+Sync.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7333F4522FAA2D1C006BEA92 /* EVY+Sync.swift */; };
+		OW0000022FAA2D1C006BEA92 /* EVY+Ownership.swift in Sources */ = {isa = PBXBuildFile; fileRef = OW0000012FAA2D1C006BEA92 /* EVY+Ownership.swift */; };
 		FA30A0112F91000100000001 /* EVY+Source.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA30A0102F91000100000001 /* EVY+Source.swift */; };
 		FA20A0152F91000100000001 /* EVYSearchRequesting.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA20A0142F91000100000001 /* EVYSearchRequesting.swift */; };
 		FA20A0172F91000100000001 /* EVYSearchModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA20A0162F91000100000001 /* EVYSearchModel.swift */; };
@@ -198,6 +199,7 @@
 		7333F4502FAA2D1C006BEA92 /* EVY+QueryParams.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "EVY+QueryParams.swift"; sourceTree = "<group>"; };
 		7333F4512FAA2D1C006BEA92 /* EVYFlowStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EVYFlowStore.swift; sourceTree = "<group>"; };
 		7333F4522FAA2D1C006BEA92 /* EVY+Sync.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "EVY+Sync.swift"; sourceTree = "<group>"; };
+		OW0000012FAA2D1C006BEA92 /* EVY+Ownership.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "EVY+Ownership.swift"; sourceTree = "<group>"; };
 		FA30A0102F91000100000001 /* EVY+Source.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "EVY+Source.swift"; sourceTree = "<group>"; };
 		FA20A0142F91000100000001 /* EVYSearchRequesting.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EVYSearchRequesting.swift; sourceTree = "<group>"; };
 		FA20A0162F91000100000001 /* EVYSearchModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EVYSearchModel.swift; sourceTree = "<group>"; };
@@ -386,6 +388,7 @@
 				A6B2C3D4E5F60718293A4B13 /* EVYRouting.swift */,
 				FA10A0082F90000100000001 /* EVYScope.swift */,
 				7333F4522FAA2D1C006BEA92 /* EVY+Sync.swift */,
+				OW0000012FAA2D1C006BEA92 /* EVY+Ownership.swift */,
 				ST0000022FAA2D1C006BEA92 /* EVY+Stores.swift */,
 				FA30A0102F91000100000001 /* EVY+Source.swift */,
 				7333F4532FAA2D1C006BEA92 /* EVY+TextParsing.swift */,
@@ -863,6 +866,7 @@
 				7333F45B2FAA2D1C006BEA92 /* EVY+QueryParams.swift in Sources */,
 				7333F45C2FAA2D1C006BEA92 /* EVYFlowStore.swift in Sources */,
 				7333F45D2FAA2D1C006BEA92 /* EVY+Sync.swift in Sources */,
+				OW0000022FAA2D1C006BEA92 /* EVY+Ownership.swift in Sources */,
 				FA30A0112F91000100000001 /* EVY+Source.swift in Sources */,
 				FA20A0152F91000100000001 /* EVYSearchRequesting.swift in Sources */,
 				FA20A0172F91000100000001 /* EVYSearchModel.swift in Sources */,

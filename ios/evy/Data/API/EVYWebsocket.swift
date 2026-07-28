@@ -278,7 +278,10 @@ actor EVYWebsocket: EVYRPCTransport {
     }
     if let errorObj = json["error"] as? [String: Any] {
       let code = errorObj["code"] as? Int ?? -1
-      let message = errorObj["message"] as? String ?? "Unknown error"
+      // rpc-websockets puts a thrown error's class name in `message` ("Error") and the
+      // actual reason in `data`, so reporting `message` alone tells the user nothing.
+      let message =
+        errorObj["data"] as? String ?? errorObj["message"] as? String ?? "Unknown error"
       throw EVYRPCError.rpcError(code: code, message: message)
     }
     guard let resultValue = json["result"] else {

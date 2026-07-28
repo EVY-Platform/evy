@@ -37,6 +37,7 @@ const coreModule = await import("../data/data");
 const {
 	create,
 	get,
+	getOwnedMessages,
 	update,
 	deleteResource: deleteCore,
 	validateAuth,
@@ -577,6 +578,175 @@ describe("message resources", () => {
 				},
 			}),
 		).rejects.toThrow("Message validation failed");
+	});
+});
+
+describe("getOwnedMessages", () => {
+	const targetService = crypto.randomUUID();
+	const targetResource = crypto.randomUUID();
+	const ownedFk = crypto.randomUUID();
+	const otherFk = crypto.randomUUID();
+
+	async function createMessage(fk: string): Promise<DATA_EVY_Message> {
+		return (await create(dataDb, {
+			service: EVY_CORE_SERVICE,
+			resource: MESSAGE_RESOURCE,
+			data: {
+				fk,
+				service: targetService,
+				resource: targetResource,
+				status: "pending" as const,
+				data: { type: "pickup" },
+			},
+		})) as DATA_EVY_Message;
+	}
+
+	/** An ownership group over the service resource `createMessage` addresses. */
+	function owns(...fks: string[]) {
+		return [{ service: targetService, resource: targetResource, ids: fks }];
+	}
+
+	async function ownedIds(
+		params: Parameters<typeof getOwnedMessages>[1],
+	): Promise<string[]> {
+		const owned = (await getOwnedMessages(
+			dataDb,
+			params,
+		)) as DATA_EVY_Message[];
+		return owned.map((message) => message.id);
+	}
+
+	beforeEach(async () => {
+		await clearAllTestTables(testDb);
+	});
+
+	it("returns nothing when the device owns nothing", async () => {
+		await createMessage(ownedFk);
+
+		expect(
+			await ownedIds({ ownedMessageIds: [], ownedForeignKeys: [] }),
+		).toEqual([]);
+	});
+
+	it("returns only messages the device created", async () => {
+		const mine = await createMessage(otherFk);
+		await createMessage(otherFk);
+
+		expect(
+			await ownedIds({
+				ownedMessageIds: [mine.id],
+				ownedForeignKeys: [],
+			}),
+		).toEqual([mine.id]);
+	});
+
+	it("returns only messages addressed to a record the device owns", async () => {
+		const addressed = await createMessage(ownedFk);
+		await createMessage(otherFk);
+
+		expect(
+			await ownedIds({
+				ownedMessageIds: [],
+				ownedForeignKeys: owns(ownedFk),
+			}),
+		).toEqual([addressed.id]);
+	});
+
+	it("returns the union of created and addressed messages", async () => {
+		const addressed = await createMessage(ownedFk);
+		const mine = await createMessage(otherFk);
+		await createMessage(otherFk);
+
+		const owned = await ownedIds({
+			ownedMessageIds: [mine.id],
+			ownedForeignKeys: owns(ownedFk),
+		});
+
+		expect(owned.toSorted()).toEqual([addressed.id, mine.id].toSorted());
+	});
+
+	it("matches the fk only within its own service and resource", async () => {
+		await createMessage(ownedFk);
+
+		expect(
+			await ownedIds({
+				ownedMessageIds: [],
+				ownedForeignKeys: [
+					{
+						service: crypto.randomUUID(),
+						resource: targetResource,
+						ids: [ownedFk],
+					},
+				],
+			}),
+		).toEqual([]);
+	});
+
+	it("excludes owned messages unchanged since updatedAfter", async () => {
+		const mine = await createMessage(otherFk);
+
+		expect(
+			await ownedIds({
+				updatedAfter: mine.updatedAt,
+				ownedMessageIds: [mine.id],
+				ownedForeignKeys: [],
+			}),
+		).toEqual([]);
+	});
+
+	it("carries tombstones to the owner on an incremental read", async () => {
+		const mine = await createMessage(otherFk);
+		const before = mine.updatedAt;
+		await deleteCore(dataDb, {
+			service: EVY_CORE_SERVICE,
+			resource: MESSAGE_RESOURCE,
+			filter: { id: mine.id },
+		});
+
+		const incremental = (await getOwnedMessages(dataDb, {
+			updatedAfter: before,
+			ownedMessageIds: [mine.id],
+			ownedForeignKeys: [],
+		})) as DATA_EVY_Message[];
+		expect(incremental).toHaveLength(1);
+		expect(incremental[0].deletedAt).toBeTruthy();
+
+		// A plain read still hides it, matching coreResource.list.
+		expect(
+			await ownedIds({
+				ownedMessageIds: [mine.id],
+				ownedForeignKeys: [],
+			}),
+		).toEqual([]);
+	});
+
+	// Message.service and Message.resource are uuid columns, so a core resource
+	// name would make Postgres throw on the cast. A message can never reference a
+	// core resource by name, so dropping the group is the correct answer.
+	it("ignores owned groups that cannot address a message", async () => {
+		const addressed = await createMessage(ownedFk);
+
+		expect(
+			await ownedIds({
+				ownedMessageIds: [],
+				ownedForeignKeys: [
+					{
+						service: EVY_CORE_SERVICE,
+						resource: EVY_CORE_RESOURCE.ADDRESSES,
+						ids: [crypto.randomUUID()],
+					},
+					...owns(ownedFk),
+				],
+			}),
+		).toEqual([addressed.id]);
+	});
+
+	it("ignores owned groups with no ids", async () => {
+		await createMessage(ownedFk);
+
+		expect(
+			await ownedIds({ ownedMessageIds: [], ownedForeignKeys: owns() }),
+		).toEqual([]);
 	});
 });
 

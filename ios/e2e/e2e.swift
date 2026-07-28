@@ -896,6 +896,17 @@ class E2ETestBase: XCTestCase {
 
   var homeFlowId: String? { nil }
 
+  typealias OwnedServiceResourceDeclaration = (
+    service: String, resource: String, ids: [String]
+  )
+
+  /// Records the launched device should own without having created them.
+  ///
+  /// Messages sync only to their creator and to the owner of the record they address, so a
+  /// test that relies on *seeded* messages has to say which seeded record this device owns.
+  /// The default owns nothing.
+  var ownedServiceResources: [OwnedServiceResourceDeclaration] { [] }
+
   override func setUpWithError() throws {
     continueAfterFailure = false
     try launchApp()
@@ -908,6 +919,14 @@ class E2ETestBase: XCTestCase {
     app.launchEnvironment["API_HOST"] = apiHost
     if let homeFlowId {
       app.launchEnvironment["HOME_FLOW_ID"] = homeFlowId
+    }
+    if !ownedServiceResources.isEmpty {
+      let declared = ownedServiceResources.map {
+        ["service": $0.service, "resource": $0.resource, "ids": $0.ids] as [String: Any]
+      }
+      let encoded = try JSONSerialization.data(withJSONObject: declared)
+      app.launchEnvironment["EVY_OWNED_SERVICE_RESOURCES"] = String(
+        decoding: encoded, as: UTF8.self)
     }
     app.launch()
   }
@@ -3993,6 +4012,8 @@ final class E2EHomepageMessageSearchTests: E2ETestBase {
   private static let homePageId = E2EFlowIds.webSocketHomePage
   private static let messageChildRowId = "8d5b9e32-ac4e-5f7b-b2d3-9e8f4a6c0b12"
   private static let pickupMessageId = "c84f227e-69ed-4c69-9f53-aafd7a918c6b"
+  /// The `fk` every seeded message points at.
+  private static let seededMessageItemId = "12401f50-cf1a-45d7-a112-2e68a2070466"
   private static let matchingTypeQuery = "pickup"
   private static let unmatchedTypeQuery = "nomatch"
   private static let seededMessageTypeLabels = [
@@ -4000,6 +4021,18 @@ final class E2EHomepageMessageSearchTests: E2ETestBase {
   ]
 
   override var homeFlowId: String? { E2EFlowIds.defaultHomeFlow }
+
+  /// The seeded messages this class asserts on all address the seeded marketplace item
+  /// below, so the device has to own that item to receive them.
+  override var ownedServiceResources: [OwnedServiceResourceDeclaration] {
+    [
+      (
+        service: MARKETPLACE_SERVICE,
+        resource: MARKETPLACE_ITEMS_RESOURCE_ID,
+        ids: [Self.seededMessageItemId]
+      )
+    ]
+  }
 
   // Page ids are stored globally, so the synthetic home flows other test classes seed
   // (homeFlowData/createHomeFlowData) overwrite the production home page's rows with their

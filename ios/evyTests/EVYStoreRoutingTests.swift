@@ -12,12 +12,16 @@ final class EVYStoreRoutingTests: XCTestCase {
   override func setUpWithError() throws {
     // Without this the create/update cases below fire real RPCs at localhost:8000.
     installHermeticMutationSync()
+    // Other classes create records, which records ownership, and do not wipe this
+    // store - so the ownership cases below need a clean one they own.
+    try? EVY.ownedStore.wipeAll()
   }
 
   override func tearDownWithError() throws {
     resetHermeticMutationSync()
     try? EVY.publicStore.wipeAll()
     try? EVY.privateStore.wipeAll()
+    try? EVY.ownedStore.wipeAll()
   }
 
   func testApplySyncedValueRoutesByVisibility() throws {
@@ -514,5 +518,69 @@ final class EVYStoreRoutingTests: XCTestCase {
       try EVY.getDataFromText(
         "{\(key).label}", scope: .cache(activeScopeId)),
       .string("active"))
+  }
+
+  // MARK: - Ownership ledger
+
+  func testOwnedServiceResourcesIsEmptyOnACleanStore() throws {
+
+    XCTAssertTrue(EVY.ownedServiceResources().isEmpty)
+  }
+
+  func testRecordOwnershipGroupsIdsByServiceAndResource() throws {
+    let service = UUID().uuidString
+    let firstId = UUID().uuidString.lowercased()
+    let secondId = UUID().uuidString.lowercased()
+    let otherResourceId = UUID().uuidString.lowercased()
+
+    EVY.recordOwnership(service: service, resource: "items", id: firstId)
+    EVY.recordOwnership(service: service, resource: "items", id: secondId)
+    EVY.recordOwnership(service: service, resource: "messages", id: otherResourceId)
+
+    let owned = EVY.ownedServiceResources().filter { $0.service == service }
+    XCTAssertEqual(owned.count, 2)
+    XCTAssertEqual(owned.map(\.resource), ["items", "messages"])
+    XCTAssertEqual(owned[0].ids, [firstId, secondId].sorted())
+    XCTAssertEqual(owned[1].ids, [otherResourceId])
+  }
+
+  func testRecordOwnershipIsIdempotent() throws {
+    let service = UUID().uuidString
+    let recordId = UUID().uuidString.lowercased()
+
+    EVY.recordOwnership(service: service, resource: "items", id: recordId)
+    EVY.recordOwnership(service: service, resource: "items", id: recordId)
+
+    let owned = EVY.ownedServiceResources().filter { $0.service == service }
+    XCTAssertEqual(owned.count, 1)
+    XCTAssertEqual(owned[0].ids, [recordId])
+  }
+
+  func testCreateRecordsOwnershipOfTheNewRecord() throws {
+    let namespace = EVYNamespace.evy
+    let resource = "ownership-create-test"
+    defer { try? EVY.publicStore.deleteAll(namespace: namespace, resource: resource) }
+
+    let createdId = try EVY.create(namespace: namespace, resource: resource, data: [:])
+
+    let owned = EVY.ownedServiceResources().filter { $0.resource == resource }
+    XCTAssertEqual(owned.count, 1)
+    XCTAssertEqual(owned[0].service, namespace)
+    XCTAssertEqual(owned[0].ids, [createdId])
+  }
+
+  func testSyncedRecordsAreNotOwned() throws {
+    let resource = EVYCoreResource.messages.rawValue
+
+    try EVY.applySyncedValue(
+      namespace: EVYNamespace.evy,
+      resource: resource,
+      value: .dictionary([
+        "id": .string(UUID().uuidString.lowercased()),
+        "visibility": .string("public"),
+      ])
+    )
+
+    XCTAssertTrue(EVY.ownedServiceResources().isEmpty)
   }
 }

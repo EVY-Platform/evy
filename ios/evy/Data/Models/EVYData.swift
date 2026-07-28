@@ -205,6 +205,16 @@ enum EVYJson: Codable, Hashable {
     }
   }
 
+  /// A record or a collection, rather than a single scalar value.
+  var isContainer: Bool {
+    switch self {
+    case .dictionary, .array:
+      return true
+    default:
+      return false
+    }
+  }
+
   @MainActor
   func parseProp(props: [String]) -> EVYJson {
     if props.count < 1 {

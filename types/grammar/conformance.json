@@ -181,6 +181,123 @@
 			}
 		},
 		{
+			"id": "comparison-record-binding-matches-by-id",
+			"category": "comparison",
+			"platforms": ["ios"],
+			"input": "{message_holder.fk == item_holder}",
+			"data": {
+				"message_holder": {
+					"fk": "12401f50-cf1a-45d7-a112-2e68a2070466"
+				},
+				"item_holder": {
+					"id": "12401f50-cf1a-45d7-a112-2e68a2070466",
+					"title": "Amazing Fridge"
+				}
+			},
+			"expect": {
+				"value": true
+			},
+			"notes": "An operand that resolves to a record compares by its id, so a foreign key can be compared against a bound record. Same rule as the two-argument findFirst(collection, id) form. Without it the record stringifies to JSON and can never equal an id."
+		},
+		{
+			"id": "comparison-record-binding-mismatched-id",
+			"category": "comparison",
+			"platforms": ["ios"],
+			"input": "{message_holder.fk == item_holder}",
+			"data": {
+				"message_holder": {
+					"fk": "12401f50-cf1a-45d7-a112-2e68a2070466"
+				},
+				"item_holder": {
+					"id": "56e5da4b-5cf0-4a2c-9f0d-9e02c4c0f5a1",
+					"title": "Amazing Freezer"
+				}
+			},
+			"expect": {
+				"value": false
+			}
+		},
+		{
+			"id": "comparison-record-binding-without-id",
+			"category": "comparison",
+			"platforms": ["ios"],
+			"input": "{message_holder.fk == item_holder}",
+			"data": {
+				"message_holder": {
+					"fk": ""
+				},
+				"item_holder": {
+					"title": "Amazing Fridge"
+				}
+			},
+			"expect": {
+				"value": false
+			},
+			"notes": "A record with no usable id has no identity to compare, so it keeps its rendered form rather than matching on an empty string."
+		},
+		{
+			"id": "comparison-collection-binding-is-not-an-identity",
+			"category": "comparison",
+			"platforms": ["ios"],
+			"input": "{message_holder.fk == items_holder}",
+			"data": {
+				"message_holder": {
+					"fk": "12401f50-cf1a-45d7-a112-2e68a2070466"
+				},
+				"items_holder": [
+					{
+						"id": "12401f50-cf1a-45d7-a112-2e68a2070466"
+					}
+				]
+			},
+			"expect": {
+				"value": false
+			},
+			"notes": "A collection has no single identity, so identity comparison applies to records only."
+		},
+		{
+			"id": "expression-find-first-matches-record-binding-by-id",
+			"category": "expression",
+			"platforms": ["ios"],
+			"input": "{findFirst(messages_holder, fk == item_holder).status}",
+			"data": {
+				"messages_holder": [
+					{
+						"id": "3f4c1d2b-8a9e-4c7d-9b1f-5e6a7b8c9d01",
+						"fk": "56e5da4b-5cf0-4a2c-9f0d-9e02c4c0f5a1"
+					},
+					{
+						"id": "7a8b9c0d-1e2f-4a3b-8c4d-5e6f7a8b9c02",
+						"fk": "12401f50-cf1a-45d7-a112-2e68a2070466",
+						"status": "pending"
+					}
+				],
+				"item_holder": {
+					"id": "12401f50-cf1a-45d7-a112-2e68a2070466",
+					"title": "Amazing Fridge"
+				}
+			},
+			"expect": {
+				"text": "pending"
+			},
+			"notes": "findFirst operands resolve through their own path, so identity comparison has to hold there too, not only in a top-level comparison."
+		},
+		{
+			"id": "expression-record-binding-renders-json",
+			"category": "expression",
+			"platforms": ["ios"],
+			"input": "{item_holder}",
+			"data": {
+				"item_holder": {
+					"id": "12401f50-cf1a-45d7-a112-2e68a2070466"
+				}
+			},
+			"expect": {
+				"text": "{\"id\":\"12401f50-cf1a-45d7-a112-2e68a2070466\"}"
+			},
+			"notes": "Identity coercion is scoped to comparison operands. Rendering a record still shows the whole record, so a change to comparison cannot leak into display."
+		},
+		{
 			"id": "comparison-quoted-literal-matches",
 			"category": "comparison",
 			"platforms": ["ios"],

@@ -53,6 +53,14 @@ inline data only.
 bare words stay literals (bare `true`/`false` become booleans, bare `null` becomes JSON null,
 quoted `"…"` stays a literal string, and `{…}` values resolve as nested objects).
 
+**A bare id stays an id.** A resource id doubles as that resource's binding key, so a bare UUID
+that resolves to a record or collection is kept as the literal id rather than replaced by the
+data it names. It cannot be replaced by that data's `id` either: what a resource key binds is a
+*record*, whose own id is a different UUID, so substituting it would quietly send the wrong id.
+Write `[resource_id].id` when you want the bound record's id — that is how `fk` is filled while
+`resource` stays the resource id. The rule is scoped to UUID-shaped values, so a value that
+deliberately resolves to an object still embeds it.
+
 `mode: "fromPath"` takes a `dataPath` and sends the whole resolved object from drafts or synced
 data.
 

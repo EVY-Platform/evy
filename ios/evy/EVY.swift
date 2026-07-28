@@ -22,6 +22,7 @@ struct Filter: Encodable {
 
 enum EVYSyncState {
   private static let cursorKey = "syncCursor"
+  private static let declaredOwnershipKey = "syncDeclaredOwnership"
 
   /// The marker to resume from, or nil for a full sync. Opaque: it comes from
   /// the server, so the device clock cannot drop or duplicate changes.
@@ -29,18 +30,38 @@ enum EVYSyncState {
     UserDefaults.standard.string(forKey: cursorKey)
   }
 
-  static func markSynced(cursor: String) {
+  /// The declared-ownership fingerprint the cursor was issued under. The cursor only
+  /// covers the entitlements the device held at the time, so it is void once this changes.
+  static var declaredOwnership: String? {
+    UserDefaults.standard.string(forKey: declaredOwnershipKey)
+  }
+
+  static func markSynced(cursor: String, declaredOwnership: String) {
     UserDefaults.standard.set(cursor, forKey: cursorKey)
+    UserDefaults.standard.set(declaredOwnership, forKey: declaredOwnershipKey)
   }
 
   // used by tests
   static func reset() {
     UserDefaults.standard.removeObject(forKey: cursorKey)
+    UserDefaults.standard.removeObject(forKey: declaredOwnershipKey)
   }
+}
+
+/// Record ids this device owns within one service resource.
+///
+/// Property names are the wire keys, both outbound and in: `SyncParams` uses synthesised
+/// `Codable` with no `CodingKeys`, the sync request schema is `additionalProperties: false`,
+/// and the `EVY_OWNED_SERVICE_RESOURCES` launch override is parsed with these same names.
+struct OwnedServiceResource: Codable {
+  let service: String
+  let resource: String
+  let ids: [String]
 }
 
 struct SyncParams: Encodable {
   let cursor: String?
+  let ownedServiceResources: [OwnedServiceResource]
 }
 
 struct CoreAPIParams<T: Encodable>: Encodable {
@@ -79,6 +100,9 @@ struct EVY {
   static let publicStore = EVYDataStore(name: "public")
   static let privateStore = EVYDataStore(name: "private")
   static let cacheStore = EVYDataStore(name: "cache", inMemoryOnly: true)
+  /// Ledger of records this device created, declared to sync as `ownedServiceResources`.
+  /// Deliberately not one of `syncedStores()` - it is bookkeeping, not synced data.
+  static let ownedStore = EVYDataStore(name: "owned")
   static let draftStore = EVYDraftStore(dataStore: cacheStore)
   static var activeCacheScopeId: String?
 

@@ -205,7 +205,7 @@ private func resolveFindFirstOperand(_ operand: String, record: EVYJson) -> Stri
     return recordValue.toString()
   }
   if let dataValue = try? EVY.getDataFromProps(operand) {
-    return dataValue.toString()
+    return evyComparisonOperandString(dataValue)
   }
   return _stripOptionalSurroundingQuotes(operand)
 }
@@ -838,4 +838,24 @@ func evyComparison(_ comparisonOperator: String, left: String, right: String) ->
   }
 
   return evyCompareValues(comparisonOperator, left: left, right: right)
+}
+
+/// The comparable form of an operand that resolved through a global data path.
+///
+/// A record compared against a foreign key is a comparison of identity - the same
+/// rule the two-argument `findFirst(collection, id)` form follows - so a record
+/// stands for its own id rather than for its JSON dump, which could never equal an
+/// id. A record with no usable id, and a collection (which has no single identity),
+/// keep their rendered form.
+///
+/// Comparisons only: `expression` and `display` resolution still render records in
+/// full.
+func evyComparisonOperandString(_ value: EVYJson) -> String {
+  guard case .dictionary(let record) = value,
+    case .string(let id)? = record["id"],
+    !id.isEmpty
+  else {
+    return value.toString()
+  }
+  return id
 }

@@ -26,7 +26,11 @@ import {
 } from "./resources/files";
 import { flowsResource } from "./resources/flows";
 import { formattersResource } from "./resources/formatters";
-import { messagesResource } from "./resources/messages";
+import {
+	listOwnedMessages,
+	messagesResource,
+	type OwnedMessagesParams,
+} from "./resources/messages";
 import { organisationsResource } from "./resources/organisation";
 import { pagesResource } from "./resources/pages";
 import { rowsResource } from "./resources/rows";
@@ -100,10 +104,25 @@ export function initCoreNotifications(broadcastFn: BroadcastFn | null): void {
 }
 
 export { validateAuth } from "./resources/devices";
+export type {
+	OwnedMessagesParams,
+	OwnedServiceResource,
+} from "./resources/messages";
 
 export async function get(db: EvyDb, params: GetRequest): Promise<GetResponse> {
 	assertEvyCoreAccess(params);
 	return getCoreBody(db, params);
+}
+
+/**
+ * The one core read that is not dispatched through the resource registry — see
+ * `listOwnedMessages` for why messages are read by declared ownership.
+ */
+export async function getOwnedMessages(
+	db: EvyDb,
+	params: OwnedMessagesParams,
+): Promise<GetResponse> {
+	return listOwnedMessages(db, params);
 }
 
 type ExternalServiceRow = {

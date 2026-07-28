@@ -9,6 +9,9 @@ import XCTest
 
 @MainActor
 final class EVYActionRunnerTests: XCTestCase {
+  /// Binding keys seeded for the inline-payload cases, cleaned up per run.
+  private var seededBindingKeys: [String] = []
+
   override func setUp() async throws {
     try await super.setUp()
     installHermeticMutationSync()
@@ -858,6 +861,118 @@ final class EVYActionRunnerTests: XCTestCase {
       return XCTFail("Expected inline create payload dictionary")
     }
     XCTAssertEqual(values["createdAt"], .string("2026-06-01T00:00:00Z"))
+  }
+
+  // MARK: - Bare ids in inline payload values
+
+  /// Seeds a record under `key` so `{key}` resolves to it, the way a resource id
+  /// bound by a query param does. Cleaned up by `inlineCreatePayload`'s caller via
+  /// `seededBindingKeys`.
+  private func seedRecordBinding(key: String, id: String, extra: [String: EVYJson] = [:]) throws {
+    var record = extra
+    record["id"] = .string(id)
+    let encoded = try JSONEncoder().encode(EVYJson.dictionary(record))
+    try? EVY.publicStore.deleteAll(namespace: EVYNamespace.local, resource: key)
+    try EVY.publicStore.create(
+      namespace: EVYNamespace.local,
+      resource: key,
+      id: EVYNamespace.singletonId,
+      value: encoded
+    )
+    seededBindingKeys.append(key)
+  }
+
+  private func seedScalarBinding(key: String, value: EVYJson) throws {
+    let encoded = try JSONEncoder().encode(value)
+    try? EVY.publicStore.deleteAll(namespace: EVYNamespace.local, resource: key)
+    try EVY.publicStore.create(
+      namespace: EVYNamespace.local, resource: key,
+      id: EVYNamespace.singletonId, value: encoded)
+    seededBindingKeys.append(key)
+  }
+
+  /// Runs an inline create into a scratch resource of its own and returns the payload
+  /// that landed in the store, cleaning up everything it and `seed*Binding` created.
+  private func inlineCreatePayload(_ data: [String: String]) throws -> [String: EVYJson] {
+    let namespace = MarketplaceTestFixture.serviceId
+    let resource = uniqueKey("inline-create")
+    defer {
+      try? EVY.publicStore.deleteAll(namespace: namespace, resource: resource)
+      for key in seededBindingKeys {
+        try? EVY.publicStore.deleteAll(namespace: EVYNamespace.local, resource: key)
+      }
+      seededBindingKeys = []
+    }
+
+    let action = rowAction(
+      true: .create(
+        service: namespace, resource: resource,
+        mode: .inline(data: data), idDestination: nil)
+    )
+    EVYActionRunner.run(actions: [action]) { _ in }
+
+    let createdRows = try EVY.publicStore.getAll(namespace: namespace, resource: resource)
+    let createdPayload = try XCTUnwrap(createdRows.first?.decoded())
+    guard case .dictionary(let values) = createdPayload else {
+      throw EVYError.invalidData(context: "Expected inline create payload dictionary")
+    }
+    return values
+  }
+
+  /// A resource id is also a binding key, so resolving it would hand back that
+  /// resource's data. It cannot be scalarised to the resolved record's id either -
+  /// the record bound under a resource key is a record, whose id is a different
+  /// uuid - so the token itself is the only correct value.
+  func testInlineCreateKeepsBareResourceIdAsTheIdItself() throws {
+    // A resource id of this test's own, so a cache scope another test left behind
+    // cannot resolve the key out from under it.
+    let resourceId = UUID().uuidString.lowercased()
+    let recordId = UUID().uuidString.lowercased()
+    let previousScopeId = EVY.activeCacheScopeId
+    EVY.activeCacheScopeId = nil
+    defer { EVY.activeCacheScopeId = previousScopeId }
+    try seedRecordBinding(key: resourceId, id: recordId, extra: ["title": .string("Fridge")])
+
+    let values = try inlineCreatePayload([
+      "resource": resourceId, "fk": "\(resourceId).id",
+    ])
+
+    XCTAssertEqual(values["resource"], .string(resourceId))
+    // The property-path form still reads the bound record, and its id is a
+    // different uuid - which is exactly why the bare form must not be coerced.
+    XCTAssertEqual(values["fk"], .string(recordId))
+    XCTAssertNotEqual(values["resource"], values["fk"])
+  }
+
+  func testInlineCreateKeepsBareUuidThatResolvesToNothing() throws {
+    let unboundId = UUID().uuidString.lowercased()
+
+    let values = try inlineCreatePayload(["service": unboundId])
+
+    XCTAssertEqual(values["service"], .string(unboundId))
+  }
+
+  func testInlineCreateStillResolvesNonUuidScalarBindings() throws {
+    let scalarKey = uniqueKey("timeslot")
+    try seedScalarBinding(key: scalarKey, value: .string("2026-06-03T09:00:00"))
+
+    let values = try inlineCreatePayload(["time": scalarKey])
+
+    XCTAssertEqual(values["time"], .string("2026-06-03T09:00:00"))
+  }
+
+  /// The rule is scoped to uuid-shaped tokens so it cannot swallow a value that
+  /// deliberately embeds a resolved object.
+  func testInlineCreateStillEmbedsObjectsForNonUuidBindings() throws {
+    let objectKey = uniqueKey("price")
+    let recordId = UUID().uuidString.lowercased()
+    try seedRecordBinding(key: objectKey, id: recordId, extra: ["currency": .string("AUD")])
+
+    let values = try inlineCreatePayload(["price": objectKey])
+
+    XCTAssertEqual(
+      values["price"],
+      .dictionary(["id": .string(recordId), "currency": .string("AUD")]))
   }
 
   func testUpdateActionAcceptsOnlyMatchingPendingMessageForDatum() throws {

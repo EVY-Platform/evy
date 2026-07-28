@@ -207,6 +207,7 @@ extension EVY {
       value: encodedData,
       sortIndex: nextSortIndex
     )
+    recordOwnership(service: namespace, resource: resource, id: newId)
 
     syncMutation(method: "create", params: params)
     return newId

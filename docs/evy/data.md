@@ -76,9 +76,20 @@ This document covers EVY shared data: schema-backed rows stored in the API datab
 
 ## Wire contract vs persisted rows
 
-Clients call the API with JSON-RPC `get`, `sync`, `resources`, `api`, `create`, `update`, and `delete` using `service` and `resource` where applicable (see [`types/schema/rpc`](../../../types/schema/rpc)). `sync` is a top-level method: send back the opaque `cursor` from the previous response, or omit it for a full sync. `resources` is also a top-level method: it returns the aggregated service/resource catalog from the core manifest plus each registered external service's live `resources` RPC response. `service: "[evy_core_service_id]"` is dispatched by the API into resource modules under [`api/src/data/resources`](../../../api/src/data/resources) and maps to the row types below in the API Postgres schema. External services such as `service: "[service_id]"` are routed by service ID from normal core `services` rows. Each external service owns its resource manifest locally and exposes it through its required `resources` JSON-RPC method; the gateway aggregates those manifests and includes the full catalog on every successful sync as a singleton under the core `resources` key so clients can persist it offline.
+Clients call the API with JSON-RPC `get`, `sync`, `resources`, `api`, `create`, `update`, and `delete` using `service` and `resource` where applicable (see [`types/schema/rpc`](../../../types/schema/rpc)). `sync` and `resources` are top-level methods; `sync` is described on its own below. `resources` returns the aggregated service/resource catalog from the core manifest plus each registered external service's live `resources` RPC response. `service: "[evy_core_service_id]"` is dispatched by the API into resource modules under [`api/src/data/resources`](../../../api/src/data/resources) and maps to the row types below in the API Postgres schema. External services such as `service: "[service_id]"` are routed by service ID from normal core `services` rows. Each external service owns its resource manifest locally and exposes it through its required `resources` JSON-RPC method; the gateway aggregates those manifests and includes the full catalog on every successful sync as a singleton under the core `resources` key so clients can persist it offline.
 
 Routing in practice: the API dispatches on `service`, comparing it against the generated core service UUID (`EVY_CORE_SERVICE`). Core resources are addressed by **name** (`flows`, `messages`, …); external resources are addressed by the **resource UUID** declared in the owning service's manifest. Anything that is not the core service is forwarded to the owning service's adapter, which the API resolves from the core `services` table at startup.
+
+**`sync` in practice:** Send back the opaque `cursor` from the previous response, or omit it for a full sync. Alongside
+the cursor a client sends `ownedServiceResources`: the record ids it owns, grouped by the service
+and resource they belong to. The server uses it to decide which ownership-scoped rows the device
+is entitled to — today only `messages` — and a device that declares nothing receives none of them.
+
+A device owns the records it created. Ownership it did not earn that way can be declared through
+the `EVY_OWNED_SERVICE_RESOURCES` launch override, which stands in for the account-derived
+ownership that arrives with real auth. Changing that declaration voids the cursor — it makes
+records visible that may have changed long before the cursor was issued — so the client resyncs
+in full.
 
 ## Who validates what
 
@@ -146,6 +157,8 @@ Every `DATA_EVY_*` row carries a required `visibility` attribute: `"public"` or 
 Core message record in [`data.schema.json`](../../../types/schema/data/data.schema.json) (`$defs.DATA_EVY_Message`, Postgres table `Message`). A message always relates to one record of another resource: `fk` is that record's id, and `service` / `resource` identify which service and resource the `fk` belongs to. Use-case-specific fields (e.g. `type`, `time`, `postalcode`) live in the free-form `data` object.
 
 On the wire this is accessed with `service: "475731ac-31aa-4d65-94d2-7032782ae359"` and `resource: "messages"`. Cancelling sets `archivedAt`; accepting sets `status` to `accepted` via `{update(...)}`.
+
+Unlike every other core resource, messages are not synced to every device. A message reaches exactly two parties: the device that created it, which declares the message's own id under `evy`/`messages` in `ownedServiceResources`, and the device that owns the record it addresses, which declares that record's id under the message's `service`/`resource`. Everyone else never receives it. Because ownership is only established when a device creates a record, a device that is reinstalled — or that never created the record a seeded message addresses — loses access to those messages until it declares the ownership explicitly; this resolves when auth lands and ownership can be derived from an account.
 
 ---
 

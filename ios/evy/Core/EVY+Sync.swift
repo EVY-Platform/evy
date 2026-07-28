@@ -7,10 +7,18 @@ import Foundation
 
 extension EVY {
   static func sync() async throws {
-    let cursor = EVYSyncState.cursor
+    let declaredOwnership = declaredOwnershipFingerprint()
+    // Declared ownership makes records visible that may have changed long before the
+    // cursor was issued, so the cursor only holds while that declaration is unchanged.
+    let cursor =
+      declaredOwnership == EVYSyncState.declaredOwnership ? EVYSyncState.cursor : nil
+
     let response: SyncResponse = try await EVYAPIManager.shared.fetch(
       method: "sync",
-      params: SyncParams(cursor: cursor),
+      params: SyncParams(
+        cursor: cursor,
+        ownedServiceResources: ownedServiceResources()
+      ),
       expecting: SyncResponse.self
     )
 
@@ -35,6 +43,7 @@ extension EVY {
       return
     }
 
-    EVYSyncState.markSynced(cursor: response.cursor)
+    EVYSyncState.markSynced(
+      cursor: response.cursor, declaredOwnership: declaredOwnership)
   }
 }

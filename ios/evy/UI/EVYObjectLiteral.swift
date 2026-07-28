@@ -70,6 +70,16 @@ enum EVYObjectLiteral {
 
 @MainActor
 enum EVYPlainTextResolution {
+  /// Resource ids are uuids, and so are the binding keys that name those resources.
+  /// A bare uuid in a value position is therefore ambiguous, and this is what
+  /// disambiguates it - see `resolveValue`.
+  private static let bareIdPattern =
+    /[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}/
+
+  private static func isBareIdToken(_ value: String) -> Bool {
+    !value.contains(".") && value.wholeMatch(of: bareIdPattern) != nil
+  }
+
   static func resolveValues(
     _ data: [String: String],
     datum: EVYJson?
@@ -112,6 +122,20 @@ enum EVYPlainTextResolution {
       return .dictionary(resolveValues(nestedObject, datum: datum))
     }
 
-    return (try? EVY.getDataFromText("{\(value)}")) ?? .string(value)
+    guard let resolved = try? EVY.getDataFromText("{\(value)}") else {
+      return .string(value)
+    }
+
+    // A bare id is an identifier, not a place to read from. Because a resource id
+    // doubles as that resource's binding key, resolving it hands back the
+    // resource's data instead of the id. Nor can that data stand in for the id:
+    // what a resource key binds is a *record*, whose own id is a different uuid,
+    // so substituting it would quietly send the wrong id. The token is the only
+    // correct answer. Reach for `<id>.id` to read from the bound record instead.
+    if isBareIdToken(trimmedValue), resolved.isContainer {
+      return .string(trimmedValue)
+    }
+
+    return resolved
   }
 }

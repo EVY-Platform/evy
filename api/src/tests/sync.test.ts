@@ -63,7 +63,14 @@ let forwardGetImpl = async (
 		},
 	]);
 
+type OwnedMessagesParams = Parameters<typeof data.getOwnedMessages>[1];
+
+let getOwnedMessagesImpl = async (
+	_params: OwnedMessagesParams,
+): Promise<GetResponse> => [];
+
 function resetSyncMocks(): void {
+	getOwnedMessagesImpl = async () => [];
 	getImpl = async (params) =>
 		buildMockGetResponse([
 			{
@@ -85,6 +92,7 @@ function resetSyncMocks(): void {
 
 describe("sync", () => {
 	let getSpy: ReturnType<typeof spyOn>;
+	let getOwnedMessagesSpy: ReturnType<typeof spyOn>;
 	let discoverResourcesSpy: ReturnType<typeof spyOn>;
 	let forwardGetSpy: ReturnType<typeof spyOn>;
 
@@ -93,6 +101,10 @@ describe("sync", () => {
 		getSpy = spyOn(data, "get").mockImplementation((_db, params) =>
 			getImpl(params),
 		);
+		getOwnedMessagesSpy = spyOn(
+			data,
+			"getOwnedMessages",
+		).mockImplementation((_db, params) => getOwnedMessagesImpl(params));
 		discoverResourcesSpy = spyOn(
 			resources,
 			"discoverResources",
@@ -104,6 +116,7 @@ describe("sync", () => {
 
 	afterEach(() => {
 		getSpy.mockRestore();
+		getOwnedMessagesSpy.mockRestore();
 		discoverResourcesSpy.mockRestore();
 		forwardGetSpy.mockRestore();
 	});
@@ -116,7 +129,7 @@ describe("sync", () => {
 		expect(Array.isArray(result.data)).toBe(true);
 	});
 
-	it("includes evy core resources (except devices and catalog) in data", async () => {
+	it("includes evy core resources (except devices, messages and catalog) in data", async () => {
 		const result = await sync({ cursor: EPOCH }, db);
 
 		const evyRows = result.data.filter(
@@ -132,9 +145,10 @@ describe("sync", () => {
 		expect(evyResourceNames).toContain("providers");
 		expect(evyResourceNames).toContain("files");
 		expect(evyResourceNames).toContain("addresses");
-		expect(evyResourceNames).toContain("messages");
 		expect(evyResourceNames).toContain("formatters");
 		expect(evyResourceNames).not.toContain("devices");
+		// Messages are ownership-scoped, so they never come from the plain loop.
+		expect(evyResourceNames).not.toContain("messages");
 		expect(evyResourceNames).toContain(EVY_CORE_RESOURCE.RESOURCES);
 
 		const addressesRow = evyRows.find(
@@ -320,6 +334,141 @@ describe("sync", () => {
 				},
 			]);
 		}
+	});
+
+	describe("owned messages", () => {
+		const OWNED_MESSAGE_ID = "0f5f1a1e-6a1e-4f6e-9c1a-2b3c4d5e6f70";
+		const OWNED_ITEM_ID = "1a2b3c4d-5e6f-4a8b-9c0d-1e2f3a4b5c6d";
+		const MESSAGE_ROW = {
+			id: OWNED_MESSAGE_ID,
+			visibility: "public" as const,
+		};
+		/** The device declares the one message it created and nothing else. */
+		const OWNS_THE_MESSAGE = [
+			{
+				service: EVY_CORE_SERVICE,
+				resource: EVY_CORE_RESOURCE.MESSAGES,
+				ids: [OWNED_MESSAGE_ID],
+			},
+		];
+
+		it("never reads messages through the plain core loop", async () => {
+			await sync({ cursor: EPOCH }, db);
+
+			expect(
+				getSpy.mock.calls.some(
+					(call) =>
+						(call[1] as GetRequest).resource ===
+						EVY_CORE_RESOURCE.MESSAGES,
+				),
+			).toBe(false);
+		});
+
+		it("returns no messages for a device that owns nothing", async () => {
+			getOwnedMessagesImpl = async () => [MESSAGE_ROW];
+
+			const result = await sync({ cursor: EPOCH }, db);
+
+			expect(
+				result.data.some(
+					(row) => row.resource === EVY_CORE_RESOURCE.MESSAGES,
+				),
+			).toBe(false);
+			expect(getOwnedMessagesSpy).not.toHaveBeenCalled();
+		});
+
+		it("splits owned message ids from owned foreign keys", async () => {
+			await sync(
+				{
+					cursor: EPOCH,
+					ownedServiceResources: [
+						{
+							service: EXTERNAL_SERVICE_ID,
+							resource: EXTERNAL_TEST_RESOURCE.RECORDS,
+							ids: [OWNED_ITEM_ID],
+						},
+						{
+							service: EVY_CORE_SERVICE,
+							resource: EVY_CORE_RESOURCE.MESSAGES,
+							ids: [OWNED_MESSAGE_ID],
+						},
+					],
+				},
+				db,
+			);
+
+			expect(getOwnedMessagesSpy).toHaveBeenCalledWith(db, {
+				updatedAfter: EPOCH,
+				ownedMessageIds: [OWNED_MESSAGE_ID],
+				ownedForeignKeys: [
+					{
+						service: EXTERNAL_SERVICE_ID,
+						resource: EXTERNAL_TEST_RESOURCE.RECORDS,
+						ids: [OWNED_ITEM_ID],
+					},
+				],
+			});
+		});
+
+		it("returns the owned messages as a core messages row", async () => {
+			getOwnedMessagesImpl = async () => [MESSAGE_ROW];
+
+			const result = await sync(
+				{
+					cursor: EPOCH,
+					ownedServiceResources: OWNS_THE_MESSAGE,
+				},
+				db,
+			);
+
+			expect(
+				result.data.find(
+					(row) => row.resource === EVY_CORE_RESOURCE.MESSAGES,
+				),
+			).toEqual({
+				service: EVY_CORE_SERVICE,
+				resource: EVY_CORE_RESOURCE.MESSAGES,
+				value: [MESSAGE_ROW],
+			});
+		});
+
+		it("adds no row when the device is entitled to nothing new", async () => {
+			const result = await sync(
+				{
+					cursor: EPOCH,
+					ownedServiceResources: OWNS_THE_MESSAGE,
+				},
+				db,
+			);
+
+			expect(
+				result.data.some(
+					(row) => row.resource === EVY_CORE_RESOURCE.MESSAGES,
+				),
+			).toBe(false);
+		});
+
+		it("degrades to an error and holds the cursor when the read fails", async () => {
+			getOwnedMessagesImpl = async () => {
+				throw new Error("message table broken");
+			};
+
+			const result = await sync(
+				{
+					cursor: RECENT_CURSOR,
+					ownedServiceResources: OWNS_THE_MESSAGE,
+				},
+				db,
+			);
+
+			expect(result.errors).toContainEqual({
+				service: EVY_CORE_SERVICE,
+				resource: EVY_CORE_RESOURCE.MESSAGES,
+				message: "message table broken",
+			});
+			expect(result.data.length).toBeGreaterThan(0);
+			expect(result.cursor).toBe(RECENT_CURSOR);
+		});
 	});
 
 	describe("cursor", () => {

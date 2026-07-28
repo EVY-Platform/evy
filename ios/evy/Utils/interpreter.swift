@@ -490,7 +490,7 @@ private func parseText(
         return parsedOperand.value
       }
       if let propsValue = try? _getDataFromText("{\(trimmedOperand)}", scope: scope) {
-        return propsValue.toString()
+        return evyComparisonOperandString(propsValue)
       }
       return parsedOperand.value
     }
