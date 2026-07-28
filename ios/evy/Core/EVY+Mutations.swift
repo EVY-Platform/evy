@@ -187,9 +187,12 @@ extension EVY {
     if payloadWithId["createdAt"] == nil {
       payloadWithId["createdAt"] = .string(EVY.nowISO8601())
     }
-    if payloadWithId["visibility"] == nil {
-      payloadWithId["visibility"] = .string("public")
-    }
+    // `visibility` is deliberately not defaulted here: each resource declares its own
+    // default server-side (private for messages and addresses, public otherwise), and
+    // sending one would override all of them. The local copy routes to `publicStore`
+    // until the record syncs back, at which point `applySyncedRecord` moves it to the
+    // store its real visibility calls for. Ownership does not depend on that landing
+    // spot - the ledger records the create either way.
     let dataWithId = EVYJson.dictionary(payloadWithId)
     let params = MutationParams(
       service: namespace,

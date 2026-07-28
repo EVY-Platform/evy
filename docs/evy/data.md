@@ -85,11 +85,19 @@ the cursor a client sends `ownedServiceResources`: the record ids it owns, group
 and resource they belong to. The server uses it to decide which ownership-scoped rows the device
 is entitled to — today only `messages` — and a device that declares nothing receives none of them.
 
-A device owns the records it created. Ownership it did not earn that way can be declared through
-the `EVY_OWNED_SERVICE_RESOURCES` launch override, which stands in for the account-derived
-ownership that arrives with real auth. Changing that declaration voids the cursor — it makes
-records visible that may have changed long before the cursor was issued — so the client resyncs
-in full.
+A device's ownership set is the union of three sources:
+
+- **records it created**, kept in a small ledger of `(service, resource, id)` triples. This is the
+  only source that can claim a *public* record, and it is what keeps a seller entitled to messages
+  about an item they listed.
+- **records it holds privately**, so a message that arrives stays owned and its later updates keep
+  coming. Local singletons share that store but are excluded: they are not records the server
+  knows, and their id is not a uuid — which the request schema rejects, failing the whole sync.
+- **the `EVY_OWNED_SERVICE_RESOURCES` launch override**, standing in for the account-derived
+  ownership that arrives with real auth. Changing that declaration voids the cursor — it makes
+  records visible that may have changed long before the cursor was issued — so the client resyncs
+  in full. The other two sources cannot: a created record has no messages older than itself, and a
+  received private row only entitles the device to that row's own later updates.
 
 ## Who validates what
 
@@ -150,7 +158,9 @@ On the wire this is accessed with `service: "475731ac-31aa-4d65-94d2-7032782ae35
 
 #### Visibility
 
-Every `DATA_EVY_*` row carries a required `visibility` attribute: `"public"` or `"private"`. Clients may omit it in create/update payloads; the server defaults omitted values to `"public"` (`"private"` for addresses). On iOS, public rows sync into `publicStore` and private rows into `privateStore`; web keeps a single data path and treats `visibility` as an ordinary field.
+Every `DATA_EVY_*` row carries a required `visibility` attribute: `"public"` or `"private"`. Clients may omit it in create/update payloads; the server defaults omitted values to `"public"` (`"private"` for addresses and messages). On iOS, public rows sync into `publicStore` and private rows into `privateStore`; web keeps a single data path and treats `visibility` as an ordinary field.
+
+On iOS the private store is also part of what a device declares as owned on sync, which is how a message that arrives for you stays owned and keeps receiving updates. Note what `visibility` is **not**: it is one global column choosing a store, not an access rule and not ownership. Every device syncs every private row it is sent — every device holds every seeded address privately — so `"private"` means "stored privately on whichever device receives it", never "mine". Ownership of a **public** record therefore cannot be expressed by visibility at all, and is recorded separately when the device creates it (see [`sync`](#wire-contract-vs-persisted-rows)).
 
 ### DATA_EVY_Message
 
@@ -158,7 +168,9 @@ Core message record in [`data.schema.json`](../../../types/schema/data/data.sche
 
 On the wire this is accessed with `service: "475731ac-31aa-4d65-94d2-7032782ae359"` and `resource: "messages"`. Cancelling sets `archivedAt`; accepting sets `status` to `accepted` via `{update(...)}`.
 
-Unlike every other core resource, messages are not synced to every device. A message reaches exactly two parties: the device that created it, which declares the message's own id under `evy`/`messages` in `ownedServiceResources`, and the device that owns the record it addresses, which declares that record's id under the message's `service`/`resource`. Everyone else never receives it. Because ownership is only established when a device creates a record, a device that is reinstalled — or that never created the record a seeded message addresses — loses access to those messages until it declares the ownership explicitly; this resolves when auth lands and ownership can be derived from an account.
+Unlike every other core resource, messages are not synced to every device. A message reaches exactly two parties: the device that created it, which declares the message's own id under `evy`/`messages` in `ownedServiceResources`, and the device that owns the record it addresses, which declares that record's id under the message's `service`/`resource`. Everyone else never receives it.
+
+Messages are `private`, so a received one lands in the receiving device's private store and stays owned from then on — it keeps getting that message's updates without needing to own the record it addresses. A device that is reinstalled, or that never created the record a seeded message addresses, still has no claim on those messages until it declares the ownership explicitly; that resolves when auth lands and ownership can be derived from an account.
 
 ---
 

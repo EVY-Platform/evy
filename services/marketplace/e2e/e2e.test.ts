@@ -171,7 +171,7 @@ describe("Marketplace E2E (via API WebSocket)", () => {
 		expect(created).toMatchObject({
 			id: messageId,
 			status: "pending",
-			visibility: "public",
+			visibility: "private",
 		});
 		expect(created.updatedAt).toBeDefined();
 

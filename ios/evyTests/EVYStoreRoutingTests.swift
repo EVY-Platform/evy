@@ -146,7 +146,10 @@ final class EVYStoreRoutingTests: XCTestCase {
     guard case .dictionary(let values) = publicDecoded else {
       return XCTFail("Expected dictionary payload")
     }
-    XCTAssertEqual(values["visibility"], .string("public"))
+    // The client does not invent a visibility: each resource defaults its own
+    // server-side, and sending one would override that. An unset visibility routes to
+    // the public store until the record syncs back with the value the server chose.
+    XCTAssertNil(values["visibility"])
   }
 
   func testRemoveSyncedValueDeletesFromPublicStore() throws {
