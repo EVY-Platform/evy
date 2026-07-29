@@ -59,11 +59,9 @@ CREATE TABLE "Message" (
 	"fk" uuid NOT NULL,
 	"service" uuid NOT NULL,
 	"resource" uuid NOT NULL,
-	"archived_at" text,
 	"created_at" text NOT NULL,
 	"updated_at" text NOT NULL,
 	"deleted_at" text,
-	"status" text NOT NULL,
 	"data" jsonb NOT NULL,
 	"visibility" "Visibility" NOT NULL
 );
