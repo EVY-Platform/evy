@@ -98,7 +98,8 @@ A device's ownership set is the union of three sources:
   ownership that arrives with real auth. Changing that declaration voids the cursor — it makes
   records visible that may have changed long before the cursor was issued — so the client resyncs
   in full. The other two sources cannot: a created record has no messages older than itself, and a
-  received private row only entitles the device to that row's own later updates.
+  received private row only entitles the device to that row's own later updates. Nor can the
+  response rule, for the same reason: a message cannot answer one that does not exist yet.
 
 ## Who validates what
 
@@ -175,9 +176,24 @@ On iOS the private store is also part of what a device declares as owned on sync
 
 Core message record in [`data.schema.json`](../../../types/schema/data/data.schema.json) (`$defs.DATA_EVY_Message`, Postgres table `Message`). A message always relates to one record of another resource: `fk` is that record's id, and `service` / `resource` identify which service and resource the `fk` belongs to. Use-case-specific fields (e.g. `type`, `time`, `postalcode`) live in the free-form `data` object.
 
-On the wire this is accessed with `service: "475731ac-31aa-4d65-94d2-7032782ae359"` and `resource: "messages"`. Cancelling sets `archivedAt`; accepting sets `status` to `accepted` via `{update(...)}`.
+On the wire this is accessed with `service: "475731ac-31aa-4d65-94d2-7032782ae359"` and `resource: "messages"`.
 
-Messages follow the same rule as every other private resource, with one addition: as well as the device that owns the message (its creator, declaring the message's own id under `evy`/`messages`), a message reaches the device that owns the record it **addresses**, which declares that record's id under the message's `service`/`resource`. That recipient rule is the only entitlement in the system that is not plain ownership. Everyone else never receives it.
+#### A message's state, and answering one
+
+`data.value` holds the whole state vocabulary: `"pending"` on a request, `"accept"` or `"reject"` on the message that answers one. A request says `"pending"` outright rather than leaving the key absent, so predicates read as one state machine and a message kind that carries no state is never mistaken for something to answer. There is no `status` column; it held this before decisions became immutable.
+
+**A decision is a new message, never an edit to the one that asked.** The response addresses whatever record the request addressed — same `fk`, `service` and `resource` — and carries `data.message_id` naming the request, `data.value` with the decision, and a copy of the request's `data.type`. The type is duplicated because `findFirst` predicates cannot nest, so a lookup cannot reach through the response to the request to find it; if nested `findFirst` ever lands, that copy becomes redundant.
+
+Answering also sets `archivedAt` on the request, and cancelling does the same. That is what closes a request out: "is anything in flight?" is a flat `findFirst`, so it cannot ask for a request with no response, and without archiving a rejected request would block its replacement forever.
+
+Messages follow the same rule as every other private resource, with two additions:
+
+- as well as the device that owns the message (its creator, declaring the message's own id under `evy`/`messages`), a message reaches the device that owns the record it **addresses**, which declares that record's id under the message's `service`/`resource`;
+- a message reaches whoever owns the message it **answers** — matched on `data.message_id`. Without it a response would never reach the party who asked, since they own neither the response nor the record it addresses.
+
+Those two are the only entitlements in the system that are not plain ownership. Everyone else never receives it.
+
+> **A trap for anything reading `data` in SQL.** The `bun-sql` driver stores a jsonb column by JSON-stringifying its value, so a row written through the API holds a jsonb *string* containing the object rather than the object. Reads are symmetric, so JavaScript never notices — but `data ->> 'key'` is NULL on that shape and `jsonb_set` refuses it outright. `messages.ts` unwraps tolerantly for exactly this reason. It affects every jsonb column in the schema, not just this one; normalising the database and fixing the write path is its own change. Note that the pglite-backed unit tests store jsonb properly, so they will not catch a clause that only works on the normalised shape.
 
 Messages are `private`, so a received one lands in the receiving device's private store and stays owned from then on — it keeps getting that message's updates without needing to own the record it addresses. A device that is reinstalled, or that never created the record a seeded message addresses, still has no claim on those messages until it declares the ownership explicitly; that resolves when auth lands and ownership can be derived from an account.
 
