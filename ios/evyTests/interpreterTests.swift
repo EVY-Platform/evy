@@ -1034,7 +1034,7 @@ final class InterpreterTests: XCTestCase {
           type: "delivery", value: "pending"),
         EVYTestMessageFixtures.message(
           id: newestPickup, fk: itemId, createdAt: "2026-06-01T09:00:00.300Z",
-          type: "pickup", value: "accept"),
+          type: "pickup", value: "accept", time: "2026-06-03T09:00:00"),
       ]),
       at: "\(MarketplaceTestFixture.serviceId):\(key)"
     )
@@ -1105,6 +1105,24 @@ final class InterpreterTests: XCTestCase {
     XCTAssertTrue(
       try _evaluateFromText(
         "{\(latestShipping).data.value != pending && \(latestShipping).data.value != accept}"))
+  }
+
+  /// `formatDatetime(findFirst(sort(…), …).data.time, "…")` is three functions deep, which is
+  /// what the accepted-request confirmation row interpolates. The function-matching pattern
+  /// only tolerated one level of nested parentheses, so this rendered as its own source text.
+  func testFormatDatetimeOverFindFirstOverSortInterpolates() throws {
+    let messagesKey = uniqueKey("messages")
+    let itemKey = uniqueKey("item")
+    let itemId = UUID().uuidString
+    _ = try storeTransferMessages(at: messagesKey, itemId: itemId)
+    try store(.dictionary(["id": .string(itemId)]), at: itemKey)
+
+    let latestPickup =
+      "findFirst(sort(\(messagesKey), desc, createdAt), fk == \(itemKey).id && data.type == pickup)"
+    let rendered = try parseTextFromText(
+      "Pickup confirmed for {formatDatetime(\(latestPickup).data.time, \"EEE do\")}")
+
+    XCTAssertEqual(rendered.value, "Pickup confirmed for Wed 3rd")
   }
 
   func testFindFirstNestedRecordPathMatches() throws {

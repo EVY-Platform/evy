@@ -12,7 +12,16 @@ private let comparisonOperators = [">=", "<=", "==", "!=", ">", "<"]
 private let propsPattern = "\\{(?!\")[^}^\"]*(?!\")\\}"
 // Matches a parenthesized arg list allowing one level of nested calls,
 // e.g. update(..., {archivedAt: now()}) — matches (a, b), (x, foo(y))
-private let functionParamsPattern = "\\((?:[^()]|\\([^()]*\\))*\\)"
+/// A parenthesised argument list, tolerating **two** levels of nesting inside it - so three
+/// functions deep in total. `formatDatetime(findFirst(sort(c, desc, f), pred).data.time, "…")`
+/// is exactly that, and it is what an accepted request's confirmation row interpolates.
+///
+/// Regex cannot balance parentheses to arbitrary depth, so this is a ceiling rather than a
+/// rule: a fourth level renders as its own source text rather than failing loudly. Going
+/// deeper means replacing the pattern with a paren-depth scan, which `splitTopLevel` already
+/// does for arguments.
+private let functionParamsPattern =
+  "\\((?:[^()]|\\((?:[^()]|\\([^()]*\\))*\\))*\\)"
 // Matches a function call: identifier followed by its params. e.g. now(), update(id, {archivedAt: now()})
 private let functionPattern = "[a-zA-Z_][a-zA-Z0-9_]*\(functionParamsPattern)"
 // Matches a numeric array index accessor. e.g. [0], [123]
