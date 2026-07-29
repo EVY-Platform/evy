@@ -17,20 +17,17 @@ import {
 	type DataChangedOperation,
 } from "evy-types/ws";
 import type { EvyDb } from "../database/db";
-
 import { addressesResource } from "./resources/addresses";
+import type { SyncScope } from "./resources/coreResource";
 import {
 	createFileResource,
 	deleteFileResource,
 	listFileRows,
+	listFilesForSync,
 } from "./resources/files";
 import { flowsResource } from "./resources/flows";
 import { formattersResource } from "./resources/formatters";
-import {
-	listOwnedMessages,
-	messagesResource,
-	type OwnedMessagesParams,
-} from "./resources/messages";
+import { messagesResource } from "./resources/messages";
 import { organisationsResource } from "./resources/organisation";
 import { pagesResource } from "./resources/pages";
 import { rowsResource } from "./resources/rows";
@@ -44,6 +41,11 @@ type CoreResourceOps = {
 		db: EvyDb,
 		filter: GetRequest["filter"] | undefined,
 	) => Promise<GetResponse>;
+	/**
+	 * The rows a device is entitled to, given what it declared as owned. Every
+	 * resource must have one: a resource without it would silently stop syncing.
+	 */
+	listForSync: (db: EvyDb, scope: SyncScope) => Promise<GetResponse>;
 	create?: (
 		db: EvyDb,
 		filter: CreateRequest["filter"] | undefined,
@@ -77,21 +79,25 @@ const CORE_RESOURCE_REGISTRY: Record<string, CoreResourceOps> = {
 	[EVY_CORE_RESOURCE.MESSAGES]: messagesResource,
 	[EVY_CORE_RESOURCE.SERVICES]: {
 		list: servicesResource.list,
+		listForSync: servicesResource.listForSync,
 		create: servicesResource.create,
 		update: servicesResource.update,
 	},
 	[EVY_CORE_RESOURCE.ORGANISATIONS]: {
 		list: organisationsResource.list,
+		listForSync: organisationsResource.listForSync,
 		create: organisationsResource.create,
 		update: organisationsResource.update,
 	},
 	[EVY_CORE_RESOURCE.PROVIDERS]: {
 		list: providersResource.list,
+		listForSync: providersResource.listForSync,
 		create: providersResource.create,
 		update: providersResource.update,
 	},
 	[EVY_CORE_RESOURCE.FILES]: {
 		list: listFileRows,
+		listForSync: listFilesForSync,
 		create: createFileResource,
 		remove: deleteFileResource,
 	},
@@ -103,11 +109,11 @@ export function initCoreNotifications(broadcastFn: BroadcastFn | null): void {
 	coreBroadcast = broadcastFn;
 }
 
-export { validateAuth } from "./resources/devices";
 export type {
-	OwnedMessagesParams,
 	OwnedServiceResource,
-} from "./resources/messages";
+	SyncScope,
+} from "./resources/coreResource";
+export { validateAuth } from "./resources/devices";
 
 export async function get(db: EvyDb, params: GetRequest): Promise<GetResponse> {
 	assertEvyCoreAccess(params);
@@ -115,14 +121,16 @@ export async function get(db: EvyDb, params: GetRequest): Promise<GetResponse> {
 }
 
 /**
- * The one core read that is not dispatched through the resource registry — see
- * `listOwnedMessages` for why messages are read by declared ownership.
+ * A resource read as sync sees it: public rows plus the private rows this device
+ * declared as owned. `get` stays unscoped - it has no ownership input and is not
+ * an access boundary.
  */
-export async function getOwnedMessages(
+export async function getSyncRows(
 	db: EvyDb,
-	params: OwnedMessagesParams,
+	resource: string,
+	scope: SyncScope,
 ): Promise<GetResponse> {
-	return listOwnedMessages(db, params);
+	return getResourceOps(resource).listForSync(db, scope);
 }
 
 type ExternalServiceRow = {

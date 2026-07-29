@@ -65,4 +65,5 @@ export async function clearAllTestTables(testDb: PgliteTestDb): Promise<void> {
 	await testDb.delete(schema.file);
 	await testDb.delete(schema.address);
 	await testDb.delete(schema.message);
+	await testDb.delete(schema.formatter);
 }

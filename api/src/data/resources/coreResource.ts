@@ -1,4 +1,4 @@
-import { and, asc, eq, gt, isNull } from "drizzle-orm";
+import { and, asc, eq, gt, inArray, isNull, or, type SQL } from "drizzle-orm";
 import type { AnyPgColumn, AnyPgTable } from "drizzle-orm/pg-core";
 import type {
 	CreateRequest,
@@ -20,11 +20,58 @@ import {
 import type { EvyDb } from "../../database/db";
 import { assertNotModified, monotonicUpdatedAt } from "../conflicts";
 
-type ResourceTable = AnyPgTable & {
+export type ResourceTable = AnyPgTable & {
 	id: AnyPgColumn;
 	updatedAt: AnyPgColumn;
 	deletedAt: AnyPgColumn;
+	/** Absent on resources with no visibility of their own, e.g. formatters. */
+	visibility?: AnyPgColumn;
 };
+
+/** Ids a device owns within one service resource, as declared on the sync request. */
+export type OwnedServiceResource = {
+	service: string;
+	resource: string;
+	ids: string[];
+};
+
+export type SyncScope = {
+	updatedAfter?: string;
+	/** Ids of this resource's records the calling device declared as owned. */
+	ownedIds: string[];
+	/** Records the device owns elsewhere. Only messages read these, as fk targets. */
+	ownedForeignKeys: OwnedServiceResource[];
+};
+
+/**
+ * What a device may see of a resource: every public row, plus the private rows it
+ * owns. A resource with no visibility column has nothing to scope, so it returns
+ * undefined and the caller filters on time alone.
+ *
+ * Note there is no signal for losing access. A row flipped from public to private
+ * simply stops matching, so a device that already holds it keeps a stale copy -
+ * nothing changes visibility after creation today, but that is the gap to close if
+ * it ever does.
+ */
+export function syncEntitlementClause(
+	table: ResourceTable,
+	ownedIds: string[],
+): SQL | undefined {
+	if (!table.visibility) return undefined;
+	const publicRows = eq(table.visibility, "public");
+	if (ownedIds.length === 0) return publicRows;
+	return or(publicRows, inArray(table.id, ownedIds));
+}
+
+/** The time half of a sync read: incremental carries tombstones, plain excludes them. */
+export function syncTimeClause(
+	table: ResourceTable,
+	updatedAfter: string | undefined,
+): SQL | undefined {
+	return updatedAfter
+		? gt(table.updatedAt, updatedAfter)
+		: isNull(table.deletedAt);
+}
 
 export function omitNulls<T extends Record<string, unknown>>(row: T): T {
 	return Object.fromEntries(
@@ -93,6 +140,28 @@ export function makeCoreResource<
 			? base.where(and(...whereClauses))
 			: base;
 		const rows = await query.orderBy(asc(table.updatedAt), asc(table.id));
+		return validateGetResponse(rows.map(norm));
+	}
+
+	/**
+	 * The rows this device is entitled to. An owner must keep receiving the
+	 * tombstone for a private row it owns, or it could never learn the row was
+	 * deleted - `visibility` and `id` both survive a soft delete, so it does.
+	 */
+	async function listForSync(
+		db: EvyDb,
+		scope: SyncScope,
+	): Promise<GetResponse> {
+		const clauses = [
+			syncTimeClause(table, scope.updatedAfter),
+			syncEntitlementClause(table, scope.ownedIds),
+		].filter((clause): clause is SQL => clause !== undefined);
+
+		const rows = await db
+			.select()
+			.from(table)
+			.where(clauses.length > 0 ? and(...clauses) : undefined)
+			.orderBy(asc(table.updatedAt), asc(table.id));
 		return validateGetResponse(rows.map(norm));
 	}
 
@@ -190,5 +259,5 @@ export function makeCoreResource<
 		return response;
 	}
 
-	return { list, create, update, remove };
+	return { list, listForSync, create, update, remove };
 }

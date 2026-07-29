@@ -1,4 +1,4 @@
-import { and, asc, eq, gt, isNull } from "drizzle-orm";
+import { and, asc, eq, gt, isNull, type SQL } from "drizzle-orm";
 
 import type {
 	CreateRequest,
@@ -24,7 +24,12 @@ import {
 	getUploadSession,
 	uploadSessionToBuffer,
 } from "../../shared/uploadSessions";
-import { omitNulls } from "./coreResource";
+import {
+	omitNulls,
+	type SyncScope,
+	syncEntitlementClause,
+	syncTimeClause,
+} from "./coreResource";
 import {
 	deleteFileBinaryIfExists,
 	readFileBinary,
@@ -72,6 +77,30 @@ export async function listFileRows(
 		: rows.map(omitNulls);
 
 	return validateGetResponse(response);
+}
+
+/**
+ * File rows a device is entitled to. Files are public, so in practice this is every
+ * row - but the rule is applied here rather than assumed, so a private file would
+ * behave like every other private record. Metadata only: the binary is fetched on
+ * demand by a single-file read, never streamed through sync.
+ */
+export async function listFilesForSync(
+	db: EvyDb,
+	scope: SyncScope,
+): Promise<GetResponse> {
+	const clauses = [
+		syncTimeClause(file, scope.updatedAfter),
+		syncEntitlementClause(file, scope.ownedIds),
+	].filter((clause): clause is SQL => clause !== undefined);
+
+	const rows = await db
+		.select()
+		.from(file)
+		.where(clauses.length > 0 ? and(...clauses) : undefined)
+		.orderBy(asc(file.updatedAt), asc(file.id));
+
+	return validateGetResponse(rows.map(omitNulls));
 }
 
 export async function createFileResource(

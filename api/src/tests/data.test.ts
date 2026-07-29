@@ -37,7 +37,7 @@ const coreModule = await import("../data/data");
 const {
 	create,
 	get,
-	getOwnedMessages,
+	getSyncRows,
 	update,
 	deleteResource: deleteCore,
 	validateAuth,
@@ -603,7 +603,7 @@ describe("message resources", () => {
 	});
 });
 
-describe("getOwnedMessages", () => {
+describe("getSyncRows", () => {
 	const targetService = crypto.randomUUID();
 	const targetResource = crypto.randomUUID();
 	const ownedFk = crypto.randomUUID();
@@ -630,10 +630,11 @@ describe("getOwnedMessages", () => {
 	}
 
 	async function ownedIds(
-		params: Parameters<typeof getOwnedMessages>[1],
+		params: Parameters<typeof getSyncRows>[2],
 	): Promise<string[]> {
-		const owned = (await getOwnedMessages(
+		const owned = (await getSyncRows(
 			dataDb,
+			MESSAGE_RESOURCE,
 			params,
 		)) as DATA_EVY_Message[];
 		return owned.map((message) => message.id);
@@ -646,9 +647,9 @@ describe("getOwnedMessages", () => {
 	it("returns nothing when the device owns nothing", async () => {
 		await createMessage(ownedFk);
 
-		expect(
-			await ownedIds({ ownedMessageIds: [], ownedForeignKeys: [] }),
-		).toEqual([]);
+		expect(await ownedIds({ ownedIds: [], ownedForeignKeys: [] })).toEqual(
+			[],
+		);
 	});
 
 	it("returns only messages the device created", async () => {
@@ -657,7 +658,7 @@ describe("getOwnedMessages", () => {
 
 		expect(
 			await ownedIds({
-				ownedMessageIds: [mine.id],
+				ownedIds: [mine.id],
 				ownedForeignKeys: [],
 			}),
 		).toEqual([mine.id]);
@@ -669,7 +670,7 @@ describe("getOwnedMessages", () => {
 
 		expect(
 			await ownedIds({
-				ownedMessageIds: [],
+				ownedIds: [],
 				ownedForeignKeys: owns(ownedFk),
 			}),
 		).toEqual([addressed.id]);
@@ -681,7 +682,7 @@ describe("getOwnedMessages", () => {
 		await createMessage(otherFk);
 
 		const owned = await ownedIds({
-			ownedMessageIds: [mine.id],
+			ownedIds: [mine.id],
 			ownedForeignKeys: owns(ownedFk),
 		});
 
@@ -693,7 +694,7 @@ describe("getOwnedMessages", () => {
 
 		expect(
 			await ownedIds({
-				ownedMessageIds: [],
+				ownedIds: [],
 				ownedForeignKeys: [
 					{
 						service: crypto.randomUUID(),
@@ -711,7 +712,7 @@ describe("getOwnedMessages", () => {
 		expect(
 			await ownedIds({
 				updatedAfter: mine.updatedAt,
-				ownedMessageIds: [mine.id],
+				ownedIds: [mine.id],
 				ownedForeignKeys: [],
 			}),
 		).toEqual([]);
@@ -726,9 +727,9 @@ describe("getOwnedMessages", () => {
 			filter: { id: mine.id },
 		});
 
-		const incremental = (await getOwnedMessages(dataDb, {
+		const incremental = (await getSyncRows(dataDb, MESSAGE_RESOURCE, {
 			updatedAfter: before,
-			ownedMessageIds: [mine.id],
+			ownedIds: [mine.id],
 			ownedForeignKeys: [],
 		})) as DATA_EVY_Message[];
 		expect(incremental).toHaveLength(1);
@@ -737,7 +738,7 @@ describe("getOwnedMessages", () => {
 		// A plain read still hides it, matching coreResource.list.
 		expect(
 			await ownedIds({
-				ownedMessageIds: [mine.id],
+				ownedIds: [mine.id],
 				ownedForeignKeys: [],
 			}),
 		).toEqual([]);
@@ -751,7 +752,7 @@ describe("getOwnedMessages", () => {
 
 		expect(
 			await ownedIds({
-				ownedMessageIds: [],
+				ownedIds: [],
 				ownedForeignKeys: [
 					{
 						service: EVY_CORE_SERVICE,
@@ -768,8 +769,110 @@ describe("getOwnedMessages", () => {
 		await createMessage(ownedFk);
 
 		expect(
-			await ownedIds({ ownedMessageIds: [], ownedForeignKeys: owns() }),
+			await ownedIds({ ownedIds: [], ownedForeignKeys: owns() }),
 		).toEqual([]);
+	});
+});
+
+describe("getSyncRows entitlement", () => {
+	beforeEach(async () => {
+		await clearAllTestTables(testDb);
+	});
+
+	async function syncedIds(
+		resource: string,
+		params: Parameters<typeof getSyncRows>[2],
+	): Promise<string[]> {
+		const rows = (await getSyncRows(dataDb, resource, params)) as {
+			id: string;
+		}[];
+		return rows.map((row) => row.id);
+	}
+
+	const ownsNothing = { ownedIds: [], ownedForeignKeys: [] };
+
+	it("sends a public row to a device that owns nothing", async () => {
+		const flow = flowRow({ visibility: "public" });
+		await create(dataDb, {
+			service: EVY_CORE_SERVICE,
+			resource: FLOW_RESOURCE,
+			data: flow,
+		});
+
+		expect(await syncedIds(FLOW_RESOURCE, ownsNothing)).toEqual([flow.id]);
+	});
+
+	it("withholds a private row from a device that owns nothing", async () => {
+		await create(dataDb, {
+			service: EVY_CORE_SERVICE,
+			resource: FLOW_RESOURCE,
+			data: flowRow({ visibility: "private" }),
+		});
+
+		expect(await syncedIds(FLOW_RESOURCE, ownsNothing)).toEqual([]);
+	});
+
+	it("sends a private row to the device that owns it", async () => {
+		const mine = flowRow({ visibility: "private" });
+		const theirs = flowRow({ visibility: "private" });
+		for (const data of [mine, theirs]) {
+			await create(dataDb, {
+				service: EVY_CORE_SERVICE,
+				resource: FLOW_RESOURCE,
+				data,
+			});
+		}
+
+		expect(
+			await syncedIds(FLOW_RESOURCE, {
+				ownedIds: [mine.id],
+				ownedForeignKeys: [],
+			}),
+		).toEqual([mine.id]);
+	});
+
+	// Formatters have no visibility column, so there is nothing to scope: the
+	// query must not assume the column exists.
+	it("sends rows of a resource that has no visibility at all", async () => {
+		const formatterId = crypto.randomUUID();
+		await create(dataDb, {
+			service: EVY_CORE_SERVICE,
+			resource: FORMATTER_RESOURCE,
+			data: {
+				id: formatterId,
+				name: `fmt-${formatterId.slice(0, 8)}`,
+				formatting_config: "{input.country}",
+				formatting: { default: "{input.postcode}" },
+				...timestamps(),
+			},
+		});
+
+		expect(await syncedIds(FORMATTER_RESOURCE, ownsNothing)).toEqual([
+			formatterId,
+		]);
+	});
+
+	it("carries a tombstone for a private row its owner still owns", async () => {
+		const mine = flowRow({ visibility: "private" });
+		const created = (await create(dataDb, {
+			service: EVY_CORE_SERVICE,
+			resource: FLOW_RESOURCE,
+			data: mine,
+		})) as DATA_EVY_Flow;
+		await deleteCore(dataDb, {
+			service: EVY_CORE_SERVICE,
+			resource: FLOW_RESOURCE,
+			filter: { id: mine.id },
+		});
+
+		const rows = (await getSyncRows(dataDb, FLOW_RESOURCE, {
+			updatedAfter: created.updatedAt,
+			ownedIds: [mine.id],
+			ownedForeignKeys: [],
+		})) as DATA_EVY_Flow[];
+
+		expect(rows).toHaveLength(1);
+		expect(rows[0].deletedAt).toBeTruthy();
 	});
 });
 
