@@ -155,7 +155,6 @@ describe("Marketplace E2E (via API WebSocket)", () => {
 			fk: crypto.randomUUID(),
 			service: marketplaceServiceId,
 			resource: itemsResourceId,
-			archivedAt: null,
 			data: {
 				type: "pickup",
 				value: "pending",

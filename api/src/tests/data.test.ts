@@ -554,17 +554,8 @@ describe("message resources", () => {
 		})) as DATA_EVY_Message[];
 		expect(listed).toHaveLength(1);
 
-		// Archiving is the only update a message takes: a decision is answered by a new
-		// message, never by rewriting the one that asked.
-		const archived = (await update(dataDb, {
-			service: EVY_CORE_SERVICE,
-			resource: MESSAGE_RESOURCE,
-			filter: { id: created.id },
-			data: { ...created, archivedAt: nowIso() },
-		})) as DATA_EVY_Message;
-		expect(archived.archivedAt).toBeDefined();
-		expect(archived.data.value).toBe("pending");
-
+		// No update step: a message is write-once. Every state change - answering a request,
+		// withdrawing one - is a new message, so nothing rewrites the one that asked.
 		const deleted = (await deleteCore(dataDb, {
 			service: EVY_CORE_SERVICE,
 			resource: MESSAGE_RESOURCE,
@@ -600,11 +591,13 @@ describe("message resources", () => {
 		).rejects.toThrow("Message validation failed");
 	});
 
-	// `status` used to hold the request's state; `data.value` does now. The def is
-	// `additionalProperties: false`, so a client still sending the old field is
-	// rejected rather than silently ignored - which is what makes the migration's
-	// updated_at bump load-bearing, since `update` echoes the whole record back.
-	it("rejects a message still carrying the removed status field", async () => {
+	// `status` held the request's state and `archivedAt` closed it out; `data.value` and
+	// `createdAt` do both now. The def is `additionalProperties: false`, so a client still
+	// sending either is rejected rather than silently ignored.
+	it.each([
+		"status",
+		"archivedAt",
+	])("rejects a message still carrying the removed %s field", async (removed) => {
 		await expect(
 			create(dataDb, {
 				service: EVY_CORE_SERVICE,
@@ -614,7 +607,7 @@ describe("message resources", () => {
 					fk: crypto.randomUUID(),
 					service: crypto.randomUUID(),
 					resource: crypto.randomUUID(),
-					status: "pending",
+					[removed]: removed === "status" ? "pending" : null,
 					data: { type: "pickup", value: "pending" },
 					visibility: "private",
 				},

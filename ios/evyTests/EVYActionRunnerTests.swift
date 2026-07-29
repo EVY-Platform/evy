@@ -814,7 +814,7 @@ final class EVYActionRunnerTests: XCTestCase {
         .create(
           service: namespace, resource: resource,
           mode: .inline(data: [
-            "fk": "item-1", "service": "\"svc-1\"", "archivedAt": "null", "verified": "true",
+            "fk": "item-1", "service": "\"svc-1\"", "closedAt": "null", "verified": "true",
             "data": "{type: pickup, time: 2026-06-03T09:00:00}",
           ]), idDestination: nil)
     )
@@ -829,7 +829,7 @@ final class EVYActionRunnerTests: XCTestCase {
     }
     XCTAssertEqual(values["fk"], .string("item-1"))
     XCTAssertEqual(values["service"], .string("svc-1"))
-    XCTAssertEqual(values["archivedAt"], .null)
+    XCTAssertEqual(values["closedAt"], .null)
     XCTAssertEqual(values["verified"], .bool(true))
     XCTAssertEqual(
       values["data"],
@@ -980,73 +980,55 @@ final class EVYActionRunnerTests: XCTestCase {
   }
 
   /// A store-mode update is scoped to the datum's own record, and a filter term that fails
-  /// makes the whole thing a no-op. `archivedAt` carries both halves: it is the one
-  /// mutation a message takes, and `null` is a filter term that stops matching once set.
-  func testUpdateActionArchivesOnlyMatchingOpenMessageForDatum() throws {
-    let namespace = EVYNamespace.evy
-    let resource = EVYCoreResource.messages.rawValue
-    let itemId = UUID().uuidString
-    let openMessageId = UUID().uuidString
-    let otherOpenMessageId = UUID().uuidString
-    let archivedMessageId = UUID().uuidString
-    let archivedAt = "2026-06-01T00:00:00Z"
+  /// makes the whole thing a no-op.
+  ///
+  /// Deliberately on a scratch resource rather than on messages. A message is write-once now -
+  /// it has no mutable field left to exercise - so using one here would test update mechanics
+  /// against a shape the contract no longer permits.
+  func testUpdateActionUpdatesOnlyTheMatchingRecordForDatum() throws {
+    let namespace = "test"
+    let resource = "store-update-actions"
+    let matchingId = UUID().uuidString
+    let otherOpenId = UUID().uuidString
+    let alreadyClosedId = UUID().uuidString
+    let closedAt = "2026-06-01T00:00:00Z"
     deleteFromSyncedStores(namespace: namespace, resource: resource)
     defer { deleteFromSyncedStores(namespace: namespace, resource: resource) }
 
-    let messages = EVYJson.array([
-      EVYTestMessageFixtures.request(
-        id: openMessageId,
-        fk: itemId,
-        service: EVY_CORE_SERVICE,
-        resource: resource,
-        type: "pickup",
-        archivedAt: .null
-      ),
-      EVYTestMessageFixtures.request(
-        id: otherOpenMessageId,
-        fk: itemId,
-        service: EVY_CORE_SERVICE,
-        resource: resource,
-        type: "delivery",
-        time: "2026-06-03T10:00:00",
-        archivedAt: .null
-      ),
-      EVYTestMessageFixtures.request(
-        id: archivedMessageId,
-        fk: itemId,
-        service: EVY_CORE_SERVICE,
-        resource: resource,
-        type: "shipping",
-        archivedAt: .string(archivedAt)
-      ),
+    let records = EVYJson.array([
+      .dictionary(["id": .string(matchingId), "closedAt": .null]),
+      .dictionary(["id": .string(otherOpenId), "closedAt": .null]),
+      .dictionary(["id": .string(alreadyClosedId), "closedAt": .string(closedAt)]),
     ])
-    try EVY.applySyncedValue(namespace: namespace, resource: resource, value: messages)
+    try EVY.applySyncedValue(namespace: namespace, resource: resource, value: records)
 
-    let archiveAction = rowAction(
+    let closeAction = rowAction(
       true:
         .update(
           service: namespace, resource: resource, mode: .store,
-          filter: ["id": "$datum.id", "archivedAt": "null"],
-          changes: .literal(["archivedAt": "now()"]))
+          filter: ["id": "$datum.id", "closedAt": "null"],
+          changes: .literal(["closedAt": "now()"]))
     )
 
-    let openDatum = EVYJson.dictionary(["id": .string(openMessageId)])
-    EVYActionRunner.run(actions: [archiveAction], datum: openDatum) { _ in }
-
-    var archived = try archivedAtByMessageId(namespace: namespace, resource: resource)
-    XCTAssertNotNil(archived[openMessageId], "the datum's own message is archived")
-    XCTAssertNil(archived[otherOpenMessageId], "another open message is left alone")
-    XCTAssertEqual(archived[archivedMessageId], archivedAt)
-
     EVYActionRunner.run(
-      actions: [archiveAction],
-      datum: EVYJson.dictionary(["id": .string(archivedMessageId)])
+      actions: [closeAction],
+      datum: EVYJson.dictionary(["id": .string(matchingId)])
     ) { _ in }
 
-    archived = try archivedAtByMessageId(namespace: namespace, resource: resource)
+    var closed = try closedAtByRecordId(namespace: namespace, resource: resource)
+    XCTAssertNotNil(closed[matchingId], "the datum's own record is updated")
+    XCTAssertNil(closed[otherOpenId], "another open record is left alone")
+    XCTAssertEqual(closed[alreadyClosedId], closedAt)
+
+    EVYActionRunner.run(
+      actions: [closeAction],
+      datum: EVYJson.dictionary(["id": .string(alreadyClosedId)])
+    ) { _ in }
+
+    closed = try closedAtByRecordId(namespace: namespace, resource: resource)
     XCTAssertEqual(
-      archived[archivedMessageId], archivedAt,
-      "an already-archived message no longer matches the filter")
+      closed[alreadyClosedId], closedAt,
+      "an already-closed record no longer matches the filter")
   }
 
   private func allFromSyncedStores(namespace: String, resource: String) -> [EVYData] {
@@ -1061,9 +1043,9 @@ final class EVYActionRunnerTests: XCTestCase {
     }
   }
 
-  /// Archive timestamps by message id. A message with no `archivedAt`, or an explicit
-  /// null, is absent from the result - so a missing key reads as "still open".
-  private func archivedAtByMessageId(
+  /// Close-out timestamps by record id. A record with no `closedAt`, or an explicit null, is
+  /// absent from the result - so a missing key reads as "still open".
+  private func closedAtByRecordId(
     namespace: String,
     resource: String
   ) throws -> [String: String] {
@@ -1075,10 +1057,10 @@ final class EVYActionRunnerTests: XCTestCase {
         guard let decoded = try? row.decoded(),
           case .dictionary(let values) = decoded,
           case .string(let id) = values["id"],
-          case .string(let archivedAt) = values["archivedAt"],
-          !archivedAt.isEmpty
+          case .string(let closedAt) = values["closedAt"],
+          !closedAt.isEmpty
         else { return nil }
-        return (id, archivedAt)
+        return (id, closedAt)
       })
   }
 
@@ -1445,8 +1427,8 @@ final class EVYActionRunnerTests: XCTestCase {
         .create(
           service: EVYNamespace.evy, resource: messagesResourceId,
           mode: .inline(data: [
-            "fk": "\(itemResourceId).id", "archivedAt": "null",
-            "data": "{type: shipping, postalcode: shipping_address.postcode}",
+            "fk": "\(itemResourceId).id",
+            "data": "{type: shipping, value: pending, postalcode: shipping_address.postcode}",
           ]), idDestination: nil),
       false: .highlightRequired(field: "postcode")
     )
@@ -1485,8 +1467,8 @@ final class EVYActionRunnerTests: XCTestCase {
         .create(
           service: namespace, resource: resource,
           mode: .inline(data: [
-            "fk": "\(itemResourceId).id", "archivedAt": "null",
-            "data": "{type: pickup, time: 2026-06-03T09:00:00}",
+            "fk": "\(itemResourceId).id",
+            "data": "{type: pickup, value: pending, time: 2026-06-03T09:00:00}",
           ]), idDestination: nil)
     )
     EVYActionRunner.run(actions: [action]) { received = $0 }
@@ -1499,12 +1481,14 @@ final class EVYActionRunnerTests: XCTestCase {
   func testDatumRowFormatterResolvesDatumReferencesInActions() throws {
     let navigateAction: EVYActionInvocation = .navigate(
       flowId: "flowX", pageId: "pageY", query: ["id": "$datum.id"])
-    let updateAction: EVYActionInvocation = .update(
+    let updateAction: EVYActionInvocation = .create(
       service: EVY_CORE_SERVICE,
       resource: EVYCoreResource.messages.rawValue,
-      mode: .store,
-      filter: ["id": "$datum.id", "archivedAt": "null"],
-      changes: .literal(["archivedAt": "now()"]))
+      mode: .inline(data: [
+        "fk": "$datum.fk",
+        "data": "{message_id: $datum.id, value: cancel, type: $datum.data.type}",
+      ]),
+      idDestination: nil)
     let row = try decodeRow(
       content: """
         {
@@ -1532,28 +1516,26 @@ final class EVYActionRunnerTests: XCTestCase {
     XCTAssertEqual(formattedRow.actions.swipeLeft.first?.true, branch(updateAction))
   }
 
-  func testSwipeLeftUpdateActionArchivesOpenMessageFromFormattedSearchResult() throws {
-    let namespace = EVYNamespace.evy
-    let resource = EVYCoreResource.messages.rawValue
-    let openMessageId = UUID().uuidString
+  func testSwipeLeftUpdateActionRunsAgainstItsOwnFormattedSearchResult() throws {
+    let namespace = "test"
+    let resource = "swipe-left-formatted-results"
+    let openId = UUID().uuidString
     deleteFromSyncedStores(namespace: namespace, resource: resource)
     defer { deleteFromSyncedStores(namespace: namespace, resource: resource) }
 
-    let message = EVYTestMessageFixtures.message(
-      id: openMessageId,
-      type: "pickup",
-      value: "pending",
-      time: "2026-06-03T09:00:00"
-    )
-    // Routed by visibility, the way a synced message actually arrives.
+    let record = EVYJson.dictionary([
+      "id": .string(openId),
+      "label": .string("pickup"),
+      "closedAt": .null,
+    ])
     try EVY.applySyncedValue(
-      namespace: namespace, resource: resource, value: .array([message]))
+      namespace: namespace, resource: resource, value: .array([record]))
 
     let template = try decodeRow(
       content: """
         {
-          "title": "{$datum.data.type} request",
-          "subtitle": "{$datum.data.value}"
+          "title": "{$datum.label} request",
+          "subtitle": ""
         }
         """,
       actions: UI_RowActions(
@@ -1562,14 +1544,14 @@ final class EVYActionRunnerTests: XCTestCase {
             true:
               .update(
                 service: namespace, resource: resource, mode: .store,
-                filter: ["id": "$datum.id", "archivedAt": "null"],
-                changes: .literal(["archivedAt": "now()"]))
+                filter: ["id": "$datum.id", "closedAt": "null"],
+                changes: .literal(["closedAt": "now()"]))
           )
         ]
       )
     )
     let results = EVYSearchResult.makeResults(
-      from: .array([message]),
+      from: .array([record]),
       resultTemplate: template,
       scopeId: nil
     )
@@ -1580,8 +1562,8 @@ final class EVYActionRunnerTests: XCTestCase {
       datum: result.datum
     ) { _ in }
 
-    let archived = try archivedAtByMessageId(namespace: namespace, resource: resource)
-    XCTAssertNotNil(archived[openMessageId])
+    let closed = try closedAtByRecordId(namespace: namespace, resource: resource)
+    XCTAssertNotNil(closed[openId])
   }
 
   private func makeRowWithSheet() throws -> UI_Row {

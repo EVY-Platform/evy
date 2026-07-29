@@ -35,16 +35,14 @@ final class EVYMessageRequestTests: XCTestCase {
 
   private func requestDatum(
     id: String? = nil,
-    type: String = "pickup",
-    archivedAt: EVYJson? = nil
+    type: String = "pickup"
   ) -> EVYJson {
     EVYTestMessageFixtures.request(
       id: id ?? requestId,
       fk: itemId,
       service: itemService,
       resource: itemResource,
-      type: type,
-      archivedAt: archivedAt
+      type: type
     )
   }
 
@@ -183,11 +181,11 @@ final class EVYMessageRequestTests: XCTestCase {
     XCTAssertNil(EVYMessageRequest.role(for: request))
   }
 
-  // MARK: - hasResponse
+  // MARK: - isSettled
 
-  func testHasResponseFindsTheAnswerToThisRequest() throws {
+  func testIsSettledOnceSomethingNamesTheRequest() throws {
     let request = try XCTUnwrap(EVYMessageRequest.classify(requestDatum()))
-    XCTAssertFalse(EVYMessageRequest.hasResponse(to: request))
+    XCTAssertFalse(EVYMessageRequest.isSettled(request))
 
     try store(
       EVYTestMessageFixtures.response(
@@ -199,10 +197,10 @@ final class EVYMessageRequestTests: XCTestCase {
         value: "reject"
       ))
 
-    XCTAssertTrue(EVYMessageRequest.hasResponse(to: request))
+    XCTAssertTrue(EVYMessageRequest.isSettled(request))
   }
 
-  func testHasResponseIgnoresAnswersToOtherRequests() throws {
+  func testIsSettledIgnoresMessagesNamingOtherRequests() throws {
     let request = try XCTUnwrap(EVYMessageRequest.classify(requestDatum()))
     try store(
       EVYTestMessageFixtures.response(
@@ -214,7 +212,7 @@ final class EVYMessageRequestTests: XCTestCase {
         value: "accept"
       ))
 
-    XCTAssertFalse(EVYMessageRequest.hasResponse(to: request))
+    XCTAssertFalse(EVYMessageRequest.isSettled(request))
   }
 
   // MARK: - respond and cancel
@@ -248,9 +246,10 @@ final class EVYMessageRequestTests: XCTestCase {
     XCTAssertEqual(response["visibility"], .string("private"))
     XCTAssertNil(response["status"], "status is gone from the contract")
 
-    // The latest message is what closes a request out, so answering touches nothing.
+    // The latest message is what closes a request out, so answering touches nothing: the
+    // stored request is byte-for-byte what arrived.
     let stored = try XCTUnwrap(messages.first { $0["id"] == .string(requestId) })
-    XCTAssertNil(stored["archivedAt"], "answering does not write to the request")
+    XCTAssertEqual(.dictionary(stored), requestDatum(), "answering does not write to the request")
     guard case .dictionary(let requestData) = stored["data"] else {
       return XCTFail("request should keep its data object")
     }
@@ -330,15 +329,32 @@ final class EVYMessageRequestTests: XCTestCase {
     XCTAssertEqual(data["value"], .string("reject"))
   }
 
-  func testCancelArchivesTheRequestAndCreatesNothing() throws {
+  /// Withdrawing is a message too, so the request itself is untouched - which is what makes
+  /// `Message` write-once.
+  func testCancelAppendsACancelMessage() throws {
     try store(requestDatum())
     let request = try XCTUnwrap(EVYMessageRequest.classify(requestDatum()))
 
     try EVYMessageRequest.cancel(request)
 
     let messages = try storedMessages()
-    XCTAssertEqual(messages.count, 1, "cancelling answers nothing")
-    XCTAssertNotNil(messages[0]["archivedAt"])
+    XCTAssertEqual(messages.count, 2, "the request survives; the withdrawal is a new message")
+
+    let cancellation = try XCTUnwrap(messages.first { $0["id"] != .string(requestId) })
+    guard case .dictionary(let data) = cancellation["data"] else {
+      return XCTFail("cancellation should carry a data object")
+    }
+    XCTAssertEqual(data["message_id"], .string(requestId))
+    XCTAssertEqual(data["value"], .string("cancel"))
+    XCTAssertEqual(
+      data["type"], .string("pickup"),
+      "the type carries forward so the item page's per-method lookup finds it")
+
+    let stored = try XCTUnwrap(messages.first { $0["id"] == .string(requestId) })
+    guard case .dictionary(let requestData) = stored["data"] else {
+      return XCTFail("request should keep its data object")
+    }
+    XCTAssertEqual(requestData["value"], .string("pending"))
   }
 
   // MARK: - swipeActions
@@ -377,11 +393,22 @@ final class EVYMessageRequestTests: XCTestCase {
     XCTAssertTrue(EVYMessageRequest.swipeActions(for: requestDatum()).isEmpty)
   }
 
-  func testNoAffordanceOnAnArchivedRequest() throws {
+  /// A withdrawn request is settled by the cancel message naming it, exactly as an answered
+  /// one is - there is no field on the request that says so.
+  func testNoAffordanceOnACancelledRequest() throws {
     ownAddressedRecord()
+    try store(requestDatum())
+    try store(
+      EVYTestMessageFixtures.response(
+        id: UUID().uuidString.lowercased(),
+        to: requestId,
+        fk: itemId,
+        service: itemService,
+        resource: itemResource,
+        value: "cancel"
+      ))
 
-    let archived = requestDatum(archivedAt: .string("2026-07-01T00:00:00.000Z"))
-    XCTAssertTrue(EVYMessageRequest.swipeActions(for: archived).isEmpty)
+    XCTAssertTrue(EVYMessageRequest.swipeActions(for: requestDatum()).isEmpty)
   }
 
   func testNoAffordanceWithoutARole() throws {

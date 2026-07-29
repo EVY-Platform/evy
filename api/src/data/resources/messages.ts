@@ -22,7 +22,6 @@ const baseMessagesResource = makeCoreResource<DATA_EVY_Message>({
 		fk: v.fk,
 		service: v.service,
 		resource: v.resource,
-		archivedAt: v.archivedAt ?? null,
 		data: v.data,
 		visibility: v.visibility,
 	}),

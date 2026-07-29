@@ -21,6 +21,11 @@ import SwiftUI
 /// Closing those three gaps - a datum-aware `visible`, multi-action swipe in the row
 /// schema, an ownership predicate in the expression language - is what would let this move
 /// back into a flow. Until then it lives here, in one testable place.
+///
+/// Note what this type never does: write to an existing message. A message is write-once, and
+/// a request's whole life is the sequence of messages naming it, ordered by `createdAt` -
+/// asked, then accepted, rejected or withdrawn. Accepting, rejecting and cancelling are the
+/// same operation with a different `data.value`.
 @MainActor
 enum EVYMessageRequest {
   /// The transfer kinds a request can ask for. Hard-coded with the rest of this rule.
@@ -35,11 +40,17 @@ enum EVYMessageRequest {
     case recipient
   }
 
-  /// A message's state, all of it. `status` used to hold this.
+  /// A message's state, all of it. A `status` column held part of this and an `archivedAt`
+  /// column the rest; both are gone.
+  ///
+  /// Only `pending` and `accept` mean anything is in flight. `reject` and `cancel` are both
+  /// terminal and read the same way by the item page - they differ in who said it, which is
+  /// worth keeping distinct even though nothing branches on it yet.
   enum Value: String {
     case pending
     case accept
     case reject
+    case cancel
   }
 
   /// The fields answering a request needs: where it pointed, and what it said.
@@ -110,8 +121,11 @@ enum EVYMessageRequest {
     return ownsAddressedRecord ? .recipient : nil
   }
 
-  /// Whether this request has already been answered, from whatever this device holds.
-  static func hasResponse(to request: Request) -> Bool {
+  /// Whether anything has been said about this request yet - accepted, rejected or withdrawn.
+  ///
+  /// Keyed on a message naming it, not on the value that message carries, so it covers a
+  /// cancellation as readily as an answer.
+  static func isSettled(_ request: Request) -> Bool {
     storedMessages().contains { message in
       guard case .dictionary(let data) = message["data"],
         case .string(let answered) = data["message_id"]
@@ -122,7 +136,7 @@ enum EVYMessageRequest {
     }
   }
 
-  /// Answer a request: create the message that says so, then close the request out.
+  /// Answer a request: create the message that says so.
   ///
   /// The decision is a new record - the request is never rewritten to say it was answered.
   /// The response addresses whatever record the request addressed, which is what keeps the
@@ -138,9 +152,19 @@ enum EVYMessageRequest {
   /// newer: the item page reads the latest message for the item and transfer method, so an
   /// answer supersedes the ask by existing.
   static func respond(to request: Request, with value: Value) throws {
-    var responseData = request.data
-    responseData["message_id"] = .string(request.id)
-    responseData["value"] = .string(value.rawValue)
+    try append(value, to: request)
+  }
+
+  /// Withdraw a request. Mechanically the same as answering one - the sender is saying the
+  /// last word about it rather than the recipient - so it goes through the same path.
+  static func cancel(_ request: Request) throws {
+    try append(.cancel, to: request)
+  }
+
+  private static func append(_ value: Value, to request: Request) throws {
+    var data = request.data
+    data["message_id"] = .string(request.id)
+    data["value"] = .string(value.rawValue)
 
     _ = try EVY.create(
       namespace: EVYNamespace.evy,
@@ -149,24 +173,19 @@ enum EVYMessageRequest {
         "fk": .string(request.fk),
         "service": .string(request.service),
         "resource": .string(request.resource),
-        "data": .dictionary(responseData),
+        "data": .dictionary(data),
       ]
     )
   }
 
-  /// Withdraw a request. The sender's own record, and no answer to record.
-  static func cancel(_ request: Request) throws {
-    try archive(request)
-  }
-
   /// What this device may do about a message, if anything.
   ///
-  /// Empty for a response, for an already-answered or archived request, and for a request
-  /// this device is neither side of - which is the case that keeps the affordance off a
-  /// message someone else is dealing with.
+  /// Empty for a response, for a request that has already been settled - answered either way,
+  /// or withdrawn - and for a request this device is neither side of, which is what keeps the
+  /// affordance off a message someone else is dealing with.
   static func swipeActions(for datum: EVYJson?) -> [EVYSwipeAction] {
-    guard let request = classify(datum), !isArchived(datum) else { return [] }
-    guard let role = role(for: request), !hasResponse(to: request) else { return [] }
+    guard let request = classify(datum) else { return [] }
+    guard let role = role(for: request), !isSettled(request) else { return [] }
 
     switch role {
     case .recipient:
@@ -185,28 +204,6 @@ enum EVYMessageRequest {
         }
       ]
     }
-  }
-
-  private static func isArchived(_ datum: EVYJson?) -> Bool {
-    guard case .dictionary(let message) = datum,
-      let archivedAt = message["archivedAt"]
-    else {
-      return false
-    }
-    if case .null = archivedAt { return false }
-    if case .string(let value) = archivedAt { return !value.isEmpty }
-    return true
-  }
-
-  private static func archive(_ request: Request) throws {
-    try EVY.update(
-      namespace: EVYNamespace.evy,
-      resource: EVYCoreResource.messages.rawValue,
-      matching: ["id": .string(request.id)],
-      // Same form `now()` writes, so a hard-coded cancel and an SDUI one are
-      // indistinguishable in the store.
-      changes: ["archivedAt": .string(EVY.nowISO8601())]
-    )
   }
 
   private static func storedMessages() -> [[String: EVYJson]] {

@@ -757,12 +757,7 @@ export const validateFileWithBinary = makeValidator<FileWithBinary>(
 // ISO date-time field validation for data payloads (post-schema).
 
 function isIsoDateTimeFieldName(key: string): boolean {
-	return key === "createdAt" || key === "updatedAt" || key === "archivedAt";
-}
-
-/** archivedAt is null while the record is active */
-function isoDateTimeFieldAllowsNull(key: string): boolean {
-	return key === "archivedAt";
+	return key === "createdAt" || key === "updatedAt";
 }
 
 function throwDataIsoValidationError(path: string, reason: string): never {
@@ -794,9 +789,6 @@ export function assertIsoDateTimeJsonFields(
 	for (const [key, child] of Object.entries(record)) {
 		const path = pathPrefix ? `${pathPrefix}.${key}` : key;
 		if (isIsoDateTimeFieldName(key)) {
-			if (child === null && isoDateTimeFieldAllowsNull(key)) {
-				continue;
-			}
 			if (typeof child === "number" && Number.isFinite(child)) {
 				throwDataIsoValidationError(
 					path,

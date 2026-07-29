@@ -8,10 +8,8 @@
 import Foundation
 
 private let comparisonOperators = [">=", "<=", "==", "!=", ">", "<"]
-// Matches a props object literal with no quoted values. e.g. {archivedAt: now()}, {name: test}
+// Matches a props object literal with no quoted values. e.g. {value: cancel}, {name: test}
 private let propsPattern = "\\{(?!\")[^}^\"]*(?!\")\\}"
-// Matches a parenthesized arg list allowing one level of nested calls,
-// e.g. update(..., {archivedAt: now()}) — matches (a, b), (x, foo(y))
 /// A parenthesised argument list, tolerating **two** levels of nesting inside it - so three
 /// functions deep in total. `formatDatetime(findFirst(sort(c, desc, f), pred).data.time, "…")`
 /// is exactly that, and it is what an accepted request's confirmation row interpolates.
@@ -22,7 +20,7 @@ private let propsPattern = "\\{(?!\")[^}^\"]*(?!\")\\}"
 /// does for arguments.
 private let functionParamsPattern =
   "\\((?:[^()]|\\((?:[^()]|\\([^()]*\\))*\\))*\\)"
-// Matches a function call: identifier followed by its params. e.g. now(), update(id, {archivedAt: now()})
+// Matches a function call: identifier followed by its params. e.g. now(), update(id, {value: cancel})
 private let functionPattern = "[a-zA-Z_][a-zA-Z0-9_]*\(functionParamsPattern)"
 // Matches a numeric array index accessor. e.g. [0], [123]
 private let arrayPattern = "\\[([\\d]*)\\]"

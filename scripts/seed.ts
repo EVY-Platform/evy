@@ -307,7 +307,6 @@ type SeedMessageRow = {
 	fk: string;
 	service: string;
 	resource: string;
-	archivedAt: string | null;
 	createdAt: string;
 	updatedAt: string;
 	data: Record<string, unknown>;
@@ -360,10 +359,6 @@ function buildMessageRows(
 			fk: item.fk,
 			service: item.service,
 			resource: item.resource,
-			archivedAt:
-				item.archivedAt === null || typeof item.archivedAt === "string"
-					? (item.archivedAt ?? null)
-					: null,
 			createdAt,
 			updatedAt,
 			data,

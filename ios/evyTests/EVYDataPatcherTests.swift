@@ -41,7 +41,7 @@ final class EVYDataPatcherTests: XCTestCase {
   func testJsonNullDecodesAndRoundTrips() throws {
     let payload = """
       {"data":[{"service":"s","resource":"r","value":[
-        {"id":"req-1","fk":"item-1","archivedAt":null,"data":{"type":"shipping"}}
+        {"id":"req-1","fk":"item-1","closedAt":null,"data":{"type":"shipping"}}
       ]}]}
       """
     let decoded = try JSONDecoder().decode(SyncResponse.self, from: Data(payload.utf8))
@@ -51,12 +51,12 @@ final class EVYDataPatcherTests: XCTestCase {
     else {
       return XCTFail("expected synced message dictionary")
     }
-    XCTAssertEqual(message["archivedAt"], EVYJson.null)
-    XCTAssertEqual(message["archivedAt"]?.toString(), "")
+    XCTAssertEqual(message["closedAt"], EVYJson.null)
+    XCTAssertEqual(message["closedAt"]?.toString(), "")
 
     let reencoded = try JSONEncoder().encode(message)
     let json =
       try JSONSerialization.jsonObject(with: reencoded) as? [String: Any]
-    XCTAssertTrue(json?["archivedAt"] is NSNull, "null should round-trip as JSON null")
+    XCTAssertTrue(json?["closedAt"] is NSNull, "null should round-trip as JSON null")
   }
 }

@@ -817,26 +817,28 @@ final class InterpreterTests: XCTestCase {
     XCTAssertEqual(countBefore, countAfter)
   }
 
-  func testFindFirstExpressionReturnsActiveMessageWhenArchivedComesFirst() throws {
+  func testFindFirstExpressionReturnsUnansweredMessageWhenAnswerComesFirst() throws {
     let messagesKey = uniqueKey("messages")
     let itemKey = uniqueKey("item")
     let itemId = UUID().uuidString
-    let archivedId = UUID().uuidString
-    let activeId = UUID().uuidString
+    let answerId = UUID().uuidString
+    let requestId = UUID().uuidString
 
     try store(
       .array([
+        // The answer is stored first, so a null test is the only thing that can skip it.
         EVYTestMessageFixtures.message(
-          id: archivedId,
+          id: answerId,
           fk: itemId,
-          archivedAt: .string("2026-06-02T00:00:00Z"),
-          type: "pickup"
+          type: "pickup",
+          value: "accept",
+          messageId: requestId
         ),
         EVYTestMessageFixtures.message(
-          id: activeId,
+          id: requestId,
           fk: itemId,
-          archivedAt: .null,
-          type: "pickup"
+          type: "pickup",
+          value: "pending"
         ),
       ]),
       at: "\(MarketplaceTestFixture.serviceId):\(messagesKey)"
@@ -844,9 +846,9 @@ final class InterpreterTests: XCTestCase {
     try store(.dictionary(["id": .string(itemId)]), at: itemKey)
 
     let result = try parseTextFromText(
-      "{findFirst(\(messagesKey), fk == \(itemKey).id && archivedAt == null).id}")
+      "{findFirst(\(messagesKey), fk == \(itemKey).id && data.message_id == null).id}")
 
-    XCTAssertEqual(result.value, activeId)
+    XCTAssertEqual(result.value, requestId)
   }
 
   func testFindFirstExpressionFiltersByUnquotedLiteralValue() throws {
@@ -860,7 +862,6 @@ final class InterpreterTests: XCTestCase {
         EVYTestMessageFixtures.message(
           id: messageId,
           fk: itemId,
-          archivedAt: .null,
           type: "pickup",
           value: "accept",
           time: "2026-06-03T09:00:00"
@@ -871,10 +872,10 @@ final class InterpreterTests: XCTestCase {
     try store(.dictionary(["id": .string(itemId)]), at: itemKey)
 
     let pendingResult = try parseTextFromText(
-      "{findFirst(\(messagesKey), fk == \(itemKey).id && archivedAt == null && data.value == pending).id}"
+      "{findFirst(\(messagesKey), fk == \(itemKey).id && data.value == pending).id}"
     )
     let acceptedResult = try parseTextFromText(
-      "{findFirst(\(messagesKey), fk == \(itemKey).id && archivedAt == null && data.value == accept).id}"
+      "{findFirst(\(messagesKey), fk == \(itemKey).id && data.value == accept).id}"
     )
 
     XCTAssertEqual(pendingResult.value, "")
@@ -891,7 +892,6 @@ final class InterpreterTests: XCTestCase {
         EVYTestMessageFixtures.message(
           id: UUID().uuidString,
           fk: itemId,
-          archivedAt: .null,
           type: "pickup",
           value: "accept",
           time: "2026-06-03T09:00:00"
@@ -902,7 +902,7 @@ final class InterpreterTests: XCTestCase {
     try store(.dictionary(["id": .string(itemId)]), at: itemKey)
 
     let acceptedFindFirst =
-      "findFirst(\(messagesKey), fk == \(itemKey).id && archivedAt == null && data.value == accept)"
+      "findFirst(\(messagesKey), fk == \(itemKey).id && data.value == accept)"
     let day = try parseTextFromText(
       "{formatDatetime(\(acceptedFindFirst).data.time, \"EEE do\")}")
     let time = try parseTextFromText(
@@ -916,7 +916,7 @@ final class InterpreterTests: XCTestCase {
     let messagesKey = uniqueKey("messages")
     let itemKey = uniqueKey("item")
     let expression =
-      "{findFirst(\(messagesKey), fk == \(itemKey).id && archivedAt == null && data.value == pending).fk == \(itemKey).id}"
+      "{findFirst(\(messagesKey), fk == \(itemKey).id && data.value == pending).fk == \(itemKey).id}"
 
     let targets = EVY.watchTargets(for: expression)
 
@@ -948,25 +948,26 @@ final class InterpreterTests: XCTestCase {
     XCTAssertEqual(result.value, "Good")
   }
 
-  func testFindFirstNotNullMatchesArchivedRecord() throws {
+  func testFindFirstNotNullMatchesAnsweringRecord() throws {
     let messagesKey = uniqueKey("messages")
     let itemKey = uniqueKey("item")
     let itemId = UUID().uuidString
-    let archivedId = UUID().uuidString
+    let answerId = UUID().uuidString
 
     try store(
       .array([
         EVYTestMessageFixtures.message(
-          id: archivedId,
+          id: answerId,
           fk: itemId,
-          archivedAt: .string("2026-06-02T00:00:00Z"),
-          type: "pickup"
+          type: "pickup",
+          value: "accept",
+          messageId: UUID().uuidString
         ),
         EVYTestMessageFixtures.message(
           id: UUID().uuidString,
           fk: itemId,
-          archivedAt: .null,
-          type: "pickup"
+          type: "pickup",
+          value: "pending"
         ),
       ]),
       at: "\(MarketplaceTestFixture.serviceId):\(messagesKey)"
@@ -974,9 +975,9 @@ final class InterpreterTests: XCTestCase {
     try store(.dictionary(["id": .string(itemId)]), at: itemKey)
 
     let result = try parseTextFromText(
-      "{findFirst(\(messagesKey), fk == \(itemKey).id && archivedAt != null).id}")
+      "{findFirst(\(messagesKey), fk == \(itemKey).id && data.message_id != null).id}")
 
-    XCTAssertEqual(result.value, archivedId)
+    XCTAssertEqual(result.value, answerId)
   }
 
   func testFindFirstOrExpressionMatchesEitherStatus() throws {
@@ -990,7 +991,6 @@ final class InterpreterTests: XCTestCase {
         EVYTestMessageFixtures.message(
           id: acceptedId,
           fk: itemId,
-          archivedAt: .null,
           type: "pickup",
           value: "accept"
         )
@@ -1181,8 +1181,7 @@ final class InterpreterTests: XCTestCase {
       .array([
         EVYTestMessageFixtures.message(
           id: UUID().uuidString,
-          fk: itemId,
-          archivedAt: .null
+          fk: itemId
         )
       ]),
       at: "\(MarketplaceTestFixture.serviceId):\(messagesKey)"
@@ -1191,7 +1190,7 @@ final class InterpreterTests: XCTestCase {
 
     XCTAssertThrowsError(
       try parseTextFromText(
-        "{findFirst(\(messagesKey), \(itemKey).id, fk, null, archivedAt).id}")
+        "{findFirst(\(messagesKey), \(itemKey).id, fk, null, createdAt).id}")
     )
   }
 
