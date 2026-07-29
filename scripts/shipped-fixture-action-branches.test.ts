@@ -88,6 +88,37 @@ describe("shipped fixtures satisfy the row schema", () => {
 		expect(rejected).toEqual([]);
 	});
 
+	/**
+	 * A marketplace item is public and the address it links to is private, so the
+	 * public page reads the pickup location off the item. Linking an address
+	 * without copying those fields leaves a page that renders a blank map and no
+	 * location - which no other test notices, because nothing errors.
+	 */
+	test("linking a pickup address also copies the public location", () => {
+		const ADDRESS_ID = "transfer_options.pickup.address_id";
+		const REQUIRED = [
+			"transfer_options.pickup.postcode",
+			"transfer_options.pickup.latitude",
+			"transfer_options.pickup.longitude",
+		];
+		const incomplete: string[] = [];
+
+		for (const { source, branch } of fixtureBranches) {
+			if (!branch || typeof branch !== "object") continue;
+			const changes = (branch as { changes?: unknown }).changes;
+			if (!changes || typeof changes !== "object") continue;
+			const keys = Object.keys(changes as Record<string, unknown>);
+			if (!keys.includes(ADDRESS_ID)) continue;
+
+			const missing = REQUIRED.filter((field) => !keys.includes(field));
+			if (missing.length > 0) {
+				incomplete.push(`${source}: missing ${missing.join(", ")}`);
+			}
+		}
+
+		expect(incomplete).toEqual([]);
+	});
+
 	test("covers the action functions the flows rely on", () => {
 		const functions = new Set(
 			fixtureBranches

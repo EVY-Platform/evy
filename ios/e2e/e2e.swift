@@ -3900,6 +3900,10 @@ final class E2EPlaceSearchTests: E2ETestBase {
     let sheetStillOpen = searchField.waitForExistence(timeout: 2)
     XCTAssertFalse(sheetStillOpen, "Search sheet should dismiss after selecting a result")
 
+    // This flow's row renders `formatAddress(pickup_address)` - the picker's own
+    // draft, on the screen of the person choosing the address. Showing the street
+    // here is correct; it is the *public item page* that reads only the postcode
+    // copied onto the item.
     let formattedAddress = app.staticTexts.matching(
       NSPredicate(format: "label CONTAINS[c] 'NSW' OR label CONTAINS[c] 'Australia'")
     ).firstMatch

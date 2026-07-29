@@ -147,7 +147,10 @@
 				"pickup": {
 					"selection": ["2026-06-03T09:00:00", "2026-06-03T09:30:00"],
 					"lead_time_hours": "24",
-					"address_id": "c81e85dd-f7fb-4310-8fc6-7c018aeaf82a"
+					"address_id": "c81e85dd-f7fb-4310-8fc6-7c018aeaf82a",
+					"postcode": "2018",
+					"latitude": -33.9172075,
+					"longitude": 151.1985883
 				},
 				"delivery": {
 					"selection": ["2026-06-03T14:00:00"],
@@ -194,7 +197,10 @@
 				"pickup": {
 					"selection": ["2026-06-03T10:00:00"],
 					"lead_time_hours": "24",
-					"address_id": "9d04047d-cd13-4dc6-82e6-85a3e4ef0d6b"
+					"address_id": "9d04047d-cd13-4dc6-82e6-85a3e4ef0d6b",
+					"postcode": "2000",
+					"latitude": -33.867787,
+					"longitude": 151.209503
 				},
 				"delivery": {
 					"selection": ["2026-06-03T15:00:00", "2026-06-03T15:30:00"],
