@@ -12,7 +12,7 @@
 						"id": "8d5b9e32-ac4e-5f7b-b2d3-9e8f4a6c0b12",
 						"type": "Text",
 						"title": "{$datum.data.type} request",
-						"subtitle": "{$datum.status}",
+						"subtitle": "{$datum.data.time}",
 						"swipeLabel": "::check::",
 						"visible": "true",
 						"name": "Message search result",
@@ -22,16 +22,32 @@
 									"condition": "",
 									"false": "",
 									"true": {
+										"fn": "create",
+										"service": "475731ac-31aa-4d65-94d2-7032782ae359",
+										"resource": "messages",
+										"mode": "inline",
+										"data": {
+											"fk": "$datum.fk",
+											"service": "$datum.service",
+											"resource": "$datum.resource",
+											"archivedAt": "null",
+											"data": "{message_id: $datum.id, value: accept, type: $datum.data.type}"
+										}
+									}
+								},
+								{
+									"condition": "",
+									"false": "",
+									"true": {
 										"fn": "update",
 										"service": "475731ac-31aa-4d65-94d2-7032782ae359",
 										"resource": "messages",
 										"mode": "store",
 										"filter": {
-											"id": "$datum.id",
-											"status": "pending"
+											"id": "$datum.id"
 										},
 										"changes": {
-											"status": "accepted"
+											"archivedAt": "now()"
 										}
 									}
 								}
