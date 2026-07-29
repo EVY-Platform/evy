@@ -42,14 +42,15 @@ enum EVYMessageRequest {
     case reject
   }
 
-  /// The fields answering a request needs. Deliberately not the whole message: a response
-  /// mirrors where the request pointed, and nothing else about it carries over.
+  /// The fields answering a request needs: where it pointed, and what it said.
   struct Request: Equatable {
     let id: String
     let fk: String
     let service: String
     let resource: String
     let type: String
+    /// The request's whole `data`, because the response carries it forward. See `respond`.
+    let data: [String: EVYJson]
   }
 
   /// A message-shaped datum that is an open transfer request.
@@ -69,7 +70,8 @@ enum EVYMessageRequest {
     else {
       return nil
     }
-    return Request(id: id, fk: fk, service: service, resource: resource, type: type)
+    return Request(
+      id: id, fk: fk, service: service, resource: resource, type: type, data: data)
   }
 
   /// Whether a message answers another one, rather than asking for something.
@@ -122,15 +124,24 @@ enum EVYMessageRequest {
 
   /// Answer a request: create the message that says so, then close the request out.
   ///
-  /// The decision is a new record - the request is never rewritten to say it was
-  /// answered. The response addresses whatever record the request addressed, which is
-  /// what keeps the item page able to find it, and copies `type` because `findFirst`
-  /// predicates cannot nest to look it up from the request.
+  /// The decision is a new record - the request is never rewritten to say it was answered.
+  /// The response addresses whatever record the request addressed, which is what keeps the
+  /// item page able to find it.
+  ///
+  /// It also **carries the request's `data` forward**, overriding only `value` and adding
+  /// `message_id`. That is not redundancy: `findFirst` predicates cannot nest, so a lookup
+  /// that finds the response cannot reach through it to the request. Anything the accepted
+  /// state displays - the pickup time, the shipping postcode - has to be on the message
+  /// that says "accepted", or the confirmation row renders with nothing in it.
   ///
   /// Archiving is what lets a rejected request be replaced by a new one: the item page's
   /// "is anything in flight?" gate is a flat `findFirst`, so it cannot ask for a request
   /// with no response.
   static func respond(to request: Request, with value: Value) throws {
+    var responseData = request.data
+    responseData["message_id"] = .string(request.id)
+    responseData["value"] = .string(value.rawValue)
+
     _ = try EVY.create(
       namespace: EVYNamespace.evy,
       resource: EVYCoreResource.messages.rawValue,
@@ -138,11 +149,7 @@ enum EVYMessageRequest {
         "fk": .string(request.fk),
         "service": .string(request.service),
         "resource": .string(request.resource),
-        "data": .dictionary([
-          "message_id": .string(request.id),
-          "value": .string(value.rawValue),
-          "type": .string(request.type),
-        ]),
+        "data": .dictionary(responseData),
       ]
     )
     try archive(request)

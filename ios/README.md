@@ -2,6 +2,15 @@
 
 The EVY app! Open Xcode, hit run, and Bob's your uncle.
 
+### One piece of behaviour that is not server-driven
+
+Almost everything the app shows comes from synced flows. The exception is
+[`EVY+MessageRequests.swift`](evy/Core/EVY+MessageRequests.swift): who may accept or reject a
+transfer request, and what answering one does. If you are looking for the flow that puts the
+accept/reject buttons on a message row, there isn't one — the file explains the three gaps in
+SDUI that keep it here, and [`docs/evy/sdui.md`](../docs/evy/sdui.md#swipe-swipe-left) records
+the same thing from the flow-authoring side.
+
 ### Prerequisites
 
 The Xcode project references generated Swift types under `types/generated/swift`, which are gitignored and produced by codegen. On a fresh checkout, run this from the repo root **before** opening Xcode or building:

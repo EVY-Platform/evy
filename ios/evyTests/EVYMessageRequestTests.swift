@@ -236,7 +236,12 @@ final class EVYMessageRequestTests: XCTestCase {
     }
     XCTAssertEqual(data["message_id"], .string(requestId))
     XCTAssertEqual(data["value"], .string("accept"))
-    XCTAssertEqual(data["type"], .string("pickup"), "copied so lookups stay flat")
+    // The request's payload carries forward, because a flat `findFirst` that finds the
+    // response cannot reach through it to the request for the details it displays.
+    XCTAssertEqual(data["type"], .string("pickup"))
+    XCTAssertEqual(
+      data["time"], .string("2026-06-03T09:00:00"),
+      "the accepted state has to be able to show the time that was agreed")
     XCTAssertEqual(response["fk"], .string(itemId))
     XCTAssertEqual(response["service"], .string(itemService))
     XCTAssertEqual(response["resource"], .string(itemResource))

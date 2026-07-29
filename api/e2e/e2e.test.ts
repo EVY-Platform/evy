@@ -235,5 +235,78 @@ describe("API E2E Tests", () => {
 			expect(updated.name).toBe("Updated Flow Name");
 			expect(updated.pageIds).toEqual([]);
 		});
+
+		/**
+		 * The round trip a request response has to make, over the real transport.
+		 *
+		 * A response addresses whatever record its request addressed, so the recipient
+		 * rule delivers it to that record's owner - the party who just answered. The
+		 * asker owns neither the response nor that record, only the request, so their
+		 * copy of the answer depends entirely on the response rule.
+		 */
+		it("sync delivers a response to the sender of the message it answers", async () => {
+			const itemService = crypto.randomUUID();
+			const itemResource = crypto.randomUUID();
+			const itemId = crypto.randomUUID();
+
+			const request = await client.call("create", {
+				service: EVY_CORE_SERVICE,
+				resource: EVY_CORE_RESOURCE.MESSAGES,
+				data: {
+					fk: itemId,
+					service: itemService,
+					resource: itemResource,
+					visibility: "private",
+					data: { type: "pickup", value: "pending" },
+				},
+			});
+
+			// The recipient answers: a new message, never an edit to the request.
+			const response = await client.call("create", {
+				service: EVY_CORE_SERVICE,
+				resource: EVY_CORE_RESOURCE.MESSAGES,
+				data: {
+					fk: itemId,
+					service: itemService,
+					resource: itemResource,
+					visibility: "private",
+					data: {
+						message_id: request.id,
+						value: "accept",
+						type: "pickup",
+					},
+				},
+			});
+
+			// The sender declares only the request it created.
+			const synced = await client.call("sync", {
+				ownedServiceResources: [
+					{
+						service: EVY_CORE_SERVICE,
+						resource: EVY_CORE_RESOURCE.MESSAGES,
+						ids: [request.id],
+					},
+				],
+			});
+
+			const messages =
+				synced.data.find(
+					(row: { resource: string }) =>
+						row.resource === EVY_CORE_RESOURCE.MESSAGES,
+				)?.value ?? [];
+			const ids = messages.map((message: { id: string }) => message.id);
+
+			expect(ids).toContain(request.id);
+			expect(ids).toContain(response.id);
+
+			const delivered = messages.find(
+				(message: { id: string }) => message.id === response.id,
+			);
+			expect(delivered.data).toMatchObject({
+				message_id: request.id,
+				value: "accept",
+				type: "pickup",
+			});
+		});
 	});
 });

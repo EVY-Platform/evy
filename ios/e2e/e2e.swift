@@ -681,28 +681,65 @@ class E2ETestBase: XCTestCase {
     return false
   }
 
-  func waitForMessageStatus(
+  /// Waits for the message that answers `messageId` to reach the server.
+  ///
+  /// A decision is a new record rather than an edit to the one that asked, so this looks
+  /// for a message naming the request in `data.message_id` - not for a changed field on
+  /// the request itself.
+  func waitForMessageResponse(
     emitter: WSEmitter,
     messageId: String,
-    status: String
+    value: String
   ) async throws -> Bool {
     try await waitForResourceUpdate(
       emitter: emitter,
       service: EVY_CORE_SERVICE,
       resource: EVYCoreResource.messages.rawValue
-    ) { Self.messageHasStatus($0, messageId: messageId, status: status) }
+    ) { Self.messageHasResponse($0, messageId: messageId, value: value) }
   }
 
-  static func messageHasStatus(
+  static func messageHasResponse(
     _ messages: Any,
     messageId: String,
-    status: String
+    value: String
   ) -> Bool {
     guard let messageRows = responseDataArray(from: messages) else { return false }
     return messageRows.contains { message in
       guard let messageData = message as? [String: Any],
+        let data = messageData["data"] as? [String: Any],
+        data["message_id"] as? String == messageId,
+        data["value"] as? String == value
+      else { return false }
+      return true
+    }
+  }
+
+  static func nowIso() -> String {
+    ISO8601DateFormatter().string(from: Date())
+  }
+
+  /// Scrolls the enclosing scroll view until `element` can actually be interacted with.
+  /// `exists` is true for an offscreen row, and swiping one fails with an empty frame.
+  @MainActor
+  func scrollUntilHittable(_ element: XCUIElement, attempts: Int = 6) -> Bool {
+    if element.isHittable { return true }
+    let scrollView = app.scrollViews.firstMatch
+    for _ in 0..<attempts {
+      scrollView.swipeUp()
+      if element.isHittable { return true }
+    }
+    return element.isHittable
+  }
+
+  /// Whether the request itself has been closed out. Answering archives it, and so does
+  /// cancelling, which is what lets a rejected request be replaced by a new one.
+  static func messageIsArchived(_ messages: Any, messageId: String) -> Bool {
+    guard let messageRows = responseDataArray(from: messages) else { return false }
+    return messageRows.contains { message in
+      guard let messageData = message as? [String: Any],
         messageData["id"] as? String == messageId,
-        messageData["status"] as? String == status
+        let archivedAt = messageData["archivedAt"] as? String,
+        !archivedAt.isEmpty
       else { return false }
       return true
     }
@@ -1152,17 +1189,22 @@ class E2ETestBase: XCTestCase {
     let messagesResourceId = EVYCoreResource.messages.rawValue
     let itemId = MARKETPLACE_ITEMS_RESOURCE_ID
     let hasActive =
-      "{findFirst(\(messagesResourceId), fk == \(itemId).id && archivedAt == null && status == pending).fk == \(itemId).id}"
+      "{findFirst(\(messagesResourceId), fk == \(itemId).id && archivedAt == null && data.value == pending).fk == \(itemId).id}"
+    // Nothing unanswered in flight, and nothing already accepted. Answering archives the
+    // request, so `archivedAt` alone would let the pickers back once it was accepted.
     let noActive =
-      "{findFirst(\(messagesResourceId), fk == \(itemId).id && archivedAt == null).fk != \(itemId).id}"
+      "{findFirst(\(messagesResourceId), fk == \(itemId).id && archivedAt == null && data.value == pending).fk != \(itemId).id"
+      + " && findFirst(\(messagesResourceId), fk == \(itemId).id && data.value == accept).fk != \(itemId).id}"
     return (hasActive, noActive)
   }
 
+  /// A separate message says a request was accepted, and a response is never archived -
+  /// only the request it answers is.
   static func acceptedRequestFindFirstExpression(type: String) -> String {
     let messagesResourceId = EVYCoreResource.messages.rawValue
     let itemId = MARKETPLACE_ITEMS_RESOURCE_ID
     return
-      "findFirst(\(messagesResourceId), fk == \(itemId).id && archivedAt == null && status == accepted && data.type == \(type))"
+      "findFirst(\(messagesResourceId), fk == \(itemId).id && data.type == \(type) && data.value == accept)"
   }
 
   static func acceptedRequestVisibilityExpression(type: String) -> String {
@@ -1179,19 +1221,23 @@ class E2ETestBase: XCTestCase {
     let messagesResourceId = EVYCoreResource.messages.rawValue
     let itemId = MARKETPLACE_ITEMS_RESOURCE_ID
     return
-      "findFirst(\(messagesResourceId), fk == \(itemId).id && archivedAt == null && data.type == \(type))"
+      "findFirst(\(messagesResourceId), fk == \(itemId).id && archivedAt == null && data.type == \(type) && data.value == pending)"
   }
 
+  /// The request container also stays up once the request has been accepted - that is
+  /// where the confirmation row lives.
   static func activeRequestVisibilityExpression(type: String) -> String {
-    let itemId = MARKETPLACE_ITEMS_RESOURCE_ID
-    return "{\(activeRequestFindFirstExpression(type: type)).fk == \(itemId).id}"
-  }
-
-  static func pendingRequestVisibilityExpression(type: String) -> String {
     let messagesResourceId = EVYCoreResource.messages.rawValue
     let itemId = MARKETPLACE_ITEMS_RESOURCE_ID
-    return
-      "{findFirst(\(messagesResourceId), fk == \(itemId).id && archivedAt == null && status == pending && data.type == \(type)).fk == \(itemId).id}"
+    return "{\(activeRequestFindFirstExpression(type: type)).fk == \(itemId).id"
+      + " || findFirst(\(messagesResourceId), fk == \(itemId).id && data.type == \(type) && data.value == accept).fk == \(itemId).id}"
+  }
+
+  /// Cancel deliberately gets neither an accepted term nor the container's `||`: it has to
+  /// disappear the moment the request is answered.
+  static func pendingRequestVisibilityExpression(type: String) -> String {
+    let itemId = MARKETPLACE_ITEMS_RESOURCE_ID
+    return "{\(activeRequestFindFirstExpression(type: type)).fk == \(itemId).id}"
   }
 
   static func cancelRequestButtonLabel(type: String) -> String {
@@ -1231,15 +1277,15 @@ class E2ETestBase: XCTestCase {
     let messagesResourceId = EVYCoreResource.messages.rawValue
     let visibility = cancelRequestVisibilityExpressions()
     let messageEnvelope =
-      "fk: \(MARKETPLACE_ITEMS_RESOURCE_ID).id, service: \"\(MARKETPLACE_SERVICE)\", resource: \"\(MARKETPLACE_ITEMS_RESOURCE_ID)\", archivedAt: null, status: \"pending\""
+      "fk: \(MARKETPLACE_ITEMS_RESOURCE_ID).id, service: \"\(MARKETPLACE_SERVICE)\", resource: \"\(MARKETPLACE_ITEMS_RESOURCE_ID)\", archivedAt: null"
     let pickupCreateAction =
-      "{create(\(EVY_CORE_SERVICE),\(messagesResourceId),{\(messageEnvelope), data: {type: pickup, time: selected_pickup_timeslot}})}"
+      "{create(\(EVY_CORE_SERVICE),\(messagesResourceId),{\(messageEnvelope), data: {type: pickup, value: pending, time: selected_pickup_timeslot}})}"
     let deliveryCreateAction =
-      "{create(\(EVY_CORE_SERVICE),\(messagesResourceId),{\(messageEnvelope), data: {type: delivery, time: selected_delivery_timeslot}})}"
+      "{create(\(EVY_CORE_SERVICE),\(messagesResourceId),{\(messageEnvelope), data: {type: delivery, value: pending, time: selected_delivery_timeslot}})}"
     let shippingCreateAction =
-      "{create(\(EVY_CORE_SERVICE),\(messagesResourceId),{\(messageEnvelope), data: {type: shipping, postalcode: shipping_address.postcode}})}"
+      "{create(\(EVY_CORE_SERVICE),\(messagesResourceId),{\(messageEnvelope), data: {type: shipping, value: pending, postalcode: shipping_address.postcode}})}"
     let cancelAction =
-      "{update(\(EVY_CORE_SERVICE),\(messagesResourceId),{fk: \(MARKETPLACE_ITEMS_RESOURCE_ID).id, archivedAt: null, status: \"pending\"},{archivedAt: now()})}"
+      "{update(\(EVY_CORE_SERVICE),\(messagesResourceId),{fk: \(MARKETPLACE_ITEMS_RESOURCE_ID).id, archivedAt: null},{archivedAt: now()})}"
 
     return [
       "id": flowId,
@@ -1717,11 +1763,11 @@ class E2ETestBase: XCTestCase {
   static func viewItemRequestFlowData(flowId: String, pageId: String) -> [String: Any] {
     let messagesResourceId = EVYCoreResource.messages.rawValue
     let messageEnvelope =
-      "fk: \(MARKETPLACE_ITEMS_RESOURCE_ID).id, service: \"\(MARKETPLACE_SERVICE)\", resource: \"\(MARKETPLACE_ITEMS_RESOURCE_ID)\", archivedAt: null, status: \"pending\""
+      "fk: \(MARKETPLACE_ITEMS_RESOURCE_ID).id, service: \"\(MARKETPLACE_SERVICE)\", resource: \"\(MARKETPLACE_ITEMS_RESOURCE_ID)\", archivedAt: null"
     let pickupCreateAction =
-      "{create(\(EVY_CORE_SERVICE),\(messagesResourceId),{\(messageEnvelope), data: {type: pickup, time: selected_pickup_timeslot}})}"
+      "{create(\(EVY_CORE_SERVICE),\(messagesResourceId),{\(messageEnvelope), data: {type: pickup, value: pending, time: selected_pickup_timeslot}})}"
     let shippingCreateAction =
-      "{create(\(EVY_CORE_SERVICE),\(messagesResourceId),{\(messageEnvelope), data: {type: shipping, postalcode: shipping_address.postcode}})}"
+      "{create(\(EVY_CORE_SERVICE),\(messagesResourceId),{\(messageEnvelope), data: {type: shipping, value: pending, postalcode: shipping_address.postcode}})}"
 
     return [
       "id": flowId,
@@ -1762,6 +1808,62 @@ class E2ETestBase: XCTestCase {
       ],
     ]
   }
+
+  /// Requesting and the inbox on one page, so the affordance offered on a request can be
+  /// checked without navigating away from what created it.
+  static func senderViewFlowData(flowId: String, pageId: String) -> [String: Any] {
+    let messagesResourceId = EVYCoreResource.messages.rawValue
+    let createAction =
+      "{create(\(EVY_CORE_SERVICE),\(messagesResourceId),{fk: \(MARKETPLACE_ITEMS_RESOURCE_ID).id,"
+      + " service: \"\(MARKETPLACE_SERVICE)\", resource: \"\(MARKETPLACE_ITEMS_RESOURCE_ID)\","
+      + " archivedAt: null, data: {type: pickup, value: pending, time: selected_pickup_timeslot}})}"
+
+    let picker = Self.timeslotPickerRow(
+      id: "20000000-0000-4000-8000-000000000001",
+      source: "{\(MARKETPLACE_ITEMS_RESOURCE_ID).pickup_selection}",
+      actions: [Self.rowAction(true: "{show(b8c7d6e5-f4a3-4b2c-9d1e-0f8a7b6c5d4e)}")],
+      name: "Pickup request times",
+      sheet: Self.pickupConfirmationSheetChild(pickupCreateAction: createAction)
+    )
+
+    // No `swipe-left` here: on a transfer request iOS supplies the affordance, and what it
+    // supplies depends on which side of the request this device is on.
+    let messageSearch: [String: Any] = [
+      "id": senderMessageSearchRowId,
+      "type": "Search",
+      "visible": "true",
+      "title": "",
+      "placeholder": "Filter messages by type",
+      "source": "{\(messagesResourceId)}",
+      "destination": "",
+      "actions": [:],
+      "name": "Search messages",
+      "child": [
+        "id": senderMessageChildRowId,
+        "type": "Text",
+        "title": "{$datum.data.type} request",
+        "subtitle": "{$datum.data.time}",
+        "visible": "true",
+        "actions": [:],
+        "name": "Message search result",
+      ],
+    ]
+
+    return [
+      "id": flowId,
+      "name": "E2E Message Sender",
+      "pages": [
+        [
+          "id": pageId,
+          "title": "Requests",
+          "rows": [picker, messageSearch],
+        ]
+      ],
+    ]
+  }
+
+  static let senderMessageSearchRowId = "20000000-0000-4000-8000-000000000002"
+  static let senderMessageChildRowId = "20000000-0000-4000-8000-000000000003"
 
   static func sheetTitleReactivityFlowData(flowId: String, pageId: String) -> [String: Any] {
     [
@@ -2695,7 +2797,7 @@ final class WebSocketE2ETests: E2ETestBase {
       Self.responseDataArray(from: messagesPayload),
       "Messages payload should be an array"
     )
-    var acceptedMessage = try XCTUnwrap(
+    let request = try XCTUnwrap(
       messageRows.compactMap { $0 as? [String: Any] }.first {
         $0["id"] as? String != nil
           && ($0["data"] as? [String: Any])?["type"] as? String == "pickup"
@@ -2704,28 +2806,48 @@ final class WebSocketE2ETests: E2ETestBase {
       "Created pickup message should be readable from the API"
     )
     let messageId = try XCTUnwrap(
-      acceptedMessage["id"] as? String,
+      request["id"] as? String,
       "Created pickup message should include an id"
     )
-    acceptedMessage["status"] = "accepted"
+
+    // Accepting is a new message naming the request, not an edit to it - and it carries
+    // the request's payload forward. `findFirst` predicates cannot nest, so the row that
+    // says "Pickup confirmed for …" reads the time off the message that says "accepted".
+    _ = try await emitter.createResource(
+      service: EVY_CORE_SERVICE,
+      resource: EVYCoreResource.messages.rawValue,
+      data: [
+        "fk": selectedItemId,
+        "service": MARKETPLACE_SERVICE,
+        "resource": MARKETPLACE_ITEMS_RESOURCE_ID,
+        "visibility": "private",
+        "data": [
+          "message_id": messageId,
+          "value": "accept",
+          "type": "pickup",
+          "time": selectedTimeslot,
+        ],
+      ]
+    )
+    // Answering closes the request out, which is what lets a rejected one be replaced.
     _ = try await emitter.updateResource(
       service: EVY_CORE_SERVICE,
       resource: EVYCoreResource.messages.rawValue,
       filter: ["id": messageId],
-      data: acceptedMessage
+      data: request.merging(["archivedAt": Self.nowIso()]) { _, new in new }
     )
-    let acceptedOnServer = try await waitForMessageStatus(
+    let acceptedOnServer = try await waitForMessageResponse(
       emitter: emitter,
       messageId: messageId,
-      status: "accepted"
+      value: "accept"
     )
     XCTAssertTrue(
       acceptedOnServer,
-      "Marketplace should persist accepted status for the pickup message")
+      "The API should persist the message that accepts the pickup request")
 
     XCTAssertTrue(
       waitForCancelRequestHidden(timeout: 10),
-      "Cancel pickup request should hide once the message is accepted")
+      "Cancel pickup request should hide once the request is answered")
     XCTAssertTrue(
       app.staticTexts.matching(
         NSPredicate(format: "label BEGINSWITH %@", "Pickup confirmed for")
@@ -2742,6 +2864,119 @@ final class WebSocketE2ETests: E2ETestBase {
       "Shipping confirmation should stay hidden for an accepted pickup request")
 
     await emitter.disconnect()
+  }
+
+  /// This class creates its items through the emitter, so the app never owns one - the only
+  /// messages it can be a party to are the requests it sends itself. Which makes it the
+  /// sender, and nothing else.
+  @MainActor
+  func testSenderIsOfferedCancelAndCannotAnswerItsOwnRequest() async throws {
+    let viewItemButton = app.buttons["View"]
+    XCTAssertTrue(
+      viewItemButton.waitForExistence(timeout: 20),
+      "Home screen not loaded - verify API is running and database is seeded")
+
+    let emitter = WSEmitter()
+    try await emitter.connect(host: apiHost)
+    try await emitter.login(token: "e2e-test", os: "ios")
+    let selectedTimeslot = "2026-06-03T09:00:00"
+    let (itemId, _) = try await createMarketplaceItem(
+      emitter: emitter,
+      titlePrefix: "Sender cancel item",
+      pickupSelection: [selectedTimeslot]
+    )
+
+    // The picker reads the item bound by the page's `id` query param, so the request page
+    // has to be navigated to rather than being the home page.
+    _ = try await openViewItemPage(
+      emitter: emitter,
+      labelPrefix: "Sender cancel",
+      itemId: itemId,
+      viewFlowDataBuilder: E2ETestBase.senderViewFlowData,
+      buttonExistenceMessage: "Sender request view button should load"
+    )
+    try await emitter.subscribe(event: "dataChanged")
+
+    let timeslot = app.staticTexts["09:00"].firstMatch
+    XCTAssertTrue(timeslot.waitForExistence(timeout: 15), "Pickup timeslot should be visible")
+    timeslot.tap()
+    XCTAssertTrue(
+      waitForConfirmationSheet(timeout: 5),
+      "Pickup confirmation sheet should appear after selecting a timeslot")
+    tapConfirmationSheetRequestButton()
+
+    let requestId = try await waitForCreatedRequestId(emitter: emitter, itemId: itemId)
+    let childRowId = E2ETestBase.senderMessageChildRowId
+
+    let row = app.otherElements["swipeRow_\(childRowId)_\(requestId)"]
+    XCTAssertTrue(
+      row.waitForExistence(timeout: 10),
+      "The request this device just sent should appear in its own message list")
+    // The message list sits below a full-height timeslot picker, so the row exists long
+    // before it is reachable.
+    XCTAssertTrue(
+      scrollUntilHittable(row),
+      "The request row should be reachable after scrolling")
+    row.swipeLeft(velocity: .slow)
+
+    XCTAssertTrue(
+      app.buttons["swipeCancel_\(childRowId)_\(requestId)"].waitForExistence(timeout: 3),
+      "The sender should be offered cancel")
+    XCTAssertFalse(
+      app.buttons["swipeAccept_\(childRowId)_\(requestId)"].exists,
+      "The sender must not be able to accept its own request")
+    XCTAssertFalse(
+      app.buttons["swipeReject_\(childRowId)_\(requestId)"].exists,
+      "The sender must not be able to reject its own request")
+
+    app.buttons["swipeCancel_\(childRowId)_\(requestId)"].tap()
+
+    // Cancelling closes the request out and answers nothing.
+    let cancelled = try await waitForResourceUpdate(
+      emitter: emitter,
+      service: EVY_CORE_SERVICE,
+      resource: EVYCoreResource.messages.rawValue
+    ) { Self.messageIsArchived($0, messageId: requestId) }
+    XCTAssertTrue(cancelled, "Cancelling should archive the request")
+
+    let payload = try await emitter.getResource(
+      service: EVY_CORE_SERVICE,
+      resource: EVYCoreResource.messages.rawValue
+    )
+    XCTAssertFalse(
+      Self.messageHasResponse(payload, messageId: requestId, value: "accept"),
+      "Cancelling records no decision")
+    XCTAssertFalse(
+      Self.messageHasResponse(payload, messageId: requestId, value: "reject"),
+      "Cancelling records no decision")
+
+    await emitter.disconnect()
+  }
+
+  private func waitForCreatedRequestId(
+    emitter: WSEmitter,
+    itemId: String,
+    timeout: TimeInterval = 10
+  ) async throws -> String {
+    let deadline = Date().addingTimeInterval(timeout)
+    repeat {
+      let payload = try await emitter.getResource(
+        service: EVY_CORE_SERVICE,
+        resource: EVYCoreResource.messages.rawValue
+      )
+      if let rows = Self.responseDataArray(from: payload),
+        let match = rows.compactMap({ $0 as? [String: Any] }).first(where: {
+          $0["fk"] as? String == itemId
+            && ($0["data"] as? [String: Any])?["type"] as? String == "pickup"
+        }),
+        let id = match["id"] as? String
+      {
+        return id
+      }
+    } while try await emitter.nextDataChanged(
+      resource: EVYCoreResource.messages.rawValue, deadline: deadline)
+    XCTFail("Tapping a pickup timeslot should have created a request")
+    return ""
   }
 
   @MainActor
@@ -4061,16 +4296,11 @@ final class E2EHomepageMessageSearchTests: E2ETestBase {
         "id": Self.messageChildRowId,
         "type": "Text",
         "title": "{$datum.data.type} request",
-        "subtitle": "{$datum.status}",
-        "swipeLabel": "::check::",
-        "actions": Self.actionsObject(
-          swipeLeft: [
-            Self.rowAction(
-              true:
-                "{update(\(EVY_CORE_SERVICE),\(EVYCoreResource.messages.rawValue),{id: $datum.id, status: \"pending\"},{status: \"accepted\"})}"
-            )
-          ]
-        ),
+        "subtitle": "{$datum.data.time}",
+        // No `swipe-left` and no `swipeLabel`: iOS owns the affordance on a transfer
+        // request, because who may answer one is not expressible here. Matches the
+        // shipped fixture.
+        "actions": [:],
         "visible": "true",
         "name": "Message search result",
       ],
@@ -4158,56 +4388,173 @@ final class E2EHomepageMessageSearchTests: E2ETestBase {
       "Item search field should remain on Home after filtering messages")
   }
 
-  func testHomepageSwipeAcceptUpdatesPickupMessageStatus() throws {
+  /// This class declares ownership of the item the seeded messages address, so the device
+  /// is their **recipient** - the side that may answer.
+  ///
+  /// Each case makes its own request rather than sharing the seeded one: answering is a
+  /// write, the database is seeded once per suite, and tests within a class run in
+  /// alphabetical order. Sharing one request would make the outcome depend on that order.
+  @MainActor
+  func testHomepageSwipeOffersAcceptAndRejectToRecipient() async throws {
+    let requestId = try await revealOwnRequest()
+
+    XCTAssertTrue(
+      app.buttons[Self.acceptButtonId(requestId)].waitForExistence(timeout: 3),
+      "The recipient should be offered accept")
+    XCTAssertTrue(
+      app.buttons[Self.rejectButtonId(requestId)].exists,
+      "The recipient should be offered reject")
+    XCTAssertFalse(
+      app.buttons[Self.cancelButtonId(requestId)].exists,
+      "The recipient cannot cancel someone else's request")
+    XCTAssertFalse(
+      app.buttons["swipeLeft_\(Self.messageChildRowId)_\(requestId)"].exists,
+      "The row's own swipe-left affordance is replaced, not added to")
+  }
+
+  @MainActor
+  func testHomepageSwipeAcceptCreatesAcceptResponse() async throws {
+    let requestId = try await revealOwnRequest()
+    app.buttons[Self.acceptButtonId(requestId)].tap()
+
+    try await assertResponsePersisted(requestId: requestId, value: "accept")
+  }
+
+  @MainActor
+  func testHomepageSwipeRejectCreatesRejectResponse() async throws {
+    let requestId = try await revealOwnRequest()
+    app.buttons[Self.rejectButtonId(requestId)].tap()
+
+    try await assertResponsePersisted(requestId: requestId, value: "reject")
+  }
+
+  /// Answering is additive, so the affordance cannot be driven by a field on the request -
+  /// it goes away because an answer now exists.
+  ///
+  /// With no actions left, the row renders without the swipe wrapper at all, so the whole
+  /// `swipeRow_` element disappears while the message stays listed.
+  @MainActor
+  func testHomepageSwipeOffersNothingOnceAnswered() async throws {
+    let requestId = try await revealOwnRequest()
+    app.buttons[Self.acceptButtonId(requestId)].tap()
+    try await assertResponsePersisted(requestId: requestId, value: "accept")
+
+    let swipeRow = app.otherElements["swipeRow_\(Self.messageChildRowId)_\(requestId)"]
+    let deadline = Date().addingTimeInterval(10)
+    while swipeRow.exists && Date() < deadline {
+      usleep(200_000)
+    }
+    XCTAssertFalse(
+      swipeRow.exists,
+      "An answered request has nothing to offer, so it stops being swipeable")
+    XCTAssertFalse(app.buttons[Self.acceptButtonId(requestId)].exists)
+    XCTAssertFalse(app.buttons[Self.rejectButtonId(requestId)].exists)
+    XCTAssertTrue(
+      app.staticTexts["pickup request"].exists,
+      "The message itself is still listed - only the affordance is gone")
+  }
+
+  private static func acceptButtonId(_ requestId: String) -> String {
+    "swipeAccept_\(messageChildRowId)_\(requestId)"
+  }
+  private static func rejectButtonId(_ requestId: String) -> String {
+    "swipeReject_\(messageChildRowId)_\(requestId)"
+  }
+  private static func cancelButtonId(_ requestId: String) -> String {
+    "swipeCancel_\(messageChildRowId)_\(requestId)"
+  }
+
+  /// Seeds a pickup request against the item this device owns, then opens its swipe reveal.
+  /// Addressing the owned item is what makes this device the request's recipient.
+  ///
+  /// Every request carries a distinct `time`, and the inbox is filtered by it. The device
+  /// owns the item, so it receives *every* request addressed to it - including the seeded
+  /// ones and the ones earlier cases in this class created. Filtering on the type alone
+  /// would leave several rows on screen, and the one under test could be scrolled out of
+  /// reach.
+  @MainActor
+  private func revealOwnRequest() async throws -> String {
     let homePage = app.scrollViews["page_\(Self.homePageId)"]
     XCTAssertTrue(
       homePage.waitForExistence(timeout: 20),
       "Home screen not loaded - verify API is running and database is seeded")
 
+    let requestId = UUID().uuidString.lowercased()
+    let uniqueTime = Self.nextUniqueRequestTime()
+    let emitter = WSEmitter()
+    try await emitter.connect(host: apiHost)
+    try await emitter.login(token: "e2e-test", os: "ios")
+    _ = try await emitter.createResource(
+      service: EVY_CORE_SERVICE,
+      resource: EVYCoreResource.messages.rawValue,
+      filter: ["id": requestId],
+      data: [
+        "id": requestId,
+        "fk": Self.seededMessageItemId,
+        "service": MARKETPLACE_SERVICE,
+        "resource": MARKETPLACE_ITEMS_RESOURCE_ID,
+        "visibility": "private",
+        "data": [
+          "type": "pickup",
+          "value": "pending",
+          "time": uniqueTime,
+        ],
+      ]
+    )
+    await emitter.disconnect()
+
     let messageSearchField = Self.orderedSearchTextFields(in: homePage)[0]
-    clearAndType(field: messageSearchField, text: Self.matchingTypeQuery)
+    clearAndType(field: messageSearchField, text: uniqueTime)
 
-    let pickupRowId =
-      "swipeRow_\(Self.messageChildRowId)_\(Self.pickupMessageId)"
-    let pickupRow = app.otherElements[pickupRowId]
+    let row = app.otherElements["swipeRow_\(Self.messageChildRowId)_\(requestId)"]
     XCTAssertTrue(
-      pickupRow.waitForExistence(timeout: 10),
-      "Seeded pickup message row should be visible")
-    XCTAssertTrue(
-      pickupRow.staticTexts["pickup request"].waitForExistence(timeout: 5),
-      "Pickup message row should show pickup request title")
-    XCTAssertTrue(
-      pickupRow.staticTexts["pending"].waitForExistence(timeout: 5),
-      "Pickup message should show pending status")
+      row.waitForExistence(timeout: 15),
+      "A pickup request addressed to the owned item should reach this device")
+    row.swipeLeft(velocity: .slow)
+    return requestId
+  }
 
-    pickupRow.swipeLeft(velocity: .slow)
+  /// The subtitle renders `data.time` verbatim, so a distinct time is a distinct search
+  /// term. Seconds are enough and keep the value a plausible timestamp.
+  private static var uniqueRequestTimeCounter = 0
+  private static func nextUniqueRequestTime() -> String {
+    uniqueRequestTimeCounter += 1
+    return String(format: "2026-06-03T09:00:%02d", uniqueRequestTimeCounter)
+  }
 
-    let swipeButtonId =
-      "swipeLeft_\(Self.messageChildRowId)_\(Self.pickupMessageId)"
-    let swipeButton = app.buttons[swipeButtonId]
+  @MainActor
+  private func assertResponsePersisted(
+    requestId: String,
+    value: String,
+    file: StaticString = #filePath,
+    line: UInt = #line
+  ) async throws {
+    let emitter = WSEmitter()
+    try await emitter.connect(host: apiHost)
+    try await emitter.login(token: "e2e-test", os: "ios")
+    try await emitter.subscribe(event: "dataChanged")
+    let answered = try await waitForMessageResponse(
+      emitter: emitter,
+      messageId: requestId,
+      value: value
+    )
+    let archived = try await waitForResourceUpdate(
+      emitter: emitter,
+      service: EVY_CORE_SERVICE,
+      resource: EVYCoreResource.messages.rawValue
+    ) { Self.messageIsArchived($0, messageId: requestId) }
+    await emitter.disconnect()
+
     XCTAssertTrue(
-      swipeButton.waitForExistence(timeout: 3),
-      "Swipe-left action button should be revealed for the pickup message")
-    XCTAssertEqual(swipeButton.label, "::check::")
-    swipeButton.tap()
-
+      answered,
+      "The API should hold a message answering the request with \(value)",
+      file: file,
+      line: line)
     XCTAssertTrue(
-      pickupRow.staticTexts["accepted"].waitForExistence(timeout: 5),
-      "Pickup message subtitle should show accepted after swipe")
-
-    let acceptedOnServer = try awaitResult("pickup message status accepted") {
-      let emitter = WSEmitter()
-      try await emitter.connect(host: self.apiHost)
-      try await emitter.login(token: "e2e-test", os: "ios")
-      let accepted = try await self.waitForMessageStatus(
-        emitter: emitter,
-        messageId: Self.pickupMessageId,
-        status: "accepted"
-      )
-      await emitter.disconnect()
-      return accepted
-    }
-    XCTAssertTrue(acceptedOnServer, "Marketplace should persist accepted status for pickup message")
+      archived,
+      "Answering should archive the request it answers",
+      file: file,
+      line: line)
   }
 
   private static func orderedSearchTextFields(in homePage: XCUIElement) -> [XCUIElement] {
