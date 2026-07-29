@@ -11,19 +11,22 @@ struct EVYHorizontalContainerRow: View {
 
   private let view: HorizontalContainerRowViewData
   private let childRefs: [EVYRowRef]
+  private let datum: EVYJson?
 
   init(
     view: HorizontalContainerRowViewData,
-    childRefs: [EVYRowRef]
+    childRefs: [EVYRowRef],
+    datum: EVYJson? = nil
   ) {
     self.view = view
     self.childRefs = childRefs
+    self.datum = datum
   }
 
   var body: some View {
     HStack(alignment: .top) {
       ForEach(childRefs, id: \.id) { ref in
-        EVYRow(ref: ref)
+        EVYRow(ref: ref, datum: datum)
       }
     }
     .containerTitleHeader(view.title)

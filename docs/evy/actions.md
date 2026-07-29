@@ -53,6 +53,13 @@ inline data only.
 bare words stay literals (bare `true`/`false` become booleans, bare `null` becomes JSON null,
 quoted `"…"` stays a literal string, and `{…}` values resolve as nested objects).
 
+**Unresolvable `$datum.…` keys are omitted.** In create `data` and update `changes` maps, a
+value that is a `$datum.…` path and does not resolve on the triggering datum is dropped from
+the payload rather than written as the literal source text. That is what lets a shared response
+template carry both `time` (pickup / delivery) and `postalcode` (shipping): whichever the request
+lacks is simply absent. Filter and query maps keep the previous behaviour — dropping a filter
+key would silently widen a store update.
+
 **A bare id stays an id.** A resource id doubles as that resource's binding key, so a bare UUID
 that resolves to a record or collection is kept as the literal id rather than replaced by the
 data it names. It cannot be replaced by that data's `id` either: what a resource key binds is a

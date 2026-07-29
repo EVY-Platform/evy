@@ -97,18 +97,28 @@ struct EVYSearch: View {
     case .api:
       return apiSearchModel?.hasSearched == true
     case .local:
+      if isListOnly {
+        return true
+      }
       return !searchText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
     }
   }
 
+  /// Blank/absent placeholder means the Search is a filtered list, not a query box.
+  private var isListOnly: Bool {
+    (placeholder ?? "").trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+  }
+
   var body: some View {
     VStack(spacing: 0) {
-      EVYTextInput(
-        text: $searchText,
-        placeholder: placeholder.map { "::search:: \($0)" }
-      )
-      .autocorrectionDisabled()
-      .textInputAutocapitalization(.never)
+      if !isListOnly {
+        EVYTextInput(
+          text: $searchText,
+          placeholder: placeholder.map { "::search:: \($0)" }
+        )
+        .autocorrectionDisabled()
+        .textInputAutocapitalization(.never)
+      }
 
       if isSearching {
         ProgressView()

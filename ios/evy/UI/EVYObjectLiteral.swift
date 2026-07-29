@@ -79,14 +79,36 @@ enum EVYPlainTextResolution {
 
   static func resolveValues(
     _ data: [String: String],
-    datum: EVYJson?
+    datum: EVYJson?,
+    omitUnresolvedDatumKeys: Bool = false
   ) -> [String: EVYJson] {
-    data.mapValues { resolveValue($0, datum: datum) }
+    var resolved: [String: EVYJson] = [:]
+    for (key, value) in data {
+      if omitUnresolvedDatumKeys, shouldOmitUnresolvedDatumKey(value, datum: datum) {
+        continue
+      }
+      resolved[key] = resolveValue(
+        value, datum: datum, omitUnresolvedDatumKeys: omitUnresolvedDatumKeys)
+    }
+    return resolved
+  }
+
+  /// True when `value` is a `$datum.…` path that does not resolve on the given datum.
+  /// Used only for create/update payload maps so a missing optional field is dropped rather
+  /// than written as the literal source text.
+  private static func shouldOmitUnresolvedDatumKey(_ value: String, datum: EVYJson?) -> Bool {
+    let trimmedValue = value.trimmingCharacters(in: .whitespacesAndNewlines)
+    guard trimmedValue.hasPrefix(EVY.datumPrefix) else { return false }
+    guard let datum else { return true }
+    let props = String(trimmedValue.dropFirst(EVY.datumPrefix.count)).split(separator: ".").map(
+      String.init)
+    return datum.parsePropStrict(props: props) == nil
   }
 
   static func resolveValue(
     _ value: String,
-    datum: EVYJson?
+    datum: EVYJson?,
+    omitUnresolvedDatumKeys: Bool = false
   ) -> EVYJson {
     let trimmedValue = value.trimmingCharacters(in: .whitespacesAndNewlines)
     if trimmedValue == EVY.datumToken, let datum {
@@ -116,7 +138,9 @@ enum EVYPlainTextResolution {
       let nestedObject = try? EVYObjectLiteral.parse(
         from: value, context: "nested action data")
     {
-      return .dictionary(resolveValues(nestedObject, datum: datum))
+      return .dictionary(
+        resolveValues(
+          nestedObject, datum: datum, omitUnresolvedDatumKeys: omitUnresolvedDatumKeys))
     }
 
     guard let resolved = try? EVY.getDataFromText("{\(value)}") else {

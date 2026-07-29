@@ -255,17 +255,13 @@ final class EVYSearchModelTests: XCTestCase {
     XCTAssertEqual(state.value.first?.displayRow.subtitle, "accept")
   }
 
-  /// The inbox lists the requests still waiting on someone.
-  ///
-  /// Two things get dropped. A settling message is a message like any other, so without
-  /// filtering the list would show "pickup request" twice - once for the ask, once for the
-  /// reply. And a request that has been settled is dropped too, because nothing about a
-  /// request changes when it is answered: a list that kept showing it would keep showing it
-  /// exactly as it was, affordance and all.
-  func testLoadLocalResultsListsOnlyOpenRequests() throws {
+  /// Filtering open requests belongs in the Search `source` expression (`filter`/`owns`),
+  /// not in the loader — so a raw `{messages}` source still returns every stored message.
+  func testLoadLocalResultsReturnsSourceUnfiltered() throws {
     let resource = EVYCoreResource.messages.rawValue
     let openRequestId = UUID().uuidString.lowercased()
     let settledRequestId = UUID().uuidString.lowercased()
+    let responseId = UUID().uuidString.lowercased()
     let itemId = UUID().uuidString.lowercased()
     let service = UUID().uuidString.lowercased()
     let itemResource = UUID().uuidString.lowercased()
@@ -286,7 +282,7 @@ final class EVYSearchModelTests: XCTestCase {
           id: settledRequestId, fk: itemId, service: service, resource: itemResource,
           type: "delivery"),
         EVYTestMessageFixtures.response(
-          id: UUID().uuidString.lowercased(),
+          id: responseId,
           to: settledRequestId,
           fk: itemId,
           service: service,
@@ -304,8 +300,9 @@ final class EVYSearchModelTests: XCTestCase {
     )
 
     XCTAssertEqual(
-      results.map(\.id), [openRequestId],
-      "only the request still waiting on someone is listed")
+      Set(results.map(\.id)),
+      Set([openRequestId, settledRequestId, responseId]),
+      "the loader no longer filters messages; source expressions do")
   }
 
   private static func makeMessageValueTemplate() -> UI_Row? {

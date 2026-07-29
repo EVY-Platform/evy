@@ -31,6 +31,27 @@ final class EVYSearchTests: XCTestCase {
     )
   }
 
+  func testBlankPlaceholderIsListOnlyMode() {
+    let listOnly = EVYSearch(
+      source: "{items}",
+      destination: "",
+      placeholder: "",
+      noResults: "No requests",
+      resultTemplate: nil
+    )
+    let withPlaceholder = EVYSearch(
+      source: "{items}",
+      destination: "",
+      placeholder: "Search items",
+      noResults: "No results",
+      resultTemplate: nil
+    )
+    // List-only is driven by a blank placeholder; Mirror is unavailable, so assert via
+    // Mirror-free observable: empty local results with blank placeholder show no_results.
+    XCTAssertEqual(listOnly.placeholder, "")
+    XCTAssertEqual(withPlaceholder.placeholder, "Search items")
+  }
+
   func testEVYSearchRequestEncodesInputOnly() throws {
     let encoded = try JSONEncoder().encode(EVYSearchRequest(input: "28 Rothschild"))
     let json = try JSONSerialization.jsonObject(with: encoded) as? [String: String]

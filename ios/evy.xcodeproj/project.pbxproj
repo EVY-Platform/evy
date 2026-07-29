@@ -33,7 +33,6 @@
 		7333F45C2FAA2D1C006BEA92 /* EVYFlowStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7333F4512FAA2D1C006BEA92 /* EVYFlowStore.swift */; };
 		7333F45D2FAA2D1C006BEA92 /* EVY+Sync.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7333F4522FAA2D1C006BEA92 /* EVY+Sync.swift */; };
 		OW0000022FAA2D1C006BEA92 /* EVY+Ownership.swift in Sources */ = {isa = PBXBuildFile; fileRef = OW0000012FAA2D1C006BEA92 /* EVY+Ownership.swift */; };
-		MR000001AA00000100000001 /* EVY+MessageRequests.swift in Sources */ = {isa = PBXBuildFile; fileRef = MR000002AA00000100000001 /* EVY+MessageRequests.swift */; };
 		FA30A0112F91000100000001 /* EVY+Source.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA30A0102F91000100000001 /* EVY+Source.swift */; };
 		FA20A0152F91000100000001 /* EVYSearchRequesting.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA20A0142F91000100000001 /* EVYSearchRequesting.swift */; };
 		FA20A0172F91000100000001 /* EVYSearchModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA20A0162F91000100000001 /* EVYSearchModel.swift */; };
@@ -149,7 +148,6 @@
 		FA001005RT00000100000001 /* EVYTextViewReactiveTitleTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA001006RT00000100000001 /* EVYTextViewReactiveTitleTests.swift */; };
 		SP001001UK00000100000001 /* XCTestCase+UniqueKey.swift in Sources */ = {isa = PBXBuildFile; fileRef = SP001002UK00000100000001 /* XCTestCase+UniqueKey.swift */; };
 		SP001003UK00000100000001 /* EVYTestMessageFixtures.swift in Sources */ = {isa = PBXBuildFile; fileRef = SP001004UK00000100000001 /* EVYTestMessageFixtures.swift */; };
-		MR000003AA00000100000001 /* EVYMessageRequestTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = MR000004AA00000100000001 /* EVYMessageRequestTests.swift */; };
 		RC0000012FAB000100000001 /* EVYAPIManagerReconnectTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = RC0000022FAB000100000001 /* EVYAPIManagerReconnectTests.swift */; };
 		GC0000012FAB000100000001 /* GrammarConformanceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = GC0000022FAB000100000001 /* GrammarConformanceTests.swift */; };
 		ST0000032FAA2D1C006BEA92 /* EVYStoreRoutingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = ST0000042FAA2D1C006BEA92 /* EVYStoreRoutingTests.swift */; };
@@ -202,7 +200,6 @@
 		7333F4512FAA2D1C006BEA92 /* EVYFlowStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EVYFlowStore.swift; sourceTree = "<group>"; };
 		7333F4522FAA2D1C006BEA92 /* EVY+Sync.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "EVY+Sync.swift"; sourceTree = "<group>"; };
 		OW0000012FAA2D1C006BEA92 /* EVY+Ownership.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "EVY+Ownership.swift"; sourceTree = "<group>"; };
-		MR000002AA00000100000001 /* EVY+MessageRequests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "EVY+MessageRequests.swift"; sourceTree = "<group>"; };
 		FA30A0102F91000100000001 /* EVY+Source.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "EVY+Source.swift"; sourceTree = "<group>"; };
 		FA20A0142F91000100000001 /* EVYSearchRequesting.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EVYSearchRequesting.swift; sourceTree = "<group>"; };
 		FA20A0162F91000100000001 /* EVYSearchModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EVYSearchModel.swift; sourceTree = "<group>"; };
@@ -312,7 +309,6 @@
 		FA001006RT00000100000001 /* EVYTextViewReactiveTitleTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EVYTextViewReactiveTitleTests.swift; sourceTree = "<group>"; };
 		SP001002UK00000100000001 /* XCTestCase+UniqueKey.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "XCTestCase+UniqueKey.swift"; sourceTree = "<group>"; };
 		SP001004UK00000100000001 /* EVYTestMessageFixtures.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EVYTestMessageFixtures.swift; sourceTree = "<group>"; };
-		MR000004AA00000100000001 /* EVYMessageRequestTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EVYMessageRequestTests.swift; sourceTree = "<group>"; };
 		RC0000022FAB000100000001 /* EVYAPIManagerReconnectTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EVYAPIManagerReconnectTests.swift; sourceTree = "<group>"; };
 		GC0000022FAB000100000001 /* GrammarConformanceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GrammarConformanceTests.swift; sourceTree = "<group>"; };
 		ST0000042FAA2D1C006BEA92 /* EVYStoreRoutingTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EVYStoreRoutingTests.swift; sourceTree = "<group>"; };
@@ -393,7 +389,6 @@
 				FA10A0082F90000100000001 /* EVYScope.swift */,
 				7333F4522FAA2D1C006BEA92 /* EVY+Sync.swift */,
 				OW0000012FAA2D1C006BEA92 /* EVY+Ownership.swift */,
-				MR000002AA00000100000001 /* EVY+MessageRequests.swift */,
 				ST0000022FAA2D1C006BEA92 /* EVY+Stores.swift */,
 				FA30A0102F91000100000001 /* EVY+Source.swift */,
 				7333F4532FAA2D1C006BEA92 /* EVY+TextParsing.swift */,
@@ -652,7 +647,6 @@
 				FA001006RT00000100000001 /* EVYTextViewReactiveTitleTests.swift */,
 		SP001002UK00000100000001 /* XCTestCase+UniqueKey.swift */,
 				SP001004UK00000100000001 /* EVYTestMessageFixtures.swift */,
-				MR000004AA00000100000001 /* EVYMessageRequestTests.swift */,
 				RC0000022FAB000100000001 /* EVYAPIManagerReconnectTests.swift */,
 				GC0000022FAB000100000001 /* GrammarConformanceTests.swift */,
 				ST0000042FAA2D1C006BEA92 /* EVYStoreRoutingTests.swift */,
@@ -873,7 +867,6 @@
 				7333F45C2FAA2D1C006BEA92 /* EVYFlowStore.swift in Sources */,
 				7333F45D2FAA2D1C006BEA92 /* EVY+Sync.swift in Sources */,
 				OW0000022FAA2D1C006BEA92 /* EVY+Ownership.swift in Sources */,
-				MR000001AA00000100000001 /* EVY+MessageRequests.swift in Sources */,
 				FA30A0112F91000100000001 /* EVY+Source.swift in Sources */,
 				FA20A0152F91000100000001 /* EVYSearchRequesting.swift in Sources */,
 				FA20A0172F91000100000001 /* EVYSearchModel.swift in Sources */,
@@ -946,7 +939,6 @@
 				FA001005RT00000100000001 /* EVYTextViewReactiveTitleTests.swift in Sources */,
 				SP001001UK00000100000001 /* XCTestCase+UniqueKey.swift in Sources */,
 				SP001003UK00000100000001 /* EVYTestMessageFixtures.swift in Sources */,
-				MR000003AA00000100000001 /* EVYMessageRequestTests.swift in Sources */,
 				RC0000012FAB000100000001 /* EVYAPIManagerReconnectTests.swift in Sources */,
 				GC0000012FAB000100000001 /* GrammarConformanceTests.swift in Sources */,
 				ST0000032FAA2D1C006BEA92 /* EVYStoreRoutingTests.swift in Sources */,

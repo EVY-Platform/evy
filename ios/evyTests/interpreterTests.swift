@@ -924,6 +924,203 @@ final class InterpreterTests: XCTestCase {
     XCTAssertTrue(targets.contains("\(itemKey).id"))
   }
 
+  func testFilterReturnsAllMatchingCandidates() throws {
+    let key = uniqueKey("rows")
+    let matchA = UUID().uuidString
+    let matchB = UUID().uuidString
+    try store(
+      .array([
+        .dictionary(["id": .string(matchA), "status": .string("pending")]),
+        .dictionary(["id": .string(UUID().uuidString), "status": .string("accept")]),
+        .dictionary(["id": .string(matchB), "status": .string("pending")]),
+      ]),
+      at: key
+    )
+
+    let filtered = try EVY.getDataFromText("{filter(\(key), $datum.status == pending)}")
+    guard case .array(let items) = filtered else {
+      return XCTFail("filter should return an array")
+    }
+    XCTAssertEqual(items.map { $0.identifierValue() }.sorted(), [matchA, matchB].sorted())
+  }
+
+  func testFilterBindsCandidateAsDatum() throws {
+    let key = uniqueKey("rows")
+    let matchId = UUID().uuidString
+    try store(
+      .array([
+        .dictionary(["id": .string(matchId), "label": .string("keep")]),
+        .dictionary(["id": .string(UUID().uuidString), "label": .string("drop")]),
+      ]),
+      at: key
+    )
+
+    let result = try parseTextFromText("{filter(\(key), $datum.label == keep).0.id}")
+    XCTAssertEqual(result.value, matchId)
+  }
+
+  func testFilterNestedFindFirstResolvesOuterDatumAndInnerBareFields() throws {
+    let messagesKey = uniqueKey("messages")
+    let itemId = UUID().uuidString
+    let openRequestId = UUID().uuidString
+    let answeredRequestId = UUID().uuidString
+    let responseId = UUID().uuidString
+
+    try store(
+      .array([
+        EVYTestMessageFixtures.message(
+          id: answeredRequestId, fk: itemId, createdAt: "2026-06-01T00:00:00.000Z",
+          type: "pickup", value: "pending"),
+        EVYTestMessageFixtures.message(
+          id: responseId, fk: itemId, createdAt: "2026-06-01T00:01:00.000Z",
+          type: "pickup", value: "accept", messageId: answeredRequestId,
+          time: "2026-06-03T09:00:00"),
+        EVYTestMessageFixtures.message(
+          id: openRequestId, fk: itemId, createdAt: "2026-06-01T00:02:00.000Z",
+          type: "delivery", value: "pending", time: "2026-06-04T10:00:00"),
+      ]),
+      at: "\(MarketplaceTestFixture.serviceId):\(messagesKey)"
+    )
+
+    let filtered = try EVY.getDataFromText(
+      """
+      {filter(\(messagesKey), $datum.data.value == pending && findFirst(sort(\(messagesKey), desc, createdAt), fk == $datum.fk && data.type == $datum.data.type).id == $datum.id)}
+      """
+    )
+    guard case .array(let items) = filtered else {
+      return XCTFail("filter should return an array")
+    }
+    XCTAssertEqual(items.map { $0.identifierValue() }, [openRequestId])
+  }
+
+  func testFilterReturnsEmptyArrayWhenNothingMatches() throws {
+    let key = uniqueKey("rows")
+    try store(
+      .array([
+        .dictionary(["id": .string(UUID().uuidString), "status": .string("accept")])
+      ]),
+      at: key
+    )
+
+    let filtered = try EVY.getDataFromText("{filter(\(key), $datum.status == pending)}")
+    guard case .array(let items) = filtered else {
+      return XCTFail("filter should return an array")
+    }
+    XCTAssertTrue(items.isEmpty)
+  }
+
+  func testFilterRejectsNonCollectionInput() throws {
+    let key = uniqueKey("scalar")
+    try store(.string("not-a-collection"), at: key)
+
+    XCTAssertThrowsError(try EVY.getDataFromText("{filter(\(key), $datum == x)}"))
+  }
+
+  func testFilterWatchTargetsIncludeCollectionKey() throws {
+    let messagesKey = uniqueKey("messages")
+    let expression =
+      "{filter(\(messagesKey), $datum.data.value == pending)}"
+
+    let targets = EVY.watchTargets(for: expression)
+
+    XCTAssertTrue(targets.contains(messagesKey))
+  }
+
+  func testOwnsReturnsTrueAfterRecordOwnership() throws {
+    EVYOwnershipLedger.reset()
+    defer { EVYOwnershipLedger.reset() }
+
+    let service = MarketplaceTestFixture.serviceId
+    let resource = MarketplaceTestFixture.itemsResourceId
+    let id = UUID().uuidString
+    EVY.recordOwnership(service: service, resource: resource, id: id)
+
+    XCTAssertTrue(try EVY.evaluateFromText("{owns(\(service), \(resource), \(id)) == true}"))
+    XCTAssertFalse(
+      try EVY.evaluateFromText("{owns(\(service), \(resource), \(UUID().uuidString)) == true}"))
+    XCTAssertTrue(
+      try EVY.evaluateFromText("{owns(\(service), \(resource), \(UUID().uuidString)) == false}"))
+  }
+
+  func testOwnsResolvesDatumArgsInsideFilter() throws {
+    EVYOwnershipLedger.reset()
+    defer { EVYOwnershipLedger.reset() }
+
+    let messagesKey = uniqueKey("messages")
+    let itemId = UUID().uuidString
+    let otherItemId = UUID().uuidString
+    let ownedRequestId = UUID().uuidString
+    let otherRequestId = UUID().uuidString
+    let service = MarketplaceTestFixture.serviceId
+    let resource = MarketplaceTestFixture.itemsResourceId
+
+    EVY.recordOwnership(service: service, resource: resource, id: itemId)
+
+    try store(
+      .array([
+        EVYTestMessageFixtures.message(
+          id: ownedRequestId, fk: itemId, service: service, resource: resource,
+          createdAt: "2026-06-01T00:00:00.000Z", type: "pickup", value: "pending"),
+        EVYTestMessageFixtures.message(
+          id: otherRequestId, fk: otherItemId, service: service, resource: resource,
+          createdAt: "2026-06-01T00:01:00.000Z", type: "pickup", value: "pending"),
+      ]),
+      at: "\(MarketplaceTestFixture.serviceId):\(messagesKey)"
+    )
+
+    let filtered = try EVY.getDataFromText(
+      """
+      {filter(\(messagesKey), owns($datum.service, $datum.resource, $datum.fk) == true)}
+      """
+    )
+    guard case .array(let items) = filtered else {
+      return XCTFail("filter should return an array")
+    }
+    XCTAssertEqual(items.map { $0.identifierValue() }, [ownedRequestId])
+  }
+
+  func testFilterForYouExpressionKeepsOnlyOpenOwnedRequest() throws {
+    EVYOwnershipLedger.reset()
+    defer { EVYOwnershipLedger.reset() }
+
+    let messagesKey = uniqueKey("messages")
+    let itemId = UUID().uuidString
+    let openRequestId = UUID().uuidString
+    let settledRequestId = UUID().uuidString
+    let responseId = UUID().uuidString
+    let service = MarketplaceTestFixture.serviceId
+    let resource = MarketplaceTestFixture.itemsResourceId
+
+    EVY.recordOwnership(service: service, resource: resource, id: itemId)
+
+    try store(
+      .array([
+        EVYTestMessageFixtures.message(
+          id: settledRequestId, fk: itemId, service: service, resource: resource,
+          createdAt: "2026-06-01T00:00:00.000Z", type: "pickup", value: "pending"),
+        EVYTestMessageFixtures.message(
+          id: responseId, fk: itemId, service: service, resource: resource,
+          createdAt: "2026-06-01T00:01:00.000Z", type: "pickup", value: "accept",
+          messageId: settledRequestId, time: "2026-06-03T09:00:00"),
+        EVYTestMessageFixtures.message(
+          id: openRequestId, fk: itemId, service: service, resource: resource,
+          createdAt: "2026-06-01T00:02:00.000Z", type: "delivery", value: "pending",
+          time: "2026-06-04T10:00:00"),
+      ]),
+      at: "\(MarketplaceTestFixture.serviceId):\(messagesKey)"
+    )
+
+    let filtered = try EVY.getDataFromText(
+      """
+      {filter(\(messagesKey), $datum.data.value == pending && owns($datum.service, $datum.resource, $datum.fk) == true && findFirst(sort(\(messagesKey), desc, createdAt), fk == $datum.fk && data.type == $datum.data.type).id == $datum.id)}
+      """
+    )
+    guard case .array(let items) = filtered else {
+      return XCTFail("filter should return an array")
+    }
+    XCTAssertEqual(items.map { $0.identifierValue() }, [openRequestId])
+  }
+
   func testNowFunctionReturnsPinnedClockISO8601() throws {
     let pinnedDate = Date(timeIntervalSince1970: 1_780_000_000)
     EVY.nowProvider = { pinnedDate }

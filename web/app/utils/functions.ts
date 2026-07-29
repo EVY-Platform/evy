@@ -308,11 +308,18 @@ function evyIfStub(args: string): EVYFunctionOutput {
 	return { value: trimmed };
 }
 
+/** Web has no ownership concept; always reports unowned. */
+function evyOwnsPlaceholder(_args: string): EVYFunctionOutput {
+	return { value: "false" };
+}
+
 const functionHandlers: Record<string, EVYFunctionHandler> = {
 	count: evyCount,
 	length: evyLength,
 	findFirst: evyCollectionPlaceholder,
+	filter: evyCollectionPlaceholder,
 	sort: evyCollectionPlaceholder,
+	owns: evyOwnsPlaceholder,
 	formatCurrency: evyFormatCurrency,
 	formatDimension: evyFormatDimension,
 	formatWeight: evyFormatWeight,

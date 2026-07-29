@@ -292,6 +292,9 @@ private func _resolveBindingRoot(
     if funcName == "findFirst" {
       return (try evyFindFirst(funcArgs, remainingProps: remainingProps), [])
     }
+    if funcName == "filter" {
+      return (try evyFilter(funcArgs, remainingProps: remainingProps), [])
+    }
     if funcName == "sort" {
       return (try evySort(funcArgs), remainingProps)
     }
@@ -537,6 +540,8 @@ private func parseText(
       value = evyLength(funcArgs)
     case "if":
       value = try evyIf(funcArgs)
+    case "owns":
+      value = try evyOwns(funcArgs)
     case "now":
       value = evyNow()
     case "formatCurrency":

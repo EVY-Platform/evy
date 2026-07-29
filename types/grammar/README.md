@@ -66,6 +66,11 @@ still renders.
 deliberately a preview mock that renders doc-shaped placeholders rather than
 evaluating real data (see `web/app/utils/functions.ts`).
 
+`owns` is covered by iOS `interpreterTests` rather than this corpus: seeding
+ownership needs the ledger (`EVYOwnershipLedger`), which the vector `data` map
+does not express. Prefer extending the corpus with an optional per-vector
+`ownership` list if that runner change becomes worthwhile.
+
 ## Adding a vector
 
 1. Give it a stable, descriptive `id`; ids are asserted unique by both runners.

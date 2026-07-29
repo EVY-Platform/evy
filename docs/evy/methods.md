@@ -121,6 +121,45 @@ needing a case of its own.
 Active match → its `fk` equals the item's id → `true`. No match (or all archived) → `""` →
 `false`.
 
+#### filter
+
+Returns every element of a collection for which a predicate is true. Unlike `findFirst`, the
+predicate binds the candidate as `$datum` (the same ephemeral-datum mechanism used by
+format-with-`$datum`), not as bare fields. Nested `findFirst` / `sort` calls keep their own
+bare-field binding for *their* candidates — so inside
+`filter(messages, … findFirst(sort(messages, desc, createdAt), fk == $datum.fk && …) …)` the
+bare `fk` is the inner `findFirst` candidate and `$datum` is the outer `filter` candidate.
+
+```
+filter({_collection_}, {_predicate_})
+```
+
+Open requests this device owns (the homepage "For you" tab source):
+
+```
+{filter(messages, $datum.data.value == pending && owns($datum.service, $datum.resource, $datum.fk) == true && findFirst(sort(messages, desc, createdAt), fk == $datum.fk && data.type == $datum.data.type).id == $datum.id)}
+```
+
+That expression sits at **exactly three function levels** (`filter` → `findFirst` → `sort`),
+which is the ceiling of the function-matching regex. A fourth nested call renders as source
+text silently — keep predicates at or under that depth.
+
+A non-collection first argument is an error. An empty match set is an empty array (not an empty
+string). Cost note: a predicate that nests `findFirst(sort(…))` re-sorts per candidate; fine at
+seed scale, not free at catalogue scale.
+
+#### owns
+
+Whether this device owns a record, as `"true"` / `"false"`. Reads
+[`EVY.ownedServiceResources()`](../../ios/evy/Core/EVY+Ownership.swift): the creation ledger,
+privately held synced rows, and the `EVY_OWNED_SERVICE_RESOURCES` launch override. There is no
+`!` operator, so fixtures write `owns(…) == false`. Web has no ownership concept and stubs this
+to `"false"`.
+
+```
+owns({_service_}, {_resource_}, {_id_})
+```
+
 #### if
 
 Inline conditional expression. Evaluates `condition` as a [comparison](./comparisons.md), then

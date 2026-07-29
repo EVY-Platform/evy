@@ -11,16 +11,19 @@ struct EVYTabContainerRow: View {
 
   private let view: TabContainerRowViewData
   private let childRefs: [EVYRowRef]
+  private let datum: EVYJson?
   private let onSegmentTapped: EVYRowTapCallback<Int>
   @State private var selected: Int = 0
 
   init(
     view: TabContainerRowViewData,
     childRefs: [EVYRowRef],
+    datum: EVYJson? = nil,
     onSegmentTapped: @escaping EVYRowTapCallback<Int>
   ) {
     self.view = view
     self.childRefs = childRefs
+    self.datum = datum
     self.onSegmentTapped = onSegmentTapped
   }
 
@@ -53,7 +56,7 @@ struct EVYTabContainerRow: View {
       .padding(.bottom, Constants.majorPadding)
 
       if selected < tabCount {
-        EVYRow(ref: childRefs[selected])
+        EVYRow(ref: childRefs[selected], datum: datum)
           .id(childRefs[selected].id)
       }
     }

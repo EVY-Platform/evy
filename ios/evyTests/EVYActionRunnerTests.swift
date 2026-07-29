@@ -979,6 +979,82 @@ final class EVYActionRunnerTests: XCTestCase {
       .dictionary(["id": .string(recordId), "currency": .string("AUD")]))
   }
 
+  func testInlineCreateOmitsUnresolvedDatumKeysFromPayload() throws {
+    let pickupDatum = EVYTestMessageFixtures.message(
+      id: UUID().uuidString,
+      fk: UUID().uuidString,
+      type: "pickup",
+      value: "pending",
+      time: "2026-06-03T09:00:00"
+    )
+    let resolved = EVYPlainTextResolution.resolveValues(
+      [
+        "message_id": "$datum.id",
+        "value": "accept",
+        "type": "$datum.data.type",
+        "time": "$datum.data.time",
+        "postalcode": "$datum.data.postalcode",
+      ],
+      datum: pickupDatum,
+      omitUnresolvedDatumKeys: true
+    )
+
+    XCTAssertEqual(resolved["value"], .string("accept"))
+    XCTAssertEqual(resolved["type"], .string("pickup"))
+    XCTAssertEqual(resolved["time"], .string("2026-06-03T09:00:00"))
+    XCTAssertNil(resolved["postalcode"])
+  }
+
+  func testUpdateChangesOmitUnresolvedDatumKeys() throws {
+    let namespace = "test"
+    let resource = "omit-datum-changes"
+    let recordId = UUID().uuidString
+    deleteFromSyncedStores(namespace: namespace, resource: resource)
+    defer { deleteFromSyncedStores(namespace: namespace, resource: resource) }
+
+    try EVY.applySyncedValue(
+      namespace: namespace, resource: resource,
+      value: .array([
+        .dictionary([
+          "id": .string(recordId),
+          "label": .string("pickup"),
+        ])
+      ]))
+
+    let datum = EVYJson.dictionary([
+      "id": .string(recordId),
+      "label": .string("pickup"),
+    ])
+    let action = rowAction(
+      true: .update(
+        service: namespace, resource: resource, mode: .store,
+        filter: ["id": "$datum.id"],
+        changes: .literal([
+          "label": "$datum.label",
+          "missing": "$datum.doesNotExist",
+        ]))
+    )
+    EVYActionRunner.run(actions: [action], datum: datum) { _ in }
+
+    let rows = try EVY.publicStore.getAll(namespace: namespace, resource: resource)
+    let updated = try XCTUnwrap(rows.first?.decoded())
+    guard case .dictionary(let values) = updated else {
+      return XCTFail("Expected updated dictionary")
+    }
+    XCTAssertEqual(values["label"], .string("pickup"))
+    XCTAssertNil(values["missing"])
+  }
+
+  func testFilterMapKeepsUnresolvedDatumAsLiteral() throws {
+    let resolved = EVYPlainTextResolution.resolveValues(
+      ["postalcode": "$datum.data.postalcode"],
+      datum: EVYTestMessageFixtures.message(
+        id: UUID().uuidString, type: "pickup", value: "pending", time: "2026-06-03T09:00:00"),
+      omitUnresolvedDatumKeys: false
+    )
+    XCTAssertEqual(resolved["postalcode"], .string("$datum.data.postalcode"))
+  }
+
   /// A store-mode update is scoped to the datum's own record, and a filter term that fails
   /// makes the whole thing a no-op.
   ///

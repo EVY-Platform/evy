@@ -277,6 +277,61 @@ func evyFindFirst(_ args: String, remainingProps: [String] = []) throws -> EVYJs
 }
 
 @MainActor
+func evyFilter(_ args: String, remainingProps: [String] = []) throws -> EVYJson {
+  let parts = _splitFunctionArguments(args)
+  guard parts.count == 2 else {
+    throw EVYError.invalidData(context: "filter expects collection, predicate")
+  }
+
+  let collectionArg = parts[0].trimmingCharacters(in: .whitespacesAndNewlines)
+  let predicate = parts[1].trimmingCharacters(in: .whitespacesAndNewlines)
+
+  let collection = try EVY.getDataFromProps(collectionArg)
+  guard case .array(let items) = collection else {
+    throw EVYError.invalidData(context: "filter expects a collection")
+  }
+
+  let matches = items.filter { candidate in
+    let temporaryId = UUID().uuidString
+    let substitutedPredicate =
+      predicate
+      .replacingOccurrences(of: EVY.datumPrefix, with: "\(temporaryId).")
+      .replacingOccurrences(of: EVY.datumToken, with: temporaryId)
+    return
+      (try? evyWithEphemeralDatum(key: temporaryId, value: candidate) {
+        try _evaluateFromText(wrappedExpression(substitutedPredicate))
+      }) ?? false
+  }
+
+  return EVYJson.array(matches).parseProp(props: remainingProps)
+}
+
+@MainActor
+func evyOwns(_ args: String) throws -> EVYFunctionOutput {
+  let parts = _splitFunctionArguments(args)
+  guard parts.count == 3 else {
+    throw EVYError.invalidData(context: "owns expects service, resource, id")
+  }
+
+  func resolveOwnershipArgument(_ argument: String) -> String {
+    let trimmed = argument.trimmingCharacters(in: .whitespacesAndNewlines)
+    if let resolved = try? EVY.getDataFromProps(trimmed) {
+      return resolved.toString()
+    }
+    return _stripOptionalSurroundingQuotes(trimmed)
+  }
+
+  let service = resolveOwnershipArgument(parts[0])
+  let resource = resolveOwnershipArgument(parts[1])
+  let id = resolveOwnershipArgument(parts[2])
+
+  let isOwned = EVY.ownedServiceResources().contains { owned in
+    owned.service == service && owned.resource == resource && owned.ids.contains(id)
+  }
+  return EVYFunctionOutput(value: isOwned ? "true" : "false", prefix: nil, suffix: nil)
+}
+
+@MainActor
 func evyIf(_ args: String) throws -> EVYFunctionOutput {
   let parts = _splitFunctionArguments(args)
   guard parts.count == 3 else { throw EVYParamError.invalidProps }

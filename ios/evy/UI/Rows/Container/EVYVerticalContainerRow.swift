@@ -11,19 +11,22 @@ struct EVYVerticalContainerRow: View {
 
   private let view: VerticalContainerRowViewData
   private let childRefs: [EVYRowRef]
+  private let datum: EVYJson?
 
   init(
     view: VerticalContainerRowViewData,
-    childRefs: [EVYRowRef]
+    childRefs: [EVYRowRef],
+    datum: EVYJson? = nil
   ) {
     self.view = view
     self.childRefs = childRefs
+    self.datum = datum
   }
 
   var body: some View {
     Group {
       ForEach(childRefs, id: \.id) { ref in
-        EVYRow(ref: ref)
+        EVYRow(ref: ref, datum: datum)
           .padding(.vertical, Constants.minorPadding)
       }
     }

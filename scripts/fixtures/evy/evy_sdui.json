@@ -6,25 +6,239 @@
 			"id": "55e427ac-263c-441f-9673-f60627b1baea",
 			"rows": [
 				{
-					"id": "7c4a8f21-9b3d-4e6a-a1c2-8f7d3e5b9a01",
-					"type": "Search",
-					"child": {
-						"id": "8d5b9e32-ac4e-5f7b-b2d3-9e8f4a6c0b12",
-						"type": "Text",
-						"title": "{$datum.data.type} request",
-						"subtitle": "{$datum.data.time}",
-						"visible": "true",
-						"name": "Message search result",
-						"actions": {}
-					},
+					"id": "29646c92-90d0-4a68-8c23-3acf88612d06",
+					"type": "TabContainer",
+					"name": "Message tabs",
 					"title": "",
-					"placeholder": "Filter messages by type",
-					"source": "{messages}",
-					"no_results": "No messages found",
-					"destination": "",
 					"visible": "true",
-					"name": "Search messages",
-					"actions": {}
+					"segments": ["For you", "From you", "Scheduled"],
+					"actions": {
+						"tap": [
+							{
+								"condition": "",
+								"false": "",
+								"true": {
+									"fn": "select",
+									"value": "$datum"
+								}
+							}
+						]
+					},
+					"children": [
+						{
+							"id": "574da230-8f09-43b2-b003-deadf6786bc4",
+							"type": "Search",
+							"name": "For you requests",
+							"title": "",
+							"placeholder": "",
+							"source": "{filter(messages, $datum.data.value == pending && owns($datum.service, $datum.resource, $datum.fk) == true && findFirst(sort(messages, desc, createdAt), fk == $datum.fk && data.type == $datum.data.type).id == $datum.id)}",
+							"no_results": "No requests",
+							"destination": "",
+							"visible": "true",
+							"actions": {},
+							"child": {
+								"id": "95444ce6-d4be-4001-8798-213cce23afd8",
+								"type": "ListItem",
+								"name": "For you request row",
+								"title": "{findFirst(dc28ed59-298e-493c-8ff3-3e60f2ebccbd, $datum.fk).title}",
+								"subtitle": "{$datum.data.value}",
+								"visible": "true",
+								"swipeLabel": "Accept",
+								"actions": {
+									"swipe-left": [
+										{
+											"condition": "",
+											"false": "",
+											"true": {
+												"fn": "create",
+												"service": "475731ac-31aa-4d65-94d2-7032782ae359",
+												"resource": "messages",
+												"mode": "inline",
+												"data": {
+													"fk": "$datum.fk",
+													"service": "$datum.service",
+													"resource": "$datum.resource",
+													"data": "{message_id: $datum.id, value: accept, type: $datum.data.type, time: $datum.data.time, postalcode: $datum.data.postalcode}"
+												}
+											}
+										}
+									],
+									"tap": [
+										{
+											"condition": "",
+											"false": "",
+											"true": {
+												"fn": "show",
+												"rowId": "b70f6354-50cb-47cc-91bc-3387deb7277f"
+											}
+										}
+									]
+								},
+								"sheet": {
+									"id": "b70f6354-50cb-47cc-91bc-3387deb7277f",
+									"type": "VerticalContainer",
+									"name": "Respond to request sheet",
+									"title": "Respond to request",
+									"visible": "true",
+									"actions": {},
+									"children": [
+										{
+											"id": "daea8a6d-8d13-462f-98fa-5403e4f81463",
+											"type": "Text",
+											"name": "Respond confirmation copy",
+											"title": "Accept this request, or reject it?",
+											"subtitle": "",
+											"visible": "true",
+											"actions": {}
+										},
+										{
+											"id": "07ce5b44-8f2c-4183-a6e9-2f853a8dd255",
+											"type": "HorizontalContainer",
+											"name": "Respond buttons",
+											"title": "",
+											"visible": "true",
+											"actions": {},
+											"children": [
+												{
+													"id": "e519e84d-9a7e-4563-bacb-388bba69e9b2",
+													"type": "Button",
+													"name": "Accept request",
+													"label": "Accept",
+													"title": "",
+													"visible": "true",
+													"actions": {
+														"tap": [
+															{
+																"condition": "",
+																"false": "",
+																"true": {
+																	"fn": "create",
+																	"service": "475731ac-31aa-4d65-94d2-7032782ae359",
+																	"resource": "messages",
+																	"mode": "inline",
+																	"data": {
+																		"fk": "$datum.fk",
+																		"service": "$datum.service",
+																		"resource": "$datum.resource",
+																		"data": "{message_id: $datum.id, value: accept, type: $datum.data.type, time: $datum.data.time, postalcode: $datum.data.postalcode}"
+																	}
+																}
+															},
+															{
+																"condition": "",
+																"false": "",
+																"true": {
+																	"fn": "close"
+																}
+															}
+														]
+													}
+												},
+												{
+													"id": "d780b1bf-b638-4e99-84fd-36be12bb96fb",
+													"type": "Button",
+													"name": "Reject request",
+													"label": "Reject",
+													"style": "danger",
+													"title": "",
+													"visible": "true",
+													"actions": {
+														"tap": [
+															{
+																"condition": "",
+																"false": "",
+																"true": {
+																	"fn": "create",
+																	"service": "475731ac-31aa-4d65-94d2-7032782ae359",
+																	"resource": "messages",
+																	"mode": "inline",
+																	"data": {
+																		"fk": "$datum.fk",
+																		"service": "$datum.service",
+																		"resource": "$datum.resource",
+																		"data": "{message_id: $datum.id, value: reject, type: $datum.data.type, time: $datum.data.time, postalcode: $datum.data.postalcode}"
+																	}
+																}
+															},
+															{
+																"condition": "",
+																"false": "",
+																"true": {
+																	"fn": "close"
+																}
+															}
+														]
+													}
+												}
+											]
+										}
+									]
+								}
+							}
+						},
+						{
+							"id": "396da583-4748-40b9-aa88-4f8bb9074fc3",
+							"type": "Search",
+							"name": "From you requests",
+							"title": "",
+							"placeholder": "",
+							"source": "{filter(messages, $datum.data.value == pending && owns($datum.service, $datum.resource, $datum.fk) == false && findFirst(sort(messages, desc, createdAt), fk == $datum.fk && data.type == $datum.data.type).id == $datum.id)}",
+							"no_results": "No requests",
+							"destination": "",
+							"visible": "true",
+							"actions": {},
+							"child": {
+								"id": "373ff30f-dc80-425c-a382-fadc8fcdcd81",
+								"type": "ListItem",
+								"name": "From you request row",
+								"title": "{findFirst(dc28ed59-298e-493c-8ff3-3e60f2ebccbd, $datum.fk).title}",
+								"subtitle": "{$datum.data.value}",
+								"visible": "true",
+								"swipeLabel": "Cancel",
+								"actions": {
+									"swipe-left": [
+										{
+											"condition": "",
+											"false": "",
+											"true": {
+												"fn": "create",
+												"service": "475731ac-31aa-4d65-94d2-7032782ae359",
+												"resource": "messages",
+												"mode": "inline",
+												"data": {
+													"fk": "$datum.fk",
+													"service": "$datum.service",
+													"resource": "$datum.resource",
+													"data": "{message_id: $datum.id, value: cancel, type: $datum.data.type, time: $datum.data.time, postalcode: $datum.data.postalcode}"
+												}
+											}
+										}
+									]
+								}
+							}
+						},
+						{
+							"id": "4e81c7e7-f765-4864-ac63-35e2eff707cd",
+							"type": "Search",
+							"name": "Scheduled requests",
+							"title": "",
+							"placeholder": "",
+							"source": "{filter(messages, $datum.data.value == accept)}",
+							"no_results": "No requests",
+							"destination": "",
+							"visible": "true",
+							"actions": {},
+							"child": {
+								"id": "c52a5527-ee4a-46c8-8f5c-1e18f782bcc0",
+								"type": "ListItem",
+								"name": "Scheduled row",
+								"title": "{findFirst(dc28ed59-298e-493c-8ff3-3e60f2ebccbd, $datum.fk).title}",
+								"subtitle": "{$datum.data.value}",
+								"visible": "true",
+								"actions": {}
+							}
+						}
+					]
 				},
 				{
 					"id": "96d3efe4-ea20-4a81-9ccb-64d6b57646e9",
