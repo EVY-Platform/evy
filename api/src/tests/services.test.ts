@@ -94,12 +94,16 @@ describe("service WebSocket adapters", () => {
 	const receivedEvents: unknown[] = [];
 	const originalMarketplaceHost = process.env.MARKETPLACE_WS_HOST;
 	const originalMarketplacePort = process.env.MARKETPLACE_WS_PORT;
+	const originalRpcTimeout = process.env.SERVICE_RPC_TIMEOUT_MS;
 
 	beforeAll(async () => {
 		await migrate(testDb, { migrationsFolder: "./drizzle" });
 		wsPort = await getFreePort();
 		process.env.MARKETPLACE_WS_HOST = "127.0.0.1";
 		process.env.MARKETPLACE_WS_PORT = String(wsPort);
+		// Keep failed reconnect probes short so a slow CI runner cannot burn the
+		// default 10s RPC timeout inside the 5s bun test budget.
+		process.env.SERVICE_RPC_TIMEOUT_MS = "200";
 
 		const nowIso = new Date().toISOString();
 		await testDb.insert(schema.service).values({
@@ -118,9 +122,13 @@ describe("service WebSocket adapters", () => {
 		await initServiceAdapters(dataDb, (_eventName, payload) => {
 			receivedEvents.push(payload);
 		});
-	});
+	}, 20_000);
 
 	afterAll(async () => {
+		const { disposeServiceAdapters } = await import(
+			"../procedures/services"
+		);
+		disposeServiceAdapters();
 		stopTestWsServer();
 		if (originalMarketplaceHost === undefined) {
 			delete process.env.MARKETPLACE_WS_HOST;
@@ -132,8 +140,13 @@ describe("service WebSocket adapters", () => {
 		} else {
 			process.env.MARKETPLACE_WS_PORT = originalMarketplacePort;
 		}
+		if (originalRpcTimeout === undefined) {
+			delete process.env.SERVICE_RPC_TIMEOUT_MS;
+		} else {
+			process.env.SERVICE_RPC_TIMEOUT_MS = originalRpcTimeout;
+		}
 		await pgliteClient.close();
-	});
+	}, 10_000);
 
 	it("relays a procedure call and returns the service's response", async () => {
 		const { forwardApi } = await import("../procedures/services");
@@ -191,7 +204,7 @@ describe("service WebSocket adapters", () => {
 		stopTestWsServer();
 		testServer = await startTestWsServer(wsPort);
 
-		const reconnectDeadline = Date.now() + 3000;
+		const reconnectDeadline = Date.now() + 5000;
 		let reconnected = false;
 		while (Date.now() < reconnectDeadline) {
 			try {
@@ -229,7 +242,7 @@ describe("service WebSocket adapters", () => {
 			resource: EXTERNAL_TEST_RESOURCE.CONDITIONS,
 		});
 		expect(got).toEqual(expect.arrayContaining([row]));
-	});
+	}, 10_000);
 });
 
 describe("resolveServiceWsEndpoint", () => {
@@ -339,11 +352,12 @@ describe("forwarded call failures are attributed", () => {
 	const savedPort = process.env.MARKETPLACE_WS_PORT;
 	const savedTimeout = process.env.SERVICE_RPC_TIMEOUT_MS;
 
-	// The shared pglite client is closed by the adapter describe above, so this
-	// one owns its database rather than depending on another describe's state.
-	const own = createPgliteTestDatabase();
+	// Own database rather than depending on another describe's state — created
+	// in beforeAll so this file does not spin up two PGlites at import time.
+	let own: ReturnType<typeof createPgliteTestDatabase>;
 
 	beforeAll(async () => {
+		own = createPgliteTestDatabase();
 		await migrate(own.testDb, { migrationsFolder: "./drizzle" });
 		const nowIso = new Date().toISOString();
 		await own.testDb.insert(schema.service).values({
@@ -375,9 +389,13 @@ describe("forwarded call failures are attributed", () => {
 
 		const { initServiceAdapters } = await import("../procedures/services");
 		await initServiceAdapters(asEvyDb(own.testDb));
-	});
+	}, 20_000);
 
 	afterAll(async () => {
+		const { disposeServiceAdapters } = await import(
+			"../procedures/services"
+		);
+		disposeServiceAdapters();
 		slowServer?.close();
 		slowServer = null;
 		await own.pgliteClient.close();
@@ -388,7 +406,7 @@ describe("forwarded call failures are attributed", () => {
 		if (savedTimeout === undefined)
 			delete process.env.SERVICE_RPC_TIMEOUT_MS;
 		else process.env.SERVICE_RPC_TIMEOUT_MS = savedTimeout;
-	});
+	}, 10_000);
 
 	it("times out a hung service instead of stalling forever", async () => {
 		const { forwardGet, ServiceForwardError } = await import(
