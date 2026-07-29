@@ -975,67 +975,74 @@ final class EVYActionRunnerTests: XCTestCase {
       .dictionary(["id": .string(recordId), "currency": .string("AUD")]))
   }
 
-  func testUpdateActionAcceptsOnlyMatchingPendingMessageForDatum() throws {
+  /// A store-mode update is scoped to the datum's own record, and a filter term that fails
+  /// makes the whole thing a no-op. `archivedAt` carries both halves: it is the one
+  /// mutation a message takes, and `null` is a filter term that stops matching once set.
+  func testUpdateActionArchivesOnlyMatchingOpenMessageForDatum() throws {
     let namespace = EVYNamespace.evy
     let resource = EVYCoreResource.messages.rawValue
     let itemId = UUID().uuidString
-    let pendingMessageId = UUID().uuidString
-    let otherPendingMessageId = UUID().uuidString
-    let acceptedMessageId = UUID().uuidString
+    let openMessageId = UUID().uuidString
+    let otherOpenMessageId = UUID().uuidString
+    let archivedMessageId = UUID().uuidString
+    let archivedAt = "2026-06-01T00:00:00Z"
     deleteFromSyncedStores(namespace: namespace, resource: resource)
     defer { deleteFromSyncedStores(namespace: namespace, resource: resource) }
 
     let messages = EVYJson.array([
-      EVYTestMessageFixtures.message(
-        id: pendingMessageId,
+      EVYTestMessageFixtures.request(
+        id: openMessageId,
         fk: itemId,
-        status: "pending",
-        archivedAt: .null,
+        service: EVY_CORE_SERVICE,
+        resource: resource,
         type: "pickup",
-        time: "2026-06-03T09:00:00"
+        archivedAt: .null
       ),
-      EVYTestMessageFixtures.message(
-        id: otherPendingMessageId,
+      EVYTestMessageFixtures.request(
+        id: otherOpenMessageId,
         fk: itemId,
-        status: "pending",
-        archivedAt: .null,
+        service: EVY_CORE_SERVICE,
+        resource: resource,
         type: "delivery",
-        time: "2026-06-03T10:00:00"
+        time: "2026-06-03T10:00:00",
+        archivedAt: .null
       ),
-      EVYTestMessageFixtures.message(
-        id: acceptedMessageId,
+      EVYTestMessageFixtures.request(
+        id: archivedMessageId,
         fk: itemId,
-        status: "accepted",
-        archivedAt: .null,
+        service: EVY_CORE_SERVICE,
+        resource: resource,
         type: "shipping",
-        postalcode: "2018"
+        archivedAt: .string(archivedAt)
       ),
     ])
     try EVY.applySyncedValue(namespace: namespace, resource: resource, value: messages)
 
-    let acceptAction = rowAction(
+    let archiveAction = rowAction(
       true:
         .update(
           service: namespace, resource: resource, mode: .store,
-          filter: ["id": "$datum.id", "status": "\"pending\""],
-          changes: .literal(["status": "\"accepted\""]))
+          filter: ["id": "$datum.id", "archivedAt": "null"],
+          changes: .literal(["archivedAt": "now()"]))
     )
 
-    let pendingDatum = EVYJson.dictionary(["id": .string(pendingMessageId)])
-    EVYActionRunner.run(actions: [acceptAction], datum: pendingDatum) { _ in }
+    let openDatum = EVYJson.dictionary(["id": .string(openMessageId)])
+    EVYActionRunner.run(actions: [archiveAction], datum: openDatum) { _ in }
 
-    let statusById = try statusByMessageId(namespace: namespace, resource: resource)
-    XCTAssertEqual(statusById[pendingMessageId], "accepted")
-    XCTAssertEqual(statusById[otherPendingMessageId], "pending")
-    XCTAssertEqual(statusById[acceptedMessageId], "accepted")
+    var archived = try archivedAtByMessageId(namespace: namespace, resource: resource)
+    XCTAssertNotNil(archived[openMessageId], "the datum's own message is archived")
+    XCTAssertNil(archived[otherOpenMessageId], "another open message is left alone")
+    XCTAssertEqual(archived[archivedMessageId], archivedAt)
 
     EVYActionRunner.run(
-      actions: [acceptAction],
-      datum: EVYJson.dictionary(["id": .string(acceptedMessageId)])
+      actions: [archiveAction],
+      datum: EVYJson.dictionary(["id": .string(archivedMessageId)])
     ) { _ in }
 
-    let afterNoOp = try statusByMessageId(namespace: namespace, resource: resource)
-    XCTAssertEqual(afterNoOp[acceptedMessageId], "accepted")
+    archived = try archivedAtByMessageId(namespace: namespace, resource: resource)
+    XCTAssertEqual(
+      archived[archivedMessageId], archivedAt,
+      "an already-archived message no longer matches the filter")
   }
 
   private func allFromSyncedStores(namespace: String, resource: String) -> [EVYData] {
@@ -1050,7 +1057,12 @@ final class EVYActionRunnerTests: XCTestCase {
     }
   }
 
-  private func statusByMessageId(namespace: String, resource: String) throws -> [String: String] {
+  /// Archive timestamps by message id. A message with no `archivedAt`, or an explicit
+  /// null, is absent from the result - so a missing key reads as "still open".
+  private func archivedAtByMessageId(
+    namespace: String,
+    resource: String
+  ) throws -> [String: String] {
     let rows = EVY.syncedStores().flatMap {
       (try? $0.getAll(namespace: namespace, resource: resource)) ?? []
     }
@@ -1059,9 +1071,10 @@ final class EVYActionRunnerTests: XCTestCase {
         guard let decoded = try? row.decoded(),
           case .dictionary(let values) = decoded,
           case .string(let id) = values["id"],
-          case .string(let status) = values["status"]
+          case .string(let archivedAt) = values["archivedAt"],
+          !archivedAt.isEmpty
         else { return nil }
-        return (id, status)
+        return (id, archivedAt)
       })
   }
 
@@ -1486,13 +1499,13 @@ final class EVYActionRunnerTests: XCTestCase {
       service: EVY_CORE_SERVICE,
       resource: EVYCoreResource.messages.rawValue,
       mode: .store,
-      filter: ["id": "$datum.id", "status": "\"pending\""],
-      changes: .literal(["status": "\"accepted\""]))
+      filter: ["id": "$datum.id", "archivedAt": "null"],
+      changes: .literal(["archivedAt": "now()"]))
     let row = try decodeRow(
       content: """
         {
           "title": "{$datum.title}",
-          "subtitle": "{$datum.status}"
+          "subtitle": "{$datum.data.value}"
         }
         """,
       actions: UI_RowActions(
@@ -1504,7 +1517,7 @@ final class EVYActionRunnerTests: XCTestCase {
     let datum = EVYJson.dictionary([
       "id": .string("resolved-uuid"),
       "title": .string("Resolved Title"),
-      "status": .string("pending"),
+      "data": .dictionary(["value": .string("pending")]),
     ])
 
     let formattedRow = try formatter.formattedResult(datum: datum).row
@@ -1515,17 +1528,17 @@ final class EVYActionRunnerTests: XCTestCase {
     XCTAssertEqual(formattedRow.actions.swipeLeft.first?.true, branch(updateAction))
   }
 
-  func testSwipeLeftUpdateActionAcceptsPendingMessageFromFormattedSearchResult() throws {
+  func testSwipeLeftUpdateActionArchivesOpenMessageFromFormattedSearchResult() throws {
     let namespace = EVYNamespace.evy
     let resource = EVYCoreResource.messages.rawValue
-    let pendingMessageId = UUID().uuidString
+    let openMessageId = UUID().uuidString
     deleteFromSyncedStores(namespace: namespace, resource: resource)
     defer { deleteFromSyncedStores(namespace: namespace, resource: resource) }
 
     let message = EVYTestMessageFixtures.message(
-      id: pendingMessageId,
-      status: "pending",
+      id: openMessageId,
       type: "pickup",
+      value: "pending",
       time: "2026-06-03T09:00:00"
     )
     // Routed by visibility, the way a synced message actually arrives.
@@ -1536,7 +1549,7 @@ final class EVYActionRunnerTests: XCTestCase {
       content: """
         {
           "title": "{$datum.data.type} request",
-          "subtitle": "{$datum.status}"
+          "subtitle": "{$datum.data.value}"
         }
         """,
       actions: UI_RowActions(
@@ -1545,8 +1558,8 @@ final class EVYActionRunnerTests: XCTestCase {
             true:
               .update(
                 service: namespace, resource: resource, mode: .store,
-                filter: ["id": "$datum.id", "status": "\"pending\""],
-                changes: .literal(["status": "\"accepted\""]))
+                filter: ["id": "$datum.id", "archivedAt": "null"],
+                changes: .literal(["archivedAt": "now()"]))
           )
         ]
       )
@@ -1563,8 +1576,8 @@ final class EVYActionRunnerTests: XCTestCase {
       datum: result.datum
     ) { _ in }
 
-    let statusById = try statusByMessageId(namespace: namespace, resource: resource)
-    XCTAssertEqual(statusById[pendingMessageId], "accepted")
+    let archived = try archivedAtByMessageId(namespace: namespace, resource: resource)
+    XCTAssertNotNil(archived[openMessageId])
   }
 
   private func makeRowWithSheet() throws -> UI_Row {

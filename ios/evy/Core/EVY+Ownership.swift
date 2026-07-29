@@ -68,6 +68,17 @@ extension EVY {
     EVYOwnershipLedger.record(service: service, resource: resource, id: id)
   }
 
+  /// Whether this device is the one that created a record.
+  ///
+  /// Narrower than `ownedServiceResources()` on purpose: that unions in the private store,
+  /// so a record which merely *reached* this device counts as owned there. Only the ledger
+  /// can answer "I wrote this", which is what tells a message's sender from its recipient.
+  static func didCreate(service: String, resource: String, id: String) -> Bool {
+    EVYOwnershipLedger.recordedIds().contains {
+      $0.service == service && $0.resource == resource && $0.id == id
+    }
+  }
+
   /// One entry per (service, resource) this device owns records in, from three sources.
   ///
   /// - the **ledger**: records this device created. The only thing that can say "mine"

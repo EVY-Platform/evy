@@ -214,8 +214,8 @@ final class EVYSearchModelTests: XCTestCase {
     try? EVY.privateStore.deleteAll(namespace: EVYNamespace.evy, resource: resource)
     let message = EVYTestMessageFixtures.message(
       id: pendingId,
-      status: "pending",
       type: "pickup",
+      value: "pending",
       time: "2026-06-03T09:00:00"
     )
     try EVY.applySyncedValue(
@@ -228,7 +228,7 @@ final class EVYSearchModelTests: XCTestCase {
       try? EVY.privateStore.deleteAll(namespace: EVYNamespace.evy, resource: resource)
     }
 
-    let template = Self.makeMessageStatusTemplate()
+    let template = Self.makeMessageValueTemplate()
     let source = "{\(resource)}"
     let state = EVYState(
       textToWatch: source,
@@ -243,27 +243,26 @@ final class EVYSearchModelTests: XCTestCase {
 
     XCTAssertEqual(state.value.first?.displayRow.subtitle, "pending")
 
+    // An update filter matches flat record keys, so the request is named by id; the
+    // change reaches into `data` through a dotted path, which `applyChanges` does support.
     try EVY.update(
       namespace: EVYNamespace.evy,
       resource: resource,
-      matching: [
-        "id": .string(pendingId),
-        "status": .string("pending"),
-      ],
-      changes: ["status": .string("accepted")]
+      matching: ["id": .string(pendingId)],
+      changes: ["data.value": .string("accept")]
     )
 
-    XCTAssertEqual(state.value.first?.displayRow.subtitle, "accepted")
+    XCTAssertEqual(state.value.first?.displayRow.subtitle, "accept")
   }
 
-  private static func makeMessageStatusTemplate() -> UI_Row? {
+  private static func makeMessageValueTemplate() -> UI_Row? {
     let resultTemplateJSON = """
       {
         "id": "message-status-template",
         "type": "Text",
         "actions": {},
         "title": "{$datum.data.type} request",
-        "subtitle": "{$datum.status}",
+        "subtitle": "{$datum.data.value}",
         "visible": "true",
         "name": "Message"
       }

@@ -1,0 +1,344 @@
+//
+//  EVYMessageRequestTests.swift
+//  evyTests
+//
+
+import XCTest
+
+@testable import evy
+
+@MainActor
+final class EVYMessageRequestTests: XCTestCase {
+  private let itemService = UUID().uuidString.lowercased()
+  private let itemResource = UUID().uuidString.lowercased()
+  private var itemId = ""
+  private var requestId = ""
+
+  override func setUpWithError() throws {
+    // Without this, respond/cancel fire real RPCs at localhost:8000.
+    installHermeticMutationSync()
+    // Other classes create records, which records ownership, and do not reset the
+    // ledger - the role cases below need one they own.
+    EVYOwnershipLedger.reset()
+    try? EVY.publicStore.wipeAll()
+    try? EVY.privateStore.wipeAll()
+    itemId = UUID().uuidString.lowercased()
+    requestId = UUID().uuidString.lowercased()
+  }
+
+  override func tearDownWithError() throws {
+    resetHermeticMutationSync()
+    try? EVY.publicStore.wipeAll()
+    try? EVY.privateStore.wipeAll()
+    EVYOwnershipLedger.reset()
+  }
+
+  private func requestDatum(
+    id: String? = nil,
+    type: String = "pickup",
+    archivedAt: EVYJson? = nil
+  ) -> EVYJson {
+    EVYTestMessageFixtures.request(
+      id: id ?? requestId,
+      fk: itemId,
+      service: itemService,
+      resource: itemResource,
+      type: type,
+      archivedAt: archivedAt
+    )
+  }
+
+  private func store(_ message: EVYJson) throws {
+    try EVY.applySyncedValue(
+      namespace: EVYNamespace.evy,
+      resource: EVYCoreResource.messages.rawValue,
+      value: message
+    )
+  }
+
+  /// The device owns the record the request addresses - the seller's position.
+  private func ownAddressedRecord() {
+    EVY.recordOwnership(service: itemService, resource: itemResource, id: itemId)
+  }
+
+  /// The device created the request - the buyer's position.
+  private func ownRequest() {
+    EVY.recordOwnership(
+      service: EVYNamespace.evy,
+      resource: EVYCoreResource.messages.rawValue,
+      id: requestId
+    )
+  }
+
+  private func storedMessages() throws -> [[String: EVYJson]] {
+    let rows = try EVY.privateStore.getAll(
+      namespace: EVYNamespace.evy,
+      resource: EVYCoreResource.messages.rawValue
+    )
+    return try rows.compactMap { row in
+      guard case .dictionary(let values) = try row.decoded() else { return nil }
+      return values
+    }
+  }
+
+  // MARK: - classify
+
+  func testClassifiesEveryTransferTypeAsARequest() throws {
+    for type in ["pickup", "delivery", "shipping"] {
+      let request = EVYMessageRequest.classify(requestDatum(type: type))
+      XCTAssertEqual(request?.type, type, "\(type) should classify as a request")
+      XCTAssertEqual(request?.id, requestId)
+      XCTAssertEqual(request?.fk, itemId)
+      XCTAssertEqual(request?.service, itemService)
+      XCTAssertEqual(request?.resource, itemResource)
+    }
+  }
+
+  func testDoesNotClassifyAResponseAsARequest() {
+    for value in ["accept", "reject"] {
+      let response = EVYTestMessageFixtures.response(
+        id: UUID().uuidString,
+        to: requestId,
+        fk: itemId,
+        service: itemService,
+        resource: itemResource,
+        value: value
+      )
+      XCTAssertNil(
+        EVYMessageRequest.classify(response),
+        "a \(value) response is not something to answer")
+    }
+  }
+
+  /// A request says "pending" outright. Identifying one by an *absent* value would make
+  /// every message that happens to carry no state look answerable.
+  func testDoesNotClassifyAMessageWithNoValue() {
+    let stateless = EVYTestMessageFixtures.message(
+      id: requestId,
+      fk: itemId,
+      service: itemService,
+      resource: itemResource,
+      type: "pickup"
+    )
+    XCTAssertNil(EVYMessageRequest.classify(stateless))
+  }
+
+  func testDoesNotClassifyAnUnknownTransferType() {
+    XCTAssertNil(EVYMessageRequest.classify(requestDatum(type: "teleport")))
+  }
+
+  func testDoesNotClassifyANonMessage() {
+    XCTAssertNil(EVYMessageRequest.classify(.dictionary(["id": .string(itemId)])))
+    XCTAssertNil(EVYMessageRequest.classify(.string("pickup")))
+    XCTAssertNil(EVYMessageRequest.classify(nil))
+  }
+
+  // MARK: - role
+
+  func testRoleIsRecipientWhenTheDeviceOwnsTheAddressedRecord() throws {
+    ownAddressedRecord()
+    let request = try XCTUnwrap(EVYMessageRequest.classify(requestDatum()))
+
+    XCTAssertEqual(EVYMessageRequest.role(for: request), .recipient)
+  }
+
+  func testRoleIsSenderWhenTheDeviceCreatedTheRequest() throws {
+    ownRequest()
+    let request = try XCTUnwrap(EVYMessageRequest.classify(requestDatum()))
+
+    XCTAssertEqual(EVYMessageRequest.role(for: request), .sender)
+  }
+
+  /// You cannot accept your own request, even on the device that also listed the item.
+  func testSenderWinsOverRecipientWhenBothHold() throws {
+    ownAddressedRecord()
+    ownRequest()
+    let request = try XCTUnwrap(EVYMessageRequest.classify(requestDatum()))
+
+    XCTAssertEqual(EVYMessageRequest.role(for: request), .sender)
+  }
+
+  /// Receiving a message also puts it in the private store, which confers ownership of
+  /// the message. That must not read as authorship, or a recipient would look like the
+  /// sender and lose the affordance entirely.
+  func testHoldingTheRequestPrivatelyIsNotAuthorship() throws {
+    ownAddressedRecord()
+    try store(requestDatum())
+    let request = try XCTUnwrap(EVYMessageRequest.classify(requestDatum()))
+
+    XCTAssertEqual(EVYMessageRequest.role(for: request), .recipient)
+  }
+
+  func testRoleIsNilWhenTheDeviceOwnsNeither() throws {
+    let request = try XCTUnwrap(EVYMessageRequest.classify(requestDatum()))
+
+    XCTAssertNil(EVYMessageRequest.role(for: request))
+  }
+
+  func testRoleIsNilWhenOwnershipIsForAnotherRecord() throws {
+    EVY.recordOwnership(
+      service: itemService, resource: itemResource, id: UUID().uuidString.lowercased())
+    let request = try XCTUnwrap(EVYMessageRequest.classify(requestDatum()))
+
+    XCTAssertNil(EVYMessageRequest.role(for: request))
+  }
+
+  // MARK: - hasResponse
+
+  func testHasResponseFindsTheAnswerToThisRequest() throws {
+    let request = try XCTUnwrap(EVYMessageRequest.classify(requestDatum()))
+    XCTAssertFalse(EVYMessageRequest.hasResponse(to: request))
+
+    try store(
+      EVYTestMessageFixtures.response(
+        id: UUID().uuidString.lowercased(),
+        to: requestId,
+        fk: itemId,
+        service: itemService,
+        resource: itemResource,
+        value: "reject"
+      ))
+
+    XCTAssertTrue(EVYMessageRequest.hasResponse(to: request))
+  }
+
+  func testHasResponseIgnoresAnswersToOtherRequests() throws {
+    let request = try XCTUnwrap(EVYMessageRequest.classify(requestDatum()))
+    try store(
+      EVYTestMessageFixtures.response(
+        id: UUID().uuidString.lowercased(),
+        to: UUID().uuidString.lowercased(),
+        fk: itemId,
+        service: itemService,
+        resource: itemResource,
+        value: "accept"
+      ))
+
+    XCTAssertFalse(EVYMessageRequest.hasResponse(to: request))
+  }
+
+  // MARK: - respond and cancel
+
+  func testRespondCreatesAResponseAndArchivesTheRequest() throws {
+    try store(requestDatum())
+    let request = try XCTUnwrap(EVYMessageRequest.classify(requestDatum()))
+
+    try EVYMessageRequest.respond(to: request, with: .accept)
+
+    let messages = try storedMessages()
+    XCTAssertEqual(messages.count, 2, "the request survives; the answer is a new message")
+
+    let response = try XCTUnwrap(
+      messages.first { $0["id"] != .string(requestId) },
+      "a response message should have been created")
+    guard case .dictionary(let data) = response["data"] else {
+      return XCTFail("response should carry a data object")
+    }
+    XCTAssertEqual(data["message_id"], .string(requestId))
+    XCTAssertEqual(data["value"], .string("accept"))
+    XCTAssertEqual(data["type"], .string("pickup"), "copied so lookups stay flat")
+    XCTAssertEqual(response["fk"], .string(itemId))
+    XCTAssertEqual(response["service"], .string(itemService))
+    XCTAssertEqual(response["resource"], .string(itemResource))
+    XCTAssertEqual(response["visibility"], .string("private"))
+    XCTAssertNil(response["status"], "status is gone from the contract")
+
+    let stored = try XCTUnwrap(messages.first { $0["id"] == .string(requestId) })
+    XCTAssertNotEqual(stored["archivedAt"], .null)
+    XCTAssertNotNil(stored["archivedAt"], "answering closes the request out")
+    guard case .dictionary(let requestData) = stored["data"] else {
+      return XCTFail("request should keep its data object")
+    }
+    XCTAssertEqual(
+      requestData["value"], .string("pending"),
+      "the request is never rewritten to say it was answered")
+  }
+
+  func testRespondWithRejectRecordsReject() throws {
+    try store(requestDatum())
+    let request = try XCTUnwrap(EVYMessageRequest.classify(requestDatum()))
+
+    try EVYMessageRequest.respond(to: request, with: .reject)
+
+    let response = try XCTUnwrap(
+      try storedMessages().first { $0["id"] != .string(requestId) })
+    guard case .dictionary(let data) = response["data"] else {
+      return XCTFail("response should carry a data object")
+    }
+    XCTAssertEqual(data["value"], .string("reject"))
+  }
+
+  func testCancelArchivesTheRequestAndCreatesNothing() throws {
+    try store(requestDatum())
+    let request = try XCTUnwrap(EVYMessageRequest.classify(requestDatum()))
+
+    try EVYMessageRequest.cancel(request)
+
+    let messages = try storedMessages()
+    XCTAssertEqual(messages.count, 1, "cancelling answers nothing")
+    XCTAssertNotNil(messages[0]["archivedAt"])
+  }
+
+  // MARK: - swipeActions
+
+  func testRecipientIsOfferedAcceptAndReject() throws {
+    ownAddressedRecord()
+    try store(requestDatum())
+
+    let actions = EVYMessageRequest.swipeActions(for: requestDatum())
+
+    XCTAssertEqual(actions.map(\.id), ["accept", "reject"])
+  }
+
+  func testSenderIsOfferedCancelOnly() throws {
+    ownRequest()
+    try store(requestDatum())
+
+    let actions = EVYMessageRequest.swipeActions(for: requestDatum())
+
+    XCTAssertEqual(actions.map(\.id), ["cancel"])
+  }
+
+  func testNoAffordanceOnceTheRequestIsAnswered() throws {
+    ownAddressedRecord()
+    try store(requestDatum())
+    try store(
+      EVYTestMessageFixtures.response(
+        id: UUID().uuidString.lowercased(),
+        to: requestId,
+        fk: itemId,
+        service: itemService,
+        resource: itemResource,
+        value: "accept"
+      ))
+
+    XCTAssertTrue(EVYMessageRequest.swipeActions(for: requestDatum()).isEmpty)
+  }
+
+  func testNoAffordanceOnAnArchivedRequest() throws {
+    ownAddressedRecord()
+
+    let archived = requestDatum(archivedAt: .string("2026-07-01T00:00:00.000Z"))
+    XCTAssertTrue(EVYMessageRequest.swipeActions(for: archived).isEmpty)
+  }
+
+  func testNoAffordanceWithoutARole() throws {
+    try store(requestDatum())
+
+    XCTAssertTrue(EVYMessageRequest.swipeActions(for: requestDatum()).isEmpty)
+  }
+
+  func testNoAffordanceOnAResponse() throws {
+    ownAddressedRecord()
+    let response = EVYTestMessageFixtures.response(
+      id: UUID().uuidString.lowercased(),
+      to: requestId,
+      fk: itemId,
+      service: itemService,
+      resource: itemResource,
+      value: "accept"
+    )
+
+    XCTAssertTrue(EVYMessageRequest.swipeActions(for: response).isEmpty)
+  }
+}

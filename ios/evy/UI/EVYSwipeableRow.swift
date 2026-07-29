@@ -11,6 +11,21 @@ enum EVYSwipeEndState {
   case open
 }
 
+/// One button behind a swipeable row.
+///
+/// A row's `swipe-left` action list is a single affordance, so SDUI produces exactly one of
+/// these. `EVYMessageRequest` produces two, which is why this is a list rather than the
+/// label-and-handler pair it replaces.
+struct EVYSwipeAction: Identifiable {
+  /// Accessibility suffix, and how a test names the button: "accept", "reject", "cancel".
+  /// Empty for the single SDUI affordance, which keeps its existing identifier.
+  let id: String
+  /// EVY text, so an icon token like `::check::` resolves to its Lucide glyph.
+  let label: String
+  let tint: Color
+  let run: () -> Void
+}
+
 enum EVYSwipeGeometry {
   static let revealWidth: CGFloat = 72
   static let revealSnapThreshold: CGFloat = 36
