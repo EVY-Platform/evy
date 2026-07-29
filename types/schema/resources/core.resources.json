@@ -15,7 +15,7 @@
 		},
 		"devices": {
 			"singular": "device",
-			"visibility": "public"
+			"visibility": "private"
 		},
 		"organisations": {
 			"singular": "organisation",

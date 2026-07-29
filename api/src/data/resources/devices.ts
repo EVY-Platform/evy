@@ -32,7 +32,7 @@ export async function validateAuth(
 			token,
 			os,
 			createdAt: new Date().toISOString(),
-			visibility: "public",
+			visibility: "private",
 		});
 
 		return true;
