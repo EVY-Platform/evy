@@ -13,46 +13,9 @@
 						"type": "Text",
 						"title": "{$datum.data.type} request",
 						"subtitle": "{$datum.data.time}",
-						"swipeLabel": "::check::",
 						"visible": "true",
 						"name": "Message search result",
-						"actions": {
-							"swipe-left": [
-								{
-									"condition": "",
-									"false": "",
-									"true": {
-										"fn": "create",
-										"service": "475731ac-31aa-4d65-94d2-7032782ae359",
-										"resource": "messages",
-										"mode": "inline",
-										"data": {
-											"fk": "$datum.fk",
-											"service": "$datum.service",
-											"resource": "$datum.resource",
-											"archivedAt": "null",
-											"data": "{message_id: $datum.id, value: accept, type: $datum.data.type}"
-										}
-									}
-								},
-								{
-									"condition": "",
-									"false": "",
-									"true": {
-										"fn": "update",
-										"service": "475731ac-31aa-4d65-94d2-7032782ae359",
-										"resource": "messages",
-										"mode": "store",
-										"filter": {
-											"id": "$datum.id"
-										},
-										"changes": {
-											"archivedAt": "now()"
-										}
-									}
-								}
-							]
-						}
+						"actions": {}
 					},
 					"title": "",
 					"placeholder": "Filter messages by type",

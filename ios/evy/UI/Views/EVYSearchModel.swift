@@ -69,10 +69,33 @@ struct EVYSearchResult: Equatable, Identifiable {
     scopeId: String?
   ) -> [EVYSearchResult] {
     return makeResults(
-      from: try? EVY.getDataFromText(source, scope: .cache(scopeId)),
+      from: hidingMessageResponses(
+        in: try? EVY.getDataFromText(source, scope: .cache(scopeId)),
+        source: source
+      ),
       resultTemplate: resultTemplate,
       scopeId: scopeId
     )
+  }
+
+  /// A message list shows requests, not the answers to them.
+  ///
+  /// A response is a message like any other and lands in the same collection, so without
+  /// this the inbox renders "pickup request" twice - once for the ask and once for the
+  /// reply. Hard-coded alongside the rest of the transfer-request rule (see
+  /// `EVYMessageRequest`), because a `Search` child cannot filter per result: `visible` is
+  /// evaluated with no datum.
+  @MainActor
+  private static func hidingMessageResponses(
+    in sourceData: EVYJson?,
+    source: String
+  ) -> EVYJson? {
+    guard case .array(let rows) = sourceData,
+      EVY.parsePropsFromText(source) == EVYCoreResource.messages.rawValue
+    else {
+      return sourceData
+    }
+    return .array(rows.filter { !EVYMessageRequest.isResponse($0) })
   }
 }
 

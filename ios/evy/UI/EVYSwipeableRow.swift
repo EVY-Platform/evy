@@ -27,6 +27,7 @@ struct EVYSwipeAction: Identifiable {
 }
 
 enum EVYSwipeGeometry {
+  /// One revealed button, and the reveal for a single-action row.
   static let revealWidth: CGFloat = 72
   static let revealSnapThreshold: CGFloat = 36
   static let maxStretchWidth: CGFloat = revealWidth * 2
@@ -38,11 +39,21 @@ enum EVYSwipeGeometry {
   private static let springVelocityClamp: CGFloat = 40
   private static let nearZeroDistance: CGFloat = 0.5
 
+  /// How far a row opens to show this many buttons. A recipient gets two.
+  static func revealWidth(actionCount: Int) -> CGFloat {
+    revealWidth * CGFloat(max(1, actionCount))
+  }
+
   static func isHorizontalDominant(translation: CGSize) -> Bool {
     abs(translation.width) > abs(translation.height)
   }
 
-  static func dragOffset(translation: CGSize, isOpen: Bool) -> CGFloat {
+  static func dragOffset(
+    translation: CGSize,
+    isOpen: Bool,
+    revealWidth: CGFloat = revealWidth
+  ) -> CGFloat {
+    let maxStretchWidth = revealWidth * 2
     let baseOffset: CGFloat = isOpen ? -revealWidth : 0
     let proposedOffset = baseOffset + translation.width
     if proposedOffset > 0 {
@@ -62,13 +73,14 @@ enum EVYSwipeGeometry {
   static func endState(
     translation: CGSize,
     velocity: CGSize,
-    isOpen: Bool
+    isOpen: Bool,
+    revealWidth: CGFloat = revealWidth
   ) -> EVYSwipeEndState {
     let baseOffset: CGFloat = isOpen ? -revealWidth : 0
     let rawOffset = baseOffset + translation.width
     let decisionOffset =
       abs(velocity.width) < nearZeroDistance
-      ? dragOffset(translation: translation, isOpen: isOpen)
+      ? dragOffset(translation: translation, isOpen: isOpen, revealWidth: revealWidth)
       : projectedOffset(rawOffset: rawOffset, velocityX: velocity.width)
     if decisionOffset <= -revealSnapThreshold {
       return .open
@@ -76,7 +88,12 @@ enum EVYSwipeGeometry {
     return .closed
   }
 
-  static func revealButtonWidth(for offset: CGFloat) -> CGFloat {
+  /// The revealed strip stretches past its resting width on an over-swipe, so the buttons
+  /// keep filling it rather than leaving a gap.
+  static func revealButtonWidth(
+    for offset: CGFloat,
+    revealWidth: CGFloat = revealWidth
+  ) -> CGFloat {
     max(revealWidth, -offset)
   }
 
@@ -123,20 +140,16 @@ enum EVYSwipeRowIdentity {
 
 struct EVYSwipeableRow<Content: View>: View {
   let swipeIdentity: String
-  let swipeLabel: String?
-  let onExecute: () -> Void
+  let actions: [EVYSwipeAction]
   private let content: () -> Content
 
   init(
     swipeIdentity: String,
-    swipeLabel: String,
-    onExecute: @escaping () -> Void,
+    actions: [EVYSwipeAction],
     @ViewBuilder content: @escaping () -> Content
   ) {
     self.swipeIdentity = swipeIdentity
-    let trimmedLabel = swipeLabel.trimmingCharacters(in: .whitespacesAndNewlines)
-    self.swipeLabel = trimmedLabel.isEmpty ? nil : trimmedLabel
-    self.onExecute = onExecute
+    self.actions = actions
     self.content = content
   }
 
@@ -150,10 +163,14 @@ struct EVYSwipeableRow<Content: View>: View {
     coordinator.openRowId == swipeIdentity
   }
 
+  private var revealWidth: CGFloat {
+    EVYSwipeGeometry.revealWidth(actionCount: actions.count)
+  }
+
   var body: some View {
-    // Action button must be above content in the ZStack. Content stays full-width and only
+    // Action buttons must be above content in the ZStack. Content stays full-width and only
     // moves visually via offset, so when drawn on top it still owns the revealed trailing
-    // hit region and turns button taps into tap-to-close (no onExecute / status update).
+    // hit region and turns button taps into tap-to-close (running no action).
     ZStack(alignment: .trailing) {
       content()
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -178,7 +195,8 @@ struct EVYSwipeableRow<Content: View>: View {
             onChanged: { translation in
               let nextOffset = EVYSwipeGeometry.dragOffset(
                 translation: translation,
-                isOpen: wasOpenAtDragStart
+                isOpen: wasOpenAtDragStart,
+                revealWidth: revealWidth
               )
               var transaction = Transaction()
               transaction.disablesAnimations = true
@@ -191,13 +209,14 @@ struct EVYSwipeableRow<Content: View>: View {
               let endState = EVYSwipeGeometry.endState(
                 translation: translation,
                 velocity: velocity,
-                isOpen: wasOpenAtDragStart
+                isOpen: wasOpenAtDragStart,
+                revealWidth: revealWidth
               )
               switch endState {
               case .closed:
                 settle(to: 0, velocityX: velocity.width)
               case .open:
-                settle(to: -EVYSwipeGeometry.revealWidth, velocityX: velocity.width)
+                settle(to: -revealWidth, velocityX: velocity.width)
               }
             },
             onTapWhenOpen: {
@@ -206,8 +225,10 @@ struct EVYSwipeableRow<Content: View>: View {
           )
         }
 
-      trailingActionButton
-        .frame(width: EVYSwipeGeometry.revealButtonWidth(for: offset))
+      trailingActionButtons
+        .frame(
+          width: EVYSwipeGeometry.revealButtonWidth(for: offset, revealWidth: revealWidth)
+        )
         .opacity(offset < 0 ? 1 : 0)
         .allowsHitTesting(offset <= -EVYSwipeGeometry.revealSnapThreshold && !isDragging)
     }
@@ -220,7 +241,7 @@ struct EVYSwipeableRow<Content: View>: View {
     }
     .onChange(of: coordinator.openRowId) { _, openId in
       guard !isDragging else { return }
-      let target: CGFloat = openId == swipeIdentity ? -EVYSwipeGeometry.revealWidth : 0
+      let target: CGFloat = openId == swipeIdentity ? -revealWidth : 0
       guard offset != target else { return }
       withAnimation(.spring(response: 0.28, dampingFraction: 0.86)) {
         offset = target
@@ -228,28 +249,44 @@ struct EVYSwipeableRow<Content: View>: View {
     }
   }
 
-  private var trailingActionButton: some View {
-    Button {
-      executeWithCommitSweep()
+  private var trailingActionButtons: some View {
+    HStack(spacing: 0) {
+      ForEach(actions) { action in
+        button(for: action)
+      }
+    }
+  }
+
+  private func button(for action: EVYSwipeAction) -> some View {
+    let label = action.label.trimmingCharacters(in: .whitespacesAndNewlines)
+    // The single SDUI affordance keeps `swipeLeft_<identity>`; a hard-coded one is named
+    // by what it does, so a test can tell accept from reject.
+    let identifier =
+      action.id.isEmpty
+      ? "swipeLeft_\(swipeIdentity)"
+      : "swipe\(action.id.capitalized)_\(swipeIdentity)"
+
+    return Button {
+      executeWithCommitSweep(action)
     } label: {
       Group {
-        if let swipeLabel {
-          EVYTextView(swipeLabel, style: .button)
-            .lineLimit(1)
-            .minimumScaleFactor(0.7)
-        } else {
+        if label.isEmpty {
           Image(systemName: "ellipsis")
             .font(.system(size: 20, weight: .semibold))
+        } else {
+          EVYTextView(label, style: .button)
+            .lineLimit(1)
+            .minimumScaleFactor(0.7)
         }
       }
       .foregroundStyle(.white)
       .frame(maxWidth: .infinity)
       .frame(maxHeight: .infinity)
-      .background(Constants.actionColor)
+      .background(action.tint)
     }
     .buttonStyle(.plain)
-    .accessibilityLabel(swipeLabel ?? "Swipe left")
-    .accessibilityIdentifier("swipeLeft_\(swipeIdentity)")
+    .accessibilityLabel(label.isEmpty ? "Swipe left" : label)
+    .accessibilityIdentifier(identifier)
   }
 
   private func settle(to targetOffset: CGFloat, velocityX: CGFloat) {
@@ -271,9 +308,9 @@ struct EVYSwipeableRow<Content: View>: View {
     }
   }
 
-  private func executeWithCommitSweep() {
+  private func executeWithCommitSweep(_ action: EVYSwipeAction) {
     coordinator.close(swipeIdentity)
-    let sweepTarget = -max(rowWidth, EVYSwipeGeometry.revealWidth)
+    let sweepTarget = -max(rowWidth, revealWidth)
     withAnimation(.easeOut(duration: 0.15), completionCriteria: .logicallyComplete) {
       offset = sweepTarget
     } completion: {
@@ -283,7 +320,7 @@ struct EVYSwipeableRow<Content: View>: View {
         offset = 0
       }
     }
-    onExecute()
+    action.run()
   }
 }
 

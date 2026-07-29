@@ -326,15 +326,37 @@ private struct EVYResolvedRow: View {
     }
   }
 
+  /// A transfer request answers to the hard-coded rule rather than to the row's own
+  /// `swipe-left` list: who may accept one is not expressible in SDUI (see
+  /// `EVYMessageRequest`). Every other row keeps the single SDUI affordance.
+  ///
+  /// The hard-coded writes run under this row's scope, the same reason `runActions` does
+  /// it: a mutation should land where the row's bindings read from, so the item page's
+  /// cached copy of the message updates with the store.
+  private func swipeActions(for contentRow: UI_Row) -> [EVYSwipeAction] {
+    let hardCoded = EVYMessageRequest.swipeActions(for: datum)
+    if !hardCoded.isEmpty {
+      return hardCoded.map { action in
+        EVYSwipeAction(id: action.id, label: action.label, tint: action.tint) {
+          EVY.withScope(evyScope) { action.run() }
+        }
+      }
+    }
+    guard !contentRow.actions.swipeLeft.isEmpty else { return [] }
+    return [
+      EVYSwipeAction(id: "", label: contentRow.swipeLabel, tint: Constants.actionColor) {
+        runActions(trigger: .swipeLeft, contentRow: contentRow)
+      }
+    ]
+  }
+
   @ViewBuilder
   private func renderedRow(for payload: UI_RowPayload, contentRow: UI_Row) -> some View {
-    if !contentRow.actions.swipeLeft.isEmpty {
+    let actions = swipeActions(for: contentRow)
+    if !actions.isEmpty {
       EVYSwipeableRow(
         swipeIdentity: EVYSwipeRowIdentity.make(rowId: contentRow.id, datum: datum),
-        swipeLabel: contentRow.swipeLabel,
-        onExecute: {
-          runActions(trigger: .swipeLeft, contentRow: contentRow)
-        }
+        actions: actions
       ) {
         tappedOrPlainRow(for: payload, contentRow: contentRow)
       }

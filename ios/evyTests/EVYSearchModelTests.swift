@@ -255,6 +255,47 @@ final class EVYSearchModelTests: XCTestCase {
     XCTAssertEqual(state.value.first?.displayRow.subtitle, "accept")
   }
 
+  /// A response is a message and lands in the same collection, so without filtering the
+  /// inbox would list "pickup request" twice - once for the ask and once for the reply.
+  func testLoadLocalResultsHidesMessageResponses() throws {
+    let resource = EVYCoreResource.messages.rawValue
+    let requestId = UUID().uuidString.lowercased()
+    let itemId = UUID().uuidString.lowercased()
+    let service = UUID().uuidString.lowercased()
+    let itemResource = UUID().uuidString.lowercased()
+    try? EVY.publicStore.deleteAll(namespace: EVYNamespace.evy, resource: resource)
+    try? EVY.privateStore.deleteAll(namespace: EVYNamespace.evy, resource: resource)
+    defer {
+      try? EVY.publicStore.deleteAll(namespace: EVYNamespace.evy, resource: resource)
+      try? EVY.privateStore.deleteAll(namespace: EVYNamespace.evy, resource: resource)
+    }
+
+    try EVY.applySyncedValue(
+      namespace: EVYNamespace.evy,
+      resource: resource,
+      value: .array([
+        EVYTestMessageFixtures.request(
+          id: requestId, fk: itemId, service: service, resource: itemResource),
+        EVYTestMessageFixtures.response(
+          id: UUID().uuidString.lowercased(),
+          to: requestId,
+          fk: itemId,
+          service: service,
+          resource: itemResource,
+          value: "accept"
+        ),
+      ])
+    )
+
+    let results = EVYSearchResult.loadLocalResults(
+      source: "{\(resource)}",
+      resultTemplate: Self.makeMessageValueTemplate(),
+      scopeId: nil
+    )
+
+    XCTAssertEqual(results.map(\.id), [requestId])
+  }
+
   private static func makeMessageValueTemplate() -> UI_Row? {
     let resultTemplateJSON = """
       {

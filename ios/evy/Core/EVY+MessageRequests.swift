@@ -72,6 +72,20 @@ enum EVYMessageRequest {
     return Request(id: id, fk: fk, service: service, resource: resource, type: type)
   }
 
+  /// Whether a message answers another one, rather than asking for something.
+  ///
+  /// Keyed on `message_id` rather than on `value`, so it stays true of a response whatever
+  /// decision it carries.
+  static func isResponse(_ datum: EVYJson?) -> Bool {
+    guard case .dictionary(let message) = datum,
+      case .dictionary(let data) = message["data"],
+      case .string(let answered) = data["message_id"]
+    else {
+      return false
+    }
+    return !answered.isEmpty
+  }
+
   /// Reads the ledger rather than `ownedServiceResources()` for authorship: receiving a
   /// message puts it in the private store, which also confers ownership of it, so the
   /// wider set cannot tell "I wrote this" from "this reached me". Getting that backwards
