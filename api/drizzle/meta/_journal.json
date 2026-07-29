@@ -8,6 +8,13 @@
 			"when": 1785283539352,
 			"tag": "0000_baseline",
 			"breakpoints": true
+		},
+		{
+			"idx": 1,
+			"version": "7",
+			"when": 1785316723611,
+			"tag": "0001_message_state_in_data",
+			"breakpoints": true
 		}
 	]
 }

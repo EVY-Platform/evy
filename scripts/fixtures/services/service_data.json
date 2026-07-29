@@ -235,9 +235,9 @@
 			"archivedAt": null,
 			"createdAt": "2026-06-01T00:00:00.000Z",
 			"updatedAt": "2026-06-01T00:00:00.000Z",
-			"status": "pending",
 			"data": {
 				"type": "pickup",
+				"value": "pending",
 				"time": "2026-06-03T09:00:00"
 			}
 		},
@@ -249,9 +249,9 @@
 			"archivedAt": null,
 			"createdAt": "2026-06-01T00:00:00.000Z",
 			"updatedAt": "2026-06-01T00:00:00.000Z",
-			"status": "pending",
 			"data": {
 				"type": "delivery",
+				"value": "pending",
 				"time": "2026-06-03T14:00:00"
 			}
 		},
@@ -263,9 +263,9 @@
 			"archivedAt": null,
 			"createdAt": "2026-06-01T00:00:00.000Z",
 			"updatedAt": "2026-06-01T00:00:00.000Z",
-			"status": "pending",
 			"data": {
 				"type": "shipping",
+				"value": "pending",
 				"postalcode": "2018"
 			}
 		}

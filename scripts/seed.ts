@@ -310,7 +310,6 @@ type SeedMessageRow = {
 	archivedAt: string | null;
 	createdAt: string;
 	updatedAt: string;
-	status: "pending" | "accepted";
 	data: Record<string, unknown>;
 	visibility: "public" | "private";
 };
@@ -336,17 +335,26 @@ function buildMessageRows(
 				`Seed message "${item.id}" must have a string "resource" field`,
 			);
 		}
-		if (item.status !== "pending" && item.status !== "accepted") {
-			throw new Error(
-				`Seed message "${item.id}" must have status "pending" or "accepted"`,
-			);
-		}
 		const data =
 			item.data !== null &&
 			typeof item.data === "object" &&
 			!Array.isArray(item.data)
 				? (item.data as Record<string, unknown>)
 				: {};
+		// A message's state lives in `data.value`: "pending" on a request, "accept" or
+		// "reject" on the response that answers one. Not every message is a request, so
+		// an absent value is fine - a misspelled one is not, and would otherwise only
+		// show up as a row the item page silently never matches.
+		if (
+			data.value !== undefined &&
+			data.value !== "pending" &&
+			data.value !== "accept" &&
+			data.value !== "reject"
+		) {
+			throw new Error(
+				`Seed message "${item.id}" has data.value "${String(data.value)}"; expected "pending", "accept" or "reject"`,
+			);
+		}
 		return {
 			id: item.id,
 			fk: item.fk,
@@ -358,7 +366,6 @@ function buildMessageRows(
 					: null,
 			createdAt,
 			updatedAt,
-			status: item.status,
 			data,
 			visibility:
 				item.visibility === "private" || item.visibility === "public"

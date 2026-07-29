@@ -152,7 +152,6 @@
 				"resource",
 				"createdAt",
 				"updatedAt",
-				"status",
 				"data",
 				"visibility"
 			],
@@ -189,10 +188,6 @@
 					"description": "Set when the record is deleted. Tombstoned rows are excluded from plain reads but included in incremental ones, so clients learn about deletions.",
 					"type": "string",
 					"format": "date-time"
-				},
-				"status": {
-					"type": "string",
-					"enum": ["pending", "accepted"]
 				},
 				"data": {
 					"type": "object",

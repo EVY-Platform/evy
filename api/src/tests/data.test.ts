@@ -6,6 +6,7 @@ import {
 	expect,
 	it,
 } from "bun:test";
+import { sql } from "drizzle-orm";
 import { migrate } from "drizzle-orm/pglite/migrator";
 
 import type {
@@ -530,8 +531,11 @@ describe("message resources", () => {
 			fk: crypto.randomUUID(),
 			service: crypto.randomUUID(),
 			resource: crypto.randomUUID(),
-			status: "pending" as const,
-			data: { type: "pickup", time: "2026-06-03T09:00:00" },
+			data: {
+				type: "pickup",
+				value: "pending",
+				time: "2026-06-03T09:00:00",
+			},
 			visibility: "private" as const,
 		};
 		const created = (await create(dataDb, {
@@ -541,7 +545,7 @@ describe("message resources", () => {
 		})) as DATA_EVY_Message;
 		expect(created.id).toBeDefined();
 		expect(created.updatedAt).toBeDefined();
-		expect(created.status).toBe("pending");
+		expect(created.data.value).toBe("pending");
 		expect(created.visibility).toBe("private");
 
 		const listed = (await get(dataDb, {
@@ -550,21 +554,16 @@ describe("message resources", () => {
 		})) as DATA_EVY_Message[];
 		expect(listed).toHaveLength(1);
 
-		const updated = (await update(dataDb, {
-			service: EVY_CORE_SERVICE,
-			resource: MESSAGE_RESOURCE,
-			filter: { id: created.id },
-			data: { ...created, status: "accepted" },
-		})) as DATA_EVY_Message;
-		expect(updated.status).toBe("accepted");
-
+		// Archiving is the only update a message takes: a decision is answered by a new
+		// message, never by rewriting the one that asked.
 		const archived = (await update(dataDb, {
 			service: EVY_CORE_SERVICE,
 			resource: MESSAGE_RESOURCE,
 			filter: { id: created.id },
-			data: { ...updated, archivedAt: nowIso() },
+			data: { ...created, archivedAt: nowIso() },
 		})) as DATA_EVY_Message;
 		expect(archived.archivedAt).toBeDefined();
+		expect(archived.data.value).toBe("pending");
 
 		const deleted = (await deleteCore(dataDb, {
 			service: EVY_CORE_SERVICE,
@@ -591,11 +590,32 @@ describe("message resources", () => {
 				resource: MESSAGE_RESOURCE,
 				data: {
 					id: crypto.randomUUID(),
+					fk: "not-a-uuid",
+					service: crypto.randomUUID(),
+					resource: crypto.randomUUID(),
+					data: {},
+					visibility: "private",
+				},
+			}),
+		).rejects.toThrow("Message validation failed");
+	});
+
+	// `status` used to hold the request's state; `data.value` does now. The def is
+	// `additionalProperties: false`, so a client still sending the old field is
+	// rejected rather than silently ignored - which is what makes the migration's
+	// updated_at bump load-bearing, since `update` echoes the whole record back.
+	it("rejects a message still carrying the removed status field", async () => {
+		await expect(
+			create(dataDb, {
+				service: EVY_CORE_SERVICE,
+				resource: MESSAGE_RESOURCE,
+				data: {
+					id: crypto.randomUUID(),
 					fk: crypto.randomUUID(),
 					service: crypto.randomUUID(),
 					resource: crypto.randomUUID(),
-					status: "invalid",
-					data: {},
+					status: "pending",
+					data: { type: "pickup", value: "pending" },
 					visibility: "private",
 				},
 			}),
@@ -617,8 +637,7 @@ describe("getSyncRows", () => {
 				fk,
 				service: targetService,
 				resource: targetResource,
-				status: "pending" as const,
-				data: { type: "pickup" },
+				data: { type: "pickup", value: "pending" },
 				visibility: "private" as const,
 			},
 		})) as DATA_EVY_Message;
@@ -638,7 +657,6 @@ describe("getSyncRows", () => {
 				fk: otherFk,
 				service: targetService,
 				resource: targetResource,
-				status: "pending" as const,
 				data: {
 					message_id: requestId,
 					value: "accept",
@@ -806,12 +824,12 @@ describe("getSyncRows", () => {
 		const request = await createMessage(otherFk);
 		const response = await createResponse(request.id);
 
-		expect(
-			await ownedIds({
-				ownedIds: [request.id],
-				ownedForeignKeys: [],
-			}),
-		).toEqual([request.id, response.id]);
+		const owned = await ownedIds({
+			ownedIds: [request.id],
+			ownedForeignKeys: [],
+		});
+
+		expect(owned.toSorted()).toEqual([request.id, response.id].toSorted());
 	});
 
 	it("does not return responses to a message the device does not own", async () => {
@@ -825,6 +843,37 @@ describe("getSyncRows", () => {
 				ownedForeignKeys: [],
 			}),
 		).toEqual([mine.id]);
+	});
+
+	// The bun-sql driver stores a jsonb column by JSON-stringifying it, so every row the
+	// running API writes holds a jsonb *string* rather than an object. Reads are symmetric
+	// so JavaScript cannot see the difference - but `data ->> 'message_id'` is NULL on that
+	// shape, which would make the response rule match nothing in the real database while
+	// passing here, because pglite stores it properly. Write the production shape directly.
+	it("returns responses stored with a double-encoded data column", async () => {
+		const request = await createMessage(otherFk);
+		const responseId = crypto.randomUUID();
+		await testDb.insert(schema.message).values({
+			id: responseId,
+			fk: otherFk,
+			service: targetService,
+			resource: targetResource,
+			createdAt: "2026-06-01T00:00:00.000Z",
+			updatedAt: "2026-06-01T00:00:00.000Z",
+			data: sql`to_jsonb(${JSON.stringify({
+				message_id: request.id,
+				value: "accept",
+				type: "pickup",
+			})}::text)`,
+			visibility: "private",
+		});
+
+		const owned = await ownedIds({
+			ownedIds: [request.id],
+			ownedForeignKeys: [],
+		});
+
+		expect(owned).toContain(responseId);
 	});
 
 	it("leaves messages with no message_id in data unaffected", async () => {

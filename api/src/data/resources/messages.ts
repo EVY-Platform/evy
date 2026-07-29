@@ -23,7 +23,6 @@ const baseMessagesResource = makeCoreResource<DATA_EVY_Message>({
 		service: v.service,
 		resource: v.resource,
 		archivedAt: v.archivedAt ?? null,
-		status: v.status,
 		data: v.data,
 		visibility: v.visibility,
 	}),
@@ -70,6 +69,29 @@ function recipientClause(
 }
 
 /**
+ * `Message.data` as a jsonb object, whichever way it was stored.
+ *
+ * The `bun-sql` driver serialises a jsonb column by JSON-stringifying its value, so a row
+ * written through the API holds a jsonb *string* containing the object rather than the
+ * object itself. Reads are symmetric - the driver parses it back - so JavaScript never
+ * notices, and a properly-encoded object decodes just as well. SQL does notice:
+ * `data ->> 'key'` is NULL on the string form, which would make any clause reaching into
+ * `data` silently match nothing.
+ *
+ * This affects every jsonb column in the schema, not only this one. Normalising the whole
+ * database and fixing the write path is its own change; until then, read tolerantly.
+ * Never throws: a string that is not a JSON object falls through to an empty object rather
+ * than failing the cast and taking the resource's sync down with it.
+ */
+const messageDataObject = sql`(CASE
+	WHEN jsonb_typeof(${message.data}) = 'object' THEN ${message.data}
+	WHEN jsonb_typeof(${message.data}) = 'string'
+		AND left(${message.data} #>> '{}', 1) = '{'
+		THEN (${message.data} #>> '{}')::jsonb
+	ELSE '{}'::jsonb
+END)`;
+
+/**
  * A message answering a message you own is yours.
  *
  * A response addresses whatever record its request addressed, so `recipientClause`
@@ -85,7 +107,7 @@ function recipientClause(
 function responseClause(ownedMessageIds: string[]): SQL | undefined {
 	if (ownedMessageIds.length === 0) return undefined;
 	return inArray(
-		sql`lower(${message.data} ->> 'message_id')`,
+		sql`lower(${messageDataObject} ->> 'message_id')`,
 		ownedMessageIds.map((id) => id.toLowerCase()),
 	);
 }
