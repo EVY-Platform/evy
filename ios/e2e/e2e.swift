@@ -681,11 +681,7 @@ class E2ETestBase: XCTestCase {
     return false
   }
 
-  /// Waits for the message that answers `messageId` to reach the server.
-  ///
-  /// A decision is a new record rather than an edit to the one that asked, so this looks
-  /// for a message naming the request in `data.message_id` - not for a changed field on
-  /// the request itself.
+  /// Waits for a response message naming `messageId` in `data.message_id`.
   func waitForMessageResponse(
     emitter: WSEmitter,
     messageId: String,
@@ -924,11 +920,6 @@ class E2ETestBase: XCTestCase {
     service: String, resource: String, ids: [String]
   )
 
-  /// Records the launched device should own without having created them.
-  ///
-  /// Messages sync only to their creator and to the owner of the record they address, so a
-  /// test that relies on *seeded* messages has to say which seeded record this device owns.
-  /// The default owns nothing.
   var ownedServiceResources: [OwnedServiceResourceDeclaration] { [] }
 
   override func setUpWithError() throws {

@@ -93,8 +93,6 @@ describe("API E2E Tests", () => {
 					),
 			);
 
-			// Nothing changed in between, so the cursor holds and no data rows repeat.
-			// The resource catalog singleton is re-sent whenever discovery succeeds.
 			expect(incrementalRows).toEqual([]);
 			expect(second.cursor).toBe(first.cursor);
 		});
@@ -236,14 +234,6 @@ describe("API E2E Tests", () => {
 			expect(updated.pageIds).toEqual([]);
 		});
 
-		/**
-		 * The round trip a request response has to make, over the real transport.
-		 *
-		 * A response addresses whatever record its request addressed, so the recipient
-		 * rule delivers it to that record's owner - the party who just answered. The
-		 * asker owns neither the response nor that record, only the request, so their
-		 * copy of the answer depends entirely on the response rule.
-		 */
 		it("sync delivers a response to the sender of the message it answers", async () => {
 			const itemService = crypto.randomUUID();
 			const itemResource = crypto.randomUUID();
@@ -261,7 +251,6 @@ describe("API E2E Tests", () => {
 				},
 			});
 
-			// The recipient answers: a new message, never an edit to the request.
 			const response = await client.call("create", {
 				service: EVY_CORE_SERVICE,
 				resource: EVY_CORE_RESOURCE.MESSAGES,
@@ -278,7 +267,6 @@ describe("API E2E Tests", () => {
 				},
 			});
 
-			// The sender declares only the request it created.
 			const synced = await client.call("sync", {
 				ownedServiceResources: [
 					{

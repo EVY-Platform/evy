@@ -6,12 +6,6 @@
 @testable import evy
 
 enum EVYTestMessageFixtures {
-  /// A message as the store holds one.
-  ///
-  /// `value` is the message's state and lives in `data`: "pending" on a request,
-  /// "accept" or "reject" on the response answering one. Passing `messageId` names the
-  /// request being answered, which is what makes a fixture a response rather than a
-  /// request.
   static func message(
     id: String,
     fk: String? = nil,
@@ -53,20 +47,16 @@ enum EVYTestMessageFixtures {
     if let resource {
       dict["resource"] = .string(resource)
     }
-    // The ordering key for "the latest message about this request". Milliseconds matter: equal
-    // keys fall back to store order, which would let a request outrank its own answer.
     if let createdAt {
       dict["createdAt"] = .string(createdAt)
     }
     if !data.isEmpty {
       dict["data"] = .dictionary(data)
     }
-    // Messages are private records, so a realistic fixture routes to the private store.
     dict["visibility"] = .string("private")
     return .dictionary(dict)
   }
 
-  /// A transfer request, in the shape the item page's create actions produce.
   static func request(
     id: String,
     fk: String,
@@ -88,7 +78,6 @@ enum EVYTestMessageFixtures {
     )
   }
 
-  /// The message that answers a request, addressing the same record the request did.
   static func response(
     id: String,
     to requestId: String,

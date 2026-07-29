@@ -262,6 +262,25 @@ final class InterpreterTests: XCTestCase {
     )
   }
 
+  func testGetValueFromTextEvaluatesCompoundDimensionLabelsInSingleBraceBlock() throws {
+    let key = uniqueKey("item")
+    try store(
+      .dictionary([
+        "dimensions": .dictionary([
+          "width": .int(500),
+          "height": .int(300),
+          "length": .int(200),
+        ])
+      ]),
+      at: key)
+    XCTAssertEqual(
+      try EVY.getValueFromText(
+        "{formatDimension(\(key).dimensions.width) (w) x formatDimension(\(key).dimensions.height) (h) x formatDimension(\(key).dimensions.length) (l)}"
+      ).toString(),
+      "50cm (w) x 30cm (h) x 20cm (l)"
+    )
+  }
+
   func testFormatDurationHumanizesMilliseconds() throws {
     let key = uniqueKey("ms")
     try store(.int(900_000), at: key)

@@ -345,8 +345,6 @@ describe("flat flow resources", () => {
 		})) as DATA_EVY_Page;
 
 		expect(deleted.id).toBe(payload.id);
-		// Soft delete: the row survives as a tombstone so incremental syncs can
-		// tell clients it is gone, but plain reads no longer return it.
 		const [tombstone] = await testDb.select().from(schema.page);
 		expect(tombstone?.deletedAt).toBeTruthy();
 		expect(
@@ -415,8 +413,6 @@ describe("address resources", () => {
 			filter: { id: payload.id },
 		})) as DATA_EVY_Address;
 		expect(deleted.id).toBe(payload.id);
-		// Soft delete: the row survives as a tombstone so incremental syncs can
-		// tell clients it is gone, but plain reads no longer return it.
 		const [tombstone] = await testDb.select().from(schema.address);
 		expect(tombstone?.deletedAt).toBeTruthy();
 		expect(
@@ -462,9 +458,6 @@ describe("visibility", () => {
 		await clearAllTestTables(testDb);
 	});
 
-	// Nothing fills a visibility in. Each resource declares its own in
-	// core.resources.json and the creating client sends it, so a payload without
-	// one is a caller that never decided - which must not reach the database.
 	it("rejects a create with no visibility rather than choosing one", async () => {
 		await expect(
 			create(dataDb, {
@@ -554,16 +547,12 @@ describe("message resources", () => {
 		})) as DATA_EVY_Message[];
 		expect(listed).toHaveLength(1);
 
-		// No update step: a message is write-once. Every state change - answering a request,
-		// withdrawing one - is a new message, so nothing rewrites the one that asked.
 		const deleted = (await deleteCore(dataDb, {
 			service: EVY_CORE_SERVICE,
 			resource: MESSAGE_RESOURCE,
 			filter: { id: created.id },
 		})) as DATA_EVY_Message;
 		expect(deleted.id).toBe(created.id);
-		// Soft delete: the row survives as a tombstone so incremental syncs can
-		// tell clients it is gone, but plain reads no longer return it.
 		const [tombstone] = await testDb.select().from(schema.message);
 		expect(tombstone?.deletedAt).toBeTruthy();
 		expect(
@@ -591,9 +580,6 @@ describe("message resources", () => {
 		).rejects.toThrow("Message validation failed");
 	});
 
-	// `status` held the request's state and `archivedAt` closed it out; `data.value` and
-	// `createdAt` do both now. The def is `additionalProperties: false`, so a client still
-	// sending either is rejected rather than silently ignored.
 	it.each([
 		"status",
 		"archivedAt",
@@ -636,10 +622,6 @@ describe("getSyncRows", () => {
 		})) as DATA_EVY_Message;
 	}
 
-	/**
-	 * A message answering another one. Addressed to `otherFk` on purpose: nothing but
-	 * the response rule can entitle a device to it.
-	 */
 	async function createResponse(
 		requestId: string,
 	): Promise<DATA_EVY_Message> {
@@ -660,7 +642,6 @@ describe("getSyncRows", () => {
 		})) as DATA_EVY_Message;
 	}
 
-	/** An ownership group over the service resource `createMessage` addresses. */
 	function owns(...fks: string[]) {
 		return [{ service: targetService, resource: targetResource, ids: fks }];
 	}
@@ -771,7 +752,6 @@ describe("getSyncRows", () => {
 		expect(incremental).toHaveLength(1);
 		expect(incremental[0].deletedAt).toBeTruthy();
 
-		// A plain read still hides it, matching coreResource.list.
 		expect(
 			await ownedIds({
 				ownedIds: [mine.id],
@@ -780,9 +760,6 @@ describe("getSyncRows", () => {
 		).toEqual([]);
 	});
 
-	// Message.service and Message.resource are uuid columns, so a core resource
-	// name would make Postgres throw on the cast. A message can never reference a
-	// core resource by name, so dropping the group is the correct answer.
 	it("ignores owned groups that cannot address a message", async () => {
 		const addressed = await createMessage(ownedFk);
 
@@ -809,10 +786,6 @@ describe("getSyncRows", () => {
 		).toEqual([]);
 	});
 
-	// A response addresses the record the request addressed, so it reaches that
-	// record's owner by the recipient rule - who is the one that just answered.
-	// The sender owns neither the response nor that record, only the request, so
-	// answering a message you own is its own entitlement.
 	it("returns responses to a message the device owns", async () => {
 		const request = await createMessage(otherFk);
 		const response = await createResponse(request.id);
@@ -838,11 +811,7 @@ describe("getSyncRows", () => {
 		).toEqual([mine.id]);
 	});
 
-	// The bun-sql driver stores a jsonb column by JSON-stringifying it, so every row the
-	// running API writes holds a jsonb *string* rather than an object. Reads are symmetric
-	// so JavaScript cannot see the difference - but `data ->> 'message_id'` is NULL on that
-	// shape, which would make the response rule match nothing in the real database while
-	// passing here, because pglite stores it properly. Write the production shape directly.
+	// pglite stores jsonb as objects; production uses bun-sql's double-encoded shape
 	it("returns responses stored with a double-encoded data column", async () => {
 		const request = await createMessage(otherFk);
 		const responseId = crypto.randomUUID();
@@ -939,8 +908,6 @@ describe("getSyncRows entitlement", () => {
 		).toEqual([mine.id]);
 	});
 
-	// Formatters have no visibility column, so there is nothing to scope: the
-	// query must not assume the column exists.
 	it("sends rows of a resource that has no visibility at all", async () => {
 		const formatterId = crypto.randomUUID();
 		await create(dataDb, {
@@ -1136,7 +1103,6 @@ describe("tombstones", () => {
 		).toEqual([]);
 	});
 
-	// Without this a client can never learn that a record it holds is gone.
 	it("includes the tombstone in an incremental read", async () => {
 		const payload = await createAndDeleteFlow();
 

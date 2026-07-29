@@ -178,25 +178,12 @@ extension EVY {
     resource: String,
     payload: [String: EVYJson]
   ) throws -> String {
-    // Lowercased to match the canonical form Postgres `uuid` columns normalize to on
-    // storage/retrieval, so id comparisons (e.g. `fk == item.id` visibility expressions)
-    // never silently mismatch on case once a value round-trips through such a column.
     let newId = UUID().uuidString.lowercased()
     var payloadWithId = payload
     payloadWithId["id"] = .string(newId)
-    // Milliseconds, not seconds: `createdAt` is what orders records against each other, and
-    // `sort` compares these as strings. Two writes in the same second would otherwise tie, and
-    // a tie falls back to store order - which is how a request could outrank its own answer.
-    // The API and the seed fixtures both write this form, so keeping to it also stops mixed
-    // formats from comparing wrongly (`.` sorts before `Z`).
     if payloadWithId["createdAt"] == nil {
       payloadWithId["createdAt"] = .string(EVY.nowISO8601(fractional: true))
     }
-    // Every core record states its visibility on create: the API validates that one
-    // arrived and never fills one in. The value is the resource's own, declared once
-    // in core.resources.json, so a caller cannot create a record whose visibility
-    // nobody chose - though one that passed an explicit value keeps it. External
-    // service resources have no visibility of their own and get none.
     if payloadWithId["visibility"] == nil,
       let declared = EVYCoreResource(rawValue: resource)?.visibility,
       namespace == EVYNamespace.evy

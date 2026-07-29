@@ -37,12 +37,7 @@ function evyLength(): EVYFunctionOutput {
 	return { value: "1" };
 }
 
-/**
- * The builder does not evaluate collections, it just shows what a row would read from. Split
- * on top-level commas only: the collection argument can itself be a call, as in
- * `findFirst(sort(messages, desc, createdAt), …)`, and a naive split would render
- * "sort(messages" as the source.
- */
+// Split on top-level commas only; nested calls like findFirst(sort(...), ...) need it
 function evyCollectionPlaceholder(args: string): EVYFunctionOutput {
 	const [data] = splitFunctionArguments(args);
 	return { value: data?.trim() ?? "" };
@@ -308,7 +303,6 @@ function evyIfStub(args: string): EVYFunctionOutput {
 	return { value: trimmed };
 }
 
-/** Web has no ownership concept; always reports unowned. */
 function evyOwnsPlaceholder(_args: string): EVYFunctionOutput {
 	return { value: "false" };
 }

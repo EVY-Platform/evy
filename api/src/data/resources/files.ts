@@ -40,12 +40,6 @@ type PreparedFileUpload = {
 
 // Resource operations
 
-/**
- * Binaries are returned only when a single file is addressed by id. Collection
- * reads - notably every `sync` - return metadata alone, so a sync payload does
- * not carry every changed file's bytes and a binary missing from disk cannot
- * fail the whole sync. Clients fetch content lazily by id.
- */
 export async function listFileRows(
 	db: EvyDb,
 	filter: GetRequest["filter"] | undefined,
@@ -57,7 +51,6 @@ export async function listFileRows(
 		whereClauses.push(eq(file.id, filter.id));
 	}
 	if (filter?.updatedAfter) {
-		// Incremental reads carry tombstones so clients can drop deleted files.
 		whereClauses.push(gt(file.updatedAt, filter.updatedAfter));
 	} else {
 		whereClauses.push(isNull(file.deletedAt));
@@ -74,12 +67,6 @@ export async function listFileRows(
 	return validateGetResponse(response);
 }
 
-/**
- * File rows a device is entitled to. Files are public, so in practice this is every
- * row - but the rule is applied here rather than assumed, so a private file would
- * behave like every other private record. Metadata only: the binary is fetched on
- * demand by a single-file read, never streamed through sync.
- */
 export async function listFilesForSync(
 	db: EvyDb,
 	scope: SyncScope,
@@ -200,8 +187,6 @@ async function createFileFromUpload(params: {
 		typeof params.dataPayload === "object" && params.dataPayload !== null
 			? (params.dataPayload as Record<string, unknown>)
 			: {};
-	// No fallback: a file create states its own visibility like every other
-	// resource, and validation rejects one that does not.
 	const validated = validateFilePayload(record);
 	const fileId = params.filter?.id ?? validated.id;
 	const uploadSession = getUploadSession(fileId);

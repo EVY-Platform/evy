@@ -1141,6 +1141,25 @@
 				"text": "a1b2c3d4-e5f6-4789-a012-3456789abcde"
 			},
 			"notes": "Only the open request survives: settled pending rows fail the latest-message self-id check."
+		},
+		{
+			"id": "expression-compound-dimension-labels",
+			"category": "expression",
+			"platforms": ["ios"],
+			"input": "{formatDimension(item_holder.dimensions.width) (w) x formatDimension(item_holder.dimensions.height) (h) x formatDimension(item_holder.dimensions.length) (l)}",
+			"data": {
+				"item_holder": {
+					"dimensions": {
+						"width": 500,
+						"height": 300,
+						"length": 200
+					}
+				}
+			},
+			"expect": {
+				"text": "50cm (w) x 30cm (h) x 20cm (l)"
+			},
+			"notes": "Substituted unit suffixes must not be parsed as function names when mixed text continues with more calls."
 		}
 	]
 }

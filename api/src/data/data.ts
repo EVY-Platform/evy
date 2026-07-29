@@ -41,10 +41,6 @@ type CoreResourceOps = {
 		db: EvyDb,
 		filter: GetRequest["filter"] | undefined,
 	) => Promise<GetResponse>;
-	/**
-	 * The rows a device is entitled to, given what it declared as owned. Every
-	 * resource must have one: a resource without it would silently stop syncing.
-	 */
 	listForSync: (db: EvyDb, scope: SyncScope) => Promise<GetResponse>;
 	create?: (
 		db: EvyDb,
@@ -120,11 +116,6 @@ export async function get(db: EvyDb, params: GetRequest): Promise<GetResponse> {
 	return getCoreBody(db, params);
 }
 
-/**
- * A resource read as sync sees it: public rows plus the private rows this device
- * declared as owned. `get` stays unscoped - it has no ownership input and is not
- * an access boundary.
- */
 export async function getSyncRows(
 	db: EvyDb,
 	resource: string,

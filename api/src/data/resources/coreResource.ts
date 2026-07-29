@@ -25,33 +25,19 @@ export type ResourceTable = AnyPgTable & {
 	id: AnyPgColumn;
 	updatedAt: AnyPgColumn;
 	deletedAt: AnyPgColumn;
-	/** Absent on resources with no visibility of their own, e.g. formatters. */
 	visibility?: AnyPgColumn;
 };
 
-/** Ids a device owns within one service resource, as declared on the sync request. */
 export type OwnedServiceResource = NonNullable<
 	SyncRequest["ownedServiceResources"]
 >[number];
 
 export type SyncScope = {
 	updatedAfter?: string;
-	/** Ids of this resource's records the calling device declared as owned. */
 	ownedIds: string[];
-	/** Records the device owns elsewhere. Only messages read these, as fk targets. */
 	ownedForeignKeys: OwnedServiceResource[];
 };
 
-/**
- * What a device may see of a resource: every public row, plus the private rows it
- * owns. A resource with no visibility column has nothing to scope, so it returns
- * undefined and the caller filters on time alone.
- *
- * Note there is no signal for losing access. A row flipped from public to private
- * simply stops matching, so a device that already holds it keeps a stale copy -
- * nothing changes visibility after creation today, but that is the gap to close if
- * it ever does.
- */
 export function syncEntitlementClause(
 	table: ResourceTable,
 	ownedIds: string[],
@@ -62,7 +48,6 @@ export function syncEntitlementClause(
 	return or(publicRows, inArray(table.id, ownedIds));
 }
 
-/** The time half of a sync read: incremental carries tombstones, plain excludes them. */
 export function syncTimeClause(
 	table: ResourceTable,
 	updatedAfter: string | undefined,
@@ -140,10 +125,7 @@ export function makeCoreResource<
 			createdAt: createdAtOverride ?? record.createdAt ?? nowIso,
 			updatedAt: nowIso,
 		};
-		// `visibility` is deliberately not supplied here. Every resource that has one
-		// declares it in core.resources.json, and the creating client sends it; the
-		// API only checks that it arrived. Filling one in would let a caller create a
-		// record whose visibility nobody chose.
+		// visibility comes from the client, never the API
 		return validate(payload);
 	}
 
@@ -155,8 +137,6 @@ export function makeCoreResource<
 		const whereClauses: ReturnType<typeof eq>[] = [];
 		if (filter?.id) whereClauses.push(eq(table.id, filter.id));
 		if (filter?.updatedAfter) {
-			// An incremental read must carry tombstones, otherwise a client can
-			// never learn that a record it holds was deleted.
 			whereClauses.push(gt(table.updatedAt, filter.updatedAfter));
 		} else {
 			whereClauses.push(isNull(table.deletedAt));
@@ -168,11 +148,6 @@ export function makeCoreResource<
 		return validateGetResponse(rows.map(norm));
 	}
 
-	/**
-	 * The rows this device is entitled to. An owner must keep receiving the
-	 * tombstone for a private row it owns, or it could never learn the row was
-	 * deleted - `visibility` and `id` both survive a soft delete, so it does.
-	 */
 	async function listForSync(
 		db: EvyDb,
 		scope: SyncScope,
@@ -242,12 +217,6 @@ export function makeCoreResource<
 		return response;
 	}
 
-	/**
-	 * Soft delete. The row is kept as a tombstone so incremental syncs can tell
-	 * clients it is gone; plain reads exclude it. Tombstones are kept
-	 * permanently, so a client can resume from any cursor and still learn about
-	 * every delete.
-	 */
 	async function remove(
 		db: EvyDb,
 		filter: DeleteRequest["filter"],

@@ -26,17 +26,6 @@ const baseMessagesResource = makeCoreResource<DATA_EVY_Message>({
 const UUID_PATTERN =
 	/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
-/**
- * Messages are the one resource with a recipient as well as an owner: whoever owns
- * the record a message addresses is entitled to it, even though they did not create
- * it and do not hold it yet.
- *
- * Groups whose service or resource is not a uuid are dropped rather than queried.
- * `Message.service` and `Message.resource` are uuid columns, so comparing them
- * against a core resource name would make Postgres throw on the cast - and a
- * message can never reference a core resource by name anyway, so such a group could
- * not match.
- */
 function recipientClause(
 	ownedForeignKeys: OwnedServiceResource[],
 ): SQL | undefined {
@@ -63,21 +52,7 @@ function recipientClause(
 	return clauses.length === 1 ? clauses[0] : or(...clauses);
 }
 
-/**
- * `Message.data` as a jsonb object, whichever way it was stored.
- *
- * The `bun-sql` driver serialises a jsonb column by JSON-stringifying its value, so a row
- * written through the API holds a jsonb *string* containing the object rather than the
- * object itself. Reads are symmetric - the driver parses it back - so JavaScript never
- * notices, and a properly-encoded object decodes just as well. SQL does notice:
- * `data ->> 'key'` is NULL on the string form, which would make any clause reaching into
- * `data` silently match nothing.
- *
- * This affects every jsonb column in the schema, not only this one. Normalising the whole
- * database and fixing the write path is its own change; until then, read tolerantly.
- * Never throws: a string that is not a JSON object falls through to an empty object rather
- * than failing the cast and taking the resource's sync down with it.
- */
+// bun-sql stores jsonb as a JSON string; unwrap so `data ->> 'key'` works in SQL
 const messageDataObject = sql`(CASE
 	WHEN jsonb_typeof(${message.data}) = 'object' THEN ${message.data}
 	WHEN jsonb_typeof(${message.data}) = 'string'
@@ -86,19 +61,7 @@ const messageDataObject = sql`(CASE
 	ELSE '{}'::jsonb
 END)`;
 
-/**
- * A message answering a message you own is yours.
- *
- * A response addresses whatever record its request addressed, so `recipientClause`
- * already delivers it to that record's owner - who is the one that answered. The
- * request's *sender* owns neither the response nor that record, only the request, so
- * without this clause the answer would never reach the person who asked.
- *
- * Matched through `data` rather than through `fk`/`service`/`resource`, because those
- * are uuid columns while core resources are addressed by name: a message can never
- * address another message directly. `->>` yields text, so a missing or malformed value
- * simply fails to match instead of throwing on a cast.
- */
+// Entitles the request sender to responses matched on data.message_id
 function responseClause(ownedMessageIds: string[]): SQL | undefined {
 	if (ownedMessageIds.length === 0) return undefined;
 	return inArray(
@@ -107,7 +70,6 @@ function responseClause(ownedMessageIds: string[]): SQL | undefined {
 	);
 }
 
-/** The generic entitlement, widened by the recipient and response rules. */
 async function listMessagesForSync(
 	db: EvyDb,
 	scope: SyncScope,

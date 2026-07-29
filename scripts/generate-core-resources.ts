@@ -33,14 +33,7 @@ const CORE_RESOURCES_SCHEMA_PATH = "types/schema/resources/core.resources.json";
 
 interface ResourceMeta {
 	singular: string;
-	/**
-	 * The visibility every record of this resource is created with. Absent for
-	 * resources with no visibility field of their own (the catalog singleton,
-	 * formatters). Declared here because nothing else may supply it: the API
-	 * validates that a create payload carries a visibility and never fills one in.
-	 */
 	visibility?: "public" | "private";
-	/** Allowed `data.value` strings for message lifecycle states. */
 	dataValues?: string[];
 }
 

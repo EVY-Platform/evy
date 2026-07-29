@@ -67,10 +67,6 @@ let forwardGetImpl = async (
 
 type SyncScope = Parameters<typeof data.getSyncRows>[2];
 
-/**
- * One mock row per resource, carrying the visibility that resource declares - so a
- * test reading these sees what the entitlement query would really hand back.
- */
 function mockRowFor(resource: string) {
 	return {
 		id: `${resource}-mock-1`,
@@ -161,7 +157,6 @@ describe("sync", () => {
 		expect(evyResourceNames).toContain("addresses");
 		expect(evyResourceNames).toContain("formatters");
 		expect(evyResourceNames).toContain("messages");
-		// Not served by the core read API at all, so there is nothing to scope.
 		expect(evyResourceNames).not.toContain("devices");
 		expect(evyResourceNames).toContain(EVY_CORE_RESOURCE.RESOURCES);
 
@@ -343,8 +338,6 @@ describe("sync", () => {
 		}
 	});
 
-	// Ten registry entries means nine chances to forget one, and the symptom is a
-	// resource that quietly never syncs rather than anything erroring.
 	it("reads every resource the sync loop asks for", async () => {
 		const attempted: string[] = [];
 		getSyncRowsImpl = async (resource) => {
@@ -378,8 +371,6 @@ describe("sync", () => {
 		it("reads every core resource through the ownership-scoped path", async () => {
 			await sync({ cursor: EPOCH }, db);
 
-			// Messages are no longer special: they come through the same loop, and
-			// nothing reads a core resource through the unscoped `get` any more.
 			for (const resource of [
 				EVY_CORE_RESOURCE.FLOWS,
 				EVY_CORE_RESOURCE.ADDRESSES,
@@ -425,8 +416,6 @@ describe("sync", () => {
 			expect(ownershipFor(EVY_CORE_RESOURCE.ADDRESSES)?.ownedIds).toEqual(
 				[OWNED_ADDRESS_ID],
 			);
-			// A resource the device owns nothing in still syncs - it just gets the
-			// public rows only.
 			expect(ownershipFor(EVY_CORE_RESOURCE.FLOWS)?.ownedIds).toEqual([]);
 		});
 
@@ -442,8 +431,6 @@ describe("sync", () => {
 				db,
 			);
 
-			// Only messages read these, as the records they address - but every
-			// resource is handed the same scope rather than a special case.
 			expect(
 				ownershipFor(EVY_CORE_RESOURCE.MESSAGES)?.ownedForeignKeys,
 			).toEqual([externalGroup]);

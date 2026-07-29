@@ -25,12 +25,6 @@ function resumePoint(syncParams: SyncRequest): string {
 	return syncParams.cursor ?? EPOCH;
 }
 
-/**
- * The high-water mark actually observed in this response, so the next sync
- * resumes from server-recorded time rather than the client's clock. Falls back
- * to where we resumed from when nothing changed, which keeps the cursor stable
- * instead of drifting forward past unseen writes.
- */
 function nextCursor(rows: SyncRow[], resumedFrom: string): string {
 	let highWater = resumedFrom;
 	for (const row of rows) {
@@ -57,12 +51,6 @@ function describe(error: unknown): string {
 	return error instanceof Error ? error.message : String(error);
 }
 
-/**
- * Pulls everything changed since `since` for each resource.
- *
- * One resource failing degrades the response rather than failing the sync for
- * every other resource, so each is caught and reported on its own.
- */
 async function fetchResources(
 	refs: ResourceRef[],
 	since: string,
@@ -101,11 +89,6 @@ function externalResourceRefs(
 	});
 }
 
-/**
- * Every core resource is read the same way, scoped by what the device owns.
- * Devices are excluded because they are not served by the core read API at all,
- * and the resource catalog because it is a singleton assembled separately.
- */
 function coreResourceRefs(): ResourceRef[] {
 	return EVY_CORE_RESOURCE_NAMES.filter(
 		(name) =>
@@ -115,17 +98,10 @@ function coreResourceRefs(): ResourceRef[] {
 }
 
 type Ownership = {
-	/** Owned record ids, keyed by the core resource they belong to. */
 	coreIdsByResource: Map<string, string[]>;
-	/** Records owned in other services, which a message may be addressed to. */
 	foreignKeys: OwnedServiceResource[];
 };
 
-/**
- * What the device claims, split by who reads it: a core resource is scoped by the
- * ids owned in that resource, while records owned elsewhere only matter to messages
- * as the records they address.
- */
 function splitOwnedServiceResources(syncParams: SyncRequest): Ownership {
 	const coreIdsByResource = new Map<string, string[]>();
 	const foreignKeys: OwnedServiceResource[] = [];
@@ -166,9 +142,6 @@ export async function sync(
 	const ownership = splitOwnedServiceResources(syncParams);
 
 	const [core, external] = await Promise.all([
-		// Public rows plus the private ones this device owns, for every resource
-		// alike. A resource the device owns nothing in still syncs; it just gets
-		// the public rows.
 		fetchResources(coreResourceRefs(), resumedFrom, (ref) =>
 			data.getSyncRows(db, ref.resource, {
 				updatedAfter: resumedFrom,
@@ -196,8 +169,7 @@ export async function sync(
 		});
 	}
 
-	// A partial response must not advance the cursor, or the resources that
-	// failed would never be retried.
+	// Partial responses must not advance the cursor
 	const cursor =
 		errors.length > 0 ? resumedFrom : nextCursor(rows, resumedFrom);
 

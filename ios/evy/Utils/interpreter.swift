@@ -874,6 +874,12 @@ private func scanIdentifierEnd(in input: String, from start: String.Index) -> St
   return end
 }
 
+private func isIdentifierStartBoundary(in input: String, at start: String.Index) -> Bool {
+  guard start > input.startIndex else { return true }
+  let previous = input[input.index(before: start)]
+  return !(previous.isLetter || previous.isNumber || previous == "_")
+}
+
 private func scanClosingParenthesis(in input: String, openingAt openIndex: String.Index)
   -> String.Index?
 {
@@ -963,7 +969,9 @@ private func firstFunctionCall(in input: String) -> (
 )? {
   var searchIndex = input.startIndex
   while searchIndex < input.endIndex {
-    if let nameEnd = scanIdentifierEnd(in: input, from: searchIndex) {
+    if isIdentifierStartBoundary(in: input, at: searchIndex),
+      let nameEnd = scanIdentifierEnd(in: input, from: searchIndex)
+    {
       var afterName = nameEnd
       while afterName < input.endIndex, input[afterName].isWhitespace {
         afterName = input.index(after: afterName)
