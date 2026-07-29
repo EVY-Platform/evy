@@ -1175,6 +1175,17 @@ class E2ETestBase: XCTestCase {
     return result
   }
 
+  /// Nothing arranged or being arranged: the exact complement of the three `Active … request`
+  /// gates, term for term. The tab container holds all three request controls, so while one
+  /// arrangement is live the page shows that one alone.
+  static func noArrangementLiveVisibilityExpression() -> String {
+    let terms = ["pickup", "delivery", "shipping"].flatMap { type -> [String] in
+      let latest = latestMessageExpression(type: type)
+      return ["\(latest).data.value != pending", "\(latest).data.value != accept"]
+    }
+    return "{\(terms.joined(separator: " && "))}"
+  }
+
   /// The latest message about one transfer method for the item. Everything the item page
   /// shows is a read of `data.value` off this - see `docs/evy/data.md`.
   static func latestMessageExpression(type: String) -> String {
@@ -1291,7 +1302,7 @@ class E2ETestBase: XCTestCase {
               "actions": Self.actionsObject(
                 tap: [Self.rowAction(true: "{select($datum)}")]
               ),
-              "visible": "true",
+              "visible": Self.noArrangementLiveVisibilityExpression(),
               "title": "",
               "segments": ["Pickup", "Delivery", "Shipping"],
               "children": [
@@ -2715,10 +2726,9 @@ final class WebSocketE2ETests: E2ETestBase {
       cancelButton.waitForExistence(timeout: 10),
       "Cancel pickup request should replace the transfer tabs and pickup timeslot")
     XCTAssertFalse(timeslot.exists, "Pickup timeslot should be hidden after creating a request")
-    // The methods are independent: only pickup's own control goes.
-    XCTAssertTrue(
-      app.segmentedControls.buttons["Shipping"].waitForExistence(timeout: 5),
-      "Transfer tabs stay up so another method can still be requested")
+    XCTAssertFalse(
+      app.segmentedControls.buttons["Shipping"].waitForExistence(timeout: 2),
+      "Transfer tabs collapse while an arrangement is in flight, leaving just that request")
 
     cancelButton.tap()
     XCTAssertTrue(
@@ -2979,9 +2989,9 @@ final class WebSocketE2ETests: E2ETestBase {
         NSPredicate(format: "label BEGINSWITH %@", "Pickup confirmed for")
       ).firstMatch.waitForExistence(timeout: 10),
       "Pickup segment should show the accepted confirmation row")
-    XCTAssertTrue(
-      app.segmentedControls.buttons["Shipping"].waitForExistence(timeout: 5),
-      "Transfer tabs stay up: an accepted pickup says nothing about shipping")
+    XCTAssertFalse(
+      app.segmentedControls.buttons["Shipping"].waitForExistence(timeout: 2),
+      "Transfer tabs stay collapsed once an arrangement is agreed")
     let shippingConfirmation = app.staticTexts.matching(
       NSPredicate(format: "label BEGINSWITH %@", "Shipping confirmed")
     ).firstMatch

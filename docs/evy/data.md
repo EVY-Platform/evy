@@ -196,7 +196,9 @@ The item page reads one thing per transfer method: the **latest** message for th
 findFirst(sort(messages, desc, createdAt), fk == <item>.id && data.type == pickup)
 ```
 
-`pending` means a request is open (offer to cancel it); `accept` means it is agreed (show the time). `reject`, `cancel` and "no message at all" are the same branch — nothing is in flight, so offer to request again. Each `(fk, data.type)` pair is **independent**: a live pickup request says nothing about whether delivery can be asked for.
+`pending` means a request is open (offer to cancel it); `accept` means it is agreed (show the time). `reject`, `cancel` and "no message at all" are the same branch — nothing is in flight, so offer to request again.
+
+Each `(fk, data.type)` pair is **tracked independently** — a rejected pickup says nothing about delivery — but only one arrangement is live at a time in the UI. The tab container holding the three request controls is gated on *nothing* being live, so while one method is pending or agreed the page shows that one arrangement alone. Requesting another means settling the current one first.
 
 Two things follow that are easy to trip over:
 
