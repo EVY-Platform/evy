@@ -20,6 +20,7 @@ function rowPayload(id = crypto.randomUUID()) {
 		type: "Text",
 		visible: "true",
 		data: { title: "Hello", text: "World" },
+		visibility: "public" as const,
 	};
 }
 
@@ -29,6 +30,7 @@ function pagePayload(rowIds: string[], id = crypto.randomUUID()) {
 		name: "E2E Page",
 		title: "Test Page",
 		rowIds,
+		visibility: "public" as const,
 	};
 }
 
@@ -37,6 +39,7 @@ function flowPayload(pageIds: string[], id = crypto.randomUUID()) {
 		id,
 		name: "E2E Test Flow",
 		pageIds,
+		visibility: "public" as const,
 	};
 }
 

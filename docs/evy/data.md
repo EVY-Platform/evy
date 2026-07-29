@@ -158,7 +158,11 @@ On the wire this is accessed with `service: "475731ac-31aa-4d65-94d2-7032782ae35
 
 #### Visibility
 
-Every `DATA_EVY_*` row carries a required `visibility` attribute: `"public"` or `"private"`. Clients may omit it in create/update payloads; the server defaults omitted values to `"public"` (`"private"` for addresses and messages). On iOS, public rows sync into `publicStore` and private rows into `privateStore`; web keeps a single data path and treats `visibility` as an ordinary field.
+Every `DATA_EVY_*` row carries a required `visibility` attribute: `"public"` or `"private"`. **Every create states it, and nothing fills one in** — not the resource module, not the schema, not the database column. A payload without a visibility is rejected, because a record whose visibility nobody chose is a bug rather than something to guess at.
+
+Each resource declares the value its records are created with in [`core.resources.json`](../../../types/schema/resources/core.resources.json), which the generator emits for both platforms (`EVY_CORE_RESOURCE_VISIBILITY` in TypeScript, `EVYCoreResource.visibility` in Swift). iOS attaches it on create; web states it where it builds records; seeds and tests state it in their payloads. Resources with no visibility of their own — the `resources` catalog, `formatters`, and every external service resource — declare nothing and get nothing.
+
+On iOS, public rows sync into `publicStore` and private rows into `privateStore`; web keeps a single data path and treats `visibility` as an ordinary field.
 
 On iOS the private store is also part of what a device declares as owned on sync, which is how a message that arrives for you stays owned and keeps receiving updates. Note what `visibility` is **not**: it is one global column choosing a store, not an access rule and not ownership. Every device syncs every private row it is sent — every device holds every seeded address privately — so `"private"` means "stored privately on whichever device receives it", never "mine". Ownership of a **public** record therefore cannot be expressed by visibility at all, and is recorded separately when the device creates it (see [`sync`](#wire-contract-vs-persisted-rows)).
 

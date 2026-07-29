@@ -46,6 +46,7 @@ describe("API E2E WebSocket reconnect", () => {
 				id: crypto.randomUUID(),
 				name: `Reconnect test ${Date.now()}`,
 				pageIds: [],
+				visibility: "public",
 			},
 		});
 

@@ -310,6 +310,7 @@ actor WSEmitter {
       "id": flowId,
       "name": nonEmptyString(flowData["name"]) ?? "Flow",
       "pageIds": pages.map(\.id),
+      "visibility": "public",
       "createdAt": now,
       "updatedAt": now,
     ]
@@ -337,6 +338,7 @@ actor WSEmitter {
       "name": nonEmptyString(pageData["name"]) ?? nonEmptyString(pageData["title"]) ?? "Page",
       "title": (pageData["title"] as? String) ?? "",
       "rowIds": rowIds,
+      "visibility": "public",
       "createdAt": now,
       "updatedAt": now,
     ]
@@ -372,6 +374,7 @@ actor WSEmitter {
       "type": (rowData["type"] as? String) ?? "Text",
       "visible": (rowData["visible"] as? String) ?? "true",
       "data": data,
+      "visibility": "public",
       "createdAt": now,
       "updatedAt": now,
     ]

@@ -158,6 +158,7 @@ describe("Marketplace E2E (via API WebSocket)", () => {
 			archivedAt: null,
 			status: "pending",
 			data: { type: "pickup", time: "2026-06-03T10:00:00" },
+			visibility: "private",
 		};
 
 		const created = await client.call("create", {

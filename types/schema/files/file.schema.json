@@ -45,7 +45,7 @@
 		"FileMetadata": {
 			"type": "object",
 			"additionalProperties": false,
-			"required": ["id", "type", "createdAt", "updatedAt"],
+			"required": ["id", "type", "createdAt", "updatedAt", "visibility"],
 			"properties": {
 				"id": {
 					"type": "string",
@@ -54,6 +54,11 @@
 				"type": {
 					"type": "string",
 					"minLength": 1
+				},
+				"visibility": {
+					"description": "Matches DATA_EVY_File.visibility - the same record, so the same required field. Stated on create like every other resource; nothing defaults it.",
+					"type": "string",
+					"enum": ["public", "private"]
 				},
 				"createdAt": {
 					"type": "string",
@@ -68,7 +73,14 @@
 		"FileWithBinary": {
 			"type": "object",
 			"additionalProperties": false,
-			"required": ["id", "type", "createdAt", "updatedAt", "dataBase64"],
+			"required": [
+				"id",
+				"type",
+				"createdAt",
+				"updatedAt",
+				"dataBase64",
+				"visibility"
+			],
 			"properties": {
 				"id": {
 					"type": "string",
@@ -77,6 +89,11 @@
 				"type": {
 					"type": "string",
 					"minLength": 1
+				},
+				"visibility": {
+					"description": "Matches DATA_EVY_File.visibility - the same record, so the same required field. Stated on create like every other resource; nothing defaults it.",
+					"type": "string",
+					"enum": ["public", "private"]
 				},
 				"createdAt": {
 					"type": "string",
