@@ -1,4 +1,4 @@
-import { and, asc, eq, inArray, or, type SQL } from "drizzle-orm";
+import { and, asc, eq, inArray, or, type SQL, sql } from "drizzle-orm";
 import type { DATA_EVY_Message, GetResponse } from "evy-types";
 import { message } from "evy-types/db/schema.generated";
 import {
@@ -69,7 +69,28 @@ function recipientClause(
 	return clauses.length === 1 ? clauses[0] : or(...clauses);
 }
 
-/** The generic entitlement, widened by the recipient rule. */
+/**
+ * A message answering a message you own is yours.
+ *
+ * A response addresses whatever record its request addressed, so `recipientClause`
+ * already delivers it to that record's owner - who is the one that answered. The
+ * request's *sender* owns neither the response nor that record, only the request, so
+ * without this clause the answer would never reach the person who asked.
+ *
+ * Matched through `data` rather than through `fk`/`service`/`resource`, because those
+ * are uuid columns while core resources are addressed by name: a message can never
+ * address another message directly. `->>` yields text, so a missing or malformed value
+ * simply fails to match instead of throwing on a cast.
+ */
+function responseClause(ownedMessageIds: string[]): SQL | undefined {
+	if (ownedMessageIds.length === 0) return undefined;
+	return inArray(
+		sql`lower(${message.data} ->> 'message_id')`,
+		ownedMessageIds.map((id) => id.toLowerCase()),
+	);
+}
+
+/** The generic entitlement, widened by the recipient and response rules. */
 async function listMessagesForSync(
 	db: EvyDb,
 	scope: SyncScope,
@@ -77,6 +98,7 @@ async function listMessagesForSync(
 	const entitlement = [
 		syncEntitlementClause(message, scope.ownedIds),
 		recipientClause(scope.ownedForeignKeys),
+		responseClause(scope.ownedIds),
 	].filter((clause): clause is SQL => clause !== undefined);
 
 	const clauses = [

@@ -624,6 +624,31 @@ describe("getSyncRows", () => {
 		})) as DATA_EVY_Message;
 	}
 
+	/**
+	 * A message answering another one. Addressed to `otherFk` on purpose: nothing but
+	 * the response rule can entitle a device to it.
+	 */
+	async function createResponse(
+		requestId: string,
+	): Promise<DATA_EVY_Message> {
+		return (await create(dataDb, {
+			service: EVY_CORE_SERVICE,
+			resource: MESSAGE_RESOURCE,
+			data: {
+				fk: otherFk,
+				service: targetService,
+				resource: targetResource,
+				status: "pending" as const,
+				data: {
+					message_id: requestId,
+					value: "accept",
+					type: "pickup",
+				},
+				visibility: "private" as const,
+			},
+		})) as DATA_EVY_Message;
+	}
+
 	/** An ownership group over the service resource `createMessage` addresses. */
 	function owns(...fks: string[]) {
 		return [{ service: targetService, resource: targetResource, ids: fks }];
@@ -771,6 +796,47 @@ describe("getSyncRows", () => {
 		expect(
 			await ownedIds({ ownedIds: [], ownedForeignKeys: owns() }),
 		).toEqual([]);
+	});
+
+	// A response addresses the record the request addressed, so it reaches that
+	// record's owner by the recipient rule - who is the one that just answered.
+	// The sender owns neither the response nor that record, only the request, so
+	// answering a message you own is its own entitlement.
+	it("returns responses to a message the device owns", async () => {
+		const request = await createMessage(otherFk);
+		const response = await createResponse(request.id);
+
+		expect(
+			await ownedIds({
+				ownedIds: [request.id],
+				ownedForeignKeys: [],
+			}),
+		).toEqual([request.id, response.id]);
+	});
+
+	it("does not return responses to a message the device does not own", async () => {
+		const request = await createMessage(otherFk);
+		const mine = await createMessage(otherFk);
+		await createResponse(request.id);
+
+		expect(
+			await ownedIds({
+				ownedIds: [mine.id],
+				ownedForeignKeys: [],
+			}),
+		).toEqual([mine.id]);
+	});
+
+	it("leaves messages with no message_id in data unaffected", async () => {
+		const mine = await createMessage(otherFk);
+		await createMessage(otherFk);
+
+		expect(
+			await ownedIds({
+				ownedIds: [mine.id],
+				ownedForeignKeys: [],
+			}),
+		).toEqual([mine.id]);
 	});
 });
 
