@@ -42,7 +42,8 @@
 		},
 		"messages": {
 			"singular": "message",
-			"visibility": "private"
+			"visibility": "private",
+			"dataValues": ["pending", "accept", "reject", "cancel"]
 		},
 		"formatters": {
 			"singular": "formatter"

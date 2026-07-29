@@ -16,7 +16,7 @@ struct EVYHorizontalContainerRow: View {
   init(
     view: HorizontalContainerRowViewData,
     childRefs: [EVYRowRef],
-    datum: EVYJson? = nil
+    datum: EVYJson?
   ) {
     self.view = view
     self.childRefs = childRefs

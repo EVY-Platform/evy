@@ -17,9 +17,9 @@ struct EVYSearch: View {
   @Environment(\.dismiss) private var dismiss
   @State private var searchText = ""
   @State private var apiSearchModel: EVYSearchModel?
+  @State private var localResults: EVYState<[EVYSearchResult]>?
 
   private let searchSource: EVY.SourceExpression
-  private var localResults: EVYState<[EVYSearchResult]>?
 
   private static let debounceMilliseconds = 300
 
@@ -38,19 +38,21 @@ struct EVYSearch: View {
 
     switch searchSource {
     case .local:
-      localResults = EVYState(
-        textToWatch: source,
-        scope: scope,
-        setter: {
-          EVYSearchResult.loadLocalResults(
-            source: source,
-            resultTemplate: resultTemplate,
-            scopeId: scope.cacheScopeId
-          )
-        }
+      _localResults = State(
+        initialValue: EVYState(
+          textToWatch: source,
+          scope: scope,
+          setter: {
+            EVYSearchResult.loadLocalResults(
+              source: source,
+              resultTemplate: resultTemplate,
+              scopeId: scope.cacheScopeId
+            )
+          }
+        )
       )
     case .api(let method):
-      localResults = nil
+      _localResults = State(initialValue: nil)
       _apiSearchModel = State(
         initialValue: EVYSearchModel(
           method: method,

@@ -21,6 +21,15 @@ private(set) var evyDataStoreGeneration = 0
 @MainActor
 final class EVYDataStore {
   private let context: ModelContext
+  private var collectionJsonCache: [String: (generation: Int, value: EVYJson?)] = [:]
+
+  private func collectionCacheKey(namespace: String, resource: String) -> String {
+    "\(namespace):\(resource)"
+  }
+
+  private func invalidateCollectionCache() {
+    collectionJsonCache.removeAll()
+  }
 
   convenience init(name: String, inMemoryOnly: Bool = false) {
     let config = ModelConfiguration(name, isStoredInMemoryOnly: inMemoryOnly)
@@ -100,6 +109,7 @@ final class EVYDataStore {
   func persistChanges() throws {
     try context.save()
     evyDataStoreGeneration += 1
+    invalidateCollectionCache()
   }
 
   func create(namespace: String, resource: String, id: String, value: Data, sortIndex: Int = 0)
@@ -161,12 +171,23 @@ final class EVYDataStore {
   func upsert(namespace: String, resource: String, id: String, value: Data, sortIndex: Int = 0)
     throws
   {
+    try upsertWithoutPersist(
+      namespace: namespace, resource: resource, id: id, value: value, sortIndex: sortIndex)
+    try persistChanges()
+    postRecordAndValueChanged(namespace: namespace, resource: resource, id: id)
+  }
+
+  private func upsertWithoutPersist(
+    namespace: String, resource: String, id: String, value: Data, sortIndex: Int = 0
+  ) throws {
     if (try? get(namespace: namespace, resource: resource, id: id)) != nil {
-      try update(
-        namespace: namespace, resource: resource, id: id, value: value, sortIndex: sortIndex)
+      let existing = try get(namespace: namespace, resource: resource, id: id)
+      existing.data = value
+      existing.sortIndex = sortIndex
     } else {
-      try create(
-        namespace: namespace, resource: resource, id: id, value: value, sortIndex: sortIndex)
+      context.insert(
+        EVYData(namespace: namespace, resource: resource, id: id, data: value, sortIndex: sortIndex)
+      )
     }
   }
 
@@ -196,9 +217,11 @@ final class EVYDataStore {
       let itemId = item.identifierValue()
       guard !itemId.isEmpty else { continue }
       guard let encoded = try? JSONEncoder().encode(item) else { continue }
-      try upsert(
+      try upsertWithoutPersist(
         namespace: namespace, resource: resource, id: itemId, value: encoded, sortIndex: sortIndex)
     }
+    try persistChanges()
+    postValueChanged(key: resource)
   }
 
   private func singletonId(for value: EVYJson) -> String {
@@ -209,11 +232,23 @@ final class EVYDataStore {
   }
 
   func getCollectionJson(namespace: String, resource: String) throws -> EVYJson? {
+    let cacheKey = collectionCacheKey(namespace: namespace, resource: resource)
+    if let cached = collectionJsonCache[cacheKey],
+      cached.generation == evyDataStoreGeneration
+    {
+      return cached.value
+    }
+
     let rows = try getAll(namespace: namespace, resource: resource)
-    guard !rows.isEmpty else { return nil }
+    guard !rows.isEmpty else {
+      collectionJsonCache[cacheKey] = (evyDataStoreGeneration, nil)
+      return nil
+    }
 
     let items: [EVYJson] = rows.compactMap { try? $0.decoded() }
-    return .array(items)
+    let collection = EVYJson.array(items)
+    collectionJsonCache[cacheKey] = (evyDataStoreGeneration, collection)
+    return collection
   }
 
   func getJsonForBinding(key: String, cacheScopeId: String?) throws -> EVYJson {

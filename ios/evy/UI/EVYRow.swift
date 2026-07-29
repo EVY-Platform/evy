@@ -328,21 +328,13 @@ private struct EVYResolvedRow: View {
     }
   }
 
-  private func swipeActions(for contentRow: UI_Row) -> (label: String, run: () -> Void)? {
-    guard !contentRow.actions.swipeLeft.isEmpty else { return nil }
-    return (
-      contentRow.swipeLabel,
-      { runActions(trigger: .swipeLeft, contentRow: contentRow) }
-    )
-  }
-
   @ViewBuilder
   private func renderedRow(for payload: UI_RowPayload, contentRow: UI_Row) -> some View {
-    if let swipe = swipeActions(for: contentRow) {
+    if !contentRow.actions.swipeLeft.isEmpty {
       EVYSwipeableRow(
         swipeIdentity: EVYSwipeRowIdentity.make(rowId: contentRow.id, datum: datum),
-        label: swipe.label,
-        run: swipe.run
+        label: contentRow.swipeLabel,
+        run: { runActions(trigger: .swipeLeft, contentRow: contentRow) }
       ) {
         tappedOrPlainRow(for: payload, contentRow: contentRow)
       }

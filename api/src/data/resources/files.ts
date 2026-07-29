@@ -1,4 +1,4 @@
-import { and, asc, eq, gt, isNull, type SQL } from "drizzle-orm";
+import { and, asc, eq, gt, isNull } from "drizzle-orm";
 
 import type {
 	CreateRequest,
@@ -24,12 +24,7 @@ import {
 	getUploadSession,
 	uploadSessionToBuffer,
 } from "../../shared/uploadSessions";
-import {
-	omitNulls,
-	type SyncScope,
-	syncEntitlementClause,
-	syncTimeClause,
-} from "./coreResource";
+import { omitNulls, runListForSync, type SyncScope } from "./coreResource";
 import {
 	deleteFileBinaryIfExists,
 	readFileBinary,
@@ -89,18 +84,7 @@ export async function listFilesForSync(
 	db: EvyDb,
 	scope: SyncScope,
 ): Promise<GetResponse> {
-	const clauses = [
-		syncTimeClause(file, scope.updatedAfter),
-		syncEntitlementClause(file, scope.ownedIds),
-	].filter((clause): clause is SQL => clause !== undefined);
-
-	const rows = await db
-		.select()
-		.from(file)
-		.where(clauses.length > 0 ? and(...clauses) : undefined)
-		.orderBy(asc(file.updatedAt), asc(file.id));
-
-	return validateGetResponse(rows.map(omitNulls));
+	return runListForSync(db, file, scope, omitNulls);
 }
 
 export async function createFileResource(

@@ -1,18 +1,14 @@
-import { and, asc, eq, inArray, or, type SQL, sql } from "drizzle-orm";
-import type { DATA_EVY_Message, GetResponse } from "evy-types";
+import { and, eq, inArray, or, type SQL, sql } from "drizzle-orm";
+import type { DATA_EVY_Message } from "evy-types";
 import { message } from "evy-types/db/schema.generated";
-import {
-	validateDataEvyMessage,
-	validateGetResponse,
-} from "evy-types/validators";
+import { validateDataEvyMessage } from "evy-types/validators";
 import type { EvyDb } from "../../database/db";
 import {
 	makeCoreResource,
 	type OwnedServiceResource,
 	omitNulls,
+	runListForSync,
 	type SyncScope,
-	syncEntitlementClause,
-	syncTimeClause,
 } from "./coreResource";
 
 const baseMessagesResource = makeCoreResource<DATA_EVY_Message>({
@@ -116,25 +112,15 @@ async function listMessagesForSync(
 	db: EvyDb,
 	scope: SyncScope,
 ): Promise<GetResponse> {
-	const entitlement = [
-		syncEntitlementClause(message, scope.ownedIds),
-		recipientClause(scope.ownedForeignKeys),
-		responseClause(scope.ownedIds),
-	].filter((clause): clause is SQL => clause !== undefined);
-
-	const clauses = [
-		syncTimeClause(message, scope.updatedAfter),
-		entitlement.length > 1 ? or(...entitlement) : entitlement[0],
-	].filter((clause): clause is SQL => clause !== undefined);
-
-	const rows = await db
-		.select()
-		.from(message)
-		.where(clauses.length > 0 ? and(...clauses) : undefined)
-		.orderBy(asc(message.updatedAt), asc(message.id));
-
-	return validateGetResponse(
-		rows.map((row) => validateDataEvyMessage(omitNulls(row))),
+	return runListForSync(
+		db,
+		message,
+		scope,
+		(row) => validateDataEvyMessage(omitNulls(row)),
+		[
+			recipientClause(scope.ownedForeignKeys),
+			responseClause(scope.ownedIds),
+		].filter((clause): clause is SQL => clause !== undefined),
 	);
 }
 

@@ -137,12 +137,8 @@ filter({_collection_}, {_predicate_})
 Open requests this device owns (the homepage "For you" tab source):
 
 ```
-{filter(messages, $datum.data.value == pending && owns($datum.service, $datum.resource, $datum.fk) == true && findFirst(sort(messages, desc, createdAt), fk == $datum.fk && data.type == $datum.data.type).id == $datum.id)}
+{filter(messages, $datum.data.value == "pending" && owns($datum.service, $datum.resource, $datum.fk) == true && findFirst(sort(messages, desc, createdAt), fk == $datum.fk && data.type == $datum.data.type).id == $datum.id)}
 ```
-
-That expression sits at **exactly three function levels** (`filter` → `findFirst` → `sort`),
-which is the ceiling of the function-matching regex. A fourth nested call renders as source
-text silently — keep predicates at or under that depth.
 
 A non-collection first argument is an error. An empty match set is an empty array (not an empty
 string). Cost note: a predicate that nests `findFirst(sort(…))` re-sorts per candidate; fine at

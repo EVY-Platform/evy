@@ -25,16 +25,24 @@ enum EVYOwnershipLedger {
     let id: String
   }
 
+  private static var cachedEntries: Set<Entry>?
+
   private static var entries: Set<Entry> {
     get {
+      if let cachedEntries {
+        return cachedEntries
+      }
       guard let data = UserDefaults.standard.data(forKey: key),
         let decoded = try? JSONDecoder().decode(Set<Entry>.self, from: data)
       else {
+        cachedEntries = []
         return []
       }
+      cachedEntries = decoded
       return decoded
     }
     set {
+      cachedEntries = newValue
       guard let data = try? JSONEncoder().encode(newValue) else { return }
       UserDefaults.standard.set(data, forKey: key)
     }
@@ -51,6 +59,7 @@ enum EVYOwnershipLedger {
 
   // used by tests
   static func reset() {
+    cachedEntries = nil
     UserDefaults.standard.removeObject(forKey: key)
   }
 }
@@ -68,15 +77,46 @@ extension EVY {
     EVYOwnershipLedger.record(service: service, resource: resource, id: id)
   }
 
-  /// Whether this device is the one that created a record.
-  ///
-  /// Narrower than `ownedServiceResources()` on purpose: that unions in the private store,
-  /// so a record which merely *reached* this device counts as owned there. Only the ledger
-  /// can answer "I wrote this", which is what tells a message's sender from its recipient.
-  static func didCreate(service: String, resource: String, id: String) -> Bool {
-    EVYOwnershipLedger.recordedIds().contains {
-      $0.service == service && $0.resource == resource && $0.id == id
+  private struct OwnedMembershipKey: Hashable {
+    let service: String
+    let resource: String
+    let id: String
+  }
+
+  @MainActor
+  private static var ownedMembershipCache: (generation: Int, members: Set<OwnedMembershipKey>)?
+
+  @MainActor
+  private static func ownedMembershipSet() -> Set<OwnedMembershipKey> {
+    if let cache = ownedMembershipCache, cache.generation == evyDataStoreGeneration {
+      return cache.members
     }
+
+    var members = Set<OwnedMembershipKey>()
+    for record in EVYOwnershipLedger.recordedIds() {
+      members.insert(
+        OwnedMembershipKey(service: record.service, resource: record.resource, id: record.id))
+    }
+    for row in (try? privateStore.getAll()) ?? []
+    where isSyncedNamespace(row.namespace) {
+      members.insert(
+        OwnedMembershipKey(service: row.namespace, resource: row.resource, id: row.id))
+    }
+    for declared in preownedServiceResources {
+      for id in declared.ids {
+        members.insert(
+          OwnedMembershipKey(service: declared.service, resource: declared.resource, id: id))
+      }
+    }
+
+    ownedMembershipCache = (evyDataStoreGeneration, members)
+    return members
+  }
+
+  /// Whether this device owns a specific synced record.
+  static func ownsRecord(service: String, resource: String, id: String) -> Bool {
+    ownedMembershipSet().contains(
+      OwnedMembershipKey(service: service, resource: resource, id: id))
   }
 
   /// One entry per (service, resource) this device owns records in, from three sources.
@@ -91,18 +131,9 @@ extension EVY {
   static func ownedServiceResources() -> [OwnedServiceResource] {
     var idsByKey: [OwnedServiceResourceKey: Set<String>] = [:]
 
-    for record in EVYOwnershipLedger.recordedIds() {
-      idsByKey[.init(service: record.service, resource: record.resource), default: []]
-        .insert(record.id)
-    }
-    for row in (try? privateStore.getAll()) ?? []
-    where isSyncedNamespace(row.namespace) {
-      idsByKey[.init(service: row.namespace, resource: row.resource), default: []]
-        .insert(row.id)
-    }
-    for declared in preownedServiceResources {
-      idsByKey[.init(service: declared.service, resource: declared.resource), default: []]
-        .formUnion(declared.ids)
+    for member in ownedMembershipSet() {
+      idsByKey[.init(service: member.service, resource: member.resource), default: []]
+        .insert(member.id)
     }
 
     // Sorted so an unchanged ownership set produces an identical request payload

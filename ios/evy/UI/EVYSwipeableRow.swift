@@ -29,10 +29,8 @@ enum EVYSwipeGeometry {
 
   static func dragOffset(
     translation: CGSize,
-    isOpen: Bool,
-    revealWidth: CGFloat = revealWidth
+    isOpen: Bool
   ) -> CGFloat {
-    let maxStretchWidth = revealWidth * 2
     let baseOffset: CGFloat = isOpen ? -revealWidth : 0
     let proposedOffset = baseOffset + translation.width
     if proposedOffset > 0 {
@@ -52,14 +50,13 @@ enum EVYSwipeGeometry {
   static func endState(
     translation: CGSize,
     velocity: CGSize,
-    isOpen: Bool,
-    revealWidth: CGFloat = revealWidth
+    isOpen: Bool
   ) -> EVYSwipeEndState {
     let baseOffset: CGFloat = isOpen ? -revealWidth : 0
     let rawOffset = baseOffset + translation.width
     let decisionOffset =
       abs(velocity.width) < nearZeroDistance
-      ? dragOffset(translation: translation, isOpen: isOpen, revealWidth: revealWidth)
+      ? dragOffset(translation: translation, isOpen: isOpen)
       : projectedOffset(rawOffset: rawOffset, velocityX: velocity.width)
     if decisionOffset <= -revealSnapThreshold {
       return .open
@@ -69,10 +66,7 @@ enum EVYSwipeGeometry {
 
   /// The revealed strip stretches past its resting width on an over-swipe, so the button
   /// keeps filling it rather than leaving a gap.
-  static func revealButtonWidth(
-    for offset: CGFloat,
-    revealWidth: CGFloat = revealWidth
-  ) -> CGFloat {
+  static func revealButtonWidth(for offset: CGFloat) -> CGFloat {
     max(revealWidth, -offset)
   }
 
@@ -145,10 +139,6 @@ struct EVYSwipeableRow<Content: View>: View {
     coordinator.openRowId == swipeIdentity
   }
 
-  private var revealWidth: CGFloat {
-    EVYSwipeGeometry.revealWidth
-  }
-
   var body: some View {
     // Action button must be above content in the ZStack. Content stays full-width and only
     // moves visually via offset, so when drawn on top it still owns the revealed trailing
@@ -176,9 +166,7 @@ struct EVYSwipeableRow<Content: View>: View {
         }
 
       trailingActionButton
-        .frame(
-          width: EVYSwipeGeometry.revealButtonWidth(for: offset, revealWidth: revealWidth)
-        )
+        .frame(width: EVYSwipeGeometry.revealButtonWidth(for: offset))
         .opacity(offset < 0 ? 1 : 0)
         .allowsHitTesting(offset <= -EVYSwipeGeometry.revealSnapThreshold && !isDragging)
     }
@@ -191,7 +179,7 @@ struct EVYSwipeableRow<Content: View>: View {
     }
     .onChange(of: coordinator.openRowId) { _, openId in
       guard !isDragging else { return }
-      let target: CGFloat = openId == swipeIdentity ? -revealWidth : 0
+      let target: CGFloat = openId == swipeIdentity ? -EVYSwipeGeometry.revealWidth : 0
       guard offset != target else { return }
       withAnimation(.spring(response: 0.28, dampingFraction: 0.86)) {
         offset = target
@@ -218,8 +206,7 @@ struct EVYSwipeableRow<Content: View>: View {
 
         let nextOffset = EVYSwipeGeometry.dragOffset(
           translation: translation,
-          isOpen: wasOpenAtDragStart,
-          revealWidth: revealWidth
+          isOpen: wasOpenAtDragStart
         )
         var transaction = Transaction()
         transaction.disablesAnimations = true
@@ -237,14 +224,13 @@ struct EVYSwipeableRow<Content: View>: View {
         let endState = EVYSwipeGeometry.endState(
           translation: value.translation,
           velocity: velocity,
-          isOpen: wasOpenAtDragStart,
-          revealWidth: revealWidth
+          isOpen: wasOpenAtDragStart
         )
         switch endState {
         case .closed:
           settle(to: 0, velocityX: velocity.width)
         case .open:
-          settle(to: -revealWidth, velocityX: velocity.width)
+          settle(to: -EVYSwipeGeometry.revealWidth, velocityX: velocity.width)
         }
       }
   }
@@ -296,7 +282,7 @@ struct EVYSwipeableRow<Content: View>: View {
 
   private func executeWithCommitSweep() {
     coordinator.close(swipeIdentity)
-    let sweepTarget = -max(rowWidth, revealWidth)
+    let sweepTarget = -max(rowWidth, EVYSwipeGeometry.revealWidth)
     withAnimation(.easeOut(duration: 0.15), completionCriteria: .logicallyComplete) {
       offset = sweepTarget
     } completion: {

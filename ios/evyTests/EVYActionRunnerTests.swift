@@ -875,23 +875,12 @@ final class EVYActionRunnerTests: XCTestCase {
   private func seedRecordBinding(key: String, id: String, extra: [String: EVYJson] = [:]) throws {
     var record = extra
     record["id"] = .string(id)
-    let encoded = try JSONEncoder().encode(EVYJson.dictionary(record))
-    try? EVY.publicStore.deleteAll(namespace: EVYNamespace.local, resource: key)
-    try EVY.publicStore.create(
-      namespace: EVYNamespace.local,
-      resource: key,
-      id: EVYNamespace.singletonId,
-      value: encoded
-    )
+    try seedLocalBinding(key: key, value: .dictionary(record))
     seededBindingKeys.append(key)
   }
 
   private func seedScalarBinding(key: String, value: EVYJson) throws {
-    let encoded = try JSONEncoder().encode(value)
-    try? EVY.publicStore.deleteAll(namespace: EVYNamespace.local, resource: key)
-    try EVY.publicStore.create(
-      namespace: EVYNamespace.local, resource: key,
-      id: EVYNamespace.singletonId, value: encoded)
+    try seedLocalBinding(key: key, value: value)
     seededBindingKeys.append(key)
   }
 

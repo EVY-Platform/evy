@@ -18,7 +18,7 @@ struct EVYTabContainerRow: View {
   init(
     view: TabContainerRowViewData,
     childRefs: [EVYRowRef],
-    datum: EVYJson? = nil,
+    datum: EVYJson?,
     onSegmentTapped: @escaping EVYRowTapCallback<Int>
   ) {
     self.view = view

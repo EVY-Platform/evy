@@ -1041,14 +1041,48 @@
 			"id": "split-args-filter-nested-find-first-sort",
 			"category": "split-args",
 			"platforms": ["ios", "web"],
-			"input": "messages, $datum.data.value == pending && findFirst(sort(messages, desc, createdAt), fk == $datum.fk && data.type == $datum.data.type).id == $datum.id",
+			"input": "messages, $datum.data.value == \"pending\" && findFirst(sort(messages, desc, createdAt), fk == $datum.fk && data.type == $datum.data.type).id == $datum.id",
 			"expect": {
 				"args": [
 					"messages",
-					"$datum.data.value == pending && findFirst(sort(messages, desc, createdAt), fk == $datum.fk && data.type == $datum.data.type).id == $datum.id"
+					"$datum.data.value == \"pending\" && findFirst(sort(messages, desc, createdAt), fk == $datum.fk && data.type == $datum.data.type).id == $datum.id"
 				]
 			},
 			"notes": "filter's nested findFirst(sort(…)) argument must stay one arg — commas inside the nested calls are not separators."
+		},
+		{
+			"id": "split-args-four-level-function-nesting",
+			"category": "split-args",
+			"platforms": ["ios", "web"],
+			"input": "middle(inner(leaf(a, b), c), d), e",
+			"expect": {
+				"args": ["middle(inner(leaf(a, b), c), d)", "e"]
+			},
+			"notes": "Four levels of call nesting inside one argument is still one argument."
+		},
+		{
+			"id": "expression-format-datetime-four-level-nesting",
+			"category": "expression",
+			"platforms": ["ios"],
+			"input": "{formatDatetime(findFirst(sort(messages_holder, desc, createdAt), fk == item.id).data.time, \"HH:mm\")}",
+			"data": {
+				"messages_holder": [
+					{
+						"id": "dfc53233-6152-4878-bf4f-b11a47c636ac",
+						"fk": "12401f50-cf1a-45d7-a112-2e68a2070466",
+						"createdAt": "2026-06-01T00:00:00.000Z",
+						"data": {
+							"type": "pickup",
+							"time": "2026-06-03T09:00:00.000Z"
+						}
+					}
+				],
+				"item": { "id": "12401f50-cf1a-45d7-a112-2e68a2070466" }
+			},
+			"expect": {
+				"text": "09:00"
+			},
+			"notes": "formatDatetime(findFirst(sort(…))) is four function levels deep and must parse as one wrapped call."
 		},
 		{
 			"id": "expression-filter-matches-by-datum-field",
@@ -1076,7 +1110,7 @@
 			"id": "expression-filter-latest-message-self-id-idiom",
 			"category": "expression",
 			"platforms": ["ios"],
-			"input": "{filter(messages_holder, $datum.data.value == pending && findFirst(sort(messages_holder, desc, createdAt), fk == $datum.fk && data.type == $datum.data.type).id == $datum.id).0.id}",
+			"input": "{filter(messages_holder, $datum.data.value == \"pending\" && findFirst(sort(messages_holder, desc, createdAt), fk == $datum.fk && data.type == $datum.data.type).id == $datum.id).0.id}",
 			"data": {
 				"messages_holder": [
 					{

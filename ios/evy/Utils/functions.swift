@@ -200,14 +200,23 @@ private func recordPathIsNull(_ record: EVYJson, path: String) -> Bool {
 }
 
 @MainActor
-private func resolveFindFirstOperand(_ operand: String, record: EVYJson) -> String {
-  if let recordValue = recordPathValue(record, path: operand) {
+private func resolveLiteralOrBoundOperand(_ operand: String, record: EVYJson? = nil) -> String {
+  let trimmed = operand.trimmingCharacters(in: .whitespacesAndNewlines)
+  if trimmed.first == "\"", trimmed.last == "\"", trimmed.count >= 2 {
+    return _stripOptionalSurroundingQuotes(trimmed)
+  }
+  if let record, let recordValue = recordPathValue(record, path: trimmed) {
     return recordValue.toString()
   }
-  if let dataValue = try? EVY.getDataFromProps(operand) {
+  if let dataValue = try? EVY.getDataFromProps(trimmed) {
     return evyComparisonOperandString(dataValue)
   }
-  return _stripOptionalSurroundingQuotes(operand)
+  return _stripOptionalSurroundingQuotes(trimmed)
+}
+
+@MainActor
+private func resolveFindFirstOperand(_ operand: String, record: EVYJson) -> String {
+  resolveLiteralOrBoundOperand(operand, record: record)
 }
 
 @MainActor
@@ -291,16 +300,12 @@ func evyFilter(_ args: String, remainingProps: [String] = []) throws -> EVYJson 
     throw EVYError.invalidData(context: "filter expects a collection")
   }
 
+  let temporaryId = UUID().uuidString
+  let substitutedPredicate = evySubstituteDatum(predicate, temporaryId: temporaryId)
   let matches = items.filter { candidate in
-    let temporaryId = UUID().uuidString
-    let substitutedPredicate =
-      predicate
-      .replacingOccurrences(of: EVY.datumPrefix, with: "\(temporaryId).")
-      .replacingOccurrences(of: EVY.datumToken, with: temporaryId)
-    return
-      (try? evyWithEphemeralDatum(key: temporaryId, value: candidate) {
-        try _evaluateFromText(wrappedExpression(substitutedPredicate))
-      }) ?? false
+    (try? evyWithEphemeralDatum(key: temporaryId, value: candidate) {
+      try _evaluateFromText(wrappedExpression(substitutedPredicate))
+    }) ?? false
   }
 
   return EVYJson.array(matches).parseProp(props: remainingProps)
@@ -313,21 +318,11 @@ func evyOwns(_ args: String) throws -> EVYFunctionOutput {
     throw EVYError.invalidData(context: "owns expects service, resource, id")
   }
 
-  func resolveOwnershipArgument(_ argument: String) -> String {
-    let trimmed = argument.trimmingCharacters(in: .whitespacesAndNewlines)
-    if let resolved = try? EVY.getDataFromProps(trimmed) {
-      return resolved.toString()
-    }
-    return _stripOptionalSurroundingQuotes(trimmed)
-  }
+  let service = resolveLiteralOrBoundOperand(parts[0])
+  let resource = resolveLiteralOrBoundOperand(parts[1])
+  let id = resolveLiteralOrBoundOperand(parts[2])
 
-  let service = resolveOwnershipArgument(parts[0])
-  let resource = resolveOwnershipArgument(parts[1])
-  let id = resolveOwnershipArgument(parts[2])
-
-  let isOwned = EVY.ownedServiceResources().contains { owned in
-    owned.service == service && owned.resource == resource && owned.ids.contains(id)
-  }
+  let isOwned = EVY.ownsRecord(service: service, resource: resource, id: id)
   return EVYFunctionOutput(value: isOwned ? "true" : "false", prefix: nil, suffix: nil)
 }
 

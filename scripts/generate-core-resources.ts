@@ -40,6 +40,8 @@ interface ResourceMeta {
 	 * validates that a create payload carries a visibility and never fills one in.
 	 */
 	visibility?: "public" | "private";
+	/** Allowed `data.value` strings for message lifecycle states. */
+	dataValues?: string[];
 }
 
 interface CoreResourcesSchema {
@@ -85,6 +87,20 @@ function validateSchema(value: unknown): asserts value is CoreResourcesSchema {
 			throw new Error(
 				`core.resources.json: resources.${name}.visibility must be "public" or "private" when set`,
 			);
+		}
+		if (m.dataValues !== undefined) {
+			if (!Array.isArray(m.dataValues) || m.dataValues.length === 0) {
+				throw new Error(
+					`core.resources.json: resources.${name}.dataValues must be a non-empty string array when set`,
+				);
+			}
+			for (const value of m.dataValues) {
+				if (typeof value !== "string" || value.length === 0) {
+					throw new Error(
+						`core.resources.json: resources.${name}.dataValues entries must be non-empty strings`,
+					);
+				}
+			}
 		}
 	}
 }
@@ -135,6 +151,16 @@ function generateTypeScript(schema: CoreResourcesSchema): string {
 		);
 	}
 	lines.push("};");
+	lines.push("");
+
+	const messageDataValues = resources.messages?.dataValues ?? [];
+	lines.push(
+		"export const EVY_MESSAGE_DATA_VALUES =",
+		`${JSON.stringify(messageDataValues)} as const;`,
+	);
+	lines.push(
+		"export type EvyMessageDataValue = (typeof EVY_MESSAGE_DATA_VALUES)[number];",
+	);
 	lines.push("");
 
 	// Resource names tuple
@@ -211,6 +237,13 @@ function generateSwift(schema: CoreResourcesSchema): string {
 	lines.push("\t\t}");
 	lines.push("\t}");
 	lines.push("}");
+
+	const messageDataValues = resources.messages?.dataValues ?? [];
+	lines.push("");
+	lines.push(
+		"public let EVY_MESSAGE_DATA_VALUES: [String] =",
+		`${JSON.stringify(messageDataValues)}`,
+	);
 
 	lines.push("");
 

@@ -695,27 +695,25 @@ class E2ETestBase: XCTestCase {
       emitter: emitter,
       service: EVY_CORE_SERVICE,
       resource: EVYCoreResource.messages.rawValue
-    ) { Self.messageHasResponse($0, messageId: messageId, value: value) }
+    ) { Self.messageHasResponse($0, messageId: messageId, value: value) != nil }
   }
 
   static func messageHasResponse(
     _ messages: Any,
     messageId: String,
     value: String
-  ) -> Bool {
-    guard let messageRows = responseDataArray(from: messages) else { return false }
-    return messageRows.contains { message in
+  ) -> String? {
+    guard let messageRows = responseDataArray(from: messages) else { return nil }
+    for message in messageRows {
       guard let messageData = message as? [String: Any],
         let data = messageData["data"] as? [String: Any],
         data["message_id"] as? String == messageId,
-        data["value"] as? String == value
-      else { return false }
-      return true
+        data["value"] as? String == value,
+        let id = messageData["id"] as? String
+      else { continue }
+      return id
     }
-  }
-
-  static func nowIso() -> String {
-    ISO8601DateFormatter().string(from: Date())
+    return nil
   }
 
   /// Scrolls the enclosing scroll view until `element` can actually be interacted with.
@@ -729,12 +727,6 @@ class E2ETestBase: XCTestCase {
       if element.isHittable { return true }
     }
     return element.isHittable
-  }
-
-  /// Whether the request was withdrawn. Nothing is written to the request itself - a
-  /// cancellation is another message naming it, exactly as an answer is.
-  static func messageIsCancelled(_ messages: Any, messageId: String) -> Bool {
-    messageHasResponse(messages, messageId: messageId, value: "cancel")
   }
 
   /// Returns the hittable button with the given label, waiting for one to appear.
@@ -1181,7 +1173,7 @@ class E2ETestBase: XCTestCase {
   static func noArrangementLiveVisibilityExpression() -> String {
     let terms = ["pickup", "delivery", "shipping"].flatMap { type -> [String] in
       let latest = latestMessageExpression(type: type)
-      return ["\(latest).data.value != pending", "\(latest).data.value != accept"]
+      return ["\(latest).data.value != \"pending\"", "\(latest).data.value != \"accept\""]
     }
     return "{\(terms.joined(separator: " && "))}"
   }
@@ -1195,42 +1187,47 @@ class E2ETestBase: XCTestCase {
       "findFirst(sort(\(messagesResourceId), desc, createdAt), fk == \(itemId).id && data.type == \(type))"
   }
 
+  static let messageCreateEnvelope =
+    "fk: \(MARKETPLACE_ITEMS_RESOURCE_ID).id, service: \"\(MARKETPLACE_SERVICE)\", resource: \"\(MARKETPLACE_ITEMS_RESOURCE_ID)\""
+
+  static func requestCreateAction(type: String, payload: String) -> String {
+    let messagesResourceId = EVYCoreResource.messages.rawValue
+    return
+      "{create(\(EVY_CORE_SERVICE),\(messagesResourceId),{\(messageCreateEnvelope), data: {type: \(type), value: pending, \(payload)}})}"
+  }
+
   /// Cancel is offered while the request is open, and each transfer method is independent, so
   /// the pickers gate on their own method rather than on anything page-wide.
   static func cancelRequestVisibilityExpressions(type: String) -> (
     hasActive: String, noActive: String
   ) {
     let latest = latestMessageExpression(type: type)
-    let hasActive = "{\(latest).data.value == pending}"
+    let hasActive = "{\(latest).data.value == \"pending\"}"
     // Nothing in flight for this method: `reject`, `cancel` and "nothing yet" all land here.
     let noActive =
-      "{\(latest).data.value != pending && \(latest).data.value != accept}"
+      "{\(latest).data.value != \"pending\" && \(latest).data.value != \"accept\"}"
     return (hasActive, noActive)
   }
 
   /// A separate message says a request was accepted, and it carries the request's payload
   /// forward - which is what the confirmation row reads the agreed time from.
-  static func acceptedRequestFindFirstExpression(type: String) -> String {
-    latestMessageExpression(type: type)
-  }
-
   static func acceptedRequestVisibilityExpression(type: String) -> String {
-    "{\(latestMessageExpression(type: type)).data.value == accept}"
+    "{\(latestMessageExpression(type: type)).data.value == \"accept\"}"
   }
 
   static func hideSegmentInfoWhenAcceptedVisibilityExpression(type: String) -> String {
-    "{\(latestMessageExpression(type: type)).data.value != accept}"
+    "{\(latestMessageExpression(type: type)).data.value != \"accept\"}"
   }
 
   /// The request container stays up while the request is open and once it has been accepted -
   /// the confirmation row lives inside it. Exact complement of the picker's gate.
   static func activeRequestVisibilityExpression(type: String) -> String {
     let latest = latestMessageExpression(type: type)
-    return "{\(latest).data.value == pending || \(latest).data.value == accept}"
+    return "{\(latest).data.value == \"pending\" || \(latest).data.value == \"accept\"}"
   }
 
   static func pendingRequestVisibilityExpression(type: String) -> String {
-    "{\(latestMessageExpression(type: type)).data.value == pending}"
+    "{\(latestMessageExpression(type: type)).data.value == \"pending\"}"
   }
 
   static func cancelRequestButtonLabel(type: String) -> String {
@@ -1256,13 +1253,13 @@ class E2ETestBase: XCTestCase {
 
   static func timeAcceptedConfirmationSubtitle(type: String) -> String {
     let capitalizedType = type.prefix(1).uppercased() + type.dropFirst()
-    let match = acceptedRequestFindFirstExpression(type: type)
+    let match = latestMessageExpression(type: type)
     return
       "\(capitalizedType) confirmed for {formatDatetime(\(match).data.time, \"EEE do\")} at {formatDatetime(\(match).data.time, \"HH:mm\")}"
   }
 
   static func shippingAcceptedConfirmationSubtitle() -> String {
-    let match = acceptedRequestFindFirstExpression(type: "shipping")
+    let match = latestMessageExpression(type: "shipping")
     return "Shipping confirmed to postcode {\(match).data.postalcode}"
   }
 
@@ -1274,17 +1271,15 @@ class E2ETestBase: XCTestCase {
     let pickupVisibility = cancelRequestVisibilityExpressions(type: "pickup")
     let deliveryVisibility = cancelRequestVisibilityExpressions(type: "delivery")
     let shippingVisibility = cancelRequestVisibilityExpressions(type: "shipping")
-    let messageEnvelope =
-      "fk: \(MARKETPLACE_ITEMS_RESOURCE_ID).id, service: \"\(MARKETPLACE_SERVICE)\", resource: \"\(MARKETPLACE_ITEMS_RESOURCE_ID)\""
-    let pickupCreateAction =
-      "{create(\(EVY_CORE_SERVICE),\(messagesResourceId),{\(messageEnvelope), data: {type: pickup, value: pending, time: selected_pickup_timeslot}})}"
-    let deliveryCreateAction =
-      "{create(\(EVY_CORE_SERVICE),\(messagesResourceId),{\(messageEnvelope), data: {type: delivery, value: pending, time: selected_delivery_timeslot}})}"
-    let shippingCreateAction =
-      "{create(\(EVY_CORE_SERVICE),\(messagesResourceId),{\(messageEnvelope), data: {type: shipping, value: pending, postalcode: shipping_address.postcode}})}"
+    let pickupCreateAction = requestCreateAction(
+      type: "pickup", payload: "time: selected_pickup_timeslot")
+    let deliveryCreateAction = requestCreateAction(
+      type: "delivery", payload: "time: selected_delivery_timeslot")
+    let shippingCreateAction = requestCreateAction(
+      type: "shipping", payload: "postalcode: shipping_address.postcode")
     func cancelAction(type: String) -> String {
       let latest = latestMessageExpression(type: type)
-      return "{create(\(EVY_CORE_SERVICE),\(messagesResourceId),{\(messageEnvelope),"
+      return "{create(\(EVY_CORE_SERVICE),\(messagesResourceId),{\(messageCreateEnvelope),"
         + " data: {message_id: \(latest).id, value: cancel, type: \(type)}})}"
     }
 
@@ -1658,14 +1653,17 @@ class E2ETestBase: XCTestCase {
     )
   }
 
+  private static let cancelRequestSheetSuffixes: [String: (sheet: String, row: String)] = [
+    "pickup": ("d", "e"),
+    "delivery": ("e", "f"),
+    "shipping": ("f", "a"),
+  ]
+
   /// Rows are stored globally by id, so each transfer method needs its own sheet: a shared id
   /// means the last one seeded wins and every cancel button shows that method's action.
   static func cancelRequestSheetId(type: String) -> String {
-    switch type {
-    case "pickup": return "f1a2b3c4-d5e6-4f7a-8b9c-0d1e2f3a4b5d"
-    case "delivery": return "f1a2b3c4-d5e6-4f7a-8b9c-0d1e2f3a4b5e"
-    default: return "f1a2b3c4-d5e6-4f7a-8b9c-0d1e2f3a4b5f"
-    }
+    let sheetSuffix = cancelRequestSheetSuffixes[type]?.sheet ?? "f"
+    return "f1a2b3c4-d5e6-4f7a-8b9c-0d1e2f3a4b5\(sheetSuffix)"
   }
 
   static func cancelRequestSheetChild(
@@ -1673,25 +1671,20 @@ class E2ETestBase: XCTestCase {
     cancelAction: String,
     message: String
   ) -> [String: Any] {
-    let suffix: String
-    switch type {
-    case "pickup": suffix = "e"
-    case "delivery": suffix = "f"
-    default: suffix = "a"
-    }
+    let rowSuffix = cancelRequestSheetSuffixes[type]?.row ?? "a"
     return Self.confirmationSheetChild(
       id: cancelRequestSheetId(type: type),
       name: "Cancel \(type) confirmation sheet",
       messageRows: [
         Self.textRow(
-          id: "a2b3c4d5-e6f7-4a8b-9c0d-1e2f3a4b5c6\(suffix)",
+          id: "a2b3c4d5-e6f7-4a8b-9c0d-1e2f3a4b5c6\(rowSuffix)",
           title: "",
           subtitle: message,
           name: "Cancel \(type) confirmation message"
         )
       ],
       confirmButton: Self.confirmSheetButton(
-        id: "f3a4b5c6-d7e8-4f9a-0b1c-2d3e4f5a6b7\(suffix)",
+        id: "f3a4b5c6-d7e8-4f9a-0b1c-2d3e4f5a6b7\(rowSuffix)",
         label: "Cancel request",
         action: cancelAction,
         name: "Confirm cancel \(type) request",
@@ -1782,13 +1775,10 @@ class E2ETestBase: XCTestCase {
   }
 
   static func viewItemRequestFlowData(flowId: String, pageId: String) -> [String: Any] {
-    let messagesResourceId = EVYCoreResource.messages.rawValue
-    let messageEnvelope =
-      "fk: \(MARKETPLACE_ITEMS_RESOURCE_ID).id, service: \"\(MARKETPLACE_SERVICE)\", resource: \"\(MARKETPLACE_ITEMS_RESOURCE_ID)\""
-    let pickupCreateAction =
-      "{create(\(EVY_CORE_SERVICE),\(messagesResourceId),{\(messageEnvelope), data: {type: pickup, value: pending, time: selected_pickup_timeslot}})}"
-    let shippingCreateAction =
-      "{create(\(EVY_CORE_SERVICE),\(messagesResourceId),{\(messageEnvelope), data: {type: shipping, value: pending, postalcode: shipping_address.postcode}})}"
+    let pickupCreateAction = requestCreateAction(
+      type: "pickup", payload: "time: selected_pickup_timeslot")
+    let shippingCreateAction = requestCreateAction(
+      type: "shipping", payload: "postalcode: shipping_address.postcode")
 
     return [
       "id": flowId,
@@ -1916,7 +1906,7 @@ class E2ETestBase: XCTestCase {
       "title": "",
       "placeholder": "",
       "source":
-        "{filter(messages, $datum.data.value == pending && owns($datum.service, $datum.resource, $datum.fk) == true && findFirst(sort(messages, desc, createdAt), fk == $datum.fk && data.type == $datum.data.type).id == $datum.id)}",
+        "{filter(messages, $datum.data.value == \"pending\" && owns($datum.service, $datum.resource, $datum.fk) == true && findFirst(sort(messages, desc, createdAt), fk == $datum.fk && data.type == $datum.data.type).id == $datum.id)}",
       "no_results": "No requests",
       "destination": "",
       "visible": "true",
@@ -1945,7 +1935,7 @@ class E2ETestBase: XCTestCase {
       "title": "",
       "placeholder": "",
       "source":
-        "{filter(messages, $datum.data.value == pending && owns($datum.service, $datum.resource, $datum.fk) == false && findFirst(sort(messages, desc, createdAt), fk == $datum.fk && data.type == $datum.data.type).id == $datum.id)}",
+        "{filter(messages, $datum.data.value == \"pending\" && owns($datum.service, $datum.resource, $datum.fk) == false && findFirst(sort(messages, desc, createdAt), fk == $datum.fk && data.type == $datum.data.type).id == $datum.id)}",
       "no_results": "No requests",
       "destination": "",
       "visible": "true",
@@ -1971,7 +1961,7 @@ class E2ETestBase: XCTestCase {
       "name": "Scheduled requests",
       "title": "",
       "placeholder": "",
-      "source": "{filter(messages, $datum.data.value == accept)}",
+      "source": "{filter(messages, $datum.data.value == \"accept\")}",
       "no_results": "No requests",
       "destination": "",
       "visible": "true",
@@ -2003,11 +1993,8 @@ class E2ETestBase: XCTestCase {
   }
 
   static func senderViewFlowData(flowId: String, pageId: String) -> [String: Any] {
-    let messagesResourceId = EVYCoreResource.messages.rawValue
-    let createAction =
-      "{create(\(EVY_CORE_SERVICE),\(messagesResourceId),{fk: \(MARKETPLACE_ITEMS_RESOURCE_ID).id,"
-      + " service: \"\(MARKETPLACE_SERVICE)\", resource: \"\(MARKETPLACE_ITEMS_RESOURCE_ID)\","
-      + " data: {type: pickup, value: pending, time: selected_pickup_timeslot}})}"
+    let createAction = requestCreateAction(
+      type: "pickup", payload: "time: selected_pickup_timeslot")
 
     let picker = Self.timeslotPickerRow(
       id: "20000000-0000-4000-8000-000000000001",
@@ -3000,11 +2987,14 @@ final class WebSocketE2ETests: E2ETestBase {
     await emitter.disconnect()
   }
 
-  /// The id of the open pickup request for an item, as the server holds it.
+  /// The id of a message for an item, as the server holds it.
   @MainActor
-  private func pickupRequestId(
+  private func waitForMessageId(
     emitter: WSEmitter,
     itemId: String,
+    type: String = "pickup",
+    value: String? = "pending",
+    failureMessage: String,
     timeout: TimeInterval = 10
   ) async throws -> String {
     let deadline = Date().addingTimeInterval(timeout)
@@ -3014,11 +3004,15 @@ final class WebSocketE2ETests: E2ETestBase {
         resource: EVYCoreResource.messages.rawValue
       )
       if let rows = Self.responseDataArray(from: payload),
-        let match = rows.compactMap({ $0 as? [String: Any] }).first(where: {
-          let data = $0["data"] as? [String: Any]
-          return $0["fk"] as? String == itemId
-            && data?["type"] as? String == "pickup"
-            && data?["value"] as? String == "pending"
+        let match = rows.compactMap({ $0 as? [String: Any] }).first(where: { row in
+          let data = row["data"] as? [String: Any]
+          guard row["fk"] as? String == itemId,
+            data?["type"] as? String == type
+          else { return false }
+          if let value {
+            return data?["value"] as? String == value
+          }
+          return true
         }),
         let id = match["id"] as? String
       {
@@ -3026,8 +3020,25 @@ final class WebSocketE2ETests: E2ETestBase {
       }
     } while try await emitter.nextDataChanged(
       resource: EVYCoreResource.messages.rawValue, deadline: deadline)
-    XCTFail("An open pickup request should exist for the item")
+    XCTFail(failureMessage)
     return ""
+  }
+
+  /// The id of the open pickup request for an item, as the server holds it.
+  @MainActor
+  private func pickupRequestId(
+    emitter: WSEmitter,
+    itemId: String,
+    timeout: TimeInterval = 10
+  ) async throws -> String {
+    try await waitForMessageId(
+      emitter: emitter,
+      itemId: itemId,
+      type: "pickup",
+      value: "pending",
+      failureMessage: "An open pickup request should exist for the item",
+      timeout: timeout
+    )
   }
 
   @MainActor
@@ -3271,25 +3282,14 @@ final class WebSocketE2ETests: E2ETestBase {
     itemId: String,
     timeout: TimeInterval = 10
   ) async throws -> String {
-    let deadline = Date().addingTimeInterval(timeout)
-    repeat {
-      let payload = try await emitter.getResource(
-        service: EVY_CORE_SERVICE,
-        resource: EVYCoreResource.messages.rawValue
-      )
-      if let rows = Self.responseDataArray(from: payload),
-        let match = rows.compactMap({ $0 as? [String: Any] }).first(where: {
-          $0["fk"] as? String == itemId
-            && ($0["data"] as? [String: Any])?["type"] as? String == "pickup"
-        }),
-        let id = match["id"] as? String
-      {
-        return id
-      }
-    } while try await emitter.nextDataChanged(
-      resource: EVYCoreResource.messages.rawValue, deadline: deadline)
-    XCTFail("Tapping a pickup timeslot should have created a request")
-    return ""
+    try await waitForMessageId(
+      emitter: emitter,
+      itemId: itemId,
+      type: "pickup",
+      value: nil,
+      failureMessage: "Tapping a pickup timeslot should have created a request",
+      timeout: timeout
+    )
   }
 
   @MainActor
@@ -4846,7 +4846,7 @@ final class E2EHomeInboxTests: E2ETestBase {
       file: file,
       line: line)
     return try XCTUnwrap(
-      Self.responseId(payload, messageId: requestId, value: value),
+      Self.messageHasResponse(payload, messageId: requestId, value: value),
       "The response should include an id",
       file: file,
       line: line
@@ -4862,23 +4862,6 @@ final class E2EHomeInboxTests: E2ETestBase {
       else { return false }
       return data["value"] as? String == value
     }
-  }
-
-  private static func responseId(_ messages: Any, messageId: String, value: String) -> String? {
-    guard let messageRows = responseDataArray(from: messages) else { return nil }
-    for message in messageRows {
-      guard let messageData = message as? [String: Any],
-        let data = messageData["data"] as? [String: Any],
-        data["message_id"] as? String == messageId,
-        data["value"] as? String == value
-      else {
-        continue
-      }
-      if let id = messageData["id"] as? String {
-        return id
-      }
-    }
-    return nil
   }
 
   @MainActor

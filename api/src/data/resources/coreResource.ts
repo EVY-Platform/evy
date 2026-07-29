@@ -11,6 +11,7 @@ import type {
 	UpdateResponse,
 } from "evy-types";
 import { hasDatabaseErrorCode, PG_UNIQUE_VIOLATION } from "evy-types/dbErrors";
+import type { SyncRequest } from "evy-types/rpc/sync.request";
 import {
 	validateCreateResponse,
 	validateDeleteResponse,
@@ -29,11 +30,9 @@ export type ResourceTable = AnyPgTable & {
 };
 
 /** Ids a device owns within one service resource, as declared on the sync request. */
-export type OwnedServiceResource = {
-	service: string;
-	resource: string;
-	ids: string[];
-};
+export type OwnedServiceResource = NonNullable<
+	SyncRequest["ownedServiceResources"]
+>[number];
 
 export type SyncScope = {
 	updatedAfter?: string;
@@ -77,6 +76,32 @@ export function omitNulls<T extends Record<string, unknown>>(row: T): T {
 	return Object.fromEntries(
 		Object.entries(row).filter(([, value]) => value !== null),
 	) as T;
+}
+
+export async function runListForSync<T>(
+	db: EvyDb,
+	table: ResourceTable,
+	scope: SyncScope,
+	norm: (raw: unknown) => T,
+	extraEntitlements: SQL[] = [],
+): Promise<GetResponse> {
+	const entitlement = [
+		syncEntitlementClause(table, scope.ownedIds),
+		...extraEntitlements,
+	].filter((clause): clause is SQL => clause !== undefined);
+
+	const clauses = [
+		syncTimeClause(table, scope.updatedAfter),
+		entitlement.length > 1 ? or(...entitlement) : entitlement[0],
+	].filter((clause): clause is SQL => clause !== undefined);
+
+	const rows = await db
+		.select()
+		.from(table)
+		.where(clauses.length > 0 ? and(...clauses) : undefined)
+		.orderBy(asc(table.updatedAt), asc(table.id));
+
+	return validateGetResponse(rows.map(norm));
 }
 
 export function makeCoreResource<
@@ -152,17 +177,7 @@ export function makeCoreResource<
 		db: EvyDb,
 		scope: SyncScope,
 	): Promise<GetResponse> {
-		const clauses = [
-			syncTimeClause(table, scope.updatedAfter),
-			syncEntitlementClause(table, scope.ownedIds),
-		].filter((clause): clause is SQL => clause !== undefined);
-
-		const rows = await db
-			.select()
-			.from(table)
-			.where(clauses.length > 0 ? and(...clauses) : undefined)
-			.orderBy(asc(table.updatedAt), asc(table.id));
-		return validateGetResponse(rows.map(norm));
+		return runListForSync(db, table, scope, norm);
 	}
 
 	async function create(

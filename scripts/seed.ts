@@ -17,7 +17,10 @@ import type {
 	UI_Page,
 	UI_Row,
 } from "../types/generated/ts";
-import { EVY_CORE_SERVICE } from "../types/generated/ts/coreResources";
+import {
+	EVY_CORE_SERVICE,
+	EVY_MESSAGE_DATA_VALUES,
+} from "../types/generated/ts/coreResources";
 import {
 	address as addressTable,
 	file as fileTable,
@@ -346,12 +349,21 @@ function buildMessageRows(
 		// show up as a row the item page silently never matches.
 		if (
 			data.value !== undefined &&
-			data.value !== "pending" &&
-			data.value !== "accept" &&
-			data.value !== "reject"
+			!EVY_MESSAGE_DATA_VALUES.includes(
+				data.value as (typeof EVY_MESSAGE_DATA_VALUES)[number],
+			)
 		) {
 			throw new Error(
-				`Seed message "${item.id}" has data.value "${String(data.value)}"; expected "pending", "accept" or "reject"`,
+				`Seed message "${item.id}" has data.value "${String(data.value)}"; expected one of ${EVY_MESSAGE_DATA_VALUES.join(", ")}`,
+			);
+		}
+		if (
+			item.visibility !== undefined &&
+			item.visibility !== "private" &&
+			item.visibility !== "public"
+		) {
+			throw new Error(
+				`Seed message "${item.id}" has visibility "${String(item.visibility)}"; expected "public" or "private"`,
 			);
 		}
 		return {
@@ -362,10 +374,7 @@ function buildMessageRows(
 			createdAt,
 			updatedAt,
 			data,
-			visibility:
-				item.visibility === "private" || item.visibility === "public"
-					? item.visibility
-					: "private",
+			visibility: item.visibility === "public" ? "public" : "private",
 		};
 	});
 }
