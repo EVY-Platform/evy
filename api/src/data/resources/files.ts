@@ -140,7 +140,7 @@ async function insertFileMetadata(
 			type: validated.type,
 			createdAt: nowIso,
 			updatedAt: nowIso,
-			visibility: validated.visibility ?? "public",
+			visibility: validated.visibility,
 		})
 		.returning()
 		.catch((err: unknown) => {
@@ -187,11 +187,9 @@ async function createFileFromUpload(params: {
 		typeof params.dataPayload === "object" && params.dataPayload !== null
 			? (params.dataPayload as Record<string, unknown>)
 			: {};
-	const validated = validateFilePayload({
-		...record,
-		visibility:
-			(record.visibility as "public" | "private" | undefined) ?? "public",
-	});
+	// No fallback: a file create states its own visibility like every other
+	// resource, and validation rejects one that does not.
+	const validated = validateFilePayload(record);
 	const fileId = params.filter?.id ?? validated.id;
 	const uploadSession = getUploadSession(fileId);
 
@@ -213,7 +211,7 @@ async function createFileFromUpload(params: {
 			type: validated.type,
 			createdAt: params.nowIso,
 			updatedAt: params.nowIso,
-			visibility: validated.visibility ?? "public",
+			visibility: validated.visibility,
 		},
 	};
 }

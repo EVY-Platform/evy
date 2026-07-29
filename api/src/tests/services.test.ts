@@ -107,6 +107,7 @@ describe("service WebSocket adapters", () => {
 			name: "marketplace",
 			description: "Marketplace",
 			sortOrder: 1,
+			visibility: "public",
 			createdAt: nowIso,
 			updatedAt: nowIso,
 		});
@@ -350,6 +351,7 @@ describe("forwarded call failures are attributed", () => {
 			name: "marketplace",
 			description: "Marketplace",
 			sortOrder: 1,
+			visibility: "public",
 			createdAt: nowIso,
 			updatedAt: nowIso,
 		});

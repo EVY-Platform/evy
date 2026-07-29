@@ -103,6 +103,7 @@ function addressRow(
 	return {
 		...ROTHCHILD_CANONICAL_ADDRESS,
 		id: crypto.randomUUID(),
+		visibility: "private",
 		...timestamps(),
 		...overrides,
 	};
@@ -445,6 +446,7 @@ describe("address resources", () => {
 			data: {
 				id: crypto.randomUUID(),
 				street: "Manual Street",
+				visibility: "private",
 			},
 		})) as DATA_EVY_Address;
 		expect(created.street).toBe("Manual Street");
@@ -454,12 +456,29 @@ describe("address resources", () => {
 	});
 });
 
-describe("visibility defaults", () => {
+describe("visibility", () => {
 	beforeEach(async () => {
 		await clearAllTestTables(testDb);
 	});
 
-	it("defaults flow visibility to public when omitted from payload", async () => {
+	// Nothing fills a visibility in. Each resource declares its own in
+	// core.resources.json and the creating client sends it, so a payload without
+	// one is a caller that never decided - which must not reach the database.
+	it("rejects a create with no visibility rather than choosing one", async () => {
+		await expect(
+			create(dataDb, {
+				service: EVY_CORE_SERVICE,
+				resource: FLOW_RESOURCE,
+				data: {
+					id: crypto.randomUUID(),
+					name: "Flow With No Visibility",
+					pageIds: [],
+				},
+			}),
+		).rejects.toThrow("visibility");
+	});
+
+	it("round-trips explicit public visibility on flows", async () => {
 		const created = (await create(dataDb, {
 			service: EVY_CORE_SERVICE,
 			resource: FLOW_RESOURCE,
@@ -467,6 +486,7 @@ describe("visibility defaults", () => {
 				id: crypto.randomUUID(),
 				name: "Public Flow",
 				pageIds: [],
+				visibility: "public",
 			},
 		})) as DATA_EVY_Flow;
 		expect(created.visibility).toBe("public");
@@ -512,6 +532,7 @@ describe("message resources", () => {
 			resource: crypto.randomUUID(),
 			status: "pending" as const,
 			data: { type: "pickup", time: "2026-06-03T09:00:00" },
+			visibility: "private" as const,
 		};
 		const created = (await create(dataDb, {
 			service: EVY_CORE_SERVICE,
@@ -575,6 +596,7 @@ describe("message resources", () => {
 					resource: crypto.randomUUID(),
 					status: "invalid",
 					data: {},
+					visibility: "private",
 				},
 			}),
 		).rejects.toThrow("Message validation failed");
@@ -597,6 +619,7 @@ describe("getOwnedMessages", () => {
 				resource: targetResource,
 				status: "pending" as const,
 				data: { type: "pickup" },
+				visibility: "private" as const,
 			},
 		})) as DATA_EVY_Message;
 	}
@@ -761,6 +784,7 @@ describe("service resources", () => {
 			id: serviceId,
 			name: "CreateSvc",
 			description: "D",
+			visibility: "public" as const,
 			...timestamps(),
 		};
 
@@ -807,7 +831,12 @@ describe("files", () => {
 			service: EVY_CORE_SERVICE,
 			resource: EVY_CORE_RESOURCE.FILES,
 			filter: { id: fileId },
-			data: { id: fileId, type: "text/plain", ...timestamps() },
+			data: {
+				id: fileId,
+				type: "text/plain",
+				visibility: "public",
+				...timestamps(),
+			},
 		} as CreateRequest);
 
 		const { filesDir, uploadTmpDir } = getFileStorageDirs();

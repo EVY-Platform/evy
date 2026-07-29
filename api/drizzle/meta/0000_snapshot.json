@@ -1,5 +1,5 @@
 {
-	"id": "a01f1b65-8439-40e4-bd42-e2b34a1e382a",
+	"id": "29a5d7a1-bae2-46b3-ba66-116548013e37",
 	"prevId": "00000000-0000-0000-0000-000000000000",
 	"version": "7",
 	"dialect": "postgresql",
@@ -74,8 +74,7 @@
 					"type": "Visibility",
 					"typeSchema": "public",
 					"primaryKey": false,
-					"notNull": true,
-					"default": "'private'"
+					"notNull": true
 				},
 				"created_at": {
 					"name": "created_at",
@@ -126,8 +125,7 @@
 					"type": "Visibility",
 					"typeSchema": "public",
 					"primaryKey": false,
-					"notNull": true,
-					"default": "'public'"
+					"notNull": true
 				},
 				"created_at": {
 					"name": "created_at",
@@ -187,8 +185,7 @@
 					"type": "Visibility",
 					"typeSchema": "public",
 					"primaryKey": false,
-					"notNull": true,
-					"default": "'public'"
+					"notNull": true
 				},
 				"created_at": {
 					"name": "created_at",
@@ -251,8 +248,7 @@
 					"type": "Visibility",
 					"typeSchema": "public",
 					"primaryKey": false,
-					"notNull": true,
-					"default": "'public'"
+					"notNull": true
 				},
 				"created_at": {
 					"name": "created_at",
@@ -274,6 +270,78 @@
 				}
 			},
 			"indexes": {},
+			"foreignKeys": {},
+			"compositePrimaryKeys": {},
+			"uniqueConstraints": {},
+			"policies": {},
+			"checkConstraints": {},
+			"isRLSEnabled": false
+		},
+		"public.Formatter": {
+			"name": "Formatter",
+			"schema": "",
+			"columns": {
+				"id": {
+					"name": "id",
+					"type": "uuid",
+					"primaryKey": true,
+					"notNull": true,
+					"default": "gen_random_uuid()"
+				},
+				"name": {
+					"name": "name",
+					"type": "text",
+					"primaryKey": false,
+					"notNull": true
+				},
+				"formatting_config": {
+					"name": "formatting_config",
+					"type": "text",
+					"primaryKey": false,
+					"notNull": true
+				},
+				"formatting": {
+					"name": "formatting",
+					"type": "jsonb",
+					"primaryKey": false,
+					"notNull": true
+				},
+				"created_at": {
+					"name": "created_at",
+					"type": "text",
+					"primaryKey": false,
+					"notNull": true
+				},
+				"updated_at": {
+					"name": "updated_at",
+					"type": "text",
+					"primaryKey": false,
+					"notNull": true
+				},
+				"deleted_at": {
+					"name": "deleted_at",
+					"type": "text",
+					"primaryKey": false,
+					"notNull": false
+				}
+			},
+			"indexes": {
+				"Formatter_name_key": {
+					"name": "Formatter_name_key",
+					"columns": [
+						{
+							"expression": "name",
+							"isExpression": false,
+							"asc": true,
+							"nulls": "last"
+						}
+					],
+					"isUnique": true,
+					"concurrently": false,
+					"method": "btree",
+					"with": {}
+				}
+			},
 			"foreignKeys": {},
 			"compositePrimaryKeys": {},
 			"uniqueConstraints": {},
@@ -351,8 +419,7 @@
 					"type": "Visibility",
 					"typeSchema": "public",
 					"primaryKey": false,
-					"notNull": true,
-					"default": "'public'"
+					"notNull": true
 				}
 			},
 			"indexes": {},
@@ -408,8 +475,7 @@
 					"type": "Visibility",
 					"typeSchema": "public",
 					"primaryKey": false,
-					"notNull": true,
-					"default": "'public'"
+					"notNull": true
 				},
 				"created_at": {
 					"name": "created_at",
@@ -494,8 +560,7 @@
 					"type": "Visibility",
 					"typeSchema": "public",
 					"primaryKey": false,
-					"notNull": true,
-					"default": "'public'"
+					"notNull": true
 				},
 				"created_at": {
 					"name": "created_at",
@@ -564,8 +629,7 @@
 					"type": "Visibility",
 					"typeSchema": "public",
 					"primaryKey": false,
-					"notNull": true,
-					"default": "'public'"
+					"notNull": true
 				},
 				"created_at": {
 					"name": "created_at",
@@ -639,8 +703,7 @@
 					"type": "Visibility",
 					"typeSchema": "public",
 					"primaryKey": false,
-					"notNull": true,
-					"default": "'public'"
+					"notNull": true
 				},
 				"created_at": {
 					"name": "created_at",
@@ -736,8 +799,7 @@
 					"type": "Visibility",
 					"typeSchema": "public",
 					"primaryKey": false,
-					"notNull": true,
-					"default": "'public'"
+					"notNull": true
 				},
 				"created_at": {
 					"name": "created_at",
@@ -792,85 +854,6 @@
 						},
 						{
 							"expression": "fk_organization_id",
-							"isExpression": false,
-							"asc": true,
-							"nulls": "last"
-						}
-					],
-					"isUnique": true,
-					"concurrently": false,
-					"method": "btree",
-					"with": {}
-				}
-			},
-			"foreignKeys": {},
-			"compositePrimaryKeys": {},
-			"uniqueConstraints": {},
-			"policies": {},
-			"checkConstraints": {},
-			"isRLSEnabled": false
-		},
-		"public.ServiceResource": {
-			"name": "ServiceResource",
-			"schema": "",
-			"columns": {
-				"id": {
-					"name": "id",
-					"type": "uuid",
-					"primaryKey": true,
-					"notNull": true
-				},
-				"fk_service_id": {
-					"name": "fk_service_id",
-					"type": "uuid",
-					"primaryKey": false,
-					"notNull": true
-				},
-				"name": {
-					"name": "name",
-					"type": "varchar(50)",
-					"primaryKey": false,
-					"notNull": true
-				},
-				"visibility": {
-					"name": "visibility",
-					"type": "Visibility",
-					"typeSchema": "public",
-					"primaryKey": false,
-					"notNull": true,
-					"default": "'public'"
-				},
-				"created_at": {
-					"name": "created_at",
-					"type": "text",
-					"primaryKey": false,
-					"notNull": true
-				},
-				"updated_at": {
-					"name": "updated_at",
-					"type": "text",
-					"primaryKey": false,
-					"notNull": true
-				},
-				"deleted_at": {
-					"name": "deleted_at",
-					"type": "text",
-					"primaryKey": false,
-					"notNull": false
-				}
-			},
-			"indexes": {
-				"ServiceResource_fk_service_id_name_key": {
-					"name": "ServiceResource_fk_service_id_name_key",
-					"columns": [
-						{
-							"expression": "fk_service_id",
-							"isExpression": false,
-							"asc": true,
-							"nulls": "last"
-						},
-						{
-							"expression": "name",
 							"isExpression": false,
 							"asc": true,
 							"nulls": "last"

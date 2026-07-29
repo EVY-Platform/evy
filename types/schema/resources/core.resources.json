@@ -2,37 +2,47 @@
 	"service": "475731ac-31aa-4d65-94d2-7032782ae359",
 	"resources": {
 		"flows": {
-			"singular": "flow"
+			"singular": "flow",
+			"visibility": "public"
 		},
 		"pages": {
-			"singular": "page"
+			"singular": "page",
+			"visibility": "public"
 		},
 		"rows": {
-			"singular": "row"
+			"singular": "row",
+			"visibility": "public"
 		},
 		"devices": {
-			"singular": "device"
+			"singular": "device",
+			"visibility": "public"
 		},
 		"organisations": {
-			"singular": "organisation"
+			"singular": "organisation",
+			"visibility": "public"
 		},
 		"services": {
-			"singular": "service"
+			"singular": "service",
+			"visibility": "public"
 		},
 		"providers": {
-			"singular": "provider"
+			"singular": "provider",
+			"visibility": "public"
 		},
 		"resources": {
 			"singular": "resource"
 		},
 		"files": {
-			"singular": "file"
+			"singular": "file",
+			"visibility": "public"
 		},
 		"addresses": {
-			"singular": "address"
+			"singular": "address",
+			"visibility": "private"
 		},
 		"messages": {
-			"singular": "message"
+			"singular": "message",
+			"visibility": "private"
 		},
 		"formatters": {
 			"singular": "formatter"

@@ -43,16 +43,8 @@ export function makeCoreResource<
 	validate: (raw: unknown) => T;
 	toUpdateSet: (validated: T, nowIso: string) => Record<string, unknown>;
 	normalize?: (raw: unknown) => T;
-	/** Default for the payload's `visibility`; `false` for tables without the column. */
-	visibility?: "public" | "private" | false;
 }) {
-	const {
-		table,
-		validate,
-		toUpdateSet,
-		normalize,
-		visibility = "public",
-	} = config;
+	const { table, validate, toUpdateSet, normalize } = config;
 	// Nullable columns come back from Drizzle as null, which the schemas do not
 	// allow for optional fields, so stripping nulls is the default rather than
 	// something each resource has to remember when a nullable column is added.
@@ -76,9 +68,10 @@ export function makeCoreResource<
 			createdAt: createdAtOverride ?? record.createdAt ?? nowIso,
 			updatedAt: nowIso,
 		};
-		if (visibility !== false) {
-			payload.visibility = record.visibility ?? visibility;
-		}
+		// `visibility` is deliberately not supplied here. Every resource that has one
+		// declares it in core.resources.json, and the creating client sends it; the
+		// API only checks that it arrived. Filling one in would let a caller create a
+		// record whose visibility nobody chose.
 		return validate(payload);
 	}
 

@@ -33,6 +33,13 @@ const CORE_RESOURCES_SCHEMA_PATH = "types/schema/resources/core.resources.json";
 
 interface ResourceMeta {
 	singular: string;
+	/**
+	 * The visibility every record of this resource is created with. Absent for
+	 * resources with no visibility field of their own (the catalog singleton,
+	 * formatters). Declared here because nothing else may supply it: the API
+	 * validates that a create payload carries a visibility and never fills one in.
+	 */
+	visibility?: "public" | "private";
 }
 
 interface CoreResourcesSchema {
@@ -70,6 +77,15 @@ function validateSchema(value: unknown): asserts value is CoreResourcesSchema {
 				`core.resources.json: resources.${name}.singular must be a non-empty string`,
 			);
 		}
+		if (
+			m.visibility !== undefined &&
+			m.visibility !== "public" &&
+			m.visibility !== "private"
+		) {
+			throw new Error(
+				`core.resources.json: resources.${name}.visibility must be "public" or "private" when set`,
+			);
+		}
 	}
 }
 
@@ -105,6 +121,20 @@ function generateTypeScript(schema: CoreResourcesSchema): string {
 		);
 	}
 	lines.push("] as const;");
+	lines.push("");
+
+	// Visibility every record of a resource is created with. Resources with no
+	// visibility field of their own are absent.
+	lines.push("export const EVY_CORE_RESOURCE_VISIBILITY: Readonly<");
+	lines.push('\tRecord<string, "public" | "private">');
+	lines.push("> = {");
+	for (const [plural, meta] of Object.entries(resources)) {
+		if (!meta.visibility) continue;
+		lines.push(
+			`\t${JSON.stringify(plural)}: ${JSON.stringify(meta.visibility)},`,
+		);
+	}
+	lines.push("};");
 	lines.push("");
 
 	// Resource names tuple
@@ -159,6 +189,24 @@ function generateSwift(schema: CoreResourcesSchema): string {
 		lines.push(
 			`\t\tcase .${caseName}: return ${JSON.stringify(meta.singular)}`,
 		);
+	}
+	lines.push("\t\t}");
+	lines.push("\t}");
+	lines.push("");
+
+	// Visibility lookup
+	lines.push(
+		"\t/// The visibility every record of this resource is created with.",
+	);
+	lines.push(
+		"\t/// Nil for resources with no visibility field of their own.",
+	);
+	lines.push("\tpublic var visibility: String? {");
+	lines.push("\t\tswitch self {");
+	for (const [plural, meta] of Object.entries(resources)) {
+		const caseName = swiftCaseName(plural);
+		const value = meta.visibility ? JSON.stringify(meta.visibility) : "nil";
+		lines.push(`\t\tcase .${caseName}: return ${value}`);
 	}
 	lines.push("\t\t}");
 	lines.push("\t}");

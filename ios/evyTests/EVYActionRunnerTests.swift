@@ -224,7 +224,7 @@ final class EVYActionRunnerTests: XCTestCase {
     EVYActionRunner.run(actions: [createAction, closeAction]) { receivedOperations.append($0) }
 
     XCTAssertEqual(receivedOperations, [.close])
-    let createdRows = try EVY.publicStore.getAll(namespace: namespace, resource: resource)
+    let createdRows = allFromSyncedStores(namespace: namespace, resource: resource)
     XCTAssertEqual(createdRows.count, 1)
   }
 
@@ -434,13 +434,13 @@ final class EVYActionRunnerTests: XCTestCase {
     let pageId = "pickup-page-\(UUID().uuidString)"
     let scopeId = EVYDraft.ephemeralScopeId(forPageId: pageId)
 
-    try? EVY.publicStore.deleteAll(namespace: coreNamespace, resource: addressesResource)
+    deleteFromSyncedStores(namespace: coreNamespace, resource: addressesResource)
     try? EVY.publicStore.deleteAll(namespace: marketplaceNamespace, resource: itemsResource)
     EVY.draftStore.deleteDrafts()
     EVY.draftStore.activeScopeId = scopeId
     EVY.activeCacheScopeId = pageId
     defer {
-      try? EVY.publicStore.deleteAll(namespace: coreNamespace, resource: addressesResource)
+      deleteFromSyncedStores(namespace: coreNamespace, resource: addressesResource)
       try? EVY.publicStore.deleteAll(namespace: marketplaceNamespace, resource: itemsResource)
       EVY.draftStore.deleteDrafts()
       EVY.draftStore.activeScopeId = nil
@@ -484,7 +484,7 @@ final class EVYActionRunnerTests: XCTestCase {
     )
     EVYActionRunner.run(actions: saveActions) { _ in }
 
-    let addresses = try EVY.publicStore.getAll(
+    let addresses = allFromSyncedStores(
       namespace: coreNamespace, resource: addressesResource)
     XCTAssertEqual(addresses.count, 1)
     guard case .dictionary(let createdAddress) = try addresses[0].decoded(),
@@ -524,8 +524,8 @@ final class EVYActionRunnerTests: XCTestCase {
     EVYActionRunner.run(actions: saveActions) { _ in }
 
     XCTAssertEqual(
-      try EVY.publicStore.getAll(namespace: coreNamespace, resource: addressesResource).count, 1)
-    let updatedRows = try EVY.publicStore.getAll(
+      allFromSyncedStores(namespace: coreNamespace, resource: addressesResource).count, 1)
+    let updatedRows = allFromSyncedStores(
       namespace: coreNamespace, resource: addressesResource)
     guard case .dictionary(let updatedAddress) = try updatedRows[0].decoded() else {
       return XCTFail("expected address after second save")
@@ -722,12 +722,12 @@ final class EVYActionRunnerTests: XCTestCase {
     let flowId = "create-flow"
     let scopeId = EVYDraft.createMergeScopeId(flowId: flowId, entityKey: itemsResource)
 
-    try? EVY.publicStore.deleteAll(namespace: coreNamespace, resource: addressesResource)
+    deleteFromSyncedStores(namespace: coreNamespace, resource: addressesResource)
     try? EVY.publicStore.deleteAll(namespace: marketplaceNamespace, resource: itemsResource)
     EVY.draftStore.deleteDrafts()
     EVY.draftStore.activeScopeId = scopeId
     defer {
-      try? EVY.publicStore.deleteAll(namespace: coreNamespace, resource: addressesResource)
+      deleteFromSyncedStores(namespace: coreNamespace, resource: addressesResource)
       try? EVY.publicStore.deleteAll(namespace: marketplaceNamespace, resource: itemsResource)
       EVY.draftStore.deleteDrafts(scopeId: scopeId)
       EVY.draftStore.activeScopeId = nil
@@ -748,7 +748,7 @@ final class EVYActionRunnerTests: XCTestCase {
     )
     EVYActionRunner.run(actions: saveActions) { _ in }
 
-    let addresses = try EVY.publicStore.getAll(
+    let addresses = allFromSyncedStores(
       namespace: coreNamespace, resource: addressesResource)
     XCTAssertEqual(addresses.count, 1)
     guard case .dictionary(let createdAddress) = try addresses[0].decoded(),
@@ -773,8 +773,8 @@ final class EVYActionRunnerTests: XCTestCase {
     EVYActionRunner.run(actions: saveActions) { _ in }
 
     XCTAssertEqual(
-      try EVY.publicStore.getAll(namespace: coreNamespace, resource: addressesResource).count, 1)
-    let updatedRows = try EVY.publicStore.getAll(
+      allFromSyncedStores(namespace: coreNamespace, resource: addressesResource).count, 1)
+    let updatedRows = allFromSyncedStores(
       namespace: coreNamespace, resource: addressesResource)
     guard case .dictionary(let updatedAddress) = try updatedRows[0].decoded(),
       case .string(let updatedId) = updatedAddress["id"]
@@ -1036,6 +1036,12 @@ final class EVYActionRunnerTests: XCTestCase {
 
     let afterNoOp = try statusByMessageId(namespace: namespace, resource: resource)
     XCTAssertEqual(afterNoOp[acceptedMessageId], "accepted")
+  }
+
+  private func allFromSyncedStores(namespace: String, resource: String) -> [EVYData] {
+    EVY.syncedStores().flatMap {
+      (try? $0.getAll(namespace: namespace, resource: resource)) ?? []
+    }
   }
 
   private func deleteFromSyncedStores(namespace: String, resource: String) {
@@ -1437,10 +1443,10 @@ final class EVYActionRunnerTests: XCTestCase {
     let itemResourceId = MarketplaceTestFixture.itemsResourceId
     let itemId = UUID().uuidString
     let itemTitle = "Pickup Item Title"
-    try? EVY.publicStore.deleteAll(namespace: namespace, resource: resource)
+    deleteFromSyncedStores(namespace: namespace, resource: resource)
     try? EVY.publicStore.deleteAll(namespace: namespace, resource: itemResourceId)
     defer {
-      try? EVY.publicStore.deleteAll(namespace: namespace, resource: resource)
+      deleteFromSyncedStores(namespace: namespace, resource: resource)
       try? EVY.publicStore.deleteAll(namespace: namespace, resource: itemResourceId)
     }
 
@@ -1469,7 +1475,7 @@ final class EVYActionRunnerTests: XCTestCase {
     EVYActionRunner.run(actions: [action]) { received = $0 }
 
     XCTAssertNil(received)
-    let createdRows = try EVY.publicStore.getAll(namespace: namespace, resource: resource)
+    let createdRows = allFromSyncedStores(namespace: namespace, resource: resource)
     XCTAssertEqual(createdRows.count, 1)
   }
 

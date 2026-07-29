@@ -5,36 +5,8 @@
 		{
 			"idx": 0,
 			"version": "7",
-			"when": 1784986730322,
+			"when": 1785283539352,
 			"tag": "0000_baseline",
-			"breakpoints": true
-		},
-		{
-			"idx": 1,
-			"version": "7",
-			"when": 1784986730323,
-			"tag": "0001_backfill_flow_submits",
-			"breakpoints": true
-		},
-		{
-			"idx": 2,
-			"version": "7",
-			"when": 1784986730324,
-			"tag": "0002_drop_service_resource",
-			"breakpoints": true
-		},
-		{
-			"idx": 3,
-			"version": "7",
-			"when": 1784986730325,
-			"tag": "0003_create_formatter",
-			"breakpoints": true
-		},
-		{
-			"idx": 4,
-			"version": "7",
-			"when": 1784986730326,
-			"tag": "0004_message_private_visibility",
 			"breakpoints": true
 		}
 	]
