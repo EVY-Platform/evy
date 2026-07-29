@@ -82,16 +82,17 @@ Routing in practice: the API dispatches on `service`, comparing it against the g
 
 **`sync` in practice:** Send back the opaque `cursor` from the previous response, or omit it for a full sync. Alongside
 the cursor a client sends `ownedServiceResources`: the record ids it owns, grouped by the service
-and resource they belong to. The server uses it to decide which ownership-scoped rows the device
-is entitled to — today only `messages` — and a device that declares nothing receives none of them.
+and resource they belong to. Every resource is read the same way: the device gets every public row,
+plus the private rows it declared. A device that declares nothing still syncs — it just receives the
+public rows only.
 
 A device's ownership set is the union of three sources:
 
 - **records it created**, kept in a small ledger of `(service, resource, id)` triples. This is the
   only source that can claim a *public* record, and it is what keeps a seller entitled to messages
-  about an item they listed.
-- **records it holds privately**, so a message that arrives stays owned and its later updates keep
-  coming. Local singletons share that store but are excluded: they are not records the server
+  about an item they listed. Anything created on the platform is owned by whoever created it.
+- **records it holds privately**, so a private row that arrives stays owned and its later updates
+  keep coming. Local singletons share that store but are excluded: they are not records the server
   knows, and their id is not a uuid — which the request schema rejects, failing the whole sync.
 - **the `EVY_OWNED_SERVICE_RESOURCES` launch override**, standing in for the account-derived
   ownership that arrives with real auth. Changing that declaration voids the cursor — it makes
@@ -162,7 +163,11 @@ Every `DATA_EVY_*` row carries a required `visibility` attribute: `"public"` or 
 
 Each resource declares the value its records are created with in [`core.resources.json`](../../../types/schema/resources/core.resources.json), which the generator emits for both platforms (`EVY_CORE_RESOURCE_VISIBILITY` in TypeScript, `EVYCoreResource.visibility` in Swift). iOS attaches it on create; web states it where it builds records; seeds and tests state it in their payloads. Resources with no visibility of their own — the `resources` catalog, `formatters`, and every external service resource — declare nothing and get nothing.
 
+**What the two values mean for sync:** a public row goes to every device; a private row goes only to the device that owns it. Messages add one case — whoever owns the record a message addresses receives it too, even before they hold it. So `private` is an access rule, not just a storage choice, and flipping a resource to private removes its rows from every device but the owner's. That happens with no error anywhere: the app simply renders less. Before making a resource private, ask who reads it — a public record that reads a private one (as the marketplace item once read its pickup address) has to carry what it needs itself.
+
 On iOS, public rows sync into `publicStore` and private rows into `privateStore`; web keeps a single data path and treats `visibility` as an ordinary field.
+
+Two limits worth knowing. `get` is **not** an access boundary — it takes no ownership and returns whatever it is asked for; sync is the only path that populates a device, so that is where the rule lives. And external service resources have no `visibility` of their own and the gateway forwards their payloads without inspecting them, so they are public by construction; a service that needs private rows declares and filters them itself.
 
 On iOS the private store is also part of what a device declares as owned on sync, which is how a message that arrives for you stays owned and keeps receiving updates. Note what `visibility` is **not**: it is one global column choosing a store, not an access rule and not ownership. Every device syncs every private row it is sent — every device holds every seeded address privately — so `"private"` means "stored privately on whichever device receives it", never "mine". Ownership of a **public** record therefore cannot be expressed by visibility at all, and is recorded separately when the device creates it (see [`sync`](#wire-contract-vs-persisted-rows)).
 
@@ -172,7 +177,7 @@ Core message record in [`data.schema.json`](../../../types/schema/data/data.sche
 
 On the wire this is accessed with `service: "475731ac-31aa-4d65-94d2-7032782ae359"` and `resource: "messages"`. Cancelling sets `archivedAt`; accepting sets `status` to `accepted` via `{update(...)}`.
 
-Unlike every other core resource, messages are not synced to every device. A message reaches exactly two parties: the device that created it, which declares the message's own id under `evy`/`messages` in `ownedServiceResources`, and the device that owns the record it addresses, which declares that record's id under the message's `service`/`resource`. Everyone else never receives it.
+Messages follow the same rule as every other private resource, with one addition: as well as the device that owns the message (its creator, declaring the message's own id under `evy`/`messages`), a message reaches the device that owns the record it **addresses**, which declares that record's id under the message's `service`/`resource`. That recipient rule is the only entitlement in the system that is not plain ownership. Everyone else never receives it.
 
 Messages are `private`, so a received one lands in the receiving device's private store and stays owned from then on — it keeps getting that message's updates without needing to own the record it addresses. A device that is reinstalled, or that never created the record a seeded message addresses, still has no claim on those messages until it declares the ownership explicitly; that resolves when auth lands and ownership can be derived from an account.
 
