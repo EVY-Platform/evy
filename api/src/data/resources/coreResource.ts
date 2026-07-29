@@ -10,6 +10,7 @@ import type {
 	UpdateRequest,
 	UpdateResponse,
 } from "evy-types";
+import { EVY_CORE_SERVICE } from "evy-types/coreResources";
 import { hasDatabaseErrorCode, PG_UNIQUE_VIOLATION } from "evy-types/dbErrors";
 import type { SyncRequest } from "evy-types/rpc/sync.request";
 import {
@@ -21,11 +22,17 @@ import {
 import type { EvyDb } from "../../database/db";
 import { assertNotModified, monotonicUpdatedAt } from "../conflicts";
 
-export type ResourceTable = AnyPgTable & {
+type ResourceTable = AnyPgTable & {
 	id: AnyPgColumn;
 	updatedAt: AnyPgColumn;
 	deletedAt: AnyPgColumn;
 	visibility?: AnyPgColumn;
+};
+
+type AddressableResourceTable = ResourceTable & {
+	fk: AnyPgColumn;
+	service: AnyPgColumn;
+	resource: AnyPgColumn;
 };
 
 export type OwnedServiceResource = NonNullable<
@@ -34,11 +41,35 @@ export type OwnedServiceResource = NonNullable<
 
 export type SyncScope = {
 	updatedAfter?: string;
-	ownedIds: string[];
-	ownedForeignKeys: OwnedServiceResource[];
+	resource: string;
+	owned: OwnedServiceResource[];
 };
 
-export function syncEntitlementClause(
+export type SyncScopeInput = Omit<SyncScope, "resource">;
+
+const UUID_PATTERN =
+	/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+function isAddressableTable(
+	table: ResourceTable,
+): table is AddressableResourceTable {
+	return "fk" in table && "service" in table && "resource" in table;
+}
+
+export function ownedIdsOf(scope: SyncScope): string[] {
+	const ids: string[] = [];
+	for (const group of scope.owned) {
+		if (
+			group.service === EVY_CORE_SERVICE &&
+			group.resource === scope.resource
+		) {
+			ids.push(...group.ids);
+		}
+	}
+	return ids;
+}
+
+function syncEntitlementClause(
 	table: ResourceTable,
 	ownedIds: string[],
 ): SQL | undefined {
@@ -48,13 +79,40 @@ export function syncEntitlementClause(
 	return or(publicRows, inArray(table.id, ownedIds));
 }
 
-export function syncTimeClause(
+function syncTimeClause(
 	table: ResourceTable,
 	updatedAfter: string | undefined,
 ): SQL | undefined {
 	return updatedAfter
 		? gt(table.updatedAt, updatedAfter)
 		: isNull(table.deletedAt);
+}
+
+function addressedRecordClause(
+	table: AddressableResourceTable,
+	owned: OwnedServiceResource[],
+): SQL | undefined {
+	const clauses: SQL[] = [];
+
+	for (const group of owned) {
+		if (group.ids.length === 0) continue;
+		if (
+			!UUID_PATTERN.test(group.service) ||
+			!UUID_PATTERN.test(group.resource)
+		) {
+			continue;
+		}
+		clauses.push(
+			and(
+				eq(table.service, group.service),
+				eq(table.resource, group.resource),
+				inArray(table.fk, group.ids),
+			) as SQL,
+		);
+	}
+
+	if (clauses.length === 0) return undefined;
+	return or(...clauses);
 }
 
 export function omitNulls<T extends Record<string, unknown>>(row: T): T {
@@ -70,14 +128,18 @@ export async function runListForSync<T>(
 	norm: (raw: unknown) => T,
 	extraEntitlements: SQL[] = [],
 ): Promise<GetResponse> {
+	const ownedIds = ownedIdsOf(scope);
 	const entitlement = [
-		syncEntitlementClause(table, scope.ownedIds),
+		syncEntitlementClause(table, ownedIds),
+		isAddressableTable(table)
+			? addressedRecordClause(table, scope.owned)
+			: undefined,
 		...extraEntitlements,
 	].filter((clause): clause is SQL => clause !== undefined);
 
 	const clauses = [
 		syncTimeClause(table, scope.updatedAfter),
-		entitlement.length > 1 ? or(...entitlement) : entitlement[0],
+		or(...entitlement),
 	].filter((clause): clause is SQL => clause !== undefined);
 
 	const rows = await db
@@ -100,8 +162,10 @@ export function makeCoreResource<
 	validate: (raw: unknown) => T;
 	toUpdateSet: (validated: T, nowIso: string) => Record<string, unknown>;
 	normalize?: (raw: unknown) => T;
+	extraSyncEntitlements?: (scope: SyncScope) => (SQL | undefined)[];
 }) {
-	const { table, validate, toUpdateSet, normalize } = config;
+	const { table, validate, toUpdateSet, normalize, extraSyncEntitlements } =
+		config;
 	// Nullable columns come back from Drizzle as null, which the schemas do not
 	// allow for optional fields, so stripping nulls is the default rather than
 	// something each resource has to remember when a nullable column is added.
@@ -152,7 +216,11 @@ export function makeCoreResource<
 		db: EvyDb,
 		scope: SyncScope,
 	): Promise<GetResponse> {
-		return runListForSync(db, table, scope, norm);
+		const extra =
+			extraSyncEntitlements?.(scope).filter(
+				(clause): clause is SQL => clause !== undefined,
+			) ?? [];
+		return runListForSync(db, table, scope, norm, extra);
 	}
 
 	async function create(

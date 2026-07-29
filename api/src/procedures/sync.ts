@@ -10,7 +10,6 @@ import {
 	EVY_CORE_RESOURCE_NAMES,
 	EVY_CORE_SERVICE,
 } from "evy-types/coreResources";
-import type { OwnedServiceResource } from "../data/data";
 import * as data from "../data/data";
 import type { EvyDb } from "../database/db";
 import { discoverResources } from "./resources";
@@ -97,27 +96,6 @@ function coreResourceRefs(): ResourceRef[] {
 	).map((resource) => ({ service: EVY_CORE_SERVICE, resource }));
 }
 
-type Ownership = {
-	coreIdsByResource: Map<string, string[]>;
-	foreignKeys: OwnedServiceResource[];
-};
-
-function splitOwnedServiceResources(syncParams: SyncRequest): Ownership {
-	const coreIdsByResource = new Map<string, string[]>();
-	const foreignKeys: OwnedServiceResource[] = [];
-
-	for (const group of syncParams.ownedServiceResources ?? []) {
-		if (group.service !== EVY_CORE_SERVICE) {
-			foreignKeys.push(group);
-			continue;
-		}
-		const existing = coreIdsByResource.get(group.resource) ?? [];
-		coreIdsByResource.set(group.resource, [...existing, ...group.ids]);
-	}
-
-	return { coreIdsByResource, foreignKeys };
-}
-
 function discoveryErrorsToSyncErrors(
 	errors: NonNullable<
 		Awaited<ReturnType<typeof discoverResources>>["errors"]
@@ -139,14 +117,13 @@ export async function sync(
 	const externalRefs = externalResourceRefs(catalog, EVY_CORE_SERVICE);
 
 	const resumedFrom = resumePoint(syncParams);
-	const ownership = splitOwnedServiceResources(syncParams);
+	const owned = syncParams.ownedServiceResources ?? [];
 
 	const [core, external] = await Promise.all([
 		fetchResources(coreResourceRefs(), resumedFrom, (ref) =>
 			data.getSyncRows(db, ref.resource, {
 				updatedAfter: resumedFrom,
-				ownedIds: ownership.coreIdsByResource.get(ref.resource) ?? [],
-				ownedForeignKeys: ownership.foreignKeys,
+				owned,
 			}),
 		),
 		fetchResources(externalRefs, resumedFrom, (ref, request) =>

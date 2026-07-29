@@ -138,7 +138,7 @@ enum EVYActionRunner {
       }
       let resolvedData = try data.map {
         try resolveObjectArgument(
-          $0, datum: datum, stripIdFromChanges: false, omitUnresolvedDatumKeys: true)
+          $0, datum: datum, stripIdFromChanges: false)
       }
       let createdId = try EVY.create(
         namespace: service,
@@ -152,7 +152,7 @@ enum EVYActionRunner {
 
     case .update(let service, let resource, let mode, let filter, let changes):
       let resolvedChanges = try resolveObjectArgument(
-        changes, datum: datum, stripIdFromChanges: true, omitUnresolvedDatumKeys: true)
+        changes, datum: datum, stripIdFromChanges: true)
       switch mode {
       case .store:
         try EVY.update(
@@ -193,13 +193,12 @@ enum EVYActionRunner {
   private static func resolveObjectArgument(
     _ argument: EVYObjectArgument,
     datum: EVYJson?,
-    stripIdFromChanges: Bool,
-    omitUnresolvedDatumKeys: Bool = false
+    stripIdFromChanges: Bool
   ) throws -> [String: EVYJson] {
     switch argument {
     case .literal(let object):
       return EVYPlainTextResolution.resolveValues(
-        object, datum: datum, omitUnresolvedDatumKeys: omitUnresolvedDatumKeys)
+        object, datum: datum, omitUnresolvedDatumKeys: true)
     case .path(let path):
       let resolved = EVYPlainTextResolution.resolveValue(path, datum: datum)
       guard case .dictionary(var dictionary) = resolved else {

@@ -2863,9 +2863,11 @@ final class WebSocketE2ETests: E2ETestBase {
       "Confirm cancel button should be tappable in the sheet")
     confirmCancelButton.tap()
 
-    let requestWithdrawn = try await waitForCancelledMessage(
+    let requestWithdrawn = try await waitForMessage(
       emitter: emitter,
-      itemId: selectedItemId
+      itemId: selectedItemId,
+      valueKey: "value",
+      value: "cancel"
     )
     XCTAssertTrue(
       requestWithdrawn, "Cancel request should append a cancel message, not rewrite the request")
@@ -2926,7 +2928,13 @@ final class WebSocketE2ETests: E2ETestBase {
       waitForCancelRequestVisible(timeout: 10),
       "Cancel pickup request should be visible while the request is open")
 
-    let requestId = try await pickupRequestId(emitter: emitter, itemId: selectedItemId)
+    let requestId = try await waitForMessageId(
+      emitter: emitter,
+      itemId: selectedItemId,
+      type: "pickup",
+      value: "pending",
+      failureMessage: "An open pickup request should exist for the item"
+    )
 
     // The owner rejects. Like every other settling message it names the request and carries
     // its payload forward.
@@ -3013,23 +3021,6 @@ final class WebSocketE2ETests: E2ETestBase {
       resource: EVYCoreResource.messages.rawValue, deadline: deadline)
     XCTFail(failureMessage)
     return ""
-  }
-
-  /// The id of the open pickup request for an item, as the server holds it.
-  @MainActor
-  private func pickupRequestId(
-    emitter: WSEmitter,
-    itemId: String,
-    timeout: TimeInterval = 10
-  ) async throws -> String {
-    try await waitForMessageId(
-      emitter: emitter,
-      itemId: itemId,
-      type: "pickup",
-      value: "pending",
-      failureMessage: "An open pickup request should exist for the item",
-      timeout: timeout
-    )
   }
 
   @MainActor
@@ -3210,7 +3201,13 @@ final class WebSocketE2ETests: E2ETestBase {
     tapConfirmationSheetRequestButton()
 
     let requestId = try awaitResult("wait for sender request") {
-      try await self.waitForCreatedRequestId(emitter: emitter, itemId: itemId)
+      try await self.waitForMessageId(
+        emitter: emitter,
+        itemId: itemId,
+        type: "pickup",
+        value: nil,
+        failureMessage: "Tapping a pickup timeslot should have created a request"
+      )
     }
     let backButton = app.navigationBars.buttons.firstMatch
     XCTAssertTrue(
@@ -3266,21 +3263,6 @@ final class WebSocketE2ETests: E2ETestBase {
     }
     XCTAssertTrue(cancelled, "Cancel should persist a response naming the request")
     try awaitResult("disconnect sender emitter") { await emitter.disconnect() }
-  }
-
-  private func waitForCreatedRequestId(
-    emitter: WSEmitter,
-    itemId: String,
-    timeout: TimeInterval = 10
-  ) async throws -> String {
-    try await waitForMessageId(
-      emitter: emitter,
-      itemId: itemId,
-      type: "pickup",
-      value: nil,
-      failureMessage: "Tapping a pickup timeslot should have created a request",
-      timeout: timeout
-    )
   }
 
   @MainActor
@@ -3793,39 +3775,12 @@ final class WebSocketE2ETests: E2ETestBase {
     return labels.allSatisfy { !app.buttons[$0].exists }
   }
 
-  private func waitForCancelledMessage(
-    emitter: WSEmitter,
-    itemId: String
-  ) async throws -> Bool {
-    try await waitForResourceUpdate(
-      emitter: emitter,
-      service: EVY_CORE_SERVICE,
-      resource: EVYCoreResource.messages.rawValue
-    ) { Self.messagesCancelled($0, itemId: itemId) }
-  }
-
-  /// Whether any request for this item has been withdrawn.
-  private static func messagesCancelled(
-    _ messages: Any,
-    itemId: String
-  ) -> Bool {
-    guard let messageRows = responseDataArray(from: messages) else { return false }
-    return messageRows.contains { message in
-      guard let messageData = message as? [String: Any],
-        messageData["fk"] as? String == itemId,
-        let data = messageData["data"] as? [String: Any],
-        data["value"] as? String == "cancel"
-      else { return false }
-      return true
-    }
-  }
-
   private func waitForMessage(
     emitter: WSEmitter,
-    type: String,
+    type: String? = nil,
     itemId: String,
-    valueKey: String,
-    value: String
+    valueKey: String? = nil,
+    value: String? = nil
   ) async throws -> Bool {
     try await waitForResourceUpdate(
       emitter: emitter,
@@ -3844,7 +3799,7 @@ final class WebSocketE2ETests: E2ETestBase {
 
   private static func messagesContain(
     _ messages: Any,
-    type: String,
+    type: String? = nil,
     itemId: String,
     valueKey: String? = nil,
     value: String? = nil
@@ -3853,9 +3808,11 @@ final class WebSocketE2ETests: E2ETestBase {
     return messageRows.contains { message in
       guard let messageData = message as? [String: Any],
         messageData["fk"] as? String == itemId,
-        let messageDetails = messageData["data"] as? [String: Any],
-        messageDetails["type"] as? String == type
+        let messageDetails = messageData["data"] as? [String: Any]
       else {
+        return false
+      }
+      if let type, messageDetails["type"] as? String != type {
         return false
       }
       guard let valueKey, let value else { return true }

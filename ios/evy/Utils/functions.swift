@@ -215,11 +215,6 @@ private func resolveLiteralOrBoundOperand(_ operand: String, record: EVYJson? = 
 }
 
 @MainActor
-private func resolveFindFirstOperand(_ operand: String, record: EVYJson) -> String {
-  resolveLiteralOrBoundOperand(operand, record: record)
-}
-
-@MainActor
 private func evaluateFindFirstAtom(
   left: String,
   op: String,
@@ -241,8 +236,8 @@ private func evaluateFindFirstAtom(
     return op == "==" ? isNull : !isNull
   }
 
-  let resolvedLeft = resolveFindFirstOperand(left, record: record)
-  let resolvedRight = resolveFindFirstOperand(right, record: record)
+  let resolvedLeft = resolveLiteralOrBoundOperand(left, record: record)
+  let resolvedRight = resolveLiteralOrBoundOperand(right, record: record)
   return evyComparison(op, left: resolvedLeft, right: resolvedRight)
 }
 
@@ -300,11 +295,9 @@ func evyFilter(_ args: String, remainingProps: [String] = []) throws -> EVYJson 
     throw EVYError.invalidData(context: "filter expects a collection")
   }
 
-  let temporaryId = UUID().uuidString
-  let substitutedPredicate = evySubstituteDatum(predicate, temporaryId: temporaryId)
   let matches = items.filter { candidate in
-    (try? evyWithEphemeralDatum(key: temporaryId, value: candidate) {
-      try _evaluateFromText(wrappedExpression(substitutedPredicate))
+    (try? evyEvaluate(predicate, boundTo: candidate) {
+      try _evaluateFromText(wrappedExpression($0))
     }) ?? false
   }
 

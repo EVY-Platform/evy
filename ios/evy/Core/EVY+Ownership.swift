@@ -10,7 +10,7 @@ import Foundation
 enum EVYOwnershipLedger {
   private static let key = "ownedRecords"
 
-  private struct Entry: Codable, Hashable {
+  fileprivate struct Entry: Codable, Hashable {
     let service: String
     let resource: String
     let id: String
@@ -18,7 +18,7 @@ enum EVYOwnershipLedger {
 
   private static var cachedEntries: Set<Entry>?
 
-  private static var entries: Set<Entry> {
+  fileprivate static var entries: Set<Entry> {
     get {
       if let cachedEntries {
         return cachedEntries
@@ -39,12 +39,8 @@ enum EVYOwnershipLedger {
     }
   }
 
-  static func record(service: String, resource: String, id: String) {
+  fileprivate static func record(service: String, resource: String, id: String) {
     entries.insert(Entry(service: service, resource: resource, id: id))
-  }
-
-  static func recordedIds() -> [(service: String, resource: String, id: String)] {
-    entries.map { ($0.service, $0.resource, $0.id) }
   }
 
   // used by tests
@@ -55,11 +51,6 @@ enum EVYOwnershipLedger {
 }
 
 extension EVY {
-  private struct OwnedServiceResourceKey: Hashable {
-    let service: String
-    let resource: String
-  }
-
   static func recordOwnership(service: String, resource: String, id: String) {
     EVYOwnershipLedger.record(service: service, resource: resource, id: id)
   }
@@ -68,6 +59,11 @@ extension EVY {
     let service: String
     let resource: String
     let id: String
+  }
+
+  private struct ServiceResourceKey: Hashable {
+    let service: String
+    let resource: String
   }
 
   @MainActor
@@ -80,9 +76,9 @@ extension EVY {
     }
 
     var members = Set<OwnedMembershipKey>()
-    for record in EVYOwnershipLedger.recordedIds() {
+    for entry in EVYOwnershipLedger.entries {
       members.insert(
-        OwnedMembershipKey(service: record.service, resource: record.resource, id: record.id))
+        OwnedMembershipKey(service: entry.service, resource: entry.resource, id: entry.id))
     }
     for row in (try? privateStore.getAll()) ?? []
     where isSyncedNamespace(row.namespace) {
@@ -106,26 +102,20 @@ extension EVY {
   }
 
   static func ownedServiceResources() -> [OwnedServiceResource] {
-    var idsByKey: [OwnedServiceResourceKey: Set<String>] = [:]
-
-    for member in ownedMembershipSet() {
-      idsByKey[.init(service: member.service, resource: member.resource), default: []]
-        .insert(member.id)
+    let grouped = Dictionary(grouping: ownedMembershipSet()) { member in
+      ServiceResourceKey(service: member.service, resource: member.resource)
     }
 
-    let owned =
-      idsByKey
-      .map {
+    return
+      grouped
+      .map { serviceResource, members in
         OwnedServiceResource(
-          service: $0.key.service, resource: $0.key.resource, ids: $0.value.sorted())
+          service: serviceResource.service,
+          resource: serviceResource.resource,
+          ids: members.map(\.id).filter(isEvyRecordId).sorted())
       }
+      .filter { !$0.ids.isEmpty }
       .sorted { ($0.service, $0.resource) < ($1.service, $1.resource) }
-
-    assert(
-      owned.allSatisfy { $0.ids.allSatisfy(isEvyRecordId) },
-      "ownedServiceResources must only contain record ids: \(owned)")
-
-    return owned
   }
 
   private static func isSyncedNamespace(_ namespace: String) -> Bool {

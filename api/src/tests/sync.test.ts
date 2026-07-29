@@ -390,36 +390,40 @@ describe("sync", () => {
 			);
 		});
 
-		it("gives each resource only the ids owned in it", async () => {
+		it("gives each resource the same full ownership declaration", async () => {
+			const ownedServiceResources = [
+				{
+					service: EVY_CORE_SERVICE,
+					resource: EVY_CORE_RESOURCE.MESSAGES,
+					ids: [OWNED_MESSAGE_ID],
+				},
+				{
+					service: EVY_CORE_SERVICE,
+					resource: EVY_CORE_RESOURCE.ADDRESSES,
+					ids: [OWNED_ADDRESS_ID],
+				},
+			];
+
 			await sync(
 				{
 					cursor: EPOCH,
-					ownedServiceResources: [
-						{
-							service: EVY_CORE_SERVICE,
-							resource: EVY_CORE_RESOURCE.MESSAGES,
-							ids: [OWNED_MESSAGE_ID],
-						},
-						{
-							service: EVY_CORE_SERVICE,
-							resource: EVY_CORE_RESOURCE.ADDRESSES,
-							ids: [OWNED_ADDRESS_ID],
-						},
-					],
+					ownedServiceResources,
 				},
 				db,
 			);
 
-			expect(ownershipFor(EVY_CORE_RESOURCE.MESSAGES)?.ownedIds).toEqual([
-				OWNED_MESSAGE_ID,
-			]);
-			expect(ownershipFor(EVY_CORE_RESOURCE.ADDRESSES)?.ownedIds).toEqual(
-				[OWNED_ADDRESS_ID],
-			);
-			expect(ownershipFor(EVY_CORE_RESOURCE.FLOWS)?.ownedIds).toEqual([]);
+			for (const resource of [
+				EVY_CORE_RESOURCE.MESSAGES,
+				EVY_CORE_RESOURCE.ADDRESSES,
+				EVY_CORE_RESOURCE.FLOWS,
+			]) {
+				expect(ownershipFor(resource)?.owned).toEqual(
+					ownedServiceResources,
+				);
+			}
 		});
 
-		it("passes records owned in other services through as foreign keys", async () => {
+		it("passes the full ownership declaration to every resource", async () => {
 			const externalGroup = {
 				service: EXTERNAL_SERVICE_ID,
 				resource: EXTERNAL_TEST_RESOURCE.RECORDS,
@@ -431,9 +435,9 @@ describe("sync", () => {
 				db,
 			);
 
-			expect(
-				ownershipFor(EVY_CORE_RESOURCE.MESSAGES)?.ownedForeignKeys,
-			).toEqual([externalGroup]);
+			expect(ownershipFor(EVY_CORE_RESOURCE.MESSAGES)?.owned).toEqual([
+				externalGroup,
+			]);
 		});
 
 		it("keeps a failing resource from hiding the rest, and holds the cursor", async () => {

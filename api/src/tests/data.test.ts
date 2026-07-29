@@ -646,6 +646,16 @@ describe("getSyncRows", () => {
 		return [{ service: targetService, resource: targetResource, ids: fks }];
 	}
 
+	function ownsCoreMessage(...ids: string[]) {
+		return [
+			{
+				service: EVY_CORE_SERVICE,
+				resource: MESSAGE_RESOURCE,
+				ids,
+			},
+		];
+	}
+
 	async function ownedIds(
 		params: Parameters<typeof getSyncRows>[2],
 	): Promise<string[]> {
@@ -664,9 +674,7 @@ describe("getSyncRows", () => {
 	it("returns nothing when the device owns nothing", async () => {
 		await createMessage(ownedFk);
 
-		expect(await ownedIds({ ownedIds: [], ownedForeignKeys: [] })).toEqual(
-			[],
-		);
+		expect(await ownedIds({ owned: [] })).toEqual([]);
 	});
 
 	it("returns only messages the device created", async () => {
@@ -675,8 +683,7 @@ describe("getSyncRows", () => {
 
 		expect(
 			await ownedIds({
-				ownedIds: [mine.id],
-				ownedForeignKeys: [],
+				owned: ownsCoreMessage(mine.id),
 			}),
 		).toEqual([mine.id]);
 	});
@@ -687,8 +694,7 @@ describe("getSyncRows", () => {
 
 		expect(
 			await ownedIds({
-				ownedIds: [],
-				ownedForeignKeys: owns(ownedFk),
+				owned: owns(ownedFk),
 			}),
 		).toEqual([addressed.id]);
 	});
@@ -699,8 +705,7 @@ describe("getSyncRows", () => {
 		await createMessage(otherFk);
 
 		const owned = await ownedIds({
-			ownedIds: [mine.id],
-			ownedForeignKeys: owns(ownedFk),
+			owned: [...ownsCoreMessage(mine.id), ...owns(ownedFk)],
 		});
 
 		expect(owned.toSorted()).toEqual([addressed.id, mine.id].toSorted());
@@ -711,8 +716,7 @@ describe("getSyncRows", () => {
 
 		expect(
 			await ownedIds({
-				ownedIds: [],
-				ownedForeignKeys: [
+				owned: [
 					{
 						service: crypto.randomUUID(),
 						resource: targetResource,
@@ -729,8 +733,7 @@ describe("getSyncRows", () => {
 		expect(
 			await ownedIds({
 				updatedAfter: mine.updatedAt,
-				ownedIds: [mine.id],
-				ownedForeignKeys: [],
+				owned: ownsCoreMessage(mine.id),
 			}),
 		).toEqual([]);
 	});
@@ -746,16 +749,14 @@ describe("getSyncRows", () => {
 
 		const incremental = (await getSyncRows(dataDb, MESSAGE_RESOURCE, {
 			updatedAfter: before,
-			ownedIds: [mine.id],
-			ownedForeignKeys: [],
+			owned: ownsCoreMessage(mine.id),
 		})) as DATA_EVY_Message[];
 		expect(incremental).toHaveLength(1);
 		expect(incremental[0].deletedAt).toBeTruthy();
 
 		expect(
 			await ownedIds({
-				ownedIds: [mine.id],
-				ownedForeignKeys: [],
+				owned: ownsCoreMessage(mine.id),
 			}),
 		).toEqual([]);
 	});
@@ -765,8 +766,7 @@ describe("getSyncRows", () => {
 
 		expect(
 			await ownedIds({
-				ownedIds: [],
-				ownedForeignKeys: [
+				owned: [
 					{
 						service: EVY_CORE_SERVICE,
 						resource: EVY_CORE_RESOURCE.ADDRESSES,
@@ -781,9 +781,7 @@ describe("getSyncRows", () => {
 	it("ignores owned groups with no ids", async () => {
 		await createMessage(ownedFk);
 
-		expect(
-			await ownedIds({ ownedIds: [], ownedForeignKeys: owns() }),
-		).toEqual([]);
+		expect(await ownedIds({ owned: owns() })).toEqual([]);
 	});
 
 	it("returns responses to a message the device owns", async () => {
@@ -791,8 +789,7 @@ describe("getSyncRows", () => {
 		const response = await createResponse(request.id);
 
 		const owned = await ownedIds({
-			ownedIds: [request.id],
-			ownedForeignKeys: [],
+			owned: ownsCoreMessage(request.id),
 		});
 
 		expect(owned.toSorted()).toEqual([request.id, response.id].toSorted());
@@ -805,8 +802,7 @@ describe("getSyncRows", () => {
 
 		expect(
 			await ownedIds({
-				ownedIds: [mine.id],
-				ownedForeignKeys: [],
+				owned: ownsCoreMessage(mine.id),
 			}),
 		).toEqual([mine.id]);
 	});
@@ -831,8 +827,7 @@ describe("getSyncRows", () => {
 		});
 
 		const owned = await ownedIds({
-			ownedIds: [request.id],
-			ownedForeignKeys: [],
+			owned: ownsCoreMessage(request.id),
 		});
 
 		expect(owned).toContain(responseId);
@@ -844,8 +839,7 @@ describe("getSyncRows", () => {
 
 		expect(
 			await ownedIds({
-				ownedIds: [mine.id],
-				ownedForeignKeys: [],
+				owned: ownsCoreMessage(mine.id),
 			}),
 		).toEqual([mine.id]);
 	});
@@ -866,7 +860,17 @@ describe("getSyncRows entitlement", () => {
 		return rows.map((row) => row.id);
 	}
 
-	const ownsNothing = { ownedIds: [], ownedForeignKeys: [] };
+	const ownsNothing = { owned: [] };
+
+	function ownsCoreResource(resource: string, ...ids: string[]) {
+		return [
+			{
+				service: EVY_CORE_SERVICE,
+				resource,
+				ids,
+			},
+		];
+	}
 
 	it("sends a public row to a device that owns nothing", async () => {
 		const flow = flowRow({ visibility: "public" });
@@ -902,8 +906,7 @@ describe("getSyncRows entitlement", () => {
 
 		expect(
 			await syncedIds(FLOW_RESOURCE, {
-				ownedIds: [mine.id],
-				ownedForeignKeys: [],
+				owned: ownsCoreResource(FLOW_RESOURCE, mine.id),
 			}),
 		).toEqual([mine.id]);
 	});
@@ -942,8 +945,7 @@ describe("getSyncRows entitlement", () => {
 
 		const rows = (await getSyncRows(dataDb, FLOW_RESOURCE, {
 			updatedAfter: created.updatedAt,
-			ownedIds: [mine.id],
-			ownedForeignKeys: [],
+			owned: ownsCoreResource(FLOW_RESOURCE, mine.id),
 		})) as DATA_EVY_Flow[];
 
 		expect(rows).toHaveLength(1);

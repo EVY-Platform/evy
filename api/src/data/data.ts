@@ -18,7 +18,7 @@ import {
 } from "evy-types/ws";
 import type { EvyDb } from "../database/db";
 import { addressesResource } from "./resources/addresses";
-import type { SyncScope } from "./resources/coreResource";
+import type { SyncScope, SyncScopeInput } from "./resources/coreResource";
 import {
 	createFileResource,
 	deleteFileResource,
@@ -105,10 +105,6 @@ export function initCoreNotifications(broadcastFn: BroadcastFn | null): void {
 	coreBroadcast = broadcastFn;
 }
 
-export type {
-	OwnedServiceResource,
-	SyncScope,
-} from "./resources/coreResource";
 export { validateAuth } from "./resources/devices";
 
 export async function get(db: EvyDb, params: GetRequest): Promise<GetResponse> {
@@ -119,9 +115,9 @@ export async function get(db: EvyDb, params: GetRequest): Promise<GetResponse> {
 export async function getSyncRows(
 	db: EvyDb,
 	resource: string,
-	scope: SyncScope,
+	scope: SyncScopeInput,
 ): Promise<GetResponse> {
-	return getResourceOps(resource).listForSync(db, scope);
+	return getResourceOps(resource).listForSync(db, { ...scope, resource });
 }
 
 type ExternalServiceRow = {

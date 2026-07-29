@@ -27,10 +27,6 @@ final class EVYDataStore {
     "\(namespace):\(resource)"
   }
 
-  private func invalidateCollectionCache() {
-    collectionJsonCache.removeAll()
-  }
-
   convenience init(name: String, inMemoryOnly: Bool = false) {
     let config = ModelConfiguration(name, isStoredInMemoryOnly: inMemoryOnly)
     if !inMemoryOnly {
@@ -104,7 +100,6 @@ final class EVYDataStore {
   func persistChanges() throws {
     try context.save()
     evyDataStoreGeneration += 1
-    invalidateCollectionCache()
   }
 
   func create(namespace: String, resource: String, id: String, value: Data, sortIndex: Int = 0)
@@ -175,8 +170,7 @@ final class EVYDataStore {
   private func upsertWithoutPersist(
     namespace: String, resource: String, id: String, value: Data, sortIndex: Int = 0
   ) throws {
-    if (try? get(namespace: namespace, resource: resource, id: id)) != nil {
-      let existing = try get(namespace: namespace, resource: resource, id: id)
+    if let existing = try? get(namespace: namespace, resource: resource, id: id) {
       existing.data = value
       existing.sortIndex = sortIndex
     } else {

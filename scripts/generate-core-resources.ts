@@ -151,9 +151,6 @@ function generateTypeScript(schema: CoreResourcesSchema): string {
 		"export const EVY_MESSAGE_DATA_VALUES =",
 		`${JSON.stringify(messageDataValues)} as const;`,
 	);
-	lines.push(
-		"export type EvyMessageDataValue = (typeof EVY_MESSAGE_DATA_VALUES)[number];",
-	);
 	lines.push("");
 
 	// Resource names tuple
@@ -230,13 +227,6 @@ function generateSwift(schema: CoreResourcesSchema): string {
 	lines.push("\t\t}");
 	lines.push("\t}");
 	lines.push("}");
-
-	const messageDataValues = resources.messages?.dataValues ?? [];
-	lines.push("");
-	lines.push(
-		"public let EVY_MESSAGE_DATA_VALUES: [String] =",
-		`${JSON.stringify(messageDataValues)}`,
-	);
 
 	lines.push("");
 

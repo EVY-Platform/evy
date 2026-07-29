@@ -264,18 +264,7 @@ private func findFirstTopLevelPrefix(
 
 @MainActor
 func _parsePropsFromText(_ input: String) -> String {
-  let trimmedInput = input.trimmingCharacters(in: .whitespacesAndNewlines)
-  if let block = interpolations(in: trimmedInput).first,
-    block.fullMatch.trimmingCharacters(in: .whitespacesAndNewlines) == trimmedInput
-  {
-    return block.inner
-  }
-
-  guard let match = try? firstMatch(input, pattern: propsPattern) else {
-    return input
-  }
-
-  return String(match.0.dropFirst().dropLast())
+  parseWrappedProps(input)?.content ?? input
 }
 
 @MainActor
@@ -533,7 +522,7 @@ private func parseText(
 
   if let (match, funcName, funcArgs) =
     parseFunctionFromText(input.value)
-    ?? parseLeadingFunctionInText(input.value)
+    ?? firstFunctionCall(in: input.value.trimmingCharacters(in: .whitespacesAndNewlines))
   {
     let returnPrefix = match.startIndex == input.value.startIndex
     let upperBound = match.range.upperBound.utf16Offset(in: input.value)
@@ -599,8 +588,7 @@ private func parseText(
   if let wrappedProps = parseWrappedProps(input.value) {
     let data = try _getDataFromProps(wrappedProps.content, scope: scope)
     let resolved = data.toString()
-    let trimmedInput = input.value.trimmingCharacters(in: .whitespacesAndNewlines)
-    if wrappedProps.fullMatch.trimmingCharacters(in: .whitespacesAndNewlines) == trimmedInput {
+    if wrappedProps.isEntireInput {
       return EVYValue(resolved, input.prefix, input.suffix)
     }
     let parsedInput = input.value.replacingOccurrences(
@@ -615,20 +603,27 @@ private func parseText(
 private struct WrappedProps {
   let fullMatch: String
   let content: String
+  let isEntireInput: Bool
 }
 
 private func parseWrappedProps(_ input: String) -> WrappedProps? {
   let trimmedInput = input.trimmingCharacters(in: .whitespacesAndNewlines)
-  if let block = interpolations(in: trimmedInput).first,
-    block.fullMatch.trimmingCharacters(in: .whitespacesAndNewlines) == trimmedInput
-  {
-    return WrappedProps(fullMatch: block.fullMatch, content: block.inner)
+  if let block = interpolations(in: trimmedInput).first {
+    let isEntireInput =
+      block.fullMatch.trimmingCharacters(in: .whitespacesAndNewlines) == trimmedInput
+    if isEntireInput {
+      return WrappedProps(fullMatch: block.fullMatch, content: block.inner, isEntireInput: true)
+    }
   }
 
   if let match = try? firstMatch(input, pattern: propsPattern) {
+    let fullMatch = match.0.description
+    let isEntireInput =
+      fullMatch.trimmingCharacters(in: .whitespacesAndNewlines) == trimmedInput
     return WrappedProps(
-      fullMatch: match.0.description,
-      content: String(match.0.dropFirst().dropLast())
+      fullMatch: fullMatch,
+      content: String(match.0.dropFirst().dropLast()),
+      isEntireInput: isEntireInput
     )
   }
   return nil
@@ -899,13 +894,17 @@ private func scanClosingParenthesis(in input: String, openingAt openIndex: Strin
   return nil
 }
 
-private func scanFunctionCall(in input: String, from start: String.Index) -> FunctionCallMatch? {
+private func scanFunctionCall(
+  in input: String,
+  from start: String.Index
+) -> (match: FunctionCallMatch, functionName: String, functionArgs: String)? {
   var index = start
   while index < input.endIndex, input[index].isWhitespace {
     index = input.index(after: index)
   }
 
   guard let nameEnd = scanIdentifierEnd(in: input, from: index) else { return nil }
+  let functionName = String(input[index..<nameEnd])
   index = nameEnd
   while index < input.endIndex, input[index].isWhitespace {
     index = input.index(after: index)
@@ -914,39 +913,17 @@ private func scanFunctionCall(in input: String, from start: String.Index) -> Fun
   guard index < input.endIndex, input[index] == "(" else { return nil }
   guard let closeIndex = scanClosingParenthesis(in: input, openingAt: index) else { return nil }
 
+  let argsStart = input.index(after: index)
+  let functionArgs = String(input[argsStart..<closeIndex])
   let fullEnd = input.index(after: closeIndex)
-  return FunctionCallMatch(
-    range: start..<fullEnd,
-    matchedText: String(input[start..<fullEnd])
+  return (
+    FunctionCallMatch(
+      range: start..<fullEnd,
+      matchedText: String(input[start..<fullEnd])
+    ),
+    functionName,
+    functionArgs
   )
-}
-
-private func parseFunctionCallInText(
-  _ input: String,
-  wrappedInBraces: Bool
-) -> (match: FunctionCallMatch, functionName: String, functionArgs: String)? {
-  let trimmedInput = input.trimmingCharacters(in: .whitespacesAndNewlines)
-
-  if wrappedInBraces {
-    guard trimmedInput.first == "{", trimmedInput.last == "}" else { return nil }
-    let innerStart = trimmedInput.index(after: trimmedInput.startIndex)
-    let innerEnd = trimmedInput.index(before: trimmedInput.endIndex)
-    guard innerStart < innerEnd else { return nil }
-    guard
-      let scanned = scanFunctionCall(in: trimmedInput, from: innerStart),
-      scanned.range.upperBound == innerEnd
-    else {
-      return nil
-    }
-    let wrappedMatch = FunctionCallMatch(
-      range: trimmedInput.startIndex..<trimmedInput.endIndex,
-      matchedText: trimmedInput
-    )
-    return parseFunctionCallMatch(wrappedMatch, in: trimmedInput, callRange: scanned.range)
-  }
-
-  guard let found = firstFunctionCall(in: trimmedInput) else { return nil }
-  return found
 }
 
 private func parseEntireFunctionInText(_ input: String) -> (
@@ -954,8 +931,8 @@ private func parseEntireFunctionInText(_ input: String) -> (
   functionName: String,
   functionArgs: String
 )? {
-  guard let found = parseLeadingFunctionInText(input) else { return nil }
   let trimmedInput = input.trimmingCharacters(in: .whitespacesAndNewlines)
+  guard let found = firstFunctionCall(in: trimmedInput) else { return nil }
   guard found.match.range.lowerBound == trimmedInput.startIndex,
     found.match.range.upperBound == trimmedInput.endIndex
   else {
@@ -977,10 +954,9 @@ private func firstFunctionCall(in input: String) -> (
         afterName = input.index(after: afterName)
       }
       if afterName < input.endIndex, input[afterName] == "(",
-        let scanned = scanFunctionCall(in: input, from: searchIndex),
-        let parsed = parseFunctionCallMatch(scanned, in: input, callRange: scanned.range)
+        let scanned = scanFunctionCall(in: input, from: searchIndex)
       {
-        return parsed
+        return scanned
       }
     }
     searchIndex = input.index(after: searchIndex)
@@ -988,53 +964,30 @@ private func firstFunctionCall(in input: String) -> (
   return nil
 }
 
-private func parseFunctionCallMatch(
-  _ match: FunctionCallMatch,
-  in input: String,
-  callRange: Range<String.Index>
-) -> (match: FunctionCallMatch, functionName: String, functionArgs: String)? {
-  var index = callRange.lowerBound
-  while index < input.endIndex, input[index].isWhitespace {
-    index = input.index(after: index)
-  }
-  guard let nameEnd = scanIdentifierEnd(in: input, from: index) else { return nil }
-  let functionName = String(input[index..<nameEnd])
-
-  index = nameEnd
-  while index < input.endIndex, input[index].isWhitespace {
-    index = input.index(after: index)
-  }
-  guard index < input.endIndex, input[index] == "(" else { return nil }
-  guard let closeIndex = scanClosingParenthesis(in: input, openingAt: index) else { return nil }
-
-  let argsStart = input.index(after: index)
-  let functionArgs = String(input[argsStart..<closeIndex])
-  return (match, functionName, functionArgs)
-}
-
 private func parseFunctionFromText(_ input: String) -> (
   match: FunctionCallMatch,
   functionName: String,
   functionArgs: String
 )? {
-  parseFunctionCallInText(input, wrappedInBraces: true)
-}
-
-private func parseLeadingFunctionInText(_ input: String) -> (
-  match: FunctionCallMatch,
-  functionName: String,
-  functionArgs: String
-)? {
   let trimmedInput = input.trimmingCharacters(in: .whitespacesAndNewlines)
-  return firstFunctionCall(in: trimmedInput)
-}
-
-private func parseFunctionInText(_ input: String) -> (
-  match: FunctionCallMatch,
-  functionName: String,
-  functionArgs: String
-)? {
-  parseEntireFunctionInText(input)
+  guard trimmedInput.first == "{", trimmedInput.last == "}" else { return nil }
+  let innerStart = trimmedInput.index(after: trimmedInput.startIndex)
+  let innerEnd = trimmedInput.index(before: trimmedInput.endIndex)
+  guard innerStart < innerEnd else { return nil }
+  guard
+    let scanned = scanFunctionCall(in: trimmedInput, from: innerStart),
+    scanned.match.range.upperBound == innerEnd
+  else {
+    return nil
+  }
+  return (
+    FunctionCallMatch(
+      range: trimmedInput.startIndex..<trimmedInput.endIndex,
+      matchedText: trimmedInput
+    ),
+    scanned.functionName,
+    scanned.functionArgs
+  )
 }
 
 /// Compiled patterns, shared across every caller.
