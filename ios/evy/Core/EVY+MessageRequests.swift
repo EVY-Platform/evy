@@ -129,14 +129,14 @@ enum EVYMessageRequest {
   /// item page able to find it.
   ///
   /// It also **carries the request's `data` forward**, overriding only `value` and adding
-  /// `message_id`. That is not redundancy: `findFirst` predicates cannot nest, so a lookup
-  /// that finds the response cannot reach through it to the request. Anything the accepted
-  /// state displays - the pickup time, the shipping postcode - has to be on the message
-  /// that says "accepted", or the confirmation row renders with nothing in it.
+  /// `message_id`. That is not redundancy: a lookup that finds the response cannot reach
+  /// through it to the request, so anything the answered state displays - the pickup time,
+  /// the shipping postcode - has to be on the message that says "accepted", or the
+  /// confirmation row renders with nothing in it.
   ///
-  /// Archiving is what lets a rejected request be replaced by a new one: the item page's
-  /// "is anything in flight?" gate is a flat `findFirst`, so it cannot ask for a request
-  /// with no response.
+  /// Nothing is written to the request. What closes it out is simply that this message is
+  /// newer: the item page reads the latest message for the item and transfer method, so an
+  /// answer supersedes the ask by existing.
   static func respond(to request: Request, with value: Value) throws {
     var responseData = request.data
     responseData["message_id"] = .string(request.id)
@@ -152,7 +152,6 @@ enum EVYMessageRequest {
         "data": .dictionary(responseData),
       ]
     )
-    try archive(request)
   }
 
   /// Withdraw a request. The sender's own record, and no answer to record.

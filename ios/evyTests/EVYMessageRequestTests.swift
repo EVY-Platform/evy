@@ -219,7 +219,7 @@ final class EVYMessageRequestTests: XCTestCase {
 
   // MARK: - respond and cancel
 
-  func testRespondCreatesAResponseAndArchivesTheRequest() throws {
+  func testRespondCreatesAResponseAndLeavesTheRequestIntact() throws {
     try store(requestDatum())
     let request = try XCTUnwrap(EVYMessageRequest.classify(requestDatum()))
 
@@ -248,15 +248,72 @@ final class EVYMessageRequestTests: XCTestCase {
     XCTAssertEqual(response["visibility"], .string("private"))
     XCTAssertNil(response["status"], "status is gone from the contract")
 
+    // The latest message is what closes a request out, so answering touches nothing.
     let stored = try XCTUnwrap(messages.first { $0["id"] == .string(requestId) })
-    XCTAssertNotEqual(stored["archivedAt"], .null)
-    XCTAssertNotNil(stored["archivedAt"], "answering closes the request out")
+    XCTAssertNil(stored["archivedAt"], "answering does not write to the request")
     guard case .dictionary(let requestData) = stored["data"] else {
       return XCTFail("request should keep its data object")
     }
     XCTAssertEqual(
       requestData["value"], .string("pending"),
       "the request is never rewritten to say it was answered")
+  }
+
+  /// A created record's `createdAt` orders it against every other message, so it has to be
+  /// precise enough to distinguish two writes in the same second.
+  func testCreatedMessageCarriesMillisecondPrecision() throws {
+    let created = try EVY.create(
+      namespace: EVYNamespace.evy,
+      resource: EVYCoreResource.messages.rawValue,
+      data: [
+        "fk": .string(itemId),
+        "service": .string(itemService),
+        "resource": .string(itemResource),
+        "data": .dictionary(["type": .string("pickup"), "value": .string("pending")]),
+      ]
+    )
+
+    let stored = try XCTUnwrap(try storedMessages().first { $0["id"] == .string(created) })
+    guard case .string(let createdAt) = stored["createdAt"] else {
+      return XCTFail("a created message should carry createdAt")
+    }
+    XCTAssertTrue(
+      createdAt.contains("."),
+      "createdAt is the ordering key, so it needs sub-second precision: got \(createdAt)")
+  }
+
+  /// The response has to sort after the request it answers, or the item page reads the
+  /// request's `pending` as the current state and never leaves it.
+  ///
+  /// Both messages go through the real create path, microseconds apart — which is the
+  /// production case and the one that ties at second resolution. `evySort` breaks equal keys
+  /// by original order regardless of direction, and the request was stored first, so a tie
+  /// hands the answer to the request.
+  func testResponseSortsAfterTheRequestItAnswers() throws {
+    let createdRequestId = try EVY.create(
+      namespace: EVYNamespace.evy,
+      resource: EVYCoreResource.messages.rawValue,
+      data: [
+        "fk": .string(itemId),
+        "service": .string(itemService),
+        "resource": .string(itemResource),
+        "data": .dictionary([
+          "type": .string("pickup"),
+          "value": .string("pending"),
+          "time": .string("2026-06-03T09:00:00"),
+        ]),
+      ]
+    )
+    let stored = try XCTUnwrap(try storedMessages().first { $0["id"] == .string(createdRequestId) })
+    let request = try XCTUnwrap(EVYMessageRequest.classify(.dictionary(stored)))
+
+    try EVYMessageRequest.respond(to: request, with: .accept)
+
+    let latest = try EVY.getDataFromText(
+      "{findFirst(sort(\(EVYCoreResource.messages.rawValue), desc, createdAt),"
+        + " fk == \(itemId) && data.type == pickup).data.value}")
+
+    XCTAssertEqual(latest, .string("accept"), "the newest message about the request wins")
   }
 
   func testRespondWithRejectRecordsReject() throws {

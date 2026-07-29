@@ -837,7 +837,11 @@ final class EVYActionRunnerTests: XCTestCase {
         "type": .string("pickup"),
         "time": .string("2026-06-03T09:00:00"),
       ]))
-    XCTAssertEqual(values["createdAt"], .string(pinnedDate.ISO8601Format()))
+    // Millisecond precision: `createdAt` orders records against each other, and `sort`
+    // compares it as a string, so two writes in the same second must not tie.
+    let fractional = ISO8601DateFormatter()
+    fractional.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+    XCTAssertEqual(values["createdAt"], .string(fractional.string(from: pinnedDate)))
   }
 
   func testInlineCreateDataKeepsExplicitCreatedAt() throws {
