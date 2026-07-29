@@ -1006,6 +1006,107 @@ final class InterpreterTests: XCTestCase {
     XCTAssertEqual(result.value, acceptedId)
   }
 
+  // MARK: - The latest matching record
+
+  /// `findFirst(sort(collection, desc, field), predicate)` is how the item page asks for "the
+  /// latest message about this transfer method". Nesting a collection call inside `findFirst` is
+  /// covered elsewhere, but only in the one-argument form - the combination with a predicate is
+  /// what the item page's whole state machine rests on, so it is pinned here.
+  ///
+  /// Timestamps carry milliseconds on purpose. `evySort` breaks equal keys by original order
+  /// regardless of direction, so second-resolution values would let the first-stored record win a
+  /// `desc` sort - which is exactly backwards for "latest wins".
+  private func storeTransferMessages(at key: String, itemId: String) throws -> (
+    oldestPickup: String, newestPickup: String, delivery: String
+  ) {
+    let oldestPickup = UUID().uuidString
+    let newestPickup = UUID().uuidString
+    let delivery = UUID().uuidString
+
+    try store(
+      .array([
+        // Deliberately stored oldest-first, so store order and sort order disagree.
+        EVYTestMessageFixtures.message(
+          id: oldestPickup, fk: itemId, createdAt: "2026-06-01T09:00:00.100Z",
+          type: "pickup", value: "pending"),
+        EVYTestMessageFixtures.message(
+          id: delivery, fk: itemId, createdAt: "2026-06-01T09:00:00.200Z",
+          type: "delivery", value: "pending"),
+        EVYTestMessageFixtures.message(
+          id: newestPickup, fk: itemId, createdAt: "2026-06-01T09:00:00.300Z",
+          type: "pickup", value: "accept"),
+      ]),
+      at: "\(MarketplaceTestFixture.serviceId):\(key)"
+    )
+    return (oldestPickup, newestPickup, delivery)
+  }
+
+  func testFindFirstOverDescendingSortReturnsNewestMatch() throws {
+    let messagesKey = uniqueKey("messages")
+    let itemKey = uniqueKey("item")
+    let itemId = UUID().uuidString
+    let ids = try storeTransferMessages(at: messagesKey, itemId: itemId)
+    try store(.dictionary(["id": .string(itemId)]), at: itemKey)
+
+    let latest = try parseTextFromText(
+      "{findFirst(sort(\(messagesKey), desc, createdAt), fk == \(itemKey).id && data.type == pickup).id}"
+    )
+
+    XCTAssertEqual(latest.value, ids.newestPickup, "the newest match wins, not the first stored")
+  }
+
+  /// The mirror image: same collection, same predicate, opposite direction. Proves the sort is
+  /// what decides rather than anything about how the records happen to be stored.
+  func testFindFirstOverAscendingSortReturnsOldestMatch() throws {
+    let messagesKey = uniqueKey("messages")
+    let itemKey = uniqueKey("item")
+    let itemId = UUID().uuidString
+    let ids = try storeTransferMessages(at: messagesKey, itemId: itemId)
+    try store(.dictionary(["id": .string(itemId)]), at: itemKey)
+
+    let oldest = try parseTextFromText(
+      "{findFirst(sort(\(messagesKey), asc, createdAt), fk == \(itemKey).id && data.type == pickup).id}"
+    )
+
+    XCTAssertEqual(oldest.value, ids.oldestPickup)
+  }
+
+  func testFindFirstOverSortReadsTheMatchedRecordsValue() throws {
+    let messagesKey = uniqueKey("messages")
+    let itemKey = uniqueKey("item")
+    let itemId = UUID().uuidString
+    _ = try storeTransferMessages(at: messagesKey, itemId: itemId)
+    try store(.dictionary(["id": .string(itemId)]), at: itemKey)
+
+    let latestPickup =
+      "findFirst(sort(\(messagesKey), desc, createdAt), fk == \(itemKey).id && data.type == pickup)"
+    let latestDelivery =
+      "findFirst(sort(\(messagesKey), desc, createdAt), fk == \(itemKey).id && data.type == delivery)"
+
+    XCTAssertTrue(try _evaluateFromText("{\(latestPickup).data.value == accept}"))
+    XCTAssertFalse(try _evaluateFromText("{\(latestPickup).data.value == pending}"))
+    // Each transfer method's state is independent of the others.
+    XCTAssertTrue(try _evaluateFromText("{\(latestDelivery).data.value == pending}"))
+  }
+
+  /// The "nothing has happened yet" branch. A predicate that matches nothing yields an empty
+  /// value, which compares unequal to every state - so "no messages", "rejected" and "cancelled"
+  /// all fall through to the same branch without a rule of their own.
+  func testFindFirstOverSortWithNoMatchIsNeitherPendingNorAccepted() throws {
+    let messagesKey = uniqueKey("messages")
+    let itemKey = uniqueKey("item")
+    let itemId = UUID().uuidString
+    _ = try storeTransferMessages(at: messagesKey, itemId: itemId)
+    try store(.dictionary(["id": .string(itemId)]), at: itemKey)
+
+    let latestShipping =
+      "findFirst(sort(\(messagesKey), desc, createdAt), fk == \(itemKey).id && data.type == shipping)"
+
+    XCTAssertTrue(
+      try _evaluateFromText(
+        "{\(latestShipping).data.value != pending && \(latestShipping).data.value != accept}"))
+  }
+
   func testFindFirstNestedRecordPathMatches() throws {
     let messagesKey = uniqueKey("messages")
     let pickupId = UUID().uuidString

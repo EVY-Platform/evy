@@ -18,6 +18,7 @@ enum EVYTestMessageFixtures {
     service: String? = nil,
     resource: String? = nil,
     archivedAt: EVYJson? = nil,
+    createdAt: String? = nil,
     type: String? = nil,
     value: String? = nil,
     messageId: String? = nil,
@@ -55,6 +56,11 @@ enum EVYTestMessageFixtures {
     }
     if let archivedAt {
       dict["archivedAt"] = archivedAt
+    }
+    // The ordering key for "the latest message about this request". Milliseconds matter: equal
+    // keys fall back to store order, which would let a request outrank its own answer.
+    if let createdAt {
+      dict["createdAt"] = .string(createdAt)
     }
     if !data.isEmpty {
       dict["data"] = .dictionary(data)
