@@ -119,6 +119,17 @@ describe("parseText", () => {
 		).toBe(TEST_RESOURCE_ID.SELLING_REASONS);
 	});
 
+	// The two-argument form over a sorted collection is what the item page uses to read a
+	// transfer method's latest state. A naive comma split would surface "sort(<id>" as the
+	// source; the property accessor rides along as mock text, as it does for any placeholder.
+	it("resolves findFirst over a sorted collection with a predicate", () => {
+		expect(
+			parseText(
+				`{findFirst(sort(${TEST_RESOURCE_ID.SELLING_REASONS}, desc, createdAt), fk == item.id && data.type == pickup).data.value}`,
+			),
+		).toBe(`${TEST_RESOURCE_ID.SELLING_REASONS}.data.value`);
+	});
+
 	it("resolves sort to the collection argument for mock preview", () => {
 		expect(
 			parseText(`{sort(${TEST_RESOURCE_ID.SELLING_REASONS}, asc)}`),

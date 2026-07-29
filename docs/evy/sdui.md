@@ -191,13 +191,13 @@ On iOS, Heading, Input, ListItem, and Text rows with a non-empty `swipe-left` ac
 
 Optional **`swipeLabel`** (Heading, Input, ListItem, Text only) sets the revealed button content as EVY text (icons like `::check::`, interpolations, etc.). When omitted or blank, iOS shows a white ellipsis icon and uses the accessibility label “Swipe left”.
 
-**One exception, hard-coded on iOS.** When a row's datum is an open transfer request — a core message whose `data.type` is `pickup` / `delivery` / `shipping` and whose `data.value` is `pending` — the client supplies the swipe affordance itself and **ignores the row's `swipe-left` list and `swipeLabel`**. Its recipient is offered accept and reject; the device that sent it is offered cancel and cannot answer its own request. See [`ios/evy/Core/EVY+MessageRequests.swift`](../../ios/evy/Core/EVY+MessageRequests.swift). Three gaps keep it out of SDUI, and closing them is what would let it move back into a flow:
+**One exception, hard-coded on iOS.** When a row's datum is an open transfer request — a core message whose `data.type` is `pickup` / `delivery` / `shipping` and whose `data.value` is `pending` — the client supplies the swipe affordance itself and **ignores the row's `swipe-left` list and `swipeLabel`**. Its recipient is offered accept and reject; the device that sent it is offered cancel and cannot answer its own request. All three write a new message rather than touching the request, and the affordance disappears once anything has settled it. See [`ios/evy/Core/EVY+MessageRequests.swift`](../../ios/evy/Core/EVY+MessageRequests.swift). Three gaps keep it out of SDUI, and closing them is what would let it move back into a flow:
 
 - `visible` is evaluated with **no datum**, so a `Search` child row cannot vary per result — which is what hiding accept on your own request needs;
 - a row has a **single** `swipe-left` affordance, and a recipient needs two;
 - **no expression can read ownership.** It lives in the client's created-records ledger and private store, not in data the interpreter can reach.
 
-The same rule hides responses from a message list, for the same first reason.
+The same rule decides what a **message list** shows: open requests only. The messages that settle a request are dropped (otherwise the list renders the ask and its reply as two identical rows), and so are the requests they settle. That second half is not cosmetic — nothing about a request changes when it is answered, since the answer is a separate record, so a list that kept showing a settled request would keep showing it exactly as it was, affordance and all.
 
 For destructive or important `create`/`update` actions, attach a `sheet` row to the triggering row and use a `show` action with that sheet row's id (often the nested `sheet.id`). Put confirmation copy on the sheet root's `title` and message rows inside the sheet, then run the actual `create`/`update` followed by `close` from a confirm button in the sheet.
 

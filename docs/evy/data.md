@@ -178,13 +178,30 @@ Core message record in [`data.schema.json`](../../../types/schema/data/data.sche
 
 On the wire this is accessed with `service: "475731ac-31aa-4d65-94d2-7032782ae359"` and `resource: "messages"`.
 
-#### A message's state, and answering one
+#### A message is write-once
 
-`data.value` holds the whole state vocabulary: `"pending"` on a request, `"accept"` or `"reject"` on the message that answers one. A request says `"pending"` outright rather than leaving the key absent, so predicates read as one state machine and a message kind that carries no state is never mistaken for something to answer. There is no `status` column; it held this before decisions became immutable.
+**Nothing in the system updates a message.** A request's whole life is the sequence of messages naming it, ordered by `createdAt`: asked, then accepted, rejected or withdrawn. There is no `status` column and no `archivedAt` column; each held part of this before the lifecycle became append-only.
 
-**A decision is a new message, never an edit to the one that asked.** The response addresses whatever record the request addressed — same `fk`, `service` and `resource` — and carries `data.message_id` naming the request, `data.value` with the decision, and a copy of the request's `data.type`. The type is duplicated because `findFirst` predicates cannot nest, so a lookup cannot reach through the response to the request to find it; if nested `findFirst` ever lands, that copy becomes redundant.
+`data.value` holds the whole vocabulary — `"pending"` on a request, and `"accept"`, `"reject"` or `"cancel"` on the message that settles one. A request says `"pending"` outright rather than leaving the key absent, so the predicates read as one state machine and a message kind that carries no state is never mistaken for something to answer.
 
-Answering also sets `archivedAt` on the request, and cancelling does the same. That is what closes a request out: "is anything in flight?" is a flat `findFirst`, so it cannot ask for a request with no response, and without archiving a rejected request would block its replacement forever.
+A settling message addresses whatever record the request addressed — same `fk`, `service` and `resource` — and **carries the request's whole `data` forward**, overriding `value` and adding `data.message_id` to name what it answers. That duplication is load-bearing rather than sloppy: `findFirst` cannot nest, so a lookup that finds the settling message cannot reach through it to the request. Anything the settled state displays — the agreed time, the shipping postcode — has to be on the message that says so, or the confirmation row renders empty.
+
+Accepting, rejecting and cancelling are therefore the same operation with a different `value`. They differ only in who says it: the record's owner answers, its asker withdraws.
+
+#### The state of a transfer method is its latest message
+
+The item page reads one thing per transfer method: the **latest** message for that `(fk, data.type)` pair.
+
+```
+findFirst(sort(messages, desc, createdAt), fk == <item>.id && data.type == pickup)
+```
+
+`pending` means a request is open (offer to cancel it); `accept` means it is agreed (show the time). `reject`, `cancel` and "no message at all" are the same branch — nothing is in flight, so offer to request again. Each `(fk, data.type)` pair is **independent**: a live pickup request says nothing about whether delivery can be asked for.
+
+Two things follow that are easy to trip over:
+
+- **`createdAt` is the ordering key and has no fallback.** It is written with millisecond precision for exactly this reason. `sort` compares it as a string, so mixing second-resolution and fractional values compares *wrongly* (`.` sorts before `Z`), and equal keys fall back to store order — which would let a request outrank its own answer, since the request was stored first.
+- **`findFirst(sort(…), …)` is the whole mechanism.** `sort` accepts a field path and `findFirst`'s collection argument is function-aware, so no client-side special case is involved. See [methods.md](./methods.md#findfirst).
 
 Messages follow the same rule as every other private resource, with two additions:
 
@@ -195,7 +212,7 @@ Those two are the only entitlements in the system that are not plain ownership. 
 
 > **A trap for anything reading `data` in SQL.** The `bun-sql` driver stores a jsonb column by JSON-stringifying its value, so a row written through the API holds a jsonb *string* containing the object rather than the object. Reads are symmetric, so JavaScript never notices — but `data ->> 'key'` is NULL on that shape and `jsonb_set` refuses it outright. `messages.ts` unwraps tolerantly for exactly this reason. It affects every jsonb column in the schema, not just this one; normalising the database and fixing the write path is its own change. Note that the pglite-backed unit tests store jsonb properly, so they will not catch a clause that only works on the normalised shape.
 
-Messages are `private`, so a received one lands in the receiving device's private store and stays owned from then on — it keeps getting that message's updates without needing to own the record it addresses. A device that is reinstalled, or that never created the record a seeded message addresses, still has no claim on those messages until it declares the ownership explicitly; that resolves when auth lands and ownership can be derived from an account.
+Messages are `private`, so a received one lands in the receiving device's private store and stays owned from then on — it keeps receiving anything that follows without needing to own the record it addresses. A device that is reinstalled, or that never created the record a seeded message addresses, still has no claim on those messages until it declares the ownership explicitly; that resolves when auth lands and ownership can be derived from an account.
 
 ---
 

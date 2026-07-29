@@ -37,8 +37,14 @@ function evyLength(): EVYFunctionOutput {
 	return { value: "1" };
 }
 
+/**
+ * The builder does not evaluate collections, it just shows what a row would read from. Split
+ * on top-level commas only: the collection argument can itself be a call, as in
+ * `findFirst(sort(messages, desc, createdAt), …)`, and a naive split would render
+ * "sort(messages" as the source.
+ */
 function evyCollectionPlaceholder(args: string): EVYFunctionOutput {
-	const [data] = args.split(",");
+	const [data] = splitFunctionArguments(args);
 	return { value: data?.trim() ?? "" };
 }
 

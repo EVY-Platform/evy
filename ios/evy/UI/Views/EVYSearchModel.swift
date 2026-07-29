@@ -69,7 +69,7 @@ struct EVYSearchResult: Equatable, Identifiable {
     scopeId: String?
   ) -> [EVYSearchResult] {
     return makeResults(
-      from: hidingMessageResponses(
+      from: onlyOpenRequests(
         in: try? EVY.getDataFromText(source, scope: .cache(scopeId)),
         source: source
       ),
@@ -78,15 +78,19 @@ struct EVYSearchResult: Equatable, Identifiable {
     )
   }
 
-  /// A message list shows requests, not the answers to them.
+  /// A message list shows the requests still waiting on someone: open ones, and not the
+  /// messages that settle them.
   ///
-  /// A response is a message like any other and lands in the same collection, so without
-  /// this the inbox renders "pickup request" twice - once for the ask and once for the
-  /// reply. Hard-coded alongside the rest of the transfer-request rule (see
-  /// `EVYMessageRequest`), because a `Search` child cannot filter per result: `visible` is
-  /// evaluated with no datum.
+  /// Dropping the settling messages is what stops the inbox rendering "pickup request" twice,
+  /// once for the ask and once for the reply. Dropping the requests they settle is what makes
+  /// answering visible: nothing about a request changes when it is answered - the answer is a
+  /// separate record - so a list that kept showing it would keep showing it exactly as it was,
+  /// affordance and all.
+  ///
+  /// Hard-coded alongside the rest of the transfer-request rule (see `EVYMessageRequest`),
+  /// because a `Search` child cannot filter per result: `visible` is evaluated with no datum.
   @MainActor
-  private static func hidingMessageResponses(
+  private static func onlyOpenRequests(
     in sourceData: EVYJson?,
     source: String
   ) -> EVYJson? {
@@ -95,7 +99,12 @@ struct EVYSearchResult: Equatable, Identifiable {
     else {
       return sourceData
     }
-    return .array(rows.filter { !EVYMessageRequest.isResponse($0) })
+    return .array(
+      rows.filter { row in
+        guard !EVYMessageRequest.isResponse(row) else { return false }
+        guard let request = EVYMessageRequest.classify(row) else { return true }
+        return !EVYMessageRequest.isSettled(request)
+      })
   }
 }
 

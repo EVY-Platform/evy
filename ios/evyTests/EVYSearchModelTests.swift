@@ -255,11 +255,17 @@ final class EVYSearchModelTests: XCTestCase {
     XCTAssertEqual(state.value.first?.displayRow.subtitle, "accept")
   }
 
-  /// A response is a message and lands in the same collection, so without filtering the
-  /// inbox would list "pickup request" twice - once for the ask and once for the reply.
-  func testLoadLocalResultsHidesMessageResponses() throws {
+  /// The inbox lists the requests still waiting on someone.
+  ///
+  /// Two things get dropped. A settling message is a message like any other, so without
+  /// filtering the list would show "pickup request" twice - once for the ask, once for the
+  /// reply. And a request that has been settled is dropped too, because nothing about a
+  /// request changes when it is answered: a list that kept showing it would keep showing it
+  /// exactly as it was, affordance and all.
+  func testLoadLocalResultsListsOnlyOpenRequests() throws {
     let resource = EVYCoreResource.messages.rawValue
-    let requestId = UUID().uuidString.lowercased()
+    let openRequestId = UUID().uuidString.lowercased()
+    let settledRequestId = UUID().uuidString.lowercased()
     let itemId = UUID().uuidString.lowercased()
     let service = UUID().uuidString.lowercased()
     let itemResource = UUID().uuidString.lowercased()
@@ -275,14 +281,18 @@ final class EVYSearchModelTests: XCTestCase {
       resource: resource,
       value: .array([
         EVYTestMessageFixtures.request(
-          id: requestId, fk: itemId, service: service, resource: itemResource),
+          id: openRequestId, fk: itemId, service: service, resource: itemResource),
+        EVYTestMessageFixtures.request(
+          id: settledRequestId, fk: itemId, service: service, resource: itemResource,
+          type: "delivery"),
         EVYTestMessageFixtures.response(
           id: UUID().uuidString.lowercased(),
-          to: requestId,
+          to: settledRequestId,
           fk: itemId,
           service: service,
           resource: itemResource,
-          value: "accept"
+          value: "accept",
+          type: "delivery"
         ),
       ])
     )
@@ -293,7 +303,9 @@ final class EVYSearchModelTests: XCTestCase {
       scopeId: nil
     )
 
-    XCTAssertEqual(results.map(\.id), [requestId])
+    XCTAssertEqual(
+      results.map(\.id), [openRequestId],
+      "only the request still waiting on someone is listed")
   }
 
   private static func makeMessageValueTemplate() -> UI_Row? {
