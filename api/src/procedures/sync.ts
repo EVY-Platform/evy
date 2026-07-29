@@ -10,7 +10,7 @@ import {
 	EVY_CORE_RESOURCE_NAMES,
 	EVY_CORE_SERVICE,
 } from "evy-types/coreResources";
-import type { OwnedMessagesParams, OwnedServiceResource } from "../data/data";
+import type { OwnedServiceResource } from "../data/data";
 import * as data from "../data/data";
 import type { EvyDb } from "../database/db";
 import { discoverResources } from "./resources";
@@ -102,56 +102,45 @@ function externalResourceRefs(
 }
 
 /**
- * Devices, the resource catalog and messages are handled outside the core fetch
- * loop. Messages are not readable wholesale: they go only to the device that
- * created them and the device that owns the record they address.
+ * Every core resource is read the same way, scoped by what the device owns.
+ * Devices are excluded because they are not served by the core read API at all,
+ * and the resource catalog because it is a singleton assembled separately.
  */
 function coreResourceRefs(): ResourceRef[] {
 	return EVY_CORE_RESOURCE_NAMES.filter(
 		(name) =>
 			name !== EVY_CORE_RESOURCE.DEVICES &&
-			name !== EVY_CORE_RESOURCE.RESOURCES &&
-			name !== EVY_CORE_RESOURCE.MESSAGES,
+			name !== EVY_CORE_RESOURCE.RESOURCES,
 	).map((resource) => ({ service: EVY_CORE_SERVICE, resource }));
 }
 
-type SplitOwnership = Omit<OwnedMessagesParams, "updatedAfter">;
+type Ownership = {
+	/** Owned record ids, keyed by the core resource they belong to. */
+	coreIdsByResource: Map<string, string[]>;
+	/** Records owned in other services, which a message may be addressed to. */
+	foreignKeys: OwnedServiceResource[];
+};
 
 /**
- * The device's own messages come from the ids it declares under the core
- * `messages` resource; everything else it owns is a record a message may be
- * addressed to.
+ * What the device claims, split by who reads it: a core resource is scoped by the
+ * ids owned in that resource, while records owned elsewhere only matter to messages
+ * as the records they address.
  */
-function splitOwnedServiceResources(syncParams: SyncRequest): SplitOwnership {
-	const ownedMessageIds: string[] = [];
-	const ownedForeignKeys: OwnedServiceResource[] = [];
+function splitOwnedServiceResources(syncParams: SyncRequest): Ownership {
+	const coreIdsByResource = new Map<string, string[]>();
+	const foreignKeys: OwnedServiceResource[] = [];
 
 	for (const group of syncParams.ownedServiceResources ?? []) {
-		if (
-			group.service === EVY_CORE_SERVICE &&
-			group.resource === EVY_CORE_RESOURCE.MESSAGES
-		) {
-			ownedMessageIds.push(...group.ids);
+		if (group.service !== EVY_CORE_SERVICE) {
+			foreignKeys.push(group);
 			continue;
 		}
-		ownedForeignKeys.push(group);
+		const existing = coreIdsByResource.get(group.resource) ?? [];
+		coreIdsByResource.set(group.resource, [...existing, ...group.ids]);
 	}
 
-	return { ownedMessageIds, ownedForeignKeys };
+	return { coreIdsByResource, foreignKeys };
 }
-
-function ownsAnything(ownership: SplitOwnership): boolean {
-	return (
-		ownership.ownedMessageIds.length > 0 ||
-		ownership.ownedForeignKeys.length > 0
-	);
-}
-
-/** The single ref the ownership-scoped messages read reports rows and errors under. */
-const MESSAGES_REF: ResourceRef = {
-	service: EVY_CORE_SERVICE,
-	resource: EVY_CORE_RESOURCE.MESSAGES,
-};
 
 function discoveryErrorsToSyncErrors(
 	errors: NonNullable<
@@ -176,33 +165,27 @@ export async function sync(
 	const resumedFrom = resumePoint(syncParams);
 	const ownership = splitOwnedServiceResources(syncParams);
 
-	const [core, external, ownedMessages] = await Promise.all([
-		fetchResources(coreResourceRefs(), resumedFrom, (_ref, request) =>
-			data.get(db, request),
+	const [core, external] = await Promise.all([
+		// Public rows plus the private ones this device owns, for every resource
+		// alike. A resource the device owns nothing in still syncs; it just gets
+		// the public rows.
+		fetchResources(coreResourceRefs(), resumedFrom, (ref) =>
+			data.getSyncRows(db, ref.resource, {
+				updatedAfter: resumedFrom,
+				ownedIds: ownership.coreIdsByResource.get(ref.resource) ?? [],
+				ownedForeignKeys: ownership.foreignKeys,
+			}),
 		),
 		fetchResources(externalRefs, resumedFrom, (ref, request) =>
 			services.forwardGet(ref.service, request),
 		),
-		// Routed through the same fetch as everything else so it degrades
-		// identically: a broken messages read costs the device its messages this
-		// round, not the rest of the sync. A device that owns nothing reads nothing.
-		fetchResources(
-			ownsAnything(ownership) ? [MESSAGES_REF] : [],
-			resumedFrom,
-			() =>
-				data.getOwnedMessages(db, {
-					updatedAfter: resumedFrom,
-					...ownership,
-				}),
-		),
 	]);
 
-	const rows = [...core.rows, ...external.rows, ...ownedMessages.rows];
+	const rows = [...core.rows, ...external.rows];
 	const errors = [
 		...discoveryErrorsToSyncErrors(catalog.errors ?? []),
 		...core.errors,
 		...external.errors,
-		...ownedMessages.errors,
 	];
 
 	if (discoveryComplete) {
