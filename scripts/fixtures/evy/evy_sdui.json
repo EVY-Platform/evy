@@ -58,7 +58,8 @@
 													"fk": "$datum.fk",
 													"service": "$datum.service",
 													"resource": "$datum.resource",
-													"data": "{message_id: $datum.id, value: accept, type: $datum.data.type, time: $datum.data.time, postalcode: $datum.data.postalcode}"
+													"parentMessageId": "$datum.id",
+													"data": "{value: accept, type: $datum.data.type, time: $datum.data.time, postalcode: $datum.data.postalcode}"
 												}
 											}
 										}
@@ -120,7 +121,8 @@
 																		"fk": "$datum.fk",
 																		"service": "$datum.service",
 																		"resource": "$datum.resource",
-																		"data": "{message_id: $datum.id, value: accept, type: $datum.data.type, time: $datum.data.time, postalcode: $datum.data.postalcode}"
+																		"parentMessageId": "$datum.id",
+																		"data": "{value: accept, type: $datum.data.type, time: $datum.data.time, postalcode: $datum.data.postalcode}"
 																	}
 																}
 															},
@@ -156,7 +158,8 @@
 																		"fk": "$datum.fk",
 																		"service": "$datum.service",
 																		"resource": "$datum.resource",
-																		"data": "{message_id: $datum.id, value: reject, type: $datum.data.type, time: $datum.data.time, postalcode: $datum.data.postalcode}"
+																		"parentMessageId": "$datum.id",
+																		"data": "{value: reject, type: $datum.data.type, time: $datum.data.time, postalcode: $datum.data.postalcode}"
 																	}
 																}
 															},
@@ -209,7 +212,8 @@
 													"fk": "$datum.fk",
 													"service": "$datum.service",
 													"resource": "$datum.resource",
-													"data": "{message_id: $datum.id, value: cancel, type: $datum.data.type, time: $datum.data.time, postalcode: $datum.data.postalcode}"
+													"parentMessageId": "$datum.id",
+													"data": "{value: cancel, type: $datum.data.type, time: $datum.data.time, postalcode: $datum.data.postalcode}"
 												}
 											}
 										}

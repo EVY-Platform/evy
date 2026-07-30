@@ -191,6 +191,11 @@
 						"$ref": "../common/json.schema.json#/$defs/JSONValue"
 					}
 				},
+				"parentMessageId": {
+					"type": "string",
+					"format": "uuid",
+					"description": "The id of the message this one answers. Absent on a request; present on accept/reject/cancel. Forms a linked list with the request."
+				},
 				"visibility": {
 					"$ref": "#/$defs/Visibility"
 				}

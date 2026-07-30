@@ -851,7 +851,7 @@ final class InterpreterTests: XCTestCase {
           fk: itemId,
           type: "pickup",
           value: "accept",
-          messageId: requestId
+          parentMessageId: requestId
         ),
         EVYTestMessageFixtures.message(
           id: requestId,
@@ -865,7 +865,7 @@ final class InterpreterTests: XCTestCase {
     try store(.dictionary(["id": .string(itemId)]), at: itemKey)
 
     let result = try parseTextFromText(
-      "{findFirst(\(messagesKey), fk == \(itemKey).id && data.message_id == null).id}")
+      "{findFirst(\(messagesKey), fk == \(itemKey).id && parentMessageId == null).id}")
 
     XCTAssertEqual(result.value, requestId)
   }
@@ -992,7 +992,7 @@ final class InterpreterTests: XCTestCase {
           type: "pickup", value: "pending"),
         EVYTestMessageFixtures.message(
           id: responseId, fk: itemId, createdAt: "2026-06-01T00:01:00.000Z",
-          type: "pickup", value: "accept", messageId: answeredRequestId,
+          type: "pickup", value: "accept", parentMessageId: answeredRequestId,
           time: "2026-06-03T09:00:00"),
         EVYTestMessageFixtures.message(
           id: openRequestId, fk: itemId, createdAt: "2026-06-01T00:02:00.000Z",
@@ -1120,7 +1120,7 @@ final class InterpreterTests: XCTestCase {
         EVYTestMessageFixtures.message(
           id: responseId, fk: itemId, service: service, resource: resource,
           createdAt: "2026-06-01T00:01:00.000Z", type: "pickup", value: "accept",
-          messageId: settledRequestId, time: "2026-06-03T09:00:00"),
+          parentMessageId: settledRequestId, time: "2026-06-03T09:00:00"),
         EVYTestMessageFixtures.message(
           id: openRequestId, fk: itemId, service: service, resource: resource,
           createdAt: "2026-06-01T00:02:00.000Z", type: "delivery", value: "pending",
@@ -1177,7 +1177,7 @@ final class InterpreterTests: XCTestCase {
           fk: itemId,
           type: "pickup",
           value: "accept",
-          messageId: UUID().uuidString
+          parentMessageId: UUID().uuidString
         ),
         EVYTestMessageFixtures.message(
           id: UUID().uuidString,
@@ -1191,7 +1191,7 @@ final class InterpreterTests: XCTestCase {
     try store(.dictionary(["id": .string(itemId)]), at: itemKey)
 
     let result = try parseTextFromText(
-      "{findFirst(\(messagesKey), fk == \(itemKey).id && data.message_id != null).id}")
+      "{findFirst(\(messagesKey), fk == \(itemKey).id && parentMessageId != null).id}")
 
     XCTAssertEqual(result.value, answerId)
   }

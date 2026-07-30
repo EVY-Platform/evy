@@ -681,7 +681,7 @@ class E2ETestBase: XCTestCase {
     return false
   }
 
-  /// Waits for a response message naming `messageId` in `data.message_id`.
+  /// Waits for a response message naming `messageId` in `parentMessageId`.
   func waitForMessageResponse(
     emitter: WSEmitter,
     messageId: String,
@@ -702,8 +702,8 @@ class E2ETestBase: XCTestCase {
     guard let messageRows = responseDataArray(from: messages) else { return nil }
     for message in messageRows {
       guard let messageData = message as? [String: Any],
+        messageData["parentMessageId"] as? String == messageId,
         let data = messageData["data"] as? [String: Any],
-        data["message_id"] as? String == messageId,
         data["value"] as? String == value,
         let id = messageData["id"] as? String
       else { continue }
@@ -1271,7 +1271,7 @@ class E2ETestBase: XCTestCase {
     func cancelAction(type: String) -> String {
       let latest = latestMessageExpression(type: type)
       return "{create(\(EVY_CORE_SERVICE),\(messagesResourceId),{\(messageCreateEnvelope),"
-        + " data: {message_id: \(latest).id, value: cancel, type: \(type)}})}"
+        + " parentMessageId: \(latest).id, data: {value: cancel, type: \(type)}})}"
     }
 
     return [
@@ -1828,8 +1828,9 @@ class E2ETestBase: XCTestCase {
           "fk": "$datum.fk",
           "service": "$datum.service",
           "resource": "$datum.resource",
+          "parentMessageId": "$datum.id",
           "data":
-            "{message_id: $datum.id, value: \(value), type: $datum.data.type, time: $datum.data.time, postalcode: $datum.data.postalcode}",
+            "{value: \(value), type: $datum.data.type, time: $datum.data.time, postalcode: $datum.data.postalcode}",
         ],
       ],
     ]
@@ -2946,8 +2947,8 @@ final class WebSocketE2ETests: E2ETestBase {
         "service": MARKETPLACE_SERVICE,
         "resource": MARKETPLACE_ITEMS_RESOURCE_ID,
         "visibility": "private",
+        "parentMessageId": requestId,
         "data": [
-          "message_id": requestId,
           "value": "reject",
           "type": "pickup",
           "time": selectedTimeslot,
@@ -3101,8 +3102,8 @@ final class WebSocketE2ETests: E2ETestBase {
         "service": MARKETPLACE_SERVICE,
         "resource": MARKETPLACE_ITEMS_RESOURCE_ID,
         "visibility": "private",
+        "parentMessageId": messageId,
         "data": [
-          "message_id": messageId,
           "value": "accept",
           "type": "pickup",
           "time": selectedTimeslot,
@@ -4742,8 +4743,8 @@ final class E2EHomeInboxTests: E2ETestBase {
             "service": MARKETPLACE_SERVICE,
             "resource": MARKETPLACE_ITEMS_RESOURCE_ID,
             "visibility": "private",
+            "parentMessageId": requestId,
             "data": [
-              "message_id": requestId,
               "value": responseValue,
               "type": "pickup",
               "time": "2026-06-03T09:00:00",

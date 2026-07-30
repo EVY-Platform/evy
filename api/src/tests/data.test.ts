@@ -6,7 +6,6 @@ import {
 	expect,
 	it,
 } from "bun:test";
-import { sql } from "drizzle-orm";
 import { migrate } from "drizzle-orm/pglite/migrator";
 
 import type {
@@ -632,11 +631,8 @@ describe("getSyncRows", () => {
 				fk: otherFk,
 				service: targetService,
 				resource: targetResource,
-				data: {
-					message_id: requestId,
-					value: "accept",
-					type: "pickup",
-				},
+				parentMessageId: requestId,
+				data: { value: "accept", type: "pickup" },
 				visibility: "private" as const,
 			},
 		})) as DATA_EVY_Message;
@@ -807,33 +803,7 @@ describe("getSyncRows", () => {
 		).toEqual([mine.id]);
 	});
 
-	// pglite stores jsonb as objects; production uses bun-sql's double-encoded shape
-	it("returns responses stored with a double-encoded data column", async () => {
-		const request = await createMessage(otherFk);
-		const responseId = crypto.randomUUID();
-		await testDb.insert(schema.message).values({
-			id: responseId,
-			fk: otherFk,
-			service: targetService,
-			resource: targetResource,
-			createdAt: "2026-06-01T00:00:00.000Z",
-			updatedAt: "2026-06-01T00:00:00.000Z",
-			data: sql`to_jsonb(${JSON.stringify({
-				message_id: request.id,
-				value: "accept",
-				type: "pickup",
-			})}::text)`,
-			visibility: "private",
-		});
-
-		const owned = await ownedIds({
-			owned: ownsCoreMessage(request.id),
-		});
-
-		expect(owned).toContain(responseId);
-	});
-
-	it("leaves messages with no message_id in data unaffected", async () => {
+	it("leaves messages with no parentMessageId unaffected", async () => {
 		const mine = await createMessage(otherFk);
 		await createMessage(otherFk);
 

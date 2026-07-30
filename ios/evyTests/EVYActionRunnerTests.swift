@@ -969,8 +969,9 @@ final class EVYActionRunnerTests: XCTestCase {
   }
 
   func testInlineCreateOmitsUnresolvedDatumKeysFromPayload() throws {
+    let requestId = UUID().uuidString
     let pickupDatum = EVYTestMessageFixtures.message(
-      id: UUID().uuidString,
+      id: requestId,
       fk: UUID().uuidString,
       type: "pickup",
       value: "pending",
@@ -978,7 +979,7 @@ final class EVYActionRunnerTests: XCTestCase {
     )
     let resolved = EVYPlainTextResolution.resolveValues(
       [
-        "message_id": "$datum.id",
+        "parentMessageId": "$datum.id",
         "value": "accept",
         "type": "$datum.data.type",
         "time": "$datum.data.time",
@@ -988,6 +989,7 @@ final class EVYActionRunnerTests: XCTestCase {
       omitUnresolvedDatumKeys: true
     )
 
+    XCTAssertEqual(resolved["parentMessageId"], .string(requestId))
     XCTAssertEqual(resolved["value"], .string("accept"))
     XCTAssertEqual(resolved["type"], .string("pickup"))
     XCTAssertEqual(resolved["time"], .string("2026-06-03T09:00:00"))
@@ -1551,7 +1553,8 @@ final class EVYActionRunnerTests: XCTestCase {
       resource: EVYCoreResource.messages.rawValue,
       mode: .inline(data: [
         "fk": "$datum.fk",
-        "data": "{message_id: $datum.id, value: cancel, type: $datum.data.type}",
+        "parentMessageId": "$datum.id",
+        "data": "{value: cancel, type: $datum.data.type}",
       ]),
       idDestination: nil)
     let row = try decodeRow(

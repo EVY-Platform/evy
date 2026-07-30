@@ -314,6 +314,7 @@ type SeedMessageRow = {
 	updatedAt: string;
 	data: Record<string, unknown>;
 	visibility: "public" | "private";
+	parentMessageId?: string;
 };
 
 function buildMessageRows(
@@ -366,6 +367,14 @@ function buildMessageRows(
 				`Seed message "${item.id}" has visibility "${String(item.visibility)}"; expected "public" or "private"`,
 			);
 		}
+		if (
+			item.parentMessageId !== undefined &&
+			typeof item.parentMessageId !== "string"
+		) {
+			throw new Error(
+				`Seed message "${item.id}" must have a string "parentMessageId" field when set`,
+			);
+		}
 		return {
 			id: item.id,
 			fk: item.fk,
@@ -375,6 +384,9 @@ function buildMessageRows(
 			updatedAt,
 			data,
 			visibility: item.visibility === "public" ? "public" : "private",
+			...(typeof item.parentMessageId === "string"
+				? { parentMessageId: item.parentMessageId }
+				: {}),
 		};
 	});
 }

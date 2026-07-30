@@ -14,7 +14,7 @@ enum EVYTestMessageFixtures {
     createdAt: String? = nil,
     type: String? = nil,
     value: String? = nil,
-    messageId: String? = nil,
+    parentMessageId: String? = nil,
     time: String? = nil,
     postalcode: String? = nil
   ) -> EVYJson {
@@ -24,9 +24,6 @@ enum EVYTestMessageFixtures {
     }
     if let value {
       data["value"] = .string(value)
-    }
-    if let messageId {
-      data["message_id"] = .string(messageId)
     }
     if let time {
       data["time"] = .string(time)
@@ -49,6 +46,9 @@ enum EVYTestMessageFixtures {
     }
     if let createdAt {
       dict["createdAt"] = .string(createdAt)
+    }
+    if let parentMessageId {
+      dict["parentMessageId"] = .string(parentMessageId)
     }
     if !data.isEmpty {
       dict["data"] = .dictionary(data)
@@ -94,7 +94,7 @@ enum EVYTestMessageFixtures {
       resource: resource,
       type: type,
       value: value,
-      messageId: requestId
+      parentMessageId: requestId
     )
   }
 }

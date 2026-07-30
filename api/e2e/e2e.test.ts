@@ -258,12 +258,9 @@ describe("API E2E Tests", () => {
 					fk: itemId,
 					service: itemService,
 					resource: itemResource,
+					parentMessageId: request.id,
 					visibility: "private",
-					data: {
-						message_id: request.id,
-						value: "accept",
-						type: "pickup",
-					},
+					data: { value: "accept", type: "pickup" },
 				},
 			});
 
@@ -290,8 +287,8 @@ describe("API E2E Tests", () => {
 			const delivered = messages.find(
 				(message: { id: string }) => message.id === response.id,
 			);
+			expect(delivered.parentMessageId).toBe(request.id);
 			expect(delivered.data).toMatchObject({
-				message_id: request.id,
 				value: "accept",
 				type: "pickup",
 			});

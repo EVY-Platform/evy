@@ -184,7 +184,7 @@ On the wire this is accessed with `service: "475731ac-31aa-4d65-94d2-7032782ae35
 
 `data.value` holds the whole vocabulary — `"pending"` on a request, and `"accept"`, `"reject"` or `"cancel"` on the message that settles one. A request says `"pending"` outright rather than leaving the key absent, so the predicates read as one state machine and a message kind that carries no state is never mistaken for something to answer.
 
-A settling message addresses whatever record the request addressed — same `fk`, `service` and `resource` — and **carries the request's whole `data` forward**, overriding `value` and adding `data.message_id` to name what it answers. That duplication is load-bearing rather than sloppy: `findFirst` cannot nest, so a lookup that finds the settling message cannot reach through it to the request. Anything the settled state displays — the agreed time, the shipping postcode — has to be on the message that says so, or the confirmation row renders empty.
+A settling message addresses whatever record the request addressed — same `fk`, `service` and `resource` — and **carries the request's whole `data` forward**, overriding `value` and setting `parentMessageId` on the row to name what it answers. That duplication is load-bearing rather than sloppy: `findFirst` cannot nest, so a lookup that finds the settling message cannot reach through it to the request. Anything the settled state displays — the agreed time, the shipping postcode — has to be on the message that says so, or the confirmation row renders empty.
 
 Accepting, rejecting and cancelling are therefore the same operation with a different `value`. They differ only in who says it: the record's owner answers, its asker withdraws.
 
@@ -208,11 +208,11 @@ Two things follow that are easy to trip over:
 Messages follow the same rule as every other private resource, with two additions:
 
 - as well as the device that owns the message (its creator, declaring the message's own id under `evy`/`messages`), a message reaches the device that owns the record it **addresses**, which declares that record's id under the message's `service`/`resource`;
-- a message reaches whoever owns the message it **answers** — matched on `data.message_id`. Without it a response would never reach the party who asked, since they own neither the response nor the record it addresses.
+- a message reaches whoever owns the message it **answers** — matched on `parentMessageId`. Without it a response would never reach the party who asked, since they own neither the response nor the record it addresses.
 
 Those two are the only entitlements in the system that are not plain ownership. Everyone else never receives it.
 
-> **A trap for anything reading `data` in SQL.** The `bun-sql` driver stores a jsonb column by JSON-stringifying its value, so a row written through the API holds a jsonb *string* containing the object rather than the object. Reads are symmetric, so JavaScript never notices — but `data ->> 'key'` is NULL on that shape and `jsonb_set` refuses it outright. `messages.ts` unwraps tolerantly for exactly this reason. It affects every jsonb column in the schema, not just this one; normalising the database and fixing the write path is its own change. Note that the pglite-backed unit tests store jsonb properly, so they will not catch a clause that only works on the normalised shape.
+> **A trap for anything reading `data` in SQL.** The `bun-sql` driver stores a jsonb column by JSON-stringifying its value, so a row written through the API holds a jsonb *string* containing the object rather than the object. Reads are symmetric, so JavaScript never notices — but `data ->> 'key'` is NULL on that shape and `jsonb_set` refuses it outright. Note that the pglite-backed unit tests store jsonb properly, so they will not catch a clause that only works on the normalised shape.
 
 Messages are `private`, so a received one lands in the receiving device's private store and stays owned from then on — it keeps receiving anything that follows without needing to own the record it addresses. A device that is reinstalled, or that never created the record a seeded message addresses, still has no claim on those messages until it declares the ownership explicitly; that resolves when auth lands and ownership can be derived from an account.
 

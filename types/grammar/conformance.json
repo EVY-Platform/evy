@@ -1123,10 +1123,10 @@
 						"id": "b0897a47-c45c-4e9c-8021-8ec3bdcac59c",
 						"fk": "12401f50-cf1a-45d7-a112-2e68a2070466",
 						"createdAt": "2026-06-01T00:01:00.000Z",
+						"parentMessageId": "dfc53233-6152-4878-bf4f-b11a47c636ac",
 						"data": {
 							"type": "pickup",
-							"value": "accept",
-							"message_id": "dfc53233-6152-4878-bf4f-b11a47c636ac"
+							"value": "accept"
 						}
 					},
 					{
