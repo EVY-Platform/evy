@@ -6,7 +6,7 @@ import type {
 	UI_Flow,
 	UI_Row,
 } from "evy-types";
-import { EVY_CORE_RESOURCE, EVY_CORE_SERVICE } from "evy-types/coreResources";
+import { EVY_CORE_RESOURCE_REF } from "evy-types/coreResources";
 import { Client } from "rpc-websockets";
 import { decomposeServerFlow } from "../app/utils/serverFlowDecompose";
 import {
@@ -69,9 +69,18 @@ async function withApiClient<T>(
 async function getFlowsFromApi(): Promise<UI_Flow[]> {
 	return withApiClient(async (client) => {
 		const [flowRows, pageRows, rowRows] = await Promise.all([
-			getFlatResourceRows<DATA_EVY_Flow>(client, EVY_CORE_RESOURCE.FLOWS),
-			getFlatResourceRows<DATA_EVY_Page>(client, EVY_CORE_RESOURCE.PAGES),
-			getFlatResourceRows<DATA_EVY_Row>(client, EVY_CORE_RESOURCE.ROWS),
+			getFlatResourceRows<DATA_EVY_Flow>(
+				client,
+				EVY_CORE_RESOURCE_REF.FLOWS,
+			),
+			getFlatResourceRows<DATA_EVY_Page>(
+				client,
+				EVY_CORE_RESOURCE_REF.PAGES,
+			),
+			getFlatResourceRows<DATA_EVY_Row>(
+				client,
+				EVY_CORE_RESOURCE_REF.ROWS,
+			),
 		]);
 		return assembleFlatFlows({ flowRows, pageRows, rowRows });
 	});
@@ -82,7 +91,6 @@ async function getFlatResourceRows<T>(
 	resource: string,
 ): Promise<T[]> {
 	const result = await client.call("get", {
-		service: EVY_CORE_SERVICE,
 		resource,
 	});
 	return Array.isArray(result) ? (result as T[]) : [];
@@ -96,13 +104,13 @@ async function createFlowInApi(flow: UI_Flow): Promise<void> {
 			new Date().toISOString(),
 		);
 		for (const row of graph.rowRows) {
-			await createFlatResource(client, EVY_CORE_RESOURCE.ROWS, row);
+			await createFlatResource(client, EVY_CORE_RESOURCE_REF.ROWS, row);
 		}
 		for (const page of graph.pageRows) {
-			await createFlatResource(client, EVY_CORE_RESOURCE.PAGES, page);
+			await createFlatResource(client, EVY_CORE_RESOURCE_REF.PAGES, page);
 		}
 		for (const flow of graph.flowRows) {
-			await createFlatResource(client, EVY_CORE_RESOURCE.FLOWS, flow);
+			await createFlatResource(client, EVY_CORE_RESOURCE_REF.FLOWS, flow);
 		}
 	});
 }
@@ -113,7 +121,6 @@ async function createFlatResource(
 	data: unknown,
 ): Promise<void> {
 	await client.call("create", {
-		service: EVY_CORE_SERVICE,
 		resource,
 		data,
 	});

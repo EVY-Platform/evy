@@ -41,6 +41,36 @@ export function serviceOfRef(ref: string): string {
 	return parseResourceRef(ref).service;
 }
 
+export function resourceOfRef(ref: string): string {
+	return parseResourceRef(ref).resource;
+}
+
+export function splitRefFromPath(path: string): {
+	ref: string;
+	rest: string;
+} | null {
+	const segments = path.split(".");
+	if (segments.length < 2) return null;
+	const ref = `${segments[0]}.${segments[1]}`;
+	if (!isValidResourceRef(ref)) return null;
+	return {
+		ref,
+		rest: segments.slice(2).join("."),
+	};
+}
+
+export function resourceRefRecord<const K extends string>(
+	service: string,
+	names: Record<K, string>,
+): Record<K, string> {
+	return Object.fromEntries(
+		Object.entries(names).map(([key, name]) => [
+			key,
+			formatResourceRef(service, name as string),
+		]),
+	) as Record<K, string>;
+}
+
 export function isValidResourceRef(ref: string): boolean {
 	try {
 		parseResourceRef(ref);

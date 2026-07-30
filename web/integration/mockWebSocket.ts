@@ -105,7 +105,7 @@ export async function installMockWebSocket(
 					this.respond({
 						jsonrpc: "2.0",
 						id: request.id,
-						result: { dataChanged: "ok" },
+						result: { data_changed: "ok" },
 					});
 					return;
 				}

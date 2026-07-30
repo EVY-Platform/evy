@@ -12,15 +12,11 @@ const LOOKUP_ATTRIBUTES = attributesFromSchema(lookupSchema);
 const MARKETPLACE_SERVICE_SLUG = "marketplace" as const;
 
 const MARKETPLACE_RESOURCE_DEFINITIONS = [
-	{
-		key: "SELLING_REASONS",
-		name: "selling_reasons",
-		attributes: LOOKUP_ATTRIBUTES,
-	},
-	{ key: "CONDITIONS", name: "conditions", attributes: LOOKUP_ATTRIBUTES },
-	{ key: "DURATIONS", name: "durations", attributes: LOOKUP_ATTRIBUTES },
-	{ key: "AREAS", name: "areas", attributes: LOOKUP_ATTRIBUTES },
-	{ key: "ITEMS", name: "items", attributes: ITEM_ATTRIBUTES },
+	{ name: "selling_reasons", attributes: LOOKUP_ATTRIBUTES },
+	{ name: "conditions", attributes: LOOKUP_ATTRIBUTES },
+	{ name: "durations", attributes: LOOKUP_ATTRIBUTES },
+	{ name: "areas", attributes: LOOKUP_ATTRIBUTES },
+	{ name: "items", attributes: ITEM_ATTRIBUTES },
 ] as const;
 
 export const MARKETPLACE_SERVICE_DESCRIPTOR = {
@@ -35,18 +31,16 @@ export const MARKETPLACE_SERVICE_DESCRIPTOR = {
 
 export const MARKETPLACE_SERVICE = MARKETPLACE_SERVICE_DESCRIPTOR.id;
 
-export const MARKETPLACE_RESOURCE = Object.fromEntries(
-	MARKETPLACE_RESOURCE_DEFINITIONS.map(({ key, name }) => [
-		key,
-		formatResourceRef(MARKETPLACE_SERVICE_SLUG, name),
-	]),
-) as {
-	readonly SELLING_REASONS: string;
-	readonly CONDITIONS: string;
-	readonly DURATIONS: string;
-	readonly AREAS: string;
-	readonly ITEMS: string;
-};
+export const MARKETPLACE_RESOURCE = {
+	SELLING_REASONS: formatResourceRef(
+		MARKETPLACE_SERVICE_SLUG,
+		"selling_reasons",
+	),
+	CONDITIONS: formatResourceRef(MARKETPLACE_SERVICE_SLUG, "conditions"),
+	DURATIONS: formatResourceRef(MARKETPLACE_SERVICE_SLUG, "durations"),
+	AREAS: formatResourceRef(MARKETPLACE_SERVICE_SLUG, "areas"),
+	ITEMS: formatResourceRef(MARKETPLACE_SERVICE_SLUG, "items"),
+} as const;
 
 export const MARKETPLACE_SEED_RESOURCES: ReadonlySet<string> = new Set(
 	MARKETPLACE_SERVICE_DESCRIPTOR.resources.map((resource) => resource.id),

@@ -1,5 +1,5 @@
 import { procedureResultAttributes } from "evy-types/procedures";
-import { serviceOfRef } from "evy-types/resourceRef";
+import { serviceOfRef, splitRefFromPath } from "evy-types/resourceRef";
 import {
 	getAllRowBindingFieldNames,
 	getAllRowContentFieldNames,
@@ -102,7 +102,7 @@ export function buildIdCandidates(
 	return [...serviceCandidates, ...resourceCandidates];
 }
 
-export function buildAttributeCandidates(
+function buildAttributeCandidates(
 	attributeNames: Iterable<string>,
 ): IdCandidate[] {
 	return [...new Set(attributeNames)]
@@ -156,12 +156,10 @@ function resolveResourceRefFromPath(
 	path: string,
 	serviceResources: { id: string }[],
 ): string | null {
-	const segments = path.split(".");
-	if (segments.length >= 2) {
-		const ref = `${segments[0]}.${segments[1]}`;
-		if (serviceResources.some((resource) => resource.id === ref)) {
-			return ref;
-		}
+	const split = splitRefFromPath(path);
+	if (!split) return null;
+	if (serviceResources.some((resource) => resource.id === split.ref)) {
+		return split.ref;
 	}
 	return null;
 }

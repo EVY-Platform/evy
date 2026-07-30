@@ -118,6 +118,13 @@ enum EVYDraft {
     }
   }
 
+  private static func entityKeySegments(for entityKey: String?) -> [String] {
+    guard let entityKey,
+      let (service, resource) = try? EVYResourceRef.parse(entityKey)
+    else { return [] }
+    return [service, resource]
+  }
+
   @MainActor
   static func binding(parsedProps: String, scopeId: String?) throws -> Binding {
     let segments = try splitPropsFromText(parsedProps)
@@ -133,17 +140,13 @@ enum EVYDraft {
 
     let effectiveScope = scopeId ?? Scope.fallbackUnscoped
     let entityKey = Scope.entityKey(fromScopeId: effectiveScope)
-    let entityKeySegments: [String]
-    if let entityKey, let (service, resource) = try? EVYResourceRef.parse(entityKey) {
-      entityKeySegments = [service, resource]
-    } else {
-      entityKeySegments = []
-    }
+    let entityKeySegments = entityKeySegments(for: entityKey)
+    let prefixMatches =
+      entityKey != nil
+      && segments.count >= entityKeySegments.count
+      && Array(segments.prefix(entityKeySegments.count)) == entityKeySegments
 
-    if let entityKey,
-      segments.count > entityKeySegments.count,
-      Array(segments.prefix(entityKeySegments.count)) == entityKeySegments
-    {
+    if let entityKey, prefixMatches, segments.count > entityKeySegments.count {
       let rest = Array(segments.dropFirst(entityKeySegments.count))
       return Binding(
         scopeId: effectiveScope,
@@ -152,17 +155,12 @@ enum EVYDraft {
       )
     }
 
-    if entityKey != nil {
-      let prefixMatches =
-        segments.count >= entityKeySegments.count
-        && Array(segments.prefix(entityKeySegments.count)) == entityKeySegments
-      if !prefixMatches {
-        return Binding(
-          scopeId: effectiveScope,
-          pathSegments: segments,
-          mergeMode: .aliasFlat(pathSegments: segments)
-        )
-      }
+    if entityKey != nil && !prefixMatches {
+      return Binding(
+        scopeId: effectiveScope,
+        pathSegments: segments,
+        mergeMode: .aliasFlat(pathSegments: segments)
+      )
     }
 
     if segments.count > 1 {
@@ -208,12 +206,7 @@ enum EVYDraft {
       return Array(splitProps.suffix(splitProps.count - path.count))
     }
     if let entityKey = Scope.entityKey(fromScopeId: binding.scopeId) {
-      let entityKeySegments: [String]
-      if let (service, resource) = try? EVYResourceRef.parse(entityKey) {
-        entityKeySegments = [service, resource]
-      } else {
-        entityKeySegments = []
-      }
+      let entityKeySegments = entityKeySegments(for: entityKey)
       if splitProps.count > entityKeySegments.count,
         Array(splitProps.prefix(entityKeySegments.count)) == entityKeySegments,
         Array(splitProps.dropFirst(entityKeySegments.count)) == path

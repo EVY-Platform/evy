@@ -1,3 +1,5 @@
+import { splitRefFromPath } from "evy-types/resourceRef";
+
 export type IdSearchToken = {
 	text: string;
 	start: number;
@@ -80,15 +82,18 @@ function findPreviousNonWhitespaceIndex(
 
 function findQualifierBeforeDot(value: string, dotIndex: number): string {
 	const end = findPreviousNonWhitespaceIndex(value, dotIndex - 1) + 1;
-	const segmentEnd = end;
-	let segmentStart = segmentEnd;
+	const prefix = value.slice(0, end);
+	const split = splitRefFromPath(prefix);
+	if (split) return split.ref;
+
+	let segmentStart = end;
 	while (
 		segmentStart > 0 &&
 		isExpressionIdentifierCharacter(value[segmentStart - 1] ?? "")
 	) {
 		segmentStart -= 1;
 	}
-	const lastSegment = value.slice(segmentStart, segmentEnd);
+	const lastSegment = value.slice(segmentStart, end);
 	if (segmentStart > 0 && value[segmentStart - 1] === ".") {
 		const serviceEnd = segmentStart - 1;
 		let serviceStart = serviceEnd;
@@ -100,7 +105,9 @@ function findQualifierBeforeDot(value: string, dotIndex: number): string {
 		}
 		const serviceSegment = value.slice(serviceStart, serviceEnd);
 		if (serviceSegment && lastSegment) {
-			return `${serviceSegment}.${lastSegment}`;
+			const twoSegmentPath = `${serviceSegment}.${lastSegment}`;
+			const refSplit = splitRefFromPath(twoSegmentPath);
+			return refSplit?.ref ?? twoSegmentPath;
 		}
 	}
 	return lastSegment;

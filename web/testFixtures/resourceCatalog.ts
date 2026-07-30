@@ -1,5 +1,5 @@
 import type { ResourcesResponse } from "evy-types";
-import { formatResourceRef } from "evy-types/resourceRef";
+import { resourceRefRecord } from "evy-types/resourceRef";
 import type { ServiceResource } from "../app/types/resources";
 
 export const TEST_SERVICE_SLUG = "test_service";
@@ -10,16 +10,10 @@ const TEST_RESOURCE_NAMES = {
 	RECORDS: "records",
 } as const;
 
-const TEST_RESOURCE_ID = Object.fromEntries(
-	Object.entries(TEST_RESOURCE_NAMES).map(([key, name]) => [
-		key,
-		formatResourceRef(TEST_SERVICE_SLUG, name),
-	]),
-) as {
-	readonly SELLING_REASONS: string;
-	readonly CONDITIONS: string;
-	readonly RECORDS: string;
-};
+const TEST_RESOURCE_ID = resourceRefRecord(
+	TEST_SERVICE_SLUG,
+	TEST_RESOURCE_NAMES,
+);
 
 const TEST_RESOURCE_CATALOG: ResourcesResponse = {
 	services: [
@@ -54,13 +48,11 @@ const TEST_RESOURCE_CATALOG: ResourcesResponse = {
 
 const testServiceDescriptor = TEST_RESOURCE_CATALOG.services[0];
 
-export const TEST_SERVICE_ID = TEST_SERVICE_SLUG;
+export const TEST_SERVICE_NAMES: Record<string, string> = {
+	[TEST_SERVICE_SLUG]: "Test Service",
+};
 
 export { TEST_RESOURCE_ID };
-
-export const TEST_SERVICE_NAMES: Record<string, string> = {
-	[TEST_SERVICE_ID]: "Test Service",
-};
 
 export function testServiceResources(): ServiceResource[] {
 	return testServiceDescriptor.resources.map((resource) => ({

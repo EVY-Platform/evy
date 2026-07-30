@@ -79,7 +79,7 @@ extension EVYActionBranch: Codable {
 
 extension EVYActionInvocation: Codable {
   private enum CodingKeys: String, CodingKey {
-    case fn, rowId, field, value, flowId, pageId, query
+    case fn, row_id, field, value, flow_id, page_id, query
     case resource, mode, data, data_path, id_destination
     case filter, changes, changes_path
   }
@@ -94,17 +94,17 @@ extension EVYActionInvocation: Codable {
     case "expand_photo": self = .expandPhoto
     case "delete_photo": self = .deletePhoto
     case "show":
-      self = .show(rowId: try container.decode(String.self, forKey: .rowId))
+      self = .show(rowId: try container.decode(String.self, forKey: .row_id))
     case "expand_text":
-      self = .expandText(rowId: try container.decode(String.self, forKey: .rowId))
+      self = .expandText(rowId: try container.decode(String.self, forKey: .row_id))
     case "highlight_required":
       self = .highlightRequired(field: try container.decode(String.self, forKey: .field))
     case "select":
       self = .select(value: try container.decode(String.self, forKey: .value))
     case "navigate":
       self = .navigate(
-        flowId: try container.decode(String.self, forKey: .flowId),
-        pageId: try container.decode(String.self, forKey: .pageId),
+        flowId: try container.decode(String.self, forKey: .flow_id),
+        pageId: try container.decode(String.self, forKey: .page_id),
         query: try container.decodeIfPresent([String: String].self, forKey: .query) ?? [:]
       )
     case "create":
@@ -170,10 +170,10 @@ extension EVYActionInvocation: Codable {
     case .deletePhoto: try container.encode("delete_photo", forKey: .fn)
     case .show(let rowId):
       try container.encode("show", forKey: .fn)
-      try container.encode(rowId, forKey: .rowId)
+      try container.encode(rowId, forKey: .row_id)
     case .expandText(let rowId):
       try container.encode("expand_text", forKey: .fn)
-      try container.encode(rowId, forKey: .rowId)
+      try container.encode(rowId, forKey: .row_id)
     case .highlightRequired(let field):
       try container.encode("highlight_required", forKey: .fn)
       try container.encode(field, forKey: .field)
@@ -182,8 +182,8 @@ extension EVYActionInvocation: Codable {
       try container.encode(value, forKey: .value)
     case .navigate(let flowId, let pageId, let query):
       try container.encode("navigate", forKey: .fn)
-      try container.encode(flowId, forKey: .flowId)
-      try container.encode(pageId, forKey: .pageId)
+      try container.encode(flowId, forKey: .flow_id)
+      try container.encode(pageId, forKey: .page_id)
       if !query.isEmpty { try container.encode(query, forKey: .query) }
     case .create(let resource, let mode, let id_destination):
       try container.encode("create", forKey: .fn)

@@ -96,6 +96,20 @@ final class EVYDataStore {
     return try context.fetch(descriptor)
   }
 
+  func getFirst(namespace: String, resource: String) throws -> EVYData {
+    var descriptor = FetchDescriptor<EVYData>(
+      predicate: #Predicate {
+        $0.namespace == namespace && $0.resource == resource
+      },
+      sortBy: [SortDescriptor<EVYData>(\.sortIndex)]
+    )
+    descriptor.fetchLimit = 1
+    guard let first = try context.fetch(descriptor).first else {
+      throw EVYDataError.keyNotFound
+    }
+    return first
+  }
+
   /// Manual ModelContext does not autosave; call after mutations.
   func persistChanges() throws {
     try context.save()

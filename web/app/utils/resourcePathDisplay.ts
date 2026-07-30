@@ -1,3 +1,4 @@
+import { splitRefFromPath } from "evy-types/resourceRef";
 import type { ServiceResource } from "../types/resources";
 
 export function resourceDisplayNames(
@@ -12,13 +13,11 @@ export function formatResourcePathForDisplay(
 	variablePath: string,
 	resourceNamesByRef: Map<string, string>,
 ): string {
-	const segments = variablePath.split(".");
-	if (segments.length >= 2) {
-		const ref = `${segments[0]}.${segments[1]}`;
-		const resourceName = resourceNamesByRef.get(ref);
+	const split = splitRefFromPath(variablePath);
+	if (split) {
+		const resourceName = resourceNamesByRef.get(split.ref);
 		if (resourceName) {
-			const rest = segments.slice(2).join(".");
-			return rest ? `${resourceName}.${rest}` : resourceName;
+			return split.rest ? `${resourceName}.${split.rest}` : resourceName;
 		}
 	}
 

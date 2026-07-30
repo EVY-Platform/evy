@@ -493,8 +493,7 @@ extension EVY {
     }
     if let namespace = try? EVYResourceRef.serviceOf(rootVariable) {
       for store in syncedStores() {
-        let rows = (try? store.getAll(namespace: namespace, resource: rootVariable)) ?? []
-        if let matched = rows.first {
+        if let matched = try? store.getFirst(namespace: namespace, resource: rootVariable) {
           return (matched, store)
         }
       }

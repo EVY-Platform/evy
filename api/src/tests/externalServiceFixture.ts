@@ -1,5 +1,5 @@
 import type { ResourcesResponse } from "evy-types";
-import { formatResourceRef } from "evy-types/resourceRef";
+import { formatResourceRef, resourceRefRecord } from "evy-types/resourceRef";
 
 export const EXTERNAL_TEST_SERVICE_ID = "test_svc" as const;
 
@@ -13,18 +13,10 @@ const EXTERNAL_TEST_RESOURCE_NAMES = {
 	RECORDS: "records",
 } as const;
 
-export const EXTERNAL_TEST_RESOURCE = Object.fromEntries(
-	Object.entries(EXTERNAL_TEST_RESOURCE_NAMES).map(([key, name]) => [
-		key,
-		formatResourceRef(EXTERNAL_TEST_SERVICE_ID, name),
-	]),
-) as {
-	readonly SELLING_REASONS: string;
-	readonly CONDITIONS: string;
-	readonly DURATIONS: string;
-	readonly AREAS: string;
-	readonly RECORDS: string;
-};
+export const EXTERNAL_TEST_RESOURCE = resourceRefRecord(
+	EXTERNAL_TEST_SERVICE_ID,
+	EXTERNAL_TEST_RESOURCE_NAMES,
+);
 
 export const EXTERNAL_TEST_SERVICE_DESCRIPTOR: ResourcesResponse["services"][number] =
 	{

@@ -113,20 +113,6 @@ function generateTypeScript(schema: CoreResourcesSchema): string {
 	);
 	lines.push("");
 
-	// Individual resource constants
-	lines.push("export const EVY_CORE_RESOURCE = {");
-	for (const [plural, meta] of Object.entries(resources)) {
-		const key = resourceKey(plural);
-		const singular = meta.singular;
-		const comment =
-			singular !== plural
-				? ` // singular: ${JSON.stringify(singular)}`
-				: "";
-		lines.push(`\t${key}: ${JSON.stringify(plural)},${comment}`);
-	}
-	lines.push("} as const;");
-	lines.push("");
-
 	lines.push("export const EVY_CORE_RESOURCE_REF = {");
 	for (const [plural] of Object.entries(resources)) {
 		const key = resourceKey(plural);

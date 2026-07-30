@@ -326,10 +326,6 @@ export function validateConfigSemantic(
 	}
 }
 
-function tableNameToVariable(tableName: string): string {
-	return tableName;
-}
-
 function getPropSchema(
 	def: { properties?: Record<string, JsonSchemaProp> },
 	key: string,
@@ -387,12 +383,6 @@ function buildNumberColumn(dbCol: string): string {
 	return `numeric("${dbCol}", { precision: 28, scale: 10, mode: "number" })`;
 }
 
-/** `#/$defs/Foo` -> `Foo`, for local refs only. */
-function localDefName(ref: string | undefined): string | null {
-	const match = /^#\/\$defs\/([A-Za-z0-9_]+)$/.exec(ref ?? "");
-	return match?.[1] ?? null;
-}
-
 const schemaFileCache = new Map<string, JsonSchema>();
 
 export async function loadSchemaRefCache(): Promise<void> {
@@ -433,10 +423,6 @@ export function resolveJsonbTypeAnnotation(ref: string | undefined): string {
 			return "UI_Flow";
 		case "../common/json.schema.json#/$defs/JSONValue":
 			return 'DATA_PRIMITIVE["data"]';
-	}
-	const local = localDefName(ref);
-	if (local) {
-		return local;
 	}
 	const externalMatch = /#\/\$defs\/([A-Za-z0-9_]+)$/.exec(ref);
 	if (externalMatch?.[1]) {
@@ -670,7 +656,7 @@ async function main(): Promise<void> {
 		const def = defs[defKey];
 		if (!def?.properties) continue;
 
-		const varName = tableNameToVariable(tableConfig.tableName);
+		const varName = tableConfig.tableName;
 		lines.push(
 			`export const ${varName} = pgTable(`,
 			`	"${tableConfig.tableName}",`,
@@ -714,14 +700,14 @@ async function main(): Promise<void> {
 	for (const [fromKey, rels] of oneToManyByFrom) {
 		const fromTable = config.tables?.[fromKey];
 		if (!fromTable) continue;
-		const fromVar = tableNameToVariable(fromTable.tableName);
+		const fromVar = fromTable.tableName;
 		lines.push(
 			`export const ${fromVar}Relations = relations(${fromVar}, ({ many }) => ({`,
 		);
 		for (const rel of rels) {
 			const toTable = config.tables?.[rel.to];
 			if (!toTable) continue;
-			const toVar = tableNameToVariable(toTable.tableName);
+			const toVar = toTable.tableName;
 			lines.push(`	${rel.relationName}: many(${toVar}),`);
 		}
 		lines.push("}));");
@@ -738,7 +724,7 @@ async function main(): Promise<void> {
 	for (const [fromKey, rels] of manyToOneByFrom) {
 		const fromTable = config.tables?.[fromKey];
 		if (!fromTable) continue;
-		const fromVar = tableNameToVariable(fromTable.tableName);
+		const fromVar = fromTable.tableName;
 		const exportName = `${fromVar}Relations`;
 		const bodyLines: string[] = [];
 		for (const rel of rels) {
@@ -748,7 +734,7 @@ async function main(): Promise<void> {
 			if (!toTable || field === undefined || reference === undefined) {
 				continue;
 			}
-			const toVar = tableNameToVariable(toTable.tableName);
+			const toVar = toTable.tableName;
 			bodyLines.push(
 				`		${rel.relationName}: one(${toVar}, {`,
 				`			fields: [${fromVar}.${field}],`,

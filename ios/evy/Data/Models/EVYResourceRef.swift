@@ -12,7 +12,11 @@ enum EVYResourceRefError: Error {
 enum EVYResourceRef {
   private static let resourceRefPattern =
     /^[a-z][a-z0-9_-]*\.[a-z][a-z0-9_-]*$/
-  private static let reservedServiceSlugs: Set<String> = ["local", "cache", "draft"]
+  private static let reservedServiceSlugs: Set<String> = [
+    EVYNamespace.local,
+    EVYNamespace.cache,
+    EVYNamespace.draft,
+  ]
 
   static func isReservedService(_ slug: String) -> Bool {
     reservedServiceSlugs.contains(slug)
@@ -42,8 +46,23 @@ enum EVYResourceRef {
     try parse(ref).service
   }
 
+  static func resourceOf(_ ref: String) throws -> String {
+    try parse(ref).resource
+  }
+
   static func isValid(_ ref: String) -> Bool {
     (try? parse(ref)) != nil
+  }
+
+  static func cacheScopeCacheKey(for pathSegments: [String]) -> String? {
+    if let split = split(pathSegments: pathSegments) {
+      return (try? resourceOf(split.ref)) ?? split.ref
+    }
+    guard let first = pathSegments.first, !first.isEmpty else { return nil }
+    if isValid(first) {
+      return (try? resourceOf(first)) ?? first
+    }
+    return first
   }
 }
 

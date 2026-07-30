@@ -7,7 +7,10 @@ import {
 	parseResourceRef,
 	RESERVED_SERVICE_SLUGS,
 	ResourceRefError,
+	resourceOfRef,
+	resourceRefRecord,
 	serviceOfRef,
+	splitRefFromPath,
 } from "../types/resourceRef";
 
 describe("resourceRef", () => {
@@ -21,12 +24,33 @@ describe("resourceRef", () => {
 			resource: "messages",
 		});
 		expect(serviceOfRef("evy.flows")).toBe("evy");
+		expect(resourceOfRef("evy.flows")).toBe("flows");
 	});
 
 	test("formatResourceRef joins segments", () => {
 		expect(formatResourceRef("marketplace", "items")).toBe(
 			"marketplace.items",
 		);
+	});
+
+	test("splitRefFromPath extracts a leading ref", () => {
+		expect(splitRefFromPath("marketplace.items.price")).toEqual({
+			ref: "marketplace.items",
+			rest: "price",
+		});
+		expect(splitRefFromPath("items")).toBeNull();
+	});
+
+	test("resourceRefRecord builds keyed refs", () => {
+		expect(
+			resourceRefRecord("test_service", {
+				ITEMS: "items",
+				ORDERS: "orders",
+			}),
+		).toEqual({
+			ITEMS: "test_service.items",
+			ORDERS: "test_service.orders",
+		});
 	});
 
 	test("rejects bare resource slug without service prefix", () => {

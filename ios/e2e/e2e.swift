@@ -30,13 +30,13 @@ func e2eActionBranch(_ callSyntax: String) -> Any {
   case "close", "select_photo", "expand_photo", "delete_photo":
     return ["fn": name]
   case "show", "expand_text":
-    return ["fn": name, "rowId": args.first ?? ""]
+    return ["fn": name, "row_id": args.first ?? ""]
   case "highlight_required":
     return ["fn": name, "field": args.first ?? ""]
   case "select":
     return ["fn": name, "value": args.first ?? ""]
   case "navigate":
-    var out: [String: Any] = ["fn": "navigate", "flowId": args[0], "pageId": args[1]]
+    var out: [String: Any] = ["fn": "navigate", "flow_id": args[0], "page_id": args[1]]
     if args.count > 2, let query = e2ePlainObject(args[2]), !query.isEmpty {
       out["query"] = query
     }

@@ -318,18 +318,20 @@ private func _resolveBindingRoot(
     return (try match.draft.decoded(), match.remainingProps)
   }
 
-  if let scopeId = scope.cacheScopeId {
-    if let cachedRow = try? EVY.cacheStore.get(
-      namespace: EVYNamespace.cache, resource: scopeId, id: firstProp)
-    {
-      return (try cachedRow.decoded(), remainingProps)
-    }
-    if let split = EVYResourceRef.split(pathSegments: splitProps),
-      let cachedRow = try? EVY.cacheStore.get(
-        namespace: EVYNamespace.cache, resource: scopeId, id: split.ref)
-    {
-      return (try cachedRow.decoded(), split.remaining)
-    }
+  if let scopeId = scope.cacheScopeId,
+    let cacheKey = EVYResourceRef.cacheScopeCacheKey(for: splitProps),
+    let cachedRow = try? EVY.cacheStore.get(
+      namespace: EVYNamespace.cache, resource: scopeId, id: cacheKey)
+  {
+    let remaining: [String] =
+      if let split = EVYResourceRef.split(pathSegments: splitProps) {
+        split.remaining
+      } else if splitProps.first == cacheKey {
+        Array(splitProps.dropFirst())
+      } else {
+        remainingProps
+      }
+    return (try cachedRow.decoded(), remaining)
   }
 
   let json: EVYJson
