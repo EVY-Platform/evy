@@ -1,4 +1,3 @@
-import type { DATA_EVY_Flow, DATA_EVY_Page } from "evy-types";
 import { procedureResultAttributes } from "evy-types/procedures";
 import { serviceOfRef } from "evy-types/resourceRef";
 import {
@@ -10,17 +9,11 @@ import type {
 	ServiceResource,
 } from "../types/resources";
 import { ACTION_FUNCTIONS } from "./actionBranch";
-import {
-	findInterpolationRegions,
-	isRangeInsideRegions,
-} from "./interpolationRegions";
 import { ROW_ATTRIBUTE_STATIC_NAMES } from "./rowConstants";
 import { parseApiSourceMethod } from "./sourceBinding";
 import { unwrapOptionalBraces } from "./unwrapBraces";
 
 type IdCandidateCategory =
-	| "Flow"
-	| "Page"
 	| "Resource"
 	| "Variable"
 	| "Service"
@@ -33,34 +26,6 @@ export type IdCandidate = {
 	category: IdCandidateCategory;
 	insertMode?: "text";
 };
-
-export type IdDisplayPart =
-	| {
-			type: "text";
-			text: string;
-			start: number;
-			end: number;
-	  }
-	| {
-			type: "candidate";
-			rawId: string;
-			displayName: string;
-			start: number;
-			end: number;
-	  }
-	| {
-			type: "attribute";
-			text: string;
-			start: number;
-			end: number;
-	  };
-
-/**
- * Where a value's ids are meaningful. "text" is an EVY text attribute, which
- * only interpolates inside `{…}`; "expression" is a whole-value expression
- * (bindings, conditions, action arguments) where bare ids resolve anywhere.
- */
-export type IdDisplayScope = "expression" | "text";
 
 type SuggestionFilterContext =
 	| { type: "root"; query: string }
@@ -91,46 +56,35 @@ const functionCandidateNames = [
 	"formatAddressLine2",
 ];
 
-function isIdBoundaryCharacter(character: string | undefined): boolean {
-	return !character || !/[a-zA-Z0-9_-]/.test(character);
-}
-
 function isTextCandidate(candidate: IdCandidate): boolean {
 	return candidate.insertMode === "text";
-}
-
-function isDisplayCandidate(candidate: IdCandidate): boolean {
-	return (
-		!isTextCandidate(candidate) &&
-		(candidate.category === "Resource" ||
-			candidate.category === "Service" ||
-			candidate.category === "Flow" ||
-			candidate.category === "Page")
-	);
 }
 
 export function getCandidateInsertValue(candidate: IdCandidate): string {
 	return isTextCandidate(candidate) ? candidate.name : candidate.id;
 }
 
+function getLastDottedSegment(value: string): string {
+	const lastDot = value.lastIndexOf(".");
+	return lastDot >= 0 ? value.slice(lastDot + 1) : value;
+}
+
+function candidateMatchesQuery(
+	candidate: IdCandidate,
+	normalizedQuery: string,
+): boolean {
+	const insertValue = getCandidateInsertValue(candidate).toLowerCase();
+	const lastSegment = getLastDottedSegment(insertValue);
+	return (
+		insertValue.startsWith(normalizedQuery) ||
+		lastSegment.startsWith(normalizedQuery)
+	);
+}
+
 export function buildIdCandidates(
-	flowsById: Record<string, DATA_EVY_Flow>,
-	pagesById: Record<string, DATA_EVY_Page>,
 	serviceResources: ServiceResource[],
 	serviceNamesById: Map<string, string>,
 ): IdCandidate[] {
-	const flowCandidates = Object.values(flowsById).map((flow) => ({
-		id: flow.id,
-		name: flow.name,
-		category: "Flow" as const,
-	}));
-
-	const pageCandidates = Object.values(pagesById).map((page) => ({
-		id: page.id,
-		name: page.name,
-		category: "Page" as const,
-	}));
-
 	const serviceCandidates = Array.from(
 		new Set(serviceResources.map((resource) => serviceOfRef(resource.id))),
 	).map((serviceId) => ({
@@ -145,12 +99,7 @@ export function buildIdCandidates(
 		category: "Resource" as const,
 	}));
 
-	return [
-		...flowCandidates,
-		...pageCandidates,
-		...serviceCandidates,
-		...resourceCandidates,
-	];
+	return [...serviceCandidates, ...resourceCandidates];
 }
 
 export function buildAttributeCandidates(
@@ -166,17 +115,17 @@ export function buildAttributeCandidates(
 		}));
 }
 
-function getCandidateNameAndCategoryKey(candidate: IdCandidate): string {
-	return `${candidate.category}:${candidate.name}`;
+function getCandidateInsertValueKey(candidate: IdCandidate): string {
+	return `${candidate.category}:${getCandidateInsertValue(candidate)}`;
 }
 
-function dedupeCandidatesByNameAndCategory(
+function dedupeCandidatesByInsertValueAndCategory(
 	candidates: IdCandidate[],
 ): IdCandidate[] {
 	const seenCandidateKeys = new Set<string>();
 
 	return candidates.filter((candidate) => {
-		const candidateKey = getCandidateNameAndCategoryKey(candidate);
+		const candidateKey = getCandidateInsertValueKey(candidate);
 		if (seenCandidateKeys.has(candidateKey)) return false;
 
 		seenCandidateKeys.add(candidateKey);
@@ -297,11 +246,11 @@ export function filterCandidates(
 	const normalizedQuery = query.trim().toLowerCase();
 	const matchingCandidates = normalizedQuery
 		? candidates.filter((candidate) =>
-				candidate.name.toLowerCase().startsWith(normalizedQuery),
+				candidateMatchesQuery(candidate, normalizedQuery),
 			)
 		: candidates;
 
-	return dedupeCandidatesByNameAndCategory(matchingCandidates).slice(
+	return dedupeCandidatesByInsertValueAndCategory(matchingCandidates).slice(
 		0,
 		MAX_FILTERED_CANDIDATES,
 	);
@@ -333,127 +282,4 @@ export function filterCandidatesForSuggestionContext(
 	}
 
 	return [];
-}
-
-function buildDisplayCandidates(candidates: IdCandidate[]): IdCandidate[] {
-	return candidates
-		.filter(isDisplayCandidate)
-		.toSorted((a, b) => b.id.length - a.id.length);
-}
-
-export function getIdDisplayText(
-	value: string,
-	candidates: IdCandidate[],
-): string {
-	return getIdDisplayParts(value, candidates)
-		.map((part) =>
-			part.type === "candidate" ? part.displayName : part.text,
-		)
-		.join("");
-}
-
-export function getIdDisplayParts(
-	value: string,
-	candidates: IdCandidate[],
-	scope: IdDisplayScope = "expression",
-): IdDisplayPart[] {
-	const displayCandidates = buildDisplayCandidates(candidates);
-	// Text attributes only interpolate inside braces, so an id outside them is
-	// a prose word that happens to match (e.g. "No messages found").
-	const interpolationRegions =
-		scope === "text" ? findInterpolationRegions(value) : null;
-	const parts: IdDisplayPart[] = [];
-	let textStart = 0;
-	let index = 0;
-
-	while (index < value.length) {
-		// Candidate-independent, so it gates the whole position rather than
-		// being re-tested per candidate.
-		if (!isIdBoundaryCharacter(value[index - 1])) {
-			index++;
-			continue;
-		}
-
-		// Ordered cheapest-first: startsWith rejects nearly every candidate
-		// before the region scan runs.
-		const candidate = displayCandidates.find(
-			(displayCandidate) =>
-				value.startsWith(displayCandidate.id, index) &&
-				isIdBoundaryCharacter(
-					value[index + displayCandidate.id.length],
-				) &&
-				(interpolationRegions === null ||
-					isRangeInsideRegions(
-						interpolationRegions,
-						index,
-						index + displayCandidate.id.length,
-					)),
-		);
-
-		if (!candidate) {
-			index++;
-			continue;
-		}
-
-		if (textStart < index) {
-			parts.push({
-				type: "text",
-				text: value.slice(textStart, index),
-				start: textStart,
-				end: index,
-			});
-		}
-
-		const end = index + candidate.id.length;
-		parts.push({
-			type: "candidate",
-			rawId: candidate.id,
-			displayName: candidate.name,
-			start: index,
-			end,
-		});
-		index = end;
-		textStart = end;
-
-		while (value[index] === ".") {
-			const separatorStart = index;
-			const attributeStart = separatorStart + 1;
-			let attributeEnd = attributeStart;
-			while (
-				attributeEnd < value.length &&
-				/[a-zA-Z0-9_$-]/.test(value[attributeEnd])
-			) {
-				attributeEnd++;
-			}
-			if (attributeEnd === attributeStart) break;
-
-			parts.push({
-				type: "text",
-				text: value.slice(separatorStart, attributeStart),
-				start: separatorStart,
-				end: attributeStart,
-			});
-			parts.push({
-				type: "attribute",
-				text: value.slice(attributeStart, attributeEnd),
-				start: attributeStart,
-				end: attributeEnd,
-			});
-			index = attributeEnd;
-			textStart = attributeEnd;
-		}
-	}
-
-	if (textStart < value.length) {
-		parts.push({
-			type: "text",
-			text: value.slice(textStart),
-			start: textStart,
-			end: value.length,
-		});
-	}
-
-	return parts.length > 0
-		? parts
-		: [{ type: "text", text: value, start: 0, end: value.length }];
 }

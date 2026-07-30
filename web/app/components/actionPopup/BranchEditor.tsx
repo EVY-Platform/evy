@@ -19,7 +19,7 @@ import {
 import { shouldOfferCreateSubmitWithFlow } from "../../utils/createDraftSignals";
 import type { IdCandidate } from "../../utils/idCandidates";
 import { toResourceOptions } from "../../utils/serviceResourceOptions";
-import { BuilderAssist } from "../BuilderAssist";
+import { AutocompleteSearch } from "../AutocompleteSearch";
 import { type PopoverOption, PopoverSelect } from "../PopoverSelect";
 import { BRANCH_FUNCTION_OPTIONS } from "./actionPopupConstants";
 
@@ -222,7 +222,7 @@ export function BranchEditor({
 			))}
 
 			{selectedFunction === "navigate" && args[0] && args[1] && (
-				<BuilderAssist
+				<AutocompleteSearch
 					ariaLabel={`${branchId}-navigate-query`}
 					value={args[2] ?? ""}
 					onChange={(v) => handleArgChange(2, v)}
@@ -243,7 +243,7 @@ export function BranchEditor({
 					</p>
 				) : (
 					<>
-						<BuilderAssist
+						<AutocompleteSearch
 							ariaLabel={`${branchId}-create-data`}
 							value={args[1] ?? ""}
 							onChange={(v) => handleArgChange(1, v)}
@@ -253,7 +253,7 @@ export function BranchEditor({
 							}
 							placeholder="Data path or inline object, e.g. pickup_address"
 						/>
-						<BuilderAssist
+						<AutocompleteSearch
 							ariaLabel={`${branchId}-create-id-destination`}
 							value={args[2] ?? ""}
 							onChange={(v) => handleArgChange(2, v)}
@@ -267,7 +267,7 @@ export function BranchEditor({
 				))}
 
 			{selectedFunction === "select" && (
-				<BuilderAssist
+				<AutocompleteSearch
 					ariaLabel={`${branchId}-select-value`}
 					value={args[0] ?? "$datum"}
 					onChange={(v) => handleArgChange(0, v)}
@@ -309,7 +309,7 @@ export function BranchEditor({
 						}}
 					/>
 					{!updateUsesDraftMode && (
-						<BuilderAssist
+						<AutocompleteSearch
 							ariaLabel={`${branchId}-update-filter`}
 							value={args[1] ?? ""}
 							onChange={(v) => handleArgChange(1, v)}
@@ -321,7 +321,7 @@ export function BranchEditor({
 							multiline
 						/>
 					)}
-					<BuilderAssist
+					<AutocompleteSearch
 						ariaLabel={`${branchId}-update-changes`}
 						value={args[2] ?? ""}
 						onChange={(v) => handleArgChange(2, v)}

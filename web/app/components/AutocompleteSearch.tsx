@@ -11,17 +11,9 @@ import { createPortal } from "react-dom";
 import { useAnchoredDropdownPosition } from "../hooks/useAnchoredDropdownPosition";
 import { useOutsideClick } from "../hooks/useOutsideClick";
 import {
-	buildTokenHtml,
-	getRawCursorIndexFromEditable,
-	readRawValueFromNode,
-	setEditableCursorAtRawIndex,
-} from "../utils/contentEditableTokens";
-import {
 	filterCandidatesForSuggestionContext,
 	getCandidateInsertValue,
-	getIdDisplayParts,
 	type IdCandidate,
-	type IdDisplayScope,
 } from "../utils/idCandidates";
 import {
 	findSuggestionContextAtCursor,
@@ -30,7 +22,7 @@ import {
 	type SuggestionContext,
 } from "../utils/idTokenSearch";
 
-type BuilderAssistProps = {
+type AutocompleteSearchProps = {
 	id?: string;
 	label?: string;
 	value: string;
@@ -40,11 +32,10 @@ type BuilderAssistProps = {
 	ariaLabel?: string;
 	labelClassName?: string;
 	multiline?: boolean;
-	scope?: IdDisplayScope;
 	getAttributeCandidatesForQualifier?: (qualifier: string) => IdCandidate[];
 };
 
-export function BuilderAssist({
+export function AutocompleteSearch({
 	id,
 	label,
 	value,
@@ -54,16 +45,16 @@ export function BuilderAssist({
 	ariaLabel,
 	labelClassName,
 	multiline,
-	scope = "expression",
 	getAttributeCandidatesForQualifier,
-}: BuilderAssistProps) {
+}: AutocompleteSearchProps) {
 	const generatedId = useId();
-	const inputId = id ?? `builder-assist-${generatedId}`;
+	const inputId = id ?? `autocomplete-search-${generatedId}`;
 	const listboxId = `${inputId}-listbox`;
 	const fieldRef = useRef<HTMLDivElement>(null);
-	const editableRef = useRef<HTMLDivElement>(null);
+	const fieldElementRef = useRef<
+		HTMLInputElement | HTMLTextAreaElement | null
+	>(null);
 	const pendingFocusCursorRef = useRef<number | null>(null);
-	const focusedTokenElRef = useRef<HTMLElement | null>(null);
 	const [isFieldFocused, setIsFieldFocused] = useState(false);
 	const [isOpen, setIsOpen] = useState(false);
 	const [activeToken, setActiveToken] = useState<IdSearchToken | null>(null);
@@ -78,11 +69,6 @@ export function BuilderAssist({
 		updatePosition: updateDropdownPosition,
 	} = useAnchoredDropdownPosition(fieldRef);
 	const isSelectingOptionRef = useRef(false);
-
-	const displayParts = useMemo(
-		() => getIdDisplayParts(value, candidates, scope),
-		[value, candidates, scope],
-	);
 
 	const filteredCandidates = useMemo(() => {
 		const query = activeTokenQuery ?? activeToken?.text ?? "";
@@ -140,35 +126,16 @@ export function BuilderAssist({
 		[updateDropdownPosition],
 	);
 
-	const commitCandidateInInterpolatedEditable = useCallback(
+	const commitCandidate = useCallback(
 		(candidate: IdCandidate) => {
-			if (!editableRef.current) return;
+			const element = fieldElementRef.current;
+			if (!element) return;
 			const insertValue = getCandidateInsertValue(candidate);
-
-			if (focusedTokenElRef.current) {
-				if (candidate.insertMode === "text") {
-					focusedTokenElRef.current.replaceWith(
-						document.createTextNode(insertValue),
-					);
-				} else {
-					focusedTokenElRef.current.dataset.value = candidate.id;
-					focusedTokenElRef.current.textContent = candidate.name;
-				}
-				focusedTokenElRef.current = null;
-				const rawValue = readRawValueFromNode(editableRef.current);
-				onChange(rawValue);
-				closeDropdown();
-				return;
-			}
-
-			const rawValue = readRawValueFromNode(editableRef.current);
 			const tokenToReplace = activeToken;
-			const cursorIndex = getRawCursorIndexFromEditable(
-				editableRef.current,
-			);
+			const cursorIndex = element.selectionStart ?? value.length;
 			const nextValue = tokenToReplace
-				? replaceSearchToken(rawValue, tokenToReplace, insertValue)
-				: `${rawValue.slice(0, cursorIndex)}${insertValue}${rawValue.slice(cursorIndex)}`;
+				? replaceSearchToken(value, tokenToReplace, insertValue)
+				: `${value.slice(0, cursorIndex)}${insertValue}${value.slice(cursorIndex)}`;
 			const nextCursorIndex = tokenToReplace
 				? tokenToReplace.start + insertValue.length
 				: cursorIndex + insertValue.length;
@@ -179,7 +146,7 @@ export function BuilderAssist({
 			setActiveTokenQuery(null);
 			closeDropdown();
 		},
-		[activeToken, closeDropdown, onChange],
+		[activeToken, closeDropdown, onChange, value],
 	);
 
 	useEffect(() => {
@@ -193,25 +160,16 @@ export function BuilderAssist({
 	);
 	useOutsideClick(isOpen, isInsideField, closeDropdown);
 
+	// biome-ignore lint/correctness/useExhaustiveDependencies: caret placement runs after programmatic value updates
 	useLayoutEffect(() => {
 		const pendingFocus = pendingFocusCursorRef.current;
-		const editable = editableRef.current;
-		if (!editable) return;
+		const element = fieldElementRef.current;
+		if (!element || pendingFocus === null) return;
 
-		// While the user is actively typing (focused, no programmatic caret
-		// pending), the browser owns the DOM; re-setting innerHTML resets the caret.
-		if (pendingFocus === null && document.activeElement === editable)
-			return;
-		if (readRawValueFromNode(editable) === value && pendingFocus === null) {
-			return;
-		}
-		editable.innerHTML = buildTokenHtml(displayParts);
-		if (pendingFocus !== null) {
-			pendingFocusCursorRef.current = null;
-			editable.focus();
-			setEditableCursorAtRawIndex(editable, pendingFocus);
-		}
-	}, [value, displayParts]);
+		pendingFocusCursorRef.current = null;
+		element.focus();
+		element.setSelectionRange(pendingFocus, pendingFocus);
+	}, [value]);
 
 	const handleListNavigationKey = useCallback(
 		(event: React.KeyboardEvent): boolean => {
@@ -241,7 +199,7 @@ export function BuilderAssist({
 				const candidate = filteredCandidates[highlightedIndex];
 				if (!candidate) return;
 				event.preventDefault();
-				commitCandidateInInterpolatedEditable(candidate);
+				commitCandidate(candidate);
 				return;
 			}
 
@@ -253,33 +211,27 @@ export function BuilderAssist({
 		[
 			handleListNavigationKey,
 			closeDropdown,
-			commitCandidateInInterpolatedEditable,
+			commitCandidate,
 			filteredCandidates,
 			highlightedIndex,
 		],
 	);
 
-	const handleEditableFocus = useCallback(() => {
+	const handleInputFocus = useCallback(() => {
 		setIsFieldFocused(true);
 		updateDropdownPosition();
 	}, [updateDropdownPosition]);
 
-	const handleEditableBlur = useCallback(() => {
+	const handleInputBlur = useCallback(() => {
 		if (isSelectingOptionRef.current) return;
 		setIsFieldFocused(false);
-		if (editableRef.current) {
-			onChange(readRawValueFromNode(editableRef.current));
-		}
 		closeDropdown();
-	}, [closeDropdown, onChange]);
+	}, [closeDropdown]);
 
-	const handleEditableInput = useCallback(
-		(_event: React.FormEvent<HTMLDivElement>) => {
-			if (!editableRef.current) return;
-			const nextValue = readRawValueFromNode(editableRef.current);
-			const cursorIndex = getRawCursorIndexFromEditable(
-				editableRef.current,
-			);
+	const handleInputChange = useCallback(
+		(event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+			const nextValue = event.target.value;
+			const cursorIndex = event.target.selectionStart ?? nextValue.length;
 			pendingFocusCursorRef.current = cursorIndex;
 			onChange(nextValue);
 			updateActiveTokenFromValue(nextValue, cursorIndex);
@@ -287,79 +239,50 @@ export function BuilderAssist({
 		[onChange, updateActiveTokenFromValue],
 	);
 
-	const handleEditableClick = useCallback(
-		(event: React.MouseEvent<HTMLDivElement>) => {
-			const target = event.target;
-			if (!(target instanceof HTMLElement)) return;
-			const tokenEl = target.closest<HTMLElement>(
-				".evy-id-autocomplete-inline-token",
-			);
-			// Only real resource chips (with data-value) are clickable for replacement.
-			// Attribute spans share the class for styling but have no data-value.
-			if (!tokenEl?.dataset.value) {
-				focusedTokenElRef.current = null;
-				if (!editableRef.current) {
-					closeDropdown();
-					return;
-				}
-				updateActiveTokenFromValue(
-					readRawValueFromNode(editableRef.current),
-					getRawCursorIndexFromEditable(editableRef.current),
-				);
-				return;
-			}
-			focusedTokenElRef.current = tokenEl;
-			setActiveTokenQuery(tokenEl.textContent ?? "");
-			setActiveToken(null);
-			setActiveSuggestionContext({
-				type: "root",
-				trigger: "{",
-				token: null,
-			});
-			setIsOpen(true);
-			setActiveIndex(0);
-			updateDropdownPosition();
+	const handleInputClick = useCallback(
+		(event: React.MouseEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+			const cursorIndex =
+				event.currentTarget.selectionStart ?? value.length;
+			updateActiveTokenFromValue(value, cursorIndex);
 		},
-		[closeDropdown, updateActiveTokenFromValue, updateDropdownPosition],
+		[updateActiveTokenFromValue, value],
 	);
 
-	const handleEditableCursorChange = useCallback(
-		(event: React.KeyboardEvent<HTMLDivElement>) => {
-			// ArrowDown/ArrowUp control dropdown list navigation (handled in keyDown);
-			// skip them here so we don't reset the highlighted candidate index.
+	const handleInputCursorChange = useCallback(
+		(
+			event: React.KeyboardEvent<HTMLInputElement | HTMLTextAreaElement>,
+		) => {
 			if (event.key === "ArrowDown" || event.key === "ArrowUp") return;
-			if (!editableRef.current) return;
-			const rawValue = readRawValueFromNode(editableRef.current);
-			const cursorIndex = getRawCursorIndexFromEditable(
-				editableRef.current,
-			);
-			updateActiveTokenFromValue(rawValue, cursorIndex);
+			const cursorIndex =
+				event.currentTarget.selectionStart ?? value.length;
+			updateActiveTokenFromValue(value, cursorIndex);
 		},
-		[updateActiveTokenFromValue],
+		[updateActiveTokenFromValue, value],
 	);
 
 	const optionElements = filteredCandidates.map((candidate, index) => {
 		const optionId = `${listboxId}-option-${index}`;
+		const insertValue = getCandidateInsertValue(candidate);
 		return (
 			<button
 				key={`${candidate.category}-${candidate.id}`}
 				id={optionId}
 				type="button"
 				role="option"
-				aria-label={candidate.name}
+				aria-label={insertValue}
 				aria-selected={highlightedIndex === index}
 				className="evy-id-autocomplete-option"
 				onMouseDown={(event) => {
 					event.preventDefault();
 					isSelectingOptionRef.current = true;
-					commitCandidateInInterpolatedEditable(candidate);
+					commitCandidate(candidate);
 					queueMicrotask(() => {
 						isSelectingOptionRef.current = false;
 					});
 				}}
 			>
 				<span className="evy-id-autocomplete-option-name">
-					{candidate.name}
+					{insertValue}
 				</span>
 				<span className="evy-id-autocomplete-option-label">
 					{candidate.category.toLowerCase()}
@@ -382,6 +305,28 @@ export function BuilderAssist({
 		filteredCandidates.length > 0 &&
 		dropdownPosition;
 
+	const inputProps = {
+		id: inputId,
+		className: "evy-id-autocomplete-input",
+		value,
+		placeholder,
+		onFocus: handleInputFocus,
+		onBlur: handleInputBlur,
+		onChange: handleInputChange,
+		onClick: handleInputClick,
+		onKeyDown: handleAutocompleteKeyDown,
+		onKeyUp: handleInputCursorChange,
+		"aria-label": ariaLabel ?? label,
+		"aria-autocomplete": "list" as const,
+		"aria-controls": listboxId,
+		"aria-expanded": isOpen,
+		"aria-activedescendant": activeDescendant,
+		role: "combobox" as const,
+		ref: (element: HTMLInputElement | HTMLTextAreaElement | null) => {
+			fieldElementRef.current = element;
+		},
+	};
+
 	return (
 		<div className="evy-id-autocomplete-root">
 			{label && (
@@ -393,27 +338,11 @@ export function BuilderAssist({
 				ref={fieldRef}
 				className={`evy-id-autocomplete-field${multiline ? " evy-id-autocomplete-field--multiline" : ""}`}
 			>
-				<div
-					ref={editableRef}
-					id={inputId}
-					className={`evy-id-autocomplete-inline-display${value.length === 0 ? " evy-id-autocomplete-inline-display--empty" : ""}`}
-					data-placeholder={placeholder}
-					tabIndex={0}
-					contentEditable
-					suppressContentEditableWarning
-					onFocus={handleEditableFocus}
-					onBlur={handleEditableBlur}
-					onInput={handleEditableInput}
-					onClick={handleEditableClick}
-					onKeyDown={handleAutocompleteKeyDown}
-					onKeyUp={handleEditableCursorChange}
-					aria-label={ariaLabel ?? label}
-					aria-autocomplete="list"
-					aria-controls={listboxId}
-					aria-expanded={isOpen}
-					aria-activedescendant={activeDescendant}
-					role="combobox"
-				/>
+				{multiline ? (
+					<textarea {...inputProps} />
+				) : (
+					<input type="text" {...inputProps} />
+				)}
 			</div>
 			{shouldRenderDropdown &&
 				createPortal(

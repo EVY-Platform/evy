@@ -22,7 +22,6 @@ import {
 	buildRowAttributeCandidates,
 	createGetAttributeCandidatesForQualifier,
 	type IdCandidate,
-	type IdDisplayScope,
 } from "../utils/idCandidates";
 import {
 	findPageReferences,
@@ -30,7 +29,7 @@ import {
 } from "../utils/pageReferences";
 import { toResourceOptions } from "../utils/serviceResourceOptions";
 import { ActionEditor } from "./ActionEditor";
-import { BuilderAssist } from "./BuilderAssist";
+import { AutocompleteSearch } from "./AutocompleteSearch";
 import { PageInUseDialog } from "./PageInUseDialog";
 import { type PopoverOption, PopoverSelect } from "./PopoverSelect";
 
@@ -44,7 +43,6 @@ function ConfigTextField({
 	labelClassName,
 	fieldClassName = "evy-mb-2",
 	candidates,
-	scope,
 	getAttributeCandidatesForQualifier,
 }: {
 	id: string;
@@ -52,9 +50,6 @@ function ConfigTextField({
 	value: string;
 	onChange: (next: string) => void;
 	candidates: IdCandidate[];
-	// Required: content fields are EVY text, bindings and conditions are
-	// expressions, and the two resolve ids differently.
-	scope: IdDisplayScope;
 	placeholder?: string;
 	ariaLabel?: string;
 	labelClassName?: string;
@@ -63,7 +58,7 @@ function ConfigTextField({
 }) {
 	return (
 		<div className={fieldClassName}>
-			<BuilderAssist
+			<AutocompleteSearch
 				id={id}
 				label={label}
 				value={value}
@@ -72,7 +67,6 @@ function ConfigTextField({
 				placeholder={placeholder}
 				ariaLabel={ariaLabel}
 				labelClassName={labelClassName}
-				scope={scope}
 				getAttributeCandidatesForQualifier={
 					getAttributeCandidatesForQualifier
 				}
@@ -167,19 +161,14 @@ export function ConfigurationPanel() {
 	const showPageTitleInPanel =
 		Boolean(activePage) && configStack.length === 0;
 
-	const builderAssistCandidates = useMemo(
+	const autocompleteCandidates = useMemo(
 		() => [
-			...buildIdCandidates(
-				flowsById,
-				pagesById,
-				serviceResources,
-				serviceNamesById,
-			),
+			...buildIdCandidates(serviceResources, serviceNamesById),
 			...buildRowAttributeCandidates(),
 			buildDatumCandidate(),
 			...buildFunctionCandidates(),
 		],
-		[flowsById, pagesById, serviceResources, serviceNamesById],
+		[serviceResources, serviceNamesById],
 	);
 
 	const submitsTargetOptions = useMemo<PopoverOption[]>(
@@ -349,8 +338,7 @@ export function ConfigurationPanel() {
 						onChange={(next) =>
 							updateRowContent(field.name, next, configRow.id)
 						}
-						candidates={builderAssistCandidates}
-						scope="text"
+						candidates={autocompleteCandidates}
 						getAttributeCandidatesForQualifier={
 							getAttributeCandidatesForQualifier
 						}
@@ -437,8 +425,7 @@ export function ConfigurationPanel() {
 						onChange={(next) =>
 							updateRowRoot(field, next, configRow.id)
 						}
-						candidates={builderAssistCandidates}
-						scope="expression"
+						candidates={autocompleteCandidates}
 						getAttributeCandidatesForQualifier={
 							getAttributeCandidatesForQualifier
 						}
@@ -464,8 +451,7 @@ export function ConfigurationPanel() {
 						onChange={(next) =>
 							updateRowRoot("visible", next, configRow.id)
 						}
-						candidates={builderAssistCandidates}
-						scope="expression"
+						candidates={autocompleteCandidates}
 						getAttributeCandidatesForQualifier={
 							getAttributeCandidatesForQualifier
 						}
@@ -482,7 +468,7 @@ export function ConfigurationPanel() {
 			openChildConfiguration,
 			updateRowContent,
 			updateRowRoot,
-			builderAssistCandidates,
+			autocompleteCandidates,
 			resourceAttributeMetadata,
 			serviceResources,
 			rowsById,

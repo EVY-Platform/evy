@@ -52,11 +52,11 @@ test.describe("Row configuration", () => {
 			page.getByRole("button", { name: "Select page Test Page" }),
 		).toBeVisible();
 		await expect(
-			configPanel.getByRole("button", { name: /^Input Row: Input$/ }),
+			configPanel.getByRole("button", { name: /^Input Row: input$/ }),
 		).toBeVisible();
 
 		await configPanel
-			.getByRole("button", { name: /^Input Row: Input$/ })
+			.getByRole("button", { name: /^Input Row: input$/ })
 			.click();
 
 		await expect(configPanel.getByLabel("Page title")).toHaveCount(0);
@@ -65,10 +65,10 @@ test.describe("Row configuration", () => {
 				name: "Configure nested row at depth 1: Input Row",
 			}),
 		).toBeVisible();
-		await expect(configPanel.getByLabel("placeholder")).toHaveText(
+		await expect(configPanel.getByLabel("placeholder")).toHaveValue(
 			"First placeholder",
 		);
-		await expect(configPanel.getByLabel("title")).toHaveText("Input Row");
+		await expect(configPanel.getByLabel("title")).toHaveValue("Input Row");
 	});
 
 	test("should display row configurations in configuration panel", async ({
@@ -104,7 +104,7 @@ test.describe("Row configuration", () => {
 		await subtitleInput.clear();
 		await subtitleInput.fill("Updated subtitle text");
 
-		await expect(subtitleInput).toHaveText("Updated subtitle text");
+		await expect(subtitleInput).toHaveValue("Updated subtitle text");
 	});
 
 	test("should display and edit Source binding in configuration panel", async ({
@@ -129,12 +129,12 @@ test.describe("Row configuration", () => {
 		const configPanel = getConfigPanel(page);
 		const sourceInput = configPanel.getByLabel("Row data source");
 		await expect(sourceInput).toBeVisible();
-		await expect(sourceInput).toHaveText("{initial}");
+		await expect(sourceInput).toHaveValue("{initial}");
 
 		await sourceInput.clear();
 		await sourceInput.fill("{items}");
 
-		await expect(sourceInput).toHaveText("{items}");
+		await expect(sourceInput).toHaveValue("{items}");
 	});
 
 	test("should display and edit no_results text on a Search row in configuration panel", async ({
@@ -162,11 +162,11 @@ test.describe("Row configuration", () => {
 			exact: true,
 		});
 		await expect(noResultsInput).toBeVisible();
-		await expect(noResultsInput).toHaveText("");
+		await expect(noResultsInput).toHaveValue("");
 
 		await noResultsInput.fill("No addresses found");
 
-		await expect(noResultsInput).toHaveText("No addresses found");
+		await expect(noResultsInput).toHaveValue("No addresses found");
 	});
 
 	test("should display InputList format in configuration panel", async ({
@@ -194,12 +194,12 @@ test.describe("Row configuration", () => {
 		const configPanel = getConfigPanel(page);
 		const formatInput = configPanel.getByLabel("format");
 		await expect(formatInput).toBeVisible();
-		await expect(formatInput).toHaveText("{$datum.value}");
+		await expect(formatInput).toHaveValue("{$datum.value}");
 
 		await formatInput.clear();
 		await formatInput.fill("{$datum.label}");
 
-		await expect(formatInput).toHaveText("{$datum.label}");
+		await expect(formatInput).toHaveValue("{$datum.label}");
 	});
 
 	// The declaration is one value, not two: the schema requires a non-empty
@@ -815,9 +815,12 @@ test.describe("Row configuration", () => {
 		await expect(popup).not.toBeVisible();
 
 		await expect(
-			configPanel.getByText("create(item, pickup_address)", {
-				exact: true,
-			}),
+			configPanel.getByText(
+				`create(${TEST_RESOURCE_ID.RECORDS}, pickup_address)`,
+				{
+					exact: true,
+				},
+			),
 		).toBeVisible();
 	});
 
@@ -860,9 +863,12 @@ test.describe("Row configuration", () => {
 		await expect(popup).not.toBeVisible();
 
 		await expect(
-			configPanel.getByText("create(item, submit)", {
-				exact: true,
-			}),
+			configPanel.getByText(
+				`create(${TEST_RESOURCE_ID.RECORDS}, submit)`,
+				{
+					exact: true,
+				},
+			),
 		).toBeVisible();
 	});
 
@@ -917,9 +923,12 @@ test.describe("Row configuration", () => {
 		await expect(popup).not.toBeVisible();
 
 		await expect(
-			configPanel.getByText("create(item, submit)", {
-				exact: true,
-			}),
+			configPanel.getByText(
+				`create(${TEST_RESOURCE_ID.RECORDS}, submit)`,
+				{
+					exact: true,
+				},
+			),
 		).toBeVisible();
 	});
 
@@ -1310,13 +1319,13 @@ test.describe("Row configuration", () => {
 
 		for (let i = 0; i < 11; i++) {
 			const nextButton = configPanel.getByRole("button", {
-				name: /: HorizontalContainer$/,
+				name: /: horizontal_container$/,
 			});
 			await expect(nextButton.first()).toBeVisible();
 			await nextButton.first().click();
 		}
 
-		await configPanel.getByRole("button", { name: /: Input$/ }).click();
+		await configPanel.getByRole("button", { name: /: input$/ }).click();
 
 		const breadcrumbScroll = page.getByTestId("nav-breadcrumb-scroll");
 		await expect(
@@ -1339,7 +1348,7 @@ test.describe("Row configuration", () => {
 
 		await expect(
 			configPanel.getByLabel("title", { exact: true }),
-		).toHaveText("Nest level 7");
+		).toHaveValue("Nest level 7");
 	});
 
 	test("should clear a branch by selecting -- and persist on save", async ({
@@ -1491,11 +1500,11 @@ test.describe("Row configuration", () => {
 		const configPanel = getConfigPanel(page);
 		const initialInput = configPanel.getByLabel("initial");
 		await expect(initialInput).toBeVisible();
-		await expect(initialInput).toHaveText("Default title");
+		await expect(initialInput).toHaveValue("Default title");
 
 		await initialInput.fill("Updated default");
 
-		await expect(initialInput).toHaveText("Updated default");
+		await expect(initialInput).toHaveValue("Updated default");
 	});
 
 	test("selecting Show defaults to the configured row sheet id", async ({
@@ -1686,7 +1695,7 @@ test.describe("Row configuration", () => {
 		const configPanel = getConfigPanel(page);
 		await expect(
 			configPanel.getByLabel("title", { exact: true }),
-		).toHaveText("Dropdown row title");
+		).toHaveValue("Dropdown row title");
 		await expect(
 			configPanel.getByText("Tap", { exact: true }),
 		).toBeVisible();
@@ -1707,7 +1716,7 @@ test.describe("Row configuration", () => {
 		const configPanel = getConfigPanel(page);
 		await expect(
 			configPanel.getByLabel("title", { exact: true }),
-		).toHaveText("Calendar row title");
+		).toHaveValue("Calendar row title");
 		await expect(
 			configPanel.getByText("Tap", { exact: true }),
 		).toBeVisible();

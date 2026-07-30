@@ -73,7 +73,7 @@ export function Modal({
 		const panel = panelRef.current;
 		if (!panel) return;
 
-		// Anchored menus (PopoverSelect, BuilderAssist) render into their own
+		// Anchored menus (PopoverSelect, AutocompleteSearch) render into their own
 		// portals outside the panel. While one holds focus it owns keyboard
 		// navigation, so the trap stays out of the way.
 		if (!panel.contains(document.activeElement)) return;
