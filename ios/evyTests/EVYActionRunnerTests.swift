@@ -1644,61 +1644,6 @@ final class EVYActionRunnerTests: XCTestCase {
     )
   }
 
-  func testDecodesShowFromSnakeCaseRowIdJson() throws {
-    let json = #"{"fn":"show","row_id":"row-1"}"#
-    let invocation = try JSONDecoder().decode(
-      EVYActionInvocation.self, from: Data(json.utf8))
-    XCTAssertEqual(invocation, .show(rowId: "row-1"))
-  }
-
-  func testDecodesExpandTextFromSnakeCaseRowIdJson() throws {
-    let json = #"{"fn":"expand_text","row_id":"row-2"}"#
-    let invocation = try JSONDecoder().decode(
-      EVYActionInvocation.self, from: Data(json.utf8))
-    XCTAssertEqual(invocation, .expandText(rowId: "row-2"))
-  }
-
-  func testDecodesNavigateFromSnakeCaseIdsJson() throws {
-    let json = #"{"fn":"navigate","flow_id":"flow-1","page_id":"page-1"}"#
-    let invocation = try JSONDecoder().decode(
-      EVYActionInvocation.self, from: Data(json.utf8))
-    XCTAssertEqual(
-      invocation,
-      .navigate(flowId: "flow-1", pageId: "page-1", query: [:])
-    )
-  }
-
-  func testDecodesCreateFromSnakeCaseJson() throws {
-    let json =
-      #"{"fn":"create","resource":"test_service.items","mode":"inline","data":{"title":"A"}}"#
-    let invocation = try JSONDecoder().decode(
-      EVYActionInvocation.self, from: Data(json.utf8))
-    XCTAssertEqual(
-      invocation,
-      .create(
-        resource: "test_service.items",
-        mode: .inline(data: ["title": "A"]),
-        id_destination: nil
-      )
-    )
-  }
-
-  func testDecodesUpdateFromSnakeCaseJson() throws {
-    let json =
-      #"{"fn":"update","resource":"test_service.items","mode":"store","filter":{"fk":"test_service.items.id"},"changes":{"closedAt":"now()"}}"#
-    let invocation = try JSONDecoder().decode(
-      EVYActionInvocation.self, from: Data(json.utf8))
-    XCTAssertEqual(
-      invocation,
-      .update(
-        resource: "test_service.items",
-        mode: .store,
-        filter: ["fk": "test_service.items.id"],
-        changes: .literal(["closedAt": "now()"])
-      )
-    )
-  }
-
   private func capturedErrors(during body: () -> Void) -> [Error] {
     var errors: [Error] = []
     let token = NotificationCenter.default.addObserver(

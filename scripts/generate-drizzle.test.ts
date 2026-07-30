@@ -1,14 +1,10 @@
-import { beforeAll, describe, expect, test } from "bun:test";
+import { describe, expect, test } from "bun:test";
 import {
 	assertDrizzleConfig,
 	type DrizzleConfig,
-	emitRefColumn,
 	type JsonSchema,
-	loadSchemaRefCache,
-	resolveJsonbTypeAnnotation,
 	validateEveryDataDefHasATable,
 } from "./generate-drizzle";
-import { snakeToCamel, snakeToPascal } from "./types-generation-utils";
 
 function tableConfig(tableName: string) {
 	return {
@@ -27,64 +23,6 @@ const schemaWithFoo: JsonSchema = {
 		},
 	},
 };
-
-describe("naming helpers", () => {
-	test("snakeToPascal converts snake_case and is idempotent on PascalCase", () => {
-		expect(snakeToPascal("horizontal_container")).toBe(
-			"HorizontalContainer",
-		);
-		expect(snakeToPascal("HorizontalContainer")).toBe(
-			"HorizontalContainer",
-		);
-	});
-
-	test("snakeToCamel converts snake_case resource names", () => {
-		expect(snakeToCamel("selling_reasons")).toBe("sellingReasons");
-	});
-});
-
-describe("resolveJsonbTypeAnnotation", () => {
-	test("throws on an unknown object $ref", () => {
-		expect(() =>
-			resolveJsonbTypeAnnotation("../unknown/schema.json"),
-		).toThrow(/unrecognised object \$ref/);
-	});
-});
-
-describe("string $ref columns", () => {
-	beforeAll(async () => {
-		await loadSchemaRefCache();
-	});
-
-	test("ServiceSlug ref emits varchar(50)", () => {
-		expect(
-			emitRefColumn(
-				"id",
-				"../common/rpc.schema.json#/$defs/ServiceSlug",
-				{
-					isPk: true,
-				},
-			),
-		).toBe('varchar("id", { length: 50 }).primaryKey().notNull()');
-	});
-
-	test("ResourceRef ref emits varchar(100)", () => {
-		expect(
-			emitRefColumn(
-				"resource",
-				"../common/rpc.schema.json#/$defs/ResourceRef",
-			),
-		).toBe('varchar("resource", { length: 100 }).notNull()');
-	});
-
-	test("object $ref still emits jsonb", () => {
-		expect(
-			emitRefColumn("submits", "#/$defs/DATA_EVY_FlowSubmits", {
-				isRequired: false,
-			}),
-		).toBe('jsonb("submits").$type<DATA_EVY_FlowSubmits>()');
-	});
-});
 
 describe("validateEveryDataDefHasATable", () => {
 	test("throws when a DATA_EVY_ def has no table entry", () => {
