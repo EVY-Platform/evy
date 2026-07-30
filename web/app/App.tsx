@@ -4,6 +4,7 @@ import type {
 	ElementDragType,
 } from "@atlaskit/pragmatic-drag-and-drop/types";
 import type { DATA_EVY_Formatter } from "evy-types";
+import { serviceOfRef } from "evy-types/resourceRef";
 import { FileSliders, Rows3 } from "lucide-react";
 import {
 	Fragment,
@@ -230,15 +231,15 @@ function AppContent() {
 								<AppPage pageId={activePage.id} />
 							</CanvasPageFrame>
 
-							{sheetPages.map(({ sheet_row_id, parentRowId }) => (
+							{sheetPages.map(({ sheetRowId, parentRowId }) => (
 								<CanvasPageFrame
-									key={sheet_row_id}
+									key={sheetRowId}
 									wrapperStyle={secondaryPageWithPhoneStyle}
 									className="evy-flex-shrink-0"
 									data-testid="sheet-page"
 								>
 									<SheetPage
-										sheet_row_id={sheet_row_id}
+										sheetRowId={sheetRowId}
 										pageId={activePage.id}
 										parentRowId={parentRowId}
 									/>
@@ -372,8 +373,8 @@ export function App() {
 		? new Map(
 				[
 					...new Set(
-						(testServiceResources ?? []).map(
-							(resource) => resource.serviceId,
+						(testServiceResources ?? []).map((resource) =>
+							serviceOfRef(resource.id),
 						),
 					),
 				].map((serviceId) => [

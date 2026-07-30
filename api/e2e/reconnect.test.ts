@@ -1,8 +1,5 @@
 import { describe, expect, it } from "bun:test";
-import {
-	EVY_CORE_RESOURCE_REF,
-	EVY_CORE_SERVICE,
-} from "evy-types/coreResources";
+import { EVY_CORE_RESOURCE_REF } from "evy-types/coreResources";
 
 import {
 	connectAndLogin,

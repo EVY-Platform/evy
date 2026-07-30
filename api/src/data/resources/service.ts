@@ -1,6 +1,6 @@
 import type { DATA_EVY_Service } from "evy-types";
 import { service } from "evy-types/db/schema.generated";
-import { isValidServiceSlug } from "evy-types/resourceRef";
+import { assertValidServiceSlug } from "evy-types/resourceRef";
 import { validateDataEvyService } from "evy-types/validators";
 import { makeCoreResource } from "./coreResource";
 
@@ -16,14 +16,9 @@ function mapServiceRow(r: typeof service.$inferSelect): DATA_EVY_Service {
 	};
 }
 
-function assertValidServiceSlug(id: string): void {
-	if (!isValidServiceSlug(id)) {
-		throw new Error(`Invalid service slug: ${id}`);
-	}
-}
-
 function validateServicePayload(raw: unknown): DATA_EVY_Service {
 	const validated = validateDataEvyService(raw);
+	// Schema validation already enforces the slug pattern; this adds reserved-slug rejection.
 	assertValidServiceSlug(validated.id);
 	return validated;
 }

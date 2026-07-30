@@ -9,10 +9,7 @@ import {
 	spyOn,
 } from "bun:test";
 import type { GetRequest, GetResponse } from "evy-types";
-import {
-	EVY_CORE_RESOURCE_REF,
-	EVY_CORE_SERVICE,
-} from "evy-types/coreResources";
+import { EVY_CORE_RESOURCE_REF } from "evy-types/coreResources";
 import { Client } from "rpc-websockets";
 import * as data from "../data/data";
 import type { EvyDb } from "../database/db";

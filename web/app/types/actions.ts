@@ -100,7 +100,7 @@ export type RowAction =
 	| {
 			type: "PUSH_CONFIG_STACK";
 			parentRowId: string;
-			child_row_id: string;
+			childRowId: string;
 	  }
 	| { type: "NAVIGATE_BREADCRUMB"; configStackLength: number };
 

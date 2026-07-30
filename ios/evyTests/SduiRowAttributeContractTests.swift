@@ -117,7 +117,7 @@ final class SduiRowAttributeContractTests: XCTestCase {
     XCTAssertTrue(row.actions.delete.isEmpty)
   }
 
-  /// Structured action branches decode into the row model without a string fallback.
+  /// Structured create actions decode a resource ref from the row model.
   func testRowDecodesStructuredActionBranches() throws {
     let rowData = try JSONSerialization.data(
       withJSONObject: [
@@ -131,8 +131,7 @@ final class SduiRowAttributeContractTests: XCTestCase {
               "false": ["fn": "close"],
               "true": [
                 "fn": "create",
-                "service": "svc",
-                "resource": "items",
+                "resource": MarketplaceTestFixture.itemsRef,
                 "mode": "submit",
               ],
             ]
@@ -143,7 +142,8 @@ final class SduiRowAttributeContractTests: XCTestCase {
     let row = try JSONDecoder().decode(UI_Row.self, from: rowData)
     XCTAssertEqual(
       row.actions.tap.first?.true,
-      .invocation(.create(resource: "marketplace.items", mode: .submit, id_destination: nil)))
+      .invocation(
+        .create(resource: MarketplaceTestFixture.itemsRef, mode: .submit, id_destination: nil)))
     XCTAssertEqual(row.actions.tap.first?.false, .invocation(.close))
   }
 
@@ -153,15 +153,15 @@ final class SduiRowAttributeContractTests: XCTestCase {
       .invocation(.navigate(flowId: "f", pageId: "p", query: ["id": "$datum.id"])),
       .invocation(
         .create(
-          resource: "marketplace.items", mode: .inline(data: ["a": "b"]),
+          resource: MarketplaceTestFixture.itemsRef, mode: .inline(data: ["a": "b"]),
           id_destination: "{buf.id}")),
       .invocation(
         .update(
-          resource: "marketplace.items", mode: .store, filter: ["id": "x"],
+          resource: MarketplaceTestFixture.itemsRef, mode: .store, filter: ["id": "x"],
           changes: .literal(["a": "b"]))),
       .invocation(
         .update(
-          resource: "marketplace.items", mode: .draft, filter: [:],
+          resource: MarketplaceTestFixture.itemsRef, mode: .draft, filter: [:],
           changes: .path("buf"))),
     ]
 

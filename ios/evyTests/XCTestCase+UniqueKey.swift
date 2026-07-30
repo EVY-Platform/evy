@@ -19,7 +19,7 @@ extension XCTestCase {
   }
 
   func uniqueKey(_ suffix: String) -> String {
-    let randomId = UUID().uuidString.replacingOccurrences(of: "-", with: "_")
+    let randomId = UUID().uuidString.replacingOccurrences(of: "-", with: "_").lowercased()
     return "evy_test_\(suffix)_\(randomId)"
   }
 

@@ -27,7 +27,7 @@ export default defineRow("SearchRow", {
 			</div>
 			<SearchChildSample
 				searchRowId={row.id}
-				child_row_id={row.config.child_row_id}
+				childRowId={row.config.child_row_id}
 			/>
 		</RowLayout>
 	),

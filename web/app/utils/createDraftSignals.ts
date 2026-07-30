@@ -84,7 +84,7 @@ export function shouldOfferCreateSubmitWithFlow(
 	resourceRef: string,
 	declaredSubmits: string | null = null,
 ): boolean {
-	if (!resourceRef || declaredSubmits === null) return false;
+	if (declaredSubmits === null) return false;
 	return declaredSubmits === resourceRef;
 }
 

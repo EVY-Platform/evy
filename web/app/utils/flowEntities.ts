@@ -68,14 +68,14 @@ export function collectSubtreeRowIds(
 	if (!row) return visited;
 	visited.add(rowId);
 
-	const child_row_id = row.data.child_row_id;
-	if (typeof child_row_id === "string") {
-		collectSubtreeRowIds(child_row_id, rowsById, visited);
+	const childRowId = row.data.child_row_id;
+	if (typeof childRowId === "string") {
+		collectSubtreeRowIds(childRowId, rowsById, visited);
 	}
 
-	const sheet_row_id = row.data.sheet_row_id;
-	if (typeof sheet_row_id === "string") {
-		collectSubtreeRowIds(sheet_row_id, rowsById, visited);
+	const sheetRowId = row.data.sheet_row_id;
+	if (typeof sheetRowId === "string") {
+		collectSubtreeRowIds(sheetRowId, rowsById, visited);
 	}
 
 	const children_row_ids = row.data.children_row_ids;

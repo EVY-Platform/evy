@@ -92,10 +92,9 @@ extension EVY {
       return true
     }
 
-    if let json = try? getSyncedJsonForRef(
-      splitProps[0] + PROP_SEPARATOR + splitProps[1]),
-      splitProps.count >= 2,
-      json.parsePropStrict(props: Array(splitProps.dropFirst(2))) != nil
+    if let split = EVYResourceRef.split(pathSegments: splitProps),
+      let json = try? getSyncedJsonForRef(split.ref),
+      json.parsePropStrict(props: split.remaining) != nil
     {
       return true
     }
@@ -107,7 +106,7 @@ extension EVY {
     forFlowId flowId: String,
     from store: EVYDataStore = EVY.publicStore
   ) {
-    for pageId in EVYFlowStore.page_ids(inFlowId: flowId, from: store) {
+    for pageId in EVYFlowStore.pageIds(inFlowId: flowId, from: store) {
       draftStore.deleteDrafts(scopeId: EVYDraft.ephemeralScopeId(forPageId: pageId))
     }
   }
@@ -129,7 +128,7 @@ extension EVY {
     guard isSubmission else {
       throw EVYError.invalidData(
         context:
-          "create requires namespace, resource, and submit or data, e.g. create(marketplace.items,submit)"
+          "create requires resource, and submit or data, e.g. create(marketplace.items,submit)"
       )
     }
 
@@ -423,10 +422,7 @@ extension EVY {
     let variableName = _parsePropsFromText(destination)
     let (_, cleanVariableName) = store(for: variableName)
     let splitProps = try splitPropsFromText(cleanVariableName)
-    let rootVariable =
-      splitProps.count >= 2
-      ? splitProps[0] + PROP_SEPARATOR + splitProps[1]
-      : splitProps.first!
+    let rootVariable = EVYResourceRef.split(pathSegments: splitProps)?.ref ?? splitProps.first!
     let resolvedScopeId = scopeId ?? draftStore.activeScopeId
 
     if let resolvedScopeId,
@@ -495,8 +491,7 @@ extension EVY {
     {
       return (cachedRow, publicStore)
     }
-    if EVYResourceRef.isValid(rootVariable) {
-      let namespace = try EVYResourceRef.serviceOf(rootVariable)
+    if let namespace = try? EVYResourceRef.serviceOf(rootVariable) {
       for store in syncedStores() {
         let rows = (try? store.getAll(namespace: namespace, resource: rootVariable)) ?? []
         if let matched = rows.first {

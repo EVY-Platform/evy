@@ -43,7 +43,7 @@ struct EVYButton: View {
 #Preview {
   VStack {
     EVYButton(
-      label: "button",
+      label: "Button",
       action: {})
     EVYButton(
       label: "Cancel pickup request",

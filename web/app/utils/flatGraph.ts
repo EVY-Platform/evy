@@ -42,12 +42,12 @@ function now(): string {
 	return new Date().toISOString();
 }
 
-function touchRow(row: DATA_EVY_Row, updated_at = now()): DATA_EVY_Row {
-	return { ...row, updated_at };
+function touchRow(row: DATA_EVY_Row, updatedAt = now()): DATA_EVY_Row {
+	return { ...row, updated_at: updatedAt };
 }
 
-function touchPage(page: DATA_EVY_Page, updated_at = now()): DATA_EVY_Page {
-	return { ...page, updated_at };
+function touchPage(page: DATA_EVY_Page, updatedAt = now()): DATA_EVY_Page {
+	return { ...page, updated_at: updatedAt };
 }
 
 /** Returns all row ids reachable from a page (row_ids + footer_row_id, recursively). */
@@ -749,11 +749,11 @@ export function getContainerChildrenCount(
 export function findChildIndexInContainer(
 	maps: FlowEntityMaps,
 	containerId: string,
-	child_row_id: string,
+	childRowId: string,
 ): number {
 	const row = maps.rowsById[containerId];
 	if (!row) return -1;
-	return getChildrenRowIds(row).indexOf(child_row_id);
+	return getChildrenRowIds(row).indexOf(childRowId);
 }
 
 /**
@@ -763,7 +763,7 @@ export function findChildIndexInContainer(
 export function ensureShowAction(
 	maps: FlowEntityMaps,
 	containerRowId: string,
-	sheet_row_id: string,
+	sheetRowId: string,
 	replacedSheetRowId?: string,
 ): FlowEntityMaps {
 	const row = maps.rowsById[containerRowId];
@@ -772,7 +772,7 @@ export function ensureShowAction(
 		normalizeStoredRowActions(row.data.actions).tap ?? [];
 	// New actions are written in the structured form; existing ones are only
 	// converted when the author saves them.
-	const showBranch = branchForStorage(`{show(${sheet_row_id})}`);
+	const showBranch = branchForStorage(`{show(${sheetRowId})}`);
 
 	let updatedExisting = false;
 	const nextActions = existingActions.map((action) => {
@@ -796,7 +796,7 @@ export function ensureShowAction(
 		const parsed = parseBranch(action.true);
 		return (
 			parsed?.functionName === "show" &&
-			parsed.args[0]?.trim() === sheet_row_id
+			parsed.args[0]?.trim() === sheetRowId
 		);
 	});
 

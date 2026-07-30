@@ -25,15 +25,15 @@ function makeDataRow(
 
 function makePage(
 	id: string,
-	row_ids: string[],
-	footer_row_id?: string,
+	rowIds: string[],
+	footerRowId?: string,
 ): DATA_EVY_Page {
 	return {
 		id,
 		name: id,
 		title: "P",
-		row_ids,
-		...(footer_row_id ? { footer_row_id } : {}),
+		row_ids: rowIds,
+		...(footerRowId ? { footer_row_id: footerRowId } : {}),
 		created_at: "",
 		updated_at: "",
 		visibility: "public",

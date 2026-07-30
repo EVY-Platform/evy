@@ -35,7 +35,6 @@ describe("extractResourceAttributeMetadata", () => {
 		expect(extractResourceAttributeMetadata(catalog, syncWith([]))).toEqual(
 			[
 				{
-					serviceId: SERVICE_ID,
 					resourceId: DECLARED_RESOURCE,
 					attributeNames: ["id", "price.currency", "title"],
 				},
@@ -113,12 +112,10 @@ describe("extractResourceAttributeMetadata", () => {
 
 		expect(result).toEqual([
 			{
-				serviceId: SERVICE_ID,
 				resourceId: DECLARED_RESOURCE,
 				attributeNames: ["id", "title"],
 			},
 			{
-				serviceId: SERVICE_ID,
 				resourceId: UNDECLARED_RESOURCE,
 				attributeNames: ["id", "other"],
 			},

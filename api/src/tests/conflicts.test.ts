@@ -7,10 +7,7 @@ import {
 	it,
 } from "bun:test";
 import { migrate } from "drizzle-orm/pglite/migrator";
-import {
-	EVY_CORE_RESOURCE_REF,
-	EVY_CORE_SERVICE,
-} from "evy-types/coreResources";
+import { EVY_CORE_RESOURCE_REF } from "evy-types/coreResources";
 import { ConflictError } from "../data/conflicts";
 import * as dataModule from "../data/data";
 import {
@@ -112,7 +109,7 @@ describe("optimistic locking", () => {
 
 		expect(failure).toBeInstanceOf(ConflictError);
 		const conflict = failure as ConflictError;
-		expect(conflict.expected_updated_at).toBe(created.updated_at);
+		expect(conflict.expectedUpdatedAt).toBe(created.updated_at);
 		expect(conflict.actualUpdatedAt).toBe(updated.updated_at);
 	});
 

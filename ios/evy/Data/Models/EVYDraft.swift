@@ -133,7 +133,12 @@ enum EVYDraft {
 
     let effectiveScope = scopeId ?? Scope.fallbackUnscoped
     let entityKey = Scope.entityKey(fromScopeId: effectiveScope)
-    let entityKeySegments = entityKey?.split(separator: ".").map(String.init) ?? []
+    let entityKeySegments: [String]
+    if let entityKey, let (service, resource) = try? EVYResourceRef.parse(entityKey) {
+      entityKeySegments = [service, resource]
+    } else {
+      entityKeySegments = []
+    }
 
     if let entityKey,
       segments.count > entityKeySegments.count,
@@ -203,7 +208,12 @@ enum EVYDraft {
       return Array(splitProps.suffix(splitProps.count - path.count))
     }
     if let entityKey = Scope.entityKey(fromScopeId: binding.scopeId) {
-      let entityKeySegments = entityKey.split(separator: ".").map(String.init)
+      let entityKeySegments: [String]
+      if let (service, resource) = try? EVYResourceRef.parse(entityKey) {
+        entityKeySegments = [service, resource]
+      } else {
+        entityKeySegments = []
+      }
       if splitProps.count > entityKeySegments.count,
         Array(splitProps.prefix(entityKeySegments.count)) == entityKeySegments,
         Array(splitProps.dropFirst(entityKeySegments.count)) == path

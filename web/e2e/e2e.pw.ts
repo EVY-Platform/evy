@@ -157,8 +157,8 @@ function assembleRow(
 
 	const nextVisitedRowIds = new Set(visitedRowIds).add(rowId);
 	const data = { ...row.data } as Record<string, unknown>;
-	const child_row_id = data.child_row_id;
-	const sheet_row_id = data.sheet_row_id;
+	const childRowId = data.child_row_id;
+	const sheetRowId = data.sheet_row_id;
 	const children_row_ids = data.children_row_ids;
 	delete data.child_row_id;
 	delete data.sheet_row_id;
@@ -171,16 +171,16 @@ function assembleRow(
 		type: row.type,
 		visible: row.visible,
 	};
-	if (typeof child_row_id === "string") {
+	if (typeof childRowId === "string") {
 		assembledRow.child = assembleRow(
-			child_row_id,
+			childRowId,
 			rowById,
 			nextVisitedRowIds,
 		);
 	}
-	if (typeof sheet_row_id === "string") {
+	if (typeof sheetRowId === "string") {
 		assembledRow.sheet = assembleRow(
-			sheet_row_id,
+			sheetRowId,
 			rowById,
 			nextVisitedRowIds,
 		);
@@ -188,11 +188,11 @@ function assembleRow(
 	if (Array.isArray(children_row_ids)) {
 		assembledRow.children = children_row_ids
 			.filter(
-				(child_row_id): child_row_id is string =>
-					typeof child_row_id === "string",
+				(childRowId): childRowId is string =>
+					typeof childRowId === "string",
 			)
-			.map((child_row_id) =>
-				assembleRow(child_row_id, rowById, nextVisitedRowIds),
+			.map((childRowId) =>
+				assembleRow(childRowId, rowById, nextVisitedRowIds),
 			)
 			.filter((row): row is UI_Row => Boolean(row));
 	}

@@ -5,12 +5,10 @@
  */
 export type ServiceResource = {
 	id: string;
-	serviceId: string;
 	name: string;
 };
 
 export type ResourceAttributeMetadata = {
-	serviceId: string;
 	resourceId: string;
 	attributeNames: string[];
 };

@@ -29,7 +29,6 @@ function assertRequiredService(
 	params: RpcParamsObject,
 ): asserts params is RpcParamsObject & { service: string } {
 	if (
-		!("service" in params) ||
 		typeof params.service !== "string" ||
 		!isValidServiceSlug(params.service)
 	) {
@@ -41,7 +40,6 @@ function assertRequiredResource(
 	params: RpcParamsObject,
 ): asserts params is RpcParamsObject & { resource: string } {
 	if (
-		!("resource" in params) ||
 		typeof params.resource !== "string" ||
 		!isValidResourceRef(params.resource)
 	) {

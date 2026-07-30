@@ -16,7 +16,7 @@ typealias EVYDeleteFileParams = DeleteFileParams
 private let chunkSize = 256 * 1024
 
 extension Data {
-  func uploadFrames(upload_id: String) throws -> [Data] {
+  func uploadFrames(uploadId: String) throws -> [Data] {
     var frames: [Data] = []
     var offset = 0
     var index = 0
@@ -27,7 +27,7 @@ extension Data {
         byteLength: chunkData.count,
         byteOffset: offset,
         index: index,
-        uploadID: upload_id
+        uploadID: uploadId
       )
       let metadataJSON = try JSONEncoder().encode(metadata)
       var frame = Data()

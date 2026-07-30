@@ -107,9 +107,7 @@ extension EVY {
   }
 
   private static func isSyncedNamespace(_ namespace: String) -> Bool {
-    namespace != EVYNamespace.local
-      && namespace != EVYNamespace.cache
-      && namespace != EVYNamespace.draft
+    !EVYResourceRef.isReservedService(namespace)
   }
 
   /// Launch override for seeded ownership until auth lands.

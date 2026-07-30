@@ -53,13 +53,19 @@ extension EVY {
 
       cacheValue(
         scopeId: scopeId,
-        cacheKey: candidate.cacheKey,
+        cacheKey: cacheKeyForResolvedEntity(queryKey: queryKey, resourceRef: candidate.cacheKey),
         value: encodedMatchingValue
       )
       return true
     }
 
     return false
+  }
+
+  private static func cacheKeyForResolvedEntity(queryKey: String?, resourceRef: String) -> String {
+    if let queryKey { return queryKey }
+    guard let dotIndex = resourceRef.lastIndex(of: ".") else { return resourceRef }
+    return String(resourceRef[resourceRef.index(after: dotIndex)...])
   }
 
   private static func cacheValue(scopeId: String, cacheKey: String, value: Data) {
@@ -77,13 +83,10 @@ extension EVY {
   private static func resolvedEntityCollections(for queryKey: String?) -> [(
     cacheKey: String, collection: EVYJson
   )] {
-    if let queryKey, EVYResourceRef.isValid(queryKey) {
-      if let namespace = try? EVYResourceRef.serviceOf(queryKey),
-        let collection = try? getSyncedCollectionJson(namespace: namespace, resource: queryKey)
-      {
-        return [(queryKey, collection)]
-      }
-      return []
+    if let queryKey, let namespace = try? EVYResourceRef.serviceOf(queryKey),
+      let collection = try? getSyncedCollectionJson(namespace: namespace, resource: queryKey)
+    {
+      return [(queryKey, collection)]
     }
 
     var results: [(cacheKey: String, collection: EVYJson)] = []
@@ -91,12 +94,14 @@ extension EVY {
     for store in syncedStores() {
       let syncedRows = (try? store.getAll()) ?? []
       let resourceRefs = Set(
-        syncedRows.filter {
-          $0.namespace != EVYNamespace.cache && $0.namespace != EVYNamespace.draft
-            && $0.namespace != EVYNamespace.local
-        }
-        .map { $0.resource })
+        syncedRows.filter { !EVYResourceRef.isReservedService($0.namespace) }
+          .map { $0.resource })
       for resourceRef in resourceRefs where seenResources.insert(resourceRef).inserted {
+        if let queryKey, queryKey != resourceRef {
+          guard let dotIndex = resourceRef.lastIndex(of: ".") else { continue }
+          let resourceSlug = String(resourceRef[resourceRef.index(after: dotIndex)...])
+          if queryKey != resourceSlug { continue }
+        }
         guard let namespace = try? EVYResourceRef.serviceOf(resourceRef),
           let collection = try? store.getCollectionJson(namespace: namespace, resource: resourceRef)
         else { continue }

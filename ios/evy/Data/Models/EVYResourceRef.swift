@@ -7,17 +7,23 @@ import Foundation
 
 enum EVYResourceRefError: Error {
   case invalidRef(String)
-  case invalidServiceSlug(String)
-  case invalidResourceSlug(String)
-  case reservedServiceSlug(String)
 }
 
 enum EVYResourceRef {
-  private static let serviceSlugPattern =
-    /^[a-z][a-z0-9_-]*$/
   private static let resourceRefPattern =
     /^[a-z][a-z0-9_-]*\.[a-z][a-z0-9_-]*$/
   private static let reservedServiceSlugs: Set<String> = ["local", "cache", "draft"]
+
+  static func isReservedService(_ slug: String) -> Bool {
+    reservedServiceSlugs.contains(slug)
+  }
+
+  static func split(pathSegments: [String]) -> (ref: String, remaining: [String])? {
+    guard pathSegments.count >= 2 else { return nil }
+    let ref = "\(pathSegments[0]).\(pathSegments[1])"
+    let remaining = pathSegments.count > 2 ? Array(pathSegments[2...]) : []
+    return (ref, remaining)
+  }
 
   static func parse(_ ref: String) throws -> (service: String, resource: String) {
     guard ref.wholeMatch(of: resourceRefPattern) != nil else {
@@ -26,23 +32,10 @@ enum EVYResourceRef {
     let dotIndex = ref.firstIndex(of: ".")!
     let service = String(ref[..<dotIndex])
     let resource = String(ref[ref.index(after: dotIndex)...])
-    if reservedServiceSlugs.contains(service) {
-      throw EVYResourceRefError.reservedServiceSlug(service)
+    if isReservedService(service) {
+      throw EVYResourceRefError.invalidRef(ref)
     }
     return (service, resource)
-  }
-
-  static func format(service: String, resource: String) throws -> String {
-    guard service.wholeMatch(of: serviceSlugPattern) != nil, !service.contains(".") else {
-      throw EVYResourceRefError.invalidServiceSlug(service)
-    }
-    guard resource.wholeMatch(of: serviceSlugPattern) != nil, !resource.contains(".") else {
-      throw EVYResourceRefError.invalidResourceSlug(resource)
-    }
-    if reservedServiceSlugs.contains(service) {
-      throw EVYResourceRefError.reservedServiceSlug(service)
-    }
-    return "\(service).\(resource)"
   }
 
   static func serviceOf(_ ref: String) throws -> String {

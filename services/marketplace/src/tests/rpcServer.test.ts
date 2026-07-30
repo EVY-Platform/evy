@@ -25,12 +25,12 @@ const { startMarketplaceRpcServer, stopMarketplaceRpcServer } = await import(
 	"../rpc"
 );
 
-let ws_port: number;
+let wsPort: number;
 
 beforeAll(async () => {
 	await migrate(testDb, { migrationsFolder: "./drizzle" });
-	ws_port = await getFreePort();
-	await startMarketplaceRpcServer({ host: "127.0.0.1", port: ws_port });
+	wsPort = await getFreePort();
+	await startMarketplaceRpcServer({ host: "127.0.0.1", port: wsPort });
 });
 
 afterAll(async () => {
@@ -43,7 +43,7 @@ beforeEach(async () => {
 });
 
 function createClient(): InstanceType<typeof Client> {
-	return new Client(`ws://127.0.0.1:${ws_port}`);
+	return new Client(`ws://127.0.0.1:${wsPort}`);
 }
 
 async function waitForOpen(client: InstanceType<typeof Client>): Promise<void> {
@@ -89,15 +89,10 @@ describe("marketplace JSON-RPC server", () => {
 			{},
 		)) as ResourcesResponse;
 		const resources = response.services[0]?.resources ?? [];
-		const items = resources.find(
-			(entry) => entry.id === MARKETPLACE_RESOURCE.ITEMS,
-		);
-		const conditions = resources.find(
-			(entry) => entry.id === MARKETPLACE_RESOURCE.CONDITIONS,
-		);
 
-		expect(items?.id).toBe(MARKETPLACE_RESOURCE.ITEMS);
-		expect(conditions?.id).toBe(MARKETPLACE_RESOURCE.CONDITIONS);
+		expect(resources.map((entry) => entry.id)).toEqual(
+			Object.values(MARKETPLACE_RESOURCE),
+		);
 		client.close();
 	});
 

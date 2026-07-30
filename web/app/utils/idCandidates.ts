@@ -1,5 +1,6 @@
 import type { DATA_EVY_Flow, DATA_EVY_Page } from "evy-types";
 import { procedureResultAttributes } from "evy-types/procedures";
+import { serviceOfRef } from "evy-types/resourceRef";
 import {
 	getAllRowBindingFieldNames,
 	getAllRowContentFieldNames,
@@ -131,7 +132,7 @@ export function buildIdCandidates(
 	}));
 
 	const serviceCandidates = Array.from(
-		new Set(serviceResources.map((resource) => resource.serviceId)),
+		new Set(serviceResources.map((resource) => serviceOfRef(resource.id))),
 	).map((serviceId) => ({
 		id: serviceId,
 		name: serviceNamesById.get(serviceId) ?? serviceId,
@@ -213,11 +214,7 @@ function resolveResourceRefFromPath(
 			return ref;
 		}
 	}
-	const resourceId = segments[0]?.trim();
-	if (!resourceId) return null;
-	return serviceResources.some((resource) => resource.id === resourceId)
-		? resourceId
-		: null;
+	return null;
 }
 
 function resolveSourceResourceId(
@@ -236,9 +233,7 @@ function resolveQualifierResourceId(
 	if (rowSource !== undefined && qualifier === "$datum") {
 		return resolveSourceResourceId(rowSource, serviceResources);
 	}
-	return serviceResources.some((resource) => resource.id === qualifier)
-		? qualifier
-		: resolveResourceRefFromPath(qualifier, serviceResources);
+	return resolveResourceRefFromPath(qualifier, serviceResources);
 }
 
 export function createGetAttributeCandidatesForQualifier({

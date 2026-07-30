@@ -1,9 +1,6 @@
 import { expect, test } from "@playwright/test";
 import type { UI_RowActions } from "evy-types";
-import {
-	TEST_RESOURCE_ID,
-	TEST_SERVICE_ID,
-} from "../testFixtures/resourceCatalog";
+import { TEST_RESOURCE_ID } from "../testFixtures/resourceCatalog";
 import { initFullFlows, openAppWithTestFlows, tapAction } from "./flowFixtures";
 import {
 	getConfigPanel,
@@ -16,7 +13,6 @@ import {
 const TEST_SERVICE_RESOURCES = [
 	{
 		id: TEST_RESOURCE_ID.RECORDS,
-		serviceId: TEST_SERVICE_ID,
 		name: "item",
 	},
 ];

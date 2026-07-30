@@ -13,29 +13,29 @@
 
 export class ConflictError extends Error {
 	readonly code = "CONFLICT";
-	readonly expected_updated_at: string;
+	readonly expectedUpdatedAt: string;
 	readonly actualUpdatedAt: string;
 
-	constructor(expected_updated_at: string, actualUpdatedAt: string) {
+	constructor(expectedUpdatedAt: string, actualUpdatedAt: string) {
 		super(
 			`Conflict: the record changed since you last read it ` +
-				`(expected updated_at ${expected_updated_at}, found ${actualUpdatedAt}). ` +
+				`(expected updated_at ${expectedUpdatedAt}, found ${actualUpdatedAt}). ` +
 				`Re-read the record and reapply your change.`,
 		);
 		this.name = "ConflictError";
-		this.expected_updated_at = expected_updated_at;
+		this.expectedUpdatedAt = expectedUpdatedAt;
 		this.actualUpdatedAt = actualUpdatedAt;
 	}
 }
 
 /** Throws when the caller's expected version is not the stored one. */
 export function assertNotModified(
-	expected_updated_at: string | undefined,
+	expectedUpdatedAt: string | undefined,
 	actualUpdatedAt: string,
 ): void {
-	if (expected_updated_at === undefined) return;
-	if (expected_updated_at !== actualUpdatedAt) {
-		throw new ConflictError(expected_updated_at, actualUpdatedAt);
+	if (expectedUpdatedAt === undefined) return;
+	if (expectedUpdatedAt !== actualUpdatedAt) {
+		throw new ConflictError(expectedUpdatedAt, actualUpdatedAt);
 	}
 }
 

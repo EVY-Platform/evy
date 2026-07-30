@@ -130,14 +130,6 @@ extension EVY {
     return EVYNamespace.singletonId
   }
 
-  static func getSyncedJsonForBinding(key: String, cacheScopeId: String?) throws -> EVYJson {
-    do {
-      return try publicStore.getJsonForBinding(key: key, cacheScopeId: cacheScopeId)
-    } catch EVYDataError.keyNotFound {
-      return try privateStore.getJsonForBinding(key: key, cacheScopeId: cacheScopeId)
-    }
-  }
-
   static func getSyncedJsonForRef(_ ref: String) throws -> EVYJson {
     let namespace = try EVYResourceRef.serviceOf(ref)
     if let collection = try getSyncedCollectionJson(namespace: namespace, resource: ref) {

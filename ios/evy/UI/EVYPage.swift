@@ -41,8 +41,8 @@ struct EVYPage: View {
   @ViewBuilder
   private func pageContent(page: EVYStoredPage) -> some View {
     VStack {
-      mainContent(row_ids: page.row_ids)
-      footerContent(footer_row_id: page.footer_row_id)
+      mainContent(rowIds: page.row_ids)
+      footerContent(footerRowId: page.footer_row_id)
     }
     .evyNavigationTitle(page.title ?? "", accessibilityIdentifier: "pageTitle_\(pageId)")
     .onAppear {
@@ -95,9 +95,9 @@ struct EVYPage: View {
   }
 
   @ViewBuilder
-  private func mainContent(row_ids: [String]) -> some View {
+  private func mainContent(rowIds: [String]) -> some View {
     ScrollView {
-      ForEach(row_ids, id: \.self) { rowId in
+      ForEach(rowIds, id: \.self) { rowId in
         EVYRow(rowId: rowId)
           .padding(.vertical, Constants.minorPadding)
       }
@@ -106,9 +106,9 @@ struct EVYPage: View {
   }
 
   @ViewBuilder
-  private func footerContent(footer_row_id: String?) -> some View {
-    if let footer_row_id {
-      EVYRow(rowId: footer_row_id)
+  private func footerContent(footerRowId: String?) -> some View {
+    if let footerRowId {
+      EVYRow(rowId: footerRowId)
         .overlay(
           alignment: .top,
           content: {

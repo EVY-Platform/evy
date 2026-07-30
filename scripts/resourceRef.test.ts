@@ -52,7 +52,7 @@ describe("resourceRef", () => {
 		expect(isValidServiceSlug("Evy")).toBe(false);
 	});
 
-	test("rejects dots in service slug", () => {
+	test("rejects invalid service slug in formatResourceRef", () => {
 		expect(() => formatResourceRef("evy.core", "items")).toThrow(
 			ResourceRefError,
 		);

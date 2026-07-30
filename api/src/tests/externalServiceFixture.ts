@@ -1,29 +1,39 @@
 import type { ResourcesResponse } from "evy-types";
+import { formatResourceRef } from "evy-types/resourceRef";
 
 export const EXTERNAL_TEST_SERVICE_ID = "test_svc" as const;
 
 const EXTERNAL_TEST_SERVICE_NAME = "test-service" as const;
 
-export const EXTERNAL_TEST_RESOURCE = {
-	SELLING_REASONS: "test_svc.selling_reasons",
-	CONDITIONS: "test_svc.conditions",
-	DURATIONS: "test_svc.durations",
-	AREAS: "test_svc.areas",
-	RECORDS: "test_svc.records",
+const EXTERNAL_TEST_RESOURCE_NAMES = {
+	SELLING_REASONS: "selling_reasons",
+	CONDITIONS: "conditions",
+	DURATIONS: "durations",
+	AREAS: "areas",
+	RECORDS: "records",
 } as const;
+
+export const EXTERNAL_TEST_RESOURCE = Object.fromEntries(
+	Object.entries(EXTERNAL_TEST_RESOURCE_NAMES).map(([key, name]) => [
+		key,
+		formatResourceRef(EXTERNAL_TEST_SERVICE_ID, name),
+	]),
+) as {
+	readonly SELLING_REASONS: string;
+	readonly CONDITIONS: string;
+	readonly DURATIONS: string;
+	readonly AREAS: string;
+	readonly RECORDS: string;
+};
 
 export const EXTERNAL_TEST_SERVICE_DESCRIPTOR: ResourcesResponse["services"][number] =
 	{
 		id: EXTERNAL_TEST_SERVICE_ID,
 		name: EXTERNAL_TEST_SERVICE_NAME,
-		resources: [
-			{
-				id: EXTERNAL_TEST_RESOURCE.SELLING_REASONS,
-				name: "selling_reasons",
-			},
-			{ id: EXTERNAL_TEST_RESOURCE.CONDITIONS, name: "conditions" },
-			{ id: EXTERNAL_TEST_RESOURCE.DURATIONS, name: "durations" },
-			{ id: EXTERNAL_TEST_RESOURCE.AREAS, name: "areas" },
-			{ id: EXTERNAL_TEST_RESOURCE.RECORDS, name: "records" },
-		],
+		resources: Object.entries(EXTERNAL_TEST_RESOURCE_NAMES).map(
+			([, name]) => ({
+				id: formatResourceRef(EXTERNAL_TEST_SERVICE_ID, name),
+				name,
+			}),
+		),
 	};

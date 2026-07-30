@@ -34,7 +34,7 @@ type AddressableResourceTable = ResourceTable & {
 	resource: AnyPgColumn;
 };
 
-export type OwnedResource = NonNullable<SyncRequest["owned_resources"]>[number];
+type OwnedResource = NonNullable<SyncRequest["owned_resources"]>[number];
 
 export type SyncScope = {
 	updated_after?: string;
@@ -87,7 +87,7 @@ function addressedRecordClause(
 
 	for (const group of owned) {
 		if (group.ids.length === 0) continue;
-		if (!isValidResourceRef(group.resource)) continue;
+		if (!isValidResourceRef(group.resource)) continue; // reserved-slug refs from sync scope
 		clauses.push(
 			and(
 				eq(table.resource, group.resource),
@@ -162,7 +162,7 @@ export function makeCoreResource<
 		dataPayload: unknown,
 		nowIso: string,
 		idOverride?: string,
-		created_atOverride?: string,
+		createdAtOverride?: string,
 	): T {
 		const record =
 			dataPayload !== null && typeof dataPayload === "object"
@@ -171,7 +171,7 @@ export function makeCoreResource<
 		const payload: Record<string, unknown> = {
 			...record,
 			id: idOverride ?? record.id ?? crypto.randomUUID(),
-			created_at: created_atOverride ?? record.created_at ?? nowIso,
+			created_at: createdAtOverride ?? record.created_at ?? nowIso,
 			updated_at: nowIso,
 		};
 		// visibility comes from the client, never the API
@@ -286,14 +286,11 @@ export function makeCoreResource<
 			.limit(1);
 		if (existing.length === 0) throw new Error("Resource not found");
 		assertNotModified(filter.expected_updated_at, existing[0].updated_at);
-		const deleted_atIso = monotonicUpdatedAt(
-			nowIso,
-			existing[0].updated_at,
-		);
+		const deletedAtIso = monotonicUpdatedAt(nowIso, existing[0].updated_at);
 		const deleted = await db
 			// biome-ignore lint/suspicious/noExplicitAny: Drizzle generic table requires cast
 			.update(table as any)
-			.set({ deleted_at: deleted_atIso, updated_at: deleted_atIso })
+			.set({ deleted_at: deletedAtIso, updated_at: deletedAtIso })
 			.where(and(eq(table.id, filter.id), isNull(table.deleted_at)))
 			.returning();
 		if (deleted.length === 0) throw new Error("Resource not found");

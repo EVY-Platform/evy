@@ -159,7 +159,6 @@ export function ActionPopup({
 							flowsById={flowsById}
 							pagesById={pagesById}
 							serviceResources={serviceResources}
-							serviceNamesById={serviceNamesById}
 							idCandidates={idCandidates}
 							rowsById={rowsById}
 							defaultSheetRowId={defaultSheetRowId}
@@ -183,7 +182,6 @@ export function ActionPopup({
 							flowsById={flowsById}
 							pagesById={pagesById}
 							serviceResources={serviceResources}
-							serviceNamesById={serviceNamesById}
 							idCandidates={idCandidates}
 							rowsById={rowsById}
 							defaultSheetRowId={defaultSheetRowId}

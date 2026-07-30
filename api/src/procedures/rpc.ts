@@ -30,16 +30,13 @@ import {
 	forwardUpdate,
 } from "./services";
 
-function routeByResourceRef(resource: string): string {
-	return serviceOfRef(resource);
-}
-
 export async function get(params: unknown, db: EvyDb): Promise<GetResponse> {
 	validateStrictGetRequest(params);
-	if (routeByResourceRef(params.resource) === EVY_CORE_SERVICE) {
+	const service = serviceOfRef(params.resource);
+	if (service === EVY_CORE_SERVICE) {
 		return getCore(db, params);
 	}
-	return forwardGet(routeByResourceRef(params.resource), params);
+	return forwardGet(service, params);
 }
 
 export async function api(params: unknown, db: EvyDb): Promise<unknown> {
@@ -66,10 +63,11 @@ export async function create(
 	db: EvyDb,
 ): Promise<CreateResponse> {
 	validateStrictCreateRequest(params);
-	if (routeByResourceRef(params.resource) === EVY_CORE_SERVICE) {
+	const service = serviceOfRef(params.resource);
+	if (service === EVY_CORE_SERVICE) {
 		return createCore(db, params);
 	}
-	return forwardCreate(routeByResourceRef(params.resource), params);
+	return forwardCreate(service, params);
 }
 
 export async function update(
@@ -77,10 +75,11 @@ export async function update(
 	db: EvyDb,
 ): Promise<UpdateResponse> {
 	validateStrictUpdateRequest(params);
-	if (routeByResourceRef(params.resource) === EVY_CORE_SERVICE) {
+	const service = serviceOfRef(params.resource);
+	if (service === EVY_CORE_SERVICE) {
 		return updateCore(db, params);
 	}
-	return forwardUpdate(routeByResourceRef(params.resource), params);
+	return forwardUpdate(service, params);
 }
 
 export async function deleteResource(
@@ -88,8 +87,9 @@ export async function deleteResource(
 	db: EvyDb,
 ): Promise<DeleteResponse> {
 	validateStrictDeleteRequest(params);
-	if (routeByResourceRef(params.resource) === EVY_CORE_SERVICE) {
+	const service = serviceOfRef(params.resource);
+	if (service === EVY_CORE_SERVICE) {
 		return deleteCore(db, params);
 	}
-	return forwardDelete(routeByResourceRef(params.resource), params);
+	return forwardDelete(service, params);
 }

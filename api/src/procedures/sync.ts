@@ -43,16 +43,14 @@ type SyncError = NonNullable<SyncResponse["errors"]>[number];
 
 type FetchOutcome = { rows: SyncRow[]; errors: SyncError[] };
 
-type ResourceRef = string;
-
 function describe(error: unknown): string {
 	return error instanceof Error ? error.message : String(error);
 }
 
 async function fetchResources(
-	refs: ResourceRef[],
+	refs: string[],
 	since: string,
-	fetchOne: (ref: ResourceRef, request: GetRequest) => Promise<GetResponse>,
+	fetchOne: (ref: string, request: GetRequest) => Promise<GetResponse>,
 ): Promise<FetchOutcome> {
 	const rows: SyncRow[] = [];
 	const errors: SyncError[] = [];
@@ -76,14 +74,14 @@ async function fetchResources(
 function externalResourceRefs(
 	response: ResourcesResponse,
 	coreServiceId: string,
-): ResourceRef[] {
+): string[] {
 	return response.services.flatMap((service) => {
 		if (service.id === coreServiceId) return [];
 		return service.resources.map((resource) => resource.id);
 	});
 }
 
-function coreResourceRefs(): ResourceRef[] {
+function coreResourceRefs(): string[] {
 	return Object.values(EVY_CORE_RESOURCE_REF).filter(
 		(ref) =>
 			ref !== EVY_CORE_RESOURCE_REF.DEVICES &&

@@ -13,8 +13,8 @@ function TextExpandRowInner({ rowId }: { rowId: string }) {
 	const textRef = useRef<HTMLParagraphElement | null>(null);
 	const title = row?.config.title ?? "";
 	const text = row?.config.text ?? "";
-	const expand_label = row?.config.expand_label ?? "";
-	const isCollapsible = expand_label.trim().length > 0;
+	const expandLabel = row?.config.expand_label ?? "";
+	const isCollapsible = expandLabel.trim().length > 0;
 	const [userExpanded, setUserExpanded] = useState(false);
 	const [canExpand, setCanExpand] = useState(false);
 	const expanded = !isCollapsible || userExpanded;
@@ -64,7 +64,7 @@ function TextExpandRowInner({ rowId }: { rowId: string }) {
 					className="evy-text-blue evy-text-sm evy-self-start evy-cursor-pointer"
 					onClick={() => setUserExpanded(true)}
 				>
-					<EVYText text={expand_label} />
+					<EVYText text={expandLabel} />
 				</button>
 			) : null}
 		</div>

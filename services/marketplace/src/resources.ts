@@ -1,4 +1,5 @@
 import type { ResourcesResponse } from "evy-types";
+import { formatResourceRef } from "evy-types/resourceRef";
 import { validateResourcesResponse } from "evy-types/validators";
 import { attributesFromSchema } from "./attributes";
 import { itemSchema, lookupSchema } from "./validation";
@@ -8,47 +9,44 @@ import { itemSchema, lookupSchema } from "./validation";
 const ITEM_ATTRIBUTES = attributesFromSchema(itemSchema);
 const LOOKUP_ATTRIBUTES = attributesFromSchema(lookupSchema);
 
+const MARKETPLACE_SERVICE_SLUG = "marketplace" as const;
+
+const MARKETPLACE_RESOURCE_DEFINITIONS = [
+	{
+		key: "SELLING_REASONS",
+		name: "selling_reasons",
+		attributes: LOOKUP_ATTRIBUTES,
+	},
+	{ key: "CONDITIONS", name: "conditions", attributes: LOOKUP_ATTRIBUTES },
+	{ key: "DURATIONS", name: "durations", attributes: LOOKUP_ATTRIBUTES },
+	{ key: "AREAS", name: "areas", attributes: LOOKUP_ATTRIBUTES },
+	{ key: "ITEMS", name: "items", attributes: ITEM_ATTRIBUTES },
+] as const;
+
 export const MARKETPLACE_SERVICE_DESCRIPTOR = {
-	id: "marketplace",
-	name: "marketplace",
-	resources: [
-		{
-			id: "marketplace.selling_reasons",
-			name: "selling_reasons",
-			attributes: LOOKUP_ATTRIBUTES,
-		},
-		{
-			id: "marketplace.conditions",
-			name: "conditions",
-			attributes: LOOKUP_ATTRIBUTES,
-		},
-		{
-			id: "marketplace.durations",
-			name: "durations",
-			attributes: LOOKUP_ATTRIBUTES,
-		},
-		{
-			id: "marketplace.areas",
-			name: "areas",
-			attributes: LOOKUP_ATTRIBUTES,
-		},
-		{
-			id: "marketplace.items",
-			name: "items",
-			attributes: ITEM_ATTRIBUTES,
-		},
-	],
+	id: MARKETPLACE_SERVICE_SLUG,
+	name: MARKETPLACE_SERVICE_SLUG,
+	resources: MARKETPLACE_RESOURCE_DEFINITIONS.map(({ name, attributes }) => ({
+		id: formatResourceRef(MARKETPLACE_SERVICE_SLUG, name),
+		name,
+		attributes,
+	})),
 } as const;
 
 export const MARKETPLACE_SERVICE = MARKETPLACE_SERVICE_DESCRIPTOR.id;
 
-export const MARKETPLACE_RESOURCE = {
-	SELLING_REASONS: "marketplace.selling_reasons",
-	CONDITIONS: "marketplace.conditions",
-	DURATIONS: "marketplace.durations",
-	AREAS: "marketplace.areas",
-	ITEMS: "marketplace.items",
-} as const;
+export const MARKETPLACE_RESOURCE = Object.fromEntries(
+	MARKETPLACE_RESOURCE_DEFINITIONS.map(({ key, name }) => [
+		key,
+		formatResourceRef(MARKETPLACE_SERVICE_SLUG, name),
+	]),
+) as {
+	readonly SELLING_REASONS: string;
+	readonly CONDITIONS: string;
+	readonly DURATIONS: string;
+	readonly AREAS: string;
+	readonly ITEMS: string;
+};
 
 export const MARKETPLACE_SEED_RESOURCES: ReadonlySet<string> = new Set(
 	MARKETPLACE_SERVICE_DESCRIPTOR.resources.map((resource) => resource.id),

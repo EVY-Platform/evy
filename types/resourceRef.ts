@@ -1,5 +1,5 @@
-export const SERVICE_SLUG_PATTERN = /^[a-z][a-z0-9_-]*$/;
-export const RESOURCE_REF_PATTERN = /^[a-z][a-z0-9_-]*\.[a-z][a-z0-9_-]*$/;
+const SERVICE_SLUG_PATTERN = /^[a-z][a-z0-9_-]*$/;
+const RESOURCE_REF_PATTERN = /^[a-z][a-z0-9_-]*\.[a-z][a-z0-9_-]*$/;
 
 export const RESERVED_SERVICE_SLUGS = new Set(["local", "cache", "draft"]);
 
@@ -17,9 +17,7 @@ export function parseResourceRef(ref: string): {
 	if (!RESOURCE_REF_PATTERN.test(ref)) {
 		throw new ResourceRefError(`Invalid resource ref: ${ref}`);
 	}
-	const dotIndex = ref.indexOf(".");
-	const service = ref.slice(0, dotIndex);
-	const resource = ref.slice(dotIndex + 1);
+	const [service, resource] = ref.split(".");
 	if (RESERVED_SERVICE_SLUGS.has(service)) {
 		throw new ResourceRefError(`Reserved service slug: ${service}`);
 	}
@@ -30,18 +28,8 @@ export function formatResourceRef(service: string, resource: string): string {
 	if (!SERVICE_SLUG_PATTERN.test(service)) {
 		throw new ResourceRefError(`Invalid service slug: ${service}`);
 	}
-	if (service.includes(".")) {
-		throw new ResourceRefError(
-			`Service slug must not contain a dot: ${service}`,
-		);
-	}
 	if (!SERVICE_SLUG_PATTERN.test(resource)) {
 		throw new ResourceRefError(`Invalid resource slug: ${resource}`);
-	}
-	if (resource.includes(".")) {
-		throw new ResourceRefError(
-			`Resource slug must not contain a dot: ${resource}`,
-		);
 	}
 	if (RESERVED_SERVICE_SLUGS.has(service)) {
 		throw new ResourceRefError(`Reserved service slug: ${service}`);
@@ -63,9 +51,11 @@ export function isValidResourceRef(ref: string): boolean {
 }
 
 export function isValidServiceSlug(slug: string): boolean {
-	return (
-		SERVICE_SLUG_PATTERN.test(slug) &&
-		!slug.includes(".") &&
-		!RESERVED_SERVICE_SLUGS.has(slug)
-	);
+	return SERVICE_SLUG_PATTERN.test(slug) && !RESERVED_SERVICE_SLUGS.has(slug);
+}
+
+export function assertValidServiceSlug(id: string): void {
+	if (!isValidServiceSlug(id)) {
+		throw new Error(`Invalid service slug: ${id}`);
+	}
 }

@@ -33,11 +33,7 @@ import {
 	service_provider as service_providerTable,
 	service as serviceTable,
 } from "../types/generated/ts/db/schema.generated";
-import {
-	isValidResourceRef,
-	isValidServiceSlug,
-	serviceOfRef,
-} from "../types/resourceRef";
+import { isValidResourceRef, parseResourceRef } from "../types/resourceRef";
 import { STANDARD_FORMATTERS } from "../types/standardFormatters";
 import { validateUiFlow } from "../types/validators";
 import { copySeedFileBinaries } from "./seed-files";
@@ -117,7 +113,7 @@ const MARKETPLACE_SERVICE = MARKETPLACE_SERVICE_DESCRIPTOR.id;
 type SeedInputPaths = {
 	evyFlowsPath?: string;
 	serviceFlowsPath?: string;
-	data_path?: string;
+	dataPath?: string;
 };
 function validateSeedDataItem(
 	item: unknown,
@@ -161,10 +157,7 @@ function partitionSeedResourceData(dataJson: SeedDataMap): {
 	const marketplace: SeedDataMap = {};
 	const evy: SeedDataMap = {};
 	for (const [resource, value] of Object.entries(dataJson)) {
-		if (!isValidResourceRef(resource)) {
-			throw new Error(`Invalid resource ref in seed data: ${resource}`);
-		}
-		const service = serviceOfRef(resource);
+		const { service } = parseResourceRef(resource);
 		if (service === MARKETPLACE_SERVICE) {
 			marketplace[resource] = value;
 		} else if (service === EVY_CORE_SERVICE) {
@@ -578,7 +571,7 @@ async function loadSeedInputs(paths: SeedInputPaths = {}): Promise<{
 		validateUiFlow(f),
 	);
 	const dataJson = validateSeedData(
-		JSON.parse(await readFile(paths.data_path ?? DATA_PATH, "utf-8")),
+		JSON.parse(await readFile(paths.dataPath ?? DATA_PATH, "utf-8")),
 	);
 
 	return { evyFlowsJson, serviceFlowsJson, dataJson };
@@ -639,33 +632,26 @@ async function seedDatabase({
 			...timestamped(now),
 		});
 
-		await tx.insert(coreSchema.service).values(
-			[
-				{
-					id: EVY_CORE_SERVICE,
-					name: "evy",
-					description: "EVY core service",
-					sort_order: 0,
-					visibility: "public",
-					...timestamped(now),
-				},
-				{
-					id: MARKETPLACE_SERVICE,
-					name: "marketplace",
-					description: "Marketplace service",
-					sort_order: 1,
-					visibility: "public",
-					// Records the endpoint on the row when the environment knows it,
-					// so routing does not depend on the env convention at runtime.
-					...timestamped(now),
-				},
-			].map((row) => {
-				if (!isValidServiceSlug(row.id)) {
-					throw new Error(`Invalid service slug: ${row.id}`);
-				}
-				return row;
-			}),
-		);
+		await tx.insert(coreSchema.service).values([
+			{
+				id: EVY_CORE_SERVICE,
+				name: "evy",
+				description: "EVY core service",
+				sort_order: 0,
+				visibility: "public",
+				...timestamped(now),
+			},
+			{
+				id: MARKETPLACE_SERVICE,
+				name: "marketplace",
+				description: "Marketplace service",
+				sort_order: 1,
+				visibility: "public",
+				// Records the endpoint on the row when the environment knows it,
+				// so routing does not depend on the env convention at runtime.
+				...timestamped(now),
+			},
+		]);
 
 		await tx.insert(coreSchema.service_provider).values({
 			id: SEED_IDS.evyMarketplaceProvider,

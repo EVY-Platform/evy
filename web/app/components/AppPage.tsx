@@ -97,8 +97,8 @@ export default function AppPage({ pageId }: { pageId: string }) {
 		</button>
 	) : null;
 
-	const footer_row_id = page?.footer_row_id;
-	const footerRecord = footer_row_id ? rowsById[footer_row_id] : undefined;
+	const footerRowId = page?.footer_row_id;
+	const footerRecord = footerRowId ? rowsById[footerRowId] : undefined;
 	const footerRowElement = footerRecord
 		? storedRowToRow(footerRecord).row
 		: undefined;
@@ -131,7 +131,7 @@ export default function AppPage({ pageId }: { pageId: string }) {
 				contain: "layout style paint",
 			}}
 		>
-			{footer_row_id ? (
+			{footerRowId ? (
 				<div
 					ref={pageWrapperRef}
 					className="evy-overflow-hidden evy-flex evy-flex-col evy-h-full evy-bg-white"
@@ -147,8 +147,8 @@ export default function AppPage({ pageId }: { pageId: string }) {
 						{scrollBody}
 					</div>
 					<DraggableRowContainer
-						rowId={footer_row_id}
-						selectRow={() => selectRow(footer_row_id)}
+						rowId={footerRowId}
+						selectRow={() => selectRow(footerRowId)}
 					>
 						{footerRowElement}
 					</DraggableRowContainer>

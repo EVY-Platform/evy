@@ -22,10 +22,5 @@ export function formatResourcePathForDisplay(
 		}
 	}
 
-	const dotIndex = variablePath.indexOf(".");
-	const resourceId =
-		dotIndex === -1 ? variablePath : variablePath.slice(0, dotIndex);
-	const pathSuffix = dotIndex === -1 ? "" : variablePath.slice(dotIndex);
-	const resourceName = resourceNamesByRef.get(resourceId);
-	return resourceName ? `${resourceName}${pathSuffix}` : variablePath;
+	return variablePath;
 }

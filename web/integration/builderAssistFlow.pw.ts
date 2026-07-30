@@ -1,40 +1,35 @@
 import { expect, type Locator, test } from "@playwright/test";
 import type { UI_Flow as ServerFlow, UI_ActionBranch } from "evy-types";
+import { EVY_CORE_RESOURCE_REF } from "evy-types/coreResources";
 import type { ServiceResource } from "../app/types/resources";
-import { TEST_SERVICE_ID } from "../testFixtures/resourceCatalog";
 import { openAppWithFullFlows } from "./flowFixtures";
 import { getConfigPanel, popoverSelect } from "./utils";
 
-const ITEM_RESOURCE_REF = "test_service.item";
-const ORDER_RESOURCE_REF = "test_service.order";
-const MESSAGES_RESOURCE_REF = "evy.messages";
+const ITEM_RESOURCE_REF = "test_service.items";
+const ORDER_RESOURCE_REF = "test_service.orders";
+const MESSAGES_RESOURCE_REF = EVY_CORE_RESOURCE_REF.MESSAGES;
 
 const SERVICE_RESOURCES: ServiceResource[] = [
 	{
 		id: ITEM_RESOURCE_REF,
-		serviceId: TEST_SERVICE_ID,
 		name: "item",
 	},
 	{
 		id: ORDER_RESOURCE_REF,
-		serviceId: TEST_SERVICE_ID,
 		name: "order",
 	},
 	{
 		id: MESSAGES_RESOURCE_REF,
-		serviceId: "evy",
 		name: "message",
 	},
 ];
 
 const RESOURCE_ATTRIBUTE_METADATA = [
 	{
-		serviceId: TEST_SERVICE_ID,
 		resourceId: ITEM_RESOURCE_REF,
 		attributeNames: ["price", "title"],
 	},
 	{
-		serviceId: TEST_SERVICE_ID,
 		resourceId: ORDER_RESOURCE_REF,
 		attributeNames: ["status"],
 	},

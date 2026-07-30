@@ -433,7 +433,7 @@ export const pageReducer = (state: AppState, action: RowAction): AppState => {
 			if (!parentRow) return state;
 			return {
 				...state,
-				configStack: [...state.configStack, action.child_row_id],
+				configStack: [...state.configStack, action.childRowId],
 			};
 		}
 

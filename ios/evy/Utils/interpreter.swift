@@ -324,15 +324,11 @@ private func _resolveBindingRoot(
     {
       return (try cachedRow.decoded(), remainingProps)
     }
-    if splitProps.count >= 2 {
-      let twoSegmentKey = splitProps[0] + PROP_SEPARATOR + splitProps[1]
-      if let cachedRow = try? EVY.cacheStore.get(
-        namespace: EVYNamespace.cache, resource: scopeId, id: twoSegmentKey)
-      {
-        let refRemaining =
-          splitProps.count > 2 ? Array(splitProps[2...]) : []
-        return (try cachedRow.decoded(), refRemaining)
-      }
+    if let split = EVYResourceRef.split(pathSegments: splitProps),
+      let cachedRow = try? EVY.cacheStore.get(
+        namespace: EVYNamespace.cache, resource: scopeId, id: split.ref)
+    {
+      return (try cachedRow.decoded(), split.remaining)
     }
   }
 
@@ -340,10 +336,8 @@ private func _resolveBindingRoot(
   do {
     json = try store.getJsonForBinding(key: firstProp, cacheScopeId: scope.cacheScopeId)
   } catch EVYDataError.keyNotFound {
-    if splitProps.count >= 2 {
-      let ref = splitProps[0] + PROP_SEPARATOR + splitProps[1]
-      let refRemaining = splitProps.count > 2 ? Array(splitProps[2...]) : []
-      return (try EVY.getSyncedJsonForRef(ref), refRemaining)
+    if let split = EVYResourceRef.split(pathSegments: splitProps) {
+      return (try EVY.getSyncedJsonForRef(split.ref), split.remaining)
     }
     throw EVYDataError.keyNotFound
   }

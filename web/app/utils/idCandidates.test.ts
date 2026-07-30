@@ -50,7 +50,7 @@ const pagesById: Record<string, DATA_EVY_Page> = {
 };
 
 const serviceResources = [
-	{ id: "test_service.items", serviceId: "test_service", name: "item" },
+	{ id: "test_service.items", name: "item" },
 ] satisfies ServiceResource[];
 
 const serviceNamesById = new Map([["test_service", "Marketplace"]]);
@@ -107,12 +107,10 @@ describe("idCandidates", () => {
 	test("buildResourceAttributeCandidatesForResource returns only the selected resource attributes", () => {
 		const metadata = [
 			{
-				serviceId: "test_service",
 				resourceId: "test_service.items",
 				attributeNames: ["title", "price"],
 			},
 			{
-				serviceId: "test_service",
 				resourceId: "test_service.other",
 				attributeNames: ["name", "status"],
 			},

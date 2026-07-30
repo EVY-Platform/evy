@@ -34,25 +34,25 @@ actor EVYAPIManager {
 
   func uploadFile(_ fileData: Data) async throws -> String {
     try await validateAuth()
-    let upload_id = UUID().uuidString
-    let frames = try fileData.uploadFrames(upload_id: upload_id)
+    let uploadId = UUID().uuidString
+    let frames = try fileData.uploadFrames(uploadId: uploadId)
     do {
       for frame in frames {
         try await rpcWS.sendBinary(frame)
       }
-      let created_at = await MainActor.run { EVY.nowISO8601(fractional: true) }
+      let createdAt = await MainActor.run { EVY.nowISO8601(fractional: true) }
       let response: EVYCreateFileData = try await rpcWS.fetch(
         method: "create",
         params: EVYCreateFileParams(
           data: EVYCreateFileData(
-            createdAt: created_at,
-            id: upload_id,
+            createdAt: createdAt,
+            id: uploadId,
             type: "image/jpeg",
-            updatedAt: created_at,
+            updatedAt: createdAt,
             // Stated like every other create; the API defaults nothing.
             visibility: .visibilityPublic
           ),
-          filter: CreateFileParamsFilter(id: upload_id),
+          filter: CreateFileParamsFilter(id: uploadId),
           resource: .evyFiles
         ),
         expecting: EVYCreateFileData.self
@@ -61,7 +61,7 @@ actor EVYAPIManager {
     } catch {
       _ = try? await rpcWS.fetch(
         method: "cancel_upload",
-        params: EVYCancelUploadParams(uploadID: upload_id),
+        params: EVYCancelUploadParams(uploadID: uploadId),
         expecting: EVYCancelUploadResponse.self
       )
       throw error
@@ -124,7 +124,7 @@ actor EVYAPIManager {
 
     let result = try await rpcWS.subscribe(event: "data_changed")
     if result["data_changed"] != "ok" {
-      throw EVYRPCError.subscriptionError("Failed to subscribe to dataChanged events")
+      throw EVYRPCError.subscriptionError("Failed to subscribe to data_changed events")
     }
 
     authed = connected
@@ -153,7 +153,7 @@ actor EVYAPIManager {
     scheduleReconnect()
   }
 
-  /// Re-establishes the session in the background so `dataChanged` pushes resume
+  /// Re-establishes the session in the background so `data_changed` pushes resume
   /// without waiting for the user to trigger a request.
   private func scheduleReconnect() {
     guard reconnectTask == nil else { return }

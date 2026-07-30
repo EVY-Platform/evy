@@ -504,8 +504,7 @@ class E2ETestBase: XCTestCase {
       "id": E2EFlowIds.webSocketCreateFlow,
       "name": "Create item",
       "submits": [
-        "service": MARKETPLACE_SERVICE,
-        "resource": MARKETPLACE_ITEMS_RESOURCE_ID,
+        "resource": MARKETPLACE_ITEMS_RESOURCE_ID
       ],
       "pages": [
         [
@@ -552,7 +551,7 @@ class E2ETestBase: XCTestCase {
             ),
             "sheet": Self.submitListingSheetChild(
               createAction:
-                "{create(\(MARKETPLACE_SERVICE),\(MARKETPLACE_ITEMS_RESOURCE_ID), submit)}"
+                "{create(\(MARKETPLACE_ITEMS_RESOURCE_ID), submit)}"
             ),
           ] as [String: Any],
         ]
@@ -566,13 +565,12 @@ class E2ETestBase: XCTestCase {
     let addressFields =
       "street: \"1 Martin Place\", city: Sydney, postcode: \"2000\", state: NSW, country: Australia"
     let createAddress =
-      "{create(\(EVY_CORE_SERVICE), addresses, {\(addressFields)}, {\(MARKETPLACE_ITEMS_RESOURCE_ID).transfer_options.pickup.address_id})}"
+      "{create(\(EVYCoreResource.addresses.ref), {\(addressFields)}, {\(MARKETPLACE_ITEMS_RESOURCE_ID).transfer_options.pickup.address_id})}"
     return [
       "id": E2EFlowIds.webSocketCreateFlow,
       "name": "Create item with address",
       "submits": [
-        "service": MARKETPLACE_SERVICE,
-        "resource": MARKETPLACE_ITEMS_RESOURCE_ID,
+        "resource": MARKETPLACE_ITEMS_RESOURCE_ID
       ],
       "pages": [
         [
@@ -609,7 +607,7 @@ class E2ETestBase: XCTestCase {
             ),
             "sheet": Self.submitListingSheetChild(
               createAction:
-                "{create(\(MARKETPLACE_SERVICE),\(MARKETPLACE_ITEMS_RESOURCE_ID), submit)}"
+                "{create(\(MARKETPLACE_ITEMS_RESOURCE_ID), submit)}"
             ),
           ] as [String: Any],
         ]
@@ -1161,10 +1159,10 @@ class E2ETestBase: XCTestCase {
   /// The latest message about one transfer method for the item. Everything the item page
   /// shows is a read of `data.value` off this - see `docs/evy/data.md`.
   static func latestMessageExpression(type: String) -> String {
-    let messagesResourceId = EVYCoreResource.messages.ref
-    let itemId = MARKETPLACE_ITEMS_RESOURCE_ID
+    let messagesRef = EVYCoreResource.messages.ref
+    let itemRef = MARKETPLACE_ITEMS_RESOURCE_ID
     return
-      "findFirst(sort(\(messagesResourceId), desc, created_at), fk == \(itemId).id && data.type == \(type))"
+      "findFirst(sort(\(messagesRef), desc, created_at), fk == \(itemRef).id && data.type == \(type))"
   }
 
   static let messageCreateEnvelope =
@@ -1173,7 +1171,7 @@ class E2ETestBase: XCTestCase {
   static func requestCreateAction(type: String, payload: String) -> String {
     let messagesResourceId = EVYCoreResource.messages.ref
     return
-      "{create(\(EVY_CORE_SERVICE),\(messagesResourceId),{\(messageCreateEnvelope), data: {type: \(type), value: pending, \(payload)}})}"
+      "{create(\(messagesResourceId),{\(messageCreateEnvelope), data: {type: \(type), value: pending, \(payload)}})}"
   }
 
   /// Cancel is offered while the request is open, and each transfer method is independent, so
@@ -1259,7 +1257,7 @@ class E2ETestBase: XCTestCase {
       type: "shipping", payload: "postalcode: shipping_address.postcode")
     func cancelAction(type: String) -> String {
       let latest = latestMessageExpression(type: type)
-      return "{create(\(EVY_CORE_SERVICE),\(messagesResourceId),{\(messageCreateEnvelope),"
+      return "{create(\(messagesResourceId),{\(messageCreateEnvelope),"
         + " parent_message_id: \(latest).id, data: {value: cancel, type: \(type)}})}"
     }
 
@@ -1810,7 +1808,6 @@ class E2ETestBase: XCTestCase {
       "false": "",
       "true": [
         "fn": "create",
-        "service": EVY_CORE_SERVICE,
         "resource": EVYCoreResource.messages.ref,
         "mode": "inline",
         "data": [
@@ -3207,8 +3204,8 @@ final class WebSocketE2ETests: E2ETestBase {
       "The From you tab should be reachable below the request picker")
     fromYouTab.tap()
 
-    let child_row_id = E2ETestBase.homeInboxFromYouChildRowId
-    let row = app.otherElements["swipeRow_\(child_row_id)_\(requestId)"]
+    let childRowId = E2ETestBase.homeInboxFromYouChildRowId
+    let row = app.otherElements["swipeRow_\(childRowId)_\(requestId)"]
     XCTAssertTrue(
       row.waitForExistence(timeout: 10),
       "The request created by this device should appear under From you")
@@ -3217,7 +3214,7 @@ final class WebSocketE2ETests: E2ETestBase {
       "The request row should be reachable after scrolling")
     row.swipeLeft(velocity: .slow)
 
-    let swipeButtonId = "swipeLeft_\(child_row_id)_\(requestId)"
+    let swipeButtonId = "swipeLeft_\(childRowId)_\(requestId)"
     let swipeButton = app.buttons[swipeButtonId]
     XCTAssertTrue(
       swipeButton.waitForExistence(timeout: 3),
@@ -4397,9 +4394,9 @@ final class E2EPlaceSearchTests: E2ETestBase {
     let destination = "{pickup_address}"
     let subtitle = "{formatAddress(pickup_address)}"
     let saveCreate =
-      "{create(\(EVY_CORE_SERVICE), addresses, pickup_address, {pickup_address.id})}"
+      "{create(\(EVYCoreResource.addresses.ref), pickup_address, {pickup_address.id})}"
     let saveUpdate =
-      "{update(\(EVY_CORE_SERVICE), addresses, {id: pickup_address.id}, pickup_address)}"
+      "{update(\(EVYCoreResource.addresses.ref), {id: pickup_address.id}, pickup_address)}"
     return [
       "id": placeSearchHomeFlowId,
       "name": "E2E Place Search",

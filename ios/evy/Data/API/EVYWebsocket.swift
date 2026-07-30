@@ -218,7 +218,7 @@ actor EVYWebsocket: EVYRPCTransport {
         DataChangedNotification.self, from: paramsData)
     else {
       postError(
-        EVYError.parsingFailed(context: "dataChanged notification parsing failed"))
+        EVYError.parsingFailed(context: "data_changed notification parsing failed"))
       return
     }
 

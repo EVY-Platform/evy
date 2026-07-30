@@ -28,11 +28,7 @@ import {
 	findPageReferences,
 	type PageReferenceEntry,
 } from "../utils/pageReferences";
-import {
-	parseSubmitTargetValue,
-	submitTargetOptions,
-	submitTargetValue,
-} from "../utils/serviceResourceOptions";
+import { toResourceOptions } from "../utils/serviceResourceOptions";
 import { ActionEditor } from "./ActionEditor";
 import { BuilderAssist } from "./BuilderAssist";
 import { PageInUseDialog } from "./PageInUseDialog";
@@ -187,7 +183,10 @@ export function ConfigurationPanel() {
 	);
 
 	const submitsTargetOptions = useMemo<PopoverOption[]>(
-		() => submitTargetOptions(serviceResources),
+		() => [
+			{ value: "", label: "None" },
+			...toResourceOptions(serviceResources),
+		],
 		[serviceResources],
 	);
 
@@ -197,7 +196,7 @@ export function ConfigurationPanel() {
 			dispatchRow({
 				type: "UPDATE_FLOW_SUBMITS",
 				flowId: activeFlowId,
-				submits: parseSubmitTargetValue(value),
+				submits: value ? { resource: value } : undefined,
 			});
 		},
 		[activeFlowId, dispatchRow],
@@ -240,11 +239,11 @@ export function ConfigurationPanel() {
 	}, []);
 
 	const openChildConfiguration = useCallback(
-		(child_row_id: string, parentRow: Row) => {
+		(childRowId: string, parentRow: Row) => {
 			dispatchRow({
 				type: "PUSH_CONFIG_STACK",
 				parentRowId: parentRow.id,
-				child_row_id,
+				childRowId,
 			});
 		},
 		[dispatchRow],
@@ -566,7 +565,7 @@ export function ConfigurationPanel() {
 								ariaLabel="Flow submits target"
 								value={
 									activeFlow.submits
-										? submitTargetValue(activeFlow.submits)
+										? activeFlow.submits.resource
 										: ""
 								}
 								placeholder="None"

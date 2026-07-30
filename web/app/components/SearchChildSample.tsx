@@ -7,10 +7,10 @@ import { resolveRowElement } from "./resolveRowElement";
 
 export function SearchChildSample({
 	searchRowId,
-	child_row_id,
+	childRowId,
 }: {
 	searchRowId: string;
-	child_row_id?: string;
+	childRowId?: string;
 }) {
 	const { dispatchRow, rowsById, rows: paletteRows } = useFlowsContext();
 	const isInRowsPanel = useIsInRowsPanel();
@@ -26,7 +26,7 @@ export function SearchChildSample({
 		return null;
 	}
 
-	if (!child_row_id) {
+	if (!childRowId) {
 		return (
 			<div className="evy-mt-2" data-testid="search-child-drop-target">
 				<PlaceholderDropIndicator
@@ -40,11 +40,11 @@ export function SearchChildSample({
 	return (
 		<div className="evy-mt-2" data-testid="search-child-sample">
 			<DraggableRowContainer
-				rowId={child_row_id}
-				selectRow={() => selectChildRow(child_row_id)}
+				rowId={childRowId}
+				selectRow={() => selectChildRow(childRowId)}
 				showIndicators={false}
 			>
-				{resolveRowElement(child_row_id, rowsById, paletteRows)}
+				{resolveRowElement(childRowId, rowsById, paletteRows)}
 			</DraggableRowContainer>
 		</div>
 	);

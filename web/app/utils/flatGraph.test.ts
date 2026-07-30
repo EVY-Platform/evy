@@ -34,11 +34,11 @@ import { pageRootIds } from "./rowTraversal";
 
 const NOW = "2024-01-01T00:00:00.000Z";
 
-function makeFlow(id: string, page_ids: string[]): DATA_EVY_Flow {
+function makeFlow(id: string, pageIds: string[]): DATA_EVY_Flow {
 	return {
 		id,
 		name: "Flow",
-		page_ids,
+		page_ids: pageIds,
 		visibility: "public",
 		created_at: NOW,
 		updated_at: NOW,
@@ -47,15 +47,15 @@ function makeFlow(id: string, page_ids: string[]): DATA_EVY_Flow {
 
 function makePage(
 	id: string,
-	row_ids: string[],
-	footer_row_id?: string,
+	rowIds: string[],
+	footerRowId?: string,
 ): DATA_EVY_Page {
 	return {
 		id,
 		name: "Page",
 		title: "",
-		row_ids,
-		footer_row_id,
+		row_ids: rowIds,
+		footer_row_id: footerRowId,
 		created_at: NOW,
 		updated_at: NOW,
 		visibility: "public",

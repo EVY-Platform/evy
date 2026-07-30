@@ -106,7 +106,7 @@ private struct EVYDropdownPreview: View {
 
   var body: some View {
     EVYDropdown(
-      title: "dropdown",
+      title: "Dropdown",
       placeholder: "A placeholder",
       data: "{conditions}",
       valueTemplate: "{$datum.value}",

@@ -12,8 +12,7 @@ extension XCTestCase {
   func seedLocalBinding(key: String, value: EVYJson) throws {
     let encodedValue = try JSONEncoder().encode(value)
 
-    if let dotIndex = key.firstIndex(of: ".") {
-      let namespace = String(key[..<dotIndex])
+    if let namespace = try? EVYResourceRef.serviceOf(key) {
       try EVY.publicStore.applySyncedValue(namespace: namespace, resource: key, value: value)
       return
     }

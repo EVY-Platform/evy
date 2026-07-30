@@ -32,11 +32,11 @@ const { pageReducer } = await import("./pageReducer");
 
 const NOW = "2024-01-01T00:00:00.000Z";
 
-function makeFlow(id: string, page_ids: string[]): DATA_EVY_Flow {
+function makeFlow(id: string, pageIds: string[]): DATA_EVY_Flow {
 	return {
 		id,
 		name: "Flow",
-		page_ids,
+		page_ids: pageIds,
 		visibility: "public",
 		created_at: NOW,
 		updated_at: NOW,
@@ -45,15 +45,15 @@ function makeFlow(id: string, page_ids: string[]): DATA_EVY_Flow {
 
 function makePage(
 	id: string,
-	row_ids: string[],
-	footer_row_id?: string,
+	rowIds: string[],
+	footerRowId?: string,
 ): DATA_EVY_Page {
 	return {
 		id,
 		name: "Page",
 		title: "Page",
-		row_ids,
-		footer_row_id,
+		row_ids: rowIds,
+		footer_row_id: footerRowId,
 		created_at: NOW,
 		updated_at: NOW,
 		visibility: "public",
@@ -78,7 +78,7 @@ function makeTextRow(
 
 function makeContainerRow(
 	id: string,
-	sheet_row_id?: string,
+	sheetRowId?: string,
 	children_row_ids: string[] = [],
 ): DATA_EVY_Row {
 	return {
@@ -88,7 +88,7 @@ function makeContainerRow(
 		visible: "true",
 		data: {
 			title: "Container",
-			...(sheet_row_id ? { sheet_row_id: sheet_row_id } : {}),
+			...(sheetRowId ? { sheet_row_id: sheetRowId } : {}),
 			...(children_row_ids.length
 				? { children_row_ids: children_row_ids }
 				: {}),
@@ -488,7 +488,7 @@ describe("pageReducer", () => {
 		const pushed = pageReducer(state, {
 			type: "PUSH_CONFIG_STACK",
 			parentRowId: "row-1",
-			child_row_id: "b",
+			childRowId: "b",
 		});
 		expect(pushed.configStack).toEqual(["a", "b"]);
 

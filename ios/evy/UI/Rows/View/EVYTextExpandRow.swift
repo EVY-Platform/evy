@@ -61,11 +61,11 @@ struct EVYTextExpandRow: View {
           }
       }
 
-      if canExpand && !isExpanded, let expand_label = view.expand_label {
+      if canExpand && !isExpanded, let expandLabel = view.expand_label {
         Button {
           onExpandTapped()
         } label: {
-          EVYTextView(expand_label, style: .action)
+          EVYTextView(expandLabel, style: .action)
         }
         .buttonStyle(.plain)
       }

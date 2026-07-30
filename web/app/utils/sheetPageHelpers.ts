@@ -2,7 +2,7 @@ import type { DATA_EVY_Row } from "evy-types";
 import { ROW_SHEET_FIELD } from "./rowConstants";
 
 type ActiveSheetPage = {
-	sheet_row_id: string;
+	sheetRowId: string;
 	parentRowId: string;
 };
 
@@ -23,14 +23,14 @@ export function buildActiveSheetPages({
 	for (const descendantId of configStack) {
 		const currentRow = rowsById[currentRowId];
 		if (!currentRow) break;
-		const sheet_row_id = currentRow.data[ROW_SHEET_FIELD];
+		const sheetRowId = currentRow.data[ROW_SHEET_FIELD];
 		const children_row_ids = Array.isArray(currentRow.data.children_row_ids)
 			? (currentRow.data.children_row_ids as string[])
 			: [];
 
-		if (sheet_row_id === descendantId) {
+		if (sheetRowId === descendantId) {
 			sheetPages.push({
-				sheet_row_id: descendantId,
+				sheetRowId: descendantId,
 				parentRowId: currentRowId,
 			});
 			currentRowId = descendantId;
@@ -51,9 +51,9 @@ export function buildActiveSheetPages({
 
 	const finalRow = rowsById[currentRowId];
 	if (finalRow) {
-		const sheet_row_id = finalRow.data[ROW_SHEET_FIELD];
-		if (typeof sheet_row_id === "string") {
-			sheetPages.push({ sheet_row_id, parentRowId: currentRowId });
+		const sheetRowId = finalRow.data[ROW_SHEET_FIELD];
+		if (typeof sheetRowId === "string") {
+			sheetPages.push({ sheetRowId, parentRowId: currentRowId });
 		}
 	}
 

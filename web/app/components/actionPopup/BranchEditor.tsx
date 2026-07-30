@@ -30,7 +30,6 @@ type BranchEditorProps = {
 	flowsById: Record<string, DATA_EVY_Flow>;
 	pagesById: Record<string, DATA_EVY_Page>;
 	serviceResources: ServiceResource[];
-	serviceNamesById: Map<string, string>;
 	idCandidates: IdCandidate[];
 	rowsById: Record<string, DATA_EVY_Row>;
 	defaultSheetRowId?: string;
@@ -115,7 +114,6 @@ export function BranchEditor({
 	flowsById,
 	pagesById,
 	serviceResources,
-	serviceNamesById: _serviceNamesById,
 	idCandidates,
 	rowsById,
 	defaultSheetRowId,

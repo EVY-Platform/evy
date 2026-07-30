@@ -304,7 +304,7 @@ final class InterpreterTests: XCTestCase {
           "title": .string("Selected item"),
         ]),
       ]),
-      at: "\(MarketplaceTestFixture.service):\(entityKey)"
+      at: "\(MarketplaceTestFixture.service).\(entityKey)"
     )
 
     EVY.resolveQueryParams([entityKey: [secondId]])
@@ -336,7 +336,7 @@ final class InterpreterTests: XCTestCase {
 
     try store(
       .array([firstAddress, secondAddress]),
-      at: "\(EVYNamespace.evy):\(EVYCoreResource.addresses.ref)"
+      at: EVYCoreResource.addresses.ref
     )
     try store(
       .array([
@@ -357,7 +357,7 @@ final class InterpreterTests: XCTestCase {
           ]),
         ]),
       ]),
-      at: "\(MarketplaceTestFixture.service):\(entityKey)"
+      at: "\(MarketplaceTestFixture.service).\(entityKey)"
     )
     let pickupSelections = EVYState<[String]>(
       watches: ["{\(entityKey).pickup_selection}"],
@@ -388,7 +388,7 @@ final class InterpreterTests: XCTestCase {
   }
 
   func testResolveQueryParamsDoesNotCacheSingularAlias() throws {
-    let randomId = UUID().uuidString.replacingOccurrences(of: "-", with: "_")
+    let randomId = UUID().uuidString.replacingOccurrences(of: "-", with: "_").lowercased()
     let resourceKey = "evy_interpreter_tests_\(randomId)_items"
     let entityKey = "evy_interpreter_tests_\(randomId)_item"
     let id = UUID().uuidString
@@ -400,7 +400,7 @@ final class InterpreterTests: XCTestCase {
           "title": .string("Selected exact item"),
         ])
       ]),
-      at: "\(MarketplaceTestFixture.service):\(resourceKey)"
+      at: "\(MarketplaceTestFixture.service).\(resourceKey)"
     )
 
     EVY.resolveQueryParams([resourceKey: [id]])
@@ -413,7 +413,7 @@ final class InterpreterTests: XCTestCase {
   }
 
   func testResolveQueryParamsResolvesExplicitResourceRef() throws {
-    let itemsRef = "\(uniqueKey("test_svc")).items"
+    let itemsRef = "\(MarketplaceTestFixture.service).\(uniqueKey("test_svc_items"))"
     let id = UUID().uuidString
 
     try store(
@@ -491,25 +491,26 @@ final class InterpreterTests: XCTestCase {
 
   func testCollectionResolvesFromPinnedScopeNotGlobalScope() throws {
     let itemsKey = uniqueKey("items")
+    let itemsRef = "\(MarketplaceTestFixture.service).\(itemsKey)"
     let homePageId = "home-\(UUID().uuidString)"
     let detailPageId = "detail-\(UUID().uuidString)"
 
     let item1 = EVYJson.dictionary(["id": .string("id-1"), "title": .string("Item 1")])
     let item2 = EVYJson.dictionary(["id": .string("id-2"), "title": .string("Item 2")])
     try EVY.publicStore.applySyncedValue(
-      namespace: MarketplaceTestFixture.service, resource: itemsKey,
+      namespace: MarketplaceTestFixture.service, resource: itemsRef,
       value: .array([item1, item2]))
 
     let encoded = try JSONEncoder().encode(item1)
     try EVY.cacheStore.create(
-      namespace: EVYNamespace.cache, resource: detailPageId, id: itemsKey, value: encoded)
+      namespace: EVYNamespace.cache, resource: detailPageId, id: itemsRef, value: encoded)
 
     EVY.activeCacheScopeId = detailPageId
-    let resultOnDetail = try EVY.getDataFromText("{\(itemsKey)}")
+    let resultOnDetail = try EVY.getDataFromText("{\(itemsRef)}")
     XCTAssertEqual(resultOnDetail, item1, "Detail page scope resolves to single cached item")
 
     EVY.activeCacheScopeId = homePageId
-    let resultOnHome = try EVY.getDataFromText("{\(itemsKey)}")
+    let resultOnHome = try EVY.getDataFromText("{\(itemsRef)}")
     guard case .array(let homeItems) = resultOnHome else {
       XCTFail("Expected array from home scope")
       return
@@ -593,7 +594,7 @@ final class InterpreterTests: XCTestCase {
           "title": .string("Selected by generic id"),
         ])
       ]),
-      at: "\(MarketplaceTestFixture.service):\(entityKey)"
+      at: "\(MarketplaceTestFixture.service).\(entityKey)"
     )
 
     EVY.resolveQueryParams(["id": [id]])
@@ -711,7 +712,7 @@ final class InterpreterTests: XCTestCase {
 
   func testGetForBindingDoesNotResolveSingularPluralFallback() throws {
     let id = UUID().uuidString
-    let randomId = UUID().uuidString.replacingOccurrences(of: "-", with: "_")
+    let randomId = UUID().uuidString.replacingOccurrences(of: "-", with: "_").lowercased()
     let resourceKey = "\(randomId)_things"
     let entityKey = "\(randomId)_thing"
 
@@ -722,7 +723,7 @@ final class InterpreterTests: XCTestCase {
           "title": .string("Plural resource item"),
         ])
       ]),
-      at: "\(MarketplaceTestFixture.service):\(resourceKey)"
+      at: "\(MarketplaceTestFixture.service).\(resourceKey)"
     )
 
     XCTAssertThrowsError(
@@ -731,7 +732,7 @@ final class InterpreterTests: XCTestCase {
 
   func testSingularQueryKeyDoesNotResolvePluralSyncedCollection() throws {
     let id = UUID().uuidString
-    let randomId = UUID().uuidString.replacingOccurrences(of: "-", with: "_")
+    let randomId = UUID().uuidString.replacingOccurrences(of: "-", with: "_").lowercased()
     let resourceKey = "\(randomId)_items"
     let entityKey = "\(randomId)_item"
 
@@ -742,7 +743,7 @@ final class InterpreterTests: XCTestCase {
           "title": .string("Selected singular item"),
         ])
       ]),
-      at: "\(MarketplaceTestFixture.service):\(resourceKey)"
+      at: "\(MarketplaceTestFixture.service).\(resourceKey)"
     )
 
     EVY.resolveQueryParams([entityKey: [id]])
@@ -752,7 +753,7 @@ final class InterpreterTests: XCTestCase {
 
   func testExactLocalKeyIsReadWithoutSyncedFallback() throws {
     let id = UUID().uuidString
-    let randomId = UUID().uuidString.replacingOccurrences(of: "-", with: "_")
+    let randomId = UUID().uuidString.replacingOccurrences(of: "-", with: "_").lowercased()
     let resourceKey = "\(randomId)_items"
     let entityKey = "\(randomId)_item"
 
@@ -771,7 +772,7 @@ final class InterpreterTests: XCTestCase {
           "title": .string("Synced collection item"),
         ])
       ]),
-      at: "\(MarketplaceTestFixture.service):\(resourceKey)"
+      at: "\(MarketplaceTestFixture.service).\(resourceKey)"
     )
 
     XCTAssertEqual(
@@ -782,6 +783,7 @@ final class InterpreterTests: XCTestCase {
 
   func testFindFirstReturnsMatchingDatumField() throws {
     let conditionsKey = uniqueKey("conditions")
+    let conditionsRef = "\(MarketplaceTestFixture.service).\(conditionsKey)"
     let itemKey = uniqueKey("item")
     let conditionId = UUID().uuidString
 
@@ -790,46 +792,48 @@ final class InterpreterTests: XCTestCase {
         .dictionary(["id": .string(conditionId), "value": .string("Excellent")]),
         .dictionary(["id": .string(UUID().uuidString), "value": .string("Other")]),
       ]),
-      at: "\(MarketplaceTestFixture.service):\(conditionsKey)"
+      at: conditionsRef
     )
     try store(.dictionary(["condition_id": .string(conditionId)]), at: itemKey)
 
     let result = try parseTextFromText(
-      "{findFirst(\(conditionsKey), \(itemKey).condition_id).value}")
+      "{findFirst(\(conditionsRef), \(itemKey).condition_id).value}")
 
     XCTAssertEqual(result.value, "Excellent")
   }
 
   func testFindFirstReturnsEmptyForNoMatch() throws {
     let conditionsKey = uniqueKey("conditions")
+    let conditionsRef = "\(MarketplaceTestFixture.service).\(conditionsKey)"
     let itemKey = uniqueKey("item")
 
     try store(
       .array([.dictionary(["id": .string("abc"), "value": .string("Excellent")])]),
-      at: "\(MarketplaceTestFixture.service):\(conditionsKey)"
+      at: conditionsRef
     )
     try store(.dictionary(["condition_id": .string("no_match")]), at: itemKey)
 
     let result = try parseTextFromText(
-      "{findFirst(\(conditionsKey), \(itemKey).condition_id).value}")
+      "{findFirst(\(conditionsRef), \(itemKey).condition_id).value}")
 
     XCTAssertEqual(result.value, "")
   }
 
   func testFindFirstDoesNotMutateStore() throws {
     let conditionsKey = uniqueKey("conditions")
+    let conditionsRef = "\(MarketplaceTestFixture.service).\(conditionsKey)"
     let itemKey = uniqueKey("item")
     let conditionId = UUID().uuidString
 
     try store(
       .array([.dictionary(["id": .string(conditionId), "value": .string("Good")])]),
-      at: "\(MarketplaceTestFixture.service):\(conditionsKey)"
+      at: conditionsRef
     )
     try store(.dictionary(["condition_id": .string(conditionId)]), at: itemKey)
 
     let countBefore = try EVY.publicStore.getAll().count
     let result = try parseTextFromText(
-      "{findFirst(\(conditionsKey), \(itemKey).condition_id).value}")
+      "{findFirst(\(conditionsRef), \(itemKey).condition_id).value}")
     let countAfter = try EVY.publicStore.getAll().count
 
     XCTAssertEqual(result.value, "Good")
@@ -860,7 +864,7 @@ final class InterpreterTests: XCTestCase {
           value: "pending"
         ),
       ]),
-      at: "\(MarketplaceTestFixture.service):\(messagesRef)"
+      at: messagesRef
     )
     try store(.dictionary(["id": .string(itemId)]), at: itemKey)
 
@@ -886,7 +890,7 @@ final class InterpreterTests: XCTestCase {
           time: "2026-06-03T09:00:00"
         )
       ]),
-      at: "\(MarketplaceTestFixture.service):\(messagesRef)"
+      at: messagesRef
     )
     try store(.dictionary(["id": .string(itemId)]), at: itemKey)
 
@@ -916,7 +920,7 @@ final class InterpreterTests: XCTestCase {
           time: "2026-06-03T09:00:00"
         )
       ]),
-      at: "\(MarketplaceTestFixture.service):\(messagesRef)"
+      at: messagesRef
     )
     try store(.dictionary(["id": .string(itemId)]), at: itemKey)
 
@@ -1049,7 +1053,6 @@ final class InterpreterTests: XCTestCase {
     EVYOwnershipLedger.reset()
     defer { EVYOwnershipLedger.reset() }
 
-    let service = MarketplaceTestFixture.service
     let resource = MarketplaceTestFixture.itemsRef
     let id = UUID().uuidString
     EVY.recordOwnership(resource: resource, id: id)
@@ -1070,7 +1073,6 @@ final class InterpreterTests: XCTestCase {
     let otherItemId = UUID().uuidString
     let ownedRequestId = UUID().uuidString
     let otherRequestId = UUID().uuidString
-    let service = MarketplaceTestFixture.service
     let resource = MarketplaceTestFixture.itemsRef
 
     EVY.recordOwnership(resource: resource, id: itemId)
@@ -1084,7 +1086,7 @@ final class InterpreterTests: XCTestCase {
           id: otherRequestId, fk: otherItemId, resource: resource,
           created_at: "2026-06-01T00:01:00.000Z", type: "pickup", value: "pending"),
       ]),
-      at: EVYCoreResource.messages.ref
+      at: messagesRef
     )
 
     let filtered = try EVY.getDataFromText(
@@ -1107,7 +1109,6 @@ final class InterpreterTests: XCTestCase {
     let openRequestId = UUID().uuidString
     let settledRequestId = UUID().uuidString
     let responseId = UUID().uuidString
-    let service = MarketplaceTestFixture.service
     let resource = MarketplaceTestFixture.itemsRef
 
     EVY.recordOwnership(resource: resource, id: itemId)
@@ -1126,7 +1127,7 @@ final class InterpreterTests: XCTestCase {
           created_at: "2026-06-01T00:02:00.000Z", type: "delivery", value: "pending",
           time: "2026-06-04T10:00:00"),
       ]),
-      at: EVYCoreResource.messages.ref
+      at: messagesRef
     )
 
     let filtered = try EVY.getDataFromText(
@@ -1152,14 +1153,15 @@ final class InterpreterTests: XCTestCase {
 
   func testFindFirstTwoArgStillMatchesByIdentifier() throws {
     let conditionsKey = uniqueKey("conditions")
+    let conditionsRef = "\(MarketplaceTestFixture.service).\(conditionsKey)"
     let conditionId = UUID().uuidString
 
     try store(
       .array([.dictionary(["id": .string(conditionId), "value": .string("Good")])]),
-      at: "\(MarketplaceTestFixture.service):\(conditionsKey)"
+      at: conditionsRef
     )
 
-    let result = try parseTextFromText("{findFirst(\(conditionsKey), \(conditionId)).value}")
+    let result = try parseTextFromText("{findFirst(\(conditionsRef), \(conditionId)).value}")
 
     XCTAssertEqual(result.value, "Good")
   }
@@ -1186,7 +1188,7 @@ final class InterpreterTests: XCTestCase {
           value: "pending"
         ),
       ]),
-      at: "\(MarketplaceTestFixture.service):\(messagesRef)"
+      at: messagesRef
     )
     try store(.dictionary(["id": .string(itemId)]), at: itemKey)
 
@@ -1211,7 +1213,7 @@ final class InterpreterTests: XCTestCase {
           value: "accept"
         )
       ]),
-      at: "\(MarketplaceTestFixture.service):\(messagesRef)"
+      at: messagesRef
     )
     try store(.dictionary(["id": .string(itemId)]), at: itemKey)
 
@@ -1252,7 +1254,7 @@ final class InterpreterTests: XCTestCase {
           id: newestPickup, fk: itemId, created_at: "2026-06-01T09:00:00.300Z",
           type: "pickup", value: "accept", time: "2026-06-03T09:00:00"),
       ]),
-      at: "\(MarketplaceTestFixture.service):\(key)"
+      at: key
     )
     return (oldestPickup, newestPickup, delivery)
   }
@@ -1356,7 +1358,7 @@ final class InterpreterTests: XCTestCase {
           "data": .dictionary(["type": .string("pickup")]),
         ]),
       ]),
-      at: "\(MarketplaceTestFixture.service):\(messagesRef)"
+      at: messagesRef
     )
 
     let result = try parseTextFromText(
@@ -1367,6 +1369,7 @@ final class InterpreterTests: XCTestCase {
 
   func testFindFirstNumericComparison() throws {
     let itemsKey = uniqueKey("priced")
+    let itemsRef = "\(MarketplaceTestFixture.service).\(itemsKey)"
     let expensiveId = UUID().uuidString
 
     try store(
@@ -1380,10 +1383,10 @@ final class InterpreterTests: XCTestCase {
           "price": .int(150),
         ]),
       ]),
-      at: "\(MarketplaceTestFixture.service):\(itemsKey)"
+      at: itemsRef
     )
 
-    let result = try parseTextFromText("{findFirst(\(itemsKey), price > 100).id}")
+    let result = try parseTextFromText("{findFirst(\(itemsRef), price > 100).id}")
 
     XCTAssertEqual(result.value, expensiveId)
   }
@@ -1400,7 +1403,7 @@ final class InterpreterTests: XCTestCase {
           fk: itemId
         )
       ]),
-      at: "\(MarketplaceTestFixture.service):\(messagesRef)"
+      at: messagesRef
     )
     try store(.dictionary(["id": .string(itemId)]), at: itemKey)
 

@@ -10,6 +10,10 @@
 
 import { join } from "node:path";
 import {
+	assertValidServiceSlug,
+	formatResourceRef,
+} from "../types/resourceRef.js";
+import {
 	generatedFileHeader,
 	generatedSwiftHeader,
 	loadJson,
@@ -47,14 +51,12 @@ function validateSchema(value: unknown): asserts value is CoreResourcesSchema {
 		throw new Error("core.resources.json: root must be an object");
 	}
 	const obj = value as Record<string, unknown>;
-	if (
-		typeof obj.service !== "string" ||
-		!/^[a-z][a-z0-9_-]*$/.test(obj.service)
-	) {
+	if (typeof obj.service !== "string") {
 		throw new Error(
 			"core.resources.json: service must be a valid service slug",
 		);
 	}
+	assertValidServiceSlug(obj.service);
 	if (
 		typeof obj.resources !== "object" ||
 		obj.resources === null ||
@@ -103,7 +105,6 @@ function validateSchema(value: unknown): asserts value is CoreResourcesSchema {
 
 function generateTypeScript(schema: CoreResourcesSchema): string {
 	const { service, resources } = schema;
-	const resourceNames = Object.keys(resources);
 	const lines: string[] = [];
 
 	lines.push(...generatedFileHeader(CORE_RESOURCES_SCHEMA_PATH));
@@ -129,7 +130,9 @@ function generateTypeScript(schema: CoreResourcesSchema): string {
 	lines.push("export const EVY_CORE_RESOURCE_REF = {");
 	for (const [plural] of Object.entries(resources)) {
 		const key = resourceKey(plural);
-		lines.push(`\t${key}: ${JSON.stringify(`${service}.${plural}`)},`);
+		lines.push(
+			`\t${key}: ${JSON.stringify(formatResourceRef(service, plural))},`,
+		);
 	}
 	lines.push("} as const;");
 	lines.push("");
@@ -137,7 +140,7 @@ function generateTypeScript(schema: CoreResourcesSchema): string {
 	lines.push("export const EVY_CORE_RESOURCES = [");
 	for (const [plural, meta] of Object.entries(resources)) {
 		lines.push(
-			`\t{ id: ${JSON.stringify(`${service}.${plural}`)}, name: ${JSON.stringify(meta.singular)} },`,
+			`\t{ id: ${JSON.stringify(formatResourceRef(service, plural))}, name: ${JSON.stringify(meta.singular)} },`,
 		);
 	}
 	lines.push("] as const;");
@@ -162,28 +165,6 @@ function generateTypeScript(schema: CoreResourcesSchema): string {
 		"export const EVY_MESSAGE_DATA_VALUES =",
 		`${JSON.stringify(messageDataValues)} as const;`,
 	);
-	lines.push("");
-
-	// Resource names tuple
-	lines.push("export const EVY_CORE_RESOURCE_NAMES = [");
-	for (const plural of resourceNames) {
-		const key = resourceKey(plural);
-		lines.push(`\tEVY_CORE_RESOURCE.${key},`);
-	}
-	lines.push("] as const;");
-	lines.push("");
-
-	// Type union
-	lines.push(
-		"export type EvyCoreResourceName = (typeof EVY_CORE_RESOURCE_NAMES)[number];",
-	);
-	lines.push("");
-
-	// Set
-	lines.push(
-		"export const EVY_CORE_RESOURCE_NAME_SET: ReadonlySet<EvyCoreResourceName> =",
-	);
-	lines.push("\tnew Set(EVY_CORE_RESOURCE_NAMES);");
 	lines.push("");
 
 	return lines.join("\n");

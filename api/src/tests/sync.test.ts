@@ -1,12 +1,12 @@
 import { afterEach, beforeEach, describe, expect, it, spyOn } from "bun:test";
 import type { GetRequest, GetResponse } from "evy-types";
 import {
-	EVY_CORE_RESOURCE,
 	EVY_CORE_RESOURCE_REF,
 	EVY_CORE_RESOURCE_VISIBILITY,
 	EVY_CORE_RESOURCES,
 	EVY_CORE_SERVICE,
 } from "evy-types/coreResources";
+import { parseResourceRef, serviceOfRef } from "evy-types/resourceRef";
 import * as data from "../data/data";
 import type { EvyDb } from "../database/db";
 import * as resources from "../procedures/resources";
@@ -43,42 +43,23 @@ function buildMockGetResponse(items: { id: string }[]): GetResponse {
 	return items;
 }
 
-function bareResourceName(ref: string): string {
-	const dot = ref.indexOf(".");
-	return dot === -1 ? ref : ref.slice(dot + 1);
-}
-
-let getImpl = async (params: GetRequest): Promise<GetResponse> =>
-	buildMockGetResponse([
-		{
-			id: `${params.resource}-mock-1`,
-			visibility:
-				params.resource === EVY_CORE_RESOURCE_REF.ADDRESSES
-					? ("private" as const)
-					: ("public" as const),
-		},
-	]);
-
-let forwardGetImpl = async (
-	_serviceName: string,
-	params: GetRequest,
-): Promise<GetResponse> =>
-	buildMockGetResponse([
-		{
-			id: `${params.resource}-mock-1`,
-			visibility: "public" as const,
-		},
-	]);
-
-type SyncScope = Parameters<typeof data.getSyncRows>[2];
-
 function mockRowFor(resourceRef: string) {
-	const bare = bareResourceName(resourceRef);
+	const bare = parseResourceRef(resourceRef).resource;
 	return {
 		id: `${resourceRef}-mock-1`,
 		visibility: EVY_CORE_RESOURCE_VISIBILITY[bare] ?? ("public" as const),
 	};
 }
+
+let getImpl = async (params: GetRequest): Promise<GetResponse> =>
+	buildMockGetResponse([mockRowFor(params.resource)]);
+
+let forwardGetImpl = async (
+	_serviceName: string,
+	params: GetRequest,
+): Promise<GetResponse> => buildMockGetResponse([mockRowFor(params.resource)]);
+
+type SyncScope = Parameters<typeof data.getSyncRows>[2];
 
 let getSyncRowsImpl = async (
 	resource: string,
@@ -88,22 +69,9 @@ let getSyncRowsImpl = async (
 function resetSyncMocks(): void {
 	getSyncRowsImpl = async (resource) => [mockRowFor(resource)];
 	getImpl = async (params) =>
-		buildMockGetResponse([
-			{
-				id: `${params.resource}-mock-1`,
-				visibility:
-					params.resource === EVY_CORE_RESOURCE_REF.ADDRESSES
-						? ("private" as const)
-						: ("public" as const),
-			},
-		]);
+		buildMockGetResponse([mockRowFor(params.resource)]);
 	forwardGetImpl = async (_serviceName, params) =>
-		buildMockGetResponse([
-			{
-				id: `${params.resource}-mock-1`,
-				visibility: "public" as const,
-			},
-		]);
+		buildMockGetResponse([mockRowFor(params.resource)]);
 }
 
 describe("sync", () => {
@@ -147,7 +115,9 @@ describe("sync", () => {
 	it("includes evy core resources (except devices and catalog) in data", async () => {
 		const result = await sync({ cursor: EPOCH }, db);
 
-		const evyResourceNames = result.data.map((row) => row.resource);
+		const evyResourceNames = result.data
+			.filter((row) => serviceOfRef(row.resource) === EVY_CORE_SERVICE)
+			.map((row) => row.resource);
 
 		expect(evyResourceNames).toContain(EVY_CORE_RESOURCE_REF.FLOWS);
 		expect(evyResourceNames).toContain(EVY_CORE_RESOURCE_REF.PAGES);
@@ -183,8 +153,8 @@ describe("sync", () => {
 	it("includes external service resources in data", async () => {
 		const result = await sync({ cursor: EPOCH }, db);
 
-		const marketplaceRows = result.data.filter((row) =>
-			row.resource.startsWith(`${EXTERNAL_SERVICE_ID}.`),
+		const marketplaceRows = result.data.filter(
+			(row) => serviceOfRef(row.resource) === EXTERNAL_SERVICE_ID,
 		);
 		const rowResources = marketplaceRows.map((row) => row.resource);
 
@@ -193,7 +163,7 @@ describe("sync", () => {
 		expect(rowResources).toContain(EXTERNAL_TEST_RESOURCE.DURATIONS);
 		expect(rowResources).toContain(EXTERNAL_TEST_RESOURCE.AREAS);
 		expect(rowResources).toContain(EXTERNAL_TEST_RESOURCE.RECORDS);
-		expect(rowResources).not.toContain("messages");
+		expect(rowResources).not.toContain(EVY_CORE_RESOURCE_REF.MESSAGES);
 	});
 
 	it("passes updated_after to the core read", async () => {

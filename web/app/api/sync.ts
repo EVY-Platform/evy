@@ -32,7 +32,6 @@ function flattenServiceResources(
 	return response.services.flatMap((service) =>
 		service.resources.map((resource) => ({
 			id: resource.id,
-			serviceId: service.id,
 			name: resource.name,
 		})),
 	);
@@ -164,7 +163,6 @@ export function extractResourceAttributeMetadata(
 		.filter((service) => service.id !== EVY_CORE_SERVICE)
 		.flatMap((service) =>
 			service.resources.map((resource) => ({
-				serviceId: service.id,
 				resourceId: resource.id,
 				attributeNames:
 					resource.attributes && resource.attributes.length > 0

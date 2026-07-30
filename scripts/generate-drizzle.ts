@@ -407,7 +407,7 @@ export async function loadSchemaRefCache(): Promise<void> {
 	);
 }
 
-export function resolveRefTarget(ref: string): JsonSchemaProp | null {
+function resolveRefTarget(ref: string): JsonSchemaProp | null {
 	const hashIndex = ref.indexOf("#");
 	if (hashIndex === -1) return null;
 	const relativeFile = ref.slice(0, hashIndex);
@@ -513,23 +513,14 @@ export function emitRefColumn(
 	ref: string,
 	options: {
 		isPk?: boolean;
-		hasDefaultRandom?: boolean;
-		enumKeys?: string[];
-		defaultVal?: unknown;
 		isRequired?: boolean;
 	} = {},
 ): string {
 	const suffixes: ColumnSuffixes = {
 		isPk: options.isPk ?? false,
-		hasDefaultRandom: options.hasDefaultRandom ?? false,
+		hasDefaultRandom: false,
 	};
-	const col = buildRefColumn(
-		dbCol,
-		ref,
-		suffixes,
-		options.enumKeys ?? [],
-		options.defaultVal,
-	);
+	const col = buildRefColumn(dbCol, ref, suffixes, [], undefined);
 	return applyNullabilityFallback(
 		col,
 		undefined,
@@ -659,7 +650,7 @@ async function main(): Promise<void> {
 		}
 		// os.schema.json declares the same enum standalone; fail on drift.
 		if (
-			enumKey === "OS" &&
+			enumKey === "os" &&
 			JSON.stringify(values) !== JSON.stringify(osSchema.enum ?? [])
 		) {
 			throw new Error(

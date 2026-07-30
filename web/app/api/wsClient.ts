@@ -10,6 +10,7 @@ import {
 	EVY_CORE_SERVICE,
 } from "evy-types/coreResources";
 import { assertFlatFlowGraphSubmits } from "evy-types/flowSubmits";
+import { isValidResourceRef, serviceOfRef } from "evy-types/resourceRef";
 import {
 	DATA_CHANGED_EVENT,
 	type DataChangedNotification,
@@ -115,7 +116,8 @@ type DataChangedListener = (changes: RemoteChange[]) => void;
 function normalizeRemoteChanges(
 	notification: DataChangedNotification,
 ): RemoteChange[] {
-	if (!notification.resource.startsWith(`${EVY_CORE_SERVICE}.`)) return [];
+	if (!isValidResourceRef(notification.resource)) return [];
+	if (serviceOfRef(notification.resource) !== EVY_CORE_SERVICE) return [];
 	const values = Array.isArray(notification.value)
 		? notification.value
 		: [notification.value];

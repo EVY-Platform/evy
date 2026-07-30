@@ -1,4 +1,4 @@
-import { describe, expect, test } from "bun:test";
+import { beforeAll, describe, expect, test } from "bun:test";
 import {
 	assertDrizzleConfig,
 	type DrizzleConfig,
@@ -52,8 +52,11 @@ describe("resolveJsonbTypeAnnotation", () => {
 });
 
 describe("string $ref columns", () => {
-	test("ServiceSlug ref emits varchar(50)", async () => {
+	beforeAll(async () => {
 		await loadSchemaRefCache();
+	});
+
+	test("ServiceSlug ref emits varchar(50)", () => {
 		expect(
 			emitRefColumn(
 				"id",
@@ -65,8 +68,7 @@ describe("string $ref columns", () => {
 		).toBe('varchar("id", { length: 50 }).primaryKey().notNull()');
 	});
 
-	test("ResourceRef ref emits varchar(100)", async () => {
-		await loadSchemaRefCache();
+	test("ResourceRef ref emits varchar(100)", () => {
 		expect(
 			emitRefColumn(
 				"resource",
@@ -75,8 +77,7 @@ describe("string $ref columns", () => {
 		).toBe('varchar("resource", { length: 100 }).notNull()');
 	});
 
-	test("object $ref still emits jsonb", async () => {
-		await loadSchemaRefCache();
+	test("object $ref still emits jsonb", () => {
 		expect(
 			emitRefColumn("submits", "#/$defs/DATA_EVY_FlowSubmits", {
 				isRequired: false,

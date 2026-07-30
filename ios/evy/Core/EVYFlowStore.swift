@@ -142,7 +142,7 @@ enum EVYFlowStore {
     flow(id: flowId, from: store)?.page_ids.first
   }
 
-  static func page_ids(
+  static func pageIds(
     inFlowId flowId: String,
     from store: EVYDataStore = EVY.publicStore
   ) -> [String] {

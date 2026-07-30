@@ -23,7 +23,7 @@ const dataDb = asEvyDb(testDb);
 
 type WSServer = InstanceType<typeof Server>;
 
-let ws_port: number;
+let wsPort: number;
 let testServer: WSServer | null = null;
 const storedData: { id: string; value: string }[] = [];
 
@@ -97,9 +97,9 @@ describe("service WebSocket adapters", () => {
 
 	beforeAll(async () => {
 		await migrate(testDb, { migrationsFolder: "./drizzle" });
-		ws_port = await getFreePort();
+		wsPort = await getFreePort();
 		process.env.MARKETPLACE_WS_HOST = "127.0.0.1";
-		process.env.MARKETPLACE_WS_PORT = String(ws_port);
+		process.env.MARKETPLACE_WS_PORT = String(wsPort);
 		// Keep failed reconnect probes short so a slow CI runner cannot burn the
 		// default 10s RPC timeout inside the 5s bun test budget.
 		process.env.SERVICE_RPC_TIMEOUT_MS = "200";
@@ -115,7 +115,7 @@ describe("service WebSocket adapters", () => {
 			updated_at: nowIso,
 		});
 
-		testServer = await startTestWsServer(ws_port);
+		testServer = await startTestWsServer(wsPort);
 
 		const { initServiceAdapters } = await import("../procedures/services");
 		await initServiceAdapters(dataDb, (_eventName, payload) => {
@@ -199,7 +199,7 @@ describe("service WebSocket adapters", () => {
 		);
 
 		stopTestWsServer();
-		testServer = await startTestWsServer(ws_port);
+		testServer = await startTestWsServer(wsPort);
 
 		const reconnectDeadline = Date.now() + 5000;
 		let reconnected = false;

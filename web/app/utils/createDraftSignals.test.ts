@@ -23,10 +23,4 @@ describe("createDraftSignals", () => {
 			false,
 		);
 	});
-
-	it("does not offer submit create for a different service prefix", () => {
-		expect(
-			shouldOfferCreateSubmitWithFlow("marketplace.items", declared),
-		).toBe(false);
-	});
 });

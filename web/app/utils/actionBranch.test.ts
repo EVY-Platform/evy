@@ -177,10 +177,10 @@ describe("action branch helpers", () => {
 	it("keeps filter and changes in update display text", () => {
 		expect(
 			formatBranchDisplay(
-				"{update(test_service.records,{fk: id-1, closedAt: null},{closedAt: now()})}",
+				`{update(${TEST_RESOURCE_ID.RECORDS},{fk: id-1, closedAt: null},{closedAt: now()})}`,
 			),
 		).toBe(
-			"update(test_service.records, {fk: id-1, closedAt: null}, {closedAt: now()})",
+			`update(${TEST_RESOURCE_ID.RECORDS}, {fk: id-1, closedAt: null}, {closedAt: now()})`,
 		);
 	});
 

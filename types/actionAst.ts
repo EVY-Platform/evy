@@ -105,7 +105,7 @@ function parseObjectArgument(text: string): ObjectArgument | null {
 function convertCreate(args: string[]): ActionConversion {
 	if (args.length < 2) return fail("create requires resource and data");
 	const resource = args[0].trim();
-	if (!resource || !isValidResourceRef(resource)) {
+	if (!isValidResourceRef(resource)) {
 		return fail("create requires a service-prefixed resource ref");
 	}
 
@@ -123,10 +123,10 @@ function convertCreate(args: string[]): ActionConversion {
 	const data = parseObjectArgument(args[1]);
 	if (!data) return fail("create data is neither an object nor a path");
 
-	let id_destination: string | undefined;
+	let idDestination: string | undefined;
 	if (args.length > 2) {
-		id_destination = args[2].trim();
-		if (!id_destination)
+		idDestination = args[2].trim();
+		if (!idDestination)
 			return fail("create id destination must not be empty");
 	}
 	if (args.length > 3) return fail("create accepts at most 3 arguments");
@@ -139,7 +139,7 @@ function convertCreate(args: string[]): ActionConversion {
 				resource,
 				mode: "inline",
 				data: data.map,
-				...(id_destination ? { id_destination: id_destination } : {}),
+				...(idDestination ? { id_destination: idDestination } : {}),
 			},
 		};
 	}
@@ -150,7 +150,7 @@ function convertCreate(args: string[]): ActionConversion {
 			resource,
 			mode: "from_path",
 			data_path: data.path,
-			...(id_destination ? { id_destination: id_destination } : {}),
+			...(idDestination ? { id_destination: idDestination } : {}),
 		},
 	};
 }
@@ -160,7 +160,7 @@ function convertUpdate(args: string[]): ActionConversion {
 		return fail("update takes 3 or 4 arguments");
 	}
 	const resource = args[0].trim();
-	if (!resource || !isValidResourceRef(resource)) {
+	if (!isValidResourceRef(resource)) {
 		return fail("update requires a service-prefixed resource ref");
 	}
 
