@@ -241,57 +241,20 @@ final class EVYDataStore {
   }
 
   func getJsonForBinding(key: String, cacheScopeId: String?) throws -> EVYJson {
-    if !key.contains(":") {
-      if let cacheScopeId,
-        let cached = try? get(
-          namespace: EVYNamespace.cache, resource: cacheScopeId, id: key)
-      {
-        return try cached.decoded()
-      }
-
-      if let localInstance = try? get(
-        namespace: EVYNamespace.local, resource: key, id: EVYNamespace.singletonId)
-      {
-        return try localInstance.decoded()
-      }
-
-      if let namespace = namespace(forSyncedResource: key),
-        let collection = try getCollectionJson(namespace: namespace, resource: key)
-      {
-        return collection
-      }
-
-      throw EVYDataError.keyNotFound
+    if let cacheScopeId,
+      let cached = try? get(
+        namespace: EVYNamespace.cache, resource: cacheScopeId, id: key)
+    {
+      return try cached.decoded()
     }
 
-    let parts = key.split(separator: ":", maxSplits: 1).map(String.init)
-    guard parts.count == 2 else { throw EVYDataError.keyNotFound }
-
-    let first = parts[0]
-    let second = parts[1]
-
-    if let collection = try getCollectionJson(namespace: first, resource: second) {
-      return collection
-    }
-
-    if let instance = try? get(namespace: first, resource: second, id: EVYNamespace.singletonId) {
-      return try instance.decoded()
+    if let localInstance = try? get(
+      namespace: EVYNamespace.local, resource: key, id: EVYNamespace.singletonId)
+    {
+      return try localInstance.decoded()
     }
 
     throw EVYDataError.keyNotFound
-  }
-
-  func namespace(forSyncedResource resource: String) -> String? {
-    var descriptor = FetchDescriptor<EVYData>(
-      predicate: #Predicate {
-        $0.resource == resource
-      }
-    )
-    descriptor.fetchLimit = 1
-    guard let row = try? context.fetch(descriptor).first else { return nil }
-    let validNamespaces = [EVYNamespace.local, EVYNamespace.cache, EVYNamespace.draft]
-    guard !validNamespaces.contains(row.namespace) else { return nil }
-    return row.namespace
   }
 
   func postValueChanged(key: String?) {

@@ -19,7 +19,7 @@ test.describe("Offline and connection resilience", () => {
 			write: "failCreate",
 			rows: [
 				{
-					resource: "flows",
+					resource: "evy.flows",
 					value: [
 						{
 							id: "1f9f6a3e-8f04-4c85-9b6f-0d0d3a8f5b01",
@@ -32,7 +32,7 @@ test.describe("Offline and connection resilience", () => {
 					],
 				},
 				{
-					resource: "pages",
+					resource: "evy.pages",
 					value: [
 						{
 							id: "2a7c1d4b-5e12-4f96-8c3d-1e1e4b9c6d02",
@@ -45,7 +45,7 @@ test.describe("Offline and connection resilience", () => {
 						},
 					],
 				},
-				{ resource: "rows", value: [] },
+				{ resource: "evy.rows", value: [] },
 			],
 		});
 

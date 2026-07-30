@@ -64,6 +64,22 @@ describe("idTokenSearch", () => {
 			qualifier: "$datum",
 			token: { text: "tit", start: 8, end: 11 },
 		});
+		expect(
+			findSuggestionContextAtCursor("{test_service.item.", 20),
+		).toEqual({
+			type: "attribute",
+			trigger: ".",
+			qualifier: "test_service.item",
+			token: null,
+		});
+		expect(
+			findSuggestionContextAtCursor("{test_service.item.tit", 22),
+		).toEqual({
+			type: "attribute",
+			trigger: ".",
+			qualifier: "test_service.item",
+			token: { text: "tit", start: 19, end: 22 },
+		});
 	});
 
 	test("findSuggestionContextAtCursor returns none without a trigger", () => {

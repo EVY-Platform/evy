@@ -138,6 +138,20 @@ extension EVY {
     }
   }
 
+  static func getSyncedJsonForRef(_ ref: String) throws -> EVYJson {
+    let namespace = try EVYResourceRef.serviceOf(ref)
+    if let collection = try getSyncedCollectionJson(namespace: namespace, resource: ref) {
+      return collection
+    }
+    for store in syncedStores() {
+      if let row = try? store.get(namespace: namespace, resource: ref, id: EVYNamespace.singletonId)
+      {
+        return try row.decoded()
+      }
+    }
+    throw EVYDataError.keyNotFound
+  }
+
   static func getSyncedCollectionJson(namespace: String, resource: String) throws -> EVYJson? {
     if let collection = try? publicStore.getCollectionJson(
       namespace: namespace, resource: resource)
@@ -145,21 +159,5 @@ extension EVY {
       return collection
     }
     return try privateStore.getCollectionJson(namespace: namespace, resource: resource)
-  }
-
-  static func namespaceForSyncedResource(_ resource: String) -> String? {
-    publicStore.namespace(forSyncedResource: resource)
-      ?? privateStore.namespace(forSyncedResource: resource)
-  }
-
-  static func findSyncedRow(matching resource: String) throws -> (row: EVYData, store: EVYDataStore)
-  {
-    for store in syncedStores() {
-      let allRows = (try? store.getAll()) ?? []
-      if let matched = allRows.first(where: { $0.resource == resource }) {
-        return (matched, store)
-      }
-    }
-    throw EVYDataError.keyNotFound
   }
 }

@@ -8,7 +8,7 @@ import {
 } from "bun:test";
 import { migrate } from "drizzle-orm/pglite/migrator";
 import type { CreateRequest, DATA_EVY_Flow } from "evy-types";
-import { EVY_CORE_RESOURCE, EVY_CORE_SERVICE } from "evy-types/coreResources";
+import { EVY_CORE_RESOURCE_REF } from "evy-types/coreResources";
 import type { WSParams } from "../shared/ws";
 
 import {
@@ -98,15 +98,13 @@ describe("create/update real-time notifications", () => {
 		const caller = await connectAndLogin(apiUrl, "notify-token-2", "web");
 
 		const createResult = await caller.call("create", {
-			service: EVY_CORE_SERVICE,
-			resource: EVY_CORE_RESOURCE.FLOWS,
+			resource: EVY_CORE_RESOURCE_REF.FLOWS,
 			data: flowData,
 		});
 
 		const params = await notifyPromise;
 		expect(params).toEqual({
-			service: EVY_CORE_SERVICE,
-			resource: EVY_CORE_RESOURCE.FLOWS,
+			resource: EVY_CORE_RESOURCE_REF.FLOWS,
 			operation: "create",
 			value: createResult,
 		});
@@ -127,7 +125,7 @@ describe("create/update real-time notifications", () => {
 		const caller = await connectAndLogin(apiUrl, "notify-token-4", "web");
 
 		const nowIso = new Date().toISOString();
-		const serviceId = crypto.randomUUID();
+		const serviceId = "notify_svc";
 		const payload = {
 			id: serviceId,
 			name: "NotifySvc",
@@ -137,15 +135,13 @@ describe("create/update real-time notifications", () => {
 			updated_at: nowIso,
 		};
 		const createResult = await caller.call("create", {
-			service: EVY_CORE_SERVICE,
-			resource: "services",
+			resource: EVY_CORE_RESOURCE_REF.SERVICES,
 			data: payload,
 		});
 
 		const params = await notifyPromise;
 		expect(params).toEqual({
-			service: EVY_CORE_SERVICE,
-			resource: "services",
+			resource: EVY_CORE_RESOURCE_REF.SERVICES,
 			operation: "create",
 			value: createResult,
 		});
@@ -175,8 +171,7 @@ describe("create/update real-time notifications", () => {
 
 		const caller = await connectAndLogin(apiUrl, "notify-token-7", "web");
 		await caller.call("create", {
-			service: EVY_CORE_SERVICE,
-			resource: EVY_CORE_RESOURCE.FLOWS,
+			resource: EVY_CORE_RESOURCE_REF.FLOWS,
 			data: {
 				id: crypto.randomUUID(),
 				name: "Subscribed Only",
@@ -192,8 +187,7 @@ describe("create/update real-time notifications", () => {
 
 		const sentinelPromise = waitForNotification(subscribed, "data_changed");
 		await caller.call("create", {
-			service: EVY_CORE_SERVICE,
-			resource: EVY_CORE_RESOURCE.FLOWS,
+			resource: EVY_CORE_RESOURCE_REF.FLOWS,
 			data: {
 				id: crypto.randomUUID(),
 				name: "Subscribed Only Again",

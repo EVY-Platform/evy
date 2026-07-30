@@ -14,6 +14,7 @@ import type {
 	DATA_EVY_RowData,
 	UI_RowActions,
 } from "evy-types";
+import { EVY_CORE_RESOURCE_REF } from "evy-types/coreResources";
 import { branchForStorage, parseBranch } from "./actionBranch";
 import { collectSubtreeRowIds, type FlowEntityMaps } from "./flowEntities";
 import { compactRowActions, normalizeStoredRowActions } from "./rowActions";
@@ -602,11 +603,11 @@ export function applyRemoteRecord(
 	operation: "create" | "update" | "delete",
 ): FlowEntityMaps {
 	const mapKey =
-		resource === "flows"
+		resource === EVY_CORE_RESOURCE_REF.FLOWS
 			? "flowsById"
-			: resource === "pages"
+			: resource === EVY_CORE_RESOURCE_REF.PAGES
 				? "pagesById"
-				: resource === "rows"
+				: resource === EVY_CORE_RESOURCE_REF.ROWS
 					? "rowsById"
 					: null;
 	if (!mapKey || !record?.id) return maps;
@@ -634,7 +635,7 @@ export function applyRemoteRecord(
 export function updateFlowSubmits(
 	maps: FlowEntityMaps,
 	flowId: string,
-	submits: { service: string; resource: string } | undefined,
+	submits: { resource: string } | undefined,
 ): FlowEntityMaps {
 	const flow = maps.flowsById[flowId];
 	if (!flow) return maps;

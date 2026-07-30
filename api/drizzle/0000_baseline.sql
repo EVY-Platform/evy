@@ -57,8 +57,7 @@ CREATE TABLE "formatter" (
 CREATE TABLE "message" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"fk" uuid NOT NULL,
-	"service" uuid NOT NULL,
-	"resource" uuid NOT NULL,
+	"resource" jsonb NOT NULL,
 	"created_at" text NOT NULL,
 	"updated_at" text NOT NULL,
 	"deleted_at" text,
@@ -105,7 +104,7 @@ CREATE TABLE "row" (
 );
 --> statement-breakpoint
 CREATE TABLE "service" (
-	"id" uuid PRIMARY KEY NOT NULL,
+	"id" jsonb PRIMARY KEY NOT NULL,
 	"name" varchar(50) NOT NULL,
 	"description" text NOT NULL,
 	"ws_host" varchar(253),
@@ -119,7 +118,7 @@ CREATE TABLE "service" (
 --> statement-breakpoint
 CREATE TABLE "service_provider" (
 	"id" uuid PRIMARY KEY NOT NULL,
-	"fk_service_id" uuid NOT NULL,
+	"fk_service_id" jsonb NOT NULL,
 	"fk_organization_id" uuid NOT NULL,
 	"name" varchar(100) NOT NULL,
 	"description" text NOT NULL,

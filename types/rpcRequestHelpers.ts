@@ -3,6 +3,7 @@ import type { CreateRequest } from "./generated/ts/rpc/create.request";
 import type { DeleteRequest } from "./generated/ts/rpc/delete.request";
 import type { GetRequest } from "./generated/ts/rpc/get.request";
 import type { UpdateRequest } from "./generated/ts/rpc/update.request";
+import { isValidResourceRef, isValidServiceSlug } from "./resourceRef";
 import {
 	validateApiRequest,
 	validateCreateRequest,
@@ -30,7 +31,7 @@ function assertRequiredService(
 	if (
 		!("service" in params) ||
 		typeof params.service !== "string" ||
-		params.service.length === 0
+		!isValidServiceSlug(params.service)
 	) {
 		throw new Error("Invalid or missing service");
 	}
@@ -42,8 +43,7 @@ function assertRequiredResource(
 	if (
 		!("resource" in params) ||
 		typeof params.resource !== "string" ||
-		params.resource.length === 0 ||
-		params.resource.length > 50
+		!isValidResourceRef(params.resource)
 	) {
 		throw new Error("Invalid or missing resource");
 	}
@@ -54,8 +54,7 @@ function assertOptionalResource(params: RpcParamsObject): void {
 		"resource" in params &&
 		params.resource !== undefined &&
 		(typeof params.resource !== "string" ||
-			params.resource.length === 0 ||
-			params.resource.length > 50)
+			!isValidResourceRef(params.resource))
 	) {
 		throw new Error("Invalid or missing resource");
 	}
@@ -74,11 +73,9 @@ function assertOptionalFilter(params: RpcParamsObject): void {
 function assertRpcParamsCommon(
 	params: unknown,
 ): asserts params is RpcParamsObject & {
-	service: string;
 	resource: string;
 } {
 	assertRpcParamsObject(params);
-	assertRequiredService(params);
 	assertRequiredResource(params);
 	assertOptionalFilter(params);
 }

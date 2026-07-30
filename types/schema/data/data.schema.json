@@ -148,7 +148,6 @@
 			"required": [
 				"id",
 				"fk",
-				"service",
 				"resource",
 				"created_at",
 				"updated_at",
@@ -164,13 +163,8 @@
 					"type": "string",
 					"format": "uuid"
 				},
-				"service": {
-					"type": "string",
-					"format": "uuid"
-				},
 				"resource": {
-					"type": "string",
-					"format": "uuid"
+					"$ref": "../common/rpc.schema.json#/$defs/ResourceRef"
 				},
 				"created_at": {
 					"type": "string",
@@ -253,15 +247,10 @@
 			"description": "Domain entity a flow submits via create(...,submit). Declared so clients validate rather than infer submission semantics from action strings.",
 			"type": "object",
 			"additionalProperties": false,
-			"required": ["service", "resource"],
+			"required": ["resource"],
 			"properties": {
-				"service": {
-					"type": "string",
-					"format": "uuid"
-				},
 				"resource": {
-					"type": "string",
-					"minLength": 1
+					"$ref": "../common/rpc.schema.json#/$defs/ResourceRef"
 				}
 			}
 		},
@@ -303,8 +292,7 @@
 			],
 			"properties": {
 				"id": {
-					"type": "string",
-					"format": "uuid"
+					"$ref": "../common/rpc.schema.json#/$defs/ServiceSlug"
 				},
 				"name": {
 					"type": "string",
@@ -423,8 +411,7 @@
 					"format": "uuid"
 				},
 				"fk_service_id": {
-					"type": "string",
-					"format": "uuid"
+					"$ref": "../common/rpc.schema.json#/$defs/ServiceSlug"
 				},
 				"fk_organization_id": {
 					"type": "string",

@@ -1,5 +1,5 @@
 {
-	"id": "c387d5a4-f4bf-4e9d-b277-e23f444878ad",
+	"id": "6aa11798-35e1-456d-858f-686dc3bd1765",
 	"prevId": "00000000-0000-0000-0000-000000000000",
 	"version": "7",
 	"dialect": "postgresql",
@@ -366,15 +366,9 @@
 					"primaryKey": false,
 					"notNull": true
 				},
-				"service": {
-					"name": "service",
-					"type": "uuid",
-					"primaryKey": false,
-					"notNull": true
-				},
 				"resource": {
 					"name": "resource",
-					"type": "uuid",
+					"type": "jsonb",
 					"primaryKey": false,
 					"notNull": true
 				},
@@ -658,7 +652,7 @@
 			"columns": {
 				"id": {
 					"name": "id",
-					"type": "uuid",
+					"type": "jsonb",
 					"primaryKey": true,
 					"notNull": true
 				},
@@ -754,7 +748,7 @@
 				},
 				"fk_service_id": {
 					"name": "fk_service_id",
-					"type": "uuid",
+					"type": "jsonb",
 					"primaryKey": false,
 					"notNull": true
 				},

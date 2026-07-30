@@ -29,7 +29,7 @@ final class EVYStoreRoutingTests: XCTestCase {
     let privateId = UUID().uuidString
     try EVY.applySyncedValue(
       namespace: EVYNamespace.evy,
-      resource: EVYCoreResource.addresses.rawValue,
+      resource: EVYCoreResource.addresses.ref,
       value: .array([
         .dictionary(["id": .string(publicId), "visibility": .string("public")]),
         .dictionary(["id": .string(privateId), "visibility": .string("private")]),
@@ -39,18 +39,18 @@ final class EVYStoreRoutingTests: XCTestCase {
     XCTAssertNotNil(
       try? EVY.publicStore.get(
         namespace: EVYNamespace.evy,
-        resource: EVYCoreResource.addresses.rawValue,
+        resource: EVYCoreResource.addresses.ref,
         id: publicId))
     XCTAssertNotNil(
       try? EVY.privateStore.get(
         namespace: EVYNamespace.evy,
-        resource: EVYCoreResource.addresses.rawValue,
+        resource: EVYCoreResource.addresses.ref,
         id: privateId))
   }
 
   func testApplySyncedValueMovesRecordWhenVisibilityChanges() throws {
     let recordId = UUID().uuidString
-    let resource = EVYCoreResource.addresses.rawValue
+    let resource = EVYCoreResource.addresses.ref
     try EVY.applySyncedValue(
       namespace: EVYNamespace.evy,
       resource: resource,
@@ -75,7 +75,7 @@ final class EVYStoreRoutingTests: XCTestCase {
     let street = "28 Rothschild Avenue"
     try EVY.applySyncedValue(
       namespace: EVYNamespace.evy,
-      resource: EVYCoreResource.addresses.rawValue,
+      resource: EVYCoreResource.addresses.ref,
       value: .array([
         .dictionary([
           "id": .string(recordId),
@@ -85,20 +85,20 @@ final class EVYStoreRoutingTests: XCTestCase {
       ])
     )
 
-    let collection = try _getDataFromText("{\(EVYCoreResource.addresses.rawValue)}")
+    let collection = try _getDataFromText("{\(EVYCoreResource.addresses.ref)}")
     guard case .array(let items) = collection else {
       return XCTFail("Expected address collection")
     }
     XCTAssertEqual(items.count, 1)
 
     let first = try _getDataFromText(
-      "{findFirst(\(EVYCoreResource.addresses.rawValue), id == \(recordId)).street}")
+      "{findFirst(\(EVYCoreResource.addresses.ref), id == \(recordId)).street}")
     XCTAssertEqual(first, .string(street))
   }
 
   func testUpdatePatchesPrivateStoreRecord() throws {
     let recordId = UUID().uuidString
-    let resource = EVYCoreResource.messages.rawValue
+    let resource = EVYCoreResource.messages.ref
     try EVY.applySyncedValue(
       namespace: EVYNamespace.evy,
       resource: resource,
@@ -154,7 +154,7 @@ final class EVYStoreRoutingTests: XCTestCase {
 
   func testRemoveSyncedValueDeletesFromPublicStore() throws {
     let recordId = UUID().uuidString
-    let resource = EVYCoreResource.messages.rawValue
+    let resource = EVYCoreResource.messages.ref
     try EVY.applySyncedValue(
       namespace: EVYNamespace.evy,
       resource: resource,
@@ -175,7 +175,7 @@ final class EVYStoreRoutingTests: XCTestCase {
 
   func testRemoveSyncedValueDeletesFromPrivateStore() throws {
     let recordId = UUID().uuidString
-    let resource = EVYCoreResource.addresses.rawValue
+    let resource = EVYCoreResource.addresses.ref
     try EVY.applySyncedValue(
       namespace: EVYNamespace.evy,
       resource: resource,
@@ -198,7 +198,7 @@ final class EVYStoreRoutingTests: XCTestCase {
   func testRemoveSyncedValueHandlesArraysAndMissingRecords() throws {
     let presentId = UUID().uuidString
     let absentId = UUID().uuidString
-    let resource = EVYCoreResource.messages.rawValue
+    let resource = EVYCoreResource.messages.ref
     try EVY.applySyncedValue(
       namespace: EVYNamespace.evy,
       resource: resource,
@@ -220,7 +220,7 @@ final class EVYStoreRoutingTests: XCTestCase {
 
   func testRecordsWithoutVisibilityDefaultToPublicStore() throws {
     let recordId = UUID().uuidString
-    let resource = EVYCoreResource.flows.rawValue
+    let resource = EVYCoreResource.flows.ref
     try EVY.applySyncedValue(
       namespace: EVYNamespace.evy,
       resource: resource,
@@ -236,7 +236,7 @@ final class EVYStoreRoutingTests: XCTestCase {
 
   func testSyncedTombstoneRemovesTheRecord() throws {
     let recordId = UUID().uuidString
-    let resource = EVYCoreResource.messages.rawValue
+    let resource = EVYCoreResource.messages.ref
     try EVY.applySyncedValue(
       namespace: EVYNamespace.evy,
       resource: resource,
@@ -263,7 +263,7 @@ final class EVYStoreRoutingTests: XCTestCase {
 
   func testLiveRecordsWithoutDeletedAtAreKept() throws {
     let recordId = UUID().uuidString
-    let resource = EVYCoreResource.messages.rawValue
+    let resource = EVYCoreResource.messages.ref
 
     try EVY.applySyncedValue(
       namespace: EVYNamespace.evy,
@@ -284,7 +284,7 @@ final class EVYStoreRoutingTests: XCTestCase {
   /// A delta carries only what changed, so its positions must not renumber the
   /// rows already held.
   func testDeltaDoesNotReorderExistingRecords() throws {
-    let resource = EVYCoreResource.messages.rawValue
+    let resource = EVYCoreResource.messages.ref
     let firstId = UUID().uuidString
     let secondId = UUID().uuidString
 
@@ -322,7 +322,7 @@ final class EVYStoreRoutingTests: XCTestCase {
   }
 
   func testNewRecordInADeltaIsAppended() throws {
-    let resource = EVYCoreResource.messages.rawValue
+    let resource = EVYCoreResource.messages.ref
     let firstId = UUID().uuidString
     let newId = UUID().uuidString
 
@@ -408,7 +408,7 @@ final class EVYStoreRoutingTests: XCTestCase {
     let backgroundScopeId = "background-\(UUID().uuidString)"
     let foregroundScopeId = "foreground-\(UUID().uuidString)"
     let key = "scoped_value"
-    let resource = EVYCoreResource.messages.rawValue
+    let resource = EVYCoreResource.messages.ref
 
     try EVY.cacheStore.create(
       namespace: EVYNamespace.cache, resource: backgroundScopeId, id: key,
@@ -475,7 +475,7 @@ final class EVYStoreRoutingTests: XCTestCase {
 
     EVY.activeCacheScopeId = activeScopeId
     let state = EVYState(
-      watches: ["{\(EVYCoreResource.messages.rawValue)}"],
+      watches: ["{\(EVYCoreResource.messages.ref)}"],
       scope: .cache(ownScopeId),
       setter: { (try? EVY.getValueFromText("{\(key).label}").toString()) ?? "unresolved" }
     )
@@ -525,63 +525,63 @@ final class EVYStoreRoutingTests: XCTestCase {
 
   // MARK: - Ownership ledger
 
-  func testOwnedServiceResourcesIsEmptyOnACleanStore() throws {
-    XCTAssertTrue(EVY.owned_service_resources().isEmpty)
+  func testOwnedResourcesIsEmptyOnACleanStore() throws {
+    XCTAssertTrue(EVY.ownedResources().isEmpty)
   }
 
-  func testRecordOwnershipGroupsIdsByServiceAndResource() throws {
-    let service = UUID().uuidString
+  func testRecordOwnershipGroupsIdsByResource() throws {
+    let itemsRef = "test.items"
+    let messagesRef = "test.messages"
     let firstId = UUID().uuidString.lowercased()
     let secondId = UUID().uuidString.lowercased()
     let otherResourceId = UUID().uuidString.lowercased()
 
-    EVY.recordOwnership(service: service, resource: "items", id: firstId)
-    EVY.recordOwnership(service: service, resource: "items", id: secondId)
-    EVY.recordOwnership(service: service, resource: "messages", id: otherResourceId)
+    EVY.recordOwnership(resource: itemsRef, id: firstId)
+    EVY.recordOwnership(resource: itemsRef, id: secondId)
+    EVY.recordOwnership(resource: messagesRef, id: otherResourceId)
 
-    let owned = EVY.owned_service_resources().filter { $0.service == service }
+    let owned = EVY.ownedResources().sorted { $0.resource < $1.resource }
     XCTAssertEqual(owned.count, 2)
-    XCTAssertEqual(owned.map(\.resource), ["items", "messages"])
+    XCTAssertEqual(owned[0].resource, itemsRef)
     XCTAssertEqual(owned[0].ids, [firstId, secondId].sorted())
+    XCTAssertEqual(owned[1].resource, messagesRef)
     XCTAssertEqual(owned[1].ids, [otherResourceId])
   }
 
   func testRecordOwnershipIsIdempotent() throws {
-    let service = UUID().uuidString
+    let itemsRef = "test.items"
     let recordId = UUID().uuidString.lowercased()
 
-    EVY.recordOwnership(service: service, resource: "items", id: recordId)
-    EVY.recordOwnership(service: service, resource: "items", id: recordId)
+    EVY.recordOwnership(resource: itemsRef, id: recordId)
+    EVY.recordOwnership(resource: itemsRef, id: recordId)
 
-    let owned = EVY.owned_service_resources().filter { $0.service == service }
+    let owned = EVY.ownedResources().filter { $0.resource == itemsRef }
     XCTAssertEqual(owned.count, 1)
     XCTAssertEqual(owned[0].ids, [recordId])
   }
 
   func testCreateRecordsOwnershipOfTheNewRecord() throws {
-    let namespace = EVYNamespace.evy
-    let resource = "ownership-create-test"
-    defer { try? EVY.publicStore.deleteAll(namespace: namespace, resource: resource) }
+    let resource = "evy.ownership-create-test"
+    defer { try? EVY.publicStore.deleteAll(namespace: EVYNamespace.evy, resource: resource) }
 
-    let createdId = try EVY.create(namespace: namespace, resource: resource, data: [:])
+    let createdId = try EVY.create(namespace: EVYNamespace.evy, resource: resource, data: [:])
 
-    let owned = EVY.owned_service_resources().filter { $0.resource == resource }
+    let owned = EVY.ownedResources().filter { $0.resource == resource }
     XCTAssertEqual(owned.count, 1)
-    XCTAssertEqual(owned[0].service, namespace)
     XCTAssertEqual(owned[0].ids, [createdId])
   }
 
   func testSyncedPublicRecordsAreNotOwned() throws {
     try EVY.applySyncedValue(
       namespace: EVYNamespace.evy,
-      resource: EVYCoreResource.messages.rawValue,
+      resource: EVYCoreResource.messages.ref,
       value: .dictionary([
         "id": .string(UUID().uuidString.lowercased()),
         "visibility": .string("public"),
       ])
     )
 
-    XCTAssertTrue(EVY.owned_service_resources().isEmpty)
+    XCTAssertTrue(EVY.ownedResources().isEmpty)
   }
 
   /// A message that reaches this device lands in the private store, and holding it
@@ -591,17 +591,16 @@ final class EVYStoreRoutingTests: XCTestCase {
 
     try EVY.applySyncedValue(
       namespace: EVYNamespace.evy,
-      resource: EVYCoreResource.messages.rawValue,
+      resource: EVYCoreResource.messages.ref,
       value: .dictionary([
         "id": .string(recordId),
         "visibility": .string("private"),
       ])
     )
 
-    let owned = EVY.owned_service_resources()
+    let owned = EVY.ownedResources()
     XCTAssertEqual(owned.count, 1)
-    XCTAssertEqual(owned[0].service, EVYNamespace.evy)
-    XCTAssertEqual(owned[0].resource, EVYCoreResource.messages.rawValue)
+    XCTAssertEqual(owned[0].resource, EVYCoreResource.messages.ref)
     XCTAssertEqual(owned[0].ids, [recordId])
   }
 
@@ -609,16 +608,19 @@ final class EVYStoreRoutingTests: XCTestCase {
   /// device sees the catalogue - so the ledger is the only thing that keeps a
   /// seller entitled to messages about an item they created.
   func testCreatedPublicRecordsAreOwned() throws {
-    let namespace = MarketplaceTestFixture.serviceId
-    let resource = "ownership-public-create-test"
-    defer { try? EVY.publicStore.deleteAll(namespace: namespace, resource: resource) }
+    let resource = "marketplace.ownership-public-create-test"
+    defer {
+      try? EVY.publicStore.deleteAll(namespace: MarketplaceTestFixture.service, resource: resource)
+    }
 
     let createdId = try EVY.create(
-      namespace: namespace, resource: resource, data: ["visibility": .string("public")])
+      namespace: MarketplaceTestFixture.service, resource: resource,
+      data: ["visibility": .string("public")])
 
     XCTAssertEqual(
-      try EVY.publicStore.getAll(namespace: namespace, resource: resource).count, 1)
-    let owned = EVY.owned_service_resources().filter { $0.resource == resource }
+      try EVY.publicStore.getAll(namespace: MarketplaceTestFixture.service, resource: resource)
+        .count, 1)
+    let owned = EVY.ownedResources().filter { $0.resource == resource }
     XCTAssertEqual(owned.count, 1)
     XCTAssertEqual(owned[0].ids, [createdId])
   }
@@ -636,8 +638,8 @@ final class EVYStoreRoutingTests: XCTestCase {
       value: try JSONEncoder().encode(EVYJson.string("private"))
     )
 
-    let owned = EVY.owned_service_resources()
-    XCTAssertFalse(owned.contains { $0.service == EVYNamespace.local })
+    let owned = EVY.ownedResources()
+    XCTAssertFalse(owned.contains { $0.resource.hasPrefix("\(EVYNamespace.local).") })
     XCTAssertFalse(owned.flatMap(\.ids).contains(EVYNamespace.singletonId))
   }
 }

@@ -2,7 +2,7 @@
 	"$schema": "https://json-schema.org/draft/2020-12/schema",
 	"$id": "update-request",
 	"title": "UpdateRequest",
-	"description": "JSON-RPC params for update method. Service, resource, filter.id, and data are required.",
+	"description": "JSON-RPC params for update method. Resource, filter.id, and data are required.",
 	"$defs": {
 		"UpdateDataPayload": {
 			"type": "object",
@@ -13,16 +13,10 @@
 	},
 	"type": "object",
 	"additionalProperties": false,
-	"required": ["service", "resource", "filter", "data"],
+	"required": ["resource", "filter", "data"],
 	"properties": {
-		"service": {
-			"type": "string",
-			"minLength": 1
-		},
 		"resource": {
-			"type": "string",
-			"minLength": 1,
-			"maxLength": 50
+			"$ref": "../common/rpc.schema.json#/$defs/ResourceRef"
 		},
 		"filter": {
 			"type": "object",

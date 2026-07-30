@@ -19,15 +19,10 @@
 			"description": "Domain entity this flow submits via create(...,submit).",
 			"type": "object",
 			"additionalProperties": false,
-			"required": ["service", "resource"],
+			"required": ["resource"],
 			"properties": {
-				"service": {
-					"type": "string",
-					"format": "uuid"
-				},
 				"resource": {
-					"type": "string",
-					"minLength": 1
+					"$ref": "../common/rpc.schema.json#/$defs/ResourceRef"
 				}
 			}
 		},

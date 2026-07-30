@@ -827,12 +827,11 @@
 			"id": "ast-convert-create-submit",
 			"category": "action-ast-convert",
 			"platforms": ["web"],
-			"input": "{create(66b092ae-7cd8-4d67-95b7-30b03568fd90,items,submit)}",
+			"input": "{create(marketplace.items,submit)}",
 			"expect": {
 				"ast": {
 					"fn": "create",
-					"service": "66b092ae-7cd8-4d67-95b7-30b03568fd90",
-					"resource": "items",
+					"resource": "marketplace.items",
 					"mode": "submit"
 				}
 			},
@@ -842,12 +841,11 @@
 			"id": "ast-convert-create-inline-quoted",
 			"category": "action-ast-convert",
 			"platforms": ["web"],
-			"input": "{create(66b092ae-7cd8-4d67-95b7-30b03568fd90,messages,{status: \"pending\", type: pickup})}",
+			"input": "{create(evy.messages,{status: \"pending\", type: pickup})}",
 			"expect": {
 				"ast": {
 					"fn": "create",
-					"service": "66b092ae-7cd8-4d67-95b7-30b03568fd90",
-					"resource": "messages",
+					"resource": "evy.messages",
 					"mode": "inline",
 					"data": {
 						"status": "pending",
@@ -861,12 +859,11 @@
 			"id": "ast-convert-create-from-path",
 			"category": "action-ast-convert",
 			"platforms": ["web"],
-			"input": "{create(core,addresses,pickup_address,{pickup_address.id})}",
+			"input": "{create(evy.addresses,pickup_address,{pickup_address.id})}",
 			"expect": {
 				"ast": {
 					"fn": "create",
-					"service": "core",
-					"resource": "addresses",
+					"resource": "evy.addresses",
 					"mode": "from_path",
 					"data_path": "pickup_address",
 					"id_destination": "{pickup_address.id}"
@@ -877,12 +874,11 @@
 			"id": "ast-convert-update-store",
 			"category": "action-ast-convert",
 			"platforms": ["web"],
-			"input": "{update(66b092ae-7cd8-4d67-95b7-30b03568fd90,items,{id: item.id},{status: accepted})}",
+			"input": "{update(marketplace.items,{id: item.id},{status: accepted})}",
 			"expect": {
 				"ast": {
 					"fn": "update",
-					"service": "66b092ae-7cd8-4d67-95b7-30b03568fd90",
-					"resource": "items",
+					"resource": "marketplace.items",
 					"mode": "store",
 					"filter": {
 						"id": "item.id"
@@ -897,12 +893,11 @@
 			"id": "ast-convert-update-draft",
 			"category": "action-ast-convert",
 			"platforms": ["web"],
-			"input": "{update(66b092ae-7cd8-4d67-95b7-30b03568fd90,items,{},{a: b},draft)}",
+			"input": "{update(marketplace.items,{},{a: b},draft)}",
 			"expect": {
 				"ast": {
 					"fn": "update",
-					"service": "66b092ae-7cd8-4d67-95b7-30b03568fd90",
-					"resource": "items",
+					"resource": "marketplace.items",
 					"mode": "draft",
 					"changes": {
 						"a": "b"
@@ -922,20 +917,30 @@
 			"notes": "Branches must be brace-wrapped to execute, so an unwrapped call is not convertible."
 		},
 		{
-			"id": "ast-convert-rejects-two-arg-create",
+			"id": "ast-convert-rejects-one-arg-create",
 			"category": "action-ast-convert",
 			"platforms": ["web"],
-			"input": "{create(svc,items)}",
+			"input": "{create(marketplace.items)}",
 			"expect": {
 				"ast": null
 			},
-			"notes": "A two-argument create was always invalid."
+			"notes": "A one-argument create is invalid — resource and data are required."
+		},
+		{
+			"id": "ast-convert-rejects-unprefixed-resource",
+			"category": "action-ast-convert",
+			"platforms": ["web"],
+			"input": "{create(items,submit)}",
+			"expect": {
+				"ast": null
+			},
+			"notes": "Resource refs must carry the service prefix."
 		},
 		{
 			"id": "ast-convert-rejects-store-update-without-filter",
 			"category": "action-ast-convert",
 			"platforms": ["web"],
-			"input": "{update(svc,items,{},{a: b})}",
+			"input": "{update(marketplace.items,{},{a: b})}",
 			"expect": {
 				"ast": null
 			},
@@ -1041,11 +1046,11 @@
 			"id": "split-args-filter-nested-find-first-sort",
 			"category": "split-args",
 			"platforms": ["ios", "web"],
-			"input": "messages, $datum.data.value == \"pending\" && findFirst(sort(messages, desc, created_at), fk == $datum.fk && data.type == $datum.data.type).id == $datum.id",
+			"input": "evy.messages, $datum.data.value == \"pending\" && findFirst(sort(evy.messages, desc, created_at), fk == $datum.fk && data.type == $datum.data.type).id == $datum.id",
 			"expect": {
 				"args": [
-					"messages",
-					"$datum.data.value == \"pending\" && findFirst(sort(messages, desc, created_at), fk == $datum.fk && data.type == $datum.data.type).id == $datum.id"
+					"evy.messages",
+					"$datum.data.value == \"pending\" && findFirst(sort(evy.messages, desc, created_at), fk == $datum.fk && data.type == $datum.data.type).id == $datum.id"
 				]
 			},
 			"notes": "filter's nested findFirst(sort(…)) argument must stay one arg — commas inside the nested calls are not separators."

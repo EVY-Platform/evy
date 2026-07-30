@@ -1,5 +1,5 @@
 {
-	"files": [
+	"evy.files": [
 		{
 			"id": "cfa7e4aa-928d-4920-a370-57ed713b2917",
 			"type": "image/jpeg",
@@ -13,7 +13,7 @@
 			"updated_at": "2026-05-20T22:56:17.000Z"
 		}
 	],
-	"addresses": [
+	"evy.addresses": [
 		{
 			"id": "c81e85dd-f7fb-4310-8fc6-7c018aeaf82a",
 			"unit": "C509",
@@ -44,7 +44,7 @@
 			"updated_at": "2026-05-22T22:56:17.000Z"
 		}
 	],
-	"selling_reasons": [
+	"marketplace.selling_reasons": [
 		{
 			"id": "76d781c6-7ab1-4b5e-99d5-60d417e3c382",
 			"value": "No longer used"
@@ -58,7 +58,7 @@
 			"value": "Doesn't fit"
 		}
 	],
-	"conditions": [
+	"marketplace.conditions": [
 		{
 			"id": "68e52916-7a07-4a07-ae0c-52e7800b9b9f",
 			"value": "For parts"
@@ -80,7 +80,7 @@
 			"value": "Used - fair"
 		}
 	],
-	"durations": [
+	"marketplace.durations": [
 		{
 			"id": "cfe1a972-2430-44cf-b8b4-74f65ed56683",
 			"value": "5 min"
@@ -98,7 +98,7 @@
 			"value": "30 min"
 		}
 	],
-	"areas": [
+	"marketplace.areas": [
 		{
 			"id": "787674a6-ef4d-4d8c-b1e2-1c860b0a9155",
 			"value": "City"
@@ -116,7 +116,7 @@
 			"value": "World"
 		}
 	],
-	"items": [
+	"marketplace.items": [
 		{
 			"id": "12401f50-cf1a-45d7-a112-2e68a2070466",
 			"title": "Amazing Fridge",
@@ -226,12 +226,11 @@
 			}
 		}
 	],
-	"messages": [
+	"evy.messages": [
 		{
 			"id": "c84f227e-69ed-4c69-9f53-aafd7a918c6b",
 			"fk": "12401f50-cf1a-45d7-a112-2e68a2070466",
-			"service": "66b092ae-7cd8-4d67-95b7-30b03568fd90",
-			"resource": "dc28ed59-298e-493c-8ff3-3e60f2ebccbd",
+			"resource": "marketplace.items",
 			"created_at": "2026-06-01T00:00:00.000Z",
 			"updated_at": "2026-06-01T00:00:00.000Z",
 			"data": {
@@ -243,8 +242,7 @@
 		{
 			"id": "d533476c-5099-4c7d-8e9a-42a8f6ca2f6e",
 			"fk": "12401f50-cf1a-45d7-a112-2e68a2070466",
-			"service": "66b092ae-7cd8-4d67-95b7-30b03568fd90",
-			"resource": "dc28ed59-298e-493c-8ff3-3e60f2ebccbd",
+			"resource": "marketplace.items",
 			"created_at": "2026-06-01T00:00:00.000Z",
 			"updated_at": "2026-06-01T00:00:00.000Z",
 			"data": {
@@ -256,8 +254,7 @@
 		{
 			"id": "5f66d7ae-3cb5-44bb-a8f3-337d4e543c72",
 			"fk": "12401f50-cf1a-45d7-a112-2e68a2070466",
-			"service": "66b092ae-7cd8-4d67-95b7-30b03568fd90",
-			"resource": "dc28ed59-298e-493c-8ff3-3e60f2ebccbd",
+			"resource": "marketplace.items",
 			"created_at": "2026-06-01T00:00:00.000Z",
 			"updated_at": "2026-06-01T00:00:00.000Z",
 			"data": {
@@ -269,8 +266,7 @@
 		{
 			"id": "dfc53233-6152-4878-bf4f-b11a47c636ac",
 			"fk": "760eac03-8783-4916-846e-6c316d0af5a1",
-			"service": "66b092ae-7cd8-4d67-95b7-30b03568fd90",
-			"resource": "dc28ed59-298e-493c-8ff3-3e60f2ebccbd",
+			"resource": "marketplace.items",
 			"created_at": "2026-06-01T00:00:00.000Z",
 			"updated_at": "2026-06-01T00:00:00.000Z",
 			"data": {
@@ -282,8 +278,7 @@
 		{
 			"id": "b0897a47-c45c-4e9c-8021-8ec3bdcac59c",
 			"fk": "760eac03-8783-4916-846e-6c316d0af5a1",
-			"service": "66b092ae-7cd8-4d67-95b7-30b03568fd90",
-			"resource": "dc28ed59-298e-493c-8ff3-3e60f2ebccbd",
+			"resource": "marketplace.items",
 			"created_at": "2026-06-01T00:01:00.000Z",
 			"updated_at": "2026-06-01T00:01:00.000Z",
 			"parent_message_id": "dfc53233-6152-4878-bf4f-b11a47c636ac",

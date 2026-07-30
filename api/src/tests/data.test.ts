@@ -20,7 +20,7 @@ import type {
 	GetRequest,
 	UpdateRequest,
 } from "evy-types";
-import { EVY_CORE_RESOURCE, EVY_CORE_SERVICE } from "evy-types/coreResources";
+import { EVY_CORE_RESOURCE_REF } from "evy-types/coreResources";
 import * as schema from "evy-types/db/schema.generated";
 import { ROTHCHILD_CANONICAL_ADDRESS } from "../../../scripts/fixtures/canonicalAddresses";
 import { useFileStorageDirsForTest } from "./fileStorageTestHelpers";
@@ -45,12 +45,12 @@ const {
 const uploadModule = await import("../procedures/uploads");
 const { clearUploadsForTest, handleUploadChunk } = uploadModule;
 
-const FLOW_RESOURCE = EVY_CORE_RESOURCE.FLOWS;
-const PAGE_RESOURCE = EVY_CORE_RESOURCE.PAGES;
-const ROW_RESOURCE = EVY_CORE_RESOURCE.ROWS;
-const ADDRESS_RESOURCE = EVY_CORE_RESOURCE.ADDRESSES;
-const MESSAGE_RESOURCE = EVY_CORE_RESOURCE.MESSAGES;
-const FORMATTER_RESOURCE = EVY_CORE_RESOURCE.FORMATTERS;
+const FLOW_RESOURCE = EVY_CORE_RESOURCE_REF.FLOWS;
+const PAGE_RESOURCE = EVY_CORE_RESOURCE_REF.PAGES;
+const ROW_RESOURCE = EVY_CORE_RESOURCE_REF.ROWS;
+const ADDRESS_RESOURCE = EVY_CORE_RESOURCE_REF.ADDRESSES;
+const MESSAGE_RESOURCE = EVY_CORE_RESOURCE_REF.MESSAGES;
+const FORMATTER_RESOURCE = EVY_CORE_RESOURCE_REF.FORMATTERS;
 
 function nowIso(): string {
 	return new Date().toISOString();
@@ -165,17 +165,14 @@ describe("flat flow resources", () => {
 		const flowPayload = flowRow({ page_ids: [pagePayload.id] });
 
 		const createdRow = (await create(dataDb, {
-			service: EVY_CORE_SERVICE,
 			resource: ROW_RESOURCE,
 			data: rowPayload,
 		})) as DATA_EVY_Row;
 		const createdPage = (await create(dataDb, {
-			service: EVY_CORE_SERVICE,
 			resource: PAGE_RESOURCE,
 			data: pagePayload,
 		})) as DATA_EVY_Page;
 		const createdFlow = (await create(dataDb, {
-			service: EVY_CORE_SERVICE,
 			resource: FLOW_RESOURCE,
 			data: flowPayload,
 		})) as DATA_EVY_Flow;
@@ -190,28 +187,22 @@ describe("flat flow resources", () => {
 	});
 
 	it("round-trips a flow submits declaration through create, get and update", async () => {
-		const submits = {
-			service: "66b092ae-7cd8-4d67-95b7-30b03568fd90",
-			resource: "dc28ed59-298e-493c-8ff3-3e60f2ebccbd",
-		};
+		const submits = { resource: "marketplace.items" };
 		const flowPayload = { ...flowRow({ page_ids: [] }), submits };
 
 		const created = (await create(dataDb, {
-			service: EVY_CORE_SERVICE,
 			resource: FLOW_RESOURCE,
 			data: flowPayload,
 		})) as DATA_EVY_Flow;
 		expect(created.submits).toEqual(submits);
 
 		const [fetched] = (await get(dataDb, {
-			service: EVY_CORE_SERVICE,
 			resource: FLOW_RESOURCE,
 			filter: { id: flowPayload.id },
 		})) as DATA_EVY_Flow[];
 		expect(fetched?.submits).toEqual(submits);
 
 		const updated = (await update(dataDb, {
-			service: EVY_CORE_SERVICE,
 			resource: FLOW_RESOURCE,
 			filter: { id: flowPayload.id },
 			data: { ...flowPayload, submits: undefined },
@@ -223,7 +214,6 @@ describe("flat flow resources", () => {
 		const flowPayload = flowRow({ page_ids: [] });
 
 		const created = (await create(dataDb, {
-			service: EVY_CORE_SERVICE,
 			resource: FLOW_RESOURCE,
 			data: flowPayload,
 		})) as DATA_EVY_Flow;
@@ -235,7 +225,6 @@ describe("flat flow resources", () => {
 	it("uses filter.id as the persisted id on create", async () => {
 		const flowId = crypto.randomUUID();
 		const result = (await create(dataDb, {
-			service: EVY_CORE_SERVICE,
 			resource: FLOW_RESOURCE,
 			filter: { id: flowId },
 			data: flowRow({ id: crypto.randomUUID(), name: "Client Flow" }),
@@ -248,14 +237,12 @@ describe("flat flow resources", () => {
 	it("rejects duplicate creates", async () => {
 		const payload = flowRow();
 		await create(dataDb, {
-			service: EVY_CORE_SERVICE,
 			resource: FLOW_RESOURCE,
 			data: payload,
 		});
 
 		await expect(
 			create(dataDb, {
-				service: EVY_CORE_SERVICE,
 				resource: FLOW_RESOURCE,
 				data: payload,
 			}),
@@ -265,13 +252,11 @@ describe("flat flow resources", () => {
 	it("updates an existing row record", async () => {
 		const payload = rowRow();
 		await create(dataDb, {
-			service: EVY_CORE_SERVICE,
 			resource: ROW_RESOURCE,
 			data: payload,
 		});
 
 		const result = (await update(dataDb, {
-			service: EVY_CORE_SERVICE,
 			resource: ROW_RESOURCE,
 			filter: { id: payload.id },
 			data: { ...payload, name: "Renamed", data: { title: "Updated" } },
@@ -286,7 +271,6 @@ describe("flat flow resources", () => {
 	it("rejects update when a flat record does not exist", async () => {
 		await expect(
 			update(dataDb, {
-				service: EVY_CORE_SERVICE,
 				resource: PAGE_RESOURCE,
 				filter: { id: crypto.randomUUID() },
 				data: pageRow(),
@@ -308,13 +292,11 @@ describe("flat flow resources", () => {
 		await testDb.insert(schema.flow).values([older, newer]);
 
 		const all = (await get(dataDb, {
-			service: EVY_CORE_SERVICE,
 			resource: FLOW_RESOURCE,
 		})) as DATA_EVY_Flow[];
 		expect(all.map((flow) => flow.id)).toEqual([older.id, newer.id]);
 
 		const filteredById = (await get(dataDb, {
-			service: EVY_CORE_SERVICE,
 			resource: FLOW_RESOURCE,
 			filter: { id: newer.id },
 		})) as DATA_EVY_Flow[];
@@ -322,7 +304,6 @@ describe("flat flow resources", () => {
 		expect(filteredById[0].name).toBe("Newer");
 
 		const filteredByTime = (await get(dataDb, {
-			service: EVY_CORE_SERVICE,
 			resource: FLOW_RESOURCE,
 			filter: { updated_after: "2024-01-01T12:00:00.000Z" },
 		})) as DATA_EVY_Flow[];
@@ -332,13 +313,11 @@ describe("flat flow resources", () => {
 	it("deletes flat records", async () => {
 		const payload = pageRow();
 		await create(dataDb, {
-			service: EVY_CORE_SERVICE,
 			resource: PAGE_RESOURCE,
 			data: payload,
 		});
 
 		const deleted = (await deleteCore(dataDb, {
-			service: EVY_CORE_SERVICE,
 			resource: PAGE_RESOURCE,
 			filter: { id: payload.id },
 		})) as DATA_EVY_Page;
@@ -348,7 +327,6 @@ describe("flat flow resources", () => {
 		expect(tombstone?.deleted_at).toBeTruthy();
 		expect(
 			await get(dataDb, {
-				service: EVY_CORE_SERVICE,
 				resource: PAGE_RESOURCE,
 			}),
 		).toEqual([]);
@@ -357,7 +335,6 @@ describe("flat flow resources", () => {
 	it("rejects invalid flat flow payloads", async () => {
 		await expect(
 			create(dataDb, {
-				service: EVY_CORE_SERVICE,
 				resource: FLOW_RESOURCE,
 				data: { id: crypto.randomUUID(), name: "Missing page ids" },
 			}),
@@ -372,14 +349,12 @@ describe("address resources", () => {
 
 	it("lists empty then creates, lists, updates, and deletes addresses", async () => {
 		const empty = (await get(dataDb, {
-			service: EVY_CORE_SERVICE,
 			resource: ADDRESS_RESOURCE,
 		})) as DATA_EVY_Address[];
 		expect(empty).toEqual([]);
 
 		const payload = addressRow();
 		const created = (await create(dataDb, {
-			service: EVY_CORE_SERVICE,
 			resource: ADDRESS_RESOURCE,
 			data: payload,
 		})) as DATA_EVY_Address;
@@ -389,14 +364,12 @@ describe("address resources", () => {
 		expect(created.visibility).toBe("private");
 
 		const listed = (await get(dataDb, {
-			service: EVY_CORE_SERVICE,
 			resource: ADDRESS_RESOURCE,
 		})) as DATA_EVY_Address[];
 		expect(listed).toHaveLength(1);
 		expect(listed[0].id).toBe(payload.id);
 
 		const updated = (await update(dataDb, {
-			service: EVY_CORE_SERVICE,
 			resource: ADDRESS_RESOURCE,
 			filter: { id: payload.id },
 			data: { ...payload, unit: "C510", instructions: "Buzz 509" },
@@ -407,7 +380,6 @@ describe("address resources", () => {
 		expect(updated.created_at).toBe(payload.created_at);
 
 		const deleted = (await deleteCore(dataDb, {
-			service: EVY_CORE_SERVICE,
 			resource: ADDRESS_RESOURCE,
 			filter: { id: payload.id },
 		})) as DATA_EVY_Address;
@@ -416,7 +388,6 @@ describe("address resources", () => {
 		expect(tombstone?.deleted_at).toBeTruthy();
 		expect(
 			await get(dataDb, {
-				service: EVY_CORE_SERVICE,
 				resource: ADDRESS_RESOURCE,
 			}),
 		).toEqual([]);
@@ -425,7 +396,6 @@ describe("address resources", () => {
 	it("rejects invalid address payloads", async () => {
 		await expect(
 			create(dataDb, {
-				service: EVY_CORE_SERVICE,
 				resource: ADDRESS_RESOURCE,
 				data: {
 					id: "not-a-uuid",
@@ -437,7 +407,6 @@ describe("address resources", () => {
 
 	it("accepts partial address payloads", async () => {
 		const created = (await create(dataDb, {
-			service: EVY_CORE_SERVICE,
 			resource: ADDRESS_RESOURCE,
 			data: {
 				id: crypto.randomUUID(),
@@ -460,7 +429,6 @@ describe("visibility", () => {
 	it("rejects a create with no visibility rather than choosing one", async () => {
 		await expect(
 			create(dataDb, {
-				service: EVY_CORE_SERVICE,
 				resource: FLOW_RESOURCE,
 				data: {
 					id: crypto.randomUUID(),
@@ -473,7 +441,6 @@ describe("visibility", () => {
 
 	it("round-trips explicit public visibility on flows", async () => {
 		const created = (await create(dataDb, {
-			service: EVY_CORE_SERVICE,
 			resource: FLOW_RESOURCE,
 			data: {
 				id: crypto.randomUUID(),
@@ -488,7 +455,6 @@ describe("visibility", () => {
 	it("round-trips explicit private visibility on flows", async () => {
 		const flowId = crypto.randomUUID();
 		const created = (await create(dataDb, {
-			service: EVY_CORE_SERVICE,
 			resource: FLOW_RESOURCE,
 			data: {
 				id: flowId,
@@ -500,7 +466,6 @@ describe("visibility", () => {
 		expect(created.visibility).toBe("private");
 
 		const listed = (await get(dataDb, {
-			service: EVY_CORE_SERVICE,
 			resource: FLOW_RESOURCE,
 		})) as DATA_EVY_Flow[];
 		expect(listed[0].visibility).toBe("private");
@@ -514,15 +479,13 @@ describe("message resources", () => {
 
 	it("lists empty then creates, lists, updates, and deletes messages", async () => {
 		const empty = (await get(dataDb, {
-			service: EVY_CORE_SERVICE,
 			resource: MESSAGE_RESOURCE,
 		})) as DATA_EVY_Message[];
 		expect(empty).toEqual([]);
 
 		const payload = {
 			fk: crypto.randomUUID(),
-			service: crypto.randomUUID(),
-			resource: crypto.randomUUID(),
+			resource: "test_svc.items",
 			data: {
 				type: "pickup",
 				value: "pending",
@@ -531,7 +494,6 @@ describe("message resources", () => {
 			visibility: "private" as const,
 		};
 		const created = (await create(dataDb, {
-			service: EVY_CORE_SERVICE,
 			resource: MESSAGE_RESOURCE,
 			data: payload,
 		})) as DATA_EVY_Message;
@@ -541,13 +503,11 @@ describe("message resources", () => {
 		expect(created.visibility).toBe("private");
 
 		const listed = (await get(dataDb, {
-			service: EVY_CORE_SERVICE,
 			resource: MESSAGE_RESOURCE,
 		})) as DATA_EVY_Message[];
 		expect(listed).toHaveLength(1);
 
 		const deleted = (await deleteCore(dataDb, {
-			service: EVY_CORE_SERVICE,
 			resource: MESSAGE_RESOURCE,
 			filter: { id: created.id },
 		})) as DATA_EVY_Message;
@@ -556,7 +516,6 @@ describe("message resources", () => {
 		expect(tombstone?.deleted_at).toBeTruthy();
 		expect(
 			await get(dataDb, {
-				service: EVY_CORE_SERVICE,
 				resource: MESSAGE_RESOURCE,
 			}),
 		).toEqual([]);
@@ -565,13 +524,11 @@ describe("message resources", () => {
 	it("rejects invalid message payloads", async () => {
 		await expect(
 			create(dataDb, {
-				service: EVY_CORE_SERVICE,
 				resource: MESSAGE_RESOURCE,
 				data: {
 					id: crypto.randomUUID(),
 					fk: "not-a-uuid",
-					service: crypto.randomUUID(),
-					resource: crypto.randomUUID(),
+					resource: "test_svc.items",
 					data: {},
 					visibility: "private",
 				},
@@ -585,13 +542,11 @@ describe("message resources", () => {
 	])("rejects a message still carrying the removed %s field", async (removed) => {
 		await expect(
 			create(dataDb, {
-				service: EVY_CORE_SERVICE,
 				resource: MESSAGE_RESOURCE,
 				data: {
 					id: crypto.randomUUID(),
 					fk: crypto.randomUUID(),
-					service: crypto.randomUUID(),
-					resource: crypto.randomUUID(),
+					resource: "test_svc.items",
 					[removed]: removed === "status" ? "pending" : null,
 					data: { type: "pickup", value: "pending" },
 					visibility: "private",
@@ -602,19 +557,16 @@ describe("message resources", () => {
 });
 
 describe("getSyncRows", () => {
-	const targetService = crypto.randomUUID();
-	const targetResource = crypto.randomUUID();
+	const targetResourceRef = "test_svc.items";
 	const ownedFk = crypto.randomUUID();
 	const otherFk = crypto.randomUUID();
 
 	async function createMessage(fk: string): Promise<DATA_EVY_Message> {
 		return (await create(dataDb, {
-			service: EVY_CORE_SERVICE,
 			resource: MESSAGE_RESOURCE,
 			data: {
 				fk,
-				service: targetService,
-				resource: targetResource,
+				resource: targetResourceRef,
 				data: { type: "pickup", value: "pending" },
 				visibility: "private" as const,
 			},
@@ -625,12 +577,10 @@ describe("getSyncRows", () => {
 		requestId: string,
 	): Promise<DATA_EVY_Message> {
 		return (await create(dataDb, {
-			service: EVY_CORE_SERVICE,
 			resource: MESSAGE_RESOURCE,
 			data: {
 				fk: otherFk,
-				service: targetService,
-				resource: targetResource,
+				resource: targetResourceRef,
 				parent_message_id: requestId,
 				data: { value: "accept", type: "pickup" },
 				visibility: "private" as const,
@@ -639,13 +589,12 @@ describe("getSyncRows", () => {
 	}
 
 	function owns(...fks: string[]) {
-		return [{ service: targetService, resource: targetResource, ids: fks }];
+		return [{ resource: targetResourceRef, ids: fks }];
 	}
 
 	function ownsCoreMessage(...ids: string[]) {
 		return [
 			{
-				service: EVY_CORE_SERVICE,
 				resource: MESSAGE_RESOURCE,
 				ids,
 			},
@@ -707,15 +656,14 @@ describe("getSyncRows", () => {
 		expect(owned.toSorted()).toEqual([addressed.id, mine.id].toSorted());
 	});
 
-	it("matches the fk only within its own service and resource", async () => {
+	it("matches the fk only within its own resource ref", async () => {
 		await createMessage(ownedFk);
 
 		expect(
 			await ownedIds({
 				owned: [
 					{
-						service: crypto.randomUUID(),
-						resource: targetResource,
+						resource: "other_svc.items",
 						ids: [ownedFk],
 					},
 				],
@@ -738,7 +686,6 @@ describe("getSyncRows", () => {
 		const mine = await createMessage(otherFk);
 		const before = mine.updated_at;
 		await deleteCore(dataDb, {
-			service: EVY_CORE_SERVICE,
 			resource: MESSAGE_RESOURCE,
 			filter: { id: mine.id },
 		});
@@ -764,8 +711,7 @@ describe("getSyncRows", () => {
 			await ownedIds({
 				owned: [
 					{
-						service: EVY_CORE_SERVICE,
-						resource: EVY_CORE_RESOURCE.ADDRESSES,
+						resource: EVY_CORE_RESOURCE_REF.ADDRESSES,
 						ids: [crypto.randomUUID()],
 					},
 					...owns(ownedFk),
@@ -835,7 +781,6 @@ describe("getSyncRows entitlement", () => {
 	function ownsCoreResource(resource: string, ...ids: string[]) {
 		return [
 			{
-				service: EVY_CORE_SERVICE,
 				resource,
 				ids,
 			},
@@ -845,7 +790,6 @@ describe("getSyncRows entitlement", () => {
 	it("sends a public row to a device that owns nothing", async () => {
 		const flow = flowRow({ visibility: "public" });
 		await create(dataDb, {
-			service: EVY_CORE_SERVICE,
 			resource: FLOW_RESOURCE,
 			data: flow,
 		});
@@ -855,7 +799,6 @@ describe("getSyncRows entitlement", () => {
 
 	it("withholds a private row from a device that owns nothing", async () => {
 		await create(dataDb, {
-			service: EVY_CORE_SERVICE,
 			resource: FLOW_RESOURCE,
 			data: flowRow({ visibility: "private" }),
 		});
@@ -868,7 +811,6 @@ describe("getSyncRows entitlement", () => {
 		const theirs = flowRow({ visibility: "private" });
 		for (const data of [mine, theirs]) {
 			await create(dataDb, {
-				service: EVY_CORE_SERVICE,
 				resource: FLOW_RESOURCE,
 				data,
 			});
@@ -884,7 +826,6 @@ describe("getSyncRows entitlement", () => {
 	it("sends rows of a resource that has no visibility at all", async () => {
 		const formatterId = crypto.randomUUID();
 		await create(dataDb, {
-			service: EVY_CORE_SERVICE,
 			resource: FORMATTER_RESOURCE,
 			data: {
 				id: formatterId,
@@ -903,12 +844,10 @@ describe("getSyncRows entitlement", () => {
 	it("carries a tombstone for a private row its owner still owns", async () => {
 		const mine = flowRow({ visibility: "private" });
 		const created = (await create(dataDb, {
-			service: EVY_CORE_SERVICE,
 			resource: FLOW_RESOURCE,
 			data: mine,
 		})) as DATA_EVY_Flow;
 		await deleteCore(dataDb, {
-			service: EVY_CORE_SERVICE,
 			resource: FLOW_RESOURCE,
 			filter: { id: mine.id },
 		});
@@ -929,7 +868,7 @@ describe("service resources", () => {
 	});
 
 	it("creates and updates Service rows", async () => {
-		const serviceId = crypto.randomUUID();
+		const serviceId = "create_svc";
 		const payload = {
 			id: serviceId,
 			name: "CreateSvc",
@@ -939,19 +878,32 @@ describe("service resources", () => {
 		};
 
 		const created = (await create(dataDb, {
-			service: EVY_CORE_SERVICE,
-			resource: EVY_CORE_RESOURCE.SERVICES,
+			resource: EVY_CORE_RESOURCE_REF.SERVICES,
 			data: payload,
 		})) as DATA_EVY_Service;
 		expect(created.id).toBe(serviceId);
 
 		const updated = (await update(dataDb, {
-			service: EVY_CORE_SERVICE,
-			resource: EVY_CORE_RESOURCE.SERVICES,
+			resource: EVY_CORE_RESOURCE_REF.SERVICES,
 			filter: { id: serviceId },
 			data: { ...payload, name: "UpdatedSvc" },
 		})) as DATA_EVY_Service;
 		expect(updated.name).toBe("UpdatedSvc");
+	});
+
+	it("rejects reserved service slugs", async () => {
+		await expect(
+			create(dataDb, {
+				resource: EVY_CORE_RESOURCE_REF.SERVICES,
+				data: {
+					id: "local",
+					name: "Bad",
+					description: "D",
+					visibility: "public",
+					...timestamps(),
+				},
+			}),
+		).rejects.toThrow("Invalid service slug");
 	});
 });
 
@@ -978,8 +930,7 @@ describe("files", () => {
 		await handleUploadChunk(Buffer.concat([header, metadataBytes, bytes]));
 
 		const result = await create(dataDb, {
-			service: EVY_CORE_SERVICE,
-			resource: EVY_CORE_RESOURCE.FILES,
+			resource: EVY_CORE_RESOURCE_REF.FILES,
 			filter: { id: fileId },
 			data: {
 				id: fileId,
@@ -1004,17 +955,15 @@ describe("request validation", () => {
 	it("rejects invalid core resources", async () => {
 		await expect(
 			get(dataDb, {
-				service: EVY_CORE_SERVICE,
-				resource: "notAResource",
+				resource: "evy.not_a_resource",
 			} as unknown as GetRequest),
 		).rejects.toThrow("Resource is not served by the core API");
 	});
 
-	it("rejects invalid service ids", async () => {
+	it("rejects non-evy resource refs", async () => {
 		await expect(
 			get(dataDb, {
-				service: "invalid",
-				resource: FLOW_RESOURCE,
+				resource: "marketplace.items",
 			} as unknown as GetRequest),
 		).rejects.toThrow("Core API only serves service evy");
 	});
@@ -1040,12 +989,10 @@ describe("tombstones", () => {
 	async function createAndDeleteFlow() {
 		const payload = flowRow();
 		await create(dataDb, {
-			service: EVY_CORE_SERVICE,
 			resource: FLOW_RESOURCE,
 			data: payload,
 		});
 		await deleteCore(dataDb, {
-			service: EVY_CORE_SERVICE,
 			resource: FLOW_RESOURCE,
 			filter: { id: payload.id },
 		});
@@ -1057,7 +1004,6 @@ describe("tombstones", () => {
 
 		expect(
 			await get(dataDb, {
-				service: EVY_CORE_SERVICE,
 				resource: FLOW_RESOURCE,
 			}),
 		).toEqual([]);
@@ -1068,7 +1014,6 @@ describe("tombstones", () => {
 
 		expect(
 			await get(dataDb, {
-				service: EVY_CORE_SERVICE,
 				resource: FLOW_RESOURCE,
 				filter: { id: payload.id },
 			}),
@@ -1079,7 +1024,6 @@ describe("tombstones", () => {
 		const payload = await createAndDeleteFlow();
 
 		const rows = (await get(dataDb, {
-			service: EVY_CORE_SERVICE,
 			resource: FLOW_RESOURCE,
 			filter: { updated_after: "1970-01-01T00:00:00.000Z" },
 		})) as DATA_EVY_Flow[];
@@ -1092,13 +1036,11 @@ describe("tombstones", () => {
 	it("stamps updated_at on delete so the tombstone lands after the cursor", async () => {
 		const payload = flowRow();
 		const created = (await create(dataDb, {
-			service: EVY_CORE_SERVICE,
 			resource: FLOW_RESOURCE,
 			data: payload,
 		})) as DATA_EVY_Flow;
 
 		const deleted = (await deleteCore(dataDb, {
-			service: EVY_CORE_SERVICE,
 			resource: FLOW_RESOURCE,
 			filter: { id: payload.id },
 		})) as DATA_EVY_Flow;
@@ -1112,7 +1054,6 @@ describe("tombstones", () => {
 
 		await expect(
 			deleteCore(dataDb, {
-				service: EVY_CORE_SERVICE,
 				resource: FLOW_RESOURCE,
 				filter: { id: payload.id },
 			}),
@@ -1122,7 +1063,6 @@ describe("tombstones", () => {
 	it("omits deleted_at entirely for a live record", async () => {
 		const payload = flowRow();
 		const created = (await create(dataDb, {
-			service: EVY_CORE_SERVICE,
 			resource: FLOW_RESOURCE,
 			data: payload,
 		})) as DATA_EVY_Flow;
@@ -1140,8 +1080,7 @@ describe("tombstones", () => {
 		});
 
 		await deleteCore(dataDb, {
-			service: EVY_CORE_SERVICE,
-			resource: EVY_CORE_RESOURCE.FILES,
+			resource: EVY_CORE_RESOURCE_REF.FILES,
 			filter: { id: fileId },
 		});
 
@@ -1149,8 +1088,7 @@ describe("tombstones", () => {
 		expect(row?.deleted_at).toBeTruthy();
 		expect(
 			await get(dataDb, {
-				service: EVY_CORE_SERVICE,
-				resource: EVY_CORE_RESOURCE.FILES,
+				resource: EVY_CORE_RESOURCE_REF.FILES,
 			}),
 		).toEqual([]);
 	});
@@ -1175,7 +1113,6 @@ describe("formatter resources", () => {
 		};
 
 		const created = await create(dataDb, {
-			service: EVY_CORE_SERVICE,
 			resource: FORMATTER_RESOURCE,
 			data: payload,
 		});
@@ -1185,13 +1122,11 @@ describe("formatter resources", () => {
 		});
 
 		const listed = await get(dataDb, {
-			service: EVY_CORE_SERVICE,
 			resource: FORMATTER_RESOURCE,
 		});
 		expect(listed).toHaveLength(1);
 
 		const updated = await update(dataDb, {
-			service: EVY_CORE_SERVICE,
 			resource: FORMATTER_RESOURCE,
 			filter: { id: payload.id },
 			data: {
@@ -1205,13 +1140,11 @@ describe("formatter resources", () => {
 		expect(updated.formatting.EUR).toBe("€{formatDecimal(input.value, 2)}");
 
 		await deleteCore(dataDb, {
-			service: EVY_CORE_SERVICE,
 			resource: FORMATTER_RESOURCE,
 			filter: { id: payload.id },
 		});
 		expect(
 			await get(dataDb, {
-				service: EVY_CORE_SERVICE,
 				resource: FORMATTER_RESOURCE,
 			}),
 		).toEqual([]);
@@ -1226,13 +1159,11 @@ describe("formatter resources", () => {
 			...timestamps(),
 		};
 		await create(dataDb, {
-			service: EVY_CORE_SERVICE,
 			resource: FORMATTER_RESOURCE,
 			data: payload,
 		});
 		await expect(
 			create(dataDb, {
-				service: EVY_CORE_SERVICE,
 				resource: FORMATTER_RESOURCE,
 				data: {
 					...payload,

@@ -1,8 +1,8 @@
 import { afterAll, beforeAll, describe, expect, it } from "bun:test";
-import { EVY_CORE_RESOURCE, EVY_CORE_SERVICE } from "evy-types/coreResources";
+import { EVY_CORE_RESOURCE_REF } from "evy-types/coreResources";
 import { waitForClientOpen } from "evy-types/wsTestHelpers";
 import { Client } from "rpc-websockets";
-import { discoverMarketplaceIds } from "../src/tests/discoverMarketplaceIds";
+import { MARKETPLACE_RESOURCE, MARKETPLACE_SERVICE } from "../src/resources";
 
 type WSClient = InstanceType<typeof Client>;
 
@@ -32,18 +32,11 @@ function failureDetail(failure: unknown): string {
 
 describe("Marketplace E2E (via API WebSocket)", () => {
 	let client: WSClient;
-	let marketplaceServiceId: string;
-	let itemsResourceId: string;
 
 	beforeAll(async () => {
 		client = new Client(API_URL);
 		await waitForClientOpen(client, CONNECTION_TIMEOUT_MS);
 		await client.login({ token: TEST_TOKEN, os: TEST_OS });
-
-		const response = await client.call("resources", {});
-		const discovered = discoverMarketplaceIds(response, ["items"]);
-		marketplaceServiceId = discovered.serviceId;
-		itemsResourceId = discovered.resourceIds.items;
 	});
 
 	afterAll(() => {
@@ -52,8 +45,7 @@ describe("Marketplace E2E (via API WebSocket)", () => {
 
 	it("get marketplace items resource should return an array envelope", async () => {
 		const result = await client.call("get", {
-			service: marketplaceServiceId,
-			resource: itemsResourceId,
+			resource: MARKETPLACE_RESOURCE.ITEMS,
 		});
 		expect(Array.isArray(result)).toBe(true);
 	});
@@ -66,8 +58,7 @@ describe("Marketplace E2E (via API WebSocket)", () => {
 		};
 
 		const created = await client.call("create", {
-			service: marketplaceServiceId,
-			resource: itemsResourceId,
+			resource: MARKETPLACE_RESOURCE.ITEMS,
 			data: testData,
 		});
 
@@ -76,8 +67,7 @@ describe("Marketplace E2E (via API WebSocket)", () => {
 		expect(created).toHaveProperty("data");
 
 		const got = await client.call("get", {
-			service: marketplaceServiceId,
-			resource: itemsResourceId,
+			resource: MARKETPLACE_RESOURCE.ITEMS,
 		});
 
 		expect(Array.isArray(got)).toBe(true);
@@ -98,8 +88,7 @@ describe("Marketplace E2E (via API WebSocket)", () => {
 	it("rejects an item whose known field has the wrong type", async () => {
 		const failure = await client
 			.call("create", {
-				service: marketplaceServiceId,
-				resource: itemsResourceId,
+				resource: MARKETPLACE_RESOURCE.ITEMS,
 				data: { id: crypto.randomUUID(), title: 123 },
 			})
 			.catch((error: unknown) => error);
@@ -108,15 +97,9 @@ describe("Marketplace E2E (via API WebSocket)", () => {
 	});
 
 	it("rejects a lookup row with an unknown key", async () => {
-		const response = await client.call("resources", {});
-		const { resourceIds } = discoverMarketplaceIds(response, [
-			"conditions",
-		]);
-
 		const failure = await client
 			.call("create", {
-				service: marketplaceServiceId,
-				resource: resourceIds.conditions,
+				resource: MARKETPLACE_RESOURCE.CONDITIONS,
 				data: { id: crypto.randomUUID(), value: "Mint", extra: true },
 			})
 			.catch((error: unknown) => error);
@@ -136,7 +119,7 @@ describe("Marketplace E2E (via API WebSocket)", () => {
 			}[];
 		};
 		const marketplace = response.services.find(
-			(service) => service.id === marketplaceServiceId,
+			(service) => service.id === MARKETPLACE_SERVICE,
 		);
 		const items = marketplace?.resources.find(
 			(resource) => resource.name === "items",
@@ -153,8 +136,7 @@ describe("Marketplace E2E (via API WebSocket)", () => {
 		const messageId = crypto.randomUUID();
 		const message = {
 			fk: crypto.randomUUID(),
-			service: marketplaceServiceId,
-			resource: itemsResourceId,
+			resource: MARKETPLACE_RESOURCE.ITEMS,
 			data: {
 				type: "pickup",
 				value: "pending",
@@ -164,8 +146,7 @@ describe("Marketplace E2E (via API WebSocket)", () => {
 		};
 
 		const created = await client.call("create", {
-			service: EVY_CORE_SERVICE,
-			resource: EVY_CORE_RESOURCE.MESSAGES,
+			resource: EVY_CORE_RESOURCE_REF.MESSAGES,
 			filter: { id: messageId },
 			data: message,
 		});
@@ -179,8 +160,7 @@ describe("Marketplace E2E (via API WebSocket)", () => {
 		expect(created.updated_at).toBeDefined();
 
 		const rows = await client.call("get", {
-			service: EVY_CORE_SERVICE,
-			resource: EVY_CORE_RESOURCE.MESSAGES,
+			resource: EVY_CORE_RESOURCE_REF.MESSAGES,
 			filter: { id: messageId },
 		});
 		expect(rows).toHaveLength(1);
@@ -205,8 +185,7 @@ describe("Marketplace E2E (via API WebSocket)", () => {
 		};
 
 		const created = await client.call("create", {
-			service: marketplaceServiceId,
-			resource: itemsResourceId,
+			resource: MARKETPLACE_RESOURCE.ITEMS,
 			filter: { id: clientId },
 			data: itemPayload,
 		});
@@ -223,8 +202,7 @@ describe("Marketplace E2E (via API WebSocket)", () => {
 		expect(created.data).not.toHaveProperty("pickup_address");
 
 		const got = await client.call("get", {
-			service: marketplaceServiceId,
-			resource: itemsResourceId,
+			resource: MARKETPLACE_RESOURCE.ITEMS,
 			filter: { id: clientId },
 		});
 

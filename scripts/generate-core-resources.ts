@@ -47,9 +47,12 @@ function validateSchema(value: unknown): asserts value is CoreResourcesSchema {
 		throw new Error("core.resources.json: root must be an object");
 	}
 	const obj = value as Record<string, unknown>;
-	if (typeof obj.service !== "string" || obj.service.length === 0) {
+	if (
+		typeof obj.service !== "string" ||
+		!/^[a-z][a-z0-9_-]*$/.test(obj.service)
+	) {
 		throw new Error(
-			"core.resources.json: service must be a non-empty string",
+			"core.resources.json: service must be a valid service slug",
 		);
 	}
 	if (
@@ -123,10 +126,18 @@ function generateTypeScript(schema: CoreResourcesSchema): string {
 	lines.push("} as const;");
 	lines.push("");
 
+	lines.push("export const EVY_CORE_RESOURCE_REF = {");
+	for (const [plural] of Object.entries(resources)) {
+		const key = resourceKey(plural);
+		lines.push(`\t${key}: ${JSON.stringify(`${service}.${plural}`)},`);
+	}
+	lines.push("} as const;");
+	lines.push("");
+
 	lines.push("export const EVY_CORE_RESOURCES = [");
 	for (const [plural, meta] of Object.entries(resources)) {
 		lines.push(
-			`\t{ id: ${JSON.stringify(plural)}, name: ${JSON.stringify(meta.singular)} },`,
+			`\t{ id: ${JSON.stringify(`${service}.${plural}`)}, name: ${JSON.stringify(meta.singular)} },`,
 		);
 	}
 	lines.push("] as const;");
@@ -225,6 +236,11 @@ function generateSwift(schema: CoreResourcesSchema): string {
 		lines.push(`\t\tcase .${caseName}: return ${value}`);
 	}
 	lines.push("\t\t}");
+	lines.push("\t}");
+	lines.push("");
+
+	lines.push("\tpublic var ref: String {");
+	lines.push('\t\t"\\(EVY_CORE_SERVICE).\\(rawValue)"');
 	lines.push("\t}");
 	lines.push("}");
 

@@ -8,7 +8,7 @@ import {
 } from "bun:test";
 import { migrate } from "drizzle-orm/pglite/migrator";
 import { schema } from "../db";
-import { MARKETPLACE_RESOURCE, MARKETPLACE_SERVICE } from "../resources";
+import { MARKETPLACE_RESOURCE } from "../resources";
 import {
 	createPgliteTestDatabase,
 	registerMarketplaceTestDb,
@@ -36,14 +36,17 @@ describe("marketplace get/create/update", () => {
 	it("rejects unsupported resources", async () => {
 		await expect(
 			get({
-				service: MARKETPLACE_SERVICE,
-				resource: "unsupported-resource",
+				resource: "items",
+			}),
+		).rejects.toThrow("Unsupported resource id for marketplace service");
+		await expect(
+			get({
+				resource: "evy.messages",
 			}),
 		).rejects.toThrow("Unsupported resource id for marketplace service");
 		await expect(
 			create({
-				service: MARKETPLACE_SERVICE,
-				resource: "unsupported-resource",
+				resource: "items",
 				data: { id: crypto.randomUUID(), name: "X" },
 			}),
 		).rejects.toThrow("Unsupported resource id for marketplace service");
@@ -52,12 +55,10 @@ describe("marketplace get/create/update", () => {
 	it("persists resource rows for service marketplace", async () => {
 		const row = { id: crypto.randomUUID(), value: "Like new" };
 		await create({
-			service: MARKETPLACE_SERVICE,
 			resource: MARKETPLACE_RESOURCE.CONDITIONS,
 			data: row,
 		});
 		const result = await get({
-			service: MARKETPLACE_SERVICE,
 			resource: MARKETPLACE_RESOURCE.CONDITIONS,
 		});
 		expect(result).toHaveLength(1);
@@ -86,7 +87,6 @@ describe("marketplace get/create/update", () => {
 		]);
 
 		const result = await get({
-			service: MARKETPLACE_SERVICE,
 			resource: MARKETPLACE_RESOURCE.CONDITIONS,
 		});
 
@@ -113,7 +113,6 @@ describe("marketplace get/create/update", () => {
 		]);
 
 		const result = await get({
-			service: MARKETPLACE_SERVICE,
 			resource: MARKETPLACE_RESOURCE.CONDITIONS,
 			filter: { updated_after: "2024-01-02T00:00:00.000Z" },
 		});
@@ -145,7 +144,6 @@ describe("marketplace get/create/update", () => {
 		]);
 
 		const result = await get({
-			service: MARKETPLACE_SERVICE,
 			resource: MARKETPLACE_RESOURCE.ITEMS,
 			filter: { id: secondId },
 		});
@@ -158,14 +156,12 @@ describe("marketplace get/create/update", () => {
 		const clientId = crypto.randomUUID();
 		const payload = { id: clientId, title: "client-keyed" };
 		const inserted = await create({
-			service: MARKETPLACE_SERVICE,
 			resource: MARKETPLACE_RESOURCE.ITEMS,
 			filter: { id: clientId },
 			data: payload,
 		});
 		expect(inserted.id).toBe(clientId);
 		const byFilter = await get({
-			service: MARKETPLACE_SERVICE,
 			resource: MARKETPLACE_RESOURCE.ITEMS,
 			filter: { id: clientId },
 		});
@@ -176,13 +172,11 @@ describe("marketplace get/create/update", () => {
 		const rowId = crypto.randomUUID();
 		const row = { id: rowId, value: "v1" };
 		await create({
-			service: MARKETPLACE_SERVICE,
 			resource: MARKETPLACE_RESOURCE.CONDITIONS,
 			filter: { id: rowId },
 			data: row,
 		});
 		const updated = await update({
-			service: MARKETPLACE_SERVICE,
 			resource: MARKETPLACE_RESOURCE.CONDITIONS,
 			filter: { id: rowId },
 			data: { ...row, value: "v2" },
@@ -193,8 +187,7 @@ describe("marketplace get/create/update", () => {
 	it("rejects unknown marketplace resource ids", async () => {
 		await expect(
 			create({
-				service: MARKETPLACE_SERVICE,
-				resource: "000c2d05-851e-4456-8f22-bb1e54f17c8c",
+				resource: "marketplace.nonexistent",
 				filter: { id: crypto.randomUUID() },
 				data: { id: crypto.randomUUID(), value: "orphan" },
 			}),
@@ -205,21 +198,18 @@ describe("marketplace get/create/update", () => {
 		const rowId = crypto.randomUUID();
 		const row = { id: rowId, value: "delete-me" };
 		await create({
-			service: MARKETPLACE_SERVICE,
 			resource: MARKETPLACE_RESOURCE.CONDITIONS,
 			filter: { id: rowId },
 			data: row,
 		});
 
 		const deleted = await deleteResource({
-			service: MARKETPLACE_SERVICE,
 			resource: MARKETPLACE_RESOURCE.CONDITIONS,
 			filter: { id: rowId },
 		});
 		expect(deleted).toMatchObject({ id: rowId, data: row });
 
 		const remaining = await get({
-			service: MARKETPLACE_SERVICE,
 			resource: MARKETPLACE_RESOURCE.CONDITIONS,
 			filter: { id: rowId },
 		});
@@ -250,7 +240,6 @@ describe("marketplace item payload validation", () => {
 
 	function createItem(data: unknown) {
 		return create({
-			service: MARKETPLACE_SERVICE,
 			resource: MARKETPLACE_RESOURCE.ITEMS,
 			filter: { id: fixtureItem.id },
 			data,
@@ -414,7 +403,6 @@ describe("marketplace item payload validation", () => {
 		await createItem(fixtureItem);
 		await expect(
 			update({
-				service: MARKETPLACE_SERVICE,
 				resource: MARKETPLACE_RESOURCE.ITEMS,
 				filter: { id: fixtureItem.id },
 				data: { ...fixtureItem, price: 999 },
@@ -428,7 +416,6 @@ describe("marketplace item payload validation", () => {
 	it("validates the lookup resources too", async () => {
 		await expect(
 			create({
-				service: MARKETPLACE_SERVICE,
 				resource: MARKETPLACE_RESOURCE.CONDITIONS,
 				data: { id: crypto.randomUUID(), anything: { goes: true } },
 			}),
@@ -436,7 +423,6 @@ describe("marketplace item payload validation", () => {
 
 		await expect(
 			create({
-				service: MARKETPLACE_SERVICE,
 				resource: MARKETPLACE_RESOURCE.AREAS,
 				data: { id: crypto.randomUUID(), value: "City" },
 			}),
@@ -450,13 +436,11 @@ describe("marketplace tombstones", () => {
 	async function createAndDelete() {
 		const rowId = crypto.randomUUID();
 		await create({
-			service: MARKETPLACE_SERVICE,
 			resource,
 			filter: { id: rowId },
 			data: { id: rowId, value: "gone" },
 		});
 		await deleteResource({
-			service: MARKETPLACE_SERVICE,
 			resource,
 			filter: { id: rowId },
 		});
@@ -466,16 +450,13 @@ describe("marketplace tombstones", () => {
 	it("hides a deleted row from a plain read", async () => {
 		await createAndDelete();
 
-		expect(await get({ service: MARKETPLACE_SERVICE, resource })).toEqual(
-			[],
-		);
+		expect(await get({ resource })).toEqual([]);
 	});
 
 	it("includes the tombstone in an incremental read", async () => {
 		const rowId = await createAndDelete();
 
 		const rows = await get({
-			service: MARKETPLACE_SERVICE,
 			resource,
 			filter: { updated_after: "1970-01-01T00:00:00.000Z" },
 		});
@@ -487,14 +468,12 @@ describe("marketplace tombstones", () => {
 	it("reports the tombstone on the delete response", async () => {
 		const rowId = crypto.randomUUID();
 		await create({
-			service: MARKETPLACE_SERVICE,
 			resource,
 			filter: { id: rowId },
 			data: { id: rowId, value: "x" },
 		});
 
 		const deleted = await deleteResource({
-			service: MARKETPLACE_SERVICE,
 			resource,
 			filter: { id: rowId },
 		});
@@ -507,7 +486,6 @@ describe("marketplace tombstones", () => {
 
 		await expect(
 			deleteResource({
-				service: MARKETPLACE_SERVICE,
 				resource,
 				filter: { id: rowId },
 			}),
@@ -517,7 +495,6 @@ describe("marketplace tombstones", () => {
 	it("omits deleted_at for a live row", async () => {
 		const rowId = crypto.randomUUID();
 		const created = await create({
-			service: MARKETPLACE_SERVICE,
 			resource,
 			filter: { id: rowId },
 			data: { id: rowId, value: "live" },

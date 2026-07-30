@@ -6,6 +6,7 @@ import type {
 } from "evy-types";
 import { EVY_CORE_SERVICE } from "evy-types/coreResources";
 import { PROCEDURES } from "evy-types/procedures";
+import { serviceOfRef } from "evy-types/resourceRef";
 import {
 	validateStrictApiRequest,
 	validateStrictCreateRequest,
@@ -29,12 +30,16 @@ import {
 	forwardUpdate,
 } from "./services";
 
+function routeByResourceRef(resource: string): string {
+	return serviceOfRef(resource);
+}
+
 export async function get(params: unknown, db: EvyDb): Promise<GetResponse> {
 	validateStrictGetRequest(params);
-	if (params.service === EVY_CORE_SERVICE) {
+	if (routeByResourceRef(params.resource) === EVY_CORE_SERVICE) {
 		return getCore(db, params);
 	}
-	return forwardGet(params.service, params);
+	return forwardGet(routeByResourceRef(params.resource), params);
 }
 
 export async function api(params: unknown, db: EvyDb): Promise<unknown> {
@@ -61,10 +66,10 @@ export async function create(
 	db: EvyDb,
 ): Promise<CreateResponse> {
 	validateStrictCreateRequest(params);
-	if (params.service === EVY_CORE_SERVICE) {
+	if (routeByResourceRef(params.resource) === EVY_CORE_SERVICE) {
 		return createCore(db, params);
 	}
-	return forwardCreate(params.service, params);
+	return forwardCreate(routeByResourceRef(params.resource), params);
 }
 
 export async function update(
@@ -72,10 +77,10 @@ export async function update(
 	db: EvyDb,
 ): Promise<UpdateResponse> {
 	validateStrictUpdateRequest(params);
-	if (params.service === EVY_CORE_SERVICE) {
+	if (routeByResourceRef(params.resource) === EVY_CORE_SERVICE) {
 		return updateCore(db, params);
 	}
-	return forwardUpdate(params.service, params);
+	return forwardUpdate(routeByResourceRef(params.resource), params);
 }
 
 export async function deleteResource(
@@ -83,8 +88,8 @@ export async function deleteResource(
 	db: EvyDb,
 ): Promise<DeleteResponse> {
 	validateStrictDeleteRequest(params);
-	if (params.service === EVY_CORE_SERVICE) {
+	if (routeByResourceRef(params.resource) === EVY_CORE_SERVICE) {
 		return deleteCore(db, params);
 	}
-	return forwardDelete(params.service, params);
+	return forwardDelete(routeByResourceRef(params.resource), params);
 }

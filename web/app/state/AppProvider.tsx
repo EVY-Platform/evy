@@ -26,7 +26,7 @@ import {
 	type FlowEntityCollections,
 	scopeCollectionsToReachableIds,
 } from "../utils/flowEntities";
-import { resourceNameById } from "../utils/resourcePathDisplay";
+import { resourceDisplayNames } from "../utils/resourcePathDisplay";
 import {
 	parseUrlPath,
 	resolveUrlIds,
@@ -60,7 +60,7 @@ export function AppProvider({
 	syncWithApi?: boolean;
 }) {
 	const resourceIdToEntityName = useMemo(
-		() => resourceNameById(serviceResources),
+		() => resourceDisplayNames(serviceResources),
 		[serviceResources],
 	);
 

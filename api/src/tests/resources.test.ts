@@ -1,5 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it, spyOn } from "bun:test";
-import { EVY_CORE_RESOURCE, EVY_CORE_SERVICE } from "evy-types/coreResources";
+import {
+	EVY_CORE_RESOURCE_REF,
+	EVY_CORE_SERVICE,
+} from "evy-types/coreResources";
 import * as data from "../data/data";
 import type { EvyDb } from "../database/db";
 import { discoverResources } from "../procedures/resources";
@@ -72,8 +75,11 @@ describe("resources", () => {
 					id: EVY_CORE_SERVICE,
 					name: "evy",
 					resources: expect.arrayContaining([
-						{ id: EVY_CORE_RESOURCE.FLOWS, name: "flow" },
-						{ id: EVY_CORE_RESOURCE.RESOURCES, name: "resource" },
+						{ id: EVY_CORE_RESOURCE_REF.FLOWS, name: "flow" },
+						{
+							id: EVY_CORE_RESOURCE_REF.RESOURCES,
+							name: "resource",
+						},
 					]),
 				}),
 				expect.objectContaining({

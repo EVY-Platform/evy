@@ -1,16 +1,18 @@
 import type { ResourcesResponse } from "evy-types";
 import type { ServiceResource } from "../app/types/resources";
 
+const TEST_SERVICE_SLUG = "test_service";
+
 const TEST_RESOURCE_ID = {
-	SELLING_REASONS: "22222222-2222-4222-8222-222222222222",
-	CONDITIONS: "33333333-3333-4333-8333-333333333333",
-	RECORDS: "44444444-4444-4444-8444-444444444444",
+	SELLING_REASONS: "test_service.selling_reasons",
+	CONDITIONS: "test_service.conditions",
+	RECORDS: "test_service.records",
 } as const;
 
 const TEST_RESOURCE_CATALOG: ResourcesResponse = {
 	services: [
 		{
-			id: "11111111-1111-4111-8111-111111111111",
+			id: TEST_SERVICE_SLUG,
 			name: "test-service",
 			resources: [
 				{

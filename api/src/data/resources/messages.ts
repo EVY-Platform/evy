@@ -14,7 +14,6 @@ export const messagesResource = makeCoreResource<DATA_EVY_Message>({
 	validate: validateDataEvyMessage,
 	toUpdateSet: (v) => ({
 		fk: v.fk,
-		service: v.service,
 		resource: v.resource,
 		data: v.data,
 		parent_message_id: v.parent_message_id,

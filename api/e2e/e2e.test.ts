@@ -1,5 +1,8 @@
 import { afterAll, beforeAll, describe, expect, it } from "bun:test";
-import { EVY_CORE_RESOURCE, EVY_CORE_SERVICE } from "evy-types/coreResources";
+import {
+	EVY_CORE_RESOURCE_REF,
+	EVY_CORE_SERVICE,
+} from "evy-types/coreResources";
 import { Client } from "rpc-websockets";
 import { waitForClientOpen } from "../src/tests/wsTestHelpers";
 
@@ -58,8 +61,7 @@ describe("API E2E Tests", () => {
 
 		it("get should succeed without auth (public)", async () => {
 			const result = await unauthClient.call("get", {
-				service: EVY_CORE_SERVICE,
-				resource: EVY_CORE_RESOURCE.FLOWS,
+				resource: EVY_CORE_RESOURCE_REF.FLOWS,
 			});
 			expect(Array.isArray(result)).toBe(true);
 		});
@@ -89,7 +91,7 @@ describe("API E2E Tests", () => {
 						typeof row === "object" &&
 						row !== null &&
 						"resource" in row &&
-						row.resource === EVY_CORE_RESOURCE.RESOURCES
+						row.resource === EVY_CORE_RESOURCE_REF.RESOURCES
 					),
 			);
 
@@ -110,8 +112,7 @@ describe("API E2E Tests", () => {
 		it("create should reject without auth", async () => {
 			try {
 				await unauthClient.call("create", {
-					service: EVY_CORE_SERVICE,
-					resource: EVY_CORE_RESOURCE.FLOWS,
+					resource: EVY_CORE_RESOURCE_REF.FLOWS,
 					data: flowPayload([]),
 				});
 				throw new Error(
@@ -147,19 +148,16 @@ describe("API E2E Tests", () => {
 			const flow = flowPayload([page.id]);
 
 			await client.call("create", {
-				service: EVY_CORE_SERVICE,
-				resource: EVY_CORE_RESOURCE.PAGES,
+				resource: EVY_CORE_RESOURCE_REF.PAGES,
 				data: page,
 			});
 			await client.call("create", {
-				service: EVY_CORE_SERVICE,
-				resource: EVY_CORE_RESOURCE.FLOWS,
+				resource: EVY_CORE_RESOURCE_REF.FLOWS,
 				data: flow,
 			});
 
 			const result = await client.call("get", {
-				service: EVY_CORE_SERVICE,
-				resource: EVY_CORE_RESOURCE.FLOWS,
+				resource: EVY_CORE_RESOURCE_REF.FLOWS,
 				filter: { id: flow.id },
 			});
 
@@ -179,18 +177,15 @@ describe("API E2E Tests", () => {
 			const flow = flowPayload([page.id]);
 
 			const createdRow = await client.call("create", {
-				service: EVY_CORE_SERVICE,
-				resource: EVY_CORE_RESOURCE.ROWS,
+				resource: EVY_CORE_RESOURCE_REF.ROWS,
 				data: row,
 			});
 			const createdPage = await client.call("create", {
-				service: EVY_CORE_SERVICE,
-				resource: EVY_CORE_RESOURCE.PAGES,
+				resource: EVY_CORE_RESOURCE_REF.PAGES,
 				data: page,
 			});
 			const createdFlow = await client.call("create", {
-				service: EVY_CORE_SERVICE,
-				resource: EVY_CORE_RESOURCE.FLOWS,
+				resource: EVY_CORE_RESOURCE_REF.FLOWS,
 				data: flow,
 			});
 
@@ -218,14 +213,12 @@ describe("API E2E Tests", () => {
 			const flow = flowPayload([]);
 
 			const created = await client.call("create", {
-				service: EVY_CORE_SERVICE,
-				resource: EVY_CORE_RESOURCE.FLOWS,
+				resource: EVY_CORE_RESOURCE_REF.FLOWS,
 				data: flow,
 			});
 
 			const updated = await client.call("update", {
-				service: EVY_CORE_SERVICE,
-				resource: EVY_CORE_RESOURCE.FLOWS,
+				resource: EVY_CORE_RESOURCE_REF.FLOWS,
 				filter: { id: created.id },
 				data: { ...flow, name: "Updated Flow Name" },
 			});
@@ -235,29 +228,24 @@ describe("API E2E Tests", () => {
 		});
 
 		it("sync delivers a response to the sender of the message it answers", async () => {
-			const itemService = crypto.randomUUID();
-			const itemResource = crypto.randomUUID();
+			const itemResourceRef = "e2e_svc.items";
 			const itemId = crypto.randomUUID();
 
 			const request = await client.call("create", {
-				service: EVY_CORE_SERVICE,
-				resource: EVY_CORE_RESOURCE.MESSAGES,
+				resource: EVY_CORE_RESOURCE_REF.MESSAGES,
 				data: {
 					fk: itemId,
-					service: itemService,
-					resource: itemResource,
+					resource: itemResourceRef,
 					visibility: "private",
 					data: { type: "pickup", value: "pending" },
 				},
 			});
 
 			const response = await client.call("create", {
-				service: EVY_CORE_SERVICE,
-				resource: EVY_CORE_RESOURCE.MESSAGES,
+				resource: EVY_CORE_RESOURCE_REF.MESSAGES,
 				data: {
 					fk: itemId,
-					service: itemService,
-					resource: itemResource,
+					resource: itemResourceRef,
 					parent_message_id: request.id,
 					visibility: "private",
 					data: { value: "accept", type: "pickup" },
@@ -265,10 +253,9 @@ describe("API E2E Tests", () => {
 			});
 
 			const synced = await client.call("sync", {
-				owned_service_resources: [
+				owned_resources: [
 					{
-						service: EVY_CORE_SERVICE,
-						resource: EVY_CORE_RESOURCE.MESSAGES,
+						resource: EVY_CORE_RESOURCE_REF.MESSAGES,
 						ids: [request.id],
 					},
 				],
@@ -277,7 +264,7 @@ describe("API E2E Tests", () => {
 			const messages =
 				synced.data.find(
 					(row: { resource: string }) =>
-						row.resource === EVY_CORE_RESOURCE.MESSAGES,
+						row.resource === EVY_CORE_RESOURCE_REF.MESSAGES,
 				)?.value ?? [];
 			const ids = messages.map((message: { id: string }) => message.id);
 

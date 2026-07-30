@@ -210,7 +210,7 @@ enum EVYPreviewMockData {
     guard let bytes = try? JSONSerialization.data(withJSONObject: record) else { return }
     try? EVY.publicStore.upsert(
       namespace: EVYNamespace.evy,
-      resource: EVYCoreResource.rows.rawValue,
+      resource: EVYCoreResource.rows.ref,
       id: id,
       value: bytes
     )

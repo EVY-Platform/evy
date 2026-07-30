@@ -9,6 +9,7 @@
 		"./functionArgs": "./functionArgs.ts",
 		"./actionAst": "./actionAst.ts",
 		"./rpcRequestHelpers": "./rpcRequestHelpers.ts",
+		"./resourceRef": "./resourceRef.ts",
 		"./standardFormatters": "./standardFormatters.ts",
 		"./validators": "./validators.ts",
 		"./flowSubmits": "./flowSubmits.ts",

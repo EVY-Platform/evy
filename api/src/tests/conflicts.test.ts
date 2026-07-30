@@ -7,7 +7,10 @@ import {
 	it,
 } from "bun:test";
 import { migrate } from "drizzle-orm/pglite/migrator";
-import { EVY_CORE_RESOURCE, EVY_CORE_SERVICE } from "evy-types/coreResources";
+import {
+	EVY_CORE_RESOURCE_REF,
+	EVY_CORE_SERVICE,
+} from "evy-types/coreResources";
 import { ConflictError } from "../data/conflicts";
 import * as dataModule from "../data/data";
 import {
@@ -21,8 +24,7 @@ const db = asEvyDb(testDb);
 
 async function createFlow() {
 	return dataModule.create(db, {
-		service: EVY_CORE_SERVICE,
-		resource: EVY_CORE_RESOURCE.FLOWS,
+		resource: EVY_CORE_RESOURCE_REF.FLOWS,
 		data: {
 			id: crypto.randomUUID(),
 			name: "Flow",
@@ -38,8 +40,7 @@ function updateFlow(
 	expected_updated_at?: string,
 ): Promise<unknown> {
 	return dataModule.update(db, {
-		service: EVY_CORE_SERVICE,
-		resource: EVY_CORE_RESOURCE.FLOWS,
+		resource: EVY_CORE_RESOURCE_REF.FLOWS,
 		filter: { id, ...(expected_updated_at ? { expected_updated_at } : {}) },
 		data: { id, name, page_ids: [], visibility: "public" },
 	});
@@ -89,8 +90,7 @@ describe("optimistic locking", () => {
 		);
 
 		const rows = await dataModule.get(db, {
-			service: EVY_CORE_SERVICE,
-			resource: EVY_CORE_RESOURCE.FLOWS,
+			resource: EVY_CORE_RESOURCE_REF.FLOWS,
 			filter: { id: created.id },
 		});
 		expect(rows[0]).toMatchObject({ name: "First writer" });
@@ -149,8 +149,7 @@ describe("optimistic locking", () => {
 
 		await expect(
 			dataModule.deleteResource(db, {
-				service: EVY_CORE_SERVICE,
-				resource: EVY_CORE_RESOURCE.FLOWS,
+				resource: EVY_CORE_RESOURCE_REF.FLOWS,
 				filter: {
 					id: created.id,
 					expected_updated_at: created.updated_at,
@@ -164,8 +163,7 @@ describe("optimistic locking", () => {
 
 		await expect(
 			dataModule.deleteResource(db, {
-				service: EVY_CORE_SERVICE,
-				resource: EVY_CORE_RESOURCE.FLOWS,
+				resource: EVY_CORE_RESOURCE_REF.FLOWS,
 				filter: {
 					id: created.id,
 					expected_updated_at: created.updated_at,

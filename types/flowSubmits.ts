@@ -75,12 +75,10 @@ function submitCreateTarget(branch: unknown): string | null {
 	const invocation = branch as Record<string, unknown>;
 	if (invocation.fn !== "create" || invocation.mode !== "submit") return null;
 
-	const service =
-		typeof invocation.service === "string" ? invocation.service : "";
 	const resource =
 		typeof invocation.resource === "string" ? invocation.resource : "";
-	if (!service || !resource) return null;
-	return `${service}/${resource}`;
+	if (!resource) return null;
+	return resource;
 }
 
 function addSubmitTargetsFromRow(row: DATA_EVY_Row, into: Set<string>): void {
@@ -136,7 +134,7 @@ export function assertFlatFlowSubmitsDeclaration(
 		);
 	}
 
-	const declared = `${flow.submits.service}/${flow.submits.resource}`;
+	const declared = flow.submits.resource;
 	if (declared !== target) {
 		throw new Error(
 			`Flow validation failed: flow ${flow.id} declares submits ${declared} but its create(...,submit) targets ${target}`,

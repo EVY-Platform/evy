@@ -3,7 +3,7 @@ import type { ServiceResource } from "../types/resources";
 import { displayLabel } from "./labelFormatting";
 import {
 	formatResourcePathForDisplay,
-	resourceNameById,
+	resourceDisplayNames,
 } from "./resourcePathDisplay";
 import { forEachRowInFlows, rowLocationLabel } from "./rowTraversal";
 
@@ -33,11 +33,11 @@ export function toVariableOptions(
 	variables: string[],
 	serviceResources: ServiceResource[] = [],
 ): { value: string; label: string }[] {
-	const resourceNamesById = resourceNameById(serviceResources);
+	const resourceNamesByRef = resourceDisplayNames(serviceResources);
 	return variables.map((variable) => ({
 		value: variable,
 		label: displayLabel(
-			formatResourcePathForDisplay(variable, resourceNamesById),
+			formatResourcePathForDisplay(variable, resourceNamesByRef),
 		),
 	}));
 }

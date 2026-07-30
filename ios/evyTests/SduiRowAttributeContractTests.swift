@@ -143,7 +143,7 @@ final class SduiRowAttributeContractTests: XCTestCase {
     let row = try JSONDecoder().decode(UI_Row.self, from: rowData)
     XCTAssertEqual(
       row.actions.tap.first?.true,
-      .invocation(.create(service: "svc", resource: "items", mode: .submit, id_destination: nil)))
+      .invocation(.create(resource: "marketplace.items", mode: .submit, id_destination: nil)))
     XCTAssertEqual(row.actions.tap.first?.false, .invocation(.close))
   }
 
@@ -153,15 +153,15 @@ final class SduiRowAttributeContractTests: XCTestCase {
       .invocation(.navigate(flowId: "f", pageId: "p", query: ["id": "$datum.id"])),
       .invocation(
         .create(
-          service: "s", resource: "r", mode: .inline(data: ["a": "b"]),
+          resource: "marketplace.items", mode: .inline(data: ["a": "b"]),
           id_destination: "{buf.id}")),
       .invocation(
         .update(
-          service: "s", resource: "r", mode: .store, filter: ["id": "x"],
+          resource: "marketplace.items", mode: .store, filter: ["id": "x"],
           changes: .literal(["a": "b"]))),
       .invocation(
         .update(
-          service: "s", resource: "r", mode: .draft, filter: [:],
+          resource: "marketplace.items", mode: .draft, filter: [:],
           changes: .path("buf"))),
     ]
 

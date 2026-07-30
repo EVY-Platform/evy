@@ -34,11 +34,7 @@ function omitNulls<T extends Record<string, unknown>>(row: T): T {
 }
 
 import { emitDataChanged } from "./events";
-import {
-	MARKETPLACE_RESOURCE,
-	MARKETPLACE_SEED_RESOURCES,
-	MARKETPLACE_SERVICE,
-} from "./resources";
+import { MARKETPLACE_RESOURCE, MARKETPLACE_SEED_RESOURCES } from "./resources";
 
 /**
  * Resource-specific payload validation. Every marketplace resource has a
@@ -68,11 +64,6 @@ function assertResourcePayload(resource: string, payload: unknown): void {
 function assertMarketplaceRules(
 	params: GetRequest | CreateRequest | UpdateRequest | DeleteRequest,
 ): void {
-	if (params.service !== MARKETPLACE_SERVICE) {
-		throw new Error(
-			"Marketplace service requires the marketplace service id",
-		);
-	}
 	if (!MARKETPLACE_SEED_RESOURCES.has(params.resource)) {
 		throw new Error("Unsupported resource id for marketplace service");
 	}

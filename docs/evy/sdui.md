@@ -49,11 +49,11 @@ Rows are what are put into pages. They are the building block of the EVY server-
 -   All attributes can include:
     -   variables surrounded with curly braces: "Hello {name}, how are you?"
     -   inline icons as [Lucide](https://lucide.dev/icons) names in kebab-case, wrapped in double colons: "EVY ::image-plus:: is the best!"
-    -   Builder consequence: in text attributes the web builder resolves ids to named chips **only inside `{…}`**, because everything outside braces is literal. Binding attributes (`source`, `destination`, `secondary`), `visible`, and action arguments are whole-value expressions, so bare ids resolve there. Core resource ids are plural words (`messages`, `files`, `addresses`), so without that distinction prose like "No messages found" would be mistaken for a resource reference.
+    -   Builder consequence: in text attributes the web builder resolves ids to named chips **only inside `{…}`**, because everything outside braces is literal. Binding attributes (`source`, `destination`, `secondary`), `visible`, and action arguments are whole-value expressions, so bare ids resolve there. Resource references are dotted (`evy.messages`, `marketplace.items`); the dot is the discriminator, so prose like "No messages found" no longer collides with a resource reference.
 -   [ x ]
     -   Denotes a type array of x
 	-   Objects and arrays
-	    -   When objects or arrays are interpolated (e.g. `{[resource_id].dimensions}`), the UI runtime resolves the binding to structured data before rendering—use the schema and client behavior for the exact shape, not a hand-written JSON fragment in the flow string.
+	    -   When objects or arrays are interpolated (e.g. `{marketplace.items.dimensions}`), the UI runtime resolves the binding to structured data before rendering—use the schema and client behavior for the exact shape, not a hand-written JSON fragment in the flow string.
 
 ```
 {
@@ -96,8 +96,7 @@ Rows are what are put into pages. They are the building block of the EVY server-
         "tap": [{
             "condition": "{length(title) > 0}",
             "false": { "fn": "highlight_required", "field": "title" },
-            "true": { "fn": "create", "service": "[service_id]",
-                      "resource": "[resource_id]", "mode": "submit" }
+            "true": { "fn": "create", "resource": "marketplace.items", "mode": "submit" }
         }]
     }
 }
@@ -219,8 +218,8 @@ Each branch is either the empty string, meaning "do nothing", or a **structured 
 ```jsonc
 "true": { "fn": "close" }
 "true": { "fn": "show", "rowId": "b8c7d6e5-…" }
-"true": { "fn": "create", "service": "…", "resource": "items", "mode": "submit" }
-"true": { "fn": "update", "service": "…", "resource": "items",
+"true": { "fn": "create", "resource": "marketplace.items", "mode": "submit" }
+"true": { "fn": "update", "resource": "marketplace.items",
           "mode": "store", "filter": { "id": "item.id" },
           "changes": { "status": "accepted" } }
 ```
@@ -263,8 +262,7 @@ Submit:
 	{
 		"condition": "",
 		"false": "",
-		"true": { "fn": "create", "service": "[service_id]",
-		          "resource": "[resource_id]", "mode": "submit" }
+		"true": { "fn": "create", "resource": "marketplace.items", "mode": "submit" }
 	},
 	{
 		"condition": "",

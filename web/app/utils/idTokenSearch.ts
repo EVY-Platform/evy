@@ -80,14 +80,30 @@ function findPreviousNonWhitespaceIndex(
 
 function findQualifierBeforeDot(value: string, dotIndex: number): string {
 	const end = findPreviousNonWhitespaceIndex(value, dotIndex - 1) + 1;
-	let start = end;
+	const segmentEnd = end;
+	let segmentStart = segmentEnd;
 	while (
-		start > 0 &&
-		isExpressionIdentifierCharacter(value[start - 1] ?? "")
+		segmentStart > 0 &&
+		isExpressionIdentifierCharacter(value[segmentStart - 1] ?? "")
 	) {
-		start -= 1;
+		segmentStart -= 1;
 	}
-	return value.slice(start, end);
+	const lastSegment = value.slice(segmentStart, segmentEnd);
+	if (segmentStart > 0 && value[segmentStart - 1] === ".") {
+		const serviceEnd = segmentStart - 1;
+		let serviceStart = serviceEnd;
+		while (
+			serviceStart > 0 &&
+			isExpressionIdentifierCharacter(value[serviceStart - 1] ?? "")
+		) {
+			serviceStart -= 1;
+		}
+		const serviceSegment = value.slice(serviceStart, serviceEnd);
+		if (serviceSegment && lastSegment) {
+			return `${serviceSegment}.${lastSegment}`;
+		}
+	}
+	return lastSegment;
 }
 
 export function findSuggestionContextAtCursor(

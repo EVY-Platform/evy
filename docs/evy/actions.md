@@ -24,8 +24,8 @@ a data path, `$datum`, a quoted literal, or a bare word — see
 | `highlight_required` | `field` | Mark a field as required / show validation. |
 | `select` | `value` | Ask the triggering row to select `value`, usually `$datum`. Each row type defines what select means (toggle, write scalar, switch segment); unsupported on rows without a select handler. When the resolved value is an **array**, Calendar treats it as a batch toggle-all (see below). |
 | `navigate` | `flowId`, `pageId`, `query` (optional) | Go to a page within a flow. `query` is a map of value expressions. |
-| `create` | `service`, `resource`, `mode`, plus mode fields | Create a domain entity. **Never changes routes** — follow with `close` to dismiss. See **create** below. |
-| `update` | `service`, `resource`, `mode`, `filter`, `changes` \| `changes_path` | Update matching domain entities. See **update** below. |
+| `create` | `resource`, `mode`, plus mode fields | Create a domain entity. **Never changes routes** — follow with `close` to dismiss. See **create** below. |
+| `update` | `resource`, `mode`, `filter`, `changes` \| `changes_path` | Update matching domain entities. See **update** below. |
 
 The web builder does not execute actions; it edits these structured invocations and displays
 mocks.
@@ -46,7 +46,7 @@ column, e.g. `{select($datum)}` on `tap-column` selects or clears an entire day.
 
 `mode: "submit"` merges the active flow's create drafts into the entity and cleans them up. In
 the web builder, `submit` is chosen automatically when the flow has row **destinations** or
-**draft** `update` actions targeting that service and resource; otherwise the builder configures
+**draft** `update` actions targeting that resource; otherwise the builder configures
 inline data only.
 
 `mode: "inline"` takes a `data` map: its values resolve as data paths or `$datum`, unresolved
@@ -60,13 +60,14 @@ template carry both `time` (pickup / delivery) and `postalcode` (shipping): whic
 lacks is simply absent. Filter and query maps keep the previous behaviour — dropping a filter
 key would silently widen a store update.
 
-**A bare id stays an id.** A resource id doubles as that resource's binding key, so a bare UUID
-that resolves to a record or collection is kept as the literal id rather than replaced by the
-data it names. It cannot be replaced by that data's `id` either: what a resource key binds is a
-*record*, whose own id is a different UUID, so substituting it would quietly send the wrong id.
-Write `[resource_id].id` when you want the bound record's id — that is how `fk` is filled while
-`resource` stays the resource id. The rule is scoped to UUID-shaped values, so a value that
-deliberately resolves to an object still embeds it.
+**Bare record ids stay literal; resource refs are dotted.** A bare UUID that resolves to a
+record or collection is kept as the literal id rather than replaced by the data it names — a
+payload carries record identifiers, not the records themselves. Write `marketplace.items.id`
+when you want the bound record's id; that is how `fk` is filled while `resource` stays the
+quoted ref (`"marketplace.items"`). The rule is scoped to UUID-shaped values, so a value that
+deliberately resolves to an object still embeds it. Resource references themselves are always
+dotted (`evy.messages`, `marketplace.items`) and quoted when used as literal values in action
+data.
 
 `mode: "from_path"` takes a `data_path` and sends the whole resolved object from drafts or synced
 data.
@@ -78,7 +79,7 @@ target already exists, link it with a follow-up store-mode `update` instead of w
 live record path (see the Address save pattern below).
 
 ```json
-{ "fn": "create", "service": "core", "resource": "addresses",
+{ "fn": "create", "resource": "evy.addresses",
   "mode": "from_path", "data_path": "pickup_address", "id_destination": "pickup_address.id" }
 ```
 
@@ -97,7 +98,7 @@ A filter value of `null` matches records where the property is absent or JSON `n
 can call functions, e.g. `{archivedAt: now()}`.
 
 ```json
-{ "fn": "update", "service": "marketplace", "resource": "items",
+{ "fn": "update", "resource": "marketplace.items",
   "mode": "store", "filter": { "id": "item.id" },
   "changes": { "status": "accepted" } }
 ```
@@ -111,14 +112,14 @@ confirm button — see [sdui.md](./sdui.md#swipe-left) for the confirmation-shee
 Use the same two-action `tap` array on the pickup Search row for create and edit flows, but the
 **link** step differs by flow type.
 
-1. **Create or update the address** — if `address_id` is empty, a `create` on `core/addresses`
+1. **Create or update the address** — if `address_id` is empty, a `create` on `evy.addresses`
    with `mode: "from_path"`, `data_path: "pickup_address"` and `id_destination: "pickup_address.id"`
    persists the address and writes the generated id to the page-local `pickup_address` buffer;
-   otherwise a store-mode `update` on `core/addresses` filtered by `id:
+   otherwise a store-mode `update` on `evy.addresses` filtered by `id:
    item.transfer_options.pickup.address_id` with `changes_path: "pickup_address"` updates the
    existing row.
 2. **Link the item** — on **edit** flows where the item row already exists: a store-mode
-   `update` on `marketplace/items` filtered by `id: item.id`, changing
+   `update` on `marketplace.items` filtered by `id: item.id`, changing
    `transfer_options.pickup.address_id` to `pickup_address.id`, matches the row and syncs
    immediately. On **create** flows: the same change in `mode: "draft"` writes into the create
    draft (picked up by submit `create`). A page shared across both flow types needs
@@ -138,17 +139,17 @@ again on re-pick.
 		"tap": [
 			{
 				"condition": "{length(item.transfer_options.pickup.address_id) == 0}",
-				"true": { "fn": "create", "service": "core", "resource": "addresses",
+				"true": { "fn": "create", "resource": "evy.addresses",
 				          "mode": "from_path", "data_path": "pickup_address",
 				          "id_destination": "{pickup_address.id}" },
-				"false": { "fn": "update", "service": "core", "resource": "addresses",
+				"false": { "fn": "update", "resource": "evy.addresses",
 				           "mode": "store",
 				           "filter": { "id": "item.transfer_options.pickup.address_id" },
 				           "changes_path": "pickup_address" }
 			},
 			{
 				"condition": "",
-				"true": { "fn": "update", "service": "marketplace", "resource": "items",
+				"true": { "fn": "update", "resource": "marketplace.items",
 				          "mode": "draft",
 				          "changes": { "transfer_options.pickup.address_id": "pickup_address.id" } },
 				"false": ""

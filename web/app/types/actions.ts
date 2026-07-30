@@ -95,7 +95,7 @@ export type RowAction =
 	| {
 			type: "UPDATE_FLOW_SUBMITS";
 			flowId: string;
-			submits: { service: string; resource: string } | undefined;
+			submits: { resource: string } | undefined;
 	  }
 	| {
 			type: "PUSH_CONFIG_STACK";

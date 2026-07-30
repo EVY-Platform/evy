@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, spyOn } from "bun:test";
 import type { GetRequest, GetResponse } from "evy-types";
 import {
 	EVY_CORE_RESOURCE,
-	EVY_CORE_RESOURCE_NAMES,
+	EVY_CORE_RESOURCE_REF,
 	EVY_CORE_RESOURCE_VISIBILITY,
 	EVY_CORE_RESOURCES,
 	EVY_CORE_SERVICE,
@@ -43,12 +43,17 @@ function buildMockGetResponse(items: { id: string }[]): GetResponse {
 	return items;
 }
 
+function bareResourceName(ref: string): string {
+	const dot = ref.indexOf(".");
+	return dot === -1 ? ref : ref.slice(dot + 1);
+}
+
 let getImpl = async (params: GetRequest): Promise<GetResponse> =>
 	buildMockGetResponse([
 		{
 			id: `${params.resource}-mock-1`,
 			visibility:
-				params.resource === "addresses"
+				params.resource === EVY_CORE_RESOURCE_REF.ADDRESSES
 					? ("private" as const)
 					: ("public" as const),
 		},
@@ -67,11 +72,11 @@ let forwardGetImpl = async (
 
 type SyncScope = Parameters<typeof data.getSyncRows>[2];
 
-function mockRowFor(resource: string) {
+function mockRowFor(resourceRef: string) {
+	const bare = bareResourceName(resourceRef);
 	return {
-		id: `${resource}-mock-1`,
-		visibility:
-			EVY_CORE_RESOURCE_VISIBILITY[resource] ?? ("public" as const),
+		id: `${resourceRef}-mock-1`,
+		visibility: EVY_CORE_RESOURCE_VISIBILITY[bare] ?? ("public" as const),
 	};
 }
 
@@ -87,7 +92,7 @@ function resetSyncMocks(): void {
 			{
 				id: `${params.resource}-mock-1`,
 				visibility:
-					params.resource === "addresses"
+					params.resource === EVY_CORE_RESOURCE_REF.ADDRESSES
 						? ("private" as const)
 						: ("public" as const),
 			},
@@ -142,31 +147,27 @@ describe("sync", () => {
 	it("includes evy core resources (except devices and catalog) in data", async () => {
 		const result = await sync({ cursor: EPOCH }, db);
 
-		const evyRows = result.data.filter(
-			(row) => row.service === EVY_CORE_SERVICE,
-		);
-		const evyResourceNames = evyRows.map((row) => row.resource);
+		const evyResourceNames = result.data.map((row) => row.resource);
 
-		expect(evyResourceNames).toContain("flows");
-		expect(evyResourceNames).toContain("pages");
-		expect(evyResourceNames).toContain("rows");
-		expect(evyResourceNames).toContain("services");
-		expect(evyResourceNames).toContain("organizations");
-		expect(evyResourceNames).toContain("providers");
-		expect(evyResourceNames).toContain("files");
-		expect(evyResourceNames).toContain("addresses");
-		expect(evyResourceNames).toContain("formatters");
-		expect(evyResourceNames).toContain("messages");
-		expect(evyResourceNames).not.toContain("devices");
-		expect(evyResourceNames).toContain(EVY_CORE_RESOURCE.RESOURCES);
+		expect(evyResourceNames).toContain(EVY_CORE_RESOURCE_REF.FLOWS);
+		expect(evyResourceNames).toContain(EVY_CORE_RESOURCE_REF.PAGES);
+		expect(evyResourceNames).toContain(EVY_CORE_RESOURCE_REF.ROWS);
+		expect(evyResourceNames).toContain(EVY_CORE_RESOURCE_REF.SERVICES);
+		expect(evyResourceNames).toContain(EVY_CORE_RESOURCE_REF.ORGANIZATIONS);
+		expect(evyResourceNames).toContain(EVY_CORE_RESOURCE_REF.PROVIDERS);
+		expect(evyResourceNames).toContain(EVY_CORE_RESOURCE_REF.FILES);
+		expect(evyResourceNames).toContain(EVY_CORE_RESOURCE_REF.ADDRESSES);
+		expect(evyResourceNames).toContain(EVY_CORE_RESOURCE_REF.FORMATTERS);
+		expect(evyResourceNames).toContain(EVY_CORE_RESOURCE_REF.MESSAGES);
+		expect(evyResourceNames).not.toContain(EVY_CORE_RESOURCE_REF.DEVICES);
+		expect(evyResourceNames).toContain(EVY_CORE_RESOURCE_REF.RESOURCES);
 
-		const addressesRow = evyRows.find(
-			(row) => row.resource === "addresses",
+		const addressesRow = result.data.find(
+			(row) => row.resource === EVY_CORE_RESOURCE_REF.ADDRESSES,
 		);
 		expect(addressesRow).toEqual({
-			service: EVY_CORE_SERVICE,
-			resource: "addresses",
-			value: [{ id: "addresses-mock-1", visibility: "private" }],
+			resource: EVY_CORE_RESOURCE_REF.ADDRESSES,
+			value: [{ id: "evy.addresses-mock-1", visibility: "private" }],
 		});
 	});
 
@@ -174,9 +175,7 @@ describe("sync", () => {
 		const result = await sync({ cursor: EPOCH }, db);
 
 		const catalogRow = result.data.find(
-			(row) =>
-				row.service === EVY_CORE_SERVICE &&
-				row.resource === EVY_CORE_RESOURCE.RESOURCES,
+			(row) => row.resource === EVY_CORE_RESOURCE_REF.RESOURCES,
 		);
 		expect(catalogRow?.value).toEqual(buildMockCatalog());
 	});
@@ -184,8 +183,8 @@ describe("sync", () => {
 	it("includes external service resources in data", async () => {
 		const result = await sync({ cursor: EPOCH }, db);
 
-		const marketplaceRows = result.data.filter(
-			(row) => row.service === EXTERNAL_SERVICE_ID,
+		const marketplaceRows = result.data.filter((row) =>
+			row.resource.startsWith(`${EXTERNAL_SERVICE_ID}.`),
 		);
 		const rowResources = marketplaceRows.map((row) => row.resource);
 
@@ -219,8 +218,7 @@ describe("sync", () => {
 		const result = await sync({ cursor: "2999-01-01T00:00:00.000Z" }, db);
 		expect(result.data).toEqual([
 			{
-				service: EVY_CORE_SERVICE,
-				resource: EVY_CORE_RESOURCE.RESOURCES,
+				resource: EVY_CORE_RESOURCE_REF.RESOURCES,
 				value: buildMockCatalog(),
 			},
 		]);
@@ -286,11 +284,13 @@ describe("sync", () => {
 
 		expect(
 			result.data.some(
-				(row) => row.resource === EVY_CORE_RESOURCE.RESOURCES,
+				(row) => row.resource === EVY_CORE_RESOURCE_REF.RESOURCES,
 			),
 		).toBe(false);
 		expect(
-			result.errors?.some((entry) => entry.resource === "resources"),
+			result.errors?.some(
+				(entry) => entry.resource === EVY_CORE_RESOURCE_REF.RESOURCES,
+			),
 		).toBe(true);
 		expect(result.cursor).toBe(EPOCH);
 	});
@@ -306,7 +306,8 @@ describe("sync", () => {
 
 	it("keeps a failing core resource from hiding the others", async () => {
 		getSyncRowsImpl = async (resource) => {
-			if (resource === "rows") throw new Error("rows table broken");
+			if (resource === EVY_CORE_RESOURCE_REF.ROWS)
+				throw new Error("rows table broken");
 			return [
 				{ id: "ok", updated_at: "2026-01-01T00:00:00.000Z" },
 			] as unknown as GetResponse;
@@ -315,21 +316,25 @@ describe("sync", () => {
 
 		const result = await sync({ cursor: EPOCH }, db);
 
-		expect(result.data.some((row) => row.resource !== "rows")).toBe(true);
-		expect(result.errors?.some((entry) => entry.resource === "rows")).toBe(
-			true,
-		);
+		expect(
+			result.data.some(
+				(row) => row.resource !== EVY_CORE_RESOURCE_REF.ROWS,
+			),
+		).toBe(true);
+		expect(
+			result.errors?.some(
+				(entry) => entry.resource === EVY_CORE_RESOURCE_REF.ROWS,
+			),
+		).toBe(true);
 	});
 
 	it("each data row has required shape", async () => {
 		const result = await sync({ cursor: EPOCH }, db);
 		for (const row of result.data) {
-			expect(typeof row.service).toBe("string");
-			expect(row.service.length).toBeGreaterThan(0);
 			expect(typeof row.resource).toBe("string");
 			expect(row.resource.length).toBeGreaterThan(0);
 			expect(row.value).toBeDefined();
-			if (row.resource === EVY_CORE_RESOURCE.RESOURCES) {
+			if (row.resource === EVY_CORE_RESOURCE_REF.RESOURCES) {
 				expect(row.value).toEqual(buildMockCatalog());
 				continue;
 			}
@@ -347,10 +352,10 @@ describe("sync", () => {
 
 		const result = await sync({ cursor: EPOCH }, db);
 
-		const expected = EVY_CORE_RESOURCE_NAMES.filter(
-			(name) =>
-				name !== EVY_CORE_RESOURCE.DEVICES &&
-				name !== EVY_CORE_RESOURCE.RESOURCES,
+		const expected = Object.values(EVY_CORE_RESOURCE_REF).filter(
+			(ref) =>
+				ref !== EVY_CORE_RESOURCE_REF.DEVICES &&
+				ref !== EVY_CORE_RESOURCE_REF.RESOURCES,
 		);
 		expect(attempted.toSorted()).toEqual([...expected].toSorted());
 		expect(result.errors).toBeUndefined();
@@ -372,10 +377,10 @@ describe("sync", () => {
 			await sync({ cursor: EPOCH }, db);
 
 			for (const resource of [
-				EVY_CORE_RESOURCE.FLOWS,
-				EVY_CORE_RESOURCE.ADDRESSES,
-				EVY_CORE_RESOURCE.MESSAGES,
-				EVY_CORE_RESOURCE.FORMATTERS,
+				EVY_CORE_RESOURCE_REF.FLOWS,
+				EVY_CORE_RESOURCE_REF.ADDRESSES,
+				EVY_CORE_RESOURCE_REF.MESSAGES,
+				EVY_CORE_RESOURCE_REF.FORMATTERS,
 			]) {
 				expect(ownershipFor(resource)).toBeDefined();
 			}
@@ -385,21 +390,19 @@ describe("sync", () => {
 		it("passes the resumed-from point to every resource", async () => {
 			await sync({ cursor: RECENT_CURSOR }, db);
 
-			expect(ownershipFor(EVY_CORE_RESOURCE.FLOWS)?.updated_after).toBe(
-				RECENT_CURSOR,
-			);
+			expect(
+				ownershipFor(EVY_CORE_RESOURCE_REF.FLOWS)?.updated_after,
+			).toBe(RECENT_CURSOR);
 		});
 
 		it("gives each resource the same full ownership declaration", async () => {
-			const owned_service_resources = [
+			const owned_resources = [
 				{
-					service: EVY_CORE_SERVICE,
-					resource: EVY_CORE_RESOURCE.MESSAGES,
+					resource: EVY_CORE_RESOURCE_REF.MESSAGES,
 					ids: [OWNED_MESSAGE_ID],
 				},
 				{
-					service: EVY_CORE_SERVICE,
-					resource: EVY_CORE_RESOURCE.ADDRESSES,
+					resource: EVY_CORE_RESOURCE_REF.ADDRESSES,
 					ids: [OWNED_ADDRESS_ID],
 				},
 			];
@@ -407,42 +410,36 @@ describe("sync", () => {
 			await sync(
 				{
 					cursor: EPOCH,
-					owned_service_resources,
+					owned_resources,
 				},
 				db,
 			);
 
 			for (const resource of [
-				EVY_CORE_RESOURCE.MESSAGES,
-				EVY_CORE_RESOURCE.ADDRESSES,
-				EVY_CORE_RESOURCE.FLOWS,
+				EVY_CORE_RESOURCE_REF.MESSAGES,
+				EVY_CORE_RESOURCE_REF.ADDRESSES,
+				EVY_CORE_RESOURCE_REF.FLOWS,
 			]) {
-				expect(ownershipFor(resource)?.owned).toEqual(
-					owned_service_resources,
-				);
+				expect(ownershipFor(resource)?.owned).toEqual(owned_resources);
 			}
 		});
 
 		it("passes the full ownership declaration to every resource", async () => {
 			const externalGroup = {
-				service: EXTERNAL_SERVICE_ID,
 				resource: EXTERNAL_TEST_RESOURCE.RECORDS,
 				ids: [OWNED_ITEM_ID],
 			};
 
-			await sync(
-				{ cursor: EPOCH, owned_service_resources: [externalGroup] },
-				db,
-			);
+			await sync({ cursor: EPOCH, owned_resources: [externalGroup] }, db);
 
-			expect(ownershipFor(EVY_CORE_RESOURCE.MESSAGES)?.owned).toEqual([
-				externalGroup,
-			]);
+			expect(ownershipFor(EVY_CORE_RESOURCE_REF.MESSAGES)?.owned).toEqual(
+				[externalGroup],
+			);
 		});
 
 		it("keeps a failing resource from hiding the rest, and holds the cursor", async () => {
 			getSyncRowsImpl = async (resource) => {
-				if (resource === EVY_CORE_RESOURCE.ADDRESSES) {
+				if (resource === EVY_CORE_RESOURCE_REF.ADDRESSES) {
 					throw new Error("addresses table broken");
 				}
 				return [mockRowFor(resource)];
@@ -451,13 +448,12 @@ describe("sync", () => {
 			const result = await sync({ cursor: RECENT_CURSOR }, db);
 
 			expect(result.errors).toContainEqual({
-				service: EVY_CORE_SERVICE,
-				resource: EVY_CORE_RESOURCE.ADDRESSES,
+				resource: EVY_CORE_RESOURCE_REF.ADDRESSES,
 				message: "addresses table broken",
 			});
 			expect(
 				result.data.some(
-					(row) => row.resource === EVY_CORE_RESOURCE.FLOWS,
+					(row) => row.resource === EVY_CORE_RESOURCE_REF.FLOWS,
 				),
 			).toBe(true);
 			expect(result.cursor).toBe(RECENT_CURSOR);

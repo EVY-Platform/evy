@@ -2,19 +2,13 @@
 	"$schema": "https://json-schema.org/draft/2020-12/schema",
 	"$id": "get-request",
 	"title": "GetRequest",
-	"description": "JSON-RPC params for get method. Service and resource are validated at runtime against the service registry.",
+	"description": "JSON-RPC params for get method. Resource is validated at runtime against the service registry.",
 	"type": "object",
 	"additionalProperties": false,
-	"required": ["service", "resource"],
+	"required": ["resource"],
 	"properties": {
-		"service": {
-			"type": "string",
-			"minLength": 1
-		},
 		"resource": {
-			"type": "string",
-			"minLength": 1,
-			"maxLength": 50
+			"$ref": "../common/rpc.schema.json#/$defs/ResourceRef"
 		},
 		"filter": {
 			"$ref": "../common/rpc.schema.json#/$defs/DataFilter"

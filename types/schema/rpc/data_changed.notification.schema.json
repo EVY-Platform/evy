@@ -5,13 +5,10 @@
 	"description": "JSON-RPC notification payload for dataChanged event. Matches an individual sync data row with create/update operation.",
 	"type": "object",
 	"additionalProperties": false,
-	"required": ["service", "resource", "operation", "value"],
+	"required": ["resource", "operation", "value"],
 	"properties": {
-		"service": {
-			"type": "string"
-		},
 		"resource": {
-			"type": "string"
+			"$ref": "../common/rpc.schema.json#/$defs/ResourceRef"
 		},
 		"operation": {
 			"type": "string",

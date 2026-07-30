@@ -202,16 +202,30 @@ export function buildResourceAttributeCandidatesForResource(
 	return buildAttributeCandidates(metadata?.attributeNames ?? []);
 }
 
+function resolveResourceRefFromPath(
+	path: string,
+	serviceResources: { id: string }[],
+): string | null {
+	const segments = path.split(".");
+	if (segments.length >= 2) {
+		const ref = `${segments[0]}.${segments[1]}`;
+		if (serviceResources.some((resource) => resource.id === ref)) {
+			return ref;
+		}
+	}
+	const resourceId = segments[0]?.trim();
+	if (!resourceId) return null;
+	return serviceResources.some((resource) => resource.id === resourceId)
+		? resourceId
+		: null;
+}
+
 function resolveSourceResourceId(
 	source: string,
 	serviceResources: { id: string }[],
 ): string | null {
 	const sourcePath = unwrapOptionalBraces(source);
-	const resourceId = sourcePath.split(".")[0]?.trim();
-	if (!resourceId) return null;
-	return serviceResources.some((resource) => resource.id === resourceId)
-		? resourceId
-		: null;
+	return resolveResourceRefFromPath(sourcePath, serviceResources);
 }
 
 function resolveQualifierResourceId(
@@ -224,7 +238,7 @@ function resolveQualifierResourceId(
 	}
 	return serviceResources.some((resource) => resource.id === qualifier)
 		? qualifier
-		: null;
+		: resolveResourceRefFromPath(qualifier, serviceResources);
 }
 
 export function createGetAttributeCandidatesForQualifier({

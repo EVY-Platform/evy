@@ -38,7 +38,7 @@ final class EVYDraftBindingTests: XCTestCase {
   }
 
   func testBindingPageLocalAliasOnEntityScopeUsesAliasFlat() throws {
-    let itemsResource = "dc28ed59-298e-493c-8ff3-3e60f2ebccbd"
+    let itemsResource = MarketplaceTestFixture.itemsRef
     let scopeId = EVYDraft.createMergeScopeId(flowId: "create-flow", entityKey: itemsResource)
     let pageLocal = try EVYDraft.binding(parsedProps: "pickup_address", scopeId: scopeId)
     XCTAssertEqual(pageLocal.scopeId, scopeId)
@@ -234,7 +234,7 @@ final class EVYDraftBindingTests: XCTestCase {
     XCTAssertNil(try EVYObjectLiteral.parseDestination(from: "item.title"))
     XCTAssertNil(
       try EVYObjectLiteral.parseDestination(
-        from: "dc28ed59-298e-493c-8ff3-3e60f2ebccbd.title"))
+        from: "\(MarketplaceTestFixture.itemsRef).title"))
   }
 
   func testEphemeralScopeSharesWriteThenReadWithoutSyncedBacking() throws {
@@ -347,13 +347,13 @@ final class EVYDraftBindingTests: XCTestCase {
     ])
 
     try EVY.publicStore.applySyncedValue(
-      namespace: MarketplaceTestFixture.serviceId,
+      namespace: MarketplaceTestFixture.service,
       resource: resourceId,
       value: .array([otherItem, selectedItem])
     )
     defer {
       try? EVY.publicStore.deleteAll(
-        namespace: MarketplaceTestFixture.serviceId, resource: resourceId)
+        namespace: MarketplaceTestFixture.service, resource: resourceId)
     }
 
     EVY.activeCacheScopeId = pageId
@@ -390,7 +390,7 @@ final class EVYDraftBindingTests: XCTestCase {
     )
 
     let otherRow = try EVY.publicStore.get(
-      namespace: MarketplaceTestFixture.serviceId,
+      namespace: MarketplaceTestFixture.service,
       resource: resourceId,
       id: otherItemId
     )
@@ -401,7 +401,7 @@ final class EVYDraftBindingTests: XCTestCase {
     )
 
     let selectedPublicRow = try EVY.publicStore.get(
-      namespace: MarketplaceTestFixture.serviceId,
+      namespace: MarketplaceTestFixture.service,
       resource: resourceId,
       id: selectedItemId
     )

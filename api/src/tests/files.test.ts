@@ -8,7 +8,6 @@ import {
 } from "bun:test";
 import { migrate } from "drizzle-orm/pglite/migrator";
 
-import { EVY_CORE_SERVICE } from "evy-types/coreResources";
 import * as schema from "evy-types/db/schema.generated";
 import { get } from "../data/data";
 import { writeFileBinary } from "../data/resources/fileStorage";
@@ -57,8 +56,7 @@ describe("get files", () => {
 		await writeFileBinary({ id, bytes: opaqueBytes });
 
 		const result = await get(dataDb, {
-			service: EVY_CORE_SERVICE,
-			resource: "files",
+			resource: "evy.files",
 			filter: { id },
 		});
 		expect(result).toEqual([
@@ -79,8 +77,7 @@ describe("get files", () => {
 		await writeFileBinary({ id, bytes: opaqueBytes });
 
 		const result = await get(dataDb, {
-			service: EVY_CORE_SERVICE,
-			resource: "files",
+			resource: "evy.files",
 		});
 		expect(Array.isArray(result)).toBe(true);
 		const item = (result as Record<string, unknown>[]).find(
@@ -96,8 +93,7 @@ describe("get files", () => {
 		await writeFileBinary({ id, bytes: opaqueBytes });
 
 		const result = (await get(dataDb, {
-			service: EVY_CORE_SERVICE,
-			resource: "files",
+			resource: "evy.files",
 			filter: { updated_after: "1970-01-01T00:00:00.000Z" },
 		})) as Record<string, unknown>[];
 
@@ -113,8 +109,7 @@ describe("get files", () => {
 		await insertFileMetadata(id);
 
 		const result = (await get(dataDb, {
-			service: EVY_CORE_SERVICE,
-			resource: "files",
+			resource: "evy.files",
 		})) as Record<string, unknown>[];
 
 		expect(result.find((r) => r.id === id)).toMatchObject({ id });
@@ -126,8 +121,7 @@ describe("get files", () => {
 
 		await expect(
 			get(dataDb, {
-				service: EVY_CORE_SERVICE,
-				resource: "files",
+				resource: "evy.files",
 				filter: { id },
 			}),
 		).rejects.toThrow("File binary not found");

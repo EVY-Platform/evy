@@ -31,7 +31,7 @@
 							"name": "For you requests",
 							"title": "",
 							"placeholder": "",
-							"source": "{filter(messages, $datum.data.value == \"pending\" && owns($datum.service, $datum.resource, $datum.fk) == true && findFirst(sort(messages, desc, created_at), fk == $datum.fk && data.type == $datum.data.type).id == $datum.id)}",
+							"source": "{filter(evy.messages, $datum.data.value == \"pending\" && owns($datum.resource, $datum.fk) == true && findFirst(sort(evy.messages, desc, created_at), fk == $datum.fk && data.type == $datum.data.type).id == $datum.id)}",
 							"no_results": "No requests",
 							"destination": "",
 							"visible": "true",
@@ -40,7 +40,7 @@
 								"id": "95444ce6-d4be-4001-8798-213cce23afd8",
 								"type": "list_item",
 								"name": "For you request row",
-								"title": "{findFirst(dc28ed59-298e-493c-8ff3-3e60f2ebccbd, $datum.fk).title}",
+								"title": "{findFirst(marketplace.items, $datum.fk).title}",
 								"subtitle": "{$datum.data.value}",
 								"visible": "true",
 								"swipe_label": "Accept",
@@ -51,12 +51,10 @@
 											"false": "",
 											"true": {
 												"fn": "create",
-												"service": "475731ac-31aa-4d65-94d2-7032782ae359",
-												"resource": "messages",
+												"resource": "evy.messages",
 												"mode": "inline",
 												"data": {
 													"fk": "$datum.fk",
-													"service": "$datum.service",
 													"resource": "$datum.resource",
 													"parent_message_id": "$datum.id",
 													"data": "{value: accept, type: $datum.data.type, time: $datum.data.time, postalcode: $datum.data.postalcode}"
@@ -114,12 +112,10 @@
 																"false": "",
 																"true": {
 																	"fn": "create",
-																	"service": "475731ac-31aa-4d65-94d2-7032782ae359",
-																	"resource": "messages",
+																	"resource": "evy.messages",
 																	"mode": "inline",
 																	"data": {
 																		"fk": "$datum.fk",
-																		"service": "$datum.service",
 																		"resource": "$datum.resource",
 																		"parent_message_id": "$datum.id",
 																		"data": "{value: accept, type: $datum.data.type, time: $datum.data.time, postalcode: $datum.data.postalcode}"
@@ -151,12 +147,10 @@
 																"false": "",
 																"true": {
 																	"fn": "create",
-																	"service": "475731ac-31aa-4d65-94d2-7032782ae359",
-																	"resource": "messages",
+																	"resource": "evy.messages",
 																	"mode": "inline",
 																	"data": {
 																		"fk": "$datum.fk",
-																		"service": "$datum.service",
 																		"resource": "$datum.resource",
 																		"parent_message_id": "$datum.id",
 																		"data": "{value: reject, type: $datum.data.type, time: $datum.data.time, postalcode: $datum.data.postalcode}"
@@ -185,7 +179,7 @@
 							"name": "From you requests",
 							"title": "",
 							"placeholder": "",
-							"source": "{filter(messages, $datum.data.value == \"pending\" && owns($datum.service, $datum.resource, $datum.fk) == false && findFirst(sort(messages, desc, created_at), fk == $datum.fk && data.type == $datum.data.type).id == $datum.id)}",
+							"source": "{filter(evy.messages, $datum.data.value == \"pending\" && owns($datum.resource, $datum.fk) == false && findFirst(sort(evy.messages, desc, created_at), fk == $datum.fk && data.type == $datum.data.type).id == $datum.id)}",
 							"no_results": "No requests",
 							"destination": "",
 							"visible": "true",
@@ -194,7 +188,7 @@
 								"id": "373ff30f-dc80-425c-a382-fadc8fcdcd81",
 								"type": "list_item",
 								"name": "From you request row",
-								"title": "{findFirst(dc28ed59-298e-493c-8ff3-3e60f2ebccbd, $datum.fk).title}",
+								"title": "{findFirst(marketplace.items, $datum.fk).title}",
 								"subtitle": "{$datum.data.value}",
 								"visible": "true",
 								"swipe_label": "Cancel",
@@ -205,12 +199,10 @@
 											"false": "",
 											"true": {
 												"fn": "create",
-												"service": "475731ac-31aa-4d65-94d2-7032782ae359",
-												"resource": "messages",
+												"resource": "evy.messages",
 												"mode": "inline",
 												"data": {
 													"fk": "$datum.fk",
-													"service": "$datum.service",
 													"resource": "$datum.resource",
 													"parent_message_id": "$datum.id",
 													"data": "{value: cancel, type: $datum.data.type, time: $datum.data.time, postalcode: $datum.data.postalcode}"
@@ -227,7 +219,7 @@
 							"name": "Scheduled requests",
 							"title": "",
 							"placeholder": "",
-							"source": "{filter(messages, $datum.data.value == \"accept\")}",
+							"source": "{filter(evy.messages, $datum.data.value == \"accept\")}",
 							"no_results": "No requests",
 							"destination": "",
 							"visible": "true",
@@ -236,7 +228,7 @@
 								"id": "c52a5527-ee4a-46c8-8f5c-1e18f782bcc0",
 								"type": "list_item",
 								"name": "Scheduled row",
-								"title": "{findFirst(dc28ed59-298e-493c-8ff3-3e60f2ebccbd, $datum.fk).title}",
+								"title": "{findFirst(marketplace.items, $datum.fk).title}",
 								"subtitle": "{$datum.data.value}",
 								"visible": "true",
 								"actions": {}
@@ -274,7 +266,7 @@
 					},
 					"title": "",
 					"placeholder": "Search anything",
-					"source": "{dc28ed59-298e-493c-8ff3-3e60f2ebccbd}",
+					"source": "{marketplace.items}",
 					"no_results": "Nothing found",
 					"destination": "",
 					"visible": "true",

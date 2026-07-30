@@ -158,16 +158,16 @@ export function serializeBranch(
 }
 
 function createUsesSubmitMarker(args: string[]): boolean {
-	return args[2]?.trim() === "submit";
+	return args[1]?.trim() === "submit";
 }
 
 export function createHasInlineDataArg(args: string[]): boolean {
-	const thirdArg = args[2]?.trim() ?? "";
-	return Boolean(thirdArg) && thirdArg !== "submit";
+	const modeOrDataArg = args[1]?.trim() ?? "";
+	return Boolean(modeOrDataArg) && modeOrDataArg !== "submit";
 }
 
 export function updateUsesDraftMarker(args: string[]): boolean {
-	return args[4]?.trim() === "draft";
+	return args[3]?.trim() === "draft";
 }
 
 function applyCreateModeForDraftSignals(
@@ -178,21 +178,21 @@ function applyCreateModeForDraftSignals(
 		return args;
 	}
 	if (offerSubmitWithFlow) {
-		if (createUsesSubmitMarker(args) && !args[3]?.trim()) {
+		if (createUsesSubmitMarker(args) && !args[2]?.trim()) {
 			return args;
 		}
 		const newArgs = [...args];
-		newArgs[2] = "submit";
-		if (newArgs.length > 3) {
-			newArgs[3] = "";
+		newArgs[1] = "submit";
+		if (newArgs.length > 2) {
+			newArgs[2] = "";
 		}
 		return newArgs;
 	}
 	if (createUsesSubmitMarker(args)) {
 		const newArgs = [...args];
-		newArgs[2] = "";
-		if (newArgs.length > 3) {
-			newArgs[3] = "";
+		newArgs[1] = "";
+		if (newArgs.length > 2) {
+			newArgs[2] = "";
 		}
 		return newArgs;
 	}
@@ -203,9 +203,8 @@ function isValidCreateBranchForSave(
 	args: string[],
 	offerSubmitWithFlow: boolean,
 ): boolean {
-	const serviceId = args[0]?.trim() ?? "";
-	const resourceId = args[1]?.trim() ?? "";
-	if (!serviceId || !resourceId) return false;
+	const resourceRef = args[0]?.trim() ?? "";
+	if (!resourceRef) return false;
 	if (createHasInlineDataArg(args)) return true;
 	if (offerSubmitWithFlow && createUsesSubmitMarker(args)) return true;
 	return false;
@@ -220,9 +219,8 @@ export function finalizeCreateBranchForSave(
 		return branchString;
 	}
 
-	const serviceId = parsed.args[0]?.trim() ?? "";
-	const resourceId = parsed.args[1]?.trim() ?? "";
-	if (!serviceId || !resourceId) {
+	const resourceRef = parsed.args[0]?.trim() ?? "";
+	if (!resourceRef) {
 		return branchString;
 	}
 

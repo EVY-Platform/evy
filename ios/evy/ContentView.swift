@@ -195,7 +195,7 @@ struct ContentView: View {
     }
     .onEVYRecordChange(
       namespace: EVYNamespace.evy,
-      resource: EVYCoreResource.flows.rawValue,
+      resource: EVYCoreResource.flows.ref,
       id: HOME_FLOW_ID
     ) {
       refreshHomeFirstPageIdIfNeeded()

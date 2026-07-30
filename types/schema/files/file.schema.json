@@ -165,15 +165,11 @@
 		"CreateFileParams": {
 			"type": "object",
 			"additionalProperties": false,
-			"required": ["service", "resource", "filter", "data"],
+			"required": ["resource", "filter", "data"],
 			"properties": {
-				"service": {
-					"type": "string",
-					"minLength": 1
-				},
 				"resource": {
 					"type": "string",
-					"enum": ["files"]
+					"enum": ["evy.files"]
 				},
 				"filter": {
 					"$ref": "#/$defs/FileIdFilter"
@@ -186,15 +182,11 @@
 		"GetFilesParams": {
 			"type": "object",
 			"additionalProperties": false,
-			"required": ["service", "resource", "filter"],
+			"required": ["resource", "filter"],
 			"properties": {
-				"service": {
-					"type": "string",
-					"minLength": 1
-				},
 				"resource": {
 					"type": "string",
-					"enum": ["files"]
+					"enum": ["evy.files"]
 				},
 				"filter": {
 					"$ref": "#/$defs/FileGetFilter"
@@ -204,15 +196,11 @@
 		"DeleteFileParams": {
 			"type": "object",
 			"additionalProperties": false,
-			"required": ["service", "resource", "filter"],
+			"required": ["resource", "filter"],
 			"properties": {
-				"service": {
-					"type": "string",
-					"minLength": 1
-				},
 				"resource": {
 					"type": "string",
-					"enum": ["files"]
+					"enum": ["evy.files"]
 				},
 				"filter": {
 					"$ref": "#/$defs/FileIdFilter"

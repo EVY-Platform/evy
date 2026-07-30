@@ -33,6 +33,11 @@ import {
 	service_provider as service_providerTable,
 	service as serviceTable,
 } from "../types/generated/ts/db/schema.generated";
+import {
+	isValidResourceRef,
+	isValidServiceSlug,
+	serviceOfRef,
+} from "../types/resourceRef";
 import { STANDARD_FORMATTERS } from "../types/standardFormatters";
 import { validateUiFlow } from "../types/validators";
 import { copySeedFileBinaries } from "./seed-files";
@@ -109,14 +114,6 @@ const SEED_IDS = {
 
 const MARKETPLACE_SERVICE = MARKETPLACE_SERVICE_DESCRIPTOR.id;
 
-const MARKETPLACE_SEED_RESOURCE_KEY_TO_ID: Record<string, string> =
-	Object.fromEntries(
-		MARKETPLACE_SERVICE_DESCRIPTOR.resources.map((resource) => [
-			resource.name,
-			resource.id,
-		]),
-	);
-
 type SeedInputPaths = {
 	evyFlowsPath?: string;
 	serviceFlowsPath?: string;
@@ -164,10 +161,16 @@ function partitionSeedResourceData(dataJson: SeedDataMap): {
 	const marketplace: SeedDataMap = {};
 	const evy: SeedDataMap = {};
 	for (const [resource, value] of Object.entries(dataJson)) {
-		if (resource in MARKETPLACE_SEED_RESOURCE_KEY_TO_ID) {
+		if (!isValidResourceRef(resource)) {
+			throw new Error(`Invalid resource ref in seed data: ${resource}`);
+		}
+		const service = serviceOfRef(resource);
+		if (service === MARKETPLACE_SERVICE) {
 			marketplace[resource] = value;
-		} else {
+		} else if (service === EVY_CORE_SERVICE) {
 			evy[resource] = value;
+		} else {
+			throw new Error(`Unknown service in seed data: ${service}`);
 		}
 	}
 	return { marketplace, evy };
@@ -181,18 +184,13 @@ type SeedDataRow = {
 	updated_at: string;
 };
 
-function buildDataRows(
-	dataJson: SeedDataMap,
-	now: string,
-	resourceKeyToId: Partial<Record<string, string>> = {},
-): SeedDataRow[] {
+function buildDataRows(dataJson: SeedDataMap, now: string): SeedDataRow[] {
 	const rows: SeedDataRow[] = [];
 	for (const [resource, value] of Object.entries(dataJson)) {
-		const rowResource = resourceKeyToId[resource] ?? resource;
 		for (const item of value) {
 			rows.push({
 				id: item.id,
-				resource: rowResource,
+				resource,
 				data: item,
 				created_at: now,
 				updated_at: now,
@@ -308,7 +306,6 @@ function buildFormatterRows(now: string) {
 type SeedMessageRow = {
 	id: string;
 	fk: string;
-	service: string;
 	resource: string;
 	created_at: string;
 	updated_at: string;
@@ -328,14 +325,14 @@ function buildMessageRows(
 				`Seed message "${item.id}" must have a string "fk" field`,
 			);
 		}
-		if (typeof item.service !== "string") {
-			throw new Error(
-				`Seed message "${item.id}" must have a string "service" field`,
-			);
-		}
 		if (typeof item.resource !== "string") {
 			throw new Error(
 				`Seed message "${item.id}" must have a string "resource" field`,
+			);
+		}
+		if (!isValidResourceRef(item.resource)) {
+			throw new Error(
+				`Seed message "${item.id}" has invalid resource ref "${item.resource}"`,
 			);
 		}
 		const data =
@@ -378,7 +375,6 @@ function buildMessageRows(
 		return {
 			id: item.id,
 			fk: item.fk,
-			service: item.service,
 			resource: item.resource,
 			created_at,
 			updated_at,
@@ -602,9 +598,9 @@ async function seedDatabase({
 	now?: string;
 }) {
 	const {
-		files: evyFiles = [],
-		addresses: evyAddresses = [],
-		messages: evyMessages = [],
+		"evy.files": evyFiles = [],
+		"evy.addresses": evyAddresses = [],
+		"evy.messages": evyMessages = [],
 		...unsupportedEvy
 	} = evyDataJson;
 	const unsupportedResources = Object.keys(unsupportedEvy);
@@ -643,26 +639,33 @@ async function seedDatabase({
 			...timestamped(now),
 		});
 
-		await tx.insert(coreSchema.service).values([
-			{
-				id: EVY_CORE_SERVICE,
-				name: "evy",
-				description: "EVY core service",
-				sort_order: 0,
-				visibility: "public",
-				...timestamped(now),
-			},
-			{
-				id: MARKETPLACE_SERVICE,
-				name: "marketplace",
-				description: "Marketplace service",
-				sort_order: 1,
-				visibility: "public",
-				// Records the endpoint on the row when the environment knows it,
-				// so routing does not depend on the env convention at runtime.
-				...timestamped(now),
-			},
-		]);
+		await tx.insert(coreSchema.service).values(
+			[
+				{
+					id: EVY_CORE_SERVICE,
+					name: "evy",
+					description: "EVY core service",
+					sort_order: 0,
+					visibility: "public",
+					...timestamped(now),
+				},
+				{
+					id: MARKETPLACE_SERVICE,
+					name: "marketplace",
+					description: "Marketplace service",
+					sort_order: 1,
+					visibility: "public",
+					// Records the endpoint on the row when the environment knows it,
+					// so routing does not depend on the env convention at runtime.
+					...timestamped(now),
+				},
+			].map((row) => {
+				if (!isValidServiceSlug(row.id)) {
+					throw new Error(`Invalid service slug: ${row.id}`);
+				}
+				return row;
+			}),
+		);
 
 		await tx.insert(coreSchema.service_provider).values({
 			id: SEED_IDS.evyMarketplaceProvider,
@@ -719,11 +722,7 @@ async function seedDatabase({
 		}
 	});
 
-	const marketplaceRows = buildDataRows(
-		marketplaceDataJson,
-		now,
-		MARKETPLACE_SEED_RESOURCE_KEY_TO_ID,
-	);
+	const marketplaceRows = buildDataRows(marketplaceDataJson, now);
 
 	await marketplaceDb.transaction(async (tx) => {
 		await tx.delete(marketplaceSchema.data);

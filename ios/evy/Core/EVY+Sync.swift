@@ -15,15 +15,16 @@ extension EVY {
       method: "sync",
       params: SyncParams(
         cursor: cursor,
-        owned_service_resources: owned_service_resources()
+        owned_resources: ownedResources()
       ),
       expecting: SyncResponse.self
     )
 
     let assignsOrder = cursor == nil
     for row in response.data {
+      let namespace = try EVYResourceRef.serviceOf(row.resource)
       try applySyncedValue(
-        namespace: row.service, resource: row.resource, value: row.value,
+        namespace: namespace, resource: row.resource, value: row.value,
         assignsOrder: assignsOrder)
     }
 

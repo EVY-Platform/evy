@@ -122,7 +122,7 @@ enum EVYActionRunner {
           ))
       )
 
-    case .create(let service, let resource, let mode, let id_destination):
+    case .create(let resource, let mode, let id_destination):
       let data: EVYObjectArgument?
       let isSubmission: Bool
       switch mode {
@@ -141,7 +141,7 @@ enum EVYActionRunner {
           $0, datum: datum, stripIdFromChanges: false)
       }
       let createdId = try EVY.create(
-        namespace: service,
+        namespace: try EVYResourceRef.serviceOf(resource),
         resource: resource,
         data: resolvedData,
         isSubmission: isSubmission
@@ -150,13 +150,14 @@ enum EVYActionRunner {
         try EVY.writeRawStringValue(createdId, to: id_destination)
       }
 
-    case .update(let service, let resource, let mode, let filter, let changes):
+    case .update(let resource, let mode, let filter, let changes):
       let resolvedChanges = try resolveObjectArgument(
         changes, datum: datum, stripIdFromChanges: true)
+      let namespace = try EVYResourceRef.serviceOf(resource)
       switch mode {
       case .store:
         try EVY.update(
-          namespace: service,
+          namespace: namespace,
           resource: resource,
           matching: EVYPlainTextResolution.resolveValues(filter, datum: datum),
           changes: resolvedChanges

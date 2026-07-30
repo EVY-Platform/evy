@@ -22,12 +22,10 @@ public enum EVYActionInvocation: Equatable {
   case select(value: String)
   case navigate(flowId: String, pageId: String, query: [String: String])
   case create(
-    service: String,
     resource: String,
     mode: CreateMode,
     id_destination: String?)
   case update(
-    service: String,
     resource: String,
     mode: UpdateMode,
     filter: [String: String],
@@ -82,7 +80,7 @@ extension EVYActionBranch: Codable {
 extension EVYActionInvocation: Codable {
   private enum CodingKeys: String, CodingKey {
     case fn, rowId, field, value, flowId, pageId, query
-    case service, resource, mode, data, data_path, id_destination
+    case resource, mode, data, data_path, id_destination
     case filter, changes, changes_path
   }
 
@@ -111,7 +109,6 @@ extension EVYActionInvocation: Codable {
       )
     case "create":
       self = .create(
-        service: try container.decode(String.self, forKey: .service),
         resource: try container.decode(String.self, forKey: .resource),
         mode: try Self.decodeCreateMode(from: container),
         id_destination: try container.decodeIfPresent(String.self, forKey: .id_destination)
@@ -122,7 +119,6 @@ extension EVYActionInvocation: Codable {
         throw Self.unsupported("update mode \(rawMode)", container)
       }
       self = .update(
-        service: try container.decode(String.self, forKey: .service),
         resource: try container.decode(String.self, forKey: .resource),
         mode: mode,
         filter: try container.decodeIfPresent([String: String].self, forKey: .filter) ?? [:],
@@ -189,9 +185,8 @@ extension EVYActionInvocation: Codable {
       try container.encode(flowId, forKey: .flowId)
       try container.encode(pageId, forKey: .pageId)
       if !query.isEmpty { try container.encode(query, forKey: .query) }
-    case .create(let service, let resource, let mode, let id_destination):
+    case .create(let resource, let mode, let id_destination):
       try container.encode("create", forKey: .fn)
-      try container.encode(service, forKey: .service)
       try container.encode(resource, forKey: .resource)
       switch mode {
       case .submit:
@@ -204,9 +199,8 @@ extension EVYActionInvocation: Codable {
         try container.encode(data_path, forKey: .data_path)
       }
       try container.encodeIfPresent(id_destination, forKey: .id_destination)
-    case .update(let service, let resource, let mode, let filter, let changes):
+    case .update(let resource, let mode, let filter, let changes):
       try container.encode("update", forKey: .fn)
-      try container.encode(service, forKey: .service)
       try container.encode(resource, forKey: .resource)
       try container.encode(mode.rawValue, forKey: .mode)
       if mode == .store { try container.encode(filter, forKey: .filter) }

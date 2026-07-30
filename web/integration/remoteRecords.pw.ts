@@ -38,7 +38,7 @@ test.describe("Remote records", () => {
 			syncedVersion: SYNCED_VERSION,
 			rows: [
 				{
-					resource: "flows",
+					resource: "evy.flows",
 					value: [
 						{
 							id: FLOW_ID,
@@ -51,7 +51,7 @@ test.describe("Remote records", () => {
 					],
 				},
 				{
-					resource: "pages",
+					resource: "evy.pages",
 					value: [
 						{
 							id: PAGE_ID,
@@ -64,7 +64,7 @@ test.describe("Remote records", () => {
 						},
 					],
 				},
-				{ resource: "rows", value: [mockRow] },
+				{ resource: "evy.rows", value: [mockRow] },
 			],
 		});
 
@@ -77,7 +77,7 @@ test.describe("Remote records", () => {
 		await page.evaluate(
 			({ row, version }) =>
 				window.__evyPushRemote({
-					resource: "rows",
+					resource: "evy.rows",
 					operation: "update",
 					value: {
 						...row,
@@ -99,7 +99,7 @@ test.describe("Remote records", () => {
 		await page.evaluate(
 			({ pageId, rowId, version }) =>
 				window.__evyPushRemote({
-					resource: "pages",
+					resource: "evy.pages",
 					operation: "update",
 					value: {
 						id: pageId,

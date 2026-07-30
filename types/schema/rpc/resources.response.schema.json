@@ -28,9 +28,8 @@
 			"required": ["id", "name"],
 			"properties": {
 				"id": {
-					"description": "Runtime routing key: plural name for core resources, UUID for external services.",
-					"type": "string",
-					"minLength": 1
+					"description": "The reference key, verbatim: `<service>.<resource>`. Usable directly in RPC params and expressions.",
+					"$ref": "../common/rpc.schema.json#/$defs/ResourceRef"
 				},
 				"name": {
 					"description": "Human-friendly base label for builder display.",
@@ -54,8 +53,7 @@
 			"required": ["id", "name", "resources"],
 			"properties": {
 				"id": {
-					"type": "string",
-					"format": "uuid"
+					"$ref": "../common/rpc.schema.json#/$defs/ServiceSlug"
 				},
 				"name": {
 					"type": "string",
@@ -76,8 +74,7 @@
 			"required": ["service", "message"],
 			"properties": {
 				"service": {
-					"type": "string",
-					"format": "uuid"
+					"$ref": "../common/rpc.schema.json#/$defs/ServiceSlug"
 				},
 				"message": {
 					"type": "string"

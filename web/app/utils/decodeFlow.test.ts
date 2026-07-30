@@ -245,7 +245,7 @@ describe("decomposeServerFlow", () => {
 		const flow: ServerFlow = {
 			id: "flow-1",
 			name: "Flow",
-			submits: { service: "svc-1", resource: "res-1" },
+			submits: { resource: "test_service.records" },
 			pages: [
 				{
 					id: "page-1",
@@ -258,8 +258,7 @@ describe("decomposeServerFlow", () => {
 
 		const graph = decomposeServerFlow(flow, NOW);
 		expect(graph.flowRows[0]?.submits).toEqual({
-			service: "svc-1",
-			resource: "res-1",
+			resource: "test_service.records",
 		});
 	});
 });

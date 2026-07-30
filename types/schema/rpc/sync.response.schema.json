@@ -16,13 +16,10 @@
 			"items": {
 				"type": "object",
 				"additionalProperties": false,
-				"required": ["service", "resource", "value"],
+				"required": ["resource", "value"],
 				"properties": {
-					"service": {
-						"type": "string"
-					},
 					"resource": {
-						"type": "string"
+						"$ref": "../common/rpc.schema.json#/$defs/ResourceRef"
 					},
 					"value": {
 						"$ref": "../common/json.schema.json#/$defs/JSONValue"
@@ -36,13 +33,10 @@
 			"items": {
 				"type": "object",
 				"additionalProperties": false,
-				"required": ["service", "resource", "message"],
+				"required": ["resource", "message"],
 				"properties": {
-					"service": {
-						"type": "string"
-					},
 					"resource": {
-						"type": "string"
+						"$ref": "../common/rpc.schema.json#/$defs/ResourceRef"
 					},
 					"message": {
 						"type": "string"

@@ -28,7 +28,7 @@ struct EVYPage: View {
     }
     .onEVYRecordChange(
       namespace: EVYNamespace.evy,
-      resource: EVYCoreResource.pages.rawValue,
+      resource: EVYCoreResource.pages.ref,
       id: pageId
     ) {
       let latestPage = EVYPageStore.page(id: pageId)

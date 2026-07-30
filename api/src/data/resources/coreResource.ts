@@ -10,8 +10,8 @@ import type {
 	UpdateRequest,
 	UpdateResponse,
 } from "evy-types";
-import { EVY_CORE_SERVICE } from "evy-types/coreResources";
 import { hasDatabaseErrorCode, PG_UNIQUE_VIOLATION } from "evy-types/dbErrors";
+import { isValidResourceRef } from "evy-types/resourceRef";
 import type { SyncRequest } from "evy-types/rpc/sync.request";
 import {
 	validateCreateResponse,
@@ -31,38 +31,29 @@ type ResourceTable = AnyPgTable & {
 
 type AddressableResourceTable = ResourceTable & {
 	fk: AnyPgColumn;
-	service: AnyPgColumn;
 	resource: AnyPgColumn;
 };
 
-export type OwnedServiceResource = NonNullable<
-	SyncRequest["owned_service_resources"]
->[number];
+export type OwnedResource = NonNullable<SyncRequest["owned_resources"]>[number];
 
 export type SyncScope = {
 	updated_after?: string;
 	resource: string;
-	owned: OwnedServiceResource[];
+	owned: OwnedResource[];
 };
 
 export type SyncScopeInput = Omit<SyncScope, "resource">;
 
-const UUID_PATTERN =
-	/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-
 function isAddressableTable(
 	table: ResourceTable,
 ): table is AddressableResourceTable {
-	return "fk" in table && "service" in table && "resource" in table;
+	return "fk" in table && "resource" in table;
 }
 
 export function ownedIdsOf(scope: SyncScope): string[] {
 	const ids: string[] = [];
 	for (const group of scope.owned) {
-		if (
-			group.service === EVY_CORE_SERVICE &&
-			group.resource === scope.resource
-		) {
+		if (group.resource === scope.resource) {
 			ids.push(...group.ids);
 		}
 	}
@@ -90,21 +81,15 @@ function syncTimeClause(
 
 function addressedRecordClause(
 	table: AddressableResourceTable,
-	owned: OwnedServiceResource[],
+	owned: OwnedResource[],
 ): SQL | undefined {
 	const clauses: SQL[] = [];
 
 	for (const group of owned) {
 		if (group.ids.length === 0) continue;
-		if (
-			!UUID_PATTERN.test(group.service) ||
-			!UUID_PATTERN.test(group.resource)
-		) {
-			continue;
-		}
+		if (!isValidResourceRef(group.resource)) continue;
 		clauses.push(
 			and(
-				eq(table.service, group.service),
 				eq(table.resource, group.resource),
 				inArray(table.fk, group.ids),
 			) as SQL,

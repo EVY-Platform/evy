@@ -6,10 +6,10 @@ import type {
 	SyncResponse,
 } from "evy-types";
 import {
-	EVY_CORE_RESOURCE,
-	EVY_CORE_RESOURCE_NAMES,
+	EVY_CORE_RESOURCE_REF,
 	EVY_CORE_SERVICE,
 } from "evy-types/coreResources";
+import { serviceOfRef } from "evy-types/resourceRef";
 import * as data from "../data/data";
 import type { EvyDb } from "../database/db";
 import { discoverResources } from "./resources";
@@ -18,7 +18,7 @@ import * as services from "./services";
 type SyncRow = SyncResponse["data"][number];
 
 const EPOCH = "1970-01-01T00:00:00.000Z";
-const RESOURCE_CATALOG_KEY = EVY_CORE_RESOURCE.RESOURCES;
+const RESOURCE_CATALOG_KEY = EVY_CORE_RESOURCE_REF.RESOURCES;
 
 function resumePoint(syncParams: SyncRequest): string {
 	return syncParams.cursor ?? EPOCH;
@@ -43,8 +43,7 @@ type SyncError = NonNullable<SyncResponse["errors"]>[number];
 
 type FetchOutcome = { rows: SyncRow[]; errors: SyncError[] };
 
-/** A resource to pull from, and the service that owns it. */
-type ResourceRef = { service: string; resource: string };
+type ResourceRef = string;
 
 function describe(error: unknown): string {
 	return error instanceof Error ? error.message : String(error);
@@ -61,14 +60,13 @@ async function fetchResources(
 	for (const ref of refs) {
 		try {
 			const value = await fetchOne(ref, {
-				service: ref.service,
-				resource: ref.resource,
+				resource: ref,
 				filter: { updated_after: since },
 			});
 			if (value.length === 0) continue;
-			rows.push({ ...ref, value });
+			rows.push({ resource: ref, value });
 		} catch (error) {
-			errors.push({ ...ref, message: describe(error) });
+			errors.push({ resource: ref, message: describe(error) });
 		}
 	}
 
@@ -81,19 +79,16 @@ function externalResourceRefs(
 ): ResourceRef[] {
 	return response.services.flatMap((service) => {
 		if (service.id === coreServiceId) return [];
-		return service.resources.map((resource) => ({
-			service: service.id,
-			resource: resource.id,
-		}));
+		return service.resources.map((resource) => resource.id);
 	});
 }
 
 function coreResourceRefs(): ResourceRef[] {
-	return EVY_CORE_RESOURCE_NAMES.filter(
-		(name) =>
-			name !== EVY_CORE_RESOURCE.DEVICES &&
-			name !== EVY_CORE_RESOURCE.RESOURCES,
-	).map((resource) => ({ service: EVY_CORE_SERVICE, resource }));
+	return Object.values(EVY_CORE_RESOURCE_REF).filter(
+		(ref) =>
+			ref !== EVY_CORE_RESOURCE_REF.DEVICES &&
+			ref !== EVY_CORE_RESOURCE_REF.RESOURCES,
+	);
 }
 
 function discoveryErrorsToSyncErrors(
@@ -102,7 +97,6 @@ function discoveryErrorsToSyncErrors(
 	>,
 ): SyncError[] {
 	return errors.map((error) => ({
-		service: error.service,
 		resource: RESOURCE_CATALOG_KEY,
 		message: error.message,
 	}));
@@ -117,17 +111,17 @@ export async function sync(
 	const externalRefs = externalResourceRefs(catalog, EVY_CORE_SERVICE);
 
 	const resumedFrom = resumePoint(syncParams);
-	const owned = syncParams.owned_service_resources ?? [];
+	const owned = syncParams.owned_resources ?? [];
 
 	const [core, external] = await Promise.all([
 		fetchResources(coreResourceRefs(), resumedFrom, (ref) =>
-			data.getSyncRows(db, ref.resource, {
+			data.getSyncRows(db, ref, {
 				updated_after: resumedFrom,
 				owned,
 			}),
 		),
 		fetchResources(externalRefs, resumedFrom, (ref, request) =>
-			services.forwardGet(ref.service, request),
+			services.forwardGet(serviceOfRef(ref), request),
 		),
 	]);
 
@@ -140,7 +134,6 @@ export async function sync(
 
 	if (discoveryComplete) {
 		rows.push({
-			service: EVY_CORE_SERVICE,
 			resource: RESOURCE_CATALOG_KEY,
 			value: catalog,
 		});

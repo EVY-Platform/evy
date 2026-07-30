@@ -1,4 +1,4 @@
-import { EVY_CORE_RESOURCE, EVY_CORE_SERVICE } from "evy-types/coreResources";
+import { EVY_CORE_RESOURCE_REF } from "evy-types/coreResources";
 import { runReadinessCli } from "evy-types/readiness";
 import * as data from "./data/data";
 import { createDb, type EvyDb } from "./database/db";
@@ -63,8 +63,7 @@ export async function assertApiReadable(
 	}
 
 	const response = await data.get(db, {
-		service: EVY_CORE_SERVICE,
-		resource: EVY_CORE_RESOURCE.FLOWS,
+		resource: EVY_CORE_RESOURCE_REF.FLOWS,
 	});
 	if (!Array.isArray(response)) {
 		throw new Error(

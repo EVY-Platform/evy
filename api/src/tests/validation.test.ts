@@ -50,7 +50,7 @@ describe("place search validators", () => {
 });
 
 describe("validateServicePayload", () => {
-	const id = "440dcda6-3a4c-4767-8de0-dffe860fd5ba";
+	const id = "marketplace";
 	const now = "2024-01-19T12:00:00.000Z";
 
 	it("accepts a valid Service row payload", () => {
@@ -129,7 +129,8 @@ describe("validateOrganizationPayload", () => {
 
 describe("validateServiceProviderPayload", () => {
 	const id = "440dcda6-3a4c-4767-8de0-dffe860fd5ba";
-	const sid = "d92f474b-eebb-4c93-9487-dc864f3d814c";
+	const sid = "marketplace";
+	const logo = "d92f474b-eebb-4c93-9487-dc864f3d814c";
 	const oid = "02e8dadc-e141-46ff-81f3-17122d170caf";
 	const now = "2024-01-19T12:00:00.000Z";
 
@@ -140,7 +141,7 @@ describe("validateServiceProviderPayload", () => {
 			fk_organization_id: oid,
 			name: "P",
 			description: "D",
-			logo: sid,
+			logo,
 			url: "https://x.com",
 			retired: false,
 			visibility: "public",
@@ -550,7 +551,8 @@ describe("row actions shape validation", () => {
 });
 
 describe("structured action invocations", () => {
-	const SVC = "66b092ae-7cd8-4d67-95b7-30b03568fd90";
+	const ITEMS = "marketplace.items";
+	const ADDRESSES = "evy.addresses";
 	const baseRow = {
 		id: "11111111-1111-4111-8111-111111111111",
 		name: "R",
@@ -588,16 +590,12 @@ describe("structured action invocations", () => {
 				query: { id: "$datum.id" },
 			},
 		],
-		[
-			"create submit",
-			{ fn: "create", service: SVC, resource: "items", mode: "submit" },
-		],
+		["create submit", { fn: "create", resource: ITEMS, mode: "submit" }],
 		[
 			"create inline",
 			{
 				fn: "create",
-				service: SVC,
-				resource: "addresses",
+				resource: ADDRESSES,
 				mode: "inline",
 				data: { street: "$datum.street" },
 			},
@@ -606,8 +604,7 @@ describe("structured action invocations", () => {
 			"create from path with id destination",
 			{
 				fn: "create",
-				service: SVC,
-				resource: "addresses",
+				resource: ADDRESSES,
 				mode: "from_path",
 				data_path: "pickup_address",
 				id_destination: "{pickup_address.id}",
@@ -617,8 +614,7 @@ describe("structured action invocations", () => {
 			"update store",
 			{
 				fn: "update",
-				service: SVC,
-				resource: "items",
+				resource: ITEMS,
 				mode: "store",
 				filter: { id: "item.id" },
 				changes: { status: "accepted" },
@@ -628,8 +624,7 @@ describe("structured action invocations", () => {
 			"update draft",
 			{
 				fn: "update",
-				service: SVC,
-				resource: "items",
+				resource: ITEMS,
 				mode: "draft",
 				changes: { status: "accepted" },
 			},
@@ -638,8 +633,7 @@ describe("structured action invocations", () => {
 			"update store from path",
 			{
 				fn: "update",
-				service: SVC,
-				resource: "addresses",
+				resource: ADDRESSES,
 				mode: "store",
 				filter: { id: "item.id" },
 				changes_path: "pickup_address",
@@ -657,22 +651,20 @@ describe("structured action invocations", () => {
 			"create submit carrying data",
 			{
 				fn: "create",
-				service: SVC,
-				resource: "a",
+				resource: "marketplace.a",
 				mode: "submit",
 				data: { x: "y" },
 			},
 		],
 		[
 			"create with an unknown mode",
-			{ fn: "create", service: SVC, resource: "a", mode: "magic" },
+			{ fn: "create", resource: "marketplace.a", mode: "magic" },
 		],
 		[
 			"a store update with an empty filter",
 			{
 				fn: "update",
-				service: SVC,
-				resource: "i",
+				resource: "marketplace.i",
 				mode: "store",
 				filter: {},
 				changes: { a: "b" },
@@ -682,8 +674,7 @@ describe("structured action invocations", () => {
 			"a draft update carrying a filter",
 			{
 				fn: "update",
-				service: SVC,
-				resource: "i",
+				resource: "marketplace.i",
 				mode: "draft",
 				filter: { id: "x" },
 				changes: { a: "b" },
@@ -693,8 +684,7 @@ describe("structured action invocations", () => {
 			"an update with both changes and changes_path",
 			{
 				fn: "update",
-				service: SVC,
-				resource: "i",
+				resource: "marketplace.i",
 				mode: "draft",
 				changes: { a: "b" },
 				changes_path: "p",
@@ -702,14 +692,13 @@ describe("structured action invocations", () => {
 		],
 		[
 			"an update with no changes at all",
-			{ fn: "update", service: SVC, resource: "i", mode: "draft" },
+			{ fn: "update", resource: "marketplace.i", mode: "draft" },
 		],
 		[
 			"a non-string expression value",
 			{
 				fn: "create",
-				service: SVC,
-				resource: "a",
+				resource: "marketplace.a",
 				mode: "inline",
 				data: { x: 5 },
 			},
@@ -726,9 +715,10 @@ describe("structured action invocations", () => {
 });
 
 describe("validateFlowData submits declaration", () => {
-	const SERVICE = "66b092ae-1e3f-4f2a-8a7d-9b0c1d2e3f40";
+	const ITEMS = "marketplace.items";
+	const ADDRESSES = "evy.addresses";
 
-	function submitButton(service: string, resource: string) {
+	function submitButton(resource: string) {
 		return {
 			name: "Submit",
 			type: "button",
@@ -739,7 +729,6 @@ describe("validateFlowData submits declaration", () => {
 						false: "",
 						true: {
 							fn: "create",
-							service,
 							resource,
 							mode: "submit",
 						},
@@ -753,7 +742,7 @@ describe("validateFlowData submits declaration", () => {
 
 	function flowWithSubmit(
 		row: Record<string, unknown>,
-		submits?: { service: string; resource: string },
+		submits?: { resource: string },
 	) {
 		const flow = flowWithRow(row) as Record<string, unknown>;
 		if (submits) flow.submits = submits;
@@ -762,44 +751,31 @@ describe("validateFlowData submits declaration", () => {
 
 	it("accepts a submitting flow whose declaration matches", () => {
 		const out = validateFlowData(
-			flowWithSubmit(submitButton(SERVICE, "items"), {
-				service: SERVICE,
-				resource: "items",
+			flowWithSubmit(submitButton(ITEMS), {
+				resource: ITEMS,
 			}),
 		);
-		expect(out.submits?.resource).toBe("items");
+		expect(out.submits?.resource).toBe(ITEMS);
 	});
 
 	it("rejects a submitting flow with no declaration", () => {
 		expect(() =>
-			validateFlowData(flowWithSubmit(submitButton(SERVICE, "items"))),
+			validateFlowData(flowWithSubmit(submitButton(ITEMS))),
 		).toThrow('declares no "submits"');
 	});
 
 	it("rejects a declaration whose resource does not match the action", () => {
 		expect(() =>
 			validateFlowData(
-				flowWithSubmit(submitButton(SERVICE, "items"), {
-					service: SERVICE,
-					resource: "addresses",
-				}),
-			),
-		).toThrow("but its create(...,submit) targets");
-	});
-
-	it("rejects a declaration whose service does not match the action", () => {
-		expect(() =>
-			validateFlowData(
-				flowWithSubmit(submitButton(SERVICE, "items"), {
-					service: "475731ac-31aa-4d65-94d2-7032782ae359",
-					resource: "items",
+				flowWithSubmit(submitButton(ITEMS), {
+					resource: ADDRESSES,
 				}),
 			),
 		).toThrow("but its create(...,submit) targets");
 	});
 
 	it("rejects a flow submitting more than one entity", () => {
-		const flow = flowWithRow(submitButton(SERVICE, "items")) as Record<
+		const flow = flowWithRow(submitButton(ITEMS)) as Record<
 			string,
 			unknown
 		>;
@@ -807,7 +783,7 @@ describe("validateFlowData submits declaration", () => {
 		const rows = pages[0]?.rows as Record<string, unknown>[];
 		rows.push({
 			id: crypto.randomUUID(),
-			...submitButton(SERVICE, "addresses"),
+			...submitButton(ADDRESSES),
 		});
 
 		expect(() => validateFlowData(flow)).toThrow(
@@ -827,8 +803,7 @@ describe("validateFlowData submits declaration", () => {
 							false: "",
 							true: {
 								fn: "create",
-								service: SERVICE,
-								resource: "messages",
+								resource: "evy.messages",
 								mode: "inline",
 								data: { status: '"pending"' },
 							},
@@ -853,10 +828,10 @@ describe("validateFlowData submits declaration", () => {
 					visible: "true",
 					title: "Hello",
 				},
-				{ service: SERVICE, resource: "items" },
+				{ resource: ITEMS },
 			),
 		);
-		expect(out.submits?.service).toBe(SERVICE);
+		expect(out.submits?.resource).toBe(ITEMS);
 	});
 
 	it("finds submit actions nested in a sheet", () => {
@@ -874,7 +849,7 @@ describe("validateFlowData submits declaration", () => {
 					label: "Open",
 					sheet: {
 						id: crypto.randomUUID(),
-						...submitButton(SERVICE, "items"),
+						...submitButton(ITEMS),
 					},
 				}),
 			),

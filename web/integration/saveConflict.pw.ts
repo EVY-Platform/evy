@@ -28,7 +28,7 @@ test.describe("Concurrent edit conflicts", () => {
 			syncedVersion: SERVER_VERSION,
 			rows: [
 				{
-					resource: "flows",
+					resource: "evy.flows",
 					value: [
 						{
 							id: FLOW_ID,
@@ -41,7 +41,7 @@ test.describe("Concurrent edit conflicts", () => {
 					],
 				},
 				{
-					resource: "pages",
+					resource: "evy.pages",
 					value: [
 						{
 							id: PAGE_ID,
@@ -54,7 +54,7 @@ test.describe("Concurrent edit conflicts", () => {
 						},
 					],
 				},
-				{ resource: "rows", value: [] },
+				{ resource: "evy.rows", value: [] },
 			],
 		});
 

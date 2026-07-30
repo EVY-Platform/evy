@@ -7,7 +7,6 @@ import Foundation
 
 extension EVY {
   private struct MutationParams: Encodable {
-    let service: String
     let resource: String
     let filter: Filter
     let data: EVYJson
@@ -93,9 +92,10 @@ extension EVY {
       return true
     }
 
-    if let json = try? EVY.getSyncedJsonForBinding(
-      key: firstProp, cacheScopeId: activeCacheScopeId),
-      json.parsePropStrict(props: remainingProps) != nil
+    if let json = try? getSyncedJsonForRef(
+      splitProps[0] + PROP_SEPARATOR + splitProps[1]),
+      splitProps.count >= 2,
+      json.parsePropStrict(props: Array(splitProps.dropFirst(2))) != nil
     {
       return true
     }
@@ -129,7 +129,7 @@ extension EVY {
     guard isSubmission else {
       throw EVYError.invalidData(
         context:
-          "create requires namespace, resource, and submit or data, e.g. create(marketplace,item,submit)"
+          "create requires namespace, resource, and submit or data, e.g. create(marketplace.items,submit)"
       )
     }
 
@@ -185,14 +185,13 @@ extension EVY {
       payloadWithId["created_at"] = .string(EVY.nowISO8601(fractional: true))
     }
     if payloadWithId["visibility"] == nil,
-      let declared = EVYCoreResource(rawValue: resource)?.visibility,
+      let declared = EVYCoreResource(ref: resource)?.visibility,
       namespace == EVYNamespace.evy
     {
       payloadWithId["visibility"] = .string(declared)
     }
     let dataWithId = EVYJson.dictionary(payloadWithId)
     let params = MutationParams(
-      service: namespace,
       resource: resource,
       filter: Filter(id: newId),
       data: dataWithId
@@ -207,7 +206,7 @@ extension EVY {
       value: encodedData,
       sortIndex: nextSortIndex
     )
-    recordOwnership(service: namespace, resource: resource, id: newId)
+    recordOwnership(resource: resource, id: newId)
 
     syncMutation(method: "create", params: params)
     return newId
@@ -327,7 +326,6 @@ extension EVY {
       }
 
       let params = MutationParams(
-        service: namespace,
         resource: resource,
         filter: Filter(id: update.recordId),
         data: update.updatedData
@@ -425,7 +423,10 @@ extension EVY {
     let variableName = _parsePropsFromText(destination)
     let (_, cleanVariableName) = store(for: variableName)
     let splitProps = try splitPropsFromText(cleanVariableName)
-    let rootVariable = splitProps.first!
+    let rootVariable =
+      splitProps.count >= 2
+      ? splitProps[0] + PROP_SEPARATOR + splitProps[1]
+      : splitProps.first!
     let resolvedScopeId = scopeId ?? draftStore.activeScopeId
 
     if let resolvedScopeId,
@@ -494,7 +495,16 @@ extension EVY {
     {
       return (cachedRow, publicStore)
     }
-    return try findSyncedRow(matching: rootVariable)
+    if EVYResourceRef.isValid(rootVariable) {
+      let namespace = try EVYResourceRef.serviceOf(rootVariable)
+      for store in syncedStores() {
+        let rows = (try? store.getAll(namespace: namespace, resource: rootVariable)) ?? []
+        if let matched = rows.first {
+          return (matched, store)
+        }
+      }
+    }
+    throw EVYDataError.keyNotFound
   }
 
 }

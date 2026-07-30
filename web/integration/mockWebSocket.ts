@@ -45,7 +45,7 @@ export async function installMockWebSocket(
 	config: MockWebSocketConfig,
 ): Promise<void> {
 	await page.addInitScript((cfg: MockWebSocketConfig) => {
-		const EVY_CORE_SERVICE = "475731ac-31aa-4d65-94d2-7032782ae359";
+		const EVY_CORE_SERVICE = "evy";
 		const syncedVersion = cfg.syncedVersion ?? "2026-07-01T00:00:00.000Z";
 		const writtenVersion = cfg.writtenVersion ?? "2026-07-09T00:00:00.000Z";
 		const write = cfg.write ?? "accept";
@@ -77,7 +77,6 @@ export async function installMockWebSocket(
 						jsonrpc: "2.0",
 						method: "data_changed",
 						params: {
-							service: EVY_CORE_SERVICE,
 							resource: change.resource,
 							operation: change.operation,
 							value: change.value,
@@ -117,7 +116,6 @@ export async function installMockWebSocket(
 						result: {
 							cursor: "1970-01-01T00:00:00.000Z",
 							data: cfg.rows.map((row) => ({
-								service: EVY_CORE_SERVICE,
 								resource: row.resource,
 								value: row.value,
 							})),

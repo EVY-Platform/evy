@@ -9,7 +9,10 @@ import {
 	spyOn,
 } from "bun:test";
 import type { GetRequest, GetResponse } from "evy-types";
-import { EVY_CORE_RESOURCE, EVY_CORE_SERVICE } from "evy-types/coreResources";
+import {
+	EVY_CORE_RESOURCE_REF,
+	EVY_CORE_SERVICE,
+} from "evy-types/coreResources";
 import { Client } from "rpc-websockets";
 import * as data from "../data/data";
 import type { EvyDb } from "../database/db";
@@ -76,8 +79,7 @@ describe("initServer bootstrap", () => {
 		await waitForClientOpen(client);
 		await expect(
 			client.call("create", {
-				service: EVY_CORE_SERVICE,
-				resource: EVY_CORE_RESOURCE.FLOWS,
+				resource: EVY_CORE_RESOURCE_REF.FLOWS,
 				data: {
 					id: crypto.randomUUID(),
 					name: "Unauth",
@@ -143,8 +145,7 @@ describe("assertApiReadable", () => {
 	it("resolves when requireSeeded is true and flows has at least one flow", async () => {
 		getImpl = async (params) => {
 			expect(params).toEqual({
-				service: EVY_CORE_SERVICE,
-				resource: EVY_CORE_RESOURCE.FLOWS,
+				resource: EVY_CORE_RESOURCE_REF.FLOWS,
 			});
 			return [
 				{

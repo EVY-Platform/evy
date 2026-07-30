@@ -5,26 +5,24 @@ import { TEST_SERVICE_ID } from "../testFixtures/resourceCatalog";
 import { openAppWithFullFlows } from "./flowFixtures";
 import { getConfigPanel, popoverSelect } from "./utils";
 
-const ITEM_RESOURCE_ID = "res-item";
-const ORDER_RESOURCE_ID = "res-order";
-// Core resources are identified by plural words and named by the singular, so
-// their ids collide with ordinary prose (types/generated/ts/coreResources.ts).
-const MESSAGES_RESOURCE_ID = "messages";
+const ITEM_RESOURCE_REF = "test_service.item";
+const ORDER_RESOURCE_REF = "test_service.order";
+const MESSAGES_RESOURCE_REF = "evy.messages";
 
 const SERVICE_RESOURCES: ServiceResource[] = [
 	{
-		id: ITEM_RESOURCE_ID,
+		id: ITEM_RESOURCE_REF,
 		serviceId: TEST_SERVICE_ID,
 		name: "item",
 	},
 	{
-		id: ORDER_RESOURCE_ID,
+		id: ORDER_RESOURCE_REF,
 		serviceId: TEST_SERVICE_ID,
 		name: "order",
 	},
 	{
-		id: MESSAGES_RESOURCE_ID,
-		serviceId: TEST_SERVICE_ID,
+		id: MESSAGES_RESOURCE_REF,
+		serviceId: "evy",
 		name: "message",
 	},
 ];
@@ -32,12 +30,12 @@ const SERVICE_RESOURCES: ServiceResource[] = [
 const RESOURCE_ATTRIBUTE_METADATA = [
 	{
 		serviceId: TEST_SERVICE_ID,
-		resourceId: ITEM_RESOURCE_ID,
+		resourceId: ITEM_RESOURCE_REF,
 		attributeNames: ["price", "title"],
 	},
 	{
 		serviceId: TEST_SERVICE_ID,
-		resourceId: ORDER_RESOURCE_ID,
+		resourceId: ORDER_RESOURCE_REF,
 		attributeNames: ["status"],
 	},
 ];
@@ -91,8 +89,7 @@ function buildBuilderAssistFlow(
 			id: "flow-builder",
 			name: "Builder Flow",
 			submits: {
-				service: TEST_SERVICE_ID,
-				resource: ITEM_RESOURCE_ID,
+				resource: ITEM_RESOURCE_REF,
 			},
 			pages: [
 				{
@@ -102,8 +99,8 @@ function buildBuilderAssistFlow(
 						{
 							id: "row-title",
 							type: "input",
-							source: `{${ITEM_RESOURCE_ID}}`,
-							destination: `{${ITEM_RESOURCE_ID}.title}`,
+							source: `{${ITEM_RESOURCE_REF}}`,
+							destination: `{${ITEM_RESOURCE_REF}.title}`,
 							title: "Editable title",
 							placeholder: "Title",
 						},
@@ -111,7 +108,7 @@ function buildBuilderAssistFlow(
 							id: "row-search",
 							type: "search",
 							title: "Search messages",
-							source: `{${MESSAGES_RESOURCE_ID}}`,
+							source: `{${MESSAGES_RESOURCE_REF}}`,
 							destination: "",
 							placeholder: "Filter messages by type",
 							no_results: "No messages found",
@@ -120,7 +117,7 @@ function buildBuilderAssistFlow(
 							id: "row-mixed",
 							type: "text",
 							title: "Mixed row",
-							subtitle: `None for {${MESSAGES_RESOURCE_ID}}`,
+							subtitle: `None for {${MESSAGES_RESOURCE_REF}}`,
 						},
 						{
 							id: "row-button",
@@ -172,10 +169,13 @@ test.describe("Builder Assist flows", () => {
 
 		const itemToken = getBuilderAssistToken(titleInput, "item");
 		await expect(itemToken).toBeVisible();
-		await expect(itemToken).toHaveAttribute("data-value", ITEM_RESOURCE_ID);
+		await expect(itemToken).toHaveAttribute(
+			"data-value",
+			ITEM_RESOURCE_REF,
+		);
 		await expect
 			.poll(() => readBuilderAssistRawValue(titleInput))
-			.toBe(`Total: {${ITEM_RESOURCE_ID}`);
+			.toBe(`Total: {${ITEM_RESOURCE_REF}`);
 
 		await page.keyboard.type(".p");
 		await expect(
@@ -186,7 +186,7 @@ test.describe("Builder Assist flows", () => {
 
 		await expect
 			.poll(() => readBuilderAssistRawValue(titleInput))
-			.toBe(`Total: {${ITEM_RESOURCE_ID}.price}`);
+			.toBe(`Total: {${ITEM_RESOURCE_REF}.price}`);
 		await expect(itemToken).toBeVisible();
 		await expect(
 			page.getByText("Total: item.price", { exact: true }),
@@ -203,7 +203,7 @@ test.describe("Builder Assist flows", () => {
 		).toBeVisible();
 		await expect
 			.poll(() => readBuilderAssistRawValue(reopenedTitleInput))
-			.toBe(`Total: {${ITEM_RESOURCE_ID}.price}`);
+			.toBe(`Total: {${ITEM_RESOURCE_REF}.price}`);
 	});
 
 	test("edits source, destination, and visible binding expressions", async ({
@@ -225,7 +225,7 @@ test.describe("Builder Assist flows", () => {
 		await page.keyboard.type("}");
 		await expect
 			.poll(() => readBuilderAssistRawValue(sourceInput))
-			.toBe(`{${ITEM_RESOURCE_ID}}`);
+			.toBe(`{${ITEM_RESOURCE_REF}}`);
 
 		const visibleInput = configPanel.getByLabel("Row visibility condition");
 		await visibleInput.clear();
@@ -255,7 +255,7 @@ test.describe("Builder Assist flows", () => {
 		await page.keyboard.type("}");
 		await expect
 			.poll(() => readBuilderAssistRawValue(destinationInput))
-			.toBe(`{${ORDER_RESOURCE_ID}}`);
+			.toBe(`{${ORDER_RESOURCE_REF}}`);
 
 		await page.getByText("Open checkout", { exact: true }).first().click();
 		await page.getByText("Editable title", { exact: true }).first().click();
@@ -313,11 +313,7 @@ test.describe("Builder Assist flows", () => {
 			"Create",
 		);
 
-		const namespaceArg = popup.getByLabel("false-0-arg-0");
-		await expect(namespaceArg).toBeVisible();
-		await popoverSelect(page, namespaceArg, "Test Service");
-
-		const resourceArg = popup.getByLabel("false-0-arg-1");
+		const resourceArg = popup.getByLabel("false-0-arg-0");
 		await expect(resourceArg).toBeVisible();
 		await popoverSelect(page, resourceArg, "Item");
 
@@ -330,7 +326,7 @@ test.describe("Builder Assist flows", () => {
 			),
 		).toBeVisible();
 		await expect(
-			configPanel.getByText("create(Test Service, item, submit)", {
+			configPanel.getByText("create(item, submit)", {
 				exact: true,
 			}),
 		).toBeVisible();
@@ -406,7 +402,7 @@ test.describe("Builder Assist flows", () => {
 		const sourceInput = configPanel.getByLabel("Row data source");
 		await expect(
 			getBuilderAssistToken(sourceInput, "message"),
-		).toHaveAttribute("data-value", MESSAGES_RESOURCE_ID);
+		).toHaveAttribute("data-value", MESSAGES_RESOURCE_REF);
 
 		await page.getByText("Mixed row", { exact: true }).first().click();
 		const subtitle = configPanel.getByLabel("subtitle", { exact: true });
@@ -414,7 +410,7 @@ test.describe("Builder Assist flows", () => {
 		await expect(subtitle).toHaveText("None for {message}");
 		await expect
 			.poll(() => readBuilderAssistRawValue(subtitle))
-			.toBe(`None for {${MESSAGES_RESOURCE_ID}}`);
+			.toBe(`None for {${MESSAGES_RESOURCE_REF}}`);
 	});
 
 	test("shows resource ids as named chips in update() argument fields", async ({
@@ -426,11 +422,10 @@ test.describe("Builder Assist flows", () => {
 				false: "",
 				true: {
 					fn: "update",
-					service: TEST_SERVICE_ID,
-					resource: ITEM_RESOURCE_ID,
+					resource: ITEM_RESOURCE_REF,
 					mode: "store",
 					filter: {
-						fk: `${ITEM_RESOURCE_ID}.id`,
+						fk: `${ITEM_RESOURCE_REF}.id`,
 						closedAt: "null",
 					},
 					changes: {
@@ -449,10 +444,10 @@ test.describe("Builder Assist flows", () => {
 
 		const filterField = popup.getByLabel("true-0-update-filter");
 		await expect(getBuilderAssistToken(filterField, "item")).toBeVisible();
-		await expect(filterField).not.toContainText(ITEM_RESOURCE_ID);
+		await expect(filterField).not.toContainText(ITEM_RESOURCE_REF);
 		await expect
 			.poll(() => readBuilderAssistRawValue(filterField))
-			.toBe(`{fk: ${ITEM_RESOURCE_ID}.id, closedAt: null}`);
+			.toBe(`{fk: ${ITEM_RESOURCE_REF}.id, closedAt: null}`);
 
 		const changesField = popup.getByLabel("true-0-update-changes");
 		await expect
@@ -464,7 +459,7 @@ test.describe("Builder Assist flows", () => {
 
 		await expect(
 			configPanel.getByText(
-				"update(Test Service, item, {fk: item.id, closedAt: null}, {closedAt: now()})",
+				"update(item, {fk: item.id, closedAt: null}, {closedAt: now()})",
 				{ exact: true },
 			),
 		).toBeVisible();

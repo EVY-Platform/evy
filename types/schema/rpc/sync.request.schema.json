@@ -2,7 +2,7 @@
 	"$schema": "https://json-schema.org/draft/2020-12/schema",
 	"$id": "sync_request",
 	"title": "SyncRequest",
-	"description": "JSON-RPC params for the unified sync method. Send back the cursor from the previous response, or omit it for a full sync. Send owned_service_resources so the server can return the ownership-scoped rows this device is entitled to.",
+	"description": "JSON-RPC params for the unified sync method. Send back the cursor from the previous response, or omit it for a full sync. Send owned_resources so the server can return the ownership-scoped rows this device is entitled to.",
 	"type": "object",
 	"additionalProperties": false,
 	"required": [],
@@ -11,25 +11,19 @@
 			"description": "Opaque marker issued by the previous sync response. Server-generated, so client clock skew cannot drop or duplicate changes.",
 			"type": "string"
 		},
-		"owned_service_resources": {
-			"description": "Resource ids this device owns, grouped by the service and resource they belong to. The server returns rows these ids entitle the device to - a message reaches the device that created it (owned evy:messages id) and the device that owns the record it points at (owned service/resource id matching the message's fk). Omit for a device that owns nothing.",
+		"owned_resources": {
+			"description": "Resource refs this device owns, grouped by resource with the record ids entitled to each. The server returns rows these ids entitle the device to - a message reaches the device that created it (owned evy.messages id) and the device that owns the record it points at (owned resource ref matching the message's fk). Omit for a device that owns nothing.",
 			"type": "array",
 			"items": {
 				"type": "object",
 				"additionalProperties": false,
-				"required": ["service", "resource", "ids"],
+				"required": ["resource", "ids"],
 				"properties": {
-					"service": {
-						"type": "string",
-						"minLength": 1
-					},
 					"resource": {
-						"type": "string",
-						"minLength": 1,
-						"maxLength": 50
+						"$ref": "../common/rpc.schema.json#/$defs/ResourceRef"
 					},
 					"ids": {
-						"description": "Record ids owned in this service resource. The uuid format is load-bearing: these are compared against uuid columns, so a malformed id must be rejected here rather than at the database.",
+						"description": "Record ids owned in this resource. The uuid format is load-bearing: these are compared against uuid columns, so a malformed id must be rejected here rather than at the database.",
 						"type": "array",
 						"items": {
 							"type": "string",

@@ -6,8 +6,7 @@ import {
 	collectSubmitTargetsFromFlatFlow,
 } from "evy-types/flowSubmits";
 
-const SERVICE = "66b092ae-7cd8-4d67-95b7-30b03568fd90";
-const RESOURCE = "dc28ed59-298e-493c-8ff3-3e60f2ebccbd";
+const RESOURCE = "marketplace.items";
 
 function makeFlow(overrides: Partial<DATA_EVY_Flow> = {}): DATA_EVY_Flow {
 	return {
@@ -47,7 +46,6 @@ function makeSubmitRow(id = "row-1"): DATA_EVY_Row {
 						false: "",
 						true: {
 							fn: "create",
-							service: SERVICE,
 							resource: RESOURCE,
 							mode: "submit",
 						},
@@ -85,12 +83,12 @@ describe("flowSubmits flat graph", () => {
 			rowsById,
 		);
 
-		expect([...targets]).toEqual([`${SERVICE}/${RESOURCE}`]);
+		expect([...targets]).toEqual([RESOURCE]);
 	});
 
 	it("allows a declaration without a submit action", () => {
 		const flow = makeFlow({
-			submits: { service: SERVICE, resource: RESOURCE },
+			submits: { resource: RESOURCE },
 		});
 		const pagesById = { "page-1": makePage({ row_ids: [] }) };
 		const rowsById = {};

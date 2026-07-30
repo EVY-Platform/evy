@@ -590,18 +590,16 @@ function forEachFlowRow(
 	}
 }
 
-/** A submit-mode create -> `service/resource`, else null. */
+/** A submit-mode create -> resource ref, else null. */
 function submitCreateTarget(branch: unknown): string | null {
 	if (!branch || typeof branch !== "object") return null;
 	const invocation = branch as Record<string, unknown>;
 	if (invocation.fn !== "create" || invocation.mode !== "submit") return null;
 
-	const service =
-		typeof invocation.service === "string" ? invocation.service : "";
 	const resource =
 		typeof invocation.resource === "string" ? invocation.resource : "";
-	if (!service || !resource) return null;
-	return `${service}/${resource}`;
+	if (!resource) return null;
+	return resource;
 }
 
 function addSubmitTargets(row: UI_Row, into: Set<string>): void {
@@ -648,7 +646,7 @@ function assertUiFlowSubmitsDeclaration(
 		);
 	}
 
-	const declared = `${flow.submits.service}/${flow.submits.resource}`;
+	const declared = flow.submits.resource;
 	if (declared !== target) {
 		throw new Error(
 			`Flow validation failed: flow declares submits ${declared} but its create(...,submit) targets ${target}`,

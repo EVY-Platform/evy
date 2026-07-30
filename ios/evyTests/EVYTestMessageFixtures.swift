@@ -9,7 +9,6 @@ enum EVYTestMessageFixtures {
   static func message(
     id: String,
     fk: String? = nil,
-    service: String? = nil,
     resource: String? = nil,
     created_at: String? = nil,
     type: String? = nil,
@@ -38,9 +37,6 @@ enum EVYTestMessageFixtures {
     if let fk {
       dict["fk"] = .string(fk)
     }
-    if let service {
-      dict["service"] = .string(service)
-    }
     if let resource {
       dict["resource"] = .string(resource)
     }
@@ -60,7 +56,6 @@ enum EVYTestMessageFixtures {
   static func request(
     id: String,
     fk: String,
-    service: String,
     resource: String,
     type: String = "pickup",
     time: String? = "2026-06-03T09:00:00",
@@ -69,7 +64,6 @@ enum EVYTestMessageFixtures {
     message(
       id: id,
       fk: fk,
-      service: service,
       resource: resource,
       created_at: created_at,
       type: type,
@@ -82,7 +76,6 @@ enum EVYTestMessageFixtures {
     id: String,
     to requestId: String,
     fk: String,
-    service: String,
     resource: String,
     value: String,
     type: String = "pickup"
@@ -90,7 +83,6 @@ enum EVYTestMessageFixtures {
     message(
       id: id,
       fk: fk,
-      service: service,
       resource: resource,
       type: type,
       value: value,

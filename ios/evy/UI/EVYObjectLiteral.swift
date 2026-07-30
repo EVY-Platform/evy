@@ -147,12 +147,9 @@ enum EVYPlainTextResolution {
       return .string(value)
     }
 
-    // A bare id is an identifier, not a place to read from. Because a resource id
-    // doubles as that resource's binding key, resolving it hands back the
-    // resource's data instead of the id. Nor can that data stand in for the id:
-    // what a resource key binds is a *record*, whose own id is a different uuid,
-    // so substituting it would quietly send the wrong id. The token is the only
-    // correct answer. Reach for `<id>.id` to read from the bound record instead.
+    /// A bare record-id UUID stays an identifier, not a place to read from. Dotted
+    /// resource refs in object literals resolve as bindings; quoted strings stay literal.
+    /// Reach for `<id>.id` to read from the bound record instead.
     if isBareIdToken(trimmedValue), resolved.isContainer {
       return .string(trimmedValue)
     }

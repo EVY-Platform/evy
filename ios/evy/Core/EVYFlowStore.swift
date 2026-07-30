@@ -10,7 +10,6 @@ import Foundation
 /// Domain entity a flow submits via `create(...,submit)`, declared on the flow
 /// record so clients validate rather than infer it from action strings.
 struct EVYFlowSubmits: Decodable, Equatable {
-  let service: String
   let resource: String
 }
 
@@ -120,7 +119,7 @@ enum EVYFlowStore {
   static func flowExists(id: String, from store: EVYDataStore = EVY.publicStore) -> Bool {
     (try? store.get(
       namespace: EVYNamespace.evy,
-      resource: EVYCoreResource.flows.rawValue,
+      resource: EVYCoreResource.flows.ref,
       id: id
     )) != nil
   }
@@ -129,7 +128,7 @@ enum EVYFlowStore {
     guard
       let evyData = try? store.get(
         namespace: EVYNamespace.evy,
-        resource: EVYCoreResource.flows.rawValue,
+        resource: EVYCoreResource.flows.ref,
         id: id
       )
     else { return nil }
@@ -193,7 +192,7 @@ enum EVYPageStore {
     guard
       let evyData = try? store.get(
         namespace: EVYNamespace.evy,
-        resource: EVYCoreResource.pages.rawValue,
+        resource: EVYCoreResource.pages.ref,
         id: id
       )
     else { return nil }
@@ -209,7 +208,7 @@ enum EVYRowStore {
     guard
       let evyData = try? store.get(
         namespace: EVYNamespace.evy,
-        resource: EVYCoreResource.rows.rawValue,
+        resource: EVYCoreResource.rows.ref,
         id: id
       )
     else { return nil }

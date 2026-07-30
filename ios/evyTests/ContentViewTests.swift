@@ -44,7 +44,7 @@ final class ContentViewTests: XCTestCase {
     let data = try JSONSerialization.data(withJSONObject: json)
     try store.upsert(
       namespace: EVYNamespace.evy,
-      resource: EVYCoreResource.flows.rawValue,
+      resource: EVYCoreResource.flows.ref,
       id: id,
       value: data
     )
@@ -71,7 +71,7 @@ final class ContentViewTests: XCTestCase {
     let data = try JSONSerialization.data(withJSONObject: json)
     try store.upsert(
       namespace: EVYNamespace.evy,
-      resource: EVYCoreResource.pages.rawValue,
+      resource: EVYCoreResource.pages.ref,
       id: id,
       value: data
     )
@@ -111,7 +111,7 @@ final class ContentViewTests: XCTestCase {
     let jsonData = try JSONSerialization.data(withJSONObject: json)
     try store.upsert(
       namespace: EVYNamespace.evy,
-      resource: EVYCoreResource.rows.rawValue,
+      resource: EVYCoreResource.rows.ref,
       id: id,
       value: jsonData
     )
@@ -538,8 +538,8 @@ final class ContentViewTests: XCTestCase {
     try seedFlow(
       store: store, id: "create-flow", page_ids: ["create-page"],
       submits: [
-        "service": MarketplaceTestFixture.serviceId,
-        "resource": MarketplaceTestFixture.itemsResourceId,
+        "service": MarketplaceTestFixture.service,
+        "resource": MarketplaceTestFixture.itemsRef,
       ])
     try seedPage(
       store: store, id: "create-page", row_ids: [],
@@ -554,8 +554,8 @@ final class ContentViewTests: XCTestCase {
               "condition": "",
               "false": "",
               "true": [
-                "fn": "create", "service": MarketplaceTestFixture.serviceId,
-                "resource": MarketplaceTestFixture.itemsResourceId, "mode": "submit",
+                "fn": "create", "service": MarketplaceTestFixture.service,
+                "resource": MarketplaceTestFixture.itemsRef, "mode": "submit",
               ],
             ]
           ]
@@ -566,7 +566,7 @@ final class ContentViewTests: XCTestCase {
     XCTAssertEqual(
       EVYFlowStore.draftScopeId(for: route, from: store),
       EVYDraft.createMergeScopeId(
-        flowId: "create-flow", entityKey: MarketplaceTestFixture.itemsResourceId)
+        flowId: "create-flow", entityKey: MarketplaceTestFixture.itemsRef)
     )
   }
 
@@ -584,7 +584,7 @@ final class ContentViewTests: XCTestCase {
       store: store,
       id: flowId,
       page_ids: ["\(flowId)-page"],
-      submits: declared.map { ["service": MarketplaceTestFixture.serviceId, "resource": $0] }
+      submits: declared.map { ["service": MarketplaceTestFixture.service, "resource": $0] }
     )
     try seedPage(
       store: store, id: "\(flowId)-page", row_ids: [], footer_row_id: "\(flowId)-button")
@@ -598,7 +598,7 @@ final class ContentViewTests: XCTestCase {
               "condition": "",
               "false": "",
               "true": [
-                "fn": "create", "service": MarketplaceTestFixture.serviceId,
+                "fn": "create", "service": MarketplaceTestFixture.service,
                 "resource": submitResource, "mode": "submit",
               ],
             ]
@@ -611,14 +611,14 @@ final class ContentViewTests: XCTestCase {
     let store = makeStore()
     try seedSubmittingFlow(
       store: store, flowId: "declared-flow",
-      submitResource: MarketplaceTestFixture.itemsResourceId,
-      declared: MarketplaceTestFixture.itemsResourceId)
+      submitResource: MarketplaceTestFixture.itemsRef,
+      declared: MarketplaceTestFixture.itemsRef)
 
     let route = Route(flowId: "declared-flow", pageId: "declared-flow-page")
     XCTAssertEqual(
       EVYFlowStore.draftScopeId(for: route, from: store),
       EVYDraft.createMergeScopeId(
-        flowId: "declared-flow", entityKey: MarketplaceTestFixture.itemsResourceId)
+        flowId: "declared-flow", entityKey: MarketplaceTestFixture.itemsRef)
     )
   }
 
@@ -640,7 +640,7 @@ final class ContentViewTests: XCTestCase {
     let store = makeStore()
     try seedSubmittingFlow(
       store: store, flowId: "undeclared-submit-flow",
-      submitResource: MarketplaceTestFixture.itemsResourceId)
+      submitResource: MarketplaceTestFixture.itemsRef)
 
     XCTAssertEqual(
       EVYFlowStore.submissionResources(flowId: "undeclared-submit-flow", from: store),

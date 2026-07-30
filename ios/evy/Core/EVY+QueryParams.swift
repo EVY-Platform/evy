@@ -30,7 +30,7 @@ extension EVY {
         continue
       }
 
-      if namespaceForSyncedResource(queryKey) == nil {
+      if !EVYResourceRef.isValid(queryKey) {
         _ = storeRawQueryParam(scopeId: scopeId, queryKey: queryKey, ids: ids)
       }
     }
@@ -77,13 +77,12 @@ extension EVY {
   private static func resolvedEntityCollections(for queryKey: String?) -> [(
     cacheKey: String, collection: EVYJson
   )] {
-    if let queryKey {
-      if let namespace = namespaceForSyncedResource(queryKey),
+    if let queryKey, EVYResourceRef.isValid(queryKey) {
+      if let namespace = try? EVYResourceRef.serviceOf(queryKey),
         let collection = try? getSyncedCollectionJson(namespace: namespace, resource: queryKey)
       {
         return [(queryKey, collection)]
       }
-
       return []
     }
 
@@ -91,16 +90,17 @@ extension EVY {
     var seenResources = Set<String>()
     for store in syncedStores() {
       let syncedRows = (try? store.getAll()) ?? []
-      let resourceNames = Set(
+      let resourceRefs = Set(
         syncedRows.filter {
           $0.namespace != EVYNamespace.cache && $0.namespace != EVYNamespace.draft
+            && $0.namespace != EVYNamespace.local
         }
         .map { $0.resource })
-      for resource in resourceNames where seenResources.insert(resource).inserted {
-        guard let namespace = store.namespace(forSyncedResource: resource),
-          let collection = try? store.getCollectionJson(namespace: namespace, resource: resource)
+      for resourceRef in resourceRefs where seenResources.insert(resourceRef).inserted {
+        guard let namespace = try? EVYResourceRef.serviceOf(resourceRef),
+          let collection = try? store.getCollectionJson(namespace: namespace, resource: resourceRef)
         else { continue }
-        results.append((resource, collection))
+        results.append((resourceRef, collection))
       }
     }
     return results

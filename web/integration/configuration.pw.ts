@@ -238,10 +238,10 @@ test.describe("Row configuration", () => {
 		await expect(targetSelect).toBeVisible();
 		await expect(targetSelect).toHaveAttribute("data-value", "");
 
-		await popoverSelect(page, targetSelect, "Test Service / Item");
+		await popoverSelect(page, targetSelect, "Item");
 		await expect(targetSelect).toHaveAttribute(
 			"data-value",
-			`${TEST_SERVICE_ID}/${TEST_RESOURCE_ID.RECORDS}`,
+			TEST_RESOURCE_ID.RECORDS,
 		);
 
 		await popoverSelect(page, targetSelect, "None");
@@ -752,7 +752,6 @@ test.describe("Row configuration", () => {
 									false: "",
 									true: {
 										fn: "create",
-										service: TEST_SERVICE_ID,
 										resource: TEST_RESOURCE_ID.RECORDS,
 										mode: "submit",
 									},
@@ -795,7 +794,6 @@ test.describe("Row configuration", () => {
 							label: "Inline Create",
 							actions: tapAction({
 								fn: "create",
-								service: TEST_SERVICE_ID,
 								resource: TEST_RESOURCE_ID.RECORDS,
 								mode: "submit",
 							}),
@@ -821,12 +819,9 @@ test.describe("Row configuration", () => {
 		await expect(popup).not.toBeVisible();
 
 		await expect(
-			configPanel.getByText(
-				"create(Test Service, item, pickup_address)",
-				{
-					exact: true,
-				},
-			),
+			configPanel.getByText("create(item, pickup_address)", {
+				exact: true,
+			}),
 		).toBeVisible();
 	});
 
@@ -845,7 +840,6 @@ test.describe("Row configuration", () => {
 							label: "Inline Create",
 							actions: tapAction({
 								fn: "create",
-								service: TEST_SERVICE_ID,
 								resource: TEST_RESOURCE_ID.RECORDS,
 								mode: "submit",
 							}),
@@ -870,7 +864,7 @@ test.describe("Row configuration", () => {
 		await expect(popup).not.toBeVisible();
 
 		await expect(
-			configPanel.getByText("create(Test Service, item, submit)", {
+			configPanel.getByText("create(item, submit)", {
 				exact: true,
 			}),
 		).toBeVisible();
@@ -898,7 +892,6 @@ test.describe("Row configuration", () => {
 							label: "Submit Create",
 							actions: tapAction({
 								fn: "create",
-								service: TEST_SERVICE_ID,
 								resource: TEST_RESOURCE_ID.RECORDS,
 								mode: "submit",
 							}),
@@ -909,7 +902,6 @@ test.describe("Row configuration", () => {
 			TEST_SERVICE_RESOURCES,
 			[],
 			{
-				service: TEST_SERVICE_ID,
 				resource: TEST_RESOURCE_ID.RECORDS,
 			},
 		);
@@ -929,7 +921,7 @@ test.describe("Row configuration", () => {
 		await expect(popup).not.toBeVisible();
 
 		await expect(
-			configPanel.getByText("create(Test Service, item, submit)", {
+			configPanel.getByText("create(item, submit)", {
 				exact: true,
 			}),
 		).toBeVisible();

@@ -669,7 +669,7 @@ describe("ensureShowAction", () => {
 });
 
 describe("updateFlowSubmits", () => {
-	const submits = { service: "svc-1", resource: "res-1" };
+	const submits = { resource: "test_service.records" };
 
 	function mapsWithFlow(): FlowEntityMaps {
 		return {
@@ -726,7 +726,7 @@ describe("applyRemoteRecord", () => {
 	it("applies a strictly newer record", () => {
 		const next = applyRemoteRecord(
 			mapsWithRow("2026-01-01T00:00:00.000Z"),
-			"rows",
+			"evy.rows",
 			{ id: "r1", updated_at: "2026-02-01T00:00:00.000Z" },
 			"update",
 		);
@@ -739,7 +739,7 @@ describe("applyRemoteRecord", () => {
 		const maps = mapsWithRow("2026-02-01T00:00:00.000Z");
 		const next = applyRemoteRecord(
 			maps,
-			"rows",
+			"evy.rows",
 			{ id: "r1", updated_at: "2026-02-01T00:00:00.000Z" },
 			"update",
 		);
@@ -751,7 +751,7 @@ describe("applyRemoteRecord", () => {
 		const maps = mapsWithRow("2026-03-01T00:00:00.000Z");
 		const next = applyRemoteRecord(
 			maps,
-			"rows",
+			"evy.rows",
 			{ id: "r1", updated_at: "2026-01-01T00:00:00.000Z" },
 			"update",
 		);
@@ -762,7 +762,7 @@ describe("applyRemoteRecord", () => {
 	it("removes a record on a delete push", () => {
 		const next = applyRemoteRecord(
 			mapsWithRow("2026-01-01T00:00:00.000Z"),
-			"rows",
+			"evy.rows",
 			{ id: "r1" },
 			"delete",
 		);
@@ -773,7 +773,7 @@ describe("applyRemoteRecord", () => {
 	it("removes a record carrying a tombstone", () => {
 		const next = applyRemoteRecord(
 			mapsWithRow("2026-01-01T00:00:00.000Z"),
-			"rows",
+			"evy.rows",
 			{ id: "r1", deleted_at: "2026-02-01T00:00:00.000Z" },
 			"update",
 		);
@@ -784,7 +784,7 @@ describe("applyRemoteRecord", () => {
 	it("adds a record the builder has not seen", () => {
 		const next = applyRemoteRecord(
 			mapsWithRow("2026-01-01T00:00:00.000Z"),
-			"rows",
+			"evy.rows",
 			{ id: "r2", updated_at: "2026-02-01T00:00:00.000Z" },
 			"create",
 		);
@@ -796,7 +796,7 @@ describe("applyRemoteRecord", () => {
 		const maps = mapsWithRow("2026-01-01T00:00:00.000Z");
 
 		expect(
-			applyRemoteRecord(maps, "messages", { id: "m1" }, "update"),
+			applyRemoteRecord(maps, "evy.messages", { id: "m1" }, "update"),
 		).toBe(maps);
 	});
 
@@ -804,7 +804,7 @@ describe("applyRemoteRecord", () => {
 		const maps = mapsWithRow("2026-01-01T00:00:00.000Z");
 		applyRemoteRecord(
 			maps,
-			"rows",
+			"evy.rows",
 			{ id: "r1", updated_at: "2026-05-01T00:00:00.000Z" },
 			"update",
 		);

@@ -33,7 +33,6 @@ struct EVYLoginParams: Encodable {
 }
 
 struct DataChangedNotification: Decodable {
-  let service: String
   let resource: String
   let operation: String
   let value: EVYJson
@@ -225,16 +224,17 @@ actor EVYWebsocket: EVYRPCTransport {
 
     Task { @MainActor in
       do {
+        let namespace = try EVYResourceRef.serviceOf(notification.resource)
         switch notification.operation {
         case "create", "update":
           try EVY.applySyncedValue(
-            namespace: notification.service,
+            namespace: namespace,
             resource: notification.resource,
             value: notification.value
           )
         case "delete":
           try EVY.removeSyncedValue(
-            namespace: notification.service,
+            namespace: namespace,
             resource: notification.resource,
             value: notification.value
           )

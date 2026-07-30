@@ -5,7 +5,10 @@ import type {
 	ResourcesResponse,
 	SyncResponse,
 } from "evy-types";
-import { EVY_CORE_RESOURCE, EVY_CORE_SERVICE } from "evy-types/coreResources";
+import {
+	EVY_CORE_RESOURCE_REF,
+	EVY_CORE_SERVICE,
+} from "evy-types/coreResources";
 import { assertFlatFlowGraphSubmits } from "evy-types/flowSubmits";
 import {
 	DATA_CHANGED_EVENT,
@@ -17,10 +20,10 @@ import { config } from "../config";
 import type { FlowEntityCollections } from "../utils/flowEntities";
 import { collectionsToMaps } from "../utils/flowEntities";
 
-type FlatResourceName =
-	| typeof EVY_CORE_RESOURCE.FLOWS
-	| typeof EVY_CORE_RESOURCE.PAGES
-	| typeof EVY_CORE_RESOURCE.ROWS;
+type FlatResourceRef =
+	| typeof EVY_CORE_RESOURCE_REF.FLOWS
+	| typeof EVY_CORE_RESOURCE_REF.PAGES
+	| typeof EVY_CORE_RESOURCE_REF.ROWS;
 type FlatResourceRecord = DATA_EVY_Flow | DATA_EVY_Page | DATA_EVY_Row;
 
 function isFlatWriteResponse(value: unknown): value is FlatResourceRecord {
@@ -112,7 +115,7 @@ type DataChangedListener = (changes: RemoteChange[]) => void;
 function normalizeRemoteChanges(
 	notification: DataChangedNotification,
 ): RemoteChange[] {
-	if (notification.service !== EVY_CORE_SERVICE) return [];
+	if (!notification.resource.startsWith(`${EVY_CORE_SERVICE}.`)) return [];
 	const values = Array.isArray(notification.value)
 		? notification.value
 		: [notification.value];
@@ -290,27 +293,27 @@ class WSClient {
 		);
 
 		await this.writeChangedRecords(
-			EVY_CORE_RESOURCE.ROWS,
+			EVY_CORE_RESOURCE_REF.ROWS,
 			previousGraph.rows,
 			nextGraph.rows,
 		);
 		await this.writeChangedRecords(
-			EVY_CORE_RESOURCE.PAGES,
+			EVY_CORE_RESOURCE_REF.PAGES,
 			previousGraph.pages,
 			nextGraph.pages,
 		);
 		await this.writeChangedRecords(
-			EVY_CORE_RESOURCE.FLOWS,
+			EVY_CORE_RESOURCE_REF.FLOWS,
 			previousGraph.flows,
 			nextGraph.flows,
 		);
 		await this.deleteMissingRecords(
-			EVY_CORE_RESOURCE.PAGES,
+			EVY_CORE_RESOURCE_REF.PAGES,
 			previousGraph.pages,
 			nextGraph.pages,
 		);
 		await this.deleteMissingRecords(
-			EVY_CORE_RESOURCE.ROWS,
+			EVY_CORE_RESOURCE_REF.ROWS,
 			previousGraph.rows,
 			nextGraph.rows,
 		);
@@ -319,7 +322,7 @@ class WSClient {
 	}
 
 	private async writeChangedRecords<T extends FlatResourceRecord>(
-		resource: FlatResourceName,
+		resource: FlatResourceRef,
 		previousRecords: T[],
 		nextRecords: T[],
 	): Promise<void> {
@@ -342,7 +345,7 @@ class WSClient {
 	}
 
 	private async deleteMissingRecords<T extends FlatResourceRecord>(
-		resource: FlatResourceName,
+		resource: FlatResourceRef,
 		previousRecords: T[],
 		nextRecords: T[],
 	): Promise<void> {
@@ -355,7 +358,7 @@ class WSClient {
 	}
 
 	private async writeRecord(
-		resource: FlatResourceName,
+		resource: FlatResourceRef,
 		method: "create" | "update",
 		record: FlatResourceRecord,
 	): Promise<void> {
@@ -368,7 +371,6 @@ class WSClient {
 		let raw: unknown;
 		try {
 			raw = await this.client.call(method, {
-				service: EVY_CORE_SERVICE,
 				resource,
 				filter: {
 					id: record.id,
@@ -429,12 +431,11 @@ class WSClient {
 	}
 
 	private async deleteRecord(
-		resource: FlatResourceName,
+		resource: FlatResourceRef,
 		id: string,
 	): Promise<void> {
 		if (!this.client) throw new Error("WebSocket client not initialized");
 		const raw = await this.client.call("delete", {
-			service: EVY_CORE_SERVICE,
 			resource,
 			filter: { id },
 		});

@@ -9,8 +9,12 @@ import type {
 	UpdateRequest,
 	UpdateResponse,
 } from "evy-types";
-import { EVY_CORE_RESOURCE, EVY_CORE_SERVICE } from "evy-types/coreResources";
+import {
+	EVY_CORE_RESOURCE_REF,
+	EVY_CORE_SERVICE,
+} from "evy-types/coreResources";
 import { service } from "evy-types/db/schema.generated";
+import { serviceOfRef } from "evy-types/resourceRef";
 import {
 	DATA_CHANGED_EVENT,
 	type DataChangedNotification,
@@ -67,31 +71,31 @@ type CoreResourceOps = {
 // directly; the rest pick fields explicitly so the omitted operations
 // stay unreachable through the RPC dispatch.
 const CORE_RESOURCE_REGISTRY: Record<string, CoreResourceOps> = {
-	[EVY_CORE_RESOURCE.FLOWS]: flowsResource,
-	[EVY_CORE_RESOURCE.PAGES]: pagesResource,
-	[EVY_CORE_RESOURCE.ROWS]: rowsResource,
-	[EVY_CORE_RESOURCE.ADDRESSES]: addressesResource,
-	[EVY_CORE_RESOURCE.FORMATTERS]: formattersResource,
-	[EVY_CORE_RESOURCE.MESSAGES]: messagesResource,
-	[EVY_CORE_RESOURCE.SERVICES]: {
+	[EVY_CORE_RESOURCE_REF.FLOWS]: flowsResource,
+	[EVY_CORE_RESOURCE_REF.PAGES]: pagesResource,
+	[EVY_CORE_RESOURCE_REF.ROWS]: rowsResource,
+	[EVY_CORE_RESOURCE_REF.ADDRESSES]: addressesResource,
+	[EVY_CORE_RESOURCE_REF.FORMATTERS]: formattersResource,
+	[EVY_CORE_RESOURCE_REF.MESSAGES]: messagesResource,
+	[EVY_CORE_RESOURCE_REF.SERVICES]: {
 		list: servicesResource.list,
 		listForSync: servicesResource.listForSync,
 		create: servicesResource.create,
 		update: servicesResource.update,
 	},
-	[EVY_CORE_RESOURCE.ORGANIZATIONS]: {
+	[EVY_CORE_RESOURCE_REF.ORGANIZATIONS]: {
 		list: organizationsResource.list,
 		listForSync: organizationsResource.listForSync,
 		create: organizationsResource.create,
 		update: organizationsResource.update,
 	},
-	[EVY_CORE_RESOURCE.PROVIDERS]: {
+	[EVY_CORE_RESOURCE_REF.PROVIDERS]: {
 		list: providersResource.list,
 		listForSync: providersResource.listForSync,
 		create: providersResource.create,
 		update: providersResource.update,
 	},
-	[EVY_CORE_RESOURCE.FILES]: {
+	[EVY_CORE_RESOURCE_REF.FILES]: {
 		list: listFileRows,
 		listForSync: listFilesForSync,
 		create: createFileResource,
@@ -220,7 +224,7 @@ async function deleteCoreBody(
 function assertEvyCoreAccess(
 	params: GetRequest | CreateRequest | UpdateRequest | DeleteRequest,
 ): void {
-	if (params.service !== EVY_CORE_SERVICE) {
+	if (serviceOfRef(params.resource) !== EVY_CORE_SERVICE) {
 		throw new Error("Core API only serves service evy");
 	}
 }
@@ -231,7 +235,6 @@ function buildEmitNotification(
 ) {
 	return (value: unknown) => {
 		const notification: DataChangedNotification = {
-			service: EVY_CORE_SERVICE,
 			resource,
 			operation,
 			value,

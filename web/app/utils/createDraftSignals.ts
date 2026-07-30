@@ -27,7 +27,7 @@ function extractVariableFromDestination(destination: string): string | null {
 type DraftSignals = {
 	draftVariables: string[];
 	draftUpdateTargets: Set<string>;
-	/** `service/resource` the active flow declares it submits, if any. */
+	/** Dotted resource ref the active flow declares it submits, if any. */
 	declaredSubmits: string | null;
 };
 
@@ -46,9 +46,7 @@ export function collectDraftSignals(
 		};
 	}
 
-	const declaredSubmits = flow.submits
-		? `${flow.submits.service}/${flow.submits.resource}`
-		: null;
+	const declaredSubmits = flow.submits?.resource ?? null;
 
 	const variables = new Set<string>();
 	const draftUpdateTargets = new Set<string>();
@@ -67,11 +65,10 @@ export function collectDraftSignals(
 				if (!trimmed) continue;
 				const parsed = parseBranchText(trimmed);
 				if (parsed?.functionName !== "update") continue;
-				const serviceId = parsed.args[0]?.trim();
-				const resourceId = parsed.args[1]?.trim();
-				if (!serviceId || !resourceId) continue;
+				const resourceRef = parsed.args[0]?.trim();
+				if (!resourceRef) continue;
 				if (!updateUsesDraftMarker(parsed.args)) continue;
-				draftUpdateTargets.add(`${serviceId}/${resourceId}`);
+				draftUpdateTargets.add(resourceRef);
 			}
 		}
 	});
@@ -84,12 +81,11 @@ export function collectDraftSignals(
 }
 
 export function shouldOfferCreateSubmitWithFlow(
-	serviceId: string,
-	resourceId: string,
+	resourceRef: string,
 	declaredSubmits: string | null = null,
 ): boolean {
-	if (!serviceId || !resourceId || declaredSubmits === null) return false;
-	return declaredSubmits === `${serviceId}/${resourceId}`;
+	if (!resourceRef || declaredSubmits === null) return false;
+	return declaredSubmits === resourceRef;
 }
 
 export function finalizeBranchForSave(
@@ -104,11 +100,9 @@ export function finalizeBranchForSave(
 		return branchString;
 	}
 
-	const serviceId = parsed.args[0]?.trim() ?? "";
-	const resourceId = parsed.args[1]?.trim() ?? "";
+	const resourceRef = parsed.args[0]?.trim() ?? "";
 	const offerSubmit = shouldOfferCreateSubmitWithFlow(
-		serviceId,
-		resourceId,
+		resourceRef,
 		declaredSubmits,
 	);
 

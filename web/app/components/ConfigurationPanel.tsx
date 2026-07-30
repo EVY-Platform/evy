@@ -187,8 +187,8 @@ export function ConfigurationPanel() {
 	);
 
 	const submitsTargetOptions = useMemo<PopoverOption[]>(
-		() => submitTargetOptions(serviceResources, serviceNamesById),
-		[serviceResources, serviceNamesById],
+		() => submitTargetOptions(serviceResources),
+		[serviceResources],
 	);
 
 	const handleSubmitsTargetChange = useCallback(

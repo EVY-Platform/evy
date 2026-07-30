@@ -45,7 +45,7 @@ struct EVYRow: View, Identifiable {
       )
       .onEVYRecordChange(
         namespace: EVYNamespace.evy,
-        resource: EVYCoreResource.rows.rawValue,
+        resource: EVYCoreResource.rows.ref,
         id: rowId
       ) {
         let latestRow = EVYRowStore.row(id: rowId)
@@ -516,7 +516,7 @@ private struct EVYSheetOverlay: View {
     .presentationBackground(.white)
     .onEVYRecordChange(
       namespace: EVYNamespace.evy,
-      resource: EVYCoreResource.rows.rawValue,
+      resource: EVYCoreResource.rows.ref,
       id: sheetRef.id
     ) {
       guard case .id = sheetRef else { return }
