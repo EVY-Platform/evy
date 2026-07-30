@@ -252,7 +252,7 @@ final class EVYStoreRoutingTests: XCTestCase {
         .dictionary([
           "id": .string(recordId),
           "visibility": .string("public"),
-          "deletedAt": .string("2026-07-01T00:00:00.000Z"),
+          "deleted_at": .string("2026-07-01T00:00:00.000Z"),
         ])
       ])
     )
@@ -272,7 +272,7 @@ final class EVYStoreRoutingTests: XCTestCase {
         .dictionary([
           "id": .string(recordId),
           "visibility": .string("public"),
-          "deletedAt": .null,
+          "deleted_at": .null,
         ])
       ])
     )
@@ -526,7 +526,7 @@ final class EVYStoreRoutingTests: XCTestCase {
   // MARK: - Ownership ledger
 
   func testOwnedServiceResourcesIsEmptyOnACleanStore() throws {
-    XCTAssertTrue(EVY.ownedServiceResources().isEmpty)
+    XCTAssertTrue(EVY.owned_service_resources().isEmpty)
   }
 
   func testRecordOwnershipGroupsIdsByServiceAndResource() throws {
@@ -539,7 +539,7 @@ final class EVYStoreRoutingTests: XCTestCase {
     EVY.recordOwnership(service: service, resource: "items", id: secondId)
     EVY.recordOwnership(service: service, resource: "messages", id: otherResourceId)
 
-    let owned = EVY.ownedServiceResources().filter { $0.service == service }
+    let owned = EVY.owned_service_resources().filter { $0.service == service }
     XCTAssertEqual(owned.count, 2)
     XCTAssertEqual(owned.map(\.resource), ["items", "messages"])
     XCTAssertEqual(owned[0].ids, [firstId, secondId].sorted())
@@ -553,7 +553,7 @@ final class EVYStoreRoutingTests: XCTestCase {
     EVY.recordOwnership(service: service, resource: "items", id: recordId)
     EVY.recordOwnership(service: service, resource: "items", id: recordId)
 
-    let owned = EVY.ownedServiceResources().filter { $0.service == service }
+    let owned = EVY.owned_service_resources().filter { $0.service == service }
     XCTAssertEqual(owned.count, 1)
     XCTAssertEqual(owned[0].ids, [recordId])
   }
@@ -565,7 +565,7 @@ final class EVYStoreRoutingTests: XCTestCase {
 
     let createdId = try EVY.create(namespace: namespace, resource: resource, data: [:])
 
-    let owned = EVY.ownedServiceResources().filter { $0.resource == resource }
+    let owned = EVY.owned_service_resources().filter { $0.resource == resource }
     XCTAssertEqual(owned.count, 1)
     XCTAssertEqual(owned[0].service, namespace)
     XCTAssertEqual(owned[0].ids, [createdId])
@@ -581,7 +581,7 @@ final class EVYStoreRoutingTests: XCTestCase {
       ])
     )
 
-    XCTAssertTrue(EVY.ownedServiceResources().isEmpty)
+    XCTAssertTrue(EVY.owned_service_resources().isEmpty)
   }
 
   /// A message that reaches this device lands in the private store, and holding it
@@ -598,7 +598,7 @@ final class EVYStoreRoutingTests: XCTestCase {
       ])
     )
 
-    let owned = EVY.ownedServiceResources()
+    let owned = EVY.owned_service_resources()
     XCTAssertEqual(owned.count, 1)
     XCTAssertEqual(owned[0].service, EVYNamespace.evy)
     XCTAssertEqual(owned[0].resource, EVYCoreResource.messages.rawValue)
@@ -618,7 +618,7 @@ final class EVYStoreRoutingTests: XCTestCase {
 
     XCTAssertEqual(
       try EVY.publicStore.getAll(namespace: namespace, resource: resource).count, 1)
-    let owned = EVY.ownedServiceResources().filter { $0.resource == resource }
+    let owned = EVY.owned_service_resources().filter { $0.resource == resource }
     XCTAssertEqual(owned.count, 1)
     XCTAssertEqual(owned[0].ids, [createdId])
   }
@@ -636,7 +636,7 @@ final class EVYStoreRoutingTests: XCTestCase {
       value: try JSONEncoder().encode(EVYJson.string("private"))
     )
 
-    let owned = EVY.ownedServiceResources()
+    let owned = EVY.owned_service_resources()
     XCTAssertFalse(owned.contains { $0.service == EVYNamespace.local })
     XCTAssertFalse(owned.flatMap(\.ids).contains(EVYNamespace.singletonId))
   }

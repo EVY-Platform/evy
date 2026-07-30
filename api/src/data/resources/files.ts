@@ -50,14 +50,14 @@ export async function listFileRows(
 	if (filter?.id) {
 		whereClauses.push(eq(file.id, filter.id));
 	}
-	if (filter?.updatedAfter) {
-		whereClauses.push(gt(file.updatedAt, filter.updatedAfter));
+	if (filter?.updated_after) {
+		whereClauses.push(gt(file.updated_at, filter.updated_after));
 	} else {
-		whereClauses.push(isNull(file.deletedAt));
+		whereClauses.push(isNull(file.deleted_at));
 	}
 
 	const query = whereClauses.length ? base.where(and(...whereClauses)) : base;
-	const rows = await query.orderBy(asc(file.updatedAt), asc(file.id));
+	const rows = await query.orderBy(asc(file.updated_at), asc(file.id));
 
 	const isSingleFileRead = Boolean(filter?.id);
 	const response = isSingleFileRead
@@ -138,8 +138,8 @@ async function insertFileMetadata(
 		.values({
 			id: filter?.id ?? validated.id,
 			type: validated.type,
-			createdAt: nowIso,
-			updatedAt: nowIso,
+			created_at: nowIso,
+			updated_at: nowIso,
 			visibility: validated.visibility,
 		})
 		.returning()
@@ -164,8 +164,8 @@ async function deleteFileMetadata(
 	const nowIso = new Date().toISOString();
 	const deleted = await db
 		.update(file)
-		.set({ deletedAt: nowIso, updatedAt: nowIso })
-		.where(and(eq(file.id, filter.id), isNull(file.deletedAt)))
+		.set({ deleted_at: nowIso, updated_at: nowIso })
+		.where(and(eq(file.id, filter.id), isNull(file.deleted_at)))
 		.returning();
 	if (deleted.length === 0) {
 		throw new Error("Resource not found");
@@ -207,8 +207,8 @@ async function createFileFromUpload(params: {
 		metadataPayload: {
 			id: fileId,
 			type: validated.type,
-			createdAt: params.nowIso,
-			updatedAt: params.nowIso,
+			created_at: params.nowIso,
+			updated_at: params.nowIso,
 			visibility: validated.visibility,
 		},
 	};
@@ -231,9 +231,9 @@ async function fileRowToGetFileResponse(
 	return {
 		id: metadata.id,
 		type: metadata.type,
-		createdAt: metadata.createdAt,
-		updatedAt: metadata.updatedAt,
+		created_at: metadata.created_at,
+		updated_at: metadata.updated_at,
 		visibility: metadata.visibility,
-		dataBase64: fileData.toString("base64"),
+		data_base64: fileData.toString("base64"),
 	};
 }

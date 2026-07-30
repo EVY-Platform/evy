@@ -58,7 +58,7 @@ export function getPageOptions(
 ): { value: string; label: string }[] {
 	const flow = flowsById[flowId];
 	if (!flow) return [];
-	return flow.pageIds
+	return flow.page_ids
 		.map((id) => pagesById[id])
 		.filter((p): p is DATA_EVY_Page => !!p)
 		.map((p) => ({ value: p.id, label: p.name }));

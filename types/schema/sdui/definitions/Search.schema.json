@@ -1,6 +1,6 @@
 {
 	"$schema": "https://json-schema.org/draft/2020-12/schema",
-	"$id": "sdui/definitions/Search",
+	"$id": "sdui/definitions/search",
 	"title": "Search_Row",
 	"triggers": {
 		"tap": "optional"
@@ -14,7 +14,7 @@
 			"required": ["type", "source", "destination"],
 			"properties": {
 				"type": {
-					"const": "Search"
+					"const": "search"
 				},
 				"title": {
 					"type": "string"

@@ -15,7 +15,7 @@ extension EVY {
       method: "sync",
       params: SyncParams(
         cursor: cursor,
-        ownedServiceResources: ownedServiceResources()
+        owned_service_resources: owned_service_resources()
       ),
       expecting: SyncResponse.self
     )

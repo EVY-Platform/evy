@@ -1,7 +1,7 @@
 {
 	"$schema": "https://json-schema.org/draft/2020-12/schema",
-	"$id": "sdui/definitions/InlinePicker",
-	"title": "InlinePicker_Row",
+	"$id": "sdui/definitions/text_select",
+	"title": "TextSelect_Row",
 	"triggers": {
 		"tap": "required"
 	},
@@ -11,10 +11,10 @@
 		},
 		{
 			"type": "object",
-			"required": ["type", "value"],
+			"required": ["type", "source", "destination"],
 			"properties": {
 				"type": {
-					"const": "InlinePicker"
+					"const": "text_select"
 				},
 				"title": {
 					"type": "string"
@@ -25,10 +25,7 @@
 				"destination": {
 					"type": "string"
 				},
-				"value": {
-					"type": "string"
-				},
-				"initial": {
+				"text": {
 					"type": "string"
 				}
 			}

@@ -291,10 +291,10 @@ describe("action branch helpers", () => {
 			"flow-1": {
 				id: "flow-1",
 				name: "Main",
-				pageIds: ["page-1"],
+				page_ids: ["page-1"],
 				visibility: "public",
-				createdAt: now,
-				updatedAt: now,
+				created_at: now,
+				updated_at: now,
 			},
 		};
 		const pagesById: Record<string, DATA_EVY_Page> = {
@@ -302,22 +302,22 @@ describe("action branch helpers", () => {
 				id: "page-1",
 				name: "Home",
 				title: "",
-				rowIds: ["row-expand"],
+				row_ids: ["row-expand"],
 				visibility: "public",
-				createdAt: now,
-				updatedAt: now,
+				created_at: now,
+				updated_at: now,
 			},
 		};
 		const rowsById: Record<string, DATA_EVY_Row> = {
 			"row-expand": {
 				id: "row-expand",
 				name: "Expand target",
-				type: "TextExpand",
+				type: "text_expand",
 				visible: "true",
 				data: {},
 				visibility: "public",
-				createdAt: now,
-				updatedAt: now,
+				created_at: now,
+				updated_at: now,
 			},
 		};
 
@@ -371,20 +371,20 @@ describe("structured branch storage", () => {
 	});
 
 	it("renders a structured branch back to a string for editing", () => {
-		expect(branchToEditableString({ fn: "show", rowId: "row-1" })).toBe(
+		expect(branchToEditableString({ fn: "show", row_id: "row-1" })).toBe(
 			"{show(row-1)}",
 		);
 	});
 
 	it("round-trips a structured branch through the editor model", () => {
-		const stored = { fn: "show", rowId: "row-1" } as const;
+		const stored = { fn: "show", row_id: "row-1" } as const;
 		expect(branchForStorage(branchToEditableString(stored))).toEqual(
 			stored,
 		);
 	});
 
 	it("parses a structured branch into the editor model", () => {
-		expect(parseBranch({ fn: "show", rowId: "row-1" })).toEqual({
+		expect(parseBranch({ fn: "show", row_id: "row-1" })).toEqual({
 			functionName: "show",
 			args: ["row-1"],
 		});

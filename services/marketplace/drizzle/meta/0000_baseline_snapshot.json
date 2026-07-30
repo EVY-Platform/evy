@@ -1,11 +1,11 @@
 {
-	"id": "767ce29f-ec85-46df-8920-1706a55b9638",
+	"id": "bdce27f8-fce3-43aa-ad6c-fe4e9e9d35e0",
 	"prevId": "00000000-0000-0000-0000-000000000000",
 	"version": "7",
 	"dialect": "postgresql",
 	"tables": {
-		"public.Data": {
-			"name": "Data",
+		"public.data": {
+			"name": "data",
 			"schema": "",
 			"columns": {
 				"id": {

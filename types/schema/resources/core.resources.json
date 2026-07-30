@@ -17,8 +17,8 @@
 			"singular": "device",
 			"visibility": "private"
 		},
-		"organisations": {
-			"singular": "organisation",
+		"organizations": {
+			"singular": "organization",
 			"visibility": "public"
 		},
 		"services": {

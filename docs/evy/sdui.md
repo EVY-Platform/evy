@@ -58,7 +58,7 @@ Rows are what are put into pages. They are the building block of the EVY server-
 ```
 {
     "id": "uuid",
-    "type": "Button" | "Calendar" | "HorizontalContainer" | "Heading" | "Text" | ... ,
+    "type": "button" | "calendar" | "horizontal_container" | "heading" | "text" | ... ,
 
     // Required. Developer-facing row name.
     "name": "string",
@@ -157,9 +157,9 @@ Each row has an `actions` attribute: an object keyed by **trigger** name. Each t
   "tap": [{ "condition": "", "false": "", "true": { "fn": "close" } }],
   "submit": [{ "condition": "", "false": "", "true": { "fn": "close" } }],
   "delete": [{ "condition": "", "false": "", "true": { "fn": "delete_photo" } }],
-  "tap-row": [{ "condition": "", "false": "", "true": { "fn": "select", "value": "$datum" } }],
-  "tap-column": [{ "condition": "", "false": "", "true": { "fn": "select", "value": "$datum" } }],
-  "swipe-left": [{ "condition": "", "false": "", "true": { "fn": "show", "rowId": "sheetId" } }]
+  "tap_row": [{ "condition": "", "false": "", "true": { "fn": "select", "value": "$datum" } }],
+  "tap_column": [{ "condition": "", "false": "", "true": { "fn": "select", "value": "$datum" } }],
+  "swipe_left": [{ "condition": "", "false": "", "true": { "fn": "show", "rowId": "sheetId" } }]
 }
 ```
 
@@ -189,7 +189,7 @@ For row types that handle their own interactive elements (`SelectPhoto`, `TextEx
 
 On iOS, Heading, Input, ListItem, and Text rows with a non-empty `swipe-left` action list become swipeable (Mail-style trailing reveal). Dragging left reveals a single accent-colored button; releasing past the reveal threshold snaps open, and a fuller swipe executes immediately. Tapping the revealed button runs `actions.swipe-left` **in order with the row's datum** and closes the row. Only one row stays open at a time; tapping open content closes without firing `tap`. Empty or absent `swipe-left` means no swipe affordance.
 
-Optional **`swipeLabel`** (Heading, Input, ListItem, Text only) sets the revealed button content as EVY text (icons like `::check::`, interpolations, etc.). When omitted or blank, iOS shows a white ellipsis icon and uses the accessibility label “Swipe left”.
+Optional **`swipe_label`** (Heading, Input, ListItem, Text only) sets the revealed button content as EVY text (icons like `::check::`, interpolations, etc.). When omitted or blank, iOS shows a white ellipsis icon and uses the accessibility label “Swipe left”.
 
 For destructive or important `create`/`update` actions, attach a `sheet` row to the triggering row and use a `show` action with that sheet row's id (often the nested `sheet.id`). Put confirmation copy on the sheet root's `title` and message rows inside the sheet, then run the actual `create`/`update` followed by `close` from a confirm button in the sheet. **`show` presents the sheet in the triggering row's datum context**, so sheet buttons can read `$datum` the same way the row's own actions do. Container children (`VerticalContainer`, `HorizontalContainer`, `TabContainer`) inherit their parent's datum.
 
@@ -279,7 +279,7 @@ Open a confirmation sheet after selecting a timeslot (`select` must run first so
 ```json
 {
 	"id": "timeslot-picker-row-id",
-	"type": "TimeslotPicker",
+	"type": "timeslot_picker",
 	"actions": {
 		"tap": [
 			{
@@ -296,7 +296,7 @@ Open a confirmation sheet after selecting a timeslot (`select` must run first so
 	},
 	"sheet": {
 		"id": "b8c7d6e5-f4a3-4b2c-9d1e-0f8a7b6c5d4e",
-		"type": "VerticalContainer",
+		"type": "vertical_container",
 		"title": "Confirmation",
 		"children": []
 	}
@@ -320,13 +320,13 @@ Each entity references others by ID only. Rows can nest arbitrarily deep via two
 
 ```mermaid
 flowchart TD
-    F["DATA_EVY_Flow\nid · name · pageIds[]"]
-    P["DATA_EVY_Page\nid · title · rowIds[] · footerRowId?"]
+    F["DATA_EVY_Flow\nid · name · page_ids[]"]
+    P["DATA_EVY_Page\nid · title · row_ids[] · footer_row_id?"]
     R["DATA_EVY_Row\nid · type · visible · data{}"]
 
-    F -- "pageIds[]" --> P
-    P -- "rowIds[]" --> R
-    P -- "footerRowId?" --> R
+    F -- "page_ids[]" --> P
+    P -- "row_ids[]" --> R
+    P -- "footer_row_id?" --> R
     R -- "data.sheet_row_id?" --> R
     R -- "data.child_row_id? (Search)" --> R
     R -- "data.children_row_ids[]?" --> R

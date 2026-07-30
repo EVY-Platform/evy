@@ -13,8 +13,8 @@ function TextExpandRowInner({ rowId }: { rowId: string }) {
 	const textRef = useRef<HTMLParagraphElement | null>(null);
 	const title = row?.config.title ?? "";
 	const text = row?.config.text ?? "";
-	const expandLabel = row?.config.expandLabel ?? "";
-	const isCollapsible = expandLabel.trim().length > 0;
+	const expand_label = row?.config.expand_label ?? "";
+	const isCollapsible = expand_label.trim().length > 0;
 	const [userExpanded, setUserExpanded] = useState(false);
 	const [canExpand, setCanExpand] = useState(false);
 	const expanded = !isCollapsible || userExpanded;
@@ -64,7 +64,7 @@ function TextExpandRowInner({ rowId }: { rowId: string }) {
 					className="evy-text-blue evy-text-sm evy-self-start evy-cursor-pointer"
 					onClick={() => setUserExpanded(true)}
 				>
-					<EVYText text={expandLabel} />
+					<EVYText text={expand_label} />
 				</button>
 			) : null}
 		</div>
@@ -73,12 +73,12 @@ function TextExpandRowInner({ rowId }: { rowId: string }) {
 
 export default defineRow("TextExpandRow", {
 	config: {
-		type: "TextExpand",
+		type: "text_expand",
 		actions: {},
 		visible: "true",
 		title: "Expandable text title",
 		text: "This is a longer text row that can be expanded when it spans more lines than the configured maximum.",
-		expandLabel: "Read more",
+		expand_label: "Read more",
 	} satisfies RowConfig,
 	Component: TextExpandRowInner,
 });

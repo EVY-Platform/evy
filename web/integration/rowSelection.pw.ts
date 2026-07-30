@@ -15,7 +15,7 @@ test.describe("Row Selection", () => {
 				title: "Test Page",
 				rows: [
 					{
-						type: "Text",
+						type: "text",
 						title: "First Text Row",
 						subtitle: "First row subtitle content",
 					},
@@ -49,12 +49,12 @@ test.describe("Row Selection", () => {
 				title: "Test Page",
 				rows: [
 					{
-						type: "Text",
+						type: "text",
 						title: "First Text Row",
 						subtitle: "First row subtitle content",
 					},
 					{
-						type: "Text",
+						type: "text",
 						title: "Second Text Row",
 						subtitle: "Second row subtitle content",
 					},
@@ -93,12 +93,12 @@ test.describe("Row Selection", () => {
 				title: "Test Page",
 				rows: [
 					{
-						type: "Text",
+						type: "text",
 						title: "First Text Row",
 						subtitle: "First row subtitle content",
 					},
 					{
-						type: "Text",
+						type: "text",
 						title: "Text Row",
 						text: "Text row content",
 					},
@@ -156,7 +156,7 @@ test.describe("Row Selection", () => {
 				title: "Test Page",
 				rows: [
 					{
-						type: "Text",
+						type: "text",
 						title: "First Text Row",
 						subtitle: "First row subtitle content",
 					},
@@ -194,7 +194,7 @@ test.describe("Row Selection", () => {
 				title: "Test Page",
 				rows: [
 					{
-						type: "Text",
+						type: "text",
 						title: "First Text Row",
 						subtitle: "First row subtitle content",
 					},
@@ -232,11 +232,11 @@ test.describe("Row Selection with Containers", () => {
 				title: "Test Page",
 				rows: [
 					{
-						type: "VerticalContainer",
+						type: "vertical_container",
 						title: "Container Row",
 						children: [
 							{
-								type: "Text",
+								type: "text",
 								title: "Child Text Row",
 								text: "Child row text",
 							},
@@ -265,11 +265,11 @@ test.describe("Row Selection with Containers", () => {
 				title: "Test Page",
 				rows: [
 					{
-						type: "VerticalContainer",
+						type: "vertical_container",
 						title: "Container Row",
 						children: [
 							{
-								type: "Text",
+								type: "text",
 								title: "Child Text Row",
 								text: "Child row text",
 							},
@@ -304,15 +304,15 @@ test.describe("Row Selection with Containers", () => {
 				title: "Test Page",
 				rows: [
 					{
-						type: "VerticalContainer",
+						type: "vertical_container",
 						title: "Outer Container",
 						children: [
 							{
-								type: "HorizontalContainer",
+								type: "horizontal_container",
 								title: "Inner Container",
 								children: [
 									{
-										type: "Text",
+										type: "text",
 										title: "Deep Text Row",
 										text: "deep",
 									},
@@ -345,11 +345,11 @@ test.describe("Row Selection with Containers", () => {
 				title: "Test Page",
 				rows: [
 					{
-						type: "VerticalContainer",
+						type: "vertical_container",
 						title: "Container Row",
 						children: [
 							{
-								type: "Input",
+								type: "input",
 								title: "Child Input Row",
 								placeholder: "type here",
 							},
@@ -375,11 +375,11 @@ test.describe("Row Selection with Containers", () => {
 				title: "Test Page",
 				rows: [
 					{
-						type: "VerticalContainer",
+						type: "vertical_container",
 						title: "Container Row",
 						children: [
 							{
-								type: "Text",
+								type: "text",
 								title: "Child Text Row",
 								text: "Child row text",
 							},
@@ -405,11 +405,11 @@ test.describe("Row Selection with Containers", () => {
 				title: "Test Page",
 				rows: [
 					{
-						type: "VerticalContainer",
+						type: "vertical_container",
 						title: "Container Row",
 						children: [
 							{
-								type: "Text",
+								type: "text",
 								title: "Child Text Row",
 								text: "Child row text",
 							},

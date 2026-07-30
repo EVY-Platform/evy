@@ -151,7 +151,7 @@ describe("sync", () => {
 		expect(evyResourceNames).toContain("pages");
 		expect(evyResourceNames).toContain("rows");
 		expect(evyResourceNames).toContain("services");
-		expect(evyResourceNames).toContain("organisations");
+		expect(evyResourceNames).toContain("organizations");
 		expect(evyResourceNames).toContain("providers");
 		expect(evyResourceNames).toContain("files");
 		expect(evyResourceNames).toContain("addresses");
@@ -197,17 +197,17 @@ describe("sync", () => {
 		expect(rowResources).not.toContain("messages");
 	});
 
-	it("passes updatedAfter to the core read", async () => {
+	it("passes updated_after to the core read", async () => {
 		getSyncRowsImpl = async (resource, scope) => {
-			expect(scope.updatedAfter).toBe(EPOCH);
+			expect(scope.updated_after).toBe(EPOCH);
 			return buildMockGetResponse([{ id: `${resource}-1` }]);
 		};
 		await sync({ cursor: EPOCH }, db);
 	});
 
-	it("passes updatedAfter to fetchService", async () => {
+	it("passes updated_after to fetchService", async () => {
 		forwardGetImpl = async (_serviceName, params) => {
-			expect(params.filter?.updatedAfter).toBe(EPOCH);
+			expect(params.filter?.updated_after).toBe(EPOCH);
 			return buildMockGetResponse([{ id: `${params.resource}-1` }]);
 		};
 		await sync({ cursor: EPOCH }, db);
@@ -245,7 +245,7 @@ describe("sync", () => {
 	it("still returns core rows when an external service is down", async () => {
 		getSyncRowsImpl = async () =>
 			[
-				{ id: "core-1", updatedAt: "2026-01-01T00:00:00.000Z" },
+				{ id: "core-1", updated_at: "2026-01-01T00:00:00.000Z" },
 			] as unknown as GetResponse;
 		forwardGetImpl = async () => {
 			throw new Error("down");
@@ -260,7 +260,7 @@ describe("sync", () => {
 	it("holds the cursor when any resource failed", async () => {
 		getSyncRowsImpl = async () =>
 			[
-				{ id: "core-1", updatedAt: "2099-01-01T00:00:00.000Z" },
+				{ id: "core-1", updated_at: "2099-01-01T00:00:00.000Z" },
 			] as unknown as GetResponse;
 		forwardGetImpl = async () => {
 			throw new Error("down");
@@ -308,7 +308,7 @@ describe("sync", () => {
 		getSyncRowsImpl = async (resource) => {
 			if (resource === "rows") throw new Error("rows table broken");
 			return [
-				{ id: "ok", updatedAt: "2026-01-01T00:00:00.000Z" },
+				{ id: "ok", updated_at: "2026-01-01T00:00:00.000Z" },
 			] as unknown as GetResponse;
 		};
 		forwardGetImpl = async () => buildMockGetResponse([]);
@@ -385,13 +385,13 @@ describe("sync", () => {
 		it("passes the resumed-from point to every resource", async () => {
 			await sync({ cursor: RECENT_CURSOR }, db);
 
-			expect(ownershipFor(EVY_CORE_RESOURCE.FLOWS)?.updatedAfter).toBe(
+			expect(ownershipFor(EVY_CORE_RESOURCE.FLOWS)?.updated_after).toBe(
 				RECENT_CURSOR,
 			);
 		});
 
 		it("gives each resource the same full ownership declaration", async () => {
-			const ownedServiceResources = [
+			const owned_service_resources = [
 				{
 					service: EVY_CORE_SERVICE,
 					resource: EVY_CORE_RESOURCE.MESSAGES,
@@ -407,7 +407,7 @@ describe("sync", () => {
 			await sync(
 				{
 					cursor: EPOCH,
-					ownedServiceResources,
+					owned_service_resources,
 				},
 				db,
 			);
@@ -418,7 +418,7 @@ describe("sync", () => {
 				EVY_CORE_RESOURCE.FLOWS,
 			]) {
 				expect(ownershipFor(resource)?.owned).toEqual(
-					ownedServiceResources,
+					owned_service_resources,
 				);
 			}
 		});
@@ -431,7 +431,7 @@ describe("sync", () => {
 			};
 
 			await sync(
-				{ cursor: EPOCH, ownedServiceResources: [externalGroup] },
+				{ cursor: EPOCH, owned_service_resources: [externalGroup] },
 				db,
 			);
 
@@ -465,12 +465,12 @@ describe("sync", () => {
 	});
 
 	describe("cursor", () => {
-		it("issues a cursor derived from the newest updatedAt it returned", async () => {
+		it("issues a cursor derived from the newest updated_at it returned", async () => {
 			getSyncRowsImpl = async () =>
 				[
-					{ id: "a", updatedAt: "2026-01-01T00:00:00.000Z" },
-					{ id: "b", updatedAt: "2026-03-01T00:00:00.000Z" },
-					{ id: "c", updatedAt: "2026-02-01T00:00:00.000Z" },
+					{ id: "a", updated_at: "2026-01-01T00:00:00.000Z" },
+					{ id: "b", updated_at: "2026-03-01T00:00:00.000Z" },
+					{ id: "c", updated_at: "2026-02-01T00:00:00.000Z" },
 				] as unknown as GetResponse;
 			forwardGetImpl = async () => buildMockGetResponse([]);
 
@@ -491,7 +491,7 @@ describe("sync", () => {
 		it("treats a missing cursor as a full sync", async () => {
 			const seen: string[] = [];
 			getSyncRowsImpl = async (_resource, scope) => {
-				seen.push(scope.updatedAfter ?? "none");
+				seen.push(scope.updated_after ?? "none");
 				return buildMockGetResponse([]);
 			};
 			forwardGetImpl = async () => buildMockGetResponse([]);

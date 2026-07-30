@@ -6,11 +6,11 @@ function makeRow(id: string, data: Record<string, unknown> = {}): DATA_EVY_Row {
 	return {
 		id,
 		name: id,
-		type: "Input",
+		type: "input",
 		visible: "true",
 		data: data as DATA_EVY_Row["data"],
-		createdAt: "",
-		updatedAt: "",
+		created_at: "",
+		updated_at: "",
 		visibility: "public",
 	};
 }
@@ -36,19 +36,19 @@ describe("extractDraftVariables", () => {
 		const flow: DATA_EVY_Flow = {
 			id: "f1",
 			name: "Flow",
-			pageIds: ["p1"],
+			page_ids: ["p1"],
 			visibility: "public",
-			createdAt: "",
-			updatedAt: "",
+			created_at: "",
+			updated_at: "",
 		};
 		const page: DATA_EVY_Page = {
 			id: "p1",
 			name: "Page",
 			title: "Page",
-			rowIds: ["root"],
+			row_ids: ["root"],
 			visibility: "public",
-			createdAt: "",
-			updatedAt: "",
+			created_at: "",
+			updated_at: "",
 		};
 		const rowsById = {
 			root,

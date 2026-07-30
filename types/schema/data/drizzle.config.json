@@ -1,105 +1,105 @@
 {
 	"enums": {
-		"OS": {
-			"name": "OS"
+		"os": {
+			"name": "os"
 		},
-		"Visibility": {
-			"name": "Visibility"
+		"visibility": {
+			"name": "visibility"
 		}
 	},
 	"nonTableDefs": ["DATA_EVY_RowData", "DATA_EVY_FlowSubmits"],
 	"tables": {
 		"DATA_EVY_Device": {
-			"tableName": "Device",
+			"tableName": "device",
 			"primaryKey": "token",
 			"defaultRandom": [],
 			"uniqueIndexes": [
 				{
-					"name": "Device_token_os_key",
+					"name": "device_token_os_key",
 					"columns": ["token", "os"]
 				}
 			]
 		},
 		"DATA_EVY_Service": {
-			"tableName": "Service",
+			"tableName": "service",
 			"primaryKey": "id",
 			"defaultRandom": [],
 			"uniqueIndexes": [
 				{
-					"name": "Service_name_key",
+					"name": "service_name_key",
 					"columns": ["name"]
 				}
 			]
 		},
 		"DATA_EVY_Organization": {
-			"tableName": "Organization",
+			"tableName": "organization",
 			"primaryKey": "id",
 			"defaultRandom": [],
 			"uniqueIndexes": [
 				{
-					"name": "Organization_name_key",
+					"name": "organization_name_key",
 					"columns": ["name"]
 				}
 			]
 		},
 		"DATA_EVY_ServiceProvider": {
-			"tableName": "ServiceProvider",
+			"tableName": "service_provider",
 			"primaryKey": "id",
 			"defaultRandom": [],
 			"uniqueIndexes": [
 				{
-					"name": "ServiceProvider_name_key",
+					"name": "service_provider_name_key",
 					"columns": ["name"]
 				},
 				{
-					"name": "ServiceProvider_fk_service_id_fk_organization_id_key",
-					"columns": ["fkServiceId", "fkOrganizationId"]
+					"name": "service_provider_fk_service_id_fk_organization_id_key",
+					"columns": ["fk_service_id", "fk_organization_id"]
 				}
 			]
 		},
 		"DATA_EVY_Flow": {
-			"tableName": "Flow",
+			"tableName": "flow",
 			"primaryKey": "id",
 			"defaultRandom": ["id"],
 			"uniqueIndexes": []
 		},
 		"DATA_EVY_Page": {
-			"tableName": "Page",
+			"tableName": "page",
 			"primaryKey": "id",
 			"defaultRandom": ["id"],
 			"uniqueIndexes": []
 		},
 		"DATA_EVY_Row": {
-			"tableName": "Row",
+			"tableName": "row",
 			"primaryKey": "id",
 			"defaultRandom": ["id"],
 			"uniqueIndexes": []
 		},
 		"DATA_EVY_File": {
-			"tableName": "File",
+			"tableName": "file",
 			"primaryKey": "id",
 			"defaultRandom": [],
 			"uniqueIndexes": []
 		},
 		"DATA_EVY_Address": {
-			"tableName": "Address",
+			"tableName": "address",
 			"primaryKey": "id",
 			"defaultRandom": ["id"],
 			"uniqueIndexes": []
 		},
 		"DATA_EVY_Message": {
-			"tableName": "Message",
+			"tableName": "message",
 			"primaryKey": "id",
 			"defaultRandom": ["id"],
 			"uniqueIndexes": []
 		},
 		"DATA_EVY_Formatter": {
-			"tableName": "Formatter",
+			"tableName": "formatter",
 			"primaryKey": "id",
 			"defaultRandom": ["id"],
 			"uniqueIndexes": [
 				{
-					"name": "Formatter_name_key",
+					"name": "formatter_name_key",
 					"columns": ["name"]
 				}
 			]
@@ -109,14 +109,14 @@
 		{
 			"from": "DATA_EVY_ServiceProvider",
 			"to": "DATA_EVY_Service",
-			"fields": ["fkServiceId"],
+			"fields": ["fk_service_id"],
 			"references": ["id"],
 			"relationName": "service"
 		},
 		{
 			"from": "DATA_EVY_ServiceProvider",
 			"to": "DATA_EVY_Organization",
-			"fields": ["fkOrganizationId"],
+			"fields": ["fk_organization_id"],
 			"references": ["id"],
 			"relationName": "organization"
 		},

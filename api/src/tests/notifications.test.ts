@@ -80,22 +80,22 @@ describe("create/update real-time notifications", () => {
 		const subscriber = await connectAndLogin(
 			apiUrl,
 			"notify-token-1",
-			"Web",
-			"dataChanged",
+			"web",
+			"data_changed",
 		);
-		const notifyPromise = waitForNotification(subscriber, "dataChanged");
+		const notifyPromise = waitForNotification(subscriber, "data_changed");
 
 		const nowIso = new Date().toISOString();
 		const flowData: DATA_EVY_Flow = {
 			id: crypto.randomUUID(),
 			name: "WS Notify Flow",
-			pageIds: [],
+			page_ids: [],
 			visibility: "public",
-			createdAt: nowIso,
-			updatedAt: nowIso,
+			created_at: nowIso,
+			updated_at: nowIso,
 		};
 
-		const caller = await connectAndLogin(apiUrl, "notify-token-2", "Web");
+		const caller = await connectAndLogin(apiUrl, "notify-token-2", "web");
 
 		const createResult = await caller.call("create", {
 			service: EVY_CORE_SERVICE,
@@ -119,12 +119,12 @@ describe("create/update real-time notifications", () => {
 		const subscriber = await connectAndLogin(
 			apiUrl,
 			"notify-token-3",
-			"Web",
-			"dataChanged",
+			"web",
+			"data_changed",
 		);
-		const notifyPromise = waitForNotification(subscriber, "dataChanged");
+		const notifyPromise = waitForNotification(subscriber, "data_changed");
 
-		const caller = await connectAndLogin(apiUrl, "notify-token-4", "Web");
+		const caller = await connectAndLogin(apiUrl, "notify-token-4", "web");
 
 		const nowIso = new Date().toISOString();
 		const serviceId = crypto.randomUUID();
@@ -133,8 +133,8 @@ describe("create/update real-time notifications", () => {
 			name: "NotifySvc",
 			description: "D",
 			visibility: "public",
-			createdAt: nowIso,
-			updatedAt: nowIso,
+			created_at: nowIso,
+			updated_at: nowIso,
 		};
 		const createResult = await caller.call("create", {
 			service: EVY_CORE_SERVICE,
@@ -158,49 +158,49 @@ describe("create/update real-time notifications", () => {
 		const subscribed = await connectAndLogin(
 			apiUrl,
 			"notify-token-5",
-			"Web",
-			"dataChanged",
+			"web",
+			"data_changed",
 		);
-		const notifyPromise = waitForNotification(subscribed, "dataChanged");
+		const notifyPromise = waitForNotification(subscribed, "data_changed");
 
 		const notSubscribed = await connectAndLogin(
 			apiUrl,
 			"notify-token-6",
-			"Web",
+			"web",
 		);
 		let unexpected = false;
-		notSubscribed.on("dataChanged", () => {
+		notSubscribed.on("data_changed", () => {
 			unexpected = true;
 		});
 
-		const caller = await connectAndLogin(apiUrl, "notify-token-7", "Web");
+		const caller = await connectAndLogin(apiUrl, "notify-token-7", "web");
 		await caller.call("create", {
 			service: EVY_CORE_SERVICE,
 			resource: EVY_CORE_RESOURCE.FLOWS,
 			data: {
 				id: crypto.randomUUID(),
 				name: "Subscribed Only",
-				pageIds: [],
+				page_ids: [],
 				visibility: "public",
-				createdAt: new Date().toISOString(),
-				updatedAt: new Date().toISOString(),
+				created_at: new Date().toISOString(),
+				updated_at: new Date().toISOString(),
 			},
 		});
 
 		await notifyPromise;
 		expect(unexpected).toBe(false);
 
-		const sentinelPromise = waitForNotification(subscribed, "dataChanged");
+		const sentinelPromise = waitForNotification(subscribed, "data_changed");
 		await caller.call("create", {
 			service: EVY_CORE_SERVICE,
 			resource: EVY_CORE_RESOURCE.FLOWS,
 			data: {
 				id: crypto.randomUUID(),
 				name: "Subscribed Only Again",
-				pageIds: [],
+				page_ids: [],
 				visibility: "public",
-				createdAt: new Date().toISOString(),
-				updatedAt: new Date().toISOString(),
+				created_at: new Date().toISOString(),
+				updated_at: new Date().toISOString(),
 			},
 		});
 		await sentinelPromise;

@@ -16,18 +16,18 @@ const sheetTitleStyle: CSSProperties = {
 };
 
 export function SheetPage({
-	sheetRowId,
+	sheet_row_id,
 	pageId,
 	parentRowId,
 }: {
-	sheetRowId: string;
+	sheet_row_id: string;
 	pageId: string;
 	parentRowId: string;
 }) {
 	const { dispatchRow } = useFlowsContext();
 	const { dispatchDropIndicator } = useDragContext();
 	const scrollableRef = useRef<HTMLDivElement | null>(null);
-	const row = useRowById(sheetRowId);
+	const row = useRowById(sheet_row_id);
 	const parseText = useParseText();
 
 	usePageDropTarget({
@@ -41,8 +41,8 @@ export function SheetPage({
 	});
 
 	const selectSheetRow = useCallback(() => {
-		dispatchRow({ type: "SET_ACTIVE_ROW", rowId: sheetRowId });
-	}, [dispatchRow, sheetRowId]);
+		dispatchRow({ type: "SET_ACTIVE_ROW", rowId: sheet_row_id });
+	}, [dispatchRow, sheet_row_id]);
 
 	const sheetTitle = row?.config.title?.trim() ?? "";
 	const heading = sheetTitle ? parseText(sheetTitle) : null;
@@ -66,7 +66,7 @@ export function SheetPage({
 			{titleElement}
 			{row && (
 				<DraggableRowContainer
-					rowId={sheetRowId}
+					rowId={sheet_row_id}
 					selectRow={selectSheetRow}
 					showIndicators
 				>
@@ -78,7 +78,7 @@ export function SheetPage({
 
 	return (
 		<SheetPageFrame scrollableRef={scrollableRef}>
-			<SheetRootRowIdContext.Provider value={sheetRowId}>
+			<SheetRootRowIdContext.Provider value={sheet_row_id}>
 				{content}
 			</SheetRootRowIdContext.Provider>
 		</SheetPageFrame>

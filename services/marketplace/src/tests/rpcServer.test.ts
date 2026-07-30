@@ -25,12 +25,12 @@ const { startMarketplaceRpcServer, stopMarketplaceRpcServer } = await import(
 	"../rpc"
 );
 
-let wsPort: number;
+let ws_port: number;
 
 beforeAll(async () => {
 	await migrate(testDb, { migrationsFolder: "./drizzle" });
-	wsPort = await getFreePort();
-	await startMarketplaceRpcServer({ host: "127.0.0.1", port: wsPort });
+	ws_port = await getFreePort();
+	await startMarketplaceRpcServer({ host: "127.0.0.1", port: ws_port });
 });
 
 afterAll(async () => {
@@ -43,7 +43,7 @@ beforeEach(async () => {
 });
 
 function createClient(): InstanceType<typeof Client> {
-	return new Client(`ws://127.0.0.1:${wsPort}`);
+	return new Client(`ws://127.0.0.1:${ws_port}`);
 }
 
 async function waitForOpen(client: InstanceType<typeof Client>): Promise<void> {

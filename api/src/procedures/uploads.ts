@@ -9,18 +9,18 @@ export {
 
 export async function cancelUpload(params: unknown): Promise<{ ok: true }> {
 	validateCancelUploadParams(params);
-	deleteUploadSession(params.uploadId);
+	deleteUploadSession(params.upload_id);
 	return { ok: true };
 }
 
 function validateCancelUploadParams(
 	value: unknown,
-): asserts value is { uploadId: string } {
+): asserts value is { upload_id: string } {
 	if (typeof value !== "object" || value === null) {
 		throw new Error("CancelUploadRequest validation failed");
 	}
 	const params = value as Record<string, unknown>;
-	if (typeof params.uploadId !== "string" || params.uploadId.length < 1) {
+	if (typeof params.upload_id !== "string" || params.upload_id.length < 1) {
 		throw new Error("CancelUploadRequest validation failed");
 	}
 }

@@ -1,9 +1,10 @@
 {
 	"$schema": "https://json-schema.org/draft/2020-12/schema",
-	"$id": "sdui/definitions/VerticalContainer",
-	"title": "VerticalContainer_Row",
+	"$id": "sdui/definitions/list_item",
+	"title": "ListItem_Row",
 	"triggers": {
-		"tap": "optional"
+		"tap": "optional",
+		"swipe_left": "optional"
 	},
 	"allOf": [
 		{
@@ -11,19 +12,22 @@
 		},
 		{
 			"type": "object",
-			"required": ["type", "children"],
+			"required": ["type"],
 			"properties": {
 				"type": {
-					"const": "VerticalContainer"
+					"const": "list_item"
 				},
 				"title": {
 					"type": "string"
 				},
-				"children": {
-					"type": "array",
-					"items": {
-						"$ref": "../evy.schema.json#/$defs/UI_Row"
-					}
+				"subtitle": {
+					"type": "string"
+				},
+				"image": {
+					"type": "string"
+				},
+				"swipe_label": {
+					"type": "string"
 				}
 			}
 		}

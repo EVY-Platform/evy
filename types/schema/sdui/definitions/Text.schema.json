@@ -1,10 +1,10 @@
 {
 	"$schema": "https://json-schema.org/draft/2020-12/schema",
-	"$id": "sdui/definitions/Text",
+	"$id": "sdui/definitions/text",
 	"title": "Text_Row",
 	"triggers": {
 		"tap": "optional",
-		"swipe-left": "optional"
+		"swipe_left": "optional"
 	},
 	"allOf": [
 		{
@@ -15,7 +15,7 @@
 			"required": ["type"],
 			"properties": {
 				"type": {
-					"const": "Text"
+					"const": "text"
 				},
 				"title": {
 					"type": "string"
@@ -26,7 +26,7 @@
 				"label": {
 					"type": "string"
 				},
-				"swipeLabel": {
+				"swipe_label": {
 					"type": "string"
 				}
 			}

@@ -21,7 +21,7 @@
 			"type": "string",
 			"format": "uuid"
 		},
-		"createdAt": {
+		"created_at": {
 			"type": "string",
 			"format": "date-time"
 		},

@@ -56,16 +56,16 @@ function nowIso(): string {
 	return new Date().toISOString();
 }
 
-function timestamps(): { createdAt: string; updatedAt: string } {
+function timestamps(): { created_at: string; updated_at: string } {
 	const iso = nowIso();
-	return { createdAt: iso, updatedAt: iso };
+	return { created_at: iso, updated_at: iso };
 }
 
 function flowRow(overrides: Partial<DATA_EVY_Flow> = {}): DATA_EVY_Flow {
 	return {
 		id: crypto.randomUUID(),
 		name: "Flow",
-		pageIds: [],
+		page_ids: [],
 		visibility: "public",
 		...timestamps(),
 		...overrides,
@@ -77,7 +77,7 @@ function pageRow(overrides: Partial<DATA_EVY_Page> = {}): DATA_EVY_Page {
 		id: crypto.randomUUID(),
 		name: "Page",
 		title: "Page",
-		rowIds: [],
+		row_ids: [],
 		visibility: "public",
 		...timestamps(),
 		...overrides,
@@ -87,8 +87,8 @@ function pageRow(overrides: Partial<DATA_EVY_Page> = {}): DATA_EVY_Page {
 function rowRow(overrides: Partial<DATA_EVY_Row> = {}): DATA_EVY_Row {
 	return {
 		id: crypto.randomUUID(),
-		name: "Text",
-		type: "Text",
+		name: "text",
+		type: "text",
 		visible: "true",
 		data: { title: "", text: "Hello" },
 		visibility: "public",
@@ -161,8 +161,8 @@ describe("flat flow resources", () => {
 
 	it("creates flow, page, and row records", async () => {
 		const rowPayload = rowRow();
-		const pagePayload = pageRow({ rowIds: [rowPayload.id] });
-		const flowPayload = flowRow({ pageIds: [pagePayload.id] });
+		const pagePayload = pageRow({ row_ids: [rowPayload.id] });
+		const flowPayload = flowRow({ page_ids: [pagePayload.id] });
 
 		const createdRow = (await create(dataDb, {
 			service: EVY_CORE_SERVICE,
@@ -182,8 +182,8 @@ describe("flat flow resources", () => {
 
 		expect(createdRow.id).toBe(rowPayload.id);
 		expect(createdRow.data.text).toBe("Hello");
-		expect(createdPage.rowIds).toEqual([rowPayload.id]);
-		expect(createdFlow.pageIds).toEqual([pagePayload.id]);
+		expect(createdPage.row_ids).toEqual([rowPayload.id]);
+		expect(createdFlow.page_ids).toEqual([pagePayload.id]);
 		expect(await testDb.select().from(schema.row)).toHaveLength(1);
 		expect(await testDb.select().from(schema.page)).toHaveLength(1);
 		expect(await testDb.select().from(schema.flow)).toHaveLength(1);
@@ -194,7 +194,7 @@ describe("flat flow resources", () => {
 			service: "66b092ae-7cd8-4d67-95b7-30b03568fd90",
 			resource: "dc28ed59-298e-493c-8ff3-3e60f2ebccbd",
 		};
-		const flowPayload = { ...flowRow({ pageIds: [] }), submits };
+		const flowPayload = { ...flowRow({ page_ids: [] }), submits };
 
 		const created = (await create(dataDb, {
 			service: EVY_CORE_SERVICE,
@@ -220,7 +220,7 @@ describe("flat flow resources", () => {
 	});
 
 	it("omits submits entirely when a flow does not declare one", async () => {
-		const flowPayload = flowRow({ pageIds: [] });
+		const flowPayload = flowRow({ page_ids: [] });
 
 		const created = (await create(dataDb, {
 			service: EVY_CORE_SERVICE,
@@ -279,8 +279,8 @@ describe("flat flow resources", () => {
 
 		expect(result.name).toBe("Renamed");
 		expect(result.data.title).toBe("Updated");
-		expect(result.createdAt).toBe(payload.createdAt);
-		expect(Date.parse(result.updatedAt)).not.toBeNaN();
+		expect(result.created_at).toBe(payload.created_at);
+		expect(Date.parse(result.updated_at)).not.toBeNaN();
 	});
 
 	it("rejects update when a flat record does not exist", async () => {
@@ -294,16 +294,16 @@ describe("flat flow resources", () => {
 		).rejects.toThrow("Resource not found");
 	});
 
-	it("gets flat records by id and updatedAfter ordered oldest first", async () => {
+	it("gets flat records by id and updated_after ordered oldest first", async () => {
 		const older = flowRow({
 			name: "Older",
-			createdAt: "2024-01-01T00:00:00.000Z",
-			updatedAt: "2024-01-01T00:00:00.000Z",
+			created_at: "2024-01-01T00:00:00.000Z",
+			updated_at: "2024-01-01T00:00:00.000Z",
 		});
 		const newer = flowRow({
 			name: "Newer",
-			createdAt: "2024-01-01T00:00:00.000Z",
-			updatedAt: "2024-01-02T00:00:00.000Z",
+			created_at: "2024-01-01T00:00:00.000Z",
+			updated_at: "2024-01-02T00:00:00.000Z",
 		});
 		await testDb.insert(schema.flow).values([older, newer]);
 
@@ -324,7 +324,7 @@ describe("flat flow resources", () => {
 		const filteredByTime = (await get(dataDb, {
 			service: EVY_CORE_SERVICE,
 			resource: FLOW_RESOURCE,
-			filter: { updatedAfter: "2024-01-01T12:00:00.000Z" },
+			filter: { updated_after: "2024-01-01T12:00:00.000Z" },
 		})) as DATA_EVY_Flow[];
 		expect(filteredByTime.map((flow) => flow.id)).toEqual([newer.id]);
 	});
@@ -345,7 +345,7 @@ describe("flat flow resources", () => {
 
 		expect(deleted.id).toBe(payload.id);
 		const [tombstone] = await testDb.select().from(schema.page);
-		expect(tombstone?.deletedAt).toBeTruthy();
+		expect(tombstone?.deleted_at).toBeTruthy();
 		expect(
 			await get(dataDb, {
 				service: EVY_CORE_SERVICE,
@@ -404,7 +404,7 @@ describe("address resources", () => {
 		expect(updated.unit).toBe("C510");
 		expect(updated.instructions).toBe("Buzz 509");
 		expect(updated.visibility).toBe("private");
-		expect(updated.createdAt).toBe(payload.createdAt);
+		expect(updated.created_at).toBe(payload.created_at);
 
 		const deleted = (await deleteCore(dataDb, {
 			service: EVY_CORE_SERVICE,
@@ -413,7 +413,7 @@ describe("address resources", () => {
 		})) as DATA_EVY_Address;
 		expect(deleted.id).toBe(payload.id);
 		const [tombstone] = await testDb.select().from(schema.address);
-		expect(tombstone?.deletedAt).toBeTruthy();
+		expect(tombstone?.deleted_at).toBeTruthy();
 		expect(
 			await get(dataDb, {
 				service: EVY_CORE_SERVICE,
@@ -465,7 +465,7 @@ describe("visibility", () => {
 				data: {
 					id: crypto.randomUUID(),
 					name: "Flow With No Visibility",
-					pageIds: [],
+					page_ids: [],
 				},
 			}),
 		).rejects.toThrow("visibility");
@@ -478,7 +478,7 @@ describe("visibility", () => {
 			data: {
 				id: crypto.randomUUID(),
 				name: "Public Flow",
-				pageIds: [],
+				page_ids: [],
 				visibility: "public",
 			},
 		})) as DATA_EVY_Flow;
@@ -493,7 +493,7 @@ describe("visibility", () => {
 			data: {
 				id: flowId,
 				name: "Private Flow",
-				pageIds: [],
+				page_ids: [],
 				visibility: "private",
 			},
 		})) as DATA_EVY_Flow;
@@ -536,7 +536,7 @@ describe("message resources", () => {
 			data: payload,
 		})) as DATA_EVY_Message;
 		expect(created.id).toBeDefined();
-		expect(created.updatedAt).toBeDefined();
+		expect(created.updated_at).toBeDefined();
 		expect(created.data.value).toBe("pending");
 		expect(created.visibility).toBe("private");
 
@@ -553,7 +553,7 @@ describe("message resources", () => {
 		})) as DATA_EVY_Message;
 		expect(deleted.id).toBe(created.id);
 		const [tombstone] = await testDb.select().from(schema.message);
-		expect(tombstone?.deletedAt).toBeTruthy();
+		expect(tombstone?.deleted_at).toBeTruthy();
 		expect(
 			await get(dataDb, {
 				service: EVY_CORE_SERVICE,
@@ -631,7 +631,7 @@ describe("getSyncRows", () => {
 				fk: otherFk,
 				service: targetService,
 				resource: targetResource,
-				parentMessageId: requestId,
+				parent_message_id: requestId,
 				data: { value: "accept", type: "pickup" },
 				visibility: "private" as const,
 			},
@@ -723,12 +723,12 @@ describe("getSyncRows", () => {
 		).toEqual([]);
 	});
 
-	it("excludes owned messages unchanged since updatedAfter", async () => {
+	it("excludes owned messages unchanged since updated_after", async () => {
 		const mine = await createMessage(otherFk);
 
 		expect(
 			await ownedIds({
-				updatedAfter: mine.updatedAt,
+				updated_after: mine.updated_at,
 				owned: ownsCoreMessage(mine.id),
 			}),
 		).toEqual([]);
@@ -736,7 +736,7 @@ describe("getSyncRows", () => {
 
 	it("carries tombstones to the owner on an incremental read", async () => {
 		const mine = await createMessage(otherFk);
-		const before = mine.updatedAt;
+		const before = mine.updated_at;
 		await deleteCore(dataDb, {
 			service: EVY_CORE_SERVICE,
 			resource: MESSAGE_RESOURCE,
@@ -744,11 +744,11 @@ describe("getSyncRows", () => {
 		});
 
 		const incremental = (await getSyncRows(dataDb, MESSAGE_RESOURCE, {
-			updatedAfter: before,
+			updated_after: before,
 			owned: ownsCoreMessage(mine.id),
 		})) as DATA_EVY_Message[];
 		expect(incremental).toHaveLength(1);
-		expect(incremental[0].deletedAt).toBeTruthy();
+		expect(incremental[0].deleted_at).toBeTruthy();
 
 		expect(
 			await ownedIds({
@@ -803,7 +803,7 @@ describe("getSyncRows", () => {
 		).toEqual([mine.id]);
 	});
 
-	it("leaves messages with no parentMessageId unaffected", async () => {
+	it("leaves messages with no parent_message_id unaffected", async () => {
 		const mine = await createMessage(otherFk);
 		await createMessage(otherFk);
 
@@ -914,12 +914,12 @@ describe("getSyncRows entitlement", () => {
 		});
 
 		const rows = (await getSyncRows(dataDb, FLOW_RESOURCE, {
-			updatedAfter: created.updatedAt,
+			updated_after: created.updated_at,
 			owned: ownsCoreResource(FLOW_RESOURCE, mine.id),
 		})) as DATA_EVY_Flow[];
 
 		expect(rows).toHaveLength(1);
-		expect(rows[0].deletedAt).toBeTruthy();
+		expect(rows[0].deleted_at).toBeTruthy();
 	});
 });
 
@@ -967,10 +967,10 @@ describe("files", () => {
 		const fileId = crypto.randomUUID();
 		const bytes = Buffer.from("hello-file");
 		const metadata = JSON.stringify({
-			uploadId: fileId,
+			upload_id: fileId,
 			index: 0,
-			byteOffset: 0,
-			byteLength: bytes.length,
+			byte_offset: 0,
+			byte_length: bytes.length,
 		});
 		const metadataBytes = Buffer.from(metadata);
 		const header = Buffer.alloc(4);
@@ -1081,15 +1081,15 @@ describe("tombstones", () => {
 		const rows = (await get(dataDb, {
 			service: EVY_CORE_SERVICE,
 			resource: FLOW_RESOURCE,
-			filter: { updatedAfter: "1970-01-01T00:00:00.000Z" },
+			filter: { updated_after: "1970-01-01T00:00:00.000Z" },
 		})) as DATA_EVY_Flow[];
 
 		expect(rows).toHaveLength(1);
 		expect(rows[0]?.id).toBe(payload.id);
-		expect(rows[0]?.deletedAt).toBeTruthy();
+		expect(rows[0]?.deleted_at).toBeTruthy();
 	});
 
-	it("stamps updatedAt on delete so the tombstone lands after the cursor", async () => {
+	it("stamps updated_at on delete so the tombstone lands after the cursor", async () => {
 		const payload = flowRow();
 		const created = (await create(dataDb, {
 			service: EVY_CORE_SERVICE,
@@ -1103,8 +1103,8 @@ describe("tombstones", () => {
 			filter: { id: payload.id },
 		})) as DATA_EVY_Flow;
 
-		expect(deleted.updatedAt >= created.updatedAt).toBe(true);
-		expect(deleted.deletedAt).toBeTruthy();
+		expect(deleted.updated_at >= created.updated_at).toBe(true);
+		expect(deleted.deleted_at).toBeTruthy();
 	});
 
 	it("refuses to delete an already-tombstoned record", async () => {
@@ -1119,7 +1119,7 @@ describe("tombstones", () => {
 		).rejects.toThrow("Resource not found");
 	});
 
-	it("omits deletedAt entirely for a live record", async () => {
+	it("omits deleted_at entirely for a live record", async () => {
 		const payload = flowRow();
 		const created = (await create(dataDb, {
 			service: EVY_CORE_SERVICE,
@@ -1127,7 +1127,7 @@ describe("tombstones", () => {
 			data: payload,
 		})) as DATA_EVY_Flow;
 
-		expect("deletedAt" in created).toBe(false);
+		expect("deleted_at" in created).toBe(false);
 	});
 
 	it("tombstones file metadata while removing the binary", async () => {
@@ -1146,7 +1146,7 @@ describe("tombstones", () => {
 		});
 
 		const [row] = await testDb.select().from(schema.file);
-		expect(row?.deletedAt).toBeTruthy();
+		expect(row?.deleted_at).toBeTruthy();
 		expect(
 			await get(dataDb, {
 				service: EVY_CORE_SERVICE,

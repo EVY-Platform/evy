@@ -23,7 +23,7 @@ const dataDb = asEvyDb(testDb);
 
 type WSServer = InstanceType<typeof Server>;
 
-let wsPort: number;
+let ws_port: number;
 let testServer: WSServer | null = null;
 const storedData: { id: string; value: string }[] = [];
 
@@ -67,8 +67,8 @@ async function startTestWsServer(port: number): Promise<WSServer> {
 			id: rowData.id ?? crypto.randomUUID(),
 			resource: params.resource,
 			data: rowData,
-			createdAt: nowIso,
-			updatedAt: nowIso,
+			created_at: nowIso,
+			updated_at: nowIso,
 		};
 		storedData.push(rowData);
 		emitJsonRpc(server, DATA_CHANGED_EVENT, {
@@ -98,9 +98,9 @@ describe("service WebSocket adapters", () => {
 
 	beforeAll(async () => {
 		await migrate(testDb, { migrationsFolder: "./drizzle" });
-		wsPort = await getFreePort();
+		ws_port = await getFreePort();
 		process.env.MARKETPLACE_WS_HOST = "127.0.0.1";
-		process.env.MARKETPLACE_WS_PORT = String(wsPort);
+		process.env.MARKETPLACE_WS_PORT = String(ws_port);
 		// Keep failed reconnect probes short so a slow CI runner cannot burn the
 		// default 10s RPC timeout inside the 5s bun test budget.
 		process.env.SERVICE_RPC_TIMEOUT_MS = "200";
@@ -110,13 +110,13 @@ describe("service WebSocket adapters", () => {
 			id: EXTERNAL_TEST_SERVICE_ID,
 			name: "marketplace",
 			description: "Marketplace",
-			sortOrder: 1,
+			sort_order: 1,
 			visibility: "public",
-			createdAt: nowIso,
-			updatedAt: nowIso,
+			created_at: nowIso,
+			updated_at: nowIso,
 		});
 
-		testServer = await startTestWsServer(wsPort);
+		testServer = await startTestWsServer(ws_port);
 
 		const { initServiceAdapters } = await import("../procedures/services");
 		await initServiceAdapters(dataDb, (_eventName, payload) => {
@@ -202,7 +202,7 @@ describe("service WebSocket adapters", () => {
 		);
 
 		stopTestWsServer();
-		testServer = await startTestWsServer(wsPort);
+		testServer = await startTestWsServer(ws_port);
 
 		const reconnectDeadline = Date.now() + 5000;
 		let reconnected = false;
@@ -264,8 +264,8 @@ describe("resolveServiceWsEndpoint", () => {
 			expect(
 				resolveServiceWsEndpoint({
 					...base,
-					wsHost: "row-host",
-					wsPort: 8001,
+					ws_host: "row-host",
+					ws_port: 8001,
 				}),
 			).toEqual({ host: "row-host", port: "8001" });
 		});
@@ -276,8 +276,8 @@ describe("resolveServiceWsEndpoint", () => {
 			expect(
 				resolveServiceWsEndpoint({
 					...base,
-					wsHost: null,
-					wsPort: null,
+					ws_host: null,
+					ws_port: null,
 				}),
 			).toEqual({ host: "env-host", port: "9999" });
 		});
@@ -289,8 +289,8 @@ describe("resolveServiceWsEndpoint", () => {
 			expect(
 				resolveServiceWsEndpoint({
 					...base,
-					wsHost: "row-host",
-					wsPort: null,
+					ws_host: "row-host",
+					ws_port: null,
 				}),
 			).toEqual({ host: "env-host", port: "9999" });
 		});
@@ -301,8 +301,8 @@ describe("resolveServiceWsEndpoint", () => {
 			expect(() =>
 				resolveServiceWsEndpoint({
 					...base,
-					wsHost: null,
-					wsPort: null,
+					ws_host: null,
+					ws_port: null,
 				}),
 			).toThrow("marketplace");
 		});
@@ -315,8 +315,8 @@ describe("resolveServiceWsEndpoint", () => {
 			resolveServiceWsEndpoint({
 				id: EXTERNAL_TEST_SERVICE_ID,
 				name: "my service!",
-				wsHost: null,
-				wsPort: null,
+				ws_host: null,
+				ws_port: null,
 			}),
 		).toThrow("cannot be used for env lookup");
 	});
@@ -331,8 +331,8 @@ describe("resolveServiceWsEndpoint", () => {
 				resolveServiceWsEndpoint({
 					id: EXTERNAL_TEST_SERVICE_ID,
 					name: "svc_2",
-					wsHost: null,
-					wsPort: null,
+					ws_host: null,
+					ws_port: null,
 				}),
 			).toEqual({ host: "h", port: "1" });
 		} finally {
@@ -364,10 +364,10 @@ describe("forwarded call failures are attributed", () => {
 			id: serviceId,
 			name: "marketplace",
 			description: "Marketplace",
-			sortOrder: 1,
+			sort_order: 1,
 			visibility: "public",
-			createdAt: nowIso,
-			updatedAt: nowIso,
+			created_at: nowIso,
+			updated_at: nowIso,
 		});
 
 		slowPort = await getFreePort();

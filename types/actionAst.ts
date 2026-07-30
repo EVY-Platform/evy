@@ -123,10 +123,10 @@ function convertCreate(args: string[]): ActionConversion {
 	const data = parseObjectArgument(args[2]);
 	if (!data) return fail("create data is neither an object nor a path");
 
-	let idDestination: string | undefined;
+	let id_destination: string | undefined;
 	if (args.length > 3) {
-		idDestination = args[3].trim();
-		if (!idDestination)
+		id_destination = args[3].trim();
+		if (!id_destination)
 			return fail("create id destination must not be empty");
 	}
 	if (args.length > 4) return fail("create accepts at most 4 arguments");
@@ -140,7 +140,7 @@ function convertCreate(args: string[]): ActionConversion {
 				resource,
 				mode: "inline",
 				data: data.map,
-				...(idDestination ? { idDestination } : {}),
+				...(id_destination ? { id_destination: id_destination } : {}),
 			},
 		};
 	}
@@ -150,9 +150,9 @@ function convertCreate(args: string[]): ActionConversion {
 			fn: "create",
 			service,
 			resource,
-			mode: "fromPath",
-			dataPath: data.path,
-			...(idDestination ? { idDestination } : {}),
+			mode: "from_path",
+			data_path: data.path,
+			...(id_destination ? { id_destination: id_destination } : {}),
 		},
 	};
 }
@@ -192,7 +192,7 @@ function convertUpdate(args: string[]): ActionConversion {
 	const changePart =
 		changes.kind === "map"
 			? { changes: changes.map }
-			: { changesPath: changes.path };
+			: { changes_path: changes.path };
 
 	if (mode === "draft") {
 		return {
@@ -229,12 +229,18 @@ function convertNavigate(args: string[]): ActionConversion {
 
 	const rawQuery = args.length > 2 ? args[2].trim() : "";
 	if (!rawQuery) {
-		return { ok: true, invocation: { fn: "navigate", flowId, pageId } };
+		return {
+			ok: true,
+			invocation: { fn: "navigate", flow_id: flowId, page_id: pageId },
+		};
 	}
 
 	const query = parsePlainTextObject(rawQuery, true);
 	if (query === null) return fail("navigate query must be an object");
-	return { ok: true, invocation: { fn: "navigate", flowId, pageId, query } };
+	return {
+		ok: true,
+		invocation: { fn: "navigate", flow_id: flowId, page_id: pageId, query },
+	};
 }
 
 /** Empty branches stay empty; `{ ok: false }` means "leave this string alone". */
@@ -264,7 +270,7 @@ export function parseActionStringToInvocation(
 		if (!rowId) return fail(`${call.name} row id must not be empty`);
 		return {
 			ok: true,
-			invocation: { fn: call.name, rowId } as UI_ActionInvocation,
+			invocation: { fn: call.name, row_id: rowId } as UI_ActionInvocation,
 		};
 	}
 
@@ -318,15 +324,15 @@ export function serializeInvocationToEditorString(
 			return `{${invocation.fn}()}`;
 		case "show":
 		case "expand_text":
-			return call([invocation.rowId]);
+			return call([invocation.row_id]);
 		case "highlight_required":
 			return call([invocation.field]);
 		case "select":
 			return call([invocation.value]);
 		case "navigate":
 			return call([
-				invocation.flowId,
-				invocation.pageId,
+				invocation.flow_id,
+				invocation.page_id,
 				...(invocation.query
 					? [serializeExpressionMap(invocation.query)]
 					: []),
@@ -342,12 +348,14 @@ export function serializeInvocationToEditorString(
 			const dataArg =
 				invocation.mode === "inline"
 					? serializeExpressionMap(invocation.data)
-					: invocation.dataPath;
+					: invocation.data_path;
 			return call([
 				invocation.service,
 				invocation.resource,
 				dataArg,
-				...(invocation.idDestination ? [invocation.idDestination] : []),
+				...(invocation.id_destination
+					? [invocation.id_destination]
+					: []),
 			]);
 		}
 		case "update": {
@@ -358,7 +366,7 @@ export function serializeInvocationToEditorString(
 			const changesArg =
 				"changes" in invocation && invocation.changes
 					? serializeExpressionMap(invocation.changes)
-					: (invocation as { changesPath: string }).changesPath;
+					: (invocation as { changes_path: string }).changes_path;
 			return call([
 				invocation.service,
 				invocation.resource,

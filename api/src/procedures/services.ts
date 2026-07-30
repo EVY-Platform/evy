@@ -196,11 +196,11 @@ function serviceRpcTimeoutMs(): number {
 export function resolveServiceWsEndpoint(svc: {
 	id: string;
 	name: string;
-	wsHost?: string | null;
-	wsPort?: number | null;
+	ws_host?: string | null;
+	ws_port?: number | null;
 }): { host: string; port: string } {
-	const rowHost = svc.wsHost?.trim();
-	const rowPort = svc.wsPort;
+	const rowHost = svc.ws_host?.trim();
+	const rowPort = svc.ws_port;
 	if (rowHost && rowPort) {
 		return { host: rowHost, port: String(rowPort) };
 	}
@@ -208,7 +208,7 @@ export function resolveServiceWsEndpoint(svc: {
 	const prefix = svc.name.toUpperCase();
 	if (!ENV_SAFE_SERVICE_NAME.test(prefix)) {
 		throw new Error(
-			`Service "${svc.name}" (${svc.id}) has no wsHost/wsPort and its name ` +
+			`Service "${svc.name}" (${svc.id}) has no ws_host/ws_port and its name ` +
 				"cannot be used for env lookup (expected letters, digits and underscores)",
 		);
 	}
@@ -217,7 +217,7 @@ export function resolveServiceWsEndpoint(svc: {
 	const port = process.env[`${prefix}_WS_PORT`]?.trim();
 	if (!host || !port) {
 		throw new Error(
-			`Service "${svc.name}" (${svc.id}) requires wsHost/wsPort on its row, ` +
+			`Service "${svc.name}" (${svc.id}) requires ws_host/ws_port on its row, ` +
 				`or ${prefix}_WS_HOST and ${prefix}_WS_PORT`,
 		);
 	}

@@ -30,9 +30,9 @@ function nextCursor(rows: SyncRow[], resumedFrom: string): string {
 		if (!Array.isArray(row.value)) continue;
 		for (const record of row.value) {
 			if (!record || typeof record !== "object") continue;
-			const updatedAt = (record as Record<string, unknown>).updatedAt;
-			if (typeof updatedAt === "string" && updatedAt > highWater) {
-				highWater = updatedAt;
+			const updated_at = (record as Record<string, unknown>).updated_at;
+			if (typeof updated_at === "string" && updated_at > highWater) {
+				highWater = updated_at;
 			}
 		}
 	}
@@ -63,7 +63,7 @@ async function fetchResources(
 			const value = await fetchOne(ref, {
 				service: ref.service,
 				resource: ref.resource,
-				filter: { updatedAfter: since },
+				filter: { updated_after: since },
 			});
 			if (value.length === 0) continue;
 			rows.push({ ...ref, value });
@@ -117,12 +117,12 @@ export async function sync(
 	const externalRefs = externalResourceRefs(catalog, EVY_CORE_SERVICE);
 
 	const resumedFrom = resumePoint(syncParams);
-	const owned = syncParams.ownedServiceResources ?? [];
+	const owned = syncParams.owned_service_resources ?? [];
 
 	const [core, external] = await Promise.all([
 		fetchResources(coreResourceRefs(), resumedFrom, (ref) =>
 			data.getSyncRows(db, ref.resource, {
-				updatedAfter: resumedFrom,
+				updated_after: resumedFrom,
 				owned,
 			}),
 		),

@@ -13,7 +13,7 @@ function buildChunkFrame(metadata: object, chunkData: Buffer): Buffer {
 	return Buffer.concat([prefix, metadataBytes, chunkData]);
 }
 
-const uploadId = "440dcda6-3a4c-4767-8de0-dffe860fd5ba";
+const upload_id = "440dcda6-3a4c-4767-8de0-dffe860fd5ba";
 const validBytes = Buffer.from([1, 2, 3, 4, 5]);
 
 beforeEach(() => {
@@ -23,14 +23,14 @@ beforeEach(() => {
 describe("parseUploadChunkFrame", () => {
 	it("parses a valid upload chunk frame", () => {
 		const metadata = {
-			uploadId,
+			upload_id,
 			index: 0,
-			byteOffset: 0,
-			byteLength: validBytes.length,
+			byte_offset: 0,
+			byte_length: validBytes.length,
 		};
 		const frame = buildChunkFrame(metadata, validBytes);
 		const result = parseUploadChunkFrame(frame);
-		expect(result.metadata.uploadId).toBe(uploadId);
+		expect(result.metadata.upload_id).toBe(upload_id);
 		expect(result.metadata.index).toBe(0);
 		expect(result.chunkData).toEqual(validBytes);
 	});
@@ -58,11 +58,11 @@ describe("parseUploadChunkFrame", () => {
 		).toThrow("Invalid metadata JSON in upload chunk frame");
 	});
 
-	it("throws when uploadId is missing", () => {
+	it("throws when upload_id is missing", () => {
 		const metadata = {
 			index: 0,
-			byteOffset: 0,
-			byteLength: 1,
+			byte_offset: 0,
+			byte_length: 1,
 		};
 		const frame = buildChunkFrame(metadata, Buffer.from([0x00]));
 		expect(() => parseUploadChunkFrame(frame)).toThrow(
@@ -79,10 +79,10 @@ describe("handleUploadChunk", () => {
 		await handleUploadChunk(
 			buildChunkFrame(
 				{
-					uploadId,
+					upload_id,
 					index: 0,
-					byteOffset: 0,
-					byteLength: chunk1.length,
+					byte_offset: 0,
+					byte_length: chunk1.length,
 				},
 				chunk1,
 			),
@@ -90,10 +90,10 @@ describe("handleUploadChunk", () => {
 		await handleUploadChunk(
 			buildChunkFrame(
 				{
-					uploadId,
+					upload_id,
 					index: 1,
-					byteOffset: chunk1.length,
-					byteLength: chunk2.length,
+					byte_offset: chunk1.length,
+					byte_length: chunk2.length,
 				},
 				chunk2,
 			),
@@ -102,7 +102,7 @@ describe("handleUploadChunk", () => {
 
 	it("throws when first chunk index is not 0", async () => {
 		const frame = buildChunkFrame(
-			{ uploadId, index: 1, byteOffset: 0, byteLength: 4 },
+			{ upload_id, index: 1, byte_offset: 0, byte_length: 4 },
 			Buffer.from([0x01, 0x02, 0x03, 0x04]),
 		);
 		await expect(handleUploadChunk(frame)).rejects.toThrow(
@@ -115,10 +115,10 @@ describe("handleUploadChunk", () => {
 		await handleUploadChunk(
 			buildChunkFrame(
 				{
-					uploadId,
+					upload_id,
 					index: 0,
-					byteOffset: 0,
-					byteLength: chunk1.length,
+					byte_offset: 0,
+					byte_length: chunk1.length,
 				},
 				chunk1,
 			),
@@ -127,10 +127,10 @@ describe("handleUploadChunk", () => {
 			handleUploadChunk(
 				buildChunkFrame(
 					{
-						uploadId,
+						upload_id,
 						index: 2,
-						byteOffset: chunk1.length,
-						byteLength: 1,
+						byte_offset: chunk1.length,
+						byte_length: 1,
 					},
 					Buffer.from([0x00]),
 				),
@@ -138,13 +138,13 @@ describe("handleUploadChunk", () => {
 		).rejects.toThrow("Unexpected chunk index");
 	});
 
-	it("throws on byteLength mismatch", async () => {
+	it("throws on byte_length mismatch", async () => {
 		const frame = buildChunkFrame(
 			{
-				uploadId,
+				upload_id,
 				index: 0,
-				byteOffset: 0,
-				byteLength: 100,
+				byte_offset: 0,
+				byte_length: 100,
 			},
 			Buffer.from([1, 2]),
 		);
@@ -154,26 +154,26 @@ describe("handleUploadChunk", () => {
 	});
 });
 
-describe("cancelUpload", () => {
+describe("cancel_upload", () => {
 	it("cancels an existing upload session", async () => {
 		await handleUploadChunk(
 			buildChunkFrame(
 				{
-					uploadId,
+					upload_id,
 					index: 0,
-					byteOffset: 0,
-					byteLength: validBytes.length,
+					byte_offset: 0,
+					byte_length: validBytes.length,
 				},
 				validBytes,
 			),
 		);
-		const result = await cancelUpload({ uploadId });
+		const result = await cancelUpload({ upload_id });
 		expect(result.ok).toBe(true);
 	});
 
 	it("returns ok:true when no upload session exists", async () => {
 		const result = await cancelUpload({
-			uploadId: "6897ad63-495d-46d9-8a5d-3400775f9e5a",
+			upload_id: "6897ad63-495d-46d9-8a5d-3400775f9e5a",
 		});
 		expect(result.ok).toBe(true);
 	});

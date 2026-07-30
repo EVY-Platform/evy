@@ -84,7 +84,7 @@ struct EVYTitledTextFieldRow: View {
     json: """
       {
         "id": "preview-input-row",
-        "type": "Input",
+        "type": "input",
         "source": "{item.title}",
         "destination": "{item.title}",
         "actions": {},

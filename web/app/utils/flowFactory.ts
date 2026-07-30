@@ -8,9 +8,9 @@ export function buildNewPageRecord(): DATA_EVY_Page {
 		id: crypto.randomUUID(),
 		name: "Page",
 		title: "",
-		rowIds: [],
-		createdAt: ts,
-		updatedAt: ts,
+		row_ids: [],
+		created_at: ts,
+		updated_at: ts,
 		visibility: "public",
 	};
 }
@@ -24,9 +24,9 @@ export function buildNewFlowRecords(name: string): {
 	const flow: DATA_EVY_Flow = {
 		id: crypto.randomUUID(),
 		name,
-		pageIds: [page.id],
-		createdAt: ts,
-		updatedAt: ts,
+		page_ids: [page.id],
+		created_at: ts,
+		updated_at: ts,
 		visibility: "public",
 	};
 	return { flow, page };

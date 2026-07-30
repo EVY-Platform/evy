@@ -49,9 +49,9 @@ describe("initServer bootstrap", () => {
 			.register("create", async () => ({
 				id: "stub",
 				name: "Stub",
-				pageIds: [],
-				createdAt: new Date().toISOString(),
-				updatedAt: new Date().toISOString(),
+				page_ids: [],
+				created_at: new Date().toISOString(),
+				updated_at: new Date().toISOString(),
 			}))
 			.protected();
 	});
@@ -67,7 +67,7 @@ describe("initServer bootstrap", () => {
 
 	it("registers dataChanged event", () => {
 		const events = server.eventList("/");
-		expect(events).toContain("dataChanged");
+		expect(events).toContain("data_changed");
 		expect(events).not.toContain("flowUpdated");
 	});
 
@@ -81,7 +81,7 @@ describe("initServer bootstrap", () => {
 				data: {
 					id: crypto.randomUUID(),
 					name: "Unauth",
-					pageIds: [],
+					page_ids: [],
 				},
 			}),
 		).rejects.toThrow();
@@ -150,9 +150,9 @@ describe("assertApiReadable", () => {
 				{
 					id: crypto.randomUUID(),
 					name: "Seeded",
-					pageIds: [],
-					createdAt: new Date().toISOString(),
-					updatedAt: new Date().toISOString(),
+					page_ids: [],
+					created_at: new Date().toISOString(),
+					updated_at: new Date().toISOString(),
 				},
 			] as GetResponse;
 		};
@@ -178,8 +178,8 @@ describe("assertApiReadable", () => {
 			{
 				id: EXTERNAL_TEST_SERVICE_ID,
 				name: "marketplace",
-				wsHost: null,
-				wsPort: null,
+				ws_host: null,
+				ws_port: null,
 			},
 		];
 		await withoutMarketplaceEnv(async () => {
@@ -200,8 +200,8 @@ describe("assertApiReadable", () => {
 			{
 				id: EXTERNAL_TEST_SERVICE_ID,
 				name: "marketplace",
-				wsHost: null,
-				wsPort: null,
+				ws_host: null,
+				ws_port: null,
 			},
 		];
 		await withoutMarketplaceEnv(async () => {
@@ -217,8 +217,8 @@ describe("assertApiReadable", () => {
 			{
 				id: EXTERNAL_TEST_SERVICE_ID,
 				name: "marketplace",
-				wsHost: "marketplace.internal",
-				wsPort: 8001,
+				ws_host: "marketplace.internal",
+				ws_port: 8001,
 			},
 		];
 		await withoutMarketplaceEnv(async () => {

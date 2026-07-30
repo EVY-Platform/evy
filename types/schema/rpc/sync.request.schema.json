@@ -1,8 +1,8 @@
 {
 	"$schema": "https://json-schema.org/draft/2020-12/schema",
-	"$id": "sync-request",
+	"$id": "sync_request",
 	"title": "SyncRequest",
-	"description": "JSON-RPC params for the unified sync method. Send back the cursor from the previous response, or omit it for a full sync. Send ownedServiceResources so the server can return the ownership-scoped rows this device is entitled to.",
+	"description": "JSON-RPC params for the unified sync method. Send back the cursor from the previous response, or omit it for a full sync. Send owned_service_resources so the server can return the ownership-scoped rows this device is entitled to.",
 	"type": "object",
 	"additionalProperties": false,
 	"required": [],
@@ -11,7 +11,7 @@
 			"description": "Opaque marker issued by the previous sync response. Server-generated, so client clock skew cannot drop or duplicate changes.",
 			"type": "string"
 		},
-		"ownedServiceResources": {
+		"owned_service_resources": {
 			"description": "Resource ids this device owns, grouped by the service and resource they belong to. The server returns rows these ids entitle the device to - a message reaches the device that created it (owned evy:messages id) and the device that owns the record it points at (owned service/resource id matching the message's fk). Omit for a device that owns nothing.",
 			"type": "array",
 			"items": {

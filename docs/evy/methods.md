@@ -108,7 +108,7 @@ rather than only a binding key — which is how you ask for the most recent matc
 first stored one. This is what the item page uses to read a transfer method's current state:
 
 ```
-{findFirst(sort(messages, desc, createdAt), fk == item.id && data.type == pickup).data.value}
+{findFirst(sort(messages, desc, created_at), fk == item.id && data.type == pickup).data.value}
 ```
 
 Two things to know before relying on it. `sort` breaks equal keys by **original order regardless
@@ -127,7 +127,7 @@ Returns every element of a collection for which a predicate is true. Unlike `fin
 predicate binds the candidate as `$datum` (the same ephemeral-datum mechanism used by
 format-with-`$datum`), not as bare fields. Nested `findFirst` / `sort` calls keep their own
 bare-field binding for *their* candidates — so inside
-`filter(messages, … findFirst(sort(messages, desc, createdAt), fk == $datum.fk && …) …)` the
+`filter(messages, … findFirst(sort(messages, desc, created_at), fk == $datum.fk && …) …)` the
 bare `fk` is the inner `findFirst` candidate and `$datum` is the outer `filter` candidate.
 
 ```
@@ -137,7 +137,7 @@ filter({_collection_}, {_predicate_})
 Open requests this device owns (the homepage "For you" tab source):
 
 ```
-{filter(messages, $datum.data.value == "pending" && owns($datum.service, $datum.resource, $datum.fk) == true && findFirst(sort(messages, desc, createdAt), fk == $datum.fk && data.type == $datum.data.type).id == $datum.id)}
+{filter(messages, $datum.data.value == "pending" && owns($datum.service, $datum.resource, $datum.fk) == true && findFirst(sort(messages, desc, created_at), fk == $datum.fk && data.type == $datum.data.type).id == $datum.id)}
 ```
 
 A non-collection first argument is an error. An empty match set is an empty array (not an empty
@@ -147,7 +147,7 @@ seed scale, not free at catalogue scale.
 #### owns
 
 Whether this device owns a record, as `"true"` / `"false"`. Reads
-[`EVY.ownedServiceResources()`](../../ios/evy/Core/EVY+Ownership.swift): the creation ledger,
+[`EVY.owned_service_resources()`](../../ios/evy/Core/EVY+Ownership.swift): the creation ledger,
 privately held synced rows, and the `EVY_OWNED_SERVICE_RESOURCES` launch override. There is no
 `!` operator, so fixtures write `owns(…) == false`. Web has no ownership concept and stubs this
 to `"false"`.

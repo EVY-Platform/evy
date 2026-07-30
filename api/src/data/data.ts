@@ -28,7 +28,7 @@ import {
 import { flowsResource } from "./resources/flows";
 import { formattersResource } from "./resources/formatters";
 import { messagesResource } from "./resources/messages";
-import { organisationsResource } from "./resources/organisation";
+import { organizationsResource } from "./resources/organization";
 import { pagesResource } from "./resources/pages";
 import { rowsResource } from "./resources/rows";
 import { servicesResource } from "./resources/service";
@@ -79,11 +79,11 @@ const CORE_RESOURCE_REGISTRY: Record<string, CoreResourceOps> = {
 		create: servicesResource.create,
 		update: servicesResource.update,
 	},
-	[EVY_CORE_RESOURCE.ORGANISATIONS]: {
-		list: organisationsResource.list,
-		listForSync: organisationsResource.listForSync,
-		create: organisationsResource.create,
-		update: organisationsResource.update,
+	[EVY_CORE_RESOURCE.ORGANIZATIONS]: {
+		list: organizationsResource.list,
+		listForSync: organizationsResource.listForSync,
+		create: organizationsResource.create,
+		update: organizationsResource.update,
 	},
 	[EVY_CORE_RESOURCE.PROVIDERS]: {
 		list: providersResource.list,
@@ -123,8 +123,8 @@ export async function getSyncRows(
 type ExternalServiceRow = {
 	id: string;
 	name: string;
-	wsHost: string | null;
-	wsPort: number | null;
+	ws_host: string | null;
+	ws_port: number | null;
 };
 
 export async function listExternalServices(
@@ -134,8 +134,8 @@ export async function listExternalServices(
 		.select({
 			id: service.id,
 			name: service.name,
-			wsHost: service.wsHost,
-			wsPort: service.wsPort,
+			ws_host: service.ws_host,
+			ws_port: service.ws_port,
 		})
 		.from(service)
 		.where(ne(service.id, EVY_CORE_SERVICE));

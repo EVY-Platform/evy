@@ -28,11 +28,11 @@ function isFlatWriteResponse(value: unknown): value is FlatResourceRecord {
 		value !== null &&
 		typeof value === "object" &&
 		"id" in value &&
-		"createdAt" in value &&
-		"updatedAt" in value &&
+		"created_at" in value &&
+		"updated_at" in value &&
 		typeof value.id === "string" &&
-		typeof value.createdAt === "string" &&
-		typeof value.updatedAt === "string"
+		typeof value.created_at === "string" &&
+		typeof value.updated_at === "string"
 	);
 }
 
@@ -71,7 +71,11 @@ function isConflictResponse(error: unknown): boolean {
 }
 
 function comparableRecord(record: FlatResourceRecord): string {
-	const { createdAt: _createdAt, updatedAt: _updatedAt, ...rest } = record;
+	const {
+		created_at: _created_at,
+		updated_at: _updated_at,
+		...rest
+	} = record;
 	return JSON.stringify(rest);
 }
 
@@ -93,8 +97,8 @@ type ConnectionState = "disconnected" | "connecting" | "connected" | "error";
  */
 export interface RemoteRecord {
 	id: string;
-	updatedAt?: string;
-	deletedAt?: string;
+	updated_at?: string;
+	deleted_at?: string;
 }
 
 export interface RemoteChange {
@@ -132,7 +136,7 @@ class WSClient {
 	private connectionPromise: Promise<void> | null = null;
 	private dataChangedListeners = new Set<DataChangedListener>();
 	/**
-	 * The `updatedAt` the server last told us each record has.
+	 * The `updated_at` the server last told us each record has.
 	 *
 	 * Kept here rather than in app state because it is transport bookkeeping:
 	 * app state carries client-stamped timestamps from local edits, which are
@@ -166,7 +170,7 @@ class WSClient {
 			this.client.on("open", async () => {
 				try {
 					const token = crypto.randomUUID();
-					await this.client?.login({ token, os: "Web" });
+					await this.client?.login({ token, os: "web" });
 					await this.client?.subscribe(DATA_CHANGED_EVENT);
 					this.connectionState = "connected";
 					resolve();
@@ -356,7 +360,7 @@ class WSClient {
 		record: FlatResourceRecord,
 	): Promise<void> {
 		if (!this.client) throw new Error("WebSocket client not initialized");
-		const expectedUpdatedAt =
+		const expected_updated_at =
 			method === "update"
 				? this.serverVersions.get(versionKey(resource, record.id))
 				: undefined;
@@ -368,7 +372,7 @@ class WSClient {
 				resource,
 				filter: {
 					id: record.id,
-					...(expectedUpdatedAt ? { expectedUpdatedAt } : {}),
+					...(expected_updated_at ? { expected_updated_at } : {}),
 				},
 				data: record,
 			});
@@ -387,7 +391,7 @@ class WSClient {
 			throw new Error(`Invalid ${resource} write response`);
 		}
 		// The server's timestamp, not our own: the next save preconditions on it.
-		this.serverVersions.set(versionKey(resource, raw.id), raw.updatedAt);
+		this.serverVersions.set(versionKey(resource, raw.id), raw.updated_at);
 	}
 
 	private rememberRemoteVersion({
@@ -395,14 +399,14 @@ class WSClient {
 		operation,
 		record,
 	}: RemoteChange): void {
-		if (operation === "delete" || record.deletedAt) {
+		if (operation === "delete" || record.deleted_at) {
 			this.serverVersions.delete(versionKey(resource, record.id));
 			return;
 		}
-		if (typeof record.updatedAt !== "string") return;
+		if (typeof record.updated_at !== "string") return;
 		this.serverVersions.set(
 			versionKey(resource, record.id),
-			record.updatedAt,
+			record.updated_at,
 		);
 	}
 
@@ -412,13 +416,13 @@ class WSClient {
 			if (!Array.isArray(row.value)) continue;
 			for (const record of row.value) {
 				if (!record || typeof record !== "object") continue;
-				const { id, updatedAt } = record as Record<string, unknown>;
-				if (typeof id !== "string" || typeof updatedAt !== "string") {
+				const { id, updated_at } = record as Record<string, unknown>;
+				if (typeof id !== "string" || typeof updated_at !== "string") {
 					continue;
 				}
 				this.serverVersions.set(
 					versionKey(row.resource, id),
-					updatedAt,
+					updated_at,
 				);
 			}
 		}

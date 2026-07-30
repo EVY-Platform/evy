@@ -85,7 +85,7 @@ extension EVY {
       members.insert(
         OwnedMembershipKey(service: row.namespace, resource: row.resource, id: row.id))
     }
-    for declared in preownedServiceResources {
+    for declared in preowned_service_resources {
       for id in declared.ids {
         members.insert(
           OwnedMembershipKey(service: declared.service, resource: declared.resource, id: id))
@@ -101,7 +101,7 @@ extension EVY {
       OwnedMembershipKey(service: service, resource: resource, id: id))
   }
 
-  static func ownedServiceResources() -> [OwnedServiceResource] {
+  static func owned_service_resources() -> [OwnedServiceResource] {
     let grouped = Dictionary(grouping: ownedMembershipSet()) { member in
       ServiceResourceKey(service: member.service, resource: member.resource)
     }
@@ -125,7 +125,7 @@ extension EVY {
   }
 
   /// Launch override for seeded ownership until auth lands.
-  private static let preownedServiceResources: [OwnedServiceResource] = {
+  private static let preowned_service_resources: [OwnedServiceResource] = {
     guard
       let raw = ProcessInfo.processInfo.environment["EVY_OWNED_SERVICE_RESOURCES"],
       let data = raw.data(using: .utf8),
@@ -138,7 +138,7 @@ extension EVY {
 
   /// Fingerprint of declared ownership; a change invalidates the sync cursor.
   static func declaredOwnershipFingerprint() -> String {
-    preownedServiceResources
+    preowned_service_resources
       .map { "\($0.service)/\($0.resource):\($0.ids.sorted().joined(separator: ","))" }
       .sorted()
       .joined(separator: ";")

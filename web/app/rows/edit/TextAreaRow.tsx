@@ -5,7 +5,7 @@ import TextArea from "../design-system/TextArea";
 
 export default defineRow("TextAreaRow", {
 	config: {
-		type: "TextArea",
+		type: "text_area",
 		actions: {},
 		source: "",
 		visible: "true",

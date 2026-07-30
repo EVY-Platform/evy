@@ -34,7 +34,7 @@ test.describe("EVY Rows", () => {
 				title: "Page 1",
 				rows: [
 					{
-						type: "Text",
+						type: "text",
 						title: "Test Text",
 						subtitle: "Test subtitle",
 					},

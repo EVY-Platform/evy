@@ -17,46 +17,46 @@ describe("rowTriggers", () => {
 	});
 
 	test("Calendar requires tap, tap-row, and tap-column", () => {
-		expect(getRowTriggers("Calendar")).toEqual([
+		expect(getRowTriggers("calendar")).toEqual([
 			{ trigger: "tap", required: true },
-			{ trigger: "tap-column", required: true },
-			{ trigger: "tap-row", required: true },
+			{ trigger: "tap_column", required: true },
+			{ trigger: "tap_row", required: true },
 		]);
 	});
 
 	test("SelectPhoto requires tap and delete", () => {
-		expect(getRowTriggers("SelectPhoto")).toEqual([
+		expect(getRowTriggers("select_photo")).toEqual([
 			{ trigger: "delete", required: true },
 			{ trigger: "tap", required: true },
 		]);
 	});
 
 	test("Heading, ListItem, and Text declare optional swipe-left", () => {
-		for (const type of ["Heading", "ListItem", "Text"]) {
+		for (const type of ["heading", "list_item", "text"]) {
 			expect(getRowTriggers(type)).toEqual([
-				{ trigger: "swipe-left", required: false },
+				{ trigger: "swipe_left", required: false },
 				{ trigger: "tap", required: false },
 			]);
 		}
 	});
 
 	test("Input declares optional submit, swipe-left, and tap", () => {
-		expect(getRowTriggers("Input")).toEqual([
+		expect(getRowTriggers("input")).toEqual([
 			{ trigger: "submit", required: false },
-			{ trigger: "swipe-left", required: false },
+			{ trigger: "swipe_left", required: false },
 			{ trigger: "tap", required: false },
 		]);
 	});
 
 	test("TextArea declares optional submit and tap", () => {
-		expect(getRowTriggers("TextArea")).toEqual([
+		expect(getRowTriggers("text_area")).toEqual([
 			{ trigger: "submit", required: false },
 			{ trigger: "tap", required: false },
 		]);
 	});
 
 	test("Search declares optional tap only", () => {
-		expect(getRowTriggers("Search")).toEqual([
+		expect(getRowTriggers("search")).toEqual([
 			{ trigger: "tap", required: false },
 		]);
 	});

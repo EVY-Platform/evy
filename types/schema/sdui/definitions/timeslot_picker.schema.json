@@ -1,6 +1,6 @@
 {
 	"$schema": "https://json-schema.org/draft/2020-12/schema",
-	"$id": "sdui/definitions/TimeslotPicker",
+	"$id": "sdui/definitions/timeslot_picker",
 	"title": "TimeslotPicker_Row",
 	"triggers": {
 		"tap": "required"
@@ -24,7 +24,7 @@
 			],
 			"properties": {
 				"type": {
-					"const": "TimeslotPicker"
+					"const": "timeslot_picker"
 				},
 				"title": {
 					"type": "string"

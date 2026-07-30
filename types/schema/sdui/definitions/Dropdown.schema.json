@@ -1,6 +1,6 @@
 {
 	"$schema": "https://json-schema.org/draft/2020-12/schema",
-	"$id": "sdui/definitions/Dropdown",
+	"$id": "sdui/definitions/dropdown",
 	"title": "Dropdown_Row",
 	"triggers": {
 		"tap": "required"
@@ -14,7 +14,7 @@
 			"required": ["type", "value", "source", "destination"],
 			"properties": {
 				"type": {
-					"const": "Dropdown"
+					"const": "dropdown"
 				},
 				"title": {
 					"type": "string"

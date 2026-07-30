@@ -1,11 +1,11 @@
 {
-	"id": "147f4b9d-4098-4d78-ac3c-3da9edf8aa9b",
-	"prevId": "91c961e4-63e8-48bb-8159-02a21fb7ac76",
+	"id": "c387d5a4-f4bf-4e9d-b277-e23f444878ad",
+	"prevId": "00000000-0000-0000-0000-000000000000",
 	"version": "7",
 	"dialect": "postgresql",
 	"tables": {
-		"public.Address": {
-			"name": "Address",
+		"public.address": {
+			"name": "address",
 			"schema": "",
 			"columns": {
 				"id": {
@@ -71,7 +71,7 @@
 				},
 				"visibility": {
 					"name": "visibility",
-					"type": "Visibility",
+					"type": "visibility",
 					"typeSchema": "public",
 					"primaryKey": false,
 					"notNull": true
@@ -103,8 +103,8 @@
 			"checkConstraints": {},
 			"isRLSEnabled": false
 		},
-		"public.Device": {
-			"name": "Device",
+		"public.device": {
+			"name": "device",
 			"schema": "",
 			"columns": {
 				"token": {
@@ -115,14 +115,14 @@
 				},
 				"os": {
 					"name": "os",
-					"type": "OS",
+					"type": "os",
 					"typeSchema": "public",
 					"primaryKey": false,
 					"notNull": true
 				},
 				"visibility": {
 					"name": "visibility",
-					"type": "Visibility",
+					"type": "visibility",
 					"typeSchema": "public",
 					"primaryKey": false,
 					"notNull": true
@@ -135,8 +135,8 @@
 				}
 			},
 			"indexes": {
-				"Device_token_os_key": {
-					"name": "Device_token_os_key",
+				"device_token_os_key": {
+					"name": "device_token_os_key",
 					"columns": [
 						{
 							"expression": "token",
@@ -164,8 +164,8 @@
 			"checkConstraints": {},
 			"isRLSEnabled": false
 		},
-		"public.File": {
-			"name": "File",
+		"public.file": {
+			"name": "file",
 			"schema": "",
 			"columns": {
 				"id": {
@@ -182,7 +182,7 @@
 				},
 				"visibility": {
 					"name": "visibility",
-					"type": "Visibility",
+					"type": "visibility",
 					"typeSchema": "public",
 					"primaryKey": false,
 					"notNull": true
@@ -214,8 +214,8 @@
 			"checkConstraints": {},
 			"isRLSEnabled": false
 		},
-		"public.Flow": {
-			"name": "Flow",
+		"public.flow": {
+			"name": "flow",
 			"schema": "",
 			"columns": {
 				"id": {
@@ -245,7 +245,7 @@
 				},
 				"visibility": {
 					"name": "visibility",
-					"type": "Visibility",
+					"type": "visibility",
 					"typeSchema": "public",
 					"primaryKey": false,
 					"notNull": true
@@ -277,8 +277,8 @@
 			"checkConstraints": {},
 			"isRLSEnabled": false
 		},
-		"public.Formatter": {
-			"name": "Formatter",
+		"public.formatter": {
+			"name": "formatter",
 			"schema": "",
 			"columns": {
 				"id": {
@@ -326,8 +326,8 @@
 				}
 			},
 			"indexes": {
-				"Formatter_name_key": {
-					"name": "Formatter_name_key",
+				"formatter_name_key": {
+					"name": "formatter_name_key",
 					"columns": [
 						{
 							"expression": "name",
@@ -349,8 +349,8 @@
 			"checkConstraints": {},
 			"isRLSEnabled": false
 		},
-		"public.Message": {
-			"name": "Message",
+		"public.message": {
+			"name": "message",
 			"schema": "",
 			"columns": {
 				"id": {
@@ -410,7 +410,7 @@
 				},
 				"visibility": {
 					"name": "visibility",
-					"type": "Visibility",
+					"type": "visibility",
 					"typeSchema": "public",
 					"primaryKey": false,
 					"notNull": true
@@ -424,8 +424,8 @@
 			"checkConstraints": {},
 			"isRLSEnabled": false
 		},
-		"public.Organization": {
-			"name": "Organization",
+		"public.organization": {
+			"name": "organization",
 			"schema": "",
 			"columns": {
 				"id": {
@@ -466,7 +466,7 @@
 				},
 				"visibility": {
 					"name": "visibility",
-					"type": "Visibility",
+					"type": "visibility",
 					"typeSchema": "public",
 					"primaryKey": false,
 					"notNull": true
@@ -491,8 +491,8 @@
 				}
 			},
 			"indexes": {
-				"Organization_name_key": {
-					"name": "Organization_name_key",
+				"organization_name_key": {
+					"name": "organization_name_key",
 					"columns": [
 						{
 							"expression": "name",
@@ -514,8 +514,8 @@
 			"checkConstraints": {},
 			"isRLSEnabled": false
 		},
-		"public.Page": {
-			"name": "Page",
+		"public.page": {
+			"name": "page",
 			"schema": "",
 			"columns": {
 				"id": {
@@ -551,7 +551,7 @@
 				},
 				"visibility": {
 					"name": "visibility",
-					"type": "Visibility",
+					"type": "visibility",
 					"typeSchema": "public",
 					"primaryKey": false,
 					"notNull": true
@@ -583,8 +583,8 @@
 			"checkConstraints": {},
 			"isRLSEnabled": false
 		},
-		"public.Row": {
-			"name": "Row",
+		"public.row": {
+			"name": "row",
 			"schema": "",
 			"columns": {
 				"id": {
@@ -620,7 +620,7 @@
 				},
 				"visibility": {
 					"name": "visibility",
-					"type": "Visibility",
+					"type": "visibility",
 					"typeSchema": "public",
 					"primaryKey": false,
 					"notNull": true
@@ -652,8 +652,8 @@
 			"checkConstraints": {},
 			"isRLSEnabled": false
 		},
-		"public.Service": {
-			"name": "Service",
+		"public.service": {
+			"name": "service",
 			"schema": "",
 			"columns": {
 				"id": {
@@ -694,7 +694,7 @@
 				},
 				"visibility": {
 					"name": "visibility",
-					"type": "Visibility",
+					"type": "visibility",
 					"typeSchema": "public",
 					"primaryKey": false,
 					"notNull": true
@@ -719,8 +719,8 @@
 				}
 			},
 			"indexes": {
-				"Service_name_key": {
-					"name": "Service_name_key",
+				"service_name_key": {
+					"name": "service_name_key",
 					"columns": [
 						{
 							"expression": "name",
@@ -742,8 +742,8 @@
 			"checkConstraints": {},
 			"isRLSEnabled": false
 		},
-		"public.ServiceProvider": {
-			"name": "ServiceProvider",
+		"public.service_provider": {
+			"name": "service_provider",
 			"schema": "",
 			"columns": {
 				"id": {
@@ -790,7 +790,7 @@
 				},
 				"visibility": {
 					"name": "visibility",
-					"type": "Visibility",
+					"type": "visibility",
 					"typeSchema": "public",
 					"primaryKey": false,
 					"notNull": true
@@ -822,8 +822,8 @@
 				}
 			},
 			"indexes": {
-				"ServiceProvider_name_key": {
-					"name": "ServiceProvider_name_key",
+				"service_provider_name_key": {
+					"name": "service_provider_name_key",
 					"columns": [
 						{
 							"expression": "name",
@@ -837,8 +837,8 @@
 					"method": "btree",
 					"with": {}
 				},
-				"ServiceProvider_fk_service_id_fk_organization_id_key": {
-					"name": "ServiceProvider_fk_service_id_fk_organization_id_key",
+				"service_provider_fk_service_id_fk_organization_id_key": {
+					"name": "service_provider_fk_service_id_fk_organization_id_key",
 					"columns": [
 						{
 							"expression": "fk_service_id",
@@ -868,13 +868,13 @@
 		}
 	},
 	"enums": {
-		"public.OS": {
-			"name": "OS",
+		"public.os": {
+			"name": "os",
 			"schema": "public",
-			"values": ["ios", "android", "Web"]
+			"values": ["ios", "android", "web"]
 		},
-		"public.Visibility": {
-			"name": "Visibility",
+		"public.visibility": {
+			"name": "visibility",
 			"schema": "public",
 			"values": ["public", "private"]
 		}

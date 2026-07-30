@@ -58,11 +58,11 @@ extension EVY {
     try applySyncedRecord(namespace: namespace, resource: resource, value: value)
   }
 
-  /// A record the server has deleted. `deletedAt` is absent on live records.
+  /// A record the server has deleted. `deleted_at` is absent on live records.
   private static func isTombstoned(_ value: EVYJson) -> Bool {
     guard case .dictionary(let record) = value else { return false }
-    guard let deletedAt = record["deletedAt"] else { return false }
-    if case .null = deletedAt { return false }
+    guard let deleted_at = record["deleted_at"] else { return false }
+    if case .null = deleted_at { return false }
     return true
   }
 

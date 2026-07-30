@@ -89,7 +89,7 @@ export type RowAction =
 	| {
 			type: "APPLY_REMOTE_RECORD";
 			resource: string;
-			record: { id: string; updatedAt?: string; deletedAt?: string };
+			record: { id: string; updated_at?: string; deleted_at?: string };
 			operation: "create" | "update" | "delete";
 	  }
 	| {
@@ -100,7 +100,7 @@ export type RowAction =
 	| {
 			type: "PUSH_CONFIG_STACK";
 			parentRowId: string;
-			childRowId: string;
+			child_row_id: string;
 	  }
 	| { type: "NAVIGATE_BREADCRUMB"; configStackLength: number };
 

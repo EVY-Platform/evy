@@ -56,7 +56,7 @@ function applyPageDropPosition(
 	}
 
 	if (pageDropPosition === "end") {
-		dispatchOptions.destinationIndex = destinationPage.rowIds.length;
+		dispatchOptions.destinationIndex = destinationPage.row_ids.length;
 	}
 }
 
@@ -201,7 +201,7 @@ export function handleDrop(
 	invariant(destinationPage, "handleDrop: destinationPage is not defined");
 
 	const dispatchOptions: DropDispatchOptions = {
-		destinationIndex: destinationPage.rowIds.length,
+		destinationIndex: destinationPage.row_ids.length,
 		destinationPageId,
 	};
 	if (pageDestinationContainerRowId) {
@@ -322,15 +322,15 @@ export function handleDrop(
 			) {
 				dispatchOptions.destinationIndex = 0;
 			} else if (closestEdgeOfTarget && !destinationContainer) {
-				const destinationRowIndex = destinationPage.rowIds.indexOf(
+				const destinationRowIndex = destinationPage.row_ids.indexOf(
 					destinationRow.data.rowId as string,
 				);
-				// If the destination row is the footer root (or otherwise not in page.rowIds),
+				// If the destination row is the footer root (or otherwise not in page.row_ids),
 				// default to appending at the end of the page rows.
 				dispatchOptions.destinationIndex =
 					destinationRowIndex >= 0
 						? destinationRowIndex
-						: destinationPage.rowIds.length;
+						: destinationPage.row_ids.length;
 			}
 
 			if (destinationContainer) {

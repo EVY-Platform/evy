@@ -1,7 +1,7 @@
 {
 	"$schema": "https://json-schema.org/draft/2020-12/schema",
-	"$id": "sdui/definitions/TextAction",
-	"title": "TextAction_Row",
+	"$id": "sdui/definitions/inline_picker",
+	"title": "InlinePicker_Row",
 	"triggers": {
 		"tap": "required"
 	},
@@ -11,18 +11,24 @@
 		},
 		{
 			"type": "object",
-			"required": ["type"],
+			"required": ["type", "value"],
 			"properties": {
 				"type": {
-					"const": "TextAction"
+					"const": "inline_picker"
 				},
 				"title": {
 					"type": "string"
 				},
-				"subtitle": {
+				"source": {
 					"type": "string"
 				},
-				"action": {
+				"destination": {
+					"type": "string"
+				},
+				"value": {
+					"type": "string"
+				},
+				"initial": {
 					"type": "string"
 				}
 			}

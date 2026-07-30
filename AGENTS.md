@@ -9,6 +9,7 @@ Always use `bun` to run commands or install dependencies.
 - Use explicit variable names (even if lengthy).
 - Use Biome to auto-format code any time changes are saved
 - Avoid typecasting unless absolutely impossible to avoid.
+- Serialized names (Postgres, JSON Schema, RPC, SDUI, enum values) are snake_case; language type names are derived — see `docs/evy/data.md` § Naming.
 
 ## Development
 

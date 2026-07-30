@@ -1,6 +1,6 @@
 {
 	"$schema": "https://json-schema.org/draft/2020-12/schema",
-	"$id": "dataChanged-notification",
+	"$id": "data_changed-notification",
 	"title": "DataChangedNotification",
 	"description": "JSON-RPC notification payload for dataChanged event. Matches an individual sync data row with create/update operation.",
 	"type": "object",

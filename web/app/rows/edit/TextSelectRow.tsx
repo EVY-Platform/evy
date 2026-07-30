@@ -6,7 +6,7 @@ import { RowLayout } from "../design-system/RowLayout";
 
 export default defineRow("TextSelectRow", {
 	config: {
-		type: "TextSelect",
+		type: "text_select",
 		actions: defaultRowActions({
 			tap: { fn: "select", value: "$datum" },
 		}),

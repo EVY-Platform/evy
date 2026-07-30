@@ -10,35 +10,35 @@ if (!API_URL) {
 	throw new Error("API_URL environment variable is not set");
 }
 const TEST_TOKEN = "e2e-test-token";
-const TEST_OS = "Web";
+const TEST_OS = "web";
 const CONNECTION_TIMEOUT_MS = 5000;
 
 function rowPayload(id = crypto.randomUUID()) {
 	return {
 		id,
 		name: "E2E Text Row",
-		type: "Text",
+		type: "text",
 		visible: "true",
 		data: { title: "Hello", text: "World" },
 		visibility: "public" as const,
 	};
 }
 
-function pagePayload(rowIds: string[], id = crypto.randomUUID()) {
+function pagePayload(row_ids: string[], id = crypto.randomUUID()) {
 	return {
 		id,
 		name: "E2E Page",
 		title: "Test Page",
-		rowIds,
+		row_ids,
 		visibility: "public" as const,
 	};
 }
 
-function flowPayload(pageIds: string[], id = crypto.randomUUID()) {
+function flowPayload(page_ids: string[], id = crypto.randomUUID()) {
 	return {
 		id,
 		name: "E2E Test Flow",
-		pageIds,
+		page_ids,
 		visibility: "public" as const,
 	};
 }
@@ -167,10 +167,10 @@ describe("API E2E Tests", () => {
 			expect(result[0]).toMatchObject({
 				id: flow.id,
 				name: flow.name,
-				pageIds: [page.id],
+				page_ids: [page.id],
 			});
-			expect(result[0].createdAt).toBeDefined();
-			expect(result[0].updatedAt).toBeDefined();
+			expect(result[0].created_at).toBeDefined();
+			expect(result[0].updated_at).toBeDefined();
 		});
 
 		it("create flat flow resources should create rows, pages, and flows", async () => {
@@ -203,15 +203,15 @@ describe("API E2E Tests", () => {
 			expect(createdPage).toMatchObject({
 				id: page.id,
 				name: page.name,
-				rowIds: [row.id],
+				row_ids: [row.id],
 			});
 			expect(createdFlow).toMatchObject({
 				id: flow.id,
 				name: flow.name,
-				pageIds: [page.id],
+				page_ids: [page.id],
 			});
-			expect(createdFlow.createdAt).toBeDefined();
-			expect(createdFlow.updatedAt).toBeDefined();
+			expect(createdFlow.created_at).toBeDefined();
+			expect(createdFlow.updated_at).toBeDefined();
 		});
 
 		it("update flows should update an existing flat flow", async () => {
@@ -231,7 +231,7 @@ describe("API E2E Tests", () => {
 			});
 
 			expect(updated.name).toBe("Updated Flow Name");
-			expect(updated.pageIds).toEqual([]);
+			expect(updated.page_ids).toEqual([]);
 		});
 
 		it("sync delivers a response to the sender of the message it answers", async () => {
@@ -258,14 +258,14 @@ describe("API E2E Tests", () => {
 					fk: itemId,
 					service: itemService,
 					resource: itemResource,
-					parentMessageId: request.id,
+					parent_message_id: request.id,
 					visibility: "private",
 					data: { value: "accept", type: "pickup" },
 				},
 			});
 
 			const synced = await client.call("sync", {
-				ownedServiceResources: [
+				owned_service_resources: [
 					{
 						service: EVY_CORE_SERVICE,
 						resource: EVY_CORE_RESOURCE.MESSAGES,
@@ -287,7 +287,7 @@ describe("API E2E Tests", () => {
 			const delivered = messages.find(
 				(message: { id: string }) => message.id === response.id,
 			);
-			expect(delivered.parentMessageId).toBe(request.id);
+			expect(delivered.parent_message_id).toBe(request.id);
 			expect(delivered.data).toMatchObject({
 				value: "accept",
 				type: "pickup",

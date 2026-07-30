@@ -305,10 +305,10 @@ export function buildRowForNewPageFromBase(
 	const row = decodeRow(cloned);
 	let actions = normalizeStoredRowActions(row.config.actions);
 
-	if (row.config.type === "TextExpand") {
+	if (row.config.type === "text_expand") {
 		actions = {
 			...actions,
-			tap: [rowAction({ fn: "expand_text", rowId: newRowId })],
+			tap: [rowAction({ fn: "expand_text", row_id: newRowId })],
 		};
 	}
 
@@ -324,7 +324,7 @@ export function buildRowForNewPageFromBase(
 		}
 		nextActions = {
 			...nextActions,
-			[trigger]: [rowAction({ fn: "show", rowId: newRowId })],
+			[trigger]: [rowAction({ fn: "show", row_id: newRowId })],
 		};
 	}
 	actions = nextActions;

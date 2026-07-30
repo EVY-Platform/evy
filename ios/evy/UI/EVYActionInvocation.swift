@@ -25,7 +25,7 @@ public enum EVYActionInvocation: Equatable {
     service: String,
     resource: String,
     mode: CreateMode,
-    idDestination: String?)
+    id_destination: String?)
   case update(
     service: String,
     resource: String,
@@ -36,7 +36,7 @@ public enum EVYActionInvocation: Equatable {
   public enum CreateMode: Equatable {
     case submit
     case inline(data: [String: String])
-    case fromPath(dataPath: String)
+    case fromPath(data_path: String)
   }
 
   public enum UpdateMode: Equatable {
@@ -82,8 +82,8 @@ extension EVYActionBranch: Codable {
 extension EVYActionInvocation: Codable {
   private enum CodingKeys: String, CodingKey {
     case fn, rowId, field, value, flowId, pageId, query
-    case service, resource, mode, data, dataPath, idDestination
-    case filter, changes, changesPath
+    case service, resource, mode, data, data_path, id_destination
+    case filter, changes, changes_path
   }
 
   public init(from decoder: Decoder) throws {
@@ -114,7 +114,7 @@ extension EVYActionInvocation: Codable {
         service: try container.decode(String.self, forKey: .service),
         resource: try container.decode(String.self, forKey: .resource),
         mode: try Self.decodeCreateMode(from: container),
-        idDestination: try container.decodeIfPresent(String.self, forKey: .idDestination)
+        id_destination: try container.decodeIfPresent(String.self, forKey: .id_destination)
       )
     case "update":
       let rawMode = try container.decode(String.self, forKey: .mode)
@@ -141,8 +141,8 @@ extension EVYActionInvocation: Codable {
     case "submit": return .submit
     case "inline":
       return .inline(data: try container.decode([String: String].self, forKey: .data))
-    case "fromPath":
-      return .fromPath(dataPath: try container.decode(String.self, forKey: .dataPath))
+    case "from_path":
+      return .fromPath(data_path: try container.decode(String.self, forKey: .data_path))
     default:
       throw unsupported("create mode \(rawMode)", container)
     }
@@ -154,7 +154,7 @@ extension EVYActionInvocation: Codable {
     if let changes = try container.decodeIfPresent([String: String].self, forKey: .changes) {
       return .literal(changes)
     }
-    return .path(try container.decode(String.self, forKey: .changesPath))
+    return .path(try container.decode(String.self, forKey: .changes_path))
   }
 
   private static func unsupported(
@@ -189,7 +189,7 @@ extension EVYActionInvocation: Codable {
       try container.encode(flowId, forKey: .flowId)
       try container.encode(pageId, forKey: .pageId)
       if !query.isEmpty { try container.encode(query, forKey: .query) }
-    case .create(let service, let resource, let mode, let idDestination):
+    case .create(let service, let resource, let mode, let id_destination):
       try container.encode("create", forKey: .fn)
       try container.encode(service, forKey: .service)
       try container.encode(resource, forKey: .resource)
@@ -199,11 +199,11 @@ extension EVYActionInvocation: Codable {
       case .inline(let data):
         try container.encode("inline", forKey: .mode)
         try container.encode(data, forKey: .data)
-      case .fromPath(let dataPath):
-        try container.encode("fromPath", forKey: .mode)
-        try container.encode(dataPath, forKey: .dataPath)
+      case .fromPath(let data_path):
+        try container.encode("from_path", forKey: .mode)
+        try container.encode(data_path, forKey: .data_path)
       }
-      try container.encodeIfPresent(idDestination, forKey: .idDestination)
+      try container.encodeIfPresent(id_destination, forKey: .id_destination)
     case .update(let service, let resource, let mode, let filter, let changes):
       try container.encode("update", forKey: .fn)
       try container.encode(service, forKey: .service)
@@ -212,7 +212,7 @@ extension EVYActionInvocation: Codable {
       if mode == .store { try container.encode(filter, forKey: .filter) }
       switch changes {
       case .literal(let map): try container.encode(map, forKey: .changes)
-      case .path(let path): try container.encode(path, forKey: .changesPath)
+      case .path(let path): try container.encode(path, forKey: .changes_path)
       }
     }
   }

@@ -151,7 +151,7 @@ function AppContent() {
 	const activePage = activePageId ? pagesById[activePageId] : undefined;
 
 	const activeFlowPageIds = useMemo(
-		() => flowsById[activeFlowId ?? ""]?.pageIds ?? [],
+		() => flowsById[activeFlowId ?? ""]?.page_ids ?? [],
 		[flowsById, activeFlowId],
 	);
 
@@ -207,7 +207,7 @@ function AppContent() {
 	);
 
 	const shouldShowBlankSheetPage = Boolean(
-		activeLeafRowId && !activeLeafRow?.config.sheetRowId,
+		activeLeafRowId && !activeLeafRow?.config.sheet_row_id,
 	);
 
 	return (
@@ -230,15 +230,15 @@ function AppContent() {
 								<AppPage pageId={activePage.id} />
 							</CanvasPageFrame>
 
-							{sheetPages.map(({ sheetRowId, parentRowId }) => (
+							{sheetPages.map(({ sheet_row_id, parentRowId }) => (
 								<CanvasPageFrame
-									key={sheetRowId}
+									key={sheet_row_id}
 									wrapperStyle={secondaryPageWithPhoneStyle}
 									className="evy-flex-shrink-0"
 									data-testid="sheet-page"
 								>
 									<SheetPage
-										sheetRowId={sheetRowId}
+										sheet_row_id={sheet_row_id}
 										pageId={activePage.id}
 										parentRowId={parentRowId}
 									/>

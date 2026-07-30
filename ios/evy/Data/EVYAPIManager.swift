@@ -34,25 +34,25 @@ actor EVYAPIManager {
 
   func uploadFile(_ fileData: Data) async throws -> String {
     try await validateAuth()
-    let uploadId = UUID().uuidString
-    let frames = try fileData.uploadFrames(uploadId: uploadId)
+    let upload_id = UUID().uuidString
+    let frames = try fileData.uploadFrames(upload_id: upload_id)
     do {
       for frame in frames {
         try await rpcWS.sendBinary(frame)
       }
-      let createdAt = await MainActor.run { EVY.nowISO8601(fractional: true) }
+      let created_at = await MainActor.run { EVY.nowISO8601(fractional: true) }
       let response: EVYCreateFileData = try await rpcWS.fetch(
         method: "create",
         params: EVYCreateFileParams(
           data: EVYCreateFileData(
-            createdAt: createdAt,
-            id: uploadId,
+            createdAt: created_at,
+            id: upload_id,
             type: "image/jpeg",
-            updatedAt: createdAt,
+            updatedAt: created_at,
             // Stated like every other create; the API defaults nothing.
             visibility: .visibilityPublic
           ),
-          filter: CreateFileParamsFilter(id: uploadId),
+          filter: CreateFileParamsFilter(id: upload_id),
           resource: .files,
           service: EVY_CORE_SERVICE
         ),
@@ -61,8 +61,8 @@ actor EVYAPIManager {
       return response.id
     } catch {
       _ = try? await rpcWS.fetch(
-        method: "cancelUpload",
-        params: EVYCancelUploadParams(uploadID: uploadId),
+        method: "cancel_upload",
+        params: EVYCancelUploadParams(uploadID: upload_id),
         expecting: EVYCancelUploadResponse.self
       )
       throw error
@@ -125,8 +125,8 @@ actor EVYAPIManager {
     let token = ProcessInfo.processInfo.environment["AUTH_TOKEN"] ?? AUTH_TOKEN
     let connected = try await rpcWS.connect(token: token, os: DataOS.ios)
 
-    let result = try await rpcWS.subscribe(event: "dataChanged")
-    if result["dataChanged"] != "ok" {
+    let result = try await rpcWS.subscribe(event: "data_changed")
+    if result["data_changed"] != "ok" {
       throw EVYRPCError.subscriptionError("Failed to subscribe to dataChanged events")
     }
 

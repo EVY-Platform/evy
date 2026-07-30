@@ -72,7 +72,7 @@ struct EVYPhotoGalleryRow: View {
     json: """
       {
         "id": "preview-photogallery-row",
-        "type": "PhotoGallery",
+        "type": "photo_gallery",
         "source": "{item.photo_ids}",
         "actions": {"tap": [{"condition": "", "true": "{expand_photo()}", "false": ""}]},
         "title": "Photo Gallery"

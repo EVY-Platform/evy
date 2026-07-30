@@ -5,7 +5,7 @@
 	"description": "Generic service-owned data row (namespace is implied by the owning service). Used by downstream services for their Data table.",
 	"type": "object",
 	"additionalProperties": false,
-	"required": ["id", "resource", "data", "createdAt", "updatedAt"],
+	"required": ["id", "resource", "data", "created_at", "updated_at"],
 	"properties": {
 		"id": {
 			"type": "string",
@@ -18,15 +18,15 @@
 		"data": {
 			"$ref": "../common/json.schema.json#/$defs/JSONValue"
 		},
-		"createdAt": {
+		"created_at": {
 			"type": "string",
 			"format": "date-time"
 		},
-		"updatedAt": {
+		"updated_at": {
 			"type": "string",
 			"format": "date-time"
 		},
-		"deletedAt": {
+		"deleted_at": {
 			"description": "Set when the row is deleted. Tombstoned rows are excluded from plain reads but included in incremental ones.",
 			"type": "string",
 			"format": "date-time"

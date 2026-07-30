@@ -851,7 +851,7 @@ final class InterpreterTests: XCTestCase {
           fk: itemId,
           type: "pickup",
           value: "accept",
-          parentMessageId: requestId
+          parent_message_id: requestId
         ),
         EVYTestMessageFixtures.message(
           id: requestId,
@@ -865,7 +865,7 @@ final class InterpreterTests: XCTestCase {
     try store(.dictionary(["id": .string(itemId)]), at: itemKey)
 
     let result = try parseTextFromText(
-      "{findFirst(\(messagesKey), fk == \(itemKey).id && parentMessageId == null).id}")
+      "{findFirst(\(messagesKey), fk == \(itemKey).id && parent_message_id == null).id}")
 
     XCTAssertEqual(result.value, requestId)
   }
@@ -988,14 +988,14 @@ final class InterpreterTests: XCTestCase {
     try store(
       .array([
         EVYTestMessageFixtures.message(
-          id: answeredRequestId, fk: itemId, createdAt: "2026-06-01T00:00:00.000Z",
+          id: answeredRequestId, fk: itemId, created_at: "2026-06-01T00:00:00.000Z",
           type: "pickup", value: "pending"),
         EVYTestMessageFixtures.message(
-          id: responseId, fk: itemId, createdAt: "2026-06-01T00:01:00.000Z",
-          type: "pickup", value: "accept", parentMessageId: answeredRequestId,
+          id: responseId, fk: itemId, created_at: "2026-06-01T00:01:00.000Z",
+          type: "pickup", value: "accept", parent_message_id: answeredRequestId,
           time: "2026-06-03T09:00:00"),
         EVYTestMessageFixtures.message(
-          id: openRequestId, fk: itemId, createdAt: "2026-06-01T00:02:00.000Z",
+          id: openRequestId, fk: itemId, created_at: "2026-06-01T00:02:00.000Z",
           type: "delivery", value: "pending", time: "2026-06-04T10:00:00"),
       ]),
       at: "\(MarketplaceTestFixture.serviceId):\(messagesKey)"
@@ -1003,7 +1003,7 @@ final class InterpreterTests: XCTestCase {
 
     let filtered = try EVY.getDataFromText(
       """
-      {filter(\(messagesKey), $datum.data.value == pending && findFirst(sort(\(messagesKey), desc, createdAt), fk == $datum.fk && data.type == $datum.data.type).id == $datum.id)}
+      {filter(\(messagesKey), $datum.data.value == pending && findFirst(sort(\(messagesKey), desc, created_at), fk == $datum.fk && data.type == $datum.data.type).id == $datum.id)}
       """
     )
     guard case .array(let items) = filtered else {
@@ -1079,10 +1079,10 @@ final class InterpreterTests: XCTestCase {
       .array([
         EVYTestMessageFixtures.message(
           id: ownedRequestId, fk: itemId, service: service, resource: resource,
-          createdAt: "2026-06-01T00:00:00.000Z", type: "pickup", value: "pending"),
+          created_at: "2026-06-01T00:00:00.000Z", type: "pickup", value: "pending"),
         EVYTestMessageFixtures.message(
           id: otherRequestId, fk: otherItemId, service: service, resource: resource,
-          createdAt: "2026-06-01T00:01:00.000Z", type: "pickup", value: "pending"),
+          created_at: "2026-06-01T00:01:00.000Z", type: "pickup", value: "pending"),
       ]),
       at: "\(MarketplaceTestFixture.serviceId):\(messagesKey)"
     )
@@ -1116,14 +1116,14 @@ final class InterpreterTests: XCTestCase {
       .array([
         EVYTestMessageFixtures.message(
           id: settledRequestId, fk: itemId, service: service, resource: resource,
-          createdAt: "2026-06-01T00:00:00.000Z", type: "pickup", value: "pending"),
+          created_at: "2026-06-01T00:00:00.000Z", type: "pickup", value: "pending"),
         EVYTestMessageFixtures.message(
           id: responseId, fk: itemId, service: service, resource: resource,
-          createdAt: "2026-06-01T00:01:00.000Z", type: "pickup", value: "accept",
-          parentMessageId: settledRequestId, time: "2026-06-03T09:00:00"),
+          created_at: "2026-06-01T00:01:00.000Z", type: "pickup", value: "accept",
+          parent_message_id: settledRequestId, time: "2026-06-03T09:00:00"),
         EVYTestMessageFixtures.message(
           id: openRequestId, fk: itemId, service: service, resource: resource,
-          createdAt: "2026-06-01T00:02:00.000Z", type: "delivery", value: "pending",
+          created_at: "2026-06-01T00:02:00.000Z", type: "delivery", value: "pending",
           time: "2026-06-04T10:00:00"),
       ]),
       at: "\(MarketplaceTestFixture.serviceId):\(messagesKey)"
@@ -1131,7 +1131,7 @@ final class InterpreterTests: XCTestCase {
 
     let filtered = try EVY.getDataFromText(
       """
-      {filter(\(messagesKey), $datum.data.value == pending && owns($datum.service, $datum.resource, $datum.fk) == true && findFirst(sort(\(messagesKey), desc, createdAt), fk == $datum.fk && data.type == $datum.data.type).id == $datum.id)}
+      {filter(\(messagesKey), $datum.data.value == pending && owns($datum.service, $datum.resource, $datum.fk) == true && findFirst(sort(\(messagesKey), desc, created_at), fk == $datum.fk && data.type == $datum.data.type).id == $datum.id)}
       """
     )
     guard case .array(let items) = filtered else {
@@ -1177,7 +1177,7 @@ final class InterpreterTests: XCTestCase {
           fk: itemId,
           type: "pickup",
           value: "accept",
-          parentMessageId: UUID().uuidString
+          parent_message_id: UUID().uuidString
         ),
         EVYTestMessageFixtures.message(
           id: UUID().uuidString,
@@ -1191,7 +1191,7 @@ final class InterpreterTests: XCTestCase {
     try store(.dictionary(["id": .string(itemId)]), at: itemKey)
 
     let result = try parseTextFromText(
-      "{findFirst(\(messagesKey), fk == \(itemKey).id && parentMessageId != null).id}")
+      "{findFirst(\(messagesKey), fk == \(itemKey).id && parent_message_id != null).id}")
 
     XCTAssertEqual(result.value, answerId)
   }
@@ -1243,13 +1243,13 @@ final class InterpreterTests: XCTestCase {
       .array([
         // Deliberately stored oldest-first, so store order and sort order disagree.
         EVYTestMessageFixtures.message(
-          id: oldestPickup, fk: itemId, createdAt: "2026-06-01T09:00:00.100Z",
+          id: oldestPickup, fk: itemId, created_at: "2026-06-01T09:00:00.100Z",
           type: "pickup", value: "pending"),
         EVYTestMessageFixtures.message(
-          id: delivery, fk: itemId, createdAt: "2026-06-01T09:00:00.200Z",
+          id: delivery, fk: itemId, created_at: "2026-06-01T09:00:00.200Z",
           type: "delivery", value: "pending"),
         EVYTestMessageFixtures.message(
-          id: newestPickup, fk: itemId, createdAt: "2026-06-01T09:00:00.300Z",
+          id: newestPickup, fk: itemId, created_at: "2026-06-01T09:00:00.300Z",
           type: "pickup", value: "accept", time: "2026-06-03T09:00:00"),
       ]),
       at: "\(MarketplaceTestFixture.serviceId):\(key)"
@@ -1265,7 +1265,7 @@ final class InterpreterTests: XCTestCase {
     try store(.dictionary(["id": .string(itemId)]), at: itemKey)
 
     let latest = try parseTextFromText(
-      "{findFirst(sort(\(messagesKey), desc, createdAt), fk == \(itemKey).id && data.type == pickup).id}"
+      "{findFirst(sort(\(messagesKey), desc, created_at), fk == \(itemKey).id && data.type == pickup).id}"
     )
 
     XCTAssertEqual(latest.value, ids.newestPickup, "the newest match wins, not the first stored")
@@ -1281,7 +1281,7 @@ final class InterpreterTests: XCTestCase {
     try store(.dictionary(["id": .string(itemId)]), at: itemKey)
 
     let oldest = try parseTextFromText(
-      "{findFirst(sort(\(messagesKey), asc, createdAt), fk == \(itemKey).id && data.type == pickup).id}"
+      "{findFirst(sort(\(messagesKey), asc, created_at), fk == \(itemKey).id && data.type == pickup).id}"
     )
 
     XCTAssertEqual(oldest.value, ids.oldestPickup)
@@ -1295,9 +1295,9 @@ final class InterpreterTests: XCTestCase {
     try store(.dictionary(["id": .string(itemId)]), at: itemKey)
 
     let latestPickup =
-      "findFirst(sort(\(messagesKey), desc, createdAt), fk == \(itemKey).id && data.type == pickup)"
+      "findFirst(sort(\(messagesKey), desc, created_at), fk == \(itemKey).id && data.type == pickup)"
     let latestDelivery =
-      "findFirst(sort(\(messagesKey), desc, createdAt), fk == \(itemKey).id && data.type == delivery)"
+      "findFirst(sort(\(messagesKey), desc, created_at), fk == \(itemKey).id && data.type == delivery)"
 
     XCTAssertTrue(try _evaluateFromText("{\(latestPickup).data.value == accept}"))
     XCTAssertFalse(try _evaluateFromText("{\(latestPickup).data.value == pending}"))
@@ -1316,7 +1316,7 @@ final class InterpreterTests: XCTestCase {
     try store(.dictionary(["id": .string(itemId)]), at: itemKey)
 
     let latestShipping =
-      "findFirst(sort(\(messagesKey), desc, createdAt), fk == \(itemKey).id && data.type == shipping)"
+      "findFirst(sort(\(messagesKey), desc, created_at), fk == \(itemKey).id && data.type == shipping)"
 
     XCTAssertTrue(
       try _evaluateFromText(
@@ -1334,7 +1334,7 @@ final class InterpreterTests: XCTestCase {
     try store(.dictionary(["id": .string(itemId)]), at: itemKey)
 
     let latestPickup =
-      "findFirst(sort(\(messagesKey), desc, createdAt), fk == \(itemKey).id && data.type == pickup)"
+      "findFirst(sort(\(messagesKey), desc, created_at), fk == \(itemKey).id && data.type == pickup)"
     let rendered = try parseTextFromText(
       "Pickup confirmed for {formatDatetime(\(latestPickup).data.time, \"EEE do\")}")
 
@@ -1406,7 +1406,7 @@ final class InterpreterTests: XCTestCase {
 
     XCTAssertThrowsError(
       try parseTextFromText(
-        "{findFirst(\(messagesKey), \(itemKey).id, fk, null, createdAt).id}")
+        "{findFirst(\(messagesKey), \(itemKey).id, fk, null, created_at).id}")
     )
   }
 

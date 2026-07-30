@@ -21,9 +21,9 @@ const flowsById: Record<string, DATA_EVY_Flow> = {
 	"flow-1": {
 		id: "flow-1",
 		name: "Checkout",
-		pageIds: ["page-1", "page-2"],
-		createdAt: "",
-		updatedAt: "",
+		page_ids: ["page-1", "page-2"],
+		created_at: "",
+		updated_at: "",
 		visibility: "public",
 	},
 };
@@ -33,18 +33,18 @@ const pagesById: Record<string, DATA_EVY_Page> = {
 		id: "page-1",
 		name: "page-1",
 		title: "Item Details",
-		rowIds: ["parent-row"],
-		createdAt: "",
-		updatedAt: "",
+		row_ids: ["parent-row"],
+		created_at: "",
+		updated_at: "",
 		visibility: "public",
 	},
 	"page-2": {
 		id: "page-2",
 		name: "page-2",
 		title: "",
-		rowIds: [],
-		createdAt: "",
-		updatedAt: "",
+		row_ids: [],
+		created_at: "",
+		updated_at: "",
 		visibility: "public",
 	},
 };
@@ -153,9 +153,9 @@ describe("idCandidates", () => {
 		expect(names).toContain("visible");
 		expect(names).toContain("subtitle");
 		expect(names).toContain("placeholder");
-		expect(names).not.toContain("childRowId");
-		expect(names).not.toContain("childrenRowIds");
-		expect(names).not.toContain("sheetRowId");
+		expect(names).not.toContain("child_row_id");
+		expect(names).not.toContain("children_row_ids");
+		expect(names).not.toContain("sheet_row_id");
 		expect(names).not.toContain("actions");
 		expect(new Set(names).size).toBe(names.length);
 		expect(

@@ -13,36 +13,36 @@
 
 export class ConflictError extends Error {
 	readonly code = "CONFLICT";
-	readonly expectedUpdatedAt: string;
+	readonly expected_updated_at: string;
 	readonly actualUpdatedAt: string;
 
-	constructor(expectedUpdatedAt: string, actualUpdatedAt: string) {
+	constructor(expected_updated_at: string, actualUpdatedAt: string) {
 		super(
 			`Conflict: the record changed since you last read it ` +
-				`(expected updatedAt ${expectedUpdatedAt}, found ${actualUpdatedAt}). ` +
+				`(expected updated_at ${expected_updated_at}, found ${actualUpdatedAt}). ` +
 				`Re-read the record and reapply your change.`,
 		);
 		this.name = "ConflictError";
-		this.expectedUpdatedAt = expectedUpdatedAt;
+		this.expected_updated_at = expected_updated_at;
 		this.actualUpdatedAt = actualUpdatedAt;
 	}
 }
 
 /** Throws when the caller's expected version is not the stored one. */
 export function assertNotModified(
-	expectedUpdatedAt: string | undefined,
+	expected_updated_at: string | undefined,
 	actualUpdatedAt: string,
 ): void {
-	if (expectedUpdatedAt === undefined) return;
-	if (expectedUpdatedAt !== actualUpdatedAt) {
-		throw new ConflictError(expectedUpdatedAt, actualUpdatedAt);
+	if (expected_updated_at === undefined) return;
+	if (expected_updated_at !== actualUpdatedAt) {
+		throw new ConflictError(expected_updated_at, actualUpdatedAt);
 	}
 }
 
 /**
- * The row's next `updatedAt`, guaranteed to be greater than its current one.
+ * The row's next `updated_at`, guaranteed to be greater than its current one.
  *
- * `updatedAt` doubles as the version token, and wall-clock time has
+ * `updated_at` doubles as the version token, and wall-clock time has
  * millisecond resolution - two writes inside the same millisecond would leave
  * it unchanged, so a second writer's stale token would still match and the
  * lock would pass exactly when it needed to fail. Nudging forward by a

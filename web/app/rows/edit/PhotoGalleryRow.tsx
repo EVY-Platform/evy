@@ -5,7 +5,7 @@ import { RowLayout } from "../design-system/RowLayout";
 
 export default defineRow("PhotoGalleryRow", {
 	config: {
-		type: "PhotoGallery",
+		type: "photo_gallery",
 		actions: defaultRowActions({ tap: { fn: "expand_photo" } }),
 		source: "{resourceId.photo_ids}",
 		visible: "true",

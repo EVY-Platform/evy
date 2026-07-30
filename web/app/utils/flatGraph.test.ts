@@ -34,30 +34,30 @@ import { pageRootIds } from "./rowTraversal";
 
 const NOW = "2024-01-01T00:00:00.000Z";
 
-function makeFlow(id: string, pageIds: string[]): DATA_EVY_Flow {
+function makeFlow(id: string, page_ids: string[]): DATA_EVY_Flow {
 	return {
 		id,
 		name: "Flow",
-		pageIds,
+		page_ids,
 		visibility: "public",
-		createdAt: NOW,
-		updatedAt: NOW,
+		created_at: NOW,
+		updated_at: NOW,
 	};
 }
 
 function makePage(
 	id: string,
-	rowIds: string[],
-	footerRowId?: string,
+	row_ids: string[],
+	footer_row_id?: string,
 ): DATA_EVY_Page {
 	return {
 		id,
 		name: "Page",
 		title: "",
-		rowIds,
-		footerRowId,
-		createdAt: NOW,
-		updatedAt: NOW,
+		row_ids,
+		footer_row_id,
+		created_at: NOW,
+		updated_at: NOW,
 		visibility: "public",
 	};
 }
@@ -66,12 +66,12 @@ function makeRow(id: string, data: Record<string, unknown> = {}): DATA_EVY_Row {
 	return {
 		id,
 		name: id,
-		type: "Text",
+		type: "text",
 		visible: "true",
 		data,
 		visibility: "public",
-		createdAt: NOW,
-		updatedAt: NOW,
+		created_at: NOW,
+		updated_at: NOW,
 	};
 }
 
@@ -287,14 +287,14 @@ describe("findContainerByIdInPage", () => {
 // ---------------------------------------------------------------------------
 
 describe("insertIntoLocation", () => {
-	it("inserts a row into page rowIds at the given index", () => {
+	it("inserts a row into page row_ids at the given index", () => {
 		const r1 = makeRow("r1");
 		const r2 = makeRow("r2");
 		const newRow = makeRow("new");
 		const page = makePage("p1", ["r1", "r2"]);
 		const maps = makeMaps([], [page], [r1, r2, newRow]);
 		const next = insertIntoLocation(maps, "p1", "new", 1);
-		expect(next.pagesById.p1?.rowIds).toEqual(["r1", "new", "r2"]);
+		expect(next.pagesById.p1?.row_ids).toEqual(["r1", "new", "r2"]);
 	});
 
 	it("inserts into a children container", () => {
@@ -337,7 +337,7 @@ describe("setFooterRow", () => {
 		const page = makePage("p1", []);
 		const maps = makeMaps([], [page], [row]);
 		const next = setFooterRow(maps, "p1", "footer");
-		expect(next.pagesById.p1?.footerRowId).toBe("footer");
+		expect(next.pagesById.p1?.footer_row_id).toBe("footer");
 	});
 });
 
@@ -346,12 +346,12 @@ describe("setFooterRow", () => {
 // ---------------------------------------------------------------------------
 
 describe("removeRowFromPage", () => {
-	it("removes a row from page rowIds and cleans up rowsById", () => {
+	it("removes a row from page row_ids and cleans up rowsById", () => {
 		const row = makeRow("r1");
 		const page = makePage("p1", ["r1"]);
 		const maps = makeMaps([makeFlow("f1", ["p1"])], [page], [row]);
 		const next = removeRowFromPage(maps, "p1", "r1");
-		expect(next.pagesById.p1?.rowIds).toEqual([]);
+		expect(next.pagesById.p1?.row_ids).toEqual([]);
 		expect(next.rowsById.r1).toBeUndefined();
 	});
 
@@ -360,7 +360,7 @@ describe("removeRowFromPage", () => {
 		const page = makePage("p1", [], "footer");
 		const maps = makeMaps([makeFlow("f1", ["p1"])], [page], [footer]);
 		const next = removeRowFromPage(maps, "p1", "footer");
-		expect(next.pagesById.p1?.footerRowId).toBeUndefined();
+		expect(next.pagesById.p1?.footer_row_id).toBeUndefined();
 		expect(next.rowsById.footer).toBeUndefined();
 	});
 
@@ -404,8 +404,8 @@ describe("moveRow", () => {
 		const p2 = makePage("p2", []);
 		const maps = makeMaps([makeFlow("f1", ["p1", "p2"])], [p1, p2], [row]);
 		const next = moveRow(maps, "r1", "p1", "p2", 0);
-		expect(next.pagesById.p1?.rowIds).toEqual([]);
-		expect(next.pagesById.p2?.rowIds).toEqual(["r1"]);
+		expect(next.pagesById.p1?.row_ids).toEqual([]);
+		expect(next.pagesById.p2?.row_ids).toEqual(["r1"]);
 	});
 
 	it("moves a row within the same page", () => {
@@ -414,7 +414,7 @@ describe("moveRow", () => {
 		const page = makePage("p1", ["r1", "r2"]);
 		const maps = makeMaps([makeFlow("f1", ["p1"])], [page], [r1, r2]);
 		const next = moveRow(maps, "r1", "p1", "p1", 2);
-		expect(next.pagesById.p1?.rowIds).toEqual(["r2", "r1"]);
+		expect(next.pagesById.p1?.row_ids).toEqual(["r2", "r1"]);
 	});
 });
 
@@ -423,13 +423,13 @@ describe("moveRow", () => {
 // ---------------------------------------------------------------------------
 
 describe("moveRowToFooter", () => {
-	it("moves a row from page rowIds to footer", () => {
+	it("moves a row from page row_ids to footer", () => {
 		const row = makeRow("r1");
 		const page = makePage("p1", ["r1"]);
 		const maps = makeMaps([makeFlow("f1", ["p1"])], [page], [row]);
 		const next = moveRowToFooter(maps, "r1", "p1", "p1");
-		expect(next.pagesById.p1?.rowIds).toEqual([]);
-		expect(next.pagesById.p1?.footerRowId).toBe("r1");
+		expect(next.pagesById.p1?.row_ids).toEqual([]);
+		expect(next.pagesById.p1?.footer_row_id).toBe("r1");
 	});
 });
 
@@ -480,7 +480,7 @@ describe("addPage", () => {
 		const newPage = makePage("p2", []);
 		const maps = makeMaps([flow], [p1], []);
 		const next = addPage(maps, "f1", newPage);
-		expect(next.flowsById.f1?.pageIds).toEqual(["p1", "p2"]);
+		expect(next.flowsById.f1?.page_ids).toEqual(["p1", "p2"]);
 		expect(next.pagesById.p2).toBeDefined();
 	});
 });
@@ -494,7 +494,7 @@ describe("removePage", () => {
 		const r2 = makeRow("r2");
 		const maps = makeMaps([flow], [p1, p2], [r1, r2]);
 		const next = removePage(maps, "f1", "p2");
-		expect(next.flowsById.f1?.pageIds).toEqual(["p1"]);
+		expect(next.flowsById.f1?.page_ids).toEqual(["p1"]);
 		expect(next.pagesById.p2).toBeUndefined();
 		expect(next.rowsById.r2).toBeUndefined();
 		expect(next.rowsById.r1).toBeDefined();
@@ -586,12 +586,12 @@ describe("findChildIndexInContainer", () => {
 // ---------------------------------------------------------------------------
 
 describe("pageRootIds", () => {
-	it("returns rowIds only when no footer", () => {
+	it("returns row_ids only when no footer", () => {
 		const page = makePage("p1", ["r1", "r2"]);
 		expect(pageRootIds(page)).toEqual(["r1", "r2"]);
 	});
 
-	it("includes footerRowId when present", () => {
+	it("includes footer_row_id when present", () => {
 		const page = makePage("p1", ["r1"], "footer");
 		expect(pageRootIds(page)).toEqual(["r1", "footer"]);
 	});
@@ -613,7 +613,7 @@ describe("ensureShowAction", () => {
 			actions.tap?.some(
 				(a) =>
 					JSON.stringify(a.true) ===
-					JSON.stringify({ fn: "show", rowId: "sheet-1" }),
+					JSON.stringify({ fn: "show", row_id: "sheet-1" }),
 			),
 		).toBe(true);
 	});
@@ -621,7 +621,7 @@ describe("ensureShowAction", () => {
 	it("does not duplicate an existing show action", () => {
 		const showAction: UI_RowAction = {
 			condition: "",
-			true: { fn: "show", rowId: "sheet-1" },
+			true: { fn: "show", row_id: "sheet-1" },
 			false: "",
 		};
 		const row = makeRow("r1", { actions: { tap: [showAction] } });
@@ -634,7 +634,7 @@ describe("ensureShowAction", () => {
 			actions.tap?.filter(
 				(a) =>
 					JSON.stringify(a.true) ===
-					JSON.stringify({ fn: "show", rowId: "sheet-1" }),
+					JSON.stringify({ fn: "show", row_id: "sheet-1" }),
 			).length,
 		).toBe(1);
 	});
@@ -642,7 +642,7 @@ describe("ensureShowAction", () => {
 	it("updates unconditional show when sheet is replaced", () => {
 		const showAction: UI_RowAction = {
 			condition: "",
-			true: { fn: "show", rowId: "old-sheet" },
+			true: { fn: "show", row_id: "old-sheet" },
 			false: "",
 		};
 		const row = makeRow("r1", { actions: { tap: [showAction] } });
@@ -655,14 +655,14 @@ describe("ensureShowAction", () => {
 			actions.tap?.some(
 				(a) =>
 					JSON.stringify(a.true) ===
-					JSON.stringify({ fn: "show", rowId: "new-sheet" }),
+					JSON.stringify({ fn: "show", row_id: "new-sheet" }),
 			),
 		).toBe(true);
 		expect(
 			actions.tap?.some(
 				(a) =>
 					JSON.stringify(a.true) ===
-					JSON.stringify({ fn: "show", rowId: "old-sheet" }),
+					JSON.stringify({ fn: "show", row_id: "old-sheet" }),
 			),
 		).toBe(false);
 	});
@@ -679,11 +679,11 @@ describe("updateFlowSubmits", () => {
 		};
 	}
 
-	it("sets the declaration and stamps updatedAt", () => {
+	it("sets the declaration and stamps updated_at", () => {
 		const next = updateFlowSubmits(mapsWithFlow(), "f1", submits);
 
 		expect(next.flowsById.f1?.submits).toEqual(submits);
-		expect(next.flowsById.f1?.updatedAt).not.toBe(NOW);
+		expect(next.flowsById.f1?.updated_at).not.toBe(NOW);
 	});
 
 	it("removes the key entirely when cleared", () => {
@@ -713,12 +713,12 @@ describe("updateFlowSubmits", () => {
 });
 
 describe("applyRemoteRecord", () => {
-	function mapsWithRow(updatedAt: string): FlowEntityMaps {
+	function mapsWithRow(updated_at: string): FlowEntityMaps {
 		return {
 			flowsById: {},
 			pagesById: {},
 			rowsById: {
-				r1: { ...makeRow("r1", { text: "local" }), updatedAt },
+				r1: { ...makeRow("r1", { text: "local" }), updated_at },
 			},
 		};
 	}
@@ -727,11 +727,11 @@ describe("applyRemoteRecord", () => {
 		const next = applyRemoteRecord(
 			mapsWithRow("2026-01-01T00:00:00.000Z"),
 			"rows",
-			{ id: "r1", updatedAt: "2026-02-01T00:00:00.000Z" },
+			{ id: "r1", updated_at: "2026-02-01T00:00:00.000Z" },
 			"update",
 		);
 
-		expect(next.rowsById.r1?.updatedAt).toBe("2026-02-01T00:00:00.000Z");
+		expect(next.rowsById.r1?.updated_at).toBe("2026-02-01T00:00:00.000Z");
 	});
 
 	// The echo of our own write carries the timestamp we already hold.
@@ -740,7 +740,7 @@ describe("applyRemoteRecord", () => {
 		const next = applyRemoteRecord(
 			maps,
 			"rows",
-			{ id: "r1", updatedAt: "2026-02-01T00:00:00.000Z" },
+			{ id: "r1", updated_at: "2026-02-01T00:00:00.000Z" },
 			"update",
 		);
 
@@ -752,7 +752,7 @@ describe("applyRemoteRecord", () => {
 		const next = applyRemoteRecord(
 			maps,
 			"rows",
-			{ id: "r1", updatedAt: "2026-01-01T00:00:00.000Z" },
+			{ id: "r1", updated_at: "2026-01-01T00:00:00.000Z" },
 			"update",
 		);
 
@@ -774,7 +774,7 @@ describe("applyRemoteRecord", () => {
 		const next = applyRemoteRecord(
 			mapsWithRow("2026-01-01T00:00:00.000Z"),
 			"rows",
-			{ id: "r1", deletedAt: "2026-02-01T00:00:00.000Z" },
+			{ id: "r1", deleted_at: "2026-02-01T00:00:00.000Z" },
 			"update",
 		);
 
@@ -785,7 +785,7 @@ describe("applyRemoteRecord", () => {
 		const next = applyRemoteRecord(
 			mapsWithRow("2026-01-01T00:00:00.000Z"),
 			"rows",
-			{ id: "r2", updatedAt: "2026-02-01T00:00:00.000Z" },
+			{ id: "r2", updated_at: "2026-02-01T00:00:00.000Z" },
 			"create",
 		);
 
@@ -805,10 +805,10 @@ describe("applyRemoteRecord", () => {
 		applyRemoteRecord(
 			maps,
 			"rows",
-			{ id: "r1", updatedAt: "2026-05-01T00:00:00.000Z" },
+			{ id: "r1", updated_at: "2026-05-01T00:00:00.000Z" },
 			"update",
 		);
 
-		expect(maps.rowsById.r1?.updatedAt).toBe("2026-01-01T00:00:00.000Z");
+		expect(maps.rowsById.r1?.updated_at).toBe("2026-01-01T00:00:00.000Z");
 	});
 });

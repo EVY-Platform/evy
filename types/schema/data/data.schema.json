@@ -42,7 +42,7 @@
 		"DATA_EVY_Address": {
 			"type": "object",
 			"additionalProperties": false,
-			"required": ["id", "createdAt", "updatedAt", "visibility"],
+			"required": ["id", "created_at", "updated_at", "visibility"],
 			"properties": {
 				"id": {
 					"type": "string",
@@ -76,24 +76,24 @@
 					"type": "string"
 				},
 				"visibility": {
-					"$ref": "#/$defs/Visibility"
+					"$ref": "#/$defs/visibility"
 				},
-				"createdAt": {
+				"created_at": {
 					"type": "string",
 					"format": "date-time"
 				},
-				"updatedAt": {
+				"updated_at": {
 					"type": "string",
 					"format": "date-time"
 				},
-				"deletedAt": {
+				"deleted_at": {
 					"description": "Set when the record is deleted. Tombstoned rows are excluded from plain reads but included in incremental ones, so clients learn about deletions.",
 					"type": "string",
 					"format": "date-time"
 				}
 			}
 		},
-		"Visibility": {
+		"visibility": {
 			"type": "string",
 			"enum": ["public", "private"]
 		},
@@ -105,8 +105,8 @@
 				"name",
 				"formatting_config",
 				"formatting",
-				"createdAt",
-				"updatedAt"
+				"created_at",
+				"updated_at"
 			],
 			"properties": {
 				"id": {
@@ -127,15 +127,15 @@
 						"type": "string"
 					}
 				},
-				"createdAt": {
+				"created_at": {
 					"type": "string",
 					"format": "date-time"
 				},
-				"updatedAt": {
+				"updated_at": {
 					"type": "string",
 					"format": "date-time"
 				},
-				"deletedAt": {
+				"deleted_at": {
 					"description": "Set when the record is deleted. Tombstoned rows are excluded from plain reads but included in incremental ones, so clients learn about deletions.",
 					"type": "string",
 					"format": "date-time"
@@ -150,8 +150,8 @@
 				"fk",
 				"service",
 				"resource",
-				"createdAt",
-				"updatedAt",
+				"created_at",
+				"updated_at",
 				"data",
 				"visibility"
 			],
@@ -172,15 +172,15 @@
 					"type": "string",
 					"format": "uuid"
 				},
-				"createdAt": {
+				"created_at": {
 					"type": "string",
 					"format": "date-time"
 				},
-				"updatedAt": {
+				"updated_at": {
 					"type": "string",
 					"format": "date-time"
 				},
-				"deletedAt": {
+				"deleted_at": {
 					"description": "Set when the record is deleted. Tombstoned rows are excluded from plain reads but included in incremental ones, so clients learn about deletions.",
 					"type": "string",
 					"format": "date-time"
@@ -191,13 +191,13 @@
 						"$ref": "../common/json.schema.json#/$defs/JSONValue"
 					}
 				},
-				"parentMessageId": {
+				"parent_message_id": {
 					"type": "string",
 					"format": "uuid",
 					"description": "The id of the message this one answers. Absent on a request; present on accept/reject/cancel. Forms a linked list with the request."
 				},
 				"visibility": {
-					"$ref": "#/$defs/Visibility"
+					"$ref": "#/$defs/visibility"
 				}
 			}
 		},
@@ -207,9 +207,9 @@
 			"required": [
 				"id",
 				"name",
-				"pageIds",
-				"createdAt",
-				"updatedAt",
+				"page_ids",
+				"created_at",
+				"updated_at",
 				"visibility"
 			],
 			"properties": {
@@ -221,7 +221,7 @@
 					"type": "string",
 					"minLength": 1
 				},
-				"pageIds": {
+				"page_ids": {
 					"type": "array",
 					"items": {
 						"type": "string",
@@ -232,17 +232,17 @@
 					"$ref": "#/$defs/DATA_EVY_FlowSubmits"
 				},
 				"visibility": {
-					"$ref": "#/$defs/Visibility"
+					"$ref": "#/$defs/visibility"
 				},
-				"createdAt": {
+				"created_at": {
 					"type": "string",
 					"format": "date-time"
 				},
-				"updatedAt": {
+				"updated_at": {
 					"type": "string",
 					"format": "date-time"
 				},
-				"deletedAt": {
+				"deleted_at": {
 					"description": "Set when the record is deleted. Tombstoned rows are excluded from plain reads but included in incremental ones, so clients learn about deletions.",
 					"type": "string",
 					"format": "date-time"
@@ -265,26 +265,26 @@
 				}
 			}
 		},
-		"OS": {
+		"os": {
 			"type": "string",
-			"enum": ["ios", "android", "Web"]
+			"enum": ["ios", "android", "web"]
 		},
 		"DATA_EVY_Device": {
 			"type": "object",
 			"additionalProperties": false,
-			"required": ["token", "os", "createdAt", "visibility"],
+			"required": ["token", "os", "created_at", "visibility"],
 			"properties": {
 				"token": {
 					"type": "string",
 					"maxLength": 256
 				},
 				"os": {
-					"$ref": "#/$defs/OS"
+					"$ref": "#/$defs/os"
 				},
 				"visibility": {
-					"$ref": "#/$defs/Visibility"
+					"$ref": "#/$defs/visibility"
 				},
-				"createdAt": {
+				"created_at": {
 					"type": "string",
 					"format": "date-time"
 				}
@@ -297,8 +297,8 @@
 				"id",
 				"name",
 				"description",
-				"createdAt",
-				"updatedAt",
+				"created_at",
+				"updated_at",
 				"visibility"
 			],
 			"properties": {
@@ -313,32 +313,32 @@
 				"description": {
 					"type": "string"
 				},
-				"wsHost": {
+				"ws_host": {
 					"description": "WebSocket host the API dials for this service. Falls back to the <NAME>_WS_HOST env var when unset.",
 					"type": "string",
 					"maxLength": 253
 				},
-				"wsPort": {
-					"description": "WebSocket port paired with wsHost. Falls back to <NAME>_WS_PORT when unset.",
+				"ws_port": {
+					"description": "WebSocket port paired with ws_host. Falls back to <NAME>_WS_PORT when unset.",
 					"type": "integer",
 					"minimum": 1,
 					"maximum": 65535
 				},
-				"sortOrder": {
+				"sort_order": {
 					"type": "integer"
 				},
 				"visibility": {
-					"$ref": "#/$defs/Visibility"
+					"$ref": "#/$defs/visibility"
 				},
-				"createdAt": {
+				"created_at": {
 					"type": "string",
 					"format": "date-time"
 				},
-				"updatedAt": {
+				"updated_at": {
 					"type": "string",
 					"format": "date-time"
 				},
-				"deletedAt": {
+				"deleted_at": {
 					"description": "Set when the record is deleted. Tombstoned rows are excluded from plain reads but included in incremental ones, so clients learn about deletions.",
 					"type": "string",
 					"format": "date-time"
@@ -354,9 +354,9 @@
 				"description",
 				"logo",
 				"url",
-				"supportEmail",
-				"createdAt",
-				"updatedAt",
+				"support_email",
+				"created_at",
+				"updated_at",
 				"visibility"
 			],
 			"properties": {
@@ -379,22 +379,22 @@
 					"type": "string",
 					"maxLength": 50
 				},
-				"supportEmail": {
+				"support_email": {
 					"type": "string",
 					"maxLength": 50
 				},
 				"visibility": {
-					"$ref": "#/$defs/Visibility"
+					"$ref": "#/$defs/visibility"
 				},
-				"createdAt": {
+				"created_at": {
 					"type": "string",
 					"format": "date-time"
 				},
-				"updatedAt": {
+				"updated_at": {
 					"type": "string",
 					"format": "date-time"
 				},
-				"deletedAt": {
+				"deleted_at": {
 					"description": "Set when the record is deleted. Tombstoned rows are excluded from plain reads but included in incremental ones, so clients learn about deletions.",
 					"type": "string",
 					"format": "date-time"
@@ -406,14 +406,14 @@
 			"additionalProperties": false,
 			"required": [
 				"id",
-				"fkServiceId",
-				"fkOrganizationId",
+				"fk_service_id",
+				"fk_organization_id",
 				"name",
 				"description",
 				"logo",
 				"url",
-				"createdAt",
-				"updatedAt",
+				"created_at",
+				"updated_at",
 				"retired",
 				"visibility"
 			],
@@ -422,11 +422,11 @@
 					"type": "string",
 					"format": "uuid"
 				},
-				"fkServiceId": {
+				"fk_service_id": {
 					"type": "string",
 					"format": "uuid"
 				},
-				"fkOrganizationId": {
+				"fk_organization_id": {
 					"type": "string",
 					"format": "uuid"
 				},
@@ -446,17 +446,17 @@
 					"maxLength": 50
 				},
 				"visibility": {
-					"$ref": "#/$defs/Visibility"
+					"$ref": "#/$defs/visibility"
 				},
-				"createdAt": {
+				"created_at": {
 					"type": "string",
 					"format": "date-time"
 				},
-				"updatedAt": {
+				"updated_at": {
 					"type": "string",
 					"format": "date-time"
 				},
-				"deletedAt": {
+				"deleted_at": {
 					"description": "Set when the record is deleted. Tombstoned rows are excluded from plain reads but included in incremental ones, so clients learn about deletions.",
 					"type": "string",
 					"format": "date-time"
@@ -470,7 +470,13 @@
 		"DATA_EVY_File": {
 			"type": "object",
 			"additionalProperties": false,
-			"required": ["id", "type", "createdAt", "updatedAt", "visibility"],
+			"required": [
+				"id",
+				"type",
+				"created_at",
+				"updated_at",
+				"visibility"
+			],
 			"properties": {
 				"id": {
 					"type": "string",
@@ -481,17 +487,17 @@
 					"minLength": 1
 				},
 				"visibility": {
-					"$ref": "#/$defs/Visibility"
+					"$ref": "#/$defs/visibility"
 				},
-				"createdAt": {
+				"created_at": {
 					"type": "string",
 					"format": "date-time"
 				},
-				"updatedAt": {
+				"updated_at": {
 					"type": "string",
 					"format": "date-time"
 				},
-				"deletedAt": {
+				"deleted_at": {
 					"description": "Set when the record is deleted. Tombstoned rows are excluded from plain reads but included in incremental ones, so clients learn about deletions.",
 					"type": "string",
 					"format": "date-time"
@@ -504,9 +510,9 @@
 			"required": [
 				"id",
 				"name",
-				"rowIds",
-				"createdAt",
-				"updatedAt",
+				"row_ids",
+				"created_at",
+				"updated_at",
 				"visibility"
 			],
 			"properties": {
@@ -521,29 +527,29 @@
 				"title": {
 					"type": "string"
 				},
-				"rowIds": {
+				"row_ids": {
 					"type": "array",
 					"items": {
 						"type": "string",
 						"format": "uuid"
 					}
 				},
-				"footerRowId": {
+				"footer_row_id": {
 					"type": "string",
 					"format": "uuid"
 				},
 				"visibility": {
-					"$ref": "#/$defs/Visibility"
+					"$ref": "#/$defs/visibility"
 				},
-				"createdAt": {
+				"created_at": {
 					"type": "string",
 					"format": "date-time"
 				},
-				"updatedAt": {
+				"updated_at": {
 					"type": "string",
 					"format": "date-time"
 				},
-				"deletedAt": {
+				"deleted_at": {
 					"description": "Set when the record is deleted. Tombstoned rows are excluded from plain reads but included in incremental ones, so clients learn about deletions.",
 					"type": "string",
 					"format": "date-time"
@@ -586,8 +592,8 @@
 				"type",
 				"visible",
 				"data",
-				"createdAt",
-				"updatedAt",
+				"created_at",
+				"updated_at",
 				"visibility"
 			],
 			"properties": {
@@ -602,27 +608,27 @@
 				"type": {
 					"type": "string",
 					"enum": [
-						"Button",
-						"Calendar",
-						"HorizontalContainer",
-						"Dropdown",
-						"Heading",
-						"Text",
-						"TextAction",
-						"TextExpand",
-						"InlinePicker",
-						"Map",
-						"InputList",
-						"Input",
-						"VerticalContainer",
-						"ListItem",
-						"Search",
-						"PhotoGallery",
-						"SelectPhoto",
-						"TabContainer",
-						"TextArea",
-						"TextSelect",
-						"TimeslotPicker"
+						"button",
+						"calendar",
+						"horizontal_container",
+						"dropdown",
+						"heading",
+						"text",
+						"text_action",
+						"text_expand",
+						"inline_picker",
+						"map",
+						"input_list",
+						"input",
+						"vertical_container",
+						"list_item",
+						"search",
+						"photo_gallery",
+						"select_photo",
+						"tab_container",
+						"text_area",
+						"text_select",
+						"timeslot_picker"
 					]
 				},
 				"visible": {
@@ -632,17 +638,17 @@
 					"$ref": "#/$defs/DATA_EVY_RowData"
 				},
 				"visibility": {
-					"$ref": "#/$defs/Visibility"
+					"$ref": "#/$defs/visibility"
 				},
-				"createdAt": {
+				"created_at": {
 					"type": "string",
 					"format": "date-time"
 				},
-				"updatedAt": {
+				"updated_at": {
 					"type": "string",
 					"format": "date-time"
 				},
-				"deletedAt": {
+				"deleted_at": {
 					"description": "Set when the record is deleted. Tombstoned rows are excluded from plain reads but included in incremental ones, so clients learn about deletions.",
 					"type": "string",
 					"format": "date-time"

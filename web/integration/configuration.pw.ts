@@ -31,11 +31,11 @@ test.describe("Row configuration", () => {
 				title: "Test Page",
 				rows: [
 					{
-						type: "HorizontalContainer",
+						type: "horizontal_container",
 						title: "Container Row",
 						children: [
 							{
-								type: "Input",
+								type: "input",
 								title: "Input Row",
 								placeholder: "First placeholder",
 							},
@@ -84,7 +84,7 @@ test.describe("Row configuration", () => {
 				title: "Test Page",
 				rows: [
 					{
-						type: "Text",
+						type: "text",
 						title: "Test Text Row",
 						subtitle: "Initial subtitle content",
 					},
@@ -120,7 +120,7 @@ test.describe("Row configuration", () => {
 				title: "Test Page",
 				rows: [
 					{
-						type: "Input",
+						type: "input",
 						source: "{initial}",
 						title: "Binding row",
 						placeholder: "Enter value",
@@ -150,7 +150,7 @@ test.describe("Row configuration", () => {
 				title: "Test Page",
 				rows: [
 					{
-						type: "Search",
+						type: "search",
 						source: "{$api:place_search}",
 						destination: "{selected_item}",
 						title: "Search row",
@@ -182,7 +182,7 @@ test.describe("Row configuration", () => {
 				title: "Test Page",
 				rows: [
 					{
-						type: "InputList",
+						type: "input_list",
 						title: "Selling Reasons",
 						placeholder: "Search for reasons",
 						format: "{$datum.value}",
@@ -220,7 +220,7 @@ test.describe("Row configuration", () => {
 					title: "Test Page",
 					rows: [
 						{
-							type: "Text",
+							type: "text",
 							title: "Hello",
 							visible: "true",
 						},
@@ -257,7 +257,7 @@ test.describe("Row configuration", () => {
 				title: "Test Page",
 				rows: [
 					{
-						type: "Button",
+						type: "button",
 						title: "",
 						label: "Test Button",
 						actions: tapAction({ fn: "close" }),
@@ -303,7 +303,7 @@ test.describe("Row configuration", () => {
 				title: "Test Page",
 				rows: [
 					{
-						type: "Button",
+						type: "button",
 						title: "",
 						label: "Test Button",
 						actions: tapAction({ fn: "close" }),
@@ -353,7 +353,7 @@ test.describe("Row configuration", () => {
 				title: "Test Page",
 				rows: [
 					{
-						type: "Button",
+						type: "button",
 						title: "",
 						label: "Nav Button",
 						actions: tapAction({ fn: "close" }),
@@ -403,7 +403,7 @@ test.describe("Row configuration", () => {
 							rows: [
 								{
 									id: "name_input",
-									type: "Input",
+									type: "input",
 									source: "",
 									title: "Name",
 									value: `{${TEST_RESOURCE_ID.RECORDS}.name}`,
@@ -412,7 +412,7 @@ test.describe("Row configuration", () => {
 								},
 								{
 									id: "submit_button",
-									type: "Button",
+									type: "button",
 									source: "",
 									title: "",
 									label: "Submit",
@@ -497,7 +497,7 @@ test.describe("Row configuration", () => {
 				title: "Test Page",
 				rows: [
 					{
-						type: "Text",
+						type: "text",
 						title: "No Action Row",
 						subtitle: "Some subtitle",
 					},
@@ -525,14 +525,14 @@ test.describe("Row configuration", () => {
 				title: "Test Page",
 				rows: [
 					{
-						type: "Input",
+						type: "input",
 						title: "Price",
 						value: "{price}",
 						placeholder: "",
 						destination: "{price}",
 					},
 					{
-						type: "Button",
+						type: "button",
 						title: "",
 						label: "Check",
 						actions: tapAction({ fn: "close" }),
@@ -576,14 +576,14 @@ test.describe("Row configuration", () => {
 				title: "Test Page",
 				rows: [
 					{
-						type: "Input",
+						type: "input",
 						title: "Items",
 						value: "{items}",
 						placeholder: "",
 						destination: "{items}",
 					},
 					{
-						type: "Button",
+						type: "button",
 						title: "",
 						label: "Validate",
 						actions: tapAction({ fn: "close" }),
@@ -630,21 +630,21 @@ test.describe("Row configuration", () => {
 				title: "Test Page",
 				rows: [
 					{
-						type: "Input",
+						type: "input",
 						title: "Name",
 						value: "{name}",
 						placeholder: "",
 						destination: "{name}",
 					},
 					{
-						type: "Input",
+						type: "input",
 						title: "Email",
 						value: "{email}",
 						placeholder: "",
 						destination: "{email}",
 					},
 					{
-						type: "Button",
+						type: "button",
 						title: "",
 						label: "Send",
 						actions: tapAction({ fn: "close" }),
@@ -695,7 +695,7 @@ test.describe("Row configuration", () => {
 				title: "Test Page",
 				rows: [
 					{
-						type: "Button",
+						type: "button",
 						title: "",
 						label: "Cancel Test",
 						actions: tapAction({ fn: "close" }),
@@ -737,7 +737,7 @@ test.describe("Row configuration", () => {
 				title: "Test Page",
 				rows: [
 					{
-						type: "Button",
+						type: "button",
 						title: "",
 						label: "Multi Action",
 						actions: {
@@ -790,7 +790,7 @@ test.describe("Row configuration", () => {
 					title: "Create Page",
 					rows: [
 						{
-							type: "Button",
+							type: "button",
 							title: "",
 							label: "Inline Create",
 							actions: tapAction({
@@ -840,7 +840,7 @@ test.describe("Row configuration", () => {
 					title: "Create Page",
 					rows: [
 						{
-							type: "Button",
+							type: "button",
 							title: "",
 							label: "Inline Create",
 							actions: tapAction({
@@ -886,14 +886,14 @@ test.describe("Row configuration", () => {
 					title: "Create Page",
 					rows: [
 						{
-							type: "Input",
+							type: "input",
 							title: "Title",
 							value: "",
 							placeholder: "",
 							destination: `{${TEST_RESOURCE_ID.RECORDS}.title}`,
 						},
 						{
-							type: "Button",
+							type: "button",
 							title: "",
 							label: "Submit Create",
 							actions: tapAction({
@@ -949,7 +949,7 @@ test.describe("Row configuration", () => {
 						rows: [
 							{
 								id: "row_input",
-								type: "Input",
+								type: "input",
 								source: "",
 								title: "Name",
 								value: "{name}",
@@ -958,7 +958,7 @@ test.describe("Row configuration", () => {
 							},
 							{
 								id: "row_btn",
-								type: "Button",
+								type: "button",
 								source: "",
 								title: "",
 								label: "Prefilled",
@@ -968,8 +968,8 @@ test.describe("Row configuration", () => {
 											condition: "{name == true}",
 											true: {
 												fn: "navigate",
-												flowId: "flow_x",
-												pageId: "page_x",
+												flow_id: "flow_x",
+												page_id: "page_x",
 											},
 											false: { fn: "close" },
 										},
@@ -1041,7 +1041,7 @@ test.describe("Row configuration", () => {
 							rows: [
 								{
 									id: "or_test_button",
-									type: "Button",
+									type: "button",
 									source: "",
 									title: "",
 									label: "OR Test",
@@ -1093,7 +1093,7 @@ test.describe("Row configuration", () => {
 							rows: [
 								{
 									id: "nested_test_button",
-									type: "Button",
+									type: "button",
 									source: "",
 									title: "",
 									label: "Nested Test",
@@ -1140,21 +1140,21 @@ test.describe("Row configuration", () => {
 				title: "Test Page",
 				rows: [
 					{
-						type: "Input",
+						type: "input",
 						title: "Name",
 						value: "{name}",
 						placeholder: "",
 						destination: "{name}",
 					},
 					{
-						type: "Input",
+						type: "input",
 						title: "Email",
 						value: "{email}",
 						placeholder: "",
 						destination: "{email}",
 					},
 					{
-						type: "Button",
+						type: "button",
 						title: "",
 						label: "Toggle Test",
 						actions: {
@@ -1213,21 +1213,21 @@ test.describe("Row configuration", () => {
 				title: "Test Page",
 				rows: [
 					{
-						type: "Input",
+						type: "input",
 						title: "Name",
 						value: "{name}",
 						placeholder: "",
 						destination: "{name}",
 					},
 					{
-						type: "Input",
+						type: "input",
 						title: "Email",
 						value: "{email}",
 						placeholder: "",
 						destination: "{email}",
 					},
 					{
-						type: "Button",
+						type: "button",
 						title: "",
 						label: "Nest Test",
 						actions: {
@@ -1285,7 +1285,7 @@ test.describe("Row configuration", () => {
 		page,
 	}) => {
 		type DeepNestRow = {
-			type: "Input" | "HorizontalContainer";
+			type: "input" | "horizontal_container";
 			title: string;
 			placeholder?: string;
 			value?: string;
@@ -1296,14 +1296,14 @@ test.describe("Row configuration", () => {
 		function deepNest(level: number): DeepNestRow {
 			if (level === 0) {
 				return {
-					type: "Input",
+					type: "input",
 					title: "Deep leaf",
 					placeholder: "",
 					value: "",
 				};
 			}
 			return {
-				type: "HorizontalContainer",
+				type: "horizontal_container",
 				title: `Nest level ${level}`,
 				children: [deepNest(level - 1)],
 			};
@@ -1363,7 +1363,7 @@ test.describe("Row configuration", () => {
 				title: "Test Page",
 				rows: [
 					{
-						type: "Button",
+						type: "button",
 						title: "",
 						label: "Clear Branch",
 						actions: tapAction({ fn: "close" }),
@@ -1426,7 +1426,7 @@ test.describe("Row configuration", () => {
 				title: "Test Page",
 				rows: [
 					{
-						type: "Button",
+						type: "button",
 						title: "",
 						label: "Cancel Clear",
 						actions: tapAction({ fn: "close" }),
@@ -1485,7 +1485,7 @@ test.describe("Row configuration", () => {
 				title: "Test Page",
 				rows: [
 					{
-						type: "Input",
+						type: "input",
 						source: "{title}",
 						destination: "{title}",
 						title: "Initial value row",
@@ -1519,11 +1519,11 @@ test.describe("Row configuration", () => {
 				title: "Page 1",
 				rows: [
 					{
-						type: "Button",
+						type: "button",
 						title: "Open Sheet",
 						label: "Open",
 						sheet: {
-							type: "Text",
+							type: "text",
 							title: "Sheet Content",
 							text: "Inside sheet",
 						},
@@ -1555,11 +1555,11 @@ test.describe("Row configuration", () => {
 				title: "Page 1",
 				rows: [
 					{
-						type: "Button",
+						type: "button",
 						title: "Trigger",
 						label: "Go",
 						sheet: {
-							type: "Text",
+							type: "text",
 							title: "Local Sheet",
 							text: "Local",
 						},
@@ -1571,7 +1571,7 @@ test.describe("Row configuration", () => {
 				title: "Page 2",
 				rows: [
 					{
-						type: "Text",
+						type: "text",
 						title: "Remote Target Row",
 						text: "Remote",
 					},
@@ -1608,13 +1608,13 @@ test.describe("Row configuration", () => {
 				title: "Test Page",
 				rows: [
 					{
-						type: "Button",
+						type: "button",
 						title: "",
 						label: "Trigger Button",
 						actions: tapAction({ fn: "close" }),
 					},
 					{
-						type: "SelectPhoto",
+						type: "select_photo",
 						title: "Photos",
 						subtitle: "0/10",
 						icon: "::image-plus::",
@@ -1667,7 +1667,7 @@ test.describe("Row configuration", () => {
 				title: "Test Page",
 				rows: [
 					{
-						type: "Button",
+						type: "button",
 						title: "",
 						label: "Warn Button",
 						actions: tapAction({ fn: "close" }),
@@ -1742,12 +1742,12 @@ test.describe("Row configuration", () => {
 				title: "Test Page",
 				rows: [
 					{
-						type: "Text",
+						type: "text",
 						title: "Slide Text",
 						subtitle: "",
 					},
 					{
-						type: "Button",
+						type: "button",
 						title: "",
 						label: "Slide Button",
 						actions: tapAction({ fn: "close" }),

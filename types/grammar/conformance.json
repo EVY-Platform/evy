@@ -791,7 +791,7 @@
 			"expect": {
 				"ast": {
 					"fn": "show",
-					"rowId": "b8c7d6e5-f4a3-4b2c-9d1e-0f8a7b6c5d4e"
+					"row_id": "b8c7d6e5-f4a3-4b2c-9d1e-0f8a7b6c5d4e"
 				}
 			}
 		},
@@ -815,8 +815,8 @@
 			"expect": {
 				"ast": {
 					"fn": "navigate",
-					"flowId": "flow-1",
-					"pageId": "page-1",
+					"flow_id": "flow-1",
+					"page_id": "page-1",
 					"query": {
 						"id": "$datum.id"
 					}
@@ -867,9 +867,9 @@
 					"fn": "create",
 					"service": "core",
 					"resource": "addresses",
-					"mode": "fromPath",
-					"dataPath": "pickup_address",
-					"idDestination": "{pickup_address.id}"
+					"mode": "from_path",
+					"data_path": "pickup_address",
+					"id_destination": "{pickup_address.id}"
 				}
 			}
 		},
@@ -1041,11 +1041,11 @@
 			"id": "split-args-filter-nested-find-first-sort",
 			"category": "split-args",
 			"platforms": ["ios", "web"],
-			"input": "messages, $datum.data.value == \"pending\" && findFirst(sort(messages, desc, createdAt), fk == $datum.fk && data.type == $datum.data.type).id == $datum.id",
+			"input": "messages, $datum.data.value == \"pending\" && findFirst(sort(messages, desc, created_at), fk == $datum.fk && data.type == $datum.data.type).id == $datum.id",
 			"expect": {
 				"args": [
 					"messages",
-					"$datum.data.value == \"pending\" && findFirst(sort(messages, desc, createdAt), fk == $datum.fk && data.type == $datum.data.type).id == $datum.id"
+					"$datum.data.value == \"pending\" && findFirst(sort(messages, desc, created_at), fk == $datum.fk && data.type == $datum.data.type).id == $datum.id"
 				]
 			},
 			"notes": "filter's nested findFirst(sort(…)) argument must stay one arg — commas inside the nested calls are not separators."
@@ -1064,13 +1064,13 @@
 			"id": "expression-format-datetime-four-level-nesting",
 			"category": "expression",
 			"platforms": ["ios"],
-			"input": "{formatDatetime(findFirst(sort(messages_holder, desc, createdAt), fk == item.id).data.time, \"HH:mm\")}",
+			"input": "{formatDatetime(findFirst(sort(messages_holder, desc, created_at), fk == item.id).data.time, \"HH:mm\")}",
 			"data": {
 				"messages_holder": [
 					{
 						"id": "dfc53233-6152-4878-bf4f-b11a47c636ac",
 						"fk": "12401f50-cf1a-45d7-a112-2e68a2070466",
-						"createdAt": "2026-06-01T00:00:00.000Z",
+						"created_at": "2026-06-01T00:00:00.000Z",
 						"data": {
 							"type": "pickup",
 							"time": "2026-06-03T09:00:00.000Z"
@@ -1110,20 +1110,20 @@
 			"id": "expression-filter-latest-message-self-id-idiom",
 			"category": "expression",
 			"platforms": ["ios"],
-			"input": "{filter(messages_holder, $datum.data.value == \"pending\" && findFirst(sort(messages_holder, desc, createdAt), fk == $datum.fk && data.type == $datum.data.type).id == $datum.id).0.id}",
+			"input": "{filter(messages_holder, $datum.data.value == \"pending\" && findFirst(sort(messages_holder, desc, created_at), fk == $datum.fk && data.type == $datum.data.type).id == $datum.id).0.id}",
 			"data": {
 				"messages_holder": [
 					{
 						"id": "dfc53233-6152-4878-bf4f-b11a47c636ac",
 						"fk": "12401f50-cf1a-45d7-a112-2e68a2070466",
-						"createdAt": "2026-06-01T00:00:00.000Z",
+						"created_at": "2026-06-01T00:00:00.000Z",
 						"data": { "type": "pickup", "value": "pending" }
 					},
 					{
 						"id": "b0897a47-c45c-4e9c-8021-8ec3bdcac59c",
 						"fk": "12401f50-cf1a-45d7-a112-2e68a2070466",
-						"createdAt": "2026-06-01T00:01:00.000Z",
-						"parentMessageId": "dfc53233-6152-4878-bf4f-b11a47c636ac",
+						"created_at": "2026-06-01T00:01:00.000Z",
+						"parent_message_id": "dfc53233-6152-4878-bf4f-b11a47c636ac",
 						"data": {
 							"type": "pickup",
 							"value": "accept"
@@ -1132,7 +1132,7 @@
 					{
 						"id": "a1b2c3d4-e5f6-4789-a012-3456789abcde",
 						"fk": "12401f50-cf1a-45d7-a112-2e68a2070466",
-						"createdAt": "2026-06-01T00:02:00.000Z",
+						"created_at": "2026-06-01T00:02:00.000Z",
 						"data": { "type": "delivery", "value": "pending" }
 					}
 				]

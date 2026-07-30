@@ -1,6 +1,6 @@
 {
 	"$schema": "https://json-schema.org/draft/2020-12/schema",
-	"$id": "sdui-row-definition-schema",
+	"$id": "sdui_row_definition_schema",
 	"title": "SDUI_RowDefinitionSchema",
 	"description": "Convention schema for standard JSON Schema files that define an SDUI row type.",
 	"type": "object",
@@ -19,7 +19,7 @@
 		},
 		"$id": {
 			"type": "string",
-			"pattern": "^sdui/definitions/[A-Za-z0-9]+$"
+			"pattern": "^sdui/definitions/[a-z0-9_]+$"
 		},
 		"title": {
 			"type": "string",
@@ -31,9 +31,9 @@
 				"enum": [
 					"tap",
 					"delete",
-					"tap-row",
-					"tap-column",
-					"swipe-left",
+					"tap_row",
+					"tap_column",
+					"swipe_left",
 					"submit"
 				]
 			},

@@ -2,7 +2,7 @@ import type { DATA_EVY_Row } from "evy-types";
 import { ROW_SHEET_FIELD } from "./rowConstants";
 
 type ActiveSheetPage = {
-	sheetRowId: string;
+	sheet_row_id: string;
 	parentRowId: string;
 };
 
@@ -23,21 +23,21 @@ export function buildActiveSheetPages({
 	for (const descendantId of configStack) {
 		const currentRow = rowsById[currentRowId];
 		if (!currentRow) break;
-		const sheetRowId = currentRow.data[ROW_SHEET_FIELD];
-		const childrenRowIds = Array.isArray(currentRow.data.children_row_ids)
+		const sheet_row_id = currentRow.data[ROW_SHEET_FIELD];
+		const children_row_ids = Array.isArray(currentRow.data.children_row_ids)
 			? (currentRow.data.children_row_ids as string[])
 			: [];
 
-		if (sheetRowId === descendantId) {
+		if (sheet_row_id === descendantId) {
 			sheetPages.push({
-				sheetRowId: descendantId,
+				sheet_row_id: descendantId,
 				parentRowId: currentRowId,
 			});
 			currentRowId = descendantId;
 			continue;
 		}
 
-		if (childrenRowIds.includes(descendantId)) {
+		if (children_row_ids.includes(descendantId)) {
 			currentRowId = descendantId;
 			continue;
 		}
@@ -51,9 +51,9 @@ export function buildActiveSheetPages({
 
 	const finalRow = rowsById[currentRowId];
 	if (finalRow) {
-		const sheetRowId = finalRow.data[ROW_SHEET_FIELD];
-		if (typeof sheetRowId === "string") {
-			sheetPages.push({ sheetRowId, parentRowId: currentRowId });
+		const sheet_row_id = finalRow.data[ROW_SHEET_FIELD];
+		if (typeof sheet_row_id === "string") {
+			sheetPages.push({ sheet_row_id, parentRowId: currentRowId });
 		}
 	}
 

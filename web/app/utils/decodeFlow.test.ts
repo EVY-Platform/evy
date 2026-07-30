@@ -19,7 +19,7 @@ const ROW_B = "b2c3d4e5-f6a7-4b8c-9d0e-1f2a3b4c5d6e";
 function makeServerRow(overrides: Record<string, unknown> = {}): ServerRow {
 	return {
 		id: ROW_A,
-		type: "Text",
+		type: "text",
 		visible: "",
 		actions: {},
 		title: "",
@@ -30,7 +30,7 @@ function makeServerRow(overrides: Record<string, unknown> = {}): ServerRow {
 describe("normalizeServerRow", () => {
 	it("fills root string defaults without injecting binding fields for Button", () => {
 		const partial = makeServerRow({
-			type: "Button",
+			type: "button",
 			label: "OK",
 			actions: {
 				tap: [{ condition: "", false: "", true: { fn: "close" } }],
@@ -49,7 +49,7 @@ describe("normalizeServerRow", () => {
 	it("preserves binding fields for Input rows", () => {
 		const n = normalizeServerRow(
 			makeServerRow({
-				type: "Input",
+				type: "input",
 				source: "{items.title}",
 				destination: "{buildTitle(item.title)}",
 				title: "Name",
@@ -63,18 +63,18 @@ describe("normalizeServerRow", () => {
 	it("normalizes nested rows without injecting binding defaults", () => {
 		const n = normalizeServerRow(
 			makeServerRow({
-				type: "VerticalContainer",
+				type: "vertical_container",
 				source: `{items}`,
 				title: "List",
 				child: makeServerRow({
 					id: ROW_B,
-					type: "Text",
+					type: "text",
 					title: "{$datum.title}",
 				}),
 				children: [
 					makeServerRow({
 						id: ROW_B,
-						type: "Button",
+						type: "button",
 						label: "Go",
 					}),
 				],
@@ -82,7 +82,7 @@ describe("normalizeServerRow", () => {
 		);
 
 		const nestedChild = n.child as ServerRow | undefined;
-		expect(nestedChild?.type).toBe("Text");
+		expect(nestedChild?.type).toBe("text");
 		expect(nestedChild?.destination).toBeUndefined();
 		expect(rowAttributes(nestedChild)).toEqual({
 			title: "{$datum.title}",
@@ -91,7 +91,7 @@ describe("normalizeServerRow", () => {
 		const firstChild = Array.isArray(n.children)
 			? (n.children[0] as ServerRow | undefined)
 			: undefined;
-		expect(firstChild?.type).toBe("Button");
+		expect(firstChild?.type).toBe("button");
 		expect(firstChild?.destination).toBeUndefined();
 		expect(firstChild).toMatchObject({
 			title: "",
@@ -104,16 +104,16 @@ describe("normalizeServerRow sheet relationships", () => {
 	it("normalizes nested sheet separately from Search child", () => {
 		const n = normalizeServerRow(
 			makeServerRow({
-				type: "Search",
-				title: "Search",
+				type: "search",
+				title: "search",
 				child: makeServerRow({
 					id: ROW_B,
-					type: "Text",
+					type: "text",
 					title: "Result",
 				}),
 				sheet: makeServerRow({
 					id: ROW_A,
-					type: "Text",
+					type: "text",
 					title: "Sheet",
 				}),
 			}),
@@ -129,25 +129,25 @@ describe("buildRowForNewPageFromBase", () => {
 		const newId = "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee";
 		const row = buildRowForNewPageFromBase(SearchRow, newId);
 		expect(row.id).toBe(newId);
-		expect(row.config.type).toBe("Search");
+		expect(row.config.type).toBe("search");
 		expect(row.config.title).toBe("Search row title");
 		expect(row.config.placeholder).toBe("");
 		expect(row.config.source).toBe("");
 		expect(row.config.destination).toBe("");
 		expect(row.config.child).toBeUndefined();
-		expect(row.config.childRowId).toBeUndefined();
+		expect(row.config.child_row_id).toBeUndefined();
 	});
 
 	it("stamps expand_text with the new row id for TextExpand rows", () => {
 		const newId = "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee";
 		const row = buildRowForNewPageFromBase(TextExpandRow, newId);
 		expect(row.id).toBe(newId);
-		expect(row.config.type).toBe("TextExpand");
+		expect(row.config.type).toBe("text_expand");
 		expect(row.config.actions).toEqual({
 			tap: [
 				{
 					condition: "",
-					true: { fn: "expand_text", rowId: newId },
+					true: { fn: "expand_text", row_id: newId },
 					false: "",
 				},
 			],
@@ -161,7 +161,7 @@ describe("buildRowForNewPageFromBase", () => {
 			tap: [
 				{
 					condition: "",
-					true: { fn: "show", rowId: newId },
+					true: { fn: "show", row_id: newId },
 					false: "",
 				},
 			],
@@ -184,8 +184,8 @@ describe("buildRowForNewPageFromBase", () => {
 		};
 		expect(row.config.actions).toEqual({
 			tap: [selectDatum],
-			"tap-row": [selectDatum],
-			"tap-column": [selectDatum],
+			tap_row: [selectDatum],
+			tap_column: [selectDatum],
 		});
 	});
 });
@@ -203,17 +203,17 @@ describe("decomposeServerFlow", () => {
 					rows: [
 						{
 							id: "search-1",
-							name: "Search",
-							type: "Search",
+							name: "search",
+							type: "search",
 							visible: "true",
-							title: "Search",
+							title: "search",
 							source: "",
 							destination: "",
 							actions: {},
 							child: {
 								id: "child-1",
 								name: "Result",
-								type: "Text",
+								type: "text",
 								visible: "true",
 								title: "Result",
 								actions: {},
@@ -221,7 +221,7 @@ describe("decomposeServerFlow", () => {
 							sheet: {
 								id: "sheet-1",
 								name: "Sheet",
-								type: "Text",
+								type: "text",
 								visible: "true",
 								title: "Sheet",
 								actions: {},

@@ -13,10 +13,10 @@ function makeFlow(overrides: Partial<DATA_EVY_Flow> = {}): DATA_EVY_Flow {
 	return {
 		id: "flow-1",
 		name: "Flow",
-		pageIds: ["page-1"],
+		page_ids: ["page-1"],
 		visibility: "public",
-		createdAt: "2026-01-01T00:00:00.000Z",
-		updatedAt: "2026-01-01T00:00:00.000Z",
+		created_at: "2026-01-01T00:00:00.000Z",
+		updated_at: "2026-01-01T00:00:00.000Z",
 		...overrides,
 	};
 }
@@ -25,10 +25,10 @@ function makePage(overrides: Partial<DATA_EVY_Page> = {}): DATA_EVY_Page {
 	return {
 		id: "page-1",
 		name: "Page",
-		rowIds: ["row-1"],
+		row_ids: ["row-1"],
 		visibility: "public",
-		createdAt: "2026-01-01T00:00:00.000Z",
-		updatedAt: "2026-01-01T00:00:00.000Z",
+		created_at: "2026-01-01T00:00:00.000Z",
+		updated_at: "2026-01-01T00:00:00.000Z",
 		...overrides,
 	};
 }
@@ -37,7 +37,7 @@ function makeSubmitRow(id = "row-1"): DATA_EVY_Row {
 	return {
 		id,
 		name: "Submit",
-		type: "Button",
+		type: "button",
 		visible: "true",
 		data: {
 			actions: {
@@ -56,8 +56,8 @@ function makeSubmitRow(id = "row-1"): DATA_EVY_Row {
 			},
 		},
 		visibility: "public",
-		createdAt: "2026-01-01T00:00:00.000Z",
-		updatedAt: "2026-01-01T00:00:00.000Z",
+		created_at: "2026-01-01T00:00:00.000Z",
+		updated_at: "2026-01-01T00:00:00.000Z",
 	};
 }
 
@@ -66,7 +66,7 @@ describe("flowSubmits flat graph", () => {
 		const flow = makeFlow();
 		const pagesById = {
 			"page-1": makePage({
-				rowIds: ["sheet-row"],
+				row_ids: ["sheet-row"],
 			}),
 		};
 		const rowsById = {
@@ -92,7 +92,7 @@ describe("flowSubmits flat graph", () => {
 		const flow = makeFlow({
 			submits: { service: SERVICE, resource: RESOURCE },
 		});
-		const pagesById = { "page-1": makePage({ rowIds: [] }) };
+		const pagesById = { "page-1": makePage({ row_ids: [] }) };
 		const rowsById = {};
 
 		expect(() =>

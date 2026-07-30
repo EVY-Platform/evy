@@ -7,7 +7,7 @@ import { RowLayout } from "../design-system/RowLayout";
 
 export default defineRow("SearchRow", {
 	config: {
-		type: "Search",
+		type: "search",
 		actions: {},
 		source: "",
 		visible: "true",
@@ -19,7 +19,7 @@ export default defineRow("SearchRow", {
 	render: (row) => (
 		<RowLayout title={row.config.title}>
 			<div className="evy-relative">
-				<InlineIcon icon="::search::" alt="Search" />
+				<InlineIcon icon="::search::" alt="search" />
 				<Input
 					value={row.config.source ?? ""}
 					placeholder={row.config.placeholder}
@@ -27,7 +27,7 @@ export default defineRow("SearchRow", {
 			</div>
 			<SearchChildSample
 				searchRowId={row.id}
-				childRowId={row.config.childRowId}
+				child_row_id={row.config.child_row_id}
 			/>
 		</RowLayout>
 	),

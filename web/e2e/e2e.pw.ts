@@ -24,7 +24,7 @@ import {
 
 const API_POLL_TIMEOUT_MS = 10_000;
 const TEST_TOKEN = "e2e-test-token";
-const TEST_OS = "Web";
+const TEST_OS = "web";
 
 type FlatFlowGraph = {
 	flowRows: DATA_EVY_Flow[];
@@ -125,7 +125,7 @@ function assembleFlatFlows(records: FlatFlowGraph): UI_Flow[] {
 	return records.flowRows.map((flow) => ({
 		id: flow.id,
 		name: flow.name,
-		pages: flow.pageIds
+		pages: flow.page_ids
 			.map((pageId) => pageById.get(pageId))
 			.filter((page): page is DATA_EVY_Page => Boolean(page))
 			.map((page) => assemblePage(page, rowById)),
@@ -137,11 +137,11 @@ function assemblePage(page: DATA_EVY_Page, rowById: Map<string, DATA_EVY_Row>) {
 		id: page.id,
 		name: page.name,
 		title: page.title ?? "",
-		rows: page.rowIds
+		rows: page.row_ids
 			.map((rowId) => assembleRow(rowId, rowById, new Set()))
 			.filter((row): row is UI_Row => Boolean(row)),
-		footer: page.footerRowId
-			? assembleRow(page.footerRowId, rowById, new Set())
+		footer: page.footer_row_id
+			? assembleRow(page.footer_row_id, rowById, new Set())
 			: undefined,
 	};
 }
@@ -157,9 +157,9 @@ function assembleRow(
 
 	const nextVisitedRowIds = new Set(visitedRowIds).add(rowId);
 	const data = { ...row.data } as Record<string, unknown>;
-	const childRowId = data.child_row_id;
-	const sheetRowId = data.sheet_row_id;
-	const childrenRowIds = data.children_row_ids;
+	const child_row_id = data.child_row_id;
+	const sheet_row_id = data.sheet_row_id;
+	const children_row_ids = data.children_row_ids;
 	delete data.child_row_id;
 	delete data.sheet_row_id;
 	delete data.children_row_ids;
@@ -171,28 +171,28 @@ function assembleRow(
 		type: row.type,
 		visible: row.visible,
 	};
-	if (typeof childRowId === "string") {
+	if (typeof child_row_id === "string") {
 		assembledRow.child = assembleRow(
-			childRowId,
+			child_row_id,
 			rowById,
 			nextVisitedRowIds,
 		);
 	}
-	if (typeof sheetRowId === "string") {
+	if (typeof sheet_row_id === "string") {
 		assembledRow.sheet = assembleRow(
-			sheetRowId,
+			sheet_row_id,
 			rowById,
 			nextVisitedRowIds,
 		);
 	}
-	if (Array.isArray(childrenRowIds)) {
-		assembledRow.children = childrenRowIds
+	if (Array.isArray(children_row_ids)) {
+		assembledRow.children = children_row_ids
 			.filter(
-				(childRowId): childRowId is string =>
-					typeof childRowId === "string",
+				(child_row_id): child_row_id is string =>
+					typeof child_row_id === "string",
 			)
-			.map((childRowId) =>
-				assembleRow(childRowId, rowById, nextVisitedRowIds),
+			.map((child_row_id) =>
+				assembleRow(child_row_id, rowById, nextVisitedRowIds),
 			)
 			.filter((row): row is UI_Row => Boolean(row));
 	}
@@ -373,7 +373,7 @@ test.describe("Web E2E Integration Tests", () => {
 					rows: [
 						{
 							id: crypto.randomUUID(),
-							type: "Text",
+							type: "text",
 							source: "",
 							visible: "true",
 							actions: {},
@@ -423,7 +423,7 @@ test.describe("Web E2E Integration Tests", () => {
 		const uniqueFlowName = `E2E Child Page Flow ${Date.now()}`;
 		const firstChild: UI_Row = {
 			id: crypto.randomUUID(),
-			type: "Text",
+			type: "text",
 			source: "",
 			visible: "true",
 			actions: {},
@@ -431,7 +431,7 @@ test.describe("Web E2E Integration Tests", () => {
 			text: "First child text",
 			sheet: {
 				id: crypto.randomUUID(),
-				type: "Text",
+				type: "text",
 				source: "",
 				visible: "true",
 				actions: {},
@@ -439,7 +439,7 @@ test.describe("Web E2E Integration Tests", () => {
 				text: "Second child text",
 				sheet: {
 					id: crypto.randomUUID(),
-					type: "Text",
+					type: "text",
 					source: "",
 					visible: "true",
 					actions: {},
@@ -450,7 +450,7 @@ test.describe("Web E2E Integration Tests", () => {
 		};
 		const parentRow: UI_Row = {
 			id: crypto.randomUUID(),
-			type: "Text",
+			type: "text",
 			source: "",
 			visible: "true",
 			actions: {},
@@ -555,7 +555,7 @@ test.describe("Web E2E Integration Tests", () => {
 					rows: [],
 					footer: {
 						id: crypto.randomUUID(),
-						type: "Button",
+						type: "button",
 						source: "",
 						visible: "true",
 						destination: "",

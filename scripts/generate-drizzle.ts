@@ -5,7 +5,6 @@
  */
 import { mkdir, writeFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
-import decamelize from "decamelize";
 import {
 	loadJson,
 	OUT_TS,
@@ -326,7 +325,7 @@ export function validateConfigSemantic(
 }
 
 function tableNameToVariable(tableName: string): string {
-	return tableName.charAt(0).toLowerCase() + tableName.slice(1);
+	return tableName;
 }
 
 function getPropSchema(
@@ -392,16 +391,27 @@ function localDefName(ref: string | undefined): string | null {
 	return match?.[1] ?? null;
 }
 
-function resolveJsonbTypeAnnotation(ref: string | undefined): string {
-	if (ref?.includes("UI_Flow") || ref?.includes("evy.schema.json")) {
-		return "UI_Flow";
+export function resolveJsonbTypeAnnotation(ref: string | undefined): string {
+	if (!ref) {
+		throw new Error("resolveJsonbTypeAnnotation: ref is required");
 	}
-	if (ref?.includes("JSONValue") || ref?.includes("json.schema.json")) {
-		return 'DATA_PRIMITIVE["data"]';
+	switch (ref) {
+		case "../sdui/evy.schema.json#/$defs/UI_Flow":
+			return "UI_Flow";
+		case "../common/json.schema.json#/$defs/JSONValue":
+			return 'DATA_PRIMITIVE["data"]';
 	}
-	// Any local $def is a generated type of the same name, so new nested value
-	// objects are typed automatically instead of needing a branch added here.
-	return localDefName(ref) ?? "unknown";
+	const local = localDefName(ref);
+	if (local) {
+		return local;
+	}
+	const externalMatch = /#\/\$defs\/([A-Za-z0-9_]+)$/.exec(ref);
+	if (externalMatch?.[1]) {
+		return externalMatch[1];
+	}
+	throw new Error(
+		`resolveJsonbTypeAnnotation: unrecognised object $ref: ${ref}`,
+	);
 }
 
 function buildArrayColumn(dbCol: string, prop: JsonSchemaProp): string {
@@ -426,8 +436,7 @@ function buildObjectColumn(
 }
 
 function enumKeyToConstName(enumKey: string): string {
-	if (enumKey === "OS") return "osEnum";
-	return `${enumKey.charAt(0).toLowerCase()}${enumKey.slice(1)}Enum`;
+	return `${enumKey}_enum`;
 }
 
 function buildRefColumn(
@@ -488,7 +497,7 @@ function emitColumn(
 	tableConfig: { primaryKey: string; defaultRandom: string[] },
 	requiredSet: Set<string>,
 ): string {
-	const dbCol = decamelize(propName);
+	const dbCol = propName;
 	const suffixes: ColumnSuffixes = {
 		isPk: tableConfig.primaryKey === propName,
 		hasDefaultRandom: tableConfig.defaultRandom.includes(propName),

@@ -8,9 +8,9 @@ function mapServiceRow(r: typeof service.$inferSelect): DATA_EVY_Service {
 		id: r.id,
 		name: r.name,
 		description: r.description,
-		...(r.sortOrder !== null ? { sortOrder: r.sortOrder } : {}),
-		createdAt: r.createdAt,
-		updatedAt: r.updatedAt,
+		...(r.sort_order !== null ? { sort_order: r.sort_order } : {}),
+		created_at: r.created_at,
+		updated_at: r.updated_at,
 		visibility: r.visibility,
 	};
 }
@@ -21,7 +21,7 @@ export const servicesResource = makeCoreResource<DATA_EVY_Service>({
 	toUpdateSet: (validated) => ({
 		name: validated.name,
 		description: validated.description,
-		sortOrder: validated.sortOrder ?? null,
+		sort_order: validated.sort_order ?? null,
 		visibility: validated.visibility,
 	}),
 	normalize: mapServiceRow,

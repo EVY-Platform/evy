@@ -1,11 +1,11 @@
 {
 	"$schema": "https://json-schema.org/draft/2020-12/schema",
-	"$id": "sdui/definitions/Calendar",
+	"$id": "sdui/definitions/calendar",
 	"title": "Calendar_Row",
 	"triggers": {
 		"tap": "required",
-		"tap-row": "required",
-		"tap-column": "required"
+		"tap_row": "required",
+		"tap_column": "required"
 	},
 	"allOf": [
 		{
@@ -26,7 +26,7 @@
 			],
 			"properties": {
 				"type": {
-					"const": "Calendar"
+					"const": "calendar"
 				},
 				"title": {
 					"type": "string"

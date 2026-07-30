@@ -1,6 +1,6 @@
 {
 	"$schema": "https://json-schema.org/draft/2020-12/schema",
-	"$id": "sdui-action",
+	"$id": "sdui_action",
 	"title": "UI_RowAction",
 	"description": "A conditional action attached to an SDUI row. Branches are structured invocations; the empty string is the canonical \"do nothing\" branch.",
 	"type": "object",
@@ -96,12 +96,12 @@
 			"description": "Addresses another row by id; the target may live on any synced page.",
 			"type": "object",
 			"additionalProperties": false,
-			"required": ["fn", "rowId"],
+			"required": ["fn", "row_id"],
 			"properties": {
 				"fn": {
 					"enum": ["show", "expand_text"]
 				},
-				"rowId": {
+				"row_id": {
 					"type": "string",
 					"minLength": 1
 				}
@@ -138,16 +138,16 @@
 		"UI_ActionNavigate": {
 			"type": "object",
 			"additionalProperties": false,
-			"required": ["fn", "flowId", "pageId"],
+			"required": ["fn", "flow_id", "page_id"],
 			"properties": {
 				"fn": {
 					"const": "navigate"
 				},
-				"flowId": {
+				"flow_id": {
 					"type": "string",
 					"minLength": 1
 				},
-				"pageId": {
+				"page_id": {
 					"type": "string",
 					"minLength": 1
 				},
@@ -200,7 +200,7 @@
 				"data": {
 					"$ref": "#/$defs/UI_ActionExpressionMap"
 				},
-				"idDestination": {
+				"id_destination": {
 					"type": "string",
 					"minLength": 1
 				}
@@ -210,7 +210,7 @@
 			"description": "Creates from a whole resolved object, e.g. a page-local draft buffer.",
 			"type": "object",
 			"additionalProperties": false,
-			"required": ["fn", "service", "resource", "mode", "dataPath"],
+			"required": ["fn", "service", "resource", "mode", "data_path"],
 			"properties": {
 				"fn": {
 					"const": "create"
@@ -224,13 +224,13 @@
 					"minLength": 1
 				},
 				"mode": {
-					"const": "fromPath"
+					"const": "from_path"
 				},
-				"dataPath": {
+				"data_path": {
 					"type": "string",
 					"minLength": 1
 				},
-				"idDestination": {
+				"id_destination": {
 					"type": "string",
 					"minLength": 1
 				}
@@ -282,7 +282,7 @@
 				"resource",
 				"mode",
 				"filter",
-				"changesPath"
+				"changes_path"
 			],
 			"properties": {
 				"fn": {
@@ -303,7 +303,7 @@
 					"$ref": "#/$defs/UI_ActionExpressionMap",
 					"minProperties": 1
 				},
-				"changesPath": {
+				"changes_path": {
 					"type": "string",
 					"minLength": 1
 				}
@@ -338,7 +338,7 @@
 			"description": "Draft update whose changes come from a whole resolved object.",
 			"type": "object",
 			"additionalProperties": false,
-			"required": ["fn", "service", "resource", "mode", "changesPath"],
+			"required": ["fn", "service", "resource", "mode", "changes_path"],
 			"properties": {
 				"fn": {
 					"const": "update"
@@ -354,7 +354,7 @@
 				"mode": {
 					"const": "draft"
 				},
-				"changesPath": {
+				"changes_path": {
 					"type": "string",
 					"minLength": 1
 				}

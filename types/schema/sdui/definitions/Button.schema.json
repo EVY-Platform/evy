@@ -1,6 +1,6 @@
 {
 	"$schema": "https://json-schema.org/draft/2020-12/schema",
-	"$id": "sdui/definitions/Button",
+	"$id": "sdui/definitions/button",
 	"title": "Button_Row",
 	"triggers": {
 		"tap": "required"
@@ -14,7 +14,7 @@
 			"required": ["type", "label"],
 			"properties": {
 				"type": {
-					"const": "Button"
+					"const": "button"
 				},
 				"title": {
 					"type": "string"

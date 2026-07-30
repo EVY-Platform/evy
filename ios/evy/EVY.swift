@@ -61,7 +61,7 @@ struct OwnedServiceResource: Codable {
 
 struct SyncParams: Encodable {
   let cursor: String?
-  let ownedServiceResources: [OwnedServiceResource]
+  let owned_service_resources: [OwnedServiceResource]
 }
 
 struct CoreAPIParams<T: Encodable>: Encodable {
@@ -103,7 +103,7 @@ struct EVY {
   static let draftStore = EVYDraftStore(dataStore: cacheStore)
   static var activeCacheScopeId: String?
 
-  /// Injectable clock so tests can pin `now()` and generated `createdAt` values
+  /// Injectable clock so tests can pin `now()` and generated `created_at` values
   static var nowProvider: () -> Date = { Date() }
 
   /// When set (e.g. in unit tests), skips fire-and-forget create/update JSON-RPC.

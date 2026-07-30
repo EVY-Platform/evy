@@ -25,7 +25,7 @@ a data path, `$datum`, a quoted literal, or a bare word — see
 | `select` | `value` | Ask the triggering row to select `value`, usually `$datum`. Each row type defines what select means (toggle, write scalar, switch segment); unsupported on rows without a select handler. When the resolved value is an **array**, Calendar treats it as a batch toggle-all (see below). |
 | `navigate` | `flowId`, `pageId`, `query` (optional) | Go to a page within a flow. `query` is a map of value expressions. |
 | `create` | `service`, `resource`, `mode`, plus mode fields | Create a domain entity. **Never changes routes** — follow with `close` to dismiss. See **create** below. |
-| `update` | `service`, `resource`, `mode`, `filter`, `changes` \| `changesPath` | Update matching domain entities. See **update** below. |
+| `update` | `service`, `resource`, `mode`, `filter`, `changes` \| `changes_path` | Update matching domain entities. See **update** below. |
 
 The web builder does not execute actions; it edits these structured invocations and displays
 mocks.
@@ -68,10 +68,10 @@ Write `[resource_id].id` when you want the bound record's id — that is how `fk
 `resource` stays the resource id. The rule is scoped to UUID-shaped values, so a value that
 deliberately resolves to an object still embeds it.
 
-`mode: "fromPath"` takes a `dataPath` and sends the whole resolved object from drafts or synced
+`mode: "from_path"` takes a `data_path` and sends the whole resolved object from drafts or synced
 data.
 
-Both non-submit modes accept an optional `idDestination`, a draft-aware write path; after
+Both non-submit modes accept an optional `id_destination`, a draft-aware write path; after
 create, the client writes the generated uuid string there (typically `pickup_address.id` on
 address pick). Use it in **create flows** where the target record does not exist yet. When the
 target already exists, link it with a follow-up store-mode `update` instead of writing onto the
@@ -79,7 +79,7 @@ live record path (see the Address save pattern below).
 
 ```json
 { "fn": "create", "service": "core", "resource": "addresses",
-  "mode": "fromPath", "dataPath": "pickup_address", "idDestination": "pickup_address.id" }
+  "mode": "from_path", "data_path": "pickup_address", "id_destination": "pickup_address.id" }
 ```
 
 ## update
@@ -91,7 +91,7 @@ immediately. A store-mode update matching no rows is a no-op.
 scope for `resource` via `mergeIntoActiveDraft`.
 
 `changes` is either a `{key: value}` object — whose keys may use dotted nested paths, e.g.
-`transfer_options.pickup.address_id` — or `changesPath`, a whole-object data path (with `id`
+`transfer_options.pickup.address_id` — or `changes_path`, a whole-object data path (with `id`
 stripped before merge), never both. Filter and change values resolve like inline `create` data.
 A filter value of `null` matches records where the property is absent or JSON `null`. Changes
 can call functions, e.g. `{archivedAt: now()}`.
@@ -112,10 +112,10 @@ Use the same two-action `tap` array on the pickup Search row for create and edit
 **link** step differs by flow type.
 
 1. **Create or update the address** — if `address_id` is empty, a `create` on `core/addresses`
-   with `mode: "fromPath"`, `dataPath: "pickup_address"` and `idDestination: "pickup_address.id"`
+   with `mode: "from_path"`, `data_path: "pickup_address"` and `id_destination: "pickup_address.id"`
    persists the address and writes the generated id to the page-local `pickup_address` buffer;
    otherwise a store-mode `update` on `core/addresses` filtered by `id:
-   item.transfer_options.pickup.address_id` with `changesPath: "pickup_address"` updates the
+   item.transfer_options.pickup.address_id` with `changes_path: "pickup_address"` updates the
    existing row.
 2. **Link the item** — on **edit** flows where the item row already exists: a store-mode
    `update` on `marketplace/items` filtered by `id: item.id`, changing
@@ -131,7 +131,7 @@ again on re-pick.
 ```json
 {
 	"id": "search-row-id",
-	"type": "Search",
+	"type": "search",
 	"source": "{$api:place_search}",
 	"destination": "{pickup_address}",
 	"actions": {
@@ -139,12 +139,12 @@ again on re-pick.
 			{
 				"condition": "{length(item.transfer_options.pickup.address_id) == 0}",
 				"true": { "fn": "create", "service": "core", "resource": "addresses",
-				          "mode": "fromPath", "dataPath": "pickup_address",
-				          "idDestination": "{pickup_address.id}" },
+				          "mode": "from_path", "data_path": "pickup_address",
+				          "id_destination": "{pickup_address.id}" },
 				"false": { "fn": "update", "service": "core", "resource": "addresses",
 				           "mode": "store",
 				           "filter": { "id": "item.transfer_options.pickup.address_id" },
-				           "changesPath": "pickup_address" }
+				           "changes_path": "pickup_address" }
 			},
 			{
 				"condition": "",
@@ -157,7 +157,7 @@ again on re-pick.
 	},
 	"child": {
 		"id": "387ebe5b-b5b5-4be9-b5db-918bb9db706f",
-		"type": "Text",
+		"type": "text",
 		"title": "{$datum.unit} {$datum.street}",
 		"subtitle": "{$datum.postcode} {$datum.city}, {$datum.state}"
 	}

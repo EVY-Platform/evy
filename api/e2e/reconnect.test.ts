@@ -12,7 +12,7 @@ if (!API_URL) {
 }
 
 const TEST_TOKEN = "e2e-reconnect-token";
-const TEST_OS = "Web";
+const TEST_OS = "web";
 
 describe("API E2E WebSocket reconnect", () => {
 	it("new client subscribed after reconnect receives dataChanged from create", async () => {
@@ -20,7 +20,7 @@ describe("API E2E WebSocket reconnect", () => {
 			API_URL,
 			TEST_TOKEN,
 			TEST_OS,
-			"dataChanged",
+			"data_changed",
 		);
 		first.close();
 
@@ -28,10 +28,10 @@ describe("API E2E WebSocket reconnect", () => {
 			API_URL,
 			`${TEST_TOKEN}-2`,
 			TEST_OS,
-			"dataChanged",
+			"data_changed",
 		);
 
-		const notifyPromise = waitForNotification(second, "dataChanged");
+		const notifyPromise = waitForNotification(second, "data_changed");
 
 		const caller = await connectAndLogin(
 			API_URL,
@@ -45,7 +45,7 @@ describe("API E2E WebSocket reconnect", () => {
 			data: {
 				id: crypto.randomUUID(),
 				name: `Reconnect test ${Date.now()}`,
-				pageIds: [],
+				page_ids: [],
 				visibility: "public",
 			},
 		});

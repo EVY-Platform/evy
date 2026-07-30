@@ -1,6 +1,6 @@
 {
 	"$schema": "https://json-schema.org/draft/2020-12/schema",
-	"$id": "sdui/definitions/Map",
+	"$id": "sdui/definitions/map",
 	"title": "Map_Row",
 	"triggers": {
 		"tap": "optional"
@@ -14,7 +14,7 @@
 			"required": ["type", "source"],
 			"properties": {
 				"type": {
-					"const": "Map"
+					"const": "map"
 				},
 				"title": {
 					"type": "string"

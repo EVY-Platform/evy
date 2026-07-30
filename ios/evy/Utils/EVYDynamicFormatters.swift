@@ -233,8 +233,8 @@ private func evyCurrencyEditingOutput(from input: EVYJson) throws -> EVYFunction
           "EUR": .string("€{formatDecimal(input.value, 2)}"),
           "default": .string("${formatDecimal(input.value, 2)}"),
         ]),
-        "createdAt": .string(now),
-        "updatedAt": .string(now),
+        "created_at": .string(now),
+        "updated_at": .string(now),
       ]),
       .dictionary([
         "id": .string("f1e2d3c4-b5a6-4789-8abc-def012345602"),
@@ -248,8 +248,8 @@ private func evyCurrencyEditingOutput(from input: EVYJson) throws -> EVYFunction
           "default": .string(
             "{input.unit} {input.street}, {input.postcode} {input.city} {input.state}"),
         ]),
-        "createdAt": .string(now),
-        "updatedAt": .string(now),
+        "created_at": .string(now),
+        "updated_at": .string(now),
       ]),
     ]
 

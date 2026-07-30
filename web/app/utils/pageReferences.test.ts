@@ -12,8 +12,8 @@ const TARGET_PAGE_ID = "page-target";
 const OTHER_PAGE_ID = "page-other";
 const now = "2026-07-01T00:00:00.000Z";
 
-function navigateTo(pageId: string): UI_ActionBranch {
-	return { fn: "navigate", flowId: FLOW_ID, pageId };
+function navigateTo(page_id: string): UI_ActionBranch {
+	return { fn: "navigate", flow_id: FLOW_ID, page_id };
 }
 
 function row(
@@ -25,11 +25,11 @@ function row(
 	return {
 		id,
 		name,
-		type: "Button",
+		type: "button",
 		visible: "true",
 		visibility: "public",
-		createdAt: now,
-		updatedAt: now,
+		created_at: now,
+		updated_at: now,
 		data: {
 			actions: { tap: [{ condition: "", true: branch, false: "" }] },
 			...data,
@@ -37,15 +37,15 @@ function row(
 	} as unknown as DATA_EVY_Row;
 }
 
-function page(id: string, name: string, rowIds: string[]): DATA_EVY_Page {
+function page(id: string, name: string, row_ids: string[]): DATA_EVY_Page {
 	return {
 		id,
 		name,
 		title: name,
-		rowIds,
+		row_ids,
 		visibility: "public",
-		createdAt: now,
-		updatedAt: now,
+		created_at: now,
+		updated_at: now,
 	} as unknown as DATA_EVY_Page;
 }
 
@@ -53,10 +53,10 @@ function fixture() {
 	const flow = {
 		id: FLOW_ID,
 		name: "Flow",
-		pageIds: [OTHER_PAGE_ID, TARGET_PAGE_ID],
+		page_ids: [OTHER_PAGE_ID, TARGET_PAGE_ID],
 		visibility: "public",
-		createdAt: now,
-		updatedAt: now,
+		created_at: now,
+		updated_at: now,
 	} as unknown as DATA_EVY_Flow;
 
 	const rowsById: Record<string, DATA_EVY_Row> = {

@@ -18,7 +18,7 @@ import {
 	resourceKey,
 	runMain,
 	SCHEMA_DIR,
-	swiftCaseName,
+	snakeToCamel,
 	writeGeneratedOutputs,
 } from "./types-generation-utils.js";
 
@@ -192,7 +192,7 @@ function generateSwift(schema: CoreResourcesSchema): string {
 	// Resource enum
 	lines.push("public enum EVYCoreResource: String, CaseIterable {");
 	for (const plural of resourceNames) {
-		const caseName = swiftCaseName(plural);
+		const caseName = snakeToCamel(plural);
 		lines.push(`\tcase ${caseName} = ${JSON.stringify(plural)}`);
 	}
 	lines.push("");
@@ -201,7 +201,7 @@ function generateSwift(schema: CoreResourcesSchema): string {
 	lines.push("\tpublic var singular: String {");
 	lines.push("\t\tswitch self {");
 	for (const [plural, meta] of Object.entries(resources)) {
-		const caseName = swiftCaseName(plural);
+		const caseName = snakeToCamel(plural);
 		lines.push(
 			`\t\tcase .${caseName}: return ${JSON.stringify(meta.singular)}`,
 		);
@@ -220,7 +220,7 @@ function generateSwift(schema: CoreResourcesSchema): string {
 	lines.push("\tpublic var visibility: String? {");
 	lines.push("\t\tswitch self {");
 	for (const [plural, meta] of Object.entries(resources)) {
-		const caseName = swiftCaseName(plural);
+		const caseName = snakeToCamel(plural);
 		const value = meta.visibility ? JSON.stringify(meta.visibility) : "nil";
 		lines.push(`\t\tcase .${caseName}: return ${value}`);
 	}

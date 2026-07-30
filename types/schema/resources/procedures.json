@@ -3,7 +3,7 @@
 	"procedures": {
 		"place_search": {
 			"service": "475731ac-31aa-4d65-94d2-7032782ae359",
-			"response": "rpc/placeSearch.response.schema.json"
+			"response": "rpc/place_search.response.schema.json"
 		}
 	}
 }

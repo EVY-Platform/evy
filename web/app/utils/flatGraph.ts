@@ -3,8 +3,8 @@
  *
  * All mutations return new maps without modifying the originals.
  * Structural row links live in DATA_EVY_Row.data: child_row_id / children_row_ids.
- * Page structure lives in DATA_EVY_Page: rowIds[], footerRowId?.
- * Flow structure lives in DATA_EVY_Flow: pageIds[].
+ * Page structure lives in DATA_EVY_Page: row_ids[], footer_row_id?.
+ * Flow structure lives in DATA_EVY_Flow: page_ids[].
  */
 
 import type {
@@ -41,25 +41,25 @@ function now(): string {
 	return new Date().toISOString();
 }
 
-function touchRow(row: DATA_EVY_Row, updatedAt = now()): DATA_EVY_Row {
-	return { ...row, updatedAt };
+function touchRow(row: DATA_EVY_Row, updated_at = now()): DATA_EVY_Row {
+	return { ...row, updated_at };
 }
 
-function touchPage(page: DATA_EVY_Page, updatedAt = now()): DATA_EVY_Page {
-	return { ...page, updatedAt };
+function touchPage(page: DATA_EVY_Page, updated_at = now()): DATA_EVY_Page {
+	return { ...page, updated_at };
 }
 
-/** Returns all row ids reachable from a page (rowIds + footerRowId, recursively). */
+/** Returns all row ids reachable from a page (row_ids + footer_row_id, recursively). */
 function collectPageRowIds(
 	page: DATA_EVY_Page,
 	rowsById: FlowEntityMaps["rowsById"],
 ): Set<string> {
 	const ids = new Set<string>();
-	for (const rowId of page.rowIds) {
+	for (const rowId of page.row_ids) {
 		collectSubtreeRowIds(rowId, rowsById, ids);
 	}
-	if (page.footerRowId) {
-		collectSubtreeRowIds(page.footerRowId, rowsById, ids);
+	if (page.footer_row_id) {
+		collectSubtreeRowIds(page.footer_row_id, rowsById, ids);
 	}
 	return ids;
 }
@@ -180,7 +180,7 @@ function removeId(ids: string[], targetId: string): string[] {
 }
 
 /**
- * Insert newRowId into a container's child/children array, or into page.rowIds.
+ * Insert newRowId into a container's child/children array, or into page.row_ids.
  * Returns the updated rowsById (if container was updated) and pagesById.
  * Does NOT add the new row record itself — callers must do that separately.
  */
@@ -205,8 +205,8 @@ export function insertIntoLocation(
 				[pageId]: touchPage(
 					{
 						...page,
-						rowIds: insertAtIndex(
-							page.rowIds,
+						row_ids: insertAtIndex(
+							page.row_ids,
 							newRowId,
 							destinationIndex,
 						),
@@ -250,7 +250,7 @@ export function insertIntoLocation(
 }
 
 /**
- * Remove rowId from wherever it lives in the page (rowIds, footerRowId,
+ * Remove rowId from wherever it lives in the page (row_ids, footer_row_id,
  * or a container's child_row_id / children_row_ids).
  * Does NOT remove the row record from rowsById — call cleanupOrphanedRows for that.
  */
@@ -263,23 +263,23 @@ function removeFromLocation(
 	const page = maps.pagesById[pageId];
 	if (!page) return maps;
 
-	// Check page-level rowIds
-	if (page.rowIds.includes(rowId)) {
+	// Check page-level row_ids
+	if (page.row_ids.includes(rowId)) {
 		return {
 			...maps,
 			pagesById: {
 				...maps.pagesById,
 				[pageId]: touchPage(
-					{ ...page, rowIds: removeId(page.rowIds, rowId) },
+					{ ...page, row_ids: removeId(page.row_ids, rowId) },
 					ts,
 				),
 			},
 		};
 	}
 
-	// Check footerRowId
-	if (page.footerRowId === rowId) {
-		const { footerRowId: _f, ...pageWithoutFooter } = page;
+	// Check footer_row_id
+	if (page.footer_row_id === rowId) {
+		const { footer_row_id: _f, ...pageWithoutFooter } = page;
 		return {
 			...maps,
 			pagesById: {
@@ -335,7 +335,7 @@ function removeFromLocation(
 function cleanupOrphanedRows(maps: FlowEntityMaps): FlowEntityMaps {
 	const reachable = new Set<string>();
 	for (const flow of Object.values(maps.flowsById)) {
-		for (const pageId of flow.pageIds) {
+		for (const pageId of flow.page_ids) {
 			const page = maps.pagesById[pageId];
 			if (!page) continue;
 			for (const id of collectPageRowIds(page, maps.rowsById)) {
@@ -389,7 +389,7 @@ export function setFooterRow(
 		...maps,
 		pagesById: {
 			...maps.pagesById,
-			[pageId]: touchPage({ ...page, footerRowId: rowId }, ts),
+			[pageId]: touchPage({ ...page, footer_row_id: rowId }, ts),
 		},
 	};
 }
@@ -447,7 +447,7 @@ export function moveRowToFooter(
 		...afterRemove,
 		pagesById: {
 			...afterRemove.pagesById,
-			[destPageId]: touchPage({ ...destPage, footerRowId: rowId }, ts),
+			[destPageId]: touchPage({ ...destPage, footer_row_id: rowId }, ts),
 		},
 	};
 }
@@ -534,8 +534,8 @@ export function addPage(
 			...maps.flowsById,
 			[flowId]: {
 				...flow,
-				pageIds: [...flow.pageIds, page.id],
-				updatedAt: ts,
+				page_ids: [...flow.page_ids, page.id],
+				updated_at: ts,
 			},
 		},
 		pagesById: { ...maps.pagesById, [page.id]: page },
@@ -560,8 +560,8 @@ export function removePage(
 			...maps.flowsById,
 			[flowId]: {
 				...flow,
-				pageIds: flow.pageIds.filter((id) => id !== pageId),
-				updatedAt: ts,
+				page_ids: flow.page_ids.filter((id) => id !== pageId),
+				updated_at: ts,
 			},
 		},
 		pagesById: remainingPages,
@@ -598,7 +598,7 @@ export function updatePageTitle(
 export function applyRemoteRecord(
 	maps: FlowEntityMaps,
 	resource: string,
-	record: { id: string; updatedAt?: string; deletedAt?: string },
+	record: { id: string; updated_at?: string; deleted_at?: string },
 	operation: "create" | "update" | "delete",
 ): FlowEntityMaps {
 	const mapKey =
@@ -611,17 +611,17 @@ export function applyRemoteRecord(
 					: null;
 	if (!mapKey || !record?.id) return maps;
 
-	const collection = maps[mapKey] as Record<string, { updatedAt?: string }>;
+	const collection = maps[mapKey] as Record<string, { updated_at?: string }>;
 	const existing = collection[record.id];
 
-	if (operation === "delete" || record.deletedAt) {
+	if (operation === "delete" || record.deleted_at) {
 		if (!existing) return maps;
 		const { [record.id]: _removed, ...rest } = collection;
 		return { ...maps, [mapKey]: rest };
 	}
 
-	if (existing?.updatedAt && record.updatedAt) {
-		if (existing.updatedAt >= record.updatedAt) return maps;
+	if (existing?.updated_at && record.updated_at) {
+		if (existing.updated_at >= record.updated_at) return maps;
 	}
 
 	return { ...maps, [mapKey]: { ...collection, [record.id]: record } };
@@ -646,7 +646,7 @@ export function updateFlowSubmits(
 		...maps,
 		flowsById: {
 			...maps.flowsById,
-			[flowId]: { ...nextFlow, updatedAt: now() },
+			[flowId]: { ...nextFlow, updated_at: now() },
 		},
 	};
 }
@@ -682,15 +682,15 @@ export function findContainerOfRowInPage(
 	rowId: string,
 ): { containerRowId: string; type: "child" | "children" | "sheet" } | null {
 	// Search body rows
-	const bodyResult = findRowContainer(maps.rowsById, page.rowIds, rowId);
+	const bodyResult = findRowContainer(maps.rowsById, page.row_ids, rowId);
 	if (bodyResult) return bodyResult;
 
 	// Search footer subtree — but skip the footer root as its own container
-	if (page.footerRowId) {
-		if (page.footerRowId === rowId) return null;
+	if (page.footer_row_id) {
+		if (page.footer_row_id === rowId) return null;
 		const footerResult = findRowContainer(
 			maps.rowsById,
-			[page.footerRowId],
+			[page.footer_row_id],
 			rowId,
 		);
 		if (footerResult) return footerResult;
@@ -720,7 +720,7 @@ export function findPageContainingRow(
 	const flow = maps.flowsById[flowId];
 	if (!flow) return undefined;
 
-	for (const pageId of flow.pageIds) {
+	for (const pageId of flow.page_ids) {
 		const page = maps.pagesById[pageId];
 		if (!page) continue;
 		const roots = pageRootIds(page);
@@ -748,11 +748,11 @@ export function getContainerChildrenCount(
 export function findChildIndexInContainer(
 	maps: FlowEntityMaps,
 	containerId: string,
-	childRowId: string,
+	child_row_id: string,
 ): number {
 	const row = maps.rowsById[containerId];
 	if (!row) return -1;
-	return getChildrenRowIds(row).indexOf(childRowId);
+	return getChildrenRowIds(row).indexOf(child_row_id);
 }
 
 /**
@@ -762,7 +762,7 @@ export function findChildIndexInContainer(
 export function ensureShowAction(
 	maps: FlowEntityMaps,
 	containerRowId: string,
-	sheetRowId: string,
+	sheet_row_id: string,
 	replacedSheetRowId?: string,
 ): FlowEntityMaps {
 	const row = maps.rowsById[containerRowId];
@@ -771,7 +771,7 @@ export function ensureShowAction(
 		normalizeStoredRowActions(row.data.actions).tap ?? [];
 	// New actions are written in the structured form; existing ones are only
 	// converted when the author saves them.
-	const showBranch = branchForStorage(`{show(${sheetRowId})}`);
+	const showBranch = branchForStorage(`{show(${sheet_row_id})}`);
 
 	let updatedExisting = false;
 	const nextActions = existingActions.map((action) => {
@@ -795,7 +795,7 @@ export function ensureShowAction(
 		const parsed = parseBranch(action.true);
 		return (
 			parsed?.functionName === "show" &&
-			parsed.args[0]?.trim() === sheetRowId
+			parsed.args[0]?.trim() === sheet_row_id
 		);
 	});
 

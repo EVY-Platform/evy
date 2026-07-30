@@ -1,11 +1,11 @@
 {
 	"$schema": "https://json-schema.org/draft/2020-12/schema",
-	"$id": "sdui/definitions/Input",
+	"$id": "sdui/definitions/input",
 	"title": "Input_Row",
 	"triggers": {
 		"tap": "optional",
 		"submit": "optional",
-		"swipe-left": "optional"
+		"swipe_left": "optional"
 	},
 	"allOf": [
 		{
@@ -16,7 +16,7 @@
 			"required": ["type", "source", "destination"],
 			"properties": {
 				"type": {
-					"const": "Input"
+					"const": "input"
 				},
 				"title": {
 					"type": "string"
@@ -33,7 +33,7 @@
 				"initial": {
 					"type": "string"
 				},
-				"swipeLabel": {
+				"swipe_label": {
 					"type": "string"
 				}
 			}

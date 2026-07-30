@@ -120,12 +120,12 @@ test.describe("Drag & Drop UX", () => {
 				rows: [
 					{
 						id: "column-1",
-						type: "HorizontalContainer" as const,
+						type: "horizontal_container" as const,
 						title: "Horizontal container row title",
 						children: [
 							{
 								id: "column-child-1",
-								type: "Text" as const,
+								type: "text" as const,
 								title: "Child Text",
 								subtitle: "Child subtitle",
 							},
@@ -160,12 +160,12 @@ test.describe("Drag & Drop UX", () => {
 				rows: [
 					{
 						id: "list-1",
-						type: "VerticalContainer" as const,
+						type: "vertical_container" as const,
 						title: "Vertical container row title",
 						children: [
 							{
 								id: "list-child-1",
-								type: "Text" as const,
+								type: "text" as const,
 								title: "Nested Text",
 								subtitle: "Nested subtitle",
 							},

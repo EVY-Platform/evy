@@ -73,15 +73,15 @@ describe("marketplace get/create/update", () => {
 				id: olderRow.id,
 				resource: MARKETPLACE_RESOURCE.CONDITIONS,
 				data: olderRow,
-				createdAt: "2024-01-01T00:00:00.000Z",
-				updatedAt: "2024-01-01T00:00:00.000Z",
+				created_at: "2024-01-01T00:00:00.000Z",
+				updated_at: "2024-01-01T00:00:00.000Z",
 			},
 			{
 				id: newerRow.id,
 				resource: MARKETPLACE_RESOURCE.CONDITIONS,
 				data: newerRow,
-				createdAt: "2024-01-01T00:00:00.000Z",
-				updatedAt: "2024-01-02T00:00:00.000Z",
+				created_at: "2024-01-01T00:00:00.000Z",
+				updated_at: "2024-01-02T00:00:00.000Z",
 			},
 		]);
 
@@ -93,7 +93,7 @@ describe("marketplace get/create/update", () => {
 		expect(result).toEqual([olderRow, newerRow]);
 	});
 
-	it("filters rows by updatedAfter", async () => {
+	it("filters rows by updated_after", async () => {
 		const oldRow = { id: crypto.randomUUID(), value: "old" };
 		const newRow = { id: crypto.randomUUID(), value: "new" };
 
@@ -101,21 +101,21 @@ describe("marketplace get/create/update", () => {
 			{
 				resource: MARKETPLACE_RESOURCE.CONDITIONS,
 				data: oldRow,
-				createdAt: "2024-01-01T00:00:00.000Z",
-				updatedAt: "2024-01-01T00:00:00.000Z",
+				created_at: "2024-01-01T00:00:00.000Z",
+				updated_at: "2024-01-01T00:00:00.000Z",
 			},
 			{
 				resource: MARKETPLACE_RESOURCE.CONDITIONS,
 				data: newRow,
-				createdAt: "2024-01-03T00:00:00.000Z",
-				updatedAt: "2024-01-03T00:00:00.000Z",
+				created_at: "2024-01-03T00:00:00.000Z",
+				updated_at: "2024-01-03T00:00:00.000Z",
 			},
 		]);
 
 		const result = await get({
 			service: MARKETPLACE_SERVICE,
 			resource: MARKETPLACE_RESOURCE.CONDITIONS,
-			filter: { updatedAfter: "2024-01-02T00:00:00.000Z" },
+			filter: { updated_after: "2024-01-02T00:00:00.000Z" },
 		});
 
 		expect(result).toHaveLength(1);
@@ -132,15 +132,15 @@ describe("marketplace get/create/update", () => {
 				id: firstId,
 				resource: MARKETPLACE_RESOURCE.ITEMS,
 				data: firstRow,
-				createdAt: "2024-01-01T00:00:00.000Z",
-				updatedAt: "2024-01-01T00:00:00.000Z",
+				created_at: "2024-01-01T00:00:00.000Z",
+				updated_at: "2024-01-01T00:00:00.000Z",
 			},
 			{
 				id: secondId,
 				resource: MARKETPLACE_RESOURCE.ITEMS,
 				data: secondRow,
-				createdAt: "2024-01-02T00:00:00.000Z",
-				updatedAt: "2024-01-02T00:00:00.000Z",
+				created_at: "2024-01-02T00:00:00.000Z",
+				updated_at: "2024-01-02T00:00:00.000Z",
 			},
 		]);
 
@@ -234,7 +234,7 @@ describe("marketplace item payload validation", () => {
 		photo_ids: ["cfa7e4aa-928d-4920-a370-57ed713b2917"],
 		price: { currency: "AUD", value: 250 },
 		seller_id: "04b34671-4eeb-4f1c-8435-5e029a0e455c",
-		createdAt: "2026-05-20T22:56:17.000Z",
+		created_at: "2026-05-20T22:56:17.000Z",
 		dimensions: { width: 500, height: 1600, length: 600, weight: 10 },
 		payment_methods: { cash: true, app: true },
 		transfer_options: {
@@ -477,7 +477,7 @@ describe("marketplace tombstones", () => {
 		const rows = await get({
 			service: MARKETPLACE_SERVICE,
 			resource,
-			filter: { updatedAfter: "1970-01-01T00:00:00.000Z" },
+			filter: { updated_after: "1970-01-01T00:00:00.000Z" },
 		});
 
 		expect(rows).toHaveLength(1);
@@ -499,7 +499,7 @@ describe("marketplace tombstones", () => {
 			filter: { id: rowId },
 		});
 
-		expect((deleted as { deletedAt?: string }).deletedAt).toBeTruthy();
+		expect((deleted as { deleted_at?: string }).deleted_at).toBeTruthy();
 	});
 
 	it("refuses to delete an already-tombstoned row", async () => {
@@ -514,7 +514,7 @@ describe("marketplace tombstones", () => {
 		).rejects.toThrow("Resource not found");
 	});
 
-	it("omits deletedAt for a live row", async () => {
+	it("omits deleted_at for a live row", async () => {
 		const rowId = crypto.randomUUID();
 		const created = await create({
 			service: MARKETPLACE_SERVICE,
@@ -523,6 +523,6 @@ describe("marketplace tombstones", () => {
 			data: { id: rowId, value: "live" },
 		});
 
-		expect("deletedAt" in (created as object)).toBe(false);
+		expect("deleted_at" in (created as object)).toBe(false);
 	});
 });

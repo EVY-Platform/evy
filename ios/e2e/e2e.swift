@@ -50,10 +50,10 @@ func e2eActionBranch(_ callSyntax: String) -> Any {
       out["mode"] = "inline"
       out["data"] = data
     } else {
-      out["mode"] = "fromPath"
-      out["dataPath"] = third
+      out["mode"] = "from_path"
+      out["data_path"] = third
     }
-    if args.count > 3, !args[3].isEmpty { out["idDestination"] = args[3] }
+    if args.count > 3, !args[3].isEmpty { out["id_destination"] = args[3] }
     return out
   case "update":
     let isDraft = args.count == 5 && args[4] == "draft"
@@ -65,7 +65,7 @@ func e2eActionBranch(_ callSyntax: String) -> Any {
     if let changes = e2ePlainObject(args[3]) {
       out["changes"] = changes
     } else {
-      out["changesPath"] = args[3]
+      out["changes_path"] = args[3]
     }
     return out
   default:
@@ -245,7 +245,7 @@ actor WSEmitter {
   }
 
   private func isMatchingDataChanged(_ event: [String: Any], resource: String) -> Bool {
-    guard event["method"] as? String == "dataChanged",
+    guard event["method"] as? String == "data_changed",
       let params = event["params"] as? [String: Any],
       params["resource"] as? String == resource
     else {
@@ -309,10 +309,10 @@ actor WSEmitter {
     var flowRow: [String: Any] = [
       "id": flowId,
       "name": nonEmptyString(flowData["name"]) ?? "Flow",
-      "pageIds": pages.map(\.id),
+      "page_ids": pages.map(\.id),
       "visibility": "public",
-      "createdAt": now,
-      "updatedAt": now,
+      "created_at": now,
+      "updated_at": now,
     ]
     if let submits = flowData["submits"] as? [String: Any] {
       flowRow["submits"] = submits
@@ -327,22 +327,22 @@ actor WSEmitter {
   ) -> (id: String, data: [String: Any]) {
     let pageId = (pageData["id"] as? String) ?? UUID().uuidString
     let rowInputs = pageData["rows"] as? [[String: Any]] ?? []
-    let rowIds = rowInputs.map { rowData in
+    let row_ids = rowInputs.map { rowData in
       decomposeRow(rowData: rowData, rows: &rows, now: now)
     }
-    let footerRowId = (pageData["footer"] as? [String: Any]).map { footerData in
+    let footer_row_id = (pageData["footer"] as? [String: Any]).map { footerData in
       decomposeRow(rowData: footerData, rows: &rows, now: now)
     }
     var pageRow: [String: Any] = [
       "id": pageId,
       "name": nonEmptyString(pageData["name"]) ?? nonEmptyString(pageData["title"]) ?? "Page",
       "title": (pageData["title"] as? String) ?? "",
-      "rowIds": rowIds,
+      "row_ids": row_ids,
       "visibility": "public",
-      "createdAt": now,
-      "updatedAt": now,
+      "created_at": now,
+      "updated_at": now,
     ]
-    if let footerRowId { pageRow["footerRowId"] = footerRowId }
+    if let footer_row_id { pageRow["footer_row_id"] = footer_row_id }
     return (pageId, pageRow)
   }
 
@@ -371,12 +371,12 @@ actor WSEmitter {
       "id": rowId,
       "name": nonEmptyString(rowData["name"]) ?? nonEmptyString(rowData["title"])
         ?? nonEmptyString(rowData["type"]) ?? "Row",
-      "type": (rowData["type"] as? String) ?? "Text",
+      "type": (rowData["type"] as? String) ?? "text",
       "visible": (rowData["visible"] as? String) ?? "true",
       "data": data,
       "visibility": "public",
-      "createdAt": now,
-      "updatedAt": now,
+      "created_at": now,
+      "updated_at": now,
     ]
     rows.append((rowId, row))
     return rowId
@@ -542,7 +542,7 @@ class E2ETestBase: XCTestCase {
           ],
           "footer": [
             "id": "1cb41189-6fa5-4562-996a-7cefb88a08ca",
-            "type": "Button",
+            "type": "button",
             "visible": "true",
             "title": "",
             "label": "Submit",
@@ -599,7 +599,7 @@ class E2ETestBase: XCTestCase {
           ],
           "footer": [
             "id": "1cb41189-6fa5-4562-996a-7cefb88a08ca",
-            "type": "Button",
+            "type": "button",
             "visible": "true",
             "title": "",
             "label": "Submit",
@@ -681,7 +681,7 @@ class E2ETestBase: XCTestCase {
     return false
   }
 
-  /// Waits for a response message naming `messageId` in `parentMessageId`.
+  /// Waits for a response message naming `messageId` in `parent_message_id`.
   func waitForMessageResponse(
     emitter: WSEmitter,
     messageId: String,
@@ -702,7 +702,7 @@ class E2ETestBase: XCTestCase {
     guard let messageRows = responseDataArray(from: messages) else { return nil }
     for message in messageRows {
       guard let messageData = message as? [String: Any],
-        messageData["parentMessageId"] as? String == messageId,
+        messageData["parent_message_id"] as? String == messageId,
         let data = messageData["data"] as? [String: Any],
         data["value"] as? String == value,
         let id = messageData["id"] as? String
@@ -920,7 +920,7 @@ class E2ETestBase: XCTestCase {
     service: String, resource: String, ids: [String]
   )
 
-  var ownedServiceResources: [OwnedServiceResourceDeclaration] { [] }
+  var owned_service_resources: [OwnedServiceResourceDeclaration] { [] }
 
   override func setUpWithError() throws {
     continueAfterFailure = false
@@ -935,8 +935,8 @@ class E2ETestBase: XCTestCase {
     if let homeFlowId {
       app.launchEnvironment["HOME_FLOW_ID"] = homeFlowId
     }
-    if !ownedServiceResources.isEmpty {
-      let declared = ownedServiceResources.map {
+    if !owned_service_resources.isEmpty {
+      let declared = owned_service_resources.map {
         ["service": $0.service, "resource": $0.resource, "ids": $0.ids] as [String: Any]
       }
       let encoded = try JSONSerialization.data(withJSONObject: declared)
@@ -984,7 +984,7 @@ class E2ETestBase: XCTestCase {
           "rows": [
             [
               "id": "a74bc80e-ffda-4e19-b8f3-cd882405958b",
-              "type": "VerticalContainer",
+              "type": "vertical_container",
               "actions": [:],
               "visible": "true",
               "title": "",
@@ -1017,7 +1017,7 @@ class E2ETestBase: XCTestCase {
   ) -> [String: Any] {
     var row: [String: Any] = [
       "id": id,
-      "type": text.isEmpty ? "Text" : "TextExpand",
+      "type": text.isEmpty ? "text" : "text_expand",
       "actions": [:],
       "visible": visible,
       "title": title,
@@ -1027,7 +1027,7 @@ class E2ETestBase: XCTestCase {
       row["label"] = ""
     } else {
       row["text"] = text
-      row["expandLabel"] = "Read more"
+      row["expand_label"] = "Read more"
       row["actions"] = Self.actionsObject(
         tap: [Self.rowAction(true: "{expand_text(\(id))}")]
       )
@@ -1047,7 +1047,7 @@ class E2ETestBase: XCTestCase {
   ) -> [String: Any] {
     return [
       "id": id,
-      "type": "ListItem",
+      "type": "list_item",
       "actions": [:],
       "visible": visible,
       "title": title,
@@ -1066,7 +1066,7 @@ class E2ETestBase: XCTestCase {
   ) -> [String: Any] {
     var row: [String: Any] = [
       "id": id,
-      "type": "Input",
+      "type": "input",
       "visible": visible,
       "title": title,
       "placeholder": placeholder,
@@ -1103,7 +1103,7 @@ class E2ETestBase: XCTestCase {
     }
     var row: [String: Any] = [
       "id": id,
-      "type": "Button",
+      "type": "button",
       "visible": visible,
       "title": "",
       "label": label,
@@ -1124,7 +1124,7 @@ class E2ETestBase: XCTestCase {
   ) -> [String: Any] {
     return [
       "id": id,
-      "type": "Heading",
+      "type": "heading",
       "actions": [:],
       "visible": "true",
       "title": title,
@@ -1153,7 +1153,7 @@ class E2ETestBase: XCTestCase {
       result["tap"] = tap
     }
     if !swipeLeft.isEmpty {
-      result["swipe-left"] = swipeLeft
+      result["swipe_left"] = swipeLeft
     }
     return result
   }
@@ -1175,7 +1175,7 @@ class E2ETestBase: XCTestCase {
     let messagesResourceId = EVYCoreResource.messages.rawValue
     let itemId = MARKETPLACE_ITEMS_RESOURCE_ID
     return
-      "findFirst(sort(\(messagesResourceId), desc, createdAt), fk == \(itemId).id && data.type == \(type))"
+      "findFirst(sort(\(messagesResourceId), desc, created_at), fk == \(itemId).id && data.type == \(type))"
   }
 
   static let messageCreateEnvelope =
@@ -1233,7 +1233,7 @@ class E2ETestBase: XCTestCase {
   ) -> [String: Any] {
     [
       "id": id,
-      "type": "VerticalContainer",
+      "type": "vertical_container",
       "actions": [:],
       "visible": Self.activeRequestVisibilityExpression(type: type),
       "title": "",
@@ -1271,7 +1271,7 @@ class E2ETestBase: XCTestCase {
     func cancelAction(type: String) -> String {
       let latest = latestMessageExpression(type: type)
       return "{create(\(EVY_CORE_SERVICE),\(messagesResourceId),{\(messageCreateEnvelope),"
-        + " parentMessageId: \(latest).id, data: {value: cancel, type: \(type)}})}"
+        + " parent_message_id: \(latest).id, data: {value: cancel, type: \(type)}})}"
     }
 
     return [
@@ -1284,7 +1284,7 @@ class E2ETestBase: XCTestCase {
           "rows": [
             [
               "id": "f1a2b3c4-d5e6-4f7a-8b9c-0d1e2f3a4b5c",
-              "type": "TabContainer",
+              "type": "tab_container",
               "actions": Self.actionsObject(
                 tap: [Self.rowAction(true: "{select($datum)}")]
               ),
@@ -1294,7 +1294,7 @@ class E2ETestBase: XCTestCase {
               "children": [
                 [
                   "id": "a2b3c4d5-e6f7-4a8b-9c0d-1e2f3a4b5c6d",
-                  "type": "VerticalContainer",
+                  "type": "vertical_container",
                   "actions": [:],
                   "visible": "true",
                   "title": "",
@@ -1315,7 +1315,7 @@ class E2ETestBase: XCTestCase {
                 ],
                 [
                   "id": "d5e6f7a8-b9c0-4d1e-2f3a-4b5c6d7e8f9a",
-                  "type": "VerticalContainer",
+                  "type": "vertical_container",
                   "actions": [:],
                   "visible": "true",
                   "title": "",
@@ -1343,7 +1343,7 @@ class E2ETestBase: XCTestCase {
                 ],
                 [
                   "id": "a8b9c0d1-e2f3-4a4b-5c6d-7e8f9a0b1c2d",
-                  "type": "VerticalContainer",
+                  "type": "vertical_container",
                   "actions": [:],
                   "visible": "true",
                   "title": "",
@@ -1489,7 +1489,7 @@ class E2ETestBase: XCTestCase {
   ) -> [String: Any] {
     var row: [String: Any] = [
       "id": id,
-      "type": "TimeslotPicker",
+      "type": "timeslot_picker",
       "source": source,
       "destination": destination,
       "actions": Self.actionsObject(
@@ -1544,7 +1544,7 @@ class E2ETestBase: XCTestCase {
   ) -> [String: Any] {
     [
       "id": id,
-      "type": "VerticalContainer",
+      "type": "vertical_container",
       "actions": [:],
       "visible": "true",
       "title": "Confirmation",
@@ -1733,7 +1733,7 @@ class E2ETestBase: XCTestCase {
             ),
             [
               "id": "b2c3d4e5-f6a7-4b8c-9d0e-1f2a3b4c5d6f",
-              "type": "TabContainer",
+              "type": "tab_container",
               "actions": Self.actionsObject(
                 tap: [Self.rowAction(true: "{select($datum)}")]
               ),
@@ -1743,7 +1743,7 @@ class E2ETestBase: XCTestCase {
               "children": [
                 [
                   "id": "c3d4e5f6-a7b8-4c9d-0e1f-2a3b4c5d6e7f",
-                  "type": "VerticalContainer",
+                  "type": "vertical_container",
                   "actions": [:],
                   "visible": "true",
                   "title": "",
@@ -1828,7 +1828,7 @@ class E2ETestBase: XCTestCase {
           "fk": "$datum.fk",
           "service": "$datum.service",
           "resource": "$datum.resource",
-          "parentMessageId": "$datum.id",
+          "parent_message_id": "$datum.id",
           "data":
             "{value: \(value), type: $datum.data.type, time: $datum.data.time, postalcode: $datum.data.postalcode}",
         ],
@@ -1864,7 +1864,7 @@ class E2ETestBase: XCTestCase {
 
     let responseSheet: [String: Any] = [
       "id": "b70f6354-50cb-47cc-91bc-3387deb7277f",
-      "type": "VerticalContainer",
+      "type": "vertical_container",
       "name": "Respond to request sheet",
       "title": "Respond to request",
       "visible": "true",
@@ -1872,7 +1872,7 @@ class E2ETestBase: XCTestCase {
       "children": [
         [
           "id": "daea8a6d-8d13-462f-98fa-5403e4f81463",
-          "type": "Text",
+          "type": "text",
           "name": "Respond confirmation copy",
           "title": "Accept this request, or reject it?",
           "subtitle": "",
@@ -1881,7 +1881,7 @@ class E2ETestBase: XCTestCase {
         ],
         [
           "id": "07ce5b44-8f2c-4183-a6e9-2f853a8dd255",
-          "type": "HorizontalContainer",
+          "type": "horizontal_container",
           "name": "Respond buttons",
           "title": "",
           "visible": "true",
@@ -1893,25 +1893,25 @@ class E2ETestBase: XCTestCase {
 
     let forYouSearch: [String: Any] = [
       "id": "574da230-8f09-43b2-b003-deadf6786bc4",
-      "type": "Search",
+      "type": "search",
       "name": "For you requests",
       "title": "",
       "placeholder": "",
       "source":
-        "{filter(messages, $datum.data.value == \"pending\" && owns($datum.service, $datum.resource, $datum.fk) == true && findFirst(sort(messages, desc, createdAt), fk == $datum.fk && data.type == $datum.data.type).id == $datum.id)}",
+        "{filter(messages, $datum.data.value == \"pending\" && owns($datum.service, $datum.resource, $datum.fk) == true && findFirst(sort(messages, desc, created_at), fk == $datum.fk && data.type == $datum.data.type).id == $datum.id)}",
       "no_results": "No requests",
       "destination": "",
       "visible": "true",
       "actions": [:],
       "child": [
         "id": homeInboxForYouChildRowId,
-        "type": "ListItem",
+        "type": "list_item",
         "name": "For you request row",
         "title":
           "{findFirst(\(MARKETPLACE_ITEMS_RESOURCE_ID), $datum.fk).title}",
         "subtitle": "{$datum.data.value}",
         "visible": "true",
-        "swipeLabel": "Accept",
+        "swipe_label": "Accept",
         "actions": actionsObject(
           tap: [rowAction(true: "{show(b70f6354-50cb-47cc-91bc-3387deb7277f)}")],
           swipeLeft: [homeInboxResponseAction(value: "accept")]
@@ -1922,25 +1922,25 @@ class E2ETestBase: XCTestCase {
 
     let fromYouSearch: [String: Any] = [
       "id": "396da583-4748-40b9-aa88-4f8bb9074fc3",
-      "type": "Search",
+      "type": "search",
       "name": "From you requests",
       "title": "",
       "placeholder": "",
       "source":
-        "{filter(messages, $datum.data.value == \"pending\" && owns($datum.service, $datum.resource, $datum.fk) == false && findFirst(sort(messages, desc, createdAt), fk == $datum.fk && data.type == $datum.data.type).id == $datum.id)}",
+        "{filter(messages, $datum.data.value == \"pending\" && owns($datum.service, $datum.resource, $datum.fk) == false && findFirst(sort(messages, desc, created_at), fk == $datum.fk && data.type == $datum.data.type).id == $datum.id)}",
       "no_results": "No requests",
       "destination": "",
       "visible": "true",
       "actions": [:],
       "child": [
         "id": homeInboxFromYouChildRowId,
-        "type": "ListItem",
+        "type": "list_item",
         "name": "From you request row",
         "title":
           "{findFirst(\(MARKETPLACE_ITEMS_RESOURCE_ID), $datum.fk).title}",
         "subtitle": "{$datum.data.value}",
         "visible": "true",
-        "swipeLabel": "Cancel",
+        "swipe_label": "Cancel",
         "actions": actionsObject(
           swipeLeft: [homeInboxResponseAction(value: "cancel")]
         ),
@@ -1949,7 +1949,7 @@ class E2ETestBase: XCTestCase {
 
     let scheduledSearch: [String: Any] = [
       "id": "4e81c7e7-f765-4864-ac63-35e2eff707cd",
-      "type": "Search",
+      "type": "search",
       "name": "Scheduled requests",
       "title": "",
       "placeholder": "",
@@ -1960,7 +1960,7 @@ class E2ETestBase: XCTestCase {
       "actions": [:],
       "child": [
         "id": homeInboxScheduledChildRowId,
-        "type": "ListItem",
+        "type": "list_item",
         "name": "Scheduled row",
         "title":
           "{findFirst(\(MARKETPLACE_ITEMS_RESOURCE_ID), $datum.fk).title}",
@@ -1972,7 +1972,7 @@ class E2ETestBase: XCTestCase {
 
     return [
       "id": "29646c92-90d0-4a68-8c23-3acf88612d06",
-      "type": "TabContainer",
+      "type": "tab_container",
       "name": "Message tabs",
       "title": "",
       "visible": "true",
@@ -2024,7 +2024,7 @@ class E2ETestBase: XCTestCase {
               action: "{show(a9f8e7d6-c5b4-4a3f-2e1d-0c9b8a7f6e5d)}",
               sheet: [
                 "id": "a9f8e7d6-c5b4-4a3f-2e1d-0c9b8a7f6e5d",
-                "type": "VerticalContainer",
+                "type": "vertical_container",
                 "actions": [:],
                 "visible": "true",
                 "title": "{\(MARKETPLACE_ITEMS_RESOURCE_ID).title}",
@@ -2071,7 +2071,7 @@ class E2ETestBase: XCTestCase {
           "rows": [
             [
               "id": crossPageSheetRowId,
-              "type": "VerticalContainer",
+              "type": "vertical_container",
               "actions": [:],
               "visible": "true",
               "title": "Confirmation",
@@ -2656,7 +2656,7 @@ final class WebSocketE2ETests: E2ETestBase {
       itemId: selectedItemId,
       buttonExistenceMessage: "Request view button should load"
     )
-    try await emitter.subscribe(event: "dataChanged")
+    try await emitter.subscribe(event: "data_changed")
 
     let timeslot = app.staticTexts["09:00"].firstMatch
     XCTAssertTrue(timeslot.waitForExistence(timeout: 10), "Pickup timeslot should be visible")
@@ -2821,7 +2821,7 @@ final class WebSocketE2ETests: E2ETestBase {
       viewFlowDataBuilder: Self.viewItemCancelRequestFlowData,
       buttonExistenceMessage: "Request view button should load"
     )
-    try await emitter.subscribe(event: "dataChanged")
+    try await emitter.subscribe(event: "data_changed")
 
     let timeslot = app.staticTexts["09:00"].firstMatch
     XCTAssertTrue(timeslot.waitForExistence(timeout: 10), "Pickup timeslot should be visible")
@@ -2915,7 +2915,7 @@ final class WebSocketE2ETests: E2ETestBase {
       viewFlowDataBuilder: Self.viewItemCancelRequestFlowData,
       buttonExistenceMessage: "Request view button should load"
     )
-    try await emitter.subscribe(event: "dataChanged")
+    try await emitter.subscribe(event: "data_changed")
 
     let timeslot = app.staticTexts["09:00"].firstMatch
     XCTAssertTrue(timeslot.waitForExistence(timeout: 10), "Pickup timeslot should be visible")
@@ -2947,7 +2947,7 @@ final class WebSocketE2ETests: E2ETestBase {
         "service": MARKETPLACE_SERVICE,
         "resource": MARKETPLACE_ITEMS_RESOURCE_ID,
         "visibility": "private",
-        "parentMessageId": requestId,
+        "parent_message_id": requestId,
         "data": [
           "value": "reject",
           "type": "pickup",
@@ -3048,7 +3048,7 @@ final class WebSocketE2ETests: E2ETestBase {
       viewFlowDataBuilder: Self.viewItemCancelRequestFlowData,
       buttonExistenceMessage: "Request view button should load"
     )
-    try await emitter.subscribe(event: "dataChanged")
+    try await emitter.subscribe(event: "data_changed")
 
     let timeslot = app.staticTexts["09:00"].firstMatch
     XCTAssertTrue(timeslot.waitForExistence(timeout: 10), "Pickup timeslot should be visible")
@@ -3102,7 +3102,7 @@ final class WebSocketE2ETests: E2ETestBase {
         "service": MARKETPLACE_SERVICE,
         "resource": MARKETPLACE_ITEMS_RESOURCE_ID,
         "visibility": "private",
-        "parentMessageId": messageId,
+        "parent_message_id": messageId,
         "data": [
           "value": "accept",
           "type": "pickup",
@@ -3179,7 +3179,7 @@ final class WebSocketE2ETests: E2ETestBase {
         flowData: senderFlowData,
         flowId: E2EFlowIds.webSocketViewFlow
       )
-      try await emitter.subscribe(event: "dataChanged")
+      try await emitter.subscribe(event: "data_changed")
     }
 
     app.terminate()
@@ -3224,8 +3224,8 @@ final class WebSocketE2ETests: E2ETestBase {
       "The From you tab should be reachable below the request picker")
     fromYouTab.tap()
 
-    let childRowId = E2ETestBase.homeInboxFromYouChildRowId
-    let row = app.otherElements["swipeRow_\(childRowId)_\(requestId)"]
+    let child_row_id = E2ETestBase.homeInboxFromYouChildRowId
+    let row = app.otherElements["swipeRow_\(child_row_id)_\(requestId)"]
     XCTAssertTrue(
       row.waitForExistence(timeout: 10),
       "The request created by this device should appear under From you")
@@ -3234,7 +3234,7 @@ final class WebSocketE2ETests: E2ETestBase {
       "The request row should be reachable after scrolling")
     row.swipeLeft(velocity: .slow)
 
-    let swipeButtonId = "swipeLeft_\(childRowId)_\(requestId)"
+    let swipeButtonId = "swipeLeft_\(child_row_id)_\(requestId)"
     let swipeButton = app.buttons[swipeButtonId]
     XCTAssertTrue(
       swipeButton.waitForExistence(timeout: 3),
@@ -3289,7 +3289,7 @@ final class WebSocketE2ETests: E2ETestBase {
       itemId: selectedItemId,
       buttonExistenceMessage: "Request view button should load"
     )
-    try await emitter.subscribe(event: "dataChanged")
+    try await emitter.subscribe(event: "data_changed")
 
     let askToBuyButton = app.buttons["Ask to buy"]
     XCTAssertTrue(
@@ -4075,7 +4075,7 @@ final class WebSocketE2ETests: E2ETestBase {
     var homeRows: [[String: Any]] = [
       [
         "id": "a74bc80e-ffda-4e19-b8f3-cd882405958b",
-        "type": "VerticalContainer",
+        "type": "vertical_container",
         "actions": [:],
         "visible": "true",
         "title": "",
@@ -4208,11 +4208,11 @@ final class E2ESwipeLeftTests: E2ETestBase {
           "rows": [
             [
               "id": swipeRowId,
-              "type": "Text",
+              "type": "text",
               "visible": "true",
               "title": "Swipe me",
               "subtitle": "",
-              "swipeLabel": "Open",
+              "swipe_label": "Open",
               "name": "Swipeable text",
               "actions": Self.actionsObject(
                 swipeLeft: [
@@ -4298,7 +4298,7 @@ final class E2ESegmentContainerTests: E2ETestBase {
           "rows": [
             [
               "id": "6a5b4c3d-2e1f-4a0b-8c9d-1e2f3a4b5c6d",
-              "type": "TabContainer",
+              "type": "tab_container",
               "actions": Self.actionsObject(
                 tap: [Self.rowAction(true: "{select($datum)}")]
               ),
@@ -4442,7 +4442,7 @@ final class E2EPlaceSearchTests: E2ETestBase {
                 placeholder: "Search address",
                 child: [
                   "id": "c3d4e5f6-a7b8-4c9d-0e1f-2a3b4c5d6e7f",
-                  "type": "Text",
+                  "type": "text",
                   "title": "{$datum.street}",
                   "subtitle": "{$datum.city}",
                   "actions": [:],
@@ -4474,7 +4474,7 @@ final class E2EPlaceSearchTests: E2ETestBase {
     let sheetId = (sheet["id"] as? String) ?? UUID().uuidString
     return [
       "id": id,
-      "type": "TextAction",
+      "type": "text_action",
       "visible": visible,
       "title": title,
       "subtitle": subtitle,
@@ -4505,7 +4505,7 @@ final class E2EPlaceSearchTests: E2ETestBase {
       tapActions.isEmpty ? [:] : Self.actionsObject(tap: tapActions)
     return [
       "id": id,
-      "type": "Search",
+      "type": "search",
       "visible": visible,
       "title": "",
       "placeholder": placeholder,
@@ -4525,7 +4525,7 @@ final class E2EHomeInboxTests: E2ETestBase {
 
   override var homeFlowId: String? { E2EFlowIds.defaultHomeFlow }
 
-  override var ownedServiceResources: [OwnedServiceResourceDeclaration] {
+  override var owned_service_resources: [OwnedServiceResourceDeclaration] {
     [
       (
         service: MARKETPLACE_SERVICE,
@@ -4546,10 +4546,10 @@ final class E2EHomeInboxTests: E2ETestBase {
   private static func homeInboxFlowData() -> [String: Any] {
     let itemSearchRow: [String: Any] = [
       "id": "96d3efe4-ea20-4a81-9ccb-64d6b57646e9",
-      "type": "Search",
+      "type": "search",
       "child": [
         "id": "d5922ca1-fc26-430a-81ed-fd343c13dab1",
-        "type": "ListItem",
+        "type": "list_item",
         "title": "{$datum.title}",
         "subtitle": "{formatCurrency($datum.price)}",
         "image": "{$datum.photo_ids.0}",
@@ -4743,7 +4743,7 @@ final class E2EHomeInboxTests: E2ETestBase {
             "service": MARKETPLACE_SERVICE,
             "resource": MARKETPLACE_ITEMS_RESOURCE_ID,
             "visibility": "private",
-            "parentMessageId": requestId,
+            "parent_message_id": requestId,
             "data": [
               "value": responseValue,
               "type": "pickup",
@@ -4769,7 +4769,7 @@ final class E2EHomeInboxTests: E2ETestBase {
       let emitter = WSEmitter()
       try await emitter.connect(host: host)
       try await emitter.login(token: "e2e-test", os: "ios")
-      try await emitter.subscribe(event: "dataChanged")
+      try await emitter.subscribe(event: "data_changed")
       let answered = try await self.waitForMessageResponse(
         emitter: emitter,
         messageId: requestId,

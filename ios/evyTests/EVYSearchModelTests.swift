@@ -309,7 +309,7 @@ final class EVYSearchModelTests: XCTestCase {
     let resultTemplateJSON = """
       {
         "id": "message-status-template",
-        "type": "Text",
+        "type": "text",
         "actions": {},
         "title": "{$datum.data.type} request",
         "subtitle": "{$datum.data.value}",
@@ -327,7 +327,7 @@ final class EVYSearchModelTests: XCTestCase {
     let resultTemplateJSON = """
       {
         "id": "search-list-item-template",
-        "type": "ListItem",
+        "type": "list_item",
         "actions": {},
         "title": "{$datum.title}",
         "subtitle": "",
@@ -344,7 +344,7 @@ final class EVYSearchModelTests: XCTestCase {
     let resultTemplateJSON = """
       {
         "id": "search-result-template",
-        "type": "Text",
+        "type": "text",
         "actions": {},
         "title": "{$datum.street}",
         "subtitle": "{$datum.city}",

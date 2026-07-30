@@ -1,6 +1,6 @@
 {
 	"$schema": "https://json-schema.org/draft/2020-12/schema",
-	"$id": "api-request",
+	"$id": "api_request",
 	"title": "ApiRequest",
 	"description": "JSON-RPC params for custom API-backed client functions. Routes a service/method request through the API gateway to evy core or the owning backend service.",
 	"$defs": {

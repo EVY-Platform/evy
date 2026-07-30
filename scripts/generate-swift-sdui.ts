@@ -6,7 +6,11 @@ import {
 	type SduiRowSpec,
 	type SduiRowSpecField,
 } from "./sdui-row-schema-utils.js";
-import { OUT_SWIFT } from "./types-generation-utils.js";
+import {
+	OUT_SWIFT,
+	snakeToCamel,
+	snakeToPascal,
+} from "./types-generation-utils.js";
 
 type RowSpec = SduiRowSpec;
 
@@ -35,28 +39,11 @@ function swiftTypeForSpecType(s: string, required = true): string {
 	}
 }
 
-function rowTypeToEnumCase(rowType: string): string {
-	const parts = rowType.split(/(?=[A-Z])/).map((part) => part.toLowerCase());
-	return parts
-		.map((part, index) =>
-			index === 0 ? part : part.charAt(0).toUpperCase() + part.slice(1),
-		)
-		.join("");
-}
-
 function swiftIdentifier(name: string): string {
 	if (name === "true" || name === "false") {
 		return `\`${name}\``;
 	}
-	if (!name.includes("-")) {
-		return name;
-	}
-	return name
-		.split("-")
-		.map((part, index) =>
-			index === 0 ? part : part.charAt(0).toUpperCase() + part.slice(1),
-		)
-		.join("");
+	return name;
 }
 
 function getRowTypesFromSpec(rowSpec: RowSpec): string[] {
@@ -111,7 +98,7 @@ function swiftTypeForSchemaProp(
 function emitUIEnums(rowSpec: RowSpec): string {
 	const rowTypes = getRowTypesFromSpec(rowSpec);
 	const rowEnumCases = rowTypes.map(
-		(rowType) => `    case ${rowTypeToEnumCase(rowType)} = "${rowType}"`,
+		(rowType) => `    case ${snakeToCamel(rowType)} = "${rowType}"`,
 	);
 	return `// Generated from types/schema/sdui/definitions/ - do not edit.
 // Run \`bun run types:generate\` from repo root to regenerate.
@@ -187,7 +174,7 @@ function emitUIRowEncodeSwitch(
 					field?.required ?? true,
 				);
 			});
-		return `        case .${rowTypeToEnumCase(rowType)}:
+		return `        case .${snakeToCamel(rowType)}:
 ${contentEncodeLines.join("\n")}`;
 	});
 	return `        switch type {
@@ -479,7 +466,7 @@ function emitRowViewDataStruct(
 	rowType: string,
 	spec: { content: Record<string, SduiRowSpecField> },
 ): string {
-	const viewDataName = `${rowType}RowViewData`;
+	const viewDataName = `${snakeToPascal(rowType)}RowViewData`;
 	const inheritedStructuralKeys = new Set<string>(
 		INHERITED_STRUCTURAL_ROW_FIELDS,
 	);
@@ -508,8 +495,8 @@ function emitRowAttributeProtocols(rowSpec: RowSpec): string {
 	for (const rowType of rowTypes) {
 		const spec = rowSpec[rowType];
 		if (!spec) continue;
-		const protocolName = `${rowType}RowAttributes`;
-		const viewDataName = `${rowType}RowViewData`;
+		const protocolName = `${snakeToPascal(rowType)}RowAttributes`;
+		const viewDataName = `${snakeToPascal(rowType)}RowViewData`;
 		const propLines = Object.entries(spec.content)
 			.filter(([key]) => !inheritedStructuralKeys.has(key))
 			.map(
@@ -527,7 +514,7 @@ function emitRowViewDataRegistry(rowSpec: RowSpec): string {
 	const rowTypes = getRowTypesFromSpec(rowSpec);
 	const decoderLines = rowTypes.map(
 		(rowType) =>
-			`        "${rowType}": { data in try JSONDecoder().decode(${rowType}RowViewData.self, from: data) }`,
+			`        "${rowType}": { data in try JSONDecoder().decode(${snakeToPascal(rowType)}RowViewData.self, from: data) }`,
 	);
 	return `// MARK: - SduiRowViewDataRegistry
 
@@ -541,7 +528,7 @@ ${decoderLines.join(",\n")}
 function emitRowPayloadBindingAccessors(rowSpec: RowSpec): string {
 	const rowTypes = getRowTypesFromSpec(rowSpec);
 	const destinationCases = rowTypes.map((rowType) => {
-		const enumCase = rowTypeToEnumCase(rowType);
+		const enumCase = snakeToCamel(rowType);
 		if (rowSpec[rowType]?.content.destination) {
 			return `        case .${enumCase}(let view, _): return view.destination`;
 		}
@@ -565,16 +552,16 @@ function emitUIRowPayloads(rowSpec: RowSpec): string {
 	const payloadCases = rowTypes.flatMap((rowType) => {
 		const spec = rowSpec[rowType];
 		if (!spec) return [];
-		const viewDataName = `${rowType}RowViewData`;
+		const viewDataName = `${snakeToPascal(rowType)}RowViewData`;
 		return [
-			`    case ${rowTypeToEnumCase(rowType)}(${viewDataName}, UI_RowActions)`,
+			`    case ${snakeToCamel(rowType)}(${viewDataName}, UI_RowActions)`,
 		];
 	});
 	const fromRowCases = rowTypes.flatMap((rowType) => {
 		const spec = rowSpec[rowType];
 		if (!spec) return [];
-		const viewDataName = `${rowType}RowViewData`;
-		const enumCase = rowTypeToEnumCase(rowType);
+		const viewDataName = `${snakeToPascal(rowType)}RowViewData`;
+		const enumCase = snakeToCamel(rowType);
 		return [
 			`        case .${enumCase}:
             let viewData = try JSONDecoder().decode(${viewDataName}.self, from: JSONEncoder().encode(row))

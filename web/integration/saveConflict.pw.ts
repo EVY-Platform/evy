@@ -33,10 +33,10 @@ test.describe("Concurrent edit conflicts", () => {
 						{
 							id: FLOW_ID,
 							name: "Conflict Flow",
-							pageIds: [PAGE_ID],
+							page_ids: [PAGE_ID],
 							visibility: "public",
-							createdAt: SERVER_VERSION,
-							updatedAt: SERVER_VERSION,
+							created_at: SERVER_VERSION,
+							updated_at: SERVER_VERSION,
 						},
 					],
 				},
@@ -47,10 +47,10 @@ test.describe("Concurrent edit conflicts", () => {
 							id: PAGE_ID,
 							name: "Page",
 							title: "Page",
-							rowIds: [],
+							row_ids: [],
 							visibility: "public",
-							createdAt: SERVER_VERSION,
-							updatedAt: SERVER_VERSION,
+							created_at: SERVER_VERSION,
+							updated_at: SERVER_VERSION,
 						},
 					],
 				},
@@ -82,7 +82,7 @@ test.describe("Concurrent edit conflicts", () => {
 		);
 		expect(updates.length).toBeGreaterThan(0);
 		expect(updates[0].params.filter).toMatchObject({
-			expectedUpdatedAt: SERVER_VERSION,
+			expected_updated_at: SERVER_VERSION,
 		});
 	});
 });

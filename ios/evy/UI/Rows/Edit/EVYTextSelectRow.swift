@@ -79,7 +79,7 @@ struct EVYTextSelectRow: View {
     json: """
       {
         "id": "preview-textselect-row",
-        "type": "TextSelect",
+        "type": "text_select",
         "source": "{item.condition}",
         "destination": "{item.condition}",
         "actions": {"tap": [{"condition": "", "true": "{select($datum)}", "false": ""}]},

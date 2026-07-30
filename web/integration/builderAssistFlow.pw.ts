@@ -101,7 +101,7 @@ function buildBuilderAssistFlow(
 					rows: [
 						{
 							id: "row-title",
-							type: "Input",
+							type: "input",
 							source: `{${ITEM_RESOURCE_ID}}`,
 							destination: `{${ITEM_RESOURCE_ID}.title}`,
 							title: "Editable title",
@@ -109,7 +109,7 @@ function buildBuilderAssistFlow(
 						},
 						{
 							id: "row-search",
-							type: "Search",
+							type: "search",
 							title: "Search messages",
 							source: `{${MESSAGES_RESOURCE_ID}}`,
 							destination: "",
@@ -118,13 +118,13 @@ function buildBuilderAssistFlow(
 						},
 						{
 							id: "row-mixed",
-							type: "Text",
+							type: "text",
 							title: "Mixed row",
 							subtitle: `None for {${MESSAGES_RESOURCE_ID}}`,
 						},
 						{
 							id: "row-button",
-							type: "Button",
+							type: "button",
 							title: "",
 							label: "Open checkout",
 							...(buttonActions.length > 0

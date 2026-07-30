@@ -13,9 +13,9 @@ export type MockWriteBehaviour =
 export type MockWebSocketConfig = {
 	rows: MockSyncRow[];
 	write?: MockWriteBehaviour;
-	/** updatedAt the sync snapshot carries, and the version writes must send. */
+	/** updated_at the sync snapshot carries, and the version writes must send. */
 	syncedVersion?: string;
-	/** updatedAt returned by an accepted write. */
+	/** updated_at returned by an accepted write. */
 	writtenVersion?: string;
 };
 
@@ -75,7 +75,7 @@ export async function installMockWebSocket(
 				window.__evyPushRemote = (change) => {
 					this.respond({
 						jsonrpc: "2.0",
-						method: "dataChanged",
+						method: "data_changed",
 						params: {
 							service: EVY_CORE_SERVICE,
 							resource: change.resource,
@@ -166,7 +166,7 @@ export async function installMockWebSocket(
 							code: -32000,
 							message:
 								"Conflict: the record changed since you last read it " +
-								`(expected updatedAt ${syncedVersion}, found ${writtenVersion}). ` +
+								`(expected updated_at ${syncedVersion}, found ${writtenVersion}). ` +
 								"Re-read the record and reapply your change.",
 						},
 					});
@@ -184,8 +184,8 @@ export async function installMockWebSocket(
 					id: request.id,
 					result: {
 						...record,
-						createdAt: syncedVersion,
-						updatedAt: writtenVersion,
+						created_at: syncedVersion,
+						updated_at: writtenVersion,
 					},
 				});
 			}

@@ -17,13 +17,3 @@ export function displayLabel(variableName: string): string {
 		return variableName;
 	return sentenceCaseFirstLetter(underscoresToSpaces(variableName));
 }
-
-/**
- * Turns identifiers like `HorizontalContainer` or `textRow` into spaced words for display.
- */
-export function splitCamelCaseToWords(identifier: string): string {
-	return identifier
-		.replace(/([a-z])([A-Z])/g, "$1 $2")
-		.replace(/([A-Z]+)([A-Z][a-z])/g, "$1 $2")
-		.trim();
-}

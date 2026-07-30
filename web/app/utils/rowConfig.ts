@@ -11,15 +11,15 @@ import {
 export function buildRowConfigFromRecord(record: DATA_EVY_Row): RowConfig {
 	const data = record.data;
 
-	const childRowId =
+	const child_row_id =
 		typeof data[ROW_CHILD_FIELD] === "string"
 			? data[ROW_CHILD_FIELD]
 			: undefined;
-	const sheetRowId =
+	const sheet_row_id =
 		typeof data[ROW_SHEET_FIELD] === "string"
 			? data[ROW_SHEET_FIELD]
 			: undefined;
-	const childrenRowIds =
+	const children_row_ids =
 		Array.isArray(data[ROW_CHILDREN_FIELD]) &&
 		(data[ROW_CHILDREN_FIELD] as unknown[]).every(
 			(id) => typeof id === "string",
@@ -51,8 +51,8 @@ export function buildRowConfigFromRecord(record: DATA_EVY_Row): RowConfig {
 		visible: record.visible,
 		title: typeof data.title === "string" ? data.title : "",
 		actions: normalizeStoredRowActions(data.actions),
-		...(childRowId !== undefined ? { childRowId } : {}),
-		...(sheetRowId !== undefined ? { sheetRowId } : {}),
-		...(childrenRowIds !== undefined ? { childrenRowIds } : {}),
+		...(child_row_id !== undefined ? { child_row_id } : {}),
+		...(sheet_row_id !== undefined ? { sheet_row_id } : {}),
+		...(children_row_ids !== undefined ? { children_row_ids } : {}),
 	} as RowConfig;
 }

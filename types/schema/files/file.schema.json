@@ -6,38 +6,38 @@
 	"type": "object",
 	"additionalProperties": false,
 	"required": [
-		"fileMetadata",
-		"fileWithBinary",
-		"fileUploadChunkMetadata",
-		"createFileParams",
-		"getFilesParams",
-		"deleteFileParams",
-		"cancelUploadParams",
-		"cancelUploadResponse"
+		"file_metadata",
+		"file_with_binary",
+		"file_upload_chunk_metadata",
+		"create_file_params",
+		"get_files_params",
+		"delete_file_params",
+		"cancel_upload_params",
+		"cancel_upload_response"
 	],
 	"properties": {
-		"fileMetadata": {
+		"file_metadata": {
 			"$ref": "#/$defs/FileMetadata"
 		},
-		"fileWithBinary": {
+		"file_with_binary": {
 			"$ref": "#/$defs/FileWithBinary"
 		},
-		"fileUploadChunkMetadata": {
+		"file_upload_chunk_metadata": {
 			"$ref": "#/$defs/FileUploadChunkMetadata"
 		},
-		"createFileParams": {
+		"create_file_params": {
 			"$ref": "#/$defs/CreateFileParams"
 		},
-		"getFilesParams": {
+		"get_files_params": {
 			"$ref": "#/$defs/GetFilesParams"
 		},
-		"deleteFileParams": {
+		"delete_file_params": {
 			"$ref": "#/$defs/DeleteFileParams"
 		},
-		"cancelUploadParams": {
+		"cancel_upload_params": {
 			"$ref": "#/$defs/CancelUploadParams"
 		},
-		"cancelUploadResponse": {
+		"cancel_upload_response": {
 			"$ref": "#/$defs/CancelUploadResponse"
 		}
 	},
@@ -45,40 +45,11 @@
 		"FileMetadata": {
 			"type": "object",
 			"additionalProperties": false,
-			"required": ["id", "type", "createdAt", "updatedAt", "visibility"],
-			"properties": {
-				"id": {
-					"type": "string",
-					"format": "uuid"
-				},
-				"type": {
-					"type": "string",
-					"minLength": 1
-				},
-				"visibility": {
-					"description": "Matches DATA_EVY_File.visibility - the same record, so the same required field. Stated on create like every other resource; nothing defaults it.",
-					"type": "string",
-					"enum": ["public", "private"]
-				},
-				"createdAt": {
-					"type": "string",
-					"format": "date-time"
-				},
-				"updatedAt": {
-					"type": "string",
-					"format": "date-time"
-				}
-			}
-		},
-		"FileWithBinary": {
-			"type": "object",
-			"additionalProperties": false,
 			"required": [
 				"id",
 				"type",
-				"createdAt",
-				"updatedAt",
-				"dataBase64",
+				"created_at",
+				"updated_at",
 				"visibility"
 			],
 			"properties": {
@@ -95,15 +66,50 @@
 					"type": "string",
 					"enum": ["public", "private"]
 				},
-				"createdAt": {
+				"created_at": {
 					"type": "string",
 					"format": "date-time"
 				},
-				"updatedAt": {
+				"updated_at": {
+					"type": "string",
+					"format": "date-time"
+				}
+			}
+		},
+		"FileWithBinary": {
+			"type": "object",
+			"additionalProperties": false,
+			"required": [
+				"id",
+				"type",
+				"created_at",
+				"updated_at",
+				"data_base64",
+				"visibility"
+			],
+			"properties": {
+				"id": {
+					"type": "string",
+					"format": "uuid"
+				},
+				"type": {
+					"type": "string",
+					"minLength": 1
+				},
+				"visibility": {
+					"description": "Matches DATA_EVY_File.visibility - the same record, so the same required field. Stated on create like every other resource; nothing defaults it.",
+					"type": "string",
+					"enum": ["public", "private"]
+				},
+				"created_at": {
 					"type": "string",
 					"format": "date-time"
 				},
-				"dataBase64": {
+				"updated_at": {
+					"type": "string",
+					"format": "date-time"
+				},
+				"data_base64": {
 					"type": "string"
 				}
 			}
@@ -111,9 +117,9 @@
 		"FileUploadChunkMetadata": {
 			"type": "object",
 			"additionalProperties": false,
-			"required": ["uploadId", "index", "byteOffset", "byteLength"],
+			"required": ["upload_id", "index", "byte_offset", "byte_length"],
 			"properties": {
-				"uploadId": {
+				"upload_id": {
 					"type": "string",
 					"format": "uuid"
 				},
@@ -121,11 +127,11 @@
 					"type": "integer",
 					"minimum": 0
 				},
-				"byteOffset": {
+				"byte_offset": {
 					"type": "integer",
 					"minimum": 0
 				},
-				"byteLength": {
+				"byte_length": {
 					"type": "integer",
 					"minimum": 1
 				}
@@ -150,7 +156,7 @@
 					"type": "string",
 					"format": "uuid"
 				},
-				"updatedAfter": {
+				"updated_after": {
 					"type": "string",
 					"format": "date-time"
 				}
@@ -216,9 +222,9 @@
 		"CancelUploadParams": {
 			"type": "object",
 			"additionalProperties": false,
-			"required": ["uploadId"],
+			"required": ["upload_id"],
 			"properties": {
-				"uploadId": {
+				"upload_id": {
 					"type": "string"
 				}
 			}

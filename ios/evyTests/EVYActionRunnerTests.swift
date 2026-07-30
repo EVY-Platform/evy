@@ -186,7 +186,7 @@ final class EVYActionRunnerTests: XCTestCase {
 
     var received: ActionOperation?
     let action = rowAction(
-      true: .create(service: namespace, resource: resource, mode: .submit, idDestination: nil))
+      true: .create(service: namespace, resource: resource, mode: .submit, id_destination: nil))
     EVYActionRunner.run(actions: [action]) { received = $0 }
 
     XCTAssertNil(received)
@@ -219,7 +219,7 @@ final class EVYActionRunnerTests: XCTestCase {
 
     var receivedOperations: [ActionOperation] = []
     let createAction = rowAction(
-      true: .create(service: namespace, resource: resource, mode: .submit, idDestination: nil))
+      true: .create(service: namespace, resource: resource, mode: .submit, id_destination: nil))
     let closeAction = rowAction(true: .close)
     EVYActionRunner.run(actions: [createAction, closeAction]) { receivedOperations.append($0) }
 
@@ -267,7 +267,7 @@ final class EVYActionRunnerTests: XCTestCase {
         .create(
           service: namespace, resource: resource,
           mode: .inline(data: ["street": "Rothschild Avenue"]),
-          idDestination: "\(entityId).transfer_options.pickup.address_id")
+          id_destination: "\(entityId).transfer_options.pickup.address_id")
     )
     var errors: [Error] = []
     let observer = NotificationCenter.default.addObserver(
@@ -316,8 +316,8 @@ final class EVYActionRunnerTests: XCTestCase {
 
     let createAction = rowAction(
       true: .create(
-        service: namespace, resource: resource, mode: .fromPath(dataPath: "pickup_address"),
-        idDestination: "pickup_address.id")
+        service: namespace, resource: resource, mode: .fromPath(data_path: "pickup_address"),
+        id_destination: "pickup_address.id")
     )
     EVYActionRunner.run(actions: [createAction]) { _ in }
 
@@ -414,7 +414,7 @@ final class EVYActionRunnerTests: XCTestCase {
         true:
           .create(
             service: coreNamespace, resource: addressesResource,
-            mode: .fromPath(dataPath: "pickup_address"), idDestination: "pickup_address.id"),
+            mode: .fromPath(data_path: "pickup_address"), id_destination: "pickup_address.id"),
         false:
           .update(
             service: coreNamespace, resource: addressesResource, mode: .store,
@@ -816,7 +816,7 @@ final class EVYActionRunnerTests: XCTestCase {
           mode: .inline(data: [
             "fk": "item-1", "service": "\"svc-1\"", "closedAt": "null", "verified": "true",
             "data": "{type: pickup, time: 2026-06-03T09:00:00}",
-          ]), idDestination: nil)
+          ]), id_destination: nil)
     )
     var received: ActionOperation?
     EVYActionRunner.run(actions: [action]) { received = $0 }
@@ -837,11 +837,11 @@ final class EVYActionRunnerTests: XCTestCase {
         "type": .string("pickup"),
         "time": .string("2026-06-03T09:00:00"),
       ]))
-    // Millisecond precision: `createdAt` orders records against each other, and `sort`
+    // Millisecond precision: `created_at` orders records against each other, and `sort`
     // compares it as a string, so two writes in the same second must not tie.
     let fractional = ISO8601DateFormatter()
     fractional.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
-    XCTAssertEqual(values["createdAt"], .string(fractional.string(from: pinnedDate)))
+    XCTAssertEqual(values["created_at"], .string(fractional.string(from: pinnedDate)))
   }
 
   func testInlineCreateDataKeepsExplicitCreatedAt() throws {
@@ -854,8 +854,8 @@ final class EVYActionRunnerTests: XCTestCase {
       true:
         .create(
           service: namespace, resource: resource,
-          mode: .inline(data: ["fk": "item-1", "createdAt": "\"2026-06-01T00:00:00Z\""]),
-          idDestination: nil)
+          mode: .inline(data: ["fk": "item-1", "created_at": "\"2026-06-01T00:00:00Z\""]),
+          id_destination: nil)
     )
     EVYActionRunner.run(actions: [action]) { _ in }
 
@@ -864,7 +864,7 @@ final class EVYActionRunnerTests: XCTestCase {
     guard case .dictionary(let values) = createdPayload else {
       return XCTFail("Expected inline create payload dictionary")
     }
-    XCTAssertEqual(values["createdAt"], .string("2026-06-01T00:00:00Z"))
+    XCTAssertEqual(values["created_at"], .string("2026-06-01T00:00:00Z"))
   }
 
   // MARK: - Bare ids in inline payload values
@@ -900,7 +900,7 @@ final class EVYActionRunnerTests: XCTestCase {
     let action = rowAction(
       true: .create(
         service: namespace, resource: resource,
-        mode: .inline(data: data), idDestination: nil)
+        mode: .inline(data: data), id_destination: nil)
     )
     EVYActionRunner.run(actions: [action]) { _ in }
 
@@ -979,7 +979,7 @@ final class EVYActionRunnerTests: XCTestCase {
     )
     let resolved = EVYPlainTextResolution.resolveValues(
       [
-        "parentMessageId": "$datum.id",
+        "parent_message_id": "$datum.id",
         "value": "accept",
         "type": "$datum.data.type",
         "time": "$datum.data.time",
@@ -989,7 +989,7 @@ final class EVYActionRunnerTests: XCTestCase {
       omitUnresolvedDatumKeys: true
     )
 
-    XCTAssertEqual(resolved["parentMessageId"], .string(requestId))
+    XCTAssertEqual(resolved["parent_message_id"], .string(requestId))
     XCTAssertEqual(resolved["value"], .string("accept"))
     XCTAssertEqual(resolved["type"], .string("pickup"))
     XCTAssertEqual(resolved["time"], .string("2026-06-03T09:00:00"))
@@ -1159,7 +1159,7 @@ final class EVYActionRunnerTests: XCTestCase {
           service: namespace, resource: resource,
           mode: .inline(data: [
             "fk": "$datum.id", "data": "{type: pickup, time: selected_pickup_timeslot}",
-          ]), idDestination: nil)
+          ]), id_destination: nil)
     )
     var receivedNavigation: ActionOperation?
 
@@ -1496,7 +1496,7 @@ final class EVYActionRunnerTests: XCTestCase {
           mode: .inline(data: [
             "fk": "\(itemResourceId).id",
             "data": "{type: shipping, value: pending, postalcode: shipping_address.postcode}",
-          ]), idDestination: nil),
+          ]), id_destination: nil),
       false: .highlightRequired(field: "postcode")
     )
     EVYActionRunner.run(actions: [action]) { received = $0 }
@@ -1536,7 +1536,7 @@ final class EVYActionRunnerTests: XCTestCase {
           mode: .inline(data: [
             "fk": "\(itemResourceId).id",
             "data": "{type: pickup, value: pending, time: 2026-06-03T09:00:00}",
-          ]), idDestination: nil)
+          ]), id_destination: nil)
     )
     EVYActionRunner.run(actions: [action]) { received = $0 }
 
@@ -1553,10 +1553,10 @@ final class EVYActionRunnerTests: XCTestCase {
       resource: EVYCoreResource.messages.rawValue,
       mode: .inline(data: [
         "fk": "$datum.fk",
-        "parentMessageId": "$datum.id",
+        "parent_message_id": "$datum.id",
         "data": "{value: cancel, type: $datum.data.type}",
       ]),
-      idDestination: nil)
+      id_destination: nil)
     let row = try decodeRow(
       content: """
         {
@@ -1642,7 +1642,7 @@ final class EVYActionRunnerTests: XCTestCase {
           "label": "Show sheet",
           "sheet": {
             "id": "sheet-row",
-            "type": "Text",
+            "type": "text",
             "source": "",
             "destination": "",
             "title": "Sheet",
@@ -1680,7 +1680,7 @@ final class EVYActionRunnerTests: XCTestCase {
     let json = """
       {
         "id": "parent-row",
-        "type": "Button",
+        "type": "button",
         "source": "",
         "destination": "",
         "visible": "true",

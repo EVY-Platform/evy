@@ -26,7 +26,7 @@ const segmentGroupStyle: CSSProperties = {
 
 export default defineRow(typeName, {
 	config: {
-		type: "TabContainer",
+		type: "tab_container",
 		actions: defaultRowActions({
 			tap: { fn: "select", value: "$datum" },
 		}),
@@ -49,7 +49,7 @@ export default defineRow(typeName, {
 			rawSegments.every((x): x is string => typeof x === "string")
 				? rawSegments
 				: [];
-		const childrenRowIds = row.config.childrenRowIds ?? [];
+		const children_row_ids = row.config.children_row_ids ?? [];
 
 		const selectSegment = (
 			event: MouseEvent<HTMLButtonElement>,
@@ -68,13 +68,13 @@ export default defineRow(typeName, {
 		const rowPathIndex = activeRowPath.indexOf(rowId);
 		const activeDirectChildId =
 			rowPathIndex >= 0 ? activeRowPath[rowPathIndex + 1] : undefined;
-		const activeDirectChildIndex = childrenRowIds.indexOf(
+		const activeDirectChildIndex = children_row_ids.indexOf(
 			activeDirectChildId ?? "",
 		);
 		const visibleChildIndex =
 			activeDirectChildIndex >= 0 ? activeDirectChildIndex : selectedTab;
 
-		const selectedChildId = childrenRowIds[visibleChildIndex];
+		const selectedChildId = children_row_ids[visibleChildIndex];
 
 		const title = row.config.title;
 

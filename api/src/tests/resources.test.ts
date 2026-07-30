@@ -33,11 +33,11 @@ describe("resources", () => {
 				id: EXTERNAL_TEST_SERVICE_ID,
 				name: EXTERNAL_TEST_SERVICE_DESCRIPTOR.name,
 				description: "Marketplace",
-				wsHost: null,
-				wsPort: null,
-				sortOrder: 1,
-				createdAt: "",
-				updatedAt: "",
+				ws_host: null,
+				ws_port: null,
+				sort_order: 1,
+				created_at: "",
+				updated_at: "",
 			},
 		]);
 		forwardResourcesSpy = spyOn(

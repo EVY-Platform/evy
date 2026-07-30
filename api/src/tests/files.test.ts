@@ -45,8 +45,8 @@ async function insertFileMetadata(id: string): Promise<void> {
 		id,
 		type: fileType,
 		visibility: "public",
-		createdAt: now,
-		updatedAt: now,
+		created_at: now,
+		updated_at: now,
 	});
 }
 
@@ -66,9 +66,9 @@ describe("get files", () => {
 				id,
 				type: fileType,
 				visibility: "public",
-				createdAt: now,
-				updatedAt: now,
-				dataBase64: opaqueBytes.toString("base64"),
+				created_at: now,
+				updated_at: now,
+				data_base64: opaqueBytes.toString("base64"),
 			},
 		]);
 	});
@@ -87,10 +87,10 @@ describe("get files", () => {
 			(r) => r.id === id,
 		);
 		expect(item).toMatchObject({ id, type: fileType });
-		expect(item).not.toHaveProperty("dataBase64");
+		expect(item).not.toHaveProperty("data_base64");
 	});
 
-	it("returns metadata without binaries for an updatedAfter read", async () => {
+	it("returns metadata without binaries for an updated_after read", async () => {
 		const id = "b2b1f2a8-6b1a-4c6f-9f1a-2f1c8d0a77aa";
 		await insertFileMetadata(id);
 		await writeFileBinary({ id, bytes: opaqueBytes });
@@ -98,12 +98,12 @@ describe("get files", () => {
 		const result = (await get(dataDb, {
 			service: EVY_CORE_SERVICE,
 			resource: "files",
-			filter: { updatedAfter: "1970-01-01T00:00:00.000Z" },
+			filter: { updated_after: "1970-01-01T00:00:00.000Z" },
 		})) as Record<string, unknown>[];
 
 		const item = result.find((r) => r.id === id);
 		expect(item).toBeDefined();
-		expect(item).not.toHaveProperty("dataBase64");
+		expect(item).not.toHaveProperty("data_base64");
 	});
 
 	// A binary missing from disk used to fail the whole sync, since sync reads

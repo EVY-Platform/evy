@@ -11,10 +11,10 @@ enum EVYTestMessageFixtures {
     fk: String? = nil,
     service: String? = nil,
     resource: String? = nil,
-    createdAt: String? = nil,
+    created_at: String? = nil,
     type: String? = nil,
     value: String? = nil,
-    parentMessageId: String? = nil,
+    parent_message_id: String? = nil,
     time: String? = nil,
     postalcode: String? = nil
   ) -> EVYJson {
@@ -44,11 +44,11 @@ enum EVYTestMessageFixtures {
     if let resource {
       dict["resource"] = .string(resource)
     }
-    if let createdAt {
-      dict["createdAt"] = .string(createdAt)
+    if let created_at {
+      dict["created_at"] = .string(created_at)
     }
-    if let parentMessageId {
-      dict["parentMessageId"] = .string(parentMessageId)
+    if let parent_message_id {
+      dict["parent_message_id"] = .string(parent_message_id)
     }
     if !data.isEmpty {
       dict["data"] = .dictionary(data)
@@ -64,14 +64,14 @@ enum EVYTestMessageFixtures {
     resource: String,
     type: String = "pickup",
     time: String? = "2026-06-03T09:00:00",
-    createdAt: String? = nil
+    created_at: String? = nil
   ) -> EVYJson {
     message(
       id: id,
       fk: fk,
       service: service,
       resource: resource,
-      createdAt: createdAt,
+      created_at: created_at,
       type: type,
       value: "pending",
       time: time
@@ -94,7 +94,7 @@ enum EVYTestMessageFixtures {
       resource: resource,
       type: type,
       value: value,
-      parentMessageId: requestId
+      parent_message_id: requestId
     )
   }
 }

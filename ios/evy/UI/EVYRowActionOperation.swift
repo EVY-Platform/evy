@@ -23,11 +23,11 @@ enum EVYRowActionTrigger {
     case .delete:
       return rowActions.delete
     case .tapRow:
-      return rowActions.tapRow
+      return rowActions.tap_row
     case .tapColumn:
-      return rowActions.tapColumn
+      return rowActions.tap_column
     case .swipeLeft:
-      return rowActions.swipeLeft
+      return rowActions.swipe_left
     case .submit:
       return rowActions.submit
     }
@@ -37,9 +37,9 @@ enum EVYRowActionTrigger {
     [
       rowActions.tap,
       rowActions.delete,
-      rowActions.tapRow,
-      rowActions.tapColumn,
-      rowActions.swipeLeft,
+      rowActions.tap_row,
+      rowActions.tap_column,
+      rowActions.swipe_left,
       rowActions.submit,
     ].flatMap { $0 }
   }

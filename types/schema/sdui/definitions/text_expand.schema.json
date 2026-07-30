@@ -1,10 +1,9 @@
 {
 	"$schema": "https://json-schema.org/draft/2020-12/schema",
-	"$id": "sdui/definitions/SelectPhoto",
-	"title": "SelectPhoto_Row",
+	"$id": "sdui/definitions/text_expand",
+	"title": "TextExpand_Row",
 	"triggers": {
-		"tap": "required",
-		"delete": "required"
+		"tap": "required"
 	},
 	"allOf": [
 		{
@@ -12,27 +11,18 @@
 		},
 		{
 			"type": "object",
-			"required": ["type", "source", "destination"],
+			"required": ["type"],
 			"properties": {
 				"type": {
-					"const": "SelectPhoto"
+					"const": "text_expand"
 				},
 				"title": {
 					"type": "string"
 				},
-				"source": {
+				"text": {
 					"type": "string"
 				},
-				"destination": {
-					"type": "string"
-				},
-				"icon": {
-					"type": "string"
-				},
-				"subtitle": {
-					"type": "string"
-				},
-				"content": {
+				"expand_label": {
 					"type": "string"
 				}
 			}

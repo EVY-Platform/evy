@@ -15,17 +15,17 @@ async function openTwoSegmentTabContainer(page: Page) {
 			title: "Page 1",
 			rows: [
 				{
-					type: "TabContainer" as const,
+					type: "tab_container" as const,
 					title: "Tab Container",
 					segments: ["Segment A", "Segment B"],
 					children: [
 						{
-							type: "Text" as const,
+							type: "text" as const,
 							title: "First Segment Child",
 							subtitle: "First content",
 						},
 						{
-							type: "Text" as const,
+							type: "text" as const,
 							title: "Second Segment Child",
 							text: "Second content",
 						},
@@ -46,7 +46,7 @@ test.describe("Sheet Page Rendering", () => {
 				title: "Page 1",
 				rows: [
 					{
-						type: "Text",
+						type: "text",
 						title: "Root Text Row",
 						subtitle: "Root subtitle",
 					},
@@ -84,11 +84,11 @@ test.describe("Sheet Page Rendering", () => {
 				title: "Page 1",
 				rows: [
 					{
-						type: "Text" as const,
+						type: "text" as const,
 						title: "Parent Row",
 						subtitle: "Parent subtitle",
 						sheet: {
-							type: "Text" as const,
+							type: "text" as const,
 							title: "Sheet Row Title",
 							text: "Sheet text content",
 						},
@@ -132,19 +132,19 @@ test.describe("Sheet Page Rendering", () => {
 				title: "Page 1",
 				rows: [
 					{
-						type: "Text" as const,
+						type: "text" as const,
 						title: "Parent Row",
 						subtitle: "Parent subtitle",
 						sheet: {
-							type: "Text" as const,
+							type: "text" as const,
 							title: "First Sheet Row",
 							text: "First child text",
 							sheet: {
-								type: "Text" as const,
+								type: "text" as const,
 								title: "Second Sheet Row",
 								text: "Second child text",
 								sheet: {
-									type: "Text" as const,
+									type: "text" as const,
 									title: "Third Sheet Row",
 									text: "Third child text",
 								},
@@ -218,31 +218,31 @@ test.describe("Sheet Page Rendering", () => {
 				title: "Page 1",
 				rows: [
 					{
-						type: "TabContainer" as const,
+						type: "tab_container" as const,
 						title: "Root Select Segment",
 						segments: ["Children 0"],
 						children: [
 							{
-								type: "VerticalContainer" as const,
+								type: "vertical_container" as const,
 								title: "Children 0 List Container",
 								children: [
 									{
-										type: "Text" as const,
+										type: "text" as const,
 										title: "Children 0 Text Row",
 										text: "Text row",
 									},
 									{
-										type: "TextAction" as const,
+										type: "text_action" as const,
 										title: "Children 1 Text Action",
 										action: "Change",
 										sheet: {
 											id: "search-sheet-row",
-											type: "Search" as const,
+											type: "search" as const,
 											title: "Search Sheet Row",
 											placeholder: "Search...",
 											value: "",
 											child: {
-												type: "Text" as const,
+												type: "text" as const,
 												title: "Search Text Child",
 												subtitle: "Text child",
 											},
@@ -253,7 +253,7 @@ test.describe("Sheet Page Rendering", () => {
 													condition: "",
 													true: {
 														fn: "show",
-														rowId: "search-sheet-row",
+														row_id: "search-sheet-row",
 													},
 													false: "",
 												},
@@ -310,11 +310,11 @@ test.describe("Sheet Page Rendering", () => {
 				title: "Page 1",
 				rows: [
 					{
-						type: "Text" as const,
+						type: "text" as const,
 						title: "Parent Row",
 						subtitle: "Parent subtitle",
 						sheet: {
-							type: "Text" as const,
+							type: "text" as const,
 							title: "Child Text Row",
 							text: "Sheet text",
 						},
@@ -358,11 +358,11 @@ test.describe("Sheet Page Rendering", () => {
 				title: "Page 1",
 				rows: [
 					{
-						type: "Text" as const,
+						type: "text" as const,
 						title: "Parent Row",
 						subtitle: "Parent subtitle",
 						sheet: {
-							type: "Text" as const,
+							type: "text" as const,
 							title: "Existing Sheet Row",
 							text: "Existing child text",
 						},
@@ -405,7 +405,7 @@ test.describe("Sheet Page Rendering", () => {
 				title: "Page 1",
 				rows: [
 					{
-						type: "Text",
+						type: "text",
 						title: "Root Row",
 						subtitle: "Subtitle",
 					},
@@ -455,12 +455,12 @@ test.describe("Sheet Page Rendering", () => {
 				title: "Page 1",
 				rows: [
 					{
-						type: "Search" as const,
+						type: "search" as const,
 						title: "Search Row Title",
 						placeholder: "Search...",
 						value: "",
 						child: {
-							type: "Text" as const,
+							type: "text" as const,
 							title: "Result Template",
 							text: "Template body",
 						},
@@ -493,7 +493,7 @@ test.describe("Sheet Page Rendering", () => {
 				title: "Page 1",
 				rows: [
 					{
-						type: "Search" as const,
+						type: "search" as const,
 						title: "Search Row Title",
 						placeholder: "Search...",
 						value: "",

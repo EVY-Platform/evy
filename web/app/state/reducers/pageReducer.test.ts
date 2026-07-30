@@ -17,7 +17,7 @@ const mockTextWithConfig = MockTextBase as typeof MockTextBase & {
 	config: Row["config"];
 };
 mockTextWithConfig.config = {
-	type: "Text",
+	type: "text",
 	visible: "true",
 	actions: {},
 	title: "",
@@ -32,30 +32,30 @@ const { pageReducer } = await import("./pageReducer");
 
 const NOW = "2024-01-01T00:00:00.000Z";
 
-function makeFlow(id: string, pageIds: string[]): DATA_EVY_Flow {
+function makeFlow(id: string, page_ids: string[]): DATA_EVY_Flow {
 	return {
 		id,
 		name: "Flow",
-		pageIds,
+		page_ids,
 		visibility: "public",
-		createdAt: NOW,
-		updatedAt: NOW,
+		created_at: NOW,
+		updated_at: NOW,
 	};
 }
 
 function makePage(
 	id: string,
-	rowIds: string[],
-	footerRowId?: string,
+	row_ids: string[],
+	footer_row_id?: string,
 ): DATA_EVY_Page {
 	return {
 		id,
 		name: "Page",
 		title: "Page",
-		rowIds,
-		footerRowId,
-		createdAt: NOW,
-		updatedAt: NOW,
+		row_ids,
+		footer_row_id,
+		created_at: NOW,
+		updated_at: NOW,
 		visibility: "public",
 	};
 }
@@ -67,35 +67,35 @@ function makeTextRow(
 	return {
 		id,
 		name: id,
-		type: "Text",
+		type: "text",
 		visible: "true",
 		data: { title: "T", text: "hello", ...extra },
 		visibility: "public",
-		createdAt: NOW,
-		updatedAt: NOW,
+		created_at: NOW,
+		updated_at: NOW,
 	};
 }
 
 function makeContainerRow(
 	id: string,
-	sheetRowId?: string,
-	childrenRowIds: string[] = [],
+	sheet_row_id?: string,
+	children_row_ids: string[] = [],
 ): DATA_EVY_Row {
 	return {
 		id,
 		name: id,
-		type: "VerticalContainer",
+		type: "vertical_container",
 		visible: "true",
 		data: {
 			title: "Container",
-			...(sheetRowId ? { sheet_row_id: sheetRowId } : {}),
-			...(childrenRowIds.length
-				? { children_row_ids: childrenRowIds }
+			...(sheet_row_id ? { sheet_row_id: sheet_row_id } : {}),
+			...(children_row_ids.length
+				? { children_row_ids: children_row_ids }
 				: {}),
 		},
 		visibility: "public",
-		createdAt: NOW,
-		updatedAt: NOW,
+		created_at: NOW,
+		updated_at: NOW,
 	};
 }
 
@@ -106,7 +106,7 @@ function makeSearchRow(
 	return {
 		id,
 		name: id,
-		type: "Search",
+		type: "search",
 		visible: "true",
 		data: {
 			source: "{$api:place_search}",
@@ -114,8 +114,8 @@ function makeSearchRow(
 			...extra,
 		},
 		visibility: "public",
-		createdAt: NOW,
-		updatedAt: NOW,
+		created_at: NOW,
+		updated_at: NOW,
 	};
 }
 
@@ -126,7 +126,7 @@ function makeButtonRow(
 	return {
 		id,
 		name: id,
-		type: "Button",
+		type: "button",
 		visible: "true",
 		data: {
 			label: "Go",
@@ -134,8 +134,8 @@ function makeButtonRow(
 			...extra,
 		},
 		visibility: "public",
-		createdAt: NOW,
-		updatedAt: NOW,
+		created_at: NOW,
+		updated_at: NOW,
 	};
 }
 
@@ -195,8 +195,8 @@ describe("pageReducer", () => {
 		const state = initialState();
 		const next = pageReducer(state, { type: "ADD_PAGE" });
 		const flow = next.flowsById["flow-1"];
-		expect(flow?.pageIds).toHaveLength(3);
-		expect(next.activePageId).toBe(flow?.pageIds[2]);
+		expect(flow?.page_ids).toHaveLength(3);
+		expect(next.activePageId).toBe(flow?.page_ids[2]);
 	});
 
 	it("ADD_ROW inserts TextRow from palette", () => {
@@ -210,7 +210,7 @@ describe("pageReducer", () => {
 			destinationIndex: 0,
 		});
 		const page = next.pagesById["page-1"];
-		expect(page?.rowIds[0]).toBe(newId);
+		expect(page?.row_ids[0]).toBe(newId);
 		expect(next.rowsById[newId]).toBeDefined();
 		expect(next.activeRowId).toBe(newId);
 	});
@@ -247,7 +247,7 @@ describe("pageReducer", () => {
 	it("UPDATE_ROW splits comma-separated values for array content fields (segments)", () => {
 		const row: DATA_EVY_Row = {
 			...makeTextRow("r"),
-			type: "TabContainer",
+			type: "tab_container",
 			data: { segments: ["A", "B"] },
 		};
 		const state = initialState({
@@ -405,7 +405,7 @@ describe("pageReducer", () => {
 			type: "REMOVE_PAGE",
 			pageId: "page-2",
 		});
-		expect(next.flowsById["flow-1"]?.pageIds).not.toContain("page-2");
+		expect(next.flowsById["flow-1"]?.page_ids).not.toContain("page-2");
 		expect(next.activePageId).toBe("page-1");
 	});
 
@@ -428,8 +428,8 @@ describe("pageReducer", () => {
 			destinationPageId: "page-2",
 			destinationIndex: 0,
 		});
-		expect(next.pagesById["page-1"]?.rowIds).not.toContain("row-1");
-		expect(next.pagesById["page-2"]?.rowIds).toContain("row-1");
+		expect(next.pagesById["page-1"]?.row_ids).not.toContain("row-1");
+		expect(next.pagesById["page-2"]?.row_ids).toContain("row-1");
 	});
 
 	it("REMOVE_ROW removes row from page", () => {
@@ -439,7 +439,7 @@ describe("pageReducer", () => {
 			pageId: "page-1",
 			rowId: "row-1",
 		});
-		expect(next.pagesById["page-1"]?.rowIds).not.toContain("row-1");
+		expect(next.pagesById["page-1"]?.row_ids).not.toContain("row-1");
 		expect(next.rowsById["row-1"]).toBeUndefined();
 	});
 
@@ -488,7 +488,7 @@ describe("pageReducer", () => {
 		const pushed = pageReducer(state, {
 			type: "PUSH_CONFIG_STACK",
 			parentRowId: "row-1",
-			childRowId: "b",
+			child_row_id: "b",
 		});
 		expect(pushed.configStack).toEqual(["a", "b"]);
 
@@ -518,7 +518,7 @@ describe("pageReducer", () => {
 			pageId: "page-1",
 			rowId: "foot",
 		});
-		expect(next.pagesById["page-1"]?.footerRowId).toBeUndefined();
+		expect(next.pagesById["page-1"]?.footer_row_id).toBeUndefined();
 		expect(next.rowsById.foot).toBeUndefined();
 	});
 
@@ -568,8 +568,8 @@ describe("pageReducer", () => {
 			destinationPageId: "page-1",
 			destinationIndex: 0,
 		});
-		expect(next.pagesById["page-1"]?.footerRowId).toBeUndefined();
-		expect(next.pagesById["page-1"]?.rowIds).toContain("foot");
+		expect(next.pagesById["page-1"]?.footer_row_id).toBeUndefined();
+		expect(next.pagesById["page-1"]?.row_ids).toContain("foot");
 	});
 
 	it("ADD_ROW inserts palette row into child container", () => {
@@ -642,7 +642,7 @@ describe("pageReducer", () => {
 			oldRowId: "TextRow",
 			destinationPageId: "page-1",
 		});
-		expect(next.pagesById["page-1"]?.footerRowId).toBe(newId);
+		expect(next.pagesById["page-1"]?.footer_row_id).toBe(newId);
 		expect(next.rowsById[newId]).toBeDefined();
 	});
 
@@ -665,8 +665,8 @@ describe("pageReducer", () => {
 			originPageId: "page-1",
 			destinationPageId: "page-1",
 		});
-		expect(next.pagesById["page-1"]?.rowIds).not.toContain("row-1");
-		expect(next.pagesById["page-1"]?.footerRowId).toBe("row-1");
+		expect(next.pagesById["page-1"]?.row_ids).not.toContain("row-1");
+		expect(next.pagesById["page-1"]?.footer_row_id).toBe("row-1");
 	});
 
 	it("MOVE_ROW_TO_FOOTER moves row across pages", () => {
@@ -677,8 +677,8 @@ describe("pageReducer", () => {
 			originPageId: "page-1",
 			destinationPageId: "page-2",
 		});
-		expect(next.pagesById["page-1"]?.rowIds).not.toContain("row-1");
-		expect(next.pagesById["page-2"]?.footerRowId).toBe("row-1");
+		expect(next.pagesById["page-1"]?.row_ids).not.toContain("row-1");
+		expect(next.pagesById["page-2"]?.footer_row_id).toBe("row-1");
 	});
 
 	it("ADD_ROW inserts palette row as sheet of footer descendant (blank sheet page drop)", () => {
@@ -710,7 +710,7 @@ describe("pageReducer", () => {
 			tap: [
 				{
 					condition: "",
-					true: { fn: "show", rowId: newId },
+					true: { fn: "show", row_id: newId },
 					false: "",
 				},
 			],
@@ -724,7 +724,7 @@ describe("pageReducer", () => {
 				tap: [
 					{
 						condition: "",
-						true: { fn: "show", rowId: "existing-sheet" },
+						true: { fn: "show", row_id: "existing-sheet" },
 						false: "",
 					},
 				],
@@ -758,7 +758,7 @@ describe("pageReducer", () => {
 			tap: [
 				{
 					condition: "",
-					true: { fn: "show", rowId: "existing-sheet" },
+					true: { fn: "show", row_id: "existing-sheet" },
 					false: "",
 				},
 			],
@@ -772,12 +772,12 @@ describe("pageReducer", () => {
 				tap: [
 					{
 						condition: "",
-						true: { fn: "show", rowId: "old-sheet" },
+						true: { fn: "show", row_id: "old-sheet" },
 						false: "",
 					},
 					{
 						condition: "other",
-						true: { fn: "show", rowId: "other-page-row" },
+						true: { fn: "show", row_id: "other-page-row" },
 						false: "",
 					},
 				],
@@ -810,12 +810,12 @@ describe("pageReducer", () => {
 			tap: [
 				{
 					condition: "",
-					true: { fn: "show", rowId: newSheetId },
+					true: { fn: "show", row_id: newSheetId },
 					false: "",
 				},
 				{
 					condition: "other",
-					true: { fn: "show", rowId: "other-page-row" },
+					true: { fn: "show", row_id: "other-page-row" },
 					false: "",
 				},
 			],

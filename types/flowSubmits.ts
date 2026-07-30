@@ -28,9 +28,9 @@ function getChildrenRowIds(row: DATA_EVY_Row): string[] {
 }
 
 function pageRootIds(page: DATA_EVY_Page): string[] {
-	return page.footerRowId
-		? [...page.rowIds, page.footerRowId]
-		: [...page.rowIds];
+	return page.footer_row_id
+		? [...page.row_ids, page.footer_row_id]
+		: [...page.row_ids];
 }
 
 function walkRows(
@@ -63,7 +63,7 @@ function forEachRowInFlow(
 	rowsById: EntityMap<DATA_EVY_Row>,
 	visit: (id: string, row: DATA_EVY_Row) => void,
 ): void {
-	for (const pageId of flow.pageIds) {
+	for (const pageId of flow.page_ids) {
 		const page = pagesById[pageId];
 		if (!page) continue;
 		walkRows(rowsById, pageRootIds(page), visit);

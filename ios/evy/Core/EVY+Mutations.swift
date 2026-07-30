@@ -107,7 +107,7 @@ extension EVY {
     forFlowId flowId: String,
     from store: EVYDataStore = EVY.publicStore
   ) {
-    for pageId in EVYFlowStore.pageIds(inFlowId: flowId, from: store) {
+    for pageId in EVYFlowStore.page_ids(inFlowId: flowId, from: store) {
       draftStore.deleteDrafts(scopeId: EVYDraft.ephemeralScopeId(forPageId: pageId))
     }
   }
@@ -181,8 +181,8 @@ extension EVY {
     let newId = UUID().uuidString.lowercased()
     var payloadWithId = payload
     payloadWithId["id"] = .string(newId)
-    if payloadWithId["createdAt"] == nil {
-      payloadWithId["createdAt"] = .string(EVY.nowISO8601(fractional: true))
+    if payloadWithId["created_at"] == nil {
+      payloadWithId["created_at"] = .string(EVY.nowISO8601(fractional: true))
     }
     if payloadWithId["visibility"] == nil,
       let declared = EVYCoreResource(rawValue: resource)?.visibility,

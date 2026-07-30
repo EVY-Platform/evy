@@ -81,7 +81,7 @@ Clients call the API with JSON-RPC `get`, `sync`, `resources`, `api`, `create`, 
 Routing in practice: the API dispatches on `service`, comparing it against the generated core service UUID (`EVY_CORE_SERVICE`). Core resources are addressed by **name** (`flows`, `messages`, …); external resources are addressed by the **resource UUID** declared in the owning service's manifest. Anything that is not the core service is forwarded to the owning service's adapter, which the API resolves from the core `services` table at startup.
 
 **`sync` in practice:** Send back the opaque `cursor` from the previous response, or omit it for a full sync. Alongside
-the cursor a client sends `ownedServiceResources`: the record ids it owns, grouped by the service
+the cursor a client sends `owned_service_resources`: the record ids it owns, grouped by the service
 and resource they belong to. Every resource is read the same way: the device gets every public row,
 plus the private rows it declared. A device that declares nothing still syncs — it just receives the
 public rows only.
@@ -111,8 +111,8 @@ Resource manifests may declare an `attributes` list per resource: the dotted att
 
 Tables that track updates use ISO 8601 / RFC 3339 strings (never numeric Unix timestamps):
 
-- `createdAt`: string (date-time)
-- `updatedAt`: string (date-time)
+- `created_at`: string (date-time)
+- `updated_at`: string (date-time)
 
 ---
 
@@ -180,11 +180,11 @@ On the wire this is accessed with `service: "475731ac-31aa-4d65-94d2-7032782ae35
 
 #### A message is write-once
 
-**Nothing in the system updates a message.** A request's whole life is the sequence of messages naming it, ordered by `createdAt`: asked, then accepted, rejected or withdrawn. There is no `status` column and no `archivedAt` column; each held part of this before the lifecycle became append-only.
+**Nothing in the system updates a message.** A request's whole life is the sequence of messages naming it, ordered by `created_at`: asked, then accepted, rejected or withdrawn. There is no `status` column and no `archivedAt` column; each held part of this before the lifecycle became append-only.
 
 `data.value` holds the whole vocabulary — `"pending"` on a request, and `"accept"`, `"reject"` or `"cancel"` on the message that settles one. A request says `"pending"` outright rather than leaving the key absent, so the predicates read as one state machine and a message kind that carries no state is never mistaken for something to answer.
 
-A settling message addresses whatever record the request addressed — same `fk`, `service` and `resource` — and **carries the request's whole `data` forward**, overriding `value` and setting `parentMessageId` on the row to name what it answers. That duplication is load-bearing rather than sloppy: `findFirst` cannot nest, so a lookup that finds the settling message cannot reach through it to the request. Anything the settled state displays — the agreed time, the shipping postcode — has to be on the message that says so, or the confirmation row renders empty.
+A settling message addresses whatever record the request addressed — same `fk`, `service` and `resource` — and **carries the request's whole `data` forward**, overriding `value` and setting `parent_message_id` on the row to name what it answers. That duplication is load-bearing rather than sloppy: `findFirst` cannot nest, so a lookup that finds the settling message cannot reach through it to the request. Anything the settled state displays — the agreed time, the shipping postcode — has to be on the message that says so, or the confirmation row renders empty.
 
 Accepting, rejecting and cancelling are therefore the same operation with a different `value`. They differ only in who says it: the record's owner answers, its asker withdraws.
 
@@ -193,7 +193,7 @@ Accepting, rejecting and cancelling are therefore the same operation with a diff
 The item page reads one thing per transfer method: the **latest** message for that `(fk, data.type)` pair.
 
 ```
-findFirst(sort(messages, desc, createdAt), fk == <item>.id && data.type == pickup)
+findFirst(sort(messages, desc, created_at), fk == <item>.id && data.type == pickup)
 ```
 
 `pending` means a request is open (offer to cancel it); `accept` means it is agreed (show the time). `reject`, `cancel` and "no message at all" are the same branch — nothing is in flight, so offer to request again.
@@ -202,13 +202,13 @@ Each `(fk, data.type)` pair is **tracked independently** — a rejected pickup s
 
 Two things follow that are easy to trip over:
 
-- **`createdAt` is the ordering key and has no fallback.** It is written with millisecond precision for exactly this reason. `sort` compares it as a string, so mixing second-resolution and fractional values compares *wrongly* (`.` sorts before `Z`), and equal keys fall back to store order — which would let a request outrank its own answer, since the request was stored first.
+- **`created_at` is the ordering key and has no fallback.** It is written with millisecond precision for exactly this reason. `sort` compares it as a string, so mixing second-resolution and fractional values compares *wrongly* (`.` sorts before `Z`), and equal keys fall back to store order — which would let a request outrank its own answer, since the request was stored first.
 - **`findFirst(sort(…), …)` is the whole mechanism.** `sort` accepts a field path and `findFirst`'s collection argument is function-aware, so no client-side special case is involved. See [methods.md](./methods.md#findfirst).
 
 Messages follow the same rule as every other private resource, with two additions:
 
 - as well as the device that owns the message (its creator, declaring the message's own id under `evy`/`messages`), a message reaches the device that owns the record it **addresses**, which declares that record's id under the message's `service`/`resource`;
-- a message reaches whoever owns the message it **answers** — matched on `parentMessageId`. Without it a response would never reach the party who asked, since they own neither the response nor the record it addresses.
+- a message reaches whoever owns the message it **answers** — matched on `parent_message_id`. Without it a response would never reach the party who asked, since they own neither the response nor the record it addresses.
 
 Those two are the only entitlements in the system that are not plain ownership. Everyone else never receives it.
 
@@ -277,3 +277,22 @@ ship: {
 id: uuid
 value: string (e.g. "30 minutes")
 ```
+
+## Naming
+
+Every **serialized** name is `snake_case`. Every **language identifier** is derived mechanically from it and never hand-written.
+
+Serialized surfaces include Postgres table/column/enum-type/index names, Drizzle column keys, JSON Schema property names, JSON Schema enum values and `const` values, generated TypeScript property names, RPC method names, RPC param names, SDUI row `type` values, SDUI row property names, SDUI action param names, SDUI trigger names, row `data` JSON keys, file-resource keys, resource names, and procedure names.
+
+Derived names stay in each language's usual style: TypeScript and Swift type names are PascalCase; Swift enum cases for row types are lowerCamelCase with `= "snake_case"` raw values; TypeScript/Swift source file names and local variables stay in their conventional casing.
+
+| Serialized name | TS type | Swift type | Swift enum case | Drizzle key | PG identifier |
+| --- | --- | --- | --- | --- | --- |
+| `horizontal_container` (row type) | `HorizontalContainer_Row` | `HorizontalContainerRowViewData` | `horizontalContainer` | — | — |
+| `service_provider` (table) | `DATA_EVY_ServiceProvider` | — | — | `service_provider` | `service_provider` |
+| `created_at` (prop) | `created_at` | `created_at` | — | `created_at` | `created_at` |
+| `swipe_left` (trigger) | `swipe_left` | `swipe_left` | — | — | — |
+| `web` (enum value) | `"web"` | `case web = "web"` | `web` | — | `'web'` |
+| `selling_reasons` (resource) | — | — | `sellingReasons` | — | — |
+
+Schema `title` fields remain PascalCase (for example `HorizontalContainer_Row`) because `json-schema-to-typescript` uses them verbatim as interface names.

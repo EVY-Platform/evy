@@ -203,7 +203,7 @@ actor EVYWebsocket: EVYRPCTransport {
 
   private func handleNotification(method: String, params: Any?) {
     switch method {
-    case "dataChanged":
+    case "data_changed":
       handleDataChanged(params: params)
     default:
       #if DEBUG

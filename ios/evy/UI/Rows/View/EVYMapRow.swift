@@ -41,7 +41,7 @@ struct EVYMapRow: View {
     json: """
       {
         "id": "preview-map-row",
-        "type": "Map",
+        "type": "map",
         "source": "{user.address}",
         "actions": {},
         "title": "Pickup location",

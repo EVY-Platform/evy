@@ -4,5 +4,5 @@
 	"title": "OS",
 	"description": "Device OS for login and API.",
 	"type": "string",
-	"enum": ["ios", "android", "Web"]
+	"enum": ["ios", "android", "web"]
 }

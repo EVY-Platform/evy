@@ -56,10 +56,10 @@ function rowWithBranch(branch: unknown) {
 	return {
 		id: "11111111-1111-4111-8111-111111111111",
 		name: "R",
-		type: "Button",
+		type: "button",
 		visible: "true",
-		createdAt: "2024-01-01T00:00:00.000Z",
-		updatedAt: "2024-01-01T00:00:00.000Z",
+		created_at: "2024-01-01T00:00:00.000Z",
+		updated_at: "2024-01-01T00:00:00.000Z",
 		visibility: "public" as const,
 		data: {
 			actions: { tap: [{ condition: "", false: "", true: branch }] },

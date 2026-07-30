@@ -1,9 +1,10 @@
 {
 	"$schema": "https://json-schema.org/draft/2020-12/schema",
-	"$id": "sdui/definitions/TextExpand",
-	"title": "TextExpand_Row",
+	"$id": "sdui/definitions/text_area",
+	"title": "TextArea_Row",
 	"triggers": {
-		"tap": "required"
+		"tap": "optional",
+		"submit": "optional"
 	},
 	"allOf": [
 		{
@@ -14,15 +15,21 @@
 			"required": ["type"],
 			"properties": {
 				"type": {
-					"const": "TextExpand"
+					"const": "text_area"
 				},
 				"title": {
 					"type": "string"
 				},
-				"text": {
+				"source": {
 					"type": "string"
 				},
-				"expandLabel": {
+				"destination": {
+					"type": "string"
+				},
+				"placeholder": {
+					"type": "string"
+				},
+				"initial": {
 					"type": "string"
 				}
 			}

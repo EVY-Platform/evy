@@ -12,7 +12,7 @@ if (!API_URL) {
 }
 
 const TEST_TOKEN = "e2e-marketplace-token";
-const TEST_OS = "Web";
+const TEST_OS = "web";
 const CONNECTION_TIMEOUT_MS = 5000;
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -176,7 +176,7 @@ describe("Marketplace E2E (via API WebSocket)", () => {
 			data: { type: "pickup", value: "pending" },
 			visibility: "private",
 		});
-		expect(created.updatedAt).toBeDefined();
+		expect(created.updated_at).toBeDefined();
 
 		const rows = await client.call("get", {
 			service: EVY_CORE_SERVICE,

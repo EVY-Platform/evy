@@ -47,7 +47,7 @@ export interface DATA_MARKETPLACE_Item {
 	title?: string;
 	description?: string;
 	seller_id?: string;
-	createdAt?: string;
+	created_at?: string;
 	condition_id?: string;
 	selling_reason_id?: string;
 	photo_ids?: string[];

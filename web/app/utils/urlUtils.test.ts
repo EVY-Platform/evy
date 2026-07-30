@@ -14,28 +14,28 @@ function makeDataRow(
 	return {
 		id,
 		name: id,
-		type: "Text",
+		type: "text",
 		visible: "true",
 		data: data as DATA_EVY_Row["data"],
-		createdAt: "",
-		updatedAt: "",
+		created_at: "",
+		updated_at: "",
 		visibility: "public",
 	};
 }
 
 function makePage(
 	id: string,
-	rowIds: string[],
-	footerRowId?: string,
+	row_ids: string[],
+	footer_row_id?: string,
 ): DATA_EVY_Page {
 	return {
 		id,
 		name: id,
 		title: "P",
-		rowIds,
-		...(footerRowId ? { footerRowId } : {}),
-		createdAt: "",
-		updatedAt: "",
+		row_ids,
+		...(footer_row_id ? { footer_row_id } : {}),
+		created_at: "",
+		updated_at: "",
 		visibility: "public",
 	};
 }

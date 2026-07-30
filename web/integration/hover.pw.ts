@@ -428,15 +428,15 @@ test.describe("Row Hover Highlight", () => {
 				title: "Test Page",
 				rows: [
 					{
-						type: "VerticalContainer",
+						type: "vertical_container",
 						title: "Outer Container",
 						children: [
 							{
-								type: "HorizontalContainer",
+								type: "horizontal_container",
 								title: "Inner Container",
 								children: [
 									{
-										type: "Text",
+										type: "text",
 										title: "Deep Text Row",
 										text: "deep",
 									},
@@ -445,7 +445,7 @@ test.describe("Row Hover Highlight", () => {
 						],
 					},
 					{
-						type: "Text",
+						type: "text",
 						title: "Sibling Text Row",
 						subtitle: "sibling",
 					},
@@ -482,11 +482,11 @@ test.describe("Row Hover Highlight", () => {
 				title: "Test Page",
 				rows: [
 					{
-						type: "VerticalContainer",
+						type: "vertical_container",
 						title: "Outer Container",
 						children: [
 							{
-								type: "Text",
+								type: "text",
 								title: "Child Text Row",
 								text: "child",
 							},

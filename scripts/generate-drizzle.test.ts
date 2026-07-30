@@ -3,8 +3,10 @@ import {
 	assertDrizzleConfig,
 	type DrizzleConfig,
 	type JsonSchema,
+	resolveJsonbTypeAnnotation,
 	validateEveryDataDefHasATable,
 } from "./generate-drizzle";
+import { snakeToCamel, snakeToPascal } from "./types-generation-utils";
 
 function tableConfig(tableName: string) {
 	return {
@@ -23,6 +25,29 @@ const schemaWithFoo: JsonSchema = {
 		},
 	},
 };
+
+describe("naming helpers", () => {
+	test("snakeToPascal converts snake_case and is idempotent on PascalCase", () => {
+		expect(snakeToPascal("horizontal_container")).toBe(
+			"HorizontalContainer",
+		);
+		expect(snakeToPascal("HorizontalContainer")).toBe(
+			"HorizontalContainer",
+		);
+	});
+
+	test("snakeToCamel converts snake_case resource names", () => {
+		expect(snakeToCamel("selling_reasons")).toBe("sellingReasons");
+	});
+});
+
+describe("resolveJsonbTypeAnnotation", () => {
+	test("throws on an unknown object $ref", () => {
+		expect(() =>
+			resolveJsonbTypeAnnotation("../unknown/schema.json"),
+		).toThrow(/unrecognised object \$ref/);
+	});
+});
 
 describe("validateEveryDataDefHasATable", () => {
 	test("throws when a DATA_EVY_ def has no table entry", () => {

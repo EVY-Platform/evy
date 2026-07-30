@@ -26,7 +26,7 @@ struct EVYTextExpandRow: View {
   }
 
   private var isCollapsible: Bool {
-    !(view.expandLabel?.isEmpty ?? true)
+    !(view.expand_label?.isEmpty ?? true)
   }
 
   private var isExpanded: Bool {
@@ -61,11 +61,11 @@ struct EVYTextExpandRow: View {
           }
       }
 
-      if canExpand && !isExpanded, let expandLabel = view.expandLabel {
+      if canExpand && !isExpanded, let expand_label = view.expand_label {
         Button {
           onExpandTapped()
         } label: {
-          EVYTextView(expandLabel, style: .action)
+          EVYTextView(expand_label, style: .action)
         }
         .buttonStyle(.plain)
       }
@@ -83,12 +83,12 @@ struct EVYTextExpandRow: View {
     json: """
       {
         "id": "preview-text-expand-row",
-        "type": "TextExpand",
+        "type": "text_expand",
         "actions": {"tap": [{"condition": "", "true": "{expand_text(preview-text-expand-row)}", "false": ""}]},
         "visible": "true",
         "title": "About this item",
         "text": "This is a longer description that may be truncated when it exceeds the maximum number of lines configured for this row.",
-        "expandLabel": "Read more"
+        "expand_label": "Read more"
       }
       """,
     failureMessage: "Unable to build text expand row preview"

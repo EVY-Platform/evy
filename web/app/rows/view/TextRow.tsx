@@ -6,7 +6,7 @@ import { TitleSubtitleRow } from "../design-system/TitleSubtitleRow";
 
 export default defineRow("TextRow", {
 	config: {
-		type: "Text",
+		type: "text",
 		actions: {},
 		visible: "true",
 		title: "Text row title",

@@ -34,9 +34,9 @@ type RowBaseAttributes = {
 
 type RowAttributes = RowBaseAttributes &
 	RowSpecificAttributes & {
-		childrenRowIds?: string[];
-		childRowId?: string;
-		sheetRowId?: string;
+		children_row_ids?: string[];
+		child_row_id?: string;
+		sheet_row_id?: string;
 		sheet?: Row;
 	};
 

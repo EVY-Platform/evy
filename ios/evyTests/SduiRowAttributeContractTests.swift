@@ -70,7 +70,7 @@ final class SduiRowAttributeContractTests: XCTestCase {
   func testSwipeLabelPresentAndOptionalOnlyForSwipeLeftRows() throws {
     let catalog = try loadCatalog()
     let supportedSwipeLabelRowTypes: Set<String> = [
-      "Heading", "Input", "ListItem", "Text",
+      "heading", "input", "list_item", "text",
     ]
 
     for (rowType, schemaDef) in catalog {
@@ -79,22 +79,22 @@ final class SduiRowAttributeContractTests: XCTestCase {
         "\(rowType): schema definition must be a JSON object"
       )
       let expectedAttributes = Self.extractExpectedAttributes(from: schemaDefDict, rowType: rowType)
-      let hasSwipeLabel = expectedAttributes["swipeLabel"] != nil
-      let isOptional = expectedAttributes["swipeLabel"] ?? false
+      let hasSwipeLabel = expectedAttributes["swipe_label"] != nil
+      let isOptional = expectedAttributes["swipe_label"] ?? false
 
       if supportedSwipeLabelRowTypes.contains(rowType) {
         XCTAssertTrue(
           hasSwipeLabel,
-          "\(rowType): expected optional `swipeLabel` attribute in schema"
+          "\(rowType): expected optional `swipe_label` attribute in schema"
         )
         XCTAssertTrue(
           isOptional,
-          "\(rowType): `swipeLabel` must be optional (not in required)"
+          "\(rowType): `swipe_label` must be optional (not in required)"
         )
       } else {
         XCTAssertFalse(
           hasSwipeLabel,
-          "\(rowType): must not declare `swipeLabel` — only Heading, Input, ListItem, and Text support it"
+          "\(rowType): must not declare `swipe_label` — only Heading, Input, ListItem, and Text support it"
         )
       }
     }
@@ -104,7 +104,7 @@ final class SduiRowAttributeContractTests: XCTestCase {
     let rowData = try JSONSerialization.data(
       withJSONObject: [
         "id": "empty-branch-row",
-        "type": "Button",
+        "type": "button",
         "visible": "true",
         "actions": [
           "tap": [["condition": "", "false": "", "true": ["fn": "close"]]]
@@ -122,7 +122,7 @@ final class SduiRowAttributeContractTests: XCTestCase {
     let rowData = try JSONSerialization.data(
       withJSONObject: [
         "id": "ast-actions-row",
-        "type": "Button",
+        "type": "button",
         "visible": "true",
         "actions": [
           "tap": [
@@ -143,7 +143,7 @@ final class SduiRowAttributeContractTests: XCTestCase {
     let row = try JSONDecoder().decode(UI_Row.self, from: rowData)
     XCTAssertEqual(
       row.actions.tap.first?.true,
-      .invocation(.create(service: "svc", resource: "items", mode: .submit, idDestination: nil)))
+      .invocation(.create(service: "svc", resource: "items", mode: .submit, id_destination: nil)))
     XCTAssertEqual(row.actions.tap.first?.false, .invocation(.close))
   }
 
@@ -154,7 +154,7 @@ final class SduiRowAttributeContractTests: XCTestCase {
       .invocation(
         .create(
           service: "s", resource: "r", mode: .inline(data: ["a": "b"]),
-          idDestination: "{buf.id}")),
+          id_destination: "{buf.id}")),
       .invocation(
         .update(
           service: "s", resource: "r", mode: .store, filter: ["id": "x"],
@@ -174,7 +174,7 @@ final class SduiRowAttributeContractTests: XCTestCase {
 
   func testSduiDefinitionsIncludeTriggersMetadata() throws {
     let allowedTriggers: Set<String> = [
-      "tap", "delete", "tap-row", "tap-column", "swipe-left", "submit",
+      "tap", "delete", "tap_row", "tap_column", "swipe_left", "submit",
     ]
     let catalog = try loadCatalog()
     for (rowType, schemaDef) in catalog {
@@ -199,29 +199,29 @@ final class SduiRowAttributeContractTests: XCTestCase {
       }
     }
     let selectPhotoTriggers = try XCTUnwrap(
-      (catalog["SelectPhoto"] as? [String: Any])?["triggers"] as? [String: String]
+      (catalog["select_photo"] as? [String: Any])?["triggers"] as? [String: String]
     )
     XCTAssertEqual(selectPhotoTriggers["tap"], "required")
     XCTAssertEqual(selectPhotoTriggers["delete"], "required")
     let calendarTriggers = try XCTUnwrap(
-      (catalog["Calendar"] as? [String: Any])?["triggers"] as? [String: String]
+      (catalog["calendar"] as? [String: Any])?["triggers"] as? [String: String]
     )
     XCTAssertEqual(calendarTriggers["tap"], "required")
-    XCTAssertEqual(calendarTriggers["tap-row"], "required")
-    XCTAssertEqual(calendarTriggers["tap-column"], "required")
+    XCTAssertEqual(calendarTriggers["tap_row"], "required")
+    XCTAssertEqual(calendarTriggers["tap_column"], "required")
     let inputTriggers = try XCTUnwrap(
-      (catalog["Input"] as? [String: Any])?["triggers"] as? [String: String]
+      (catalog["input"] as? [String: Any])?["triggers"] as? [String: String]
     )
     XCTAssertEqual(inputTriggers["tap"], "optional")
     XCTAssertEqual(inputTriggers["submit"], "optional")
-    XCTAssertEqual(inputTriggers["swipe-left"], "optional")
+    XCTAssertEqual(inputTriggers["swipe_left"], "optional")
     let textAreaTriggers = try XCTUnwrap(
-      (catalog["TextArea"] as? [String: Any])?["triggers"] as? [String: String]
+      (catalog["text_area"] as? [String: Any])?["triggers"] as? [String: String]
     )
     XCTAssertEqual(textAreaTriggers["tap"], "optional")
     XCTAssertEqual(textAreaTriggers["submit"], "optional")
     let searchTriggers = try XCTUnwrap(
-      (catalog["Search"] as? [String: Any])?["triggers"] as? [String: String]
+      (catalog["search"] as? [String: Any])?["triggers"] as? [String: String]
     )
     XCTAssertEqual(searchTriggers["tap"], "optional")
     XCTAssertNil(searchTriggers["submit"])
@@ -236,7 +236,7 @@ final class SduiRowAttributeContractTests: XCTestCase {
         "actions": [:] as [String: Any],
         "sheet": [
           "id": "nested-sheet",
-          "type": "Text",
+          "type": "text",
           "visible": "true",
           "actions": [:] as [String: Any],
           "title": "Sheet",
@@ -271,7 +271,7 @@ final class SduiRowAttributeContractTests: XCTestCase {
     for (rowType, schemaDef) in catalog {
       let schemaDefDict = try XCTUnwrap(schemaDef as? [String: Any])
       let attributes = Self.extractExpectedAttributes(from: schemaDefDict, rowType: rowType)
-      if rowType == "Search" {
+      if rowType == "search" {
         XCTAssertNotNil(attributes["child"])
       } else {
         XCTAssertNil(attributes["child"], "\(rowType) must not declare child in schema")
@@ -450,25 +450,25 @@ final class SduiRowInitialBootstrapTests: XCTestCase {
 
   func testInputWithInitialSeedsScalarDraft() throws {
     try assertSeedsDraft(
-      type: "Input", initial: "Default title", expected: .string("Default title"))
+      type: "input", initial: "Default title", expected: .string("Default title"))
   }
 
   func testTextAreaWithInitialSeedsScalarDraft() throws {
     try assertSeedsDraft(
-      type: "TextArea", initial: "Default description",
+      type: "text_area", initial: "Default description",
       expected: .string("Default description"))
   }
 
   func testDropdownWithInitialSeedsScalarDraft() throws {
     try assertSeedsDraft(
-      type: "Dropdown", initial: "condition_new", expected: .string("condition_new"),
+      type: "dropdown", initial: "condition_new", expected: .string("condition_new"),
       extraFields: ["source": "{options}", "value": "{$datum.value}"]
     )
   }
 
   func testInlinePickerWithInitialSeedsArrayDraft() throws {
     try assertSeedsDraft(
-      type: "InlinePicker", initial: "distance_10",
+      type: "inline_picker", initial: "distance_10",
       expected: .array([.string("distance_10")]),
       extraFields: ["source": "{options}", "value": "{$datum.value}"]
     )
@@ -501,14 +501,14 @@ final class SduiRowInitialBootstrapTests: XCTestCase {
     EVY.draftStore.activeScopeId = scopeId
 
     let inputRow = try makeRow(
-      type: "Input", destination: "{\(inputKey)}", initial: "",
+      type: "input", destination: "{\(inputKey)}", initial: "",
       extraFields: ["source": "{\(inputKey)}"]
     )
     bootstrapRowDraft(row: inputRow, scopeId: scopeId)
     XCTAssertEqual(try EVY.getDataFromText("{\(inputKey)}"), .string(""))
 
     let inlinePickerRow = try makeRow(
-      type: "InlinePicker", destination: "{\(inlinePickerKey)}", initial: "",
+      type: "inline_picker", destination: "{\(inlinePickerKey)}", initial: "",
       extraFields: ["source": "{options}", "value": "{$datum.value}"]
     )
     bootstrapRowDraft(row: inlinePickerRow, scopeId: scopeId)
@@ -522,7 +522,7 @@ final class SduiRowInitialBootstrapTests: XCTestCase {
 
     try EVY.writeRawStringValue("User edit", to: "{\(key)}", scopeId: scopeId)
 
-    let row = try makeRow(type: "Input", destination: "{\(key)}", initial: "Ignored default")
+    let row = try makeRow(type: "input", destination: "{\(key)}", initial: "Ignored default")
     bootstrapRowDraft(row: row, scopeId: scopeId)
 
     XCTAssertEqual(try EVY.getDataFromText("{\(key)}"), .string("User edit"))
@@ -545,7 +545,7 @@ final class SduiRowInitialBootstrapTests: XCTestCase {
     )
 
     let row = try makeRow(
-      type: "Input", destination: "{\(entityId).title}", initial: "Ignored default",
+      type: "input", destination: "{\(entityId).title}", initial: "Ignored default",
       extraFields: ["source": "{\(entityId).title}"]
     )
     bootstrapRowDraft(row: row, scopeId: scopeId)
@@ -562,7 +562,7 @@ final class SduiRowInitialBootstrapTests: XCTestCase {
     let destination = "{\(priceKey): {value: $datum, currency: \"AUD\"}}"
 
     let initialRow = try makeRow(
-      type: "Input", destination: destination, initial: "0",
+      type: "input", destination: destination, initial: "0",
       extraFields: ["source": "{formatCurrency(\(priceKey))}"]
     )
     bootstrapRowDraft(row: initialRow, scopeId: scopeId)
@@ -571,7 +571,7 @@ final class SduiRowInitialBootstrapTests: XCTestCase {
     EVY.draftStore.deleteDrafts()
 
     let editRow = try makeRow(
-      type: "Input", destination: destination, initial: "",
+      type: "input", destination: destination, initial: "",
       extraFields: ["source": "{formatCurrency(\(priceKey))}"]
     )
     bootstrapRowDraft(row: editRow, scopeId: scopeId)

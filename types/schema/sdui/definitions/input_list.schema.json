@@ -1,7 +1,7 @@
 {
 	"$schema": "https://json-schema.org/draft/2020-12/schema",
-	"$id": "sdui/definitions/PhotoGallery",
-	"title": "PhotoGallery_Row",
+	"$id": "sdui/definitions/input_list",
+	"title": "InputList_Row",
 	"triggers": {
 		"tap": "required"
 	},
@@ -14,12 +14,18 @@
 			"required": ["type", "source"],
 			"properties": {
 				"type": {
-					"const": "PhotoGallery"
+					"const": "input_list"
 				},
 				"title": {
 					"type": "string"
 				},
 				"source": {
+					"type": "string"
+				},
+				"format": {
+					"type": "string"
+				},
+				"placeholder": {
 					"type": "string"
 				}
 			}

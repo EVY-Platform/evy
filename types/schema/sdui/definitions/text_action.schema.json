@@ -1,7 +1,7 @@
 {
 	"$schema": "https://json-schema.org/draft/2020-12/schema",
-	"$id": "sdui/definitions/InputList",
-	"title": "InputList_Row",
+	"$id": "sdui/definitions/text_action",
+	"title": "TextAction_Row",
 	"triggers": {
 		"tap": "required"
 	},
@@ -11,21 +11,18 @@
 		},
 		{
 			"type": "object",
-			"required": ["type", "source"],
+			"required": ["type"],
 			"properties": {
 				"type": {
-					"const": "InputList"
+					"const": "text_action"
 				},
 				"title": {
 					"type": "string"
 				},
-				"source": {
+				"subtitle": {
 					"type": "string"
 				},
-				"format": {
-					"type": "string"
-				},
-				"placeholder": {
+				"action": {
 					"type": "string"
 				}
 			}

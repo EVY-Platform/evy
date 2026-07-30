@@ -208,7 +208,7 @@ export function ConfigurationPanel() {
 	>([]);
 
 	const canDeleteCurrentPage = Boolean(
-		activeFlow && activePage && activeFlow.pageIds.length > 1,
+		activeFlow && activePage && activeFlow.page_ids.length > 1,
 	);
 
 	const handleDeletePageClick = useCallback(() => {
@@ -240,11 +240,11 @@ export function ConfigurationPanel() {
 	}, []);
 
 	const openChildConfiguration = useCallback(
-		(childRowId: string, parentRow: Row) => {
+		(child_row_id: string, parentRow: Row) => {
 			dispatchRow({
 				type: "PUSH_CONFIG_STACK",
 				parentRowId: parentRow.id,
-				childRowId,
+				child_row_id,
 			});
 		},
 		[dispatchRow],
@@ -607,7 +607,7 @@ export function ConfigurationPanel() {
 										pagesById={pagesById}
 										rowsById={rowsById}
 										defaultSheetRowId={
-											currentConfigRow.config.sheetRowId
+											currentConfigRow.config.sheet_row_id
 										}
 										onUpdate={(next) =>
 											updateRowActionsForTrigger(
