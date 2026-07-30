@@ -290,6 +290,7 @@ final class InterpreterTests: XCTestCase {
 
   func testResolveQueryParamsStoresMatchingEntityUnderQueryKey() throws {
     let entityKey = uniqueKey("entities")
+    let entityRef = "\(MarketplaceTestFixture.service).\(entityKey)"
     let firstId = UUID().uuidString
     let secondId = UUID().uuidString
 
@@ -304,19 +305,20 @@ final class InterpreterTests: XCTestCase {
           "title": .string("Selected item"),
         ]),
       ]),
-      at: "\(MarketplaceTestFixture.serviceId):\(entityKey)"
+      at: entityRef
     )
 
-    EVY.resolveQueryParams([entityKey: [secondId]])
+    EVY.resolveQueryParams([entityRef: [secondId]])
 
-    XCTAssertEqual(try EVY.getDataFromText("{\(entityKey).title}"), .string("Selected item"))
+    XCTAssertEqual(try EVY.getDataFromText("{\(entityRef).title}"), .string("Selected item"))
 
-    EVY.resolveQueryParams([entityKey: [firstId, secondId]])
-    XCTAssertEqual(try EVY.getDataFromText("{\(entityKey).title}"), .string("First item"))
+    EVY.resolveQueryParams([entityRef: [firstId, secondId]])
+    XCTAssertEqual(try EVY.getDataFromText("{\(entityRef).title}"), .string("First item"))
   }
 
   func testResolveQueryParamsRefreshesStatesWhenSelectedEntityChanges() throws {
     let entityKey = uniqueKey("entities")
+    let entityRef = "\(MarketplaceTestFixture.service).\(entityKey)"
     let firstId = UUID().uuidString
     let secondId = UUID().uuidString
     let firstAddressId = UUID().uuidString
@@ -336,7 +338,7 @@ final class InterpreterTests: XCTestCase {
 
     try store(
       .array([firstAddress, secondAddress]),
-      at: "\(EVYNamespace.evy):\(EVYCoreResource.addresses.rawValue)"
+      at: EVYCoreResource.addresses.ref
     )
     try store(
       .array([
@@ -357,18 +359,18 @@ final class InterpreterTests: XCTestCase {
           ]),
         ]),
       ]),
-      at: "\(MarketplaceTestFixture.serviceId):\(entityKey)"
+      at: entityRef
     )
     let pickupSelections = EVYState<[String]>(
-      watches: ["{\(entityKey).pickup_selection}"],
-      setter: { EVYDatetime.readTimeslots("{\(entityKey).pickup_selection}") }
+      watches: ["{\(entityRef).pickup_selection}"],
+      setter: { EVYDatetime.readTimeslots("{\(entityRef).pickup_selection}") }
     )
     let deliverySelections = EVYState<[String]>(
-      watches: ["{\(entityKey).delivery_selection}"],
-      setter: { EVYDatetime.readTimeslots("{\(entityKey).delivery_selection}") }
+      watches: ["{\(entityRef).delivery_selection}"],
+      setter: { EVYDatetime.readTimeslots("{\(entityRef).delivery_selection}") }
     )
     let pickupAddressExpression =
-      "{findFirst(\(EVYCoreResource.addresses.rawValue), \(entityKey).transfer_options.pickup.address_id)}"
+      "{findFirst(\(EVYCoreResource.addresses.ref), \(entityRef).transfer_options.pickup.address_id)}"
     let pickupAddress = EVYState<EVYJson>(
       watches: EVY.watchTargets(for: pickupAddressExpression),
       setter: {
@@ -388,9 +390,11 @@ final class InterpreterTests: XCTestCase {
   }
 
   func testResolveQueryParamsDoesNotCacheSingularAlias() throws {
-    let randomId = UUID().uuidString.replacingOccurrences(of: "-", with: "_")
+    let randomId = UUID().uuidString.replacingOccurrences(of: "-", with: "_").lowercased()
     let resourceKey = "evy_interpreter_tests_\(randomId)_items"
     let entityKey = "evy_interpreter_tests_\(randomId)_item"
+    let resourceRef = "\(MarketplaceTestFixture.service).\(resourceKey)"
+    let entityRef = "\(MarketplaceTestFixture.service).\(entityKey)"
     let id = UUID().uuidString
 
     try store(
@@ -400,36 +404,36 @@ final class InterpreterTests: XCTestCase {
           "title": .string("Selected exact item"),
         ])
       ]),
-      at: "\(MarketplaceTestFixture.serviceId):\(resourceKey)"
+      at: resourceRef
     )
 
-    EVY.resolveQueryParams([resourceKey: [id]])
+    EVY.resolveQueryParams([resourceRef: [id]])
 
     XCTAssertEqual(
-      try EVY.getDataFromText("{\(resourceKey).title}"),
+      try EVY.getDataFromText("{\(resourceRef).title}"),
       .string("Selected exact item")
     )
-    XCTAssertThrowsError(try EVY.getDataFromText("{\(entityKey).title}"))
+    XCTAssertThrowsError(try EVY.getDataFromText("{\(entityRef).title}"))
   }
 
-  func testResolveQueryParamsInfersServiceFromSyncedResourceKey() throws {
-    let entityKey = uniqueKey("entities")
+  func testResolveQueryParamsResolvesExplicitResourceRef() throws {
+    let itemsRef = "\(MarketplaceTestFixture.service).\(uniqueKey("test_svc_items"))"
     let id = UUID().uuidString
 
     try store(
       .array([
         .dictionary([
           "id": .string(id),
-          "title": .string("Selected from other service"),
+          "title": .string("Selected from explicit ref"),
         ])
       ]),
-      at: "other_service:\(entityKey)"
+      at: itemsRef
     )
 
-    EVY.resolveQueryParams([entityKey: [id]])
+    EVY.resolveQueryParams([itemsRef: [id]])
 
     XCTAssertEqual(
-      try EVY.getDataFromText("{\(entityKey).title}"), .string("Selected from other service"))
+      try EVY.getDataFromText("{\(itemsRef).title}"), .string("Selected from explicit ref"))
   }
 
   func testResolveQueryParamsStoresRawValuesWhenNoSyncedCollectionExists() throws {
@@ -491,25 +495,26 @@ final class InterpreterTests: XCTestCase {
 
   func testCollectionResolvesFromPinnedScopeNotGlobalScope() throws {
     let itemsKey = uniqueKey("items")
+    let itemsRef = "\(MarketplaceTestFixture.service).\(itemsKey)"
     let homePageId = "home-\(UUID().uuidString)"
     let detailPageId = "detail-\(UUID().uuidString)"
 
     let item1 = EVYJson.dictionary(["id": .string("id-1"), "title": .string("Item 1")])
     let item2 = EVYJson.dictionary(["id": .string("id-2"), "title": .string("Item 2")])
     try EVY.publicStore.applySyncedValue(
-      namespace: MarketplaceTestFixture.serviceId, resource: itemsKey,
+      namespace: MarketplaceTestFixture.service, resource: itemsRef,
       value: .array([item1, item2]))
 
     let encoded = try JSONEncoder().encode(item1)
     try EVY.cacheStore.create(
-      namespace: EVYNamespace.cache, resource: detailPageId, id: itemsKey, value: encoded)
+      namespace: EVYNamespace.cache, resource: detailPageId, id: itemsRef, value: encoded)
 
     EVY.activeCacheScopeId = detailPageId
-    let resultOnDetail = try EVY.getDataFromText("{\(itemsKey)}")
+    let resultOnDetail = try EVY.getDataFromText("{\(itemsRef)}")
     XCTAssertEqual(resultOnDetail, item1, "Detail page scope resolves to single cached item")
 
     EVY.activeCacheScopeId = homePageId
-    let resultOnHome = try EVY.getDataFromText("{\(itemsKey)}")
+    let resultOnHome = try EVY.getDataFromText("{\(itemsRef)}")
     guard case .array(let homeItems) = resultOnHome else {
       XCTFail("Expected array from home scope")
       return
@@ -558,6 +563,29 @@ final class InterpreterTests: XCTestCase {
     XCTAssertEqual(try EVY.getDataFromText("{item.title}"), .string("Real title"))
   }
 
+  func testEnsureDraftExistsDoesNotShadowCachedDottedResourceRef() throws {
+    let itemsRef = "\(MarketplaceTestFixture.service).\(uniqueKey("items"))"
+    let scopeId = EVYDraft.ephemeralScopeId(forPageId: testPageId)
+    EVY.draftStore.activeScopeId = scopeId
+
+    let item = EVYJson.dictionary(["id": .string("id-1"), "title": .string("Selected title")])
+    try EVY.cacheStore.create(
+      namespace: EVYNamespace.cache,
+      resource: testPageId,
+      id: itemsRef,
+      value: try JSONEncoder().encode(item)
+    )
+
+    EVY.ensureDraftExists(variableName: "\(itemsRef).title", scopeId: scopeId)
+
+    let binding = try EVY.draftStore.binding(
+      fromParsedProps: "\(itemsRef).title", scopeId: scopeId)
+    XCTAssertNil(
+      EVY.draftStore.draftIfPresent(binding: binding),
+      "Bootstrap must not create an empty draft over a navigate-query cached entity")
+    XCTAssertEqual(try EVY.getDataFromText("{\(itemsRef).title}"), .string("Selected title"))
+  }
+
   func testEnsureDraftExistsSeedsWhenNoInstanceValueExists() throws {
     let variableName = "\(uniqueKey("item")).title"
     let scopeId = EVYDraft.ephemeralScopeId(forPageId: testPageId)
@@ -584,6 +612,7 @@ final class InterpreterTests: XCTestCase {
 
   func testResolveQueryParamsResolvesGenericIdFromSyncedCollection() throws {
     let entityKey = uniqueKey("entities")
+    let entityRef = "\(MarketplaceTestFixture.service).\(entityKey)"
     let id = UUID().uuidString
 
     try store(
@@ -593,13 +622,13 @@ final class InterpreterTests: XCTestCase {
           "title": .string("Selected by generic id"),
         ])
       ]),
-      at: "\(MarketplaceTestFixture.serviceId):\(entityKey)"
+      at: entityRef
     )
 
     EVY.resolveQueryParams(["id": [id]])
 
     XCTAssertEqual(
-      try EVY.getDataFromText("{\(entityKey).title}"),
+      try EVY.getDataFromText("{\(entityRef).title}"),
       .string("Selected by generic id")
     )
   }
@@ -711,7 +740,7 @@ final class InterpreterTests: XCTestCase {
 
   func testGetForBindingDoesNotResolveSingularPluralFallback() throws {
     let id = UUID().uuidString
-    let randomId = UUID().uuidString.replacingOccurrences(of: "-", with: "_")
+    let randomId = UUID().uuidString.replacingOccurrences(of: "-", with: "_").lowercased()
     let resourceKey = "\(randomId)_things"
     let entityKey = "\(randomId)_thing"
 
@@ -722,7 +751,7 @@ final class InterpreterTests: XCTestCase {
           "title": .string("Plural resource item"),
         ])
       ]),
-      at: "\(MarketplaceTestFixture.serviceId):\(resourceKey)"
+      at: "\(MarketplaceTestFixture.service).\(resourceKey)"
     )
 
     XCTAssertThrowsError(
@@ -731,7 +760,7 @@ final class InterpreterTests: XCTestCase {
 
   func testSingularQueryKeyDoesNotResolvePluralSyncedCollection() throws {
     let id = UUID().uuidString
-    let randomId = UUID().uuidString.replacingOccurrences(of: "-", with: "_")
+    let randomId = UUID().uuidString.replacingOccurrences(of: "-", with: "_").lowercased()
     let resourceKey = "\(randomId)_items"
     let entityKey = "\(randomId)_item"
 
@@ -742,7 +771,7 @@ final class InterpreterTests: XCTestCase {
           "title": .string("Selected singular item"),
         ])
       ]),
-      at: "\(MarketplaceTestFixture.serviceId):\(resourceKey)"
+      at: "\(MarketplaceTestFixture.service).\(resourceKey)"
     )
 
     EVY.resolveQueryParams([entityKey: [id]])
@@ -752,7 +781,7 @@ final class InterpreterTests: XCTestCase {
 
   func testExactLocalKeyIsReadWithoutSyncedFallback() throws {
     let id = UUID().uuidString
-    let randomId = UUID().uuidString.replacingOccurrences(of: "-", with: "_")
+    let randomId = UUID().uuidString.replacingOccurrences(of: "-", with: "_").lowercased()
     let resourceKey = "\(randomId)_items"
     let entityKey = "\(randomId)_item"
 
@@ -771,7 +800,7 @@ final class InterpreterTests: XCTestCase {
           "title": .string("Synced collection item"),
         ])
       ]),
-      at: "\(MarketplaceTestFixture.serviceId):\(resourceKey)"
+      at: "\(MarketplaceTestFixture.service).\(resourceKey)"
     )
 
     XCTAssertEqual(
@@ -782,6 +811,7 @@ final class InterpreterTests: XCTestCase {
 
   func testFindFirstReturnsMatchingDatumField() throws {
     let conditionsKey = uniqueKey("conditions")
+    let conditionsRef = "\(MarketplaceTestFixture.service).\(conditionsKey)"
     let itemKey = uniqueKey("item")
     let conditionId = UUID().uuidString
 
@@ -790,46 +820,48 @@ final class InterpreterTests: XCTestCase {
         .dictionary(["id": .string(conditionId), "value": .string("Excellent")]),
         .dictionary(["id": .string(UUID().uuidString), "value": .string("Other")]),
       ]),
-      at: "\(MarketplaceTestFixture.serviceId):\(conditionsKey)"
+      at: conditionsRef
     )
     try store(.dictionary(["condition_id": .string(conditionId)]), at: itemKey)
 
     let result = try parseTextFromText(
-      "{findFirst(\(conditionsKey), \(itemKey).condition_id).value}")
+      "{findFirst(\(conditionsRef), \(itemKey).condition_id).value}")
 
     XCTAssertEqual(result.value, "Excellent")
   }
 
   func testFindFirstReturnsEmptyForNoMatch() throws {
     let conditionsKey = uniqueKey("conditions")
+    let conditionsRef = "\(MarketplaceTestFixture.service).\(conditionsKey)"
     let itemKey = uniqueKey("item")
 
     try store(
       .array([.dictionary(["id": .string("abc"), "value": .string("Excellent")])]),
-      at: "\(MarketplaceTestFixture.serviceId):\(conditionsKey)"
+      at: conditionsRef
     )
     try store(.dictionary(["condition_id": .string("no_match")]), at: itemKey)
 
     let result = try parseTextFromText(
-      "{findFirst(\(conditionsKey), \(itemKey).condition_id).value}")
+      "{findFirst(\(conditionsRef), \(itemKey).condition_id).value}")
 
     XCTAssertEqual(result.value, "")
   }
 
   func testFindFirstDoesNotMutateStore() throws {
     let conditionsKey = uniqueKey("conditions")
+    let conditionsRef = "\(MarketplaceTestFixture.service).\(conditionsKey)"
     let itemKey = uniqueKey("item")
     let conditionId = UUID().uuidString
 
     try store(
       .array([.dictionary(["id": .string(conditionId), "value": .string("Good")])]),
-      at: "\(MarketplaceTestFixture.serviceId):\(conditionsKey)"
+      at: conditionsRef
     )
     try store(.dictionary(["condition_id": .string(conditionId)]), at: itemKey)
 
     let countBefore = try EVY.publicStore.getAll().count
     let result = try parseTextFromText(
-      "{findFirst(\(conditionsKey), \(itemKey).condition_id).value}")
+      "{findFirst(\(conditionsRef), \(itemKey).condition_id).value}")
     let countAfter = try EVY.publicStore.getAll().count
 
     XCTAssertEqual(result.value, "Good")
@@ -837,7 +869,7 @@ final class InterpreterTests: XCTestCase {
   }
 
   func testFindFirstExpressionReturnsUnansweredMessageWhenAnswerComesFirst() throws {
-    let messagesKey = uniqueKey("messages")
+    let messagesRef = EVYCoreResource.messages.ref
     let itemKey = uniqueKey("item")
     let itemId = UUID().uuidString
     let answerId = UUID().uuidString
@@ -851,7 +883,7 @@ final class InterpreterTests: XCTestCase {
           fk: itemId,
           type: "pickup",
           value: "accept",
-          parentMessageId: requestId
+          parent_message_id: requestId
         ),
         EVYTestMessageFixtures.message(
           id: requestId,
@@ -860,18 +892,18 @@ final class InterpreterTests: XCTestCase {
           value: "pending"
         ),
       ]),
-      at: "\(MarketplaceTestFixture.serviceId):\(messagesKey)"
+      at: messagesRef
     )
     try store(.dictionary(["id": .string(itemId)]), at: itemKey)
 
     let result = try parseTextFromText(
-      "{findFirst(\(messagesKey), fk == \(itemKey).id && parentMessageId == null).id}")
+      "{findFirst(\(messagesRef), fk == \(itemKey).id && parent_message_id == null).id}")
 
     XCTAssertEqual(result.value, requestId)
   }
 
   func testFindFirstExpressionFiltersByUnquotedLiteralValue() throws {
-    let messagesKey = uniqueKey("messages")
+    let messagesRef = EVYCoreResource.messages.ref
     let itemKey = uniqueKey("item")
     let itemId = UUID().uuidString
     let messageId = UUID().uuidString
@@ -886,15 +918,15 @@ final class InterpreterTests: XCTestCase {
           time: "2026-06-03T09:00:00"
         )
       ]),
-      at: "\(MarketplaceTestFixture.serviceId):\(messagesKey)"
+      at: messagesRef
     )
     try store(.dictionary(["id": .string(itemId)]), at: itemKey)
 
     let pendingResult = try parseTextFromText(
-      "{findFirst(\(messagesKey), fk == \(itemKey).id && data.value == pending).id}"
+      "{findFirst(\(messagesRef), fk == \(itemKey).id && data.value == pending).id}"
     )
     let acceptedResult = try parseTextFromText(
-      "{findFirst(\(messagesKey), fk == \(itemKey).id && data.value == accept).id}"
+      "{findFirst(\(messagesRef), fk == \(itemKey).id && data.value == accept).id}"
     )
 
     XCTAssertEqual(pendingResult.value, "")
@@ -902,7 +934,7 @@ final class InterpreterTests: XCTestCase {
   }
 
   func testFormatDatetimeOverFindFirstPath() throws {
-    let messagesKey = uniqueKey("messages")
+    let messagesRef = EVYCoreResource.messages.ref
     let itemKey = uniqueKey("item")
     let itemId = UUID().uuidString
 
@@ -916,12 +948,12 @@ final class InterpreterTests: XCTestCase {
           time: "2026-06-03T09:00:00"
         )
       ]),
-      at: "\(MarketplaceTestFixture.serviceId):\(messagesKey)"
+      at: messagesRef
     )
     try store(.dictionary(["id": .string(itemId)]), at: itemKey)
 
     let acceptedFindFirst =
-      "findFirst(\(messagesKey), fk == \(itemKey).id && data.value == accept)"
+      "findFirst(\(messagesRef), fk == \(itemKey).id && data.value == accept)"
     let day = try parseTextFromText(
       "{formatDatetime(\(acceptedFindFirst).data.time, \"EEE do\")}")
     let time = try parseTextFromText(
@@ -932,14 +964,14 @@ final class InterpreterTests: XCTestCase {
   }
 
   func testStatusExpressionWatchTargetsIncludeCollectionKey() throws {
-    let messagesKey = uniqueKey("messages")
+    let messagesRef = EVYCoreResource.messages.ref
     let itemKey = uniqueKey("item")
     let expression =
-      "{findFirst(\(messagesKey), fk == \(itemKey).id && data.value == pending).fk == \(itemKey).id}"
+      "{findFirst(\(messagesRef), fk == \(itemKey).id && data.value == pending).fk == \(itemKey).id}"
 
     let targets = EVY.watchTargets(for: expression)
 
-    XCTAssertTrue(targets.contains(messagesKey))
+    XCTAssertTrue(targets.contains(messagesRef))
     XCTAssertTrue(targets.contains("\(itemKey).id"))
   }
 
@@ -979,7 +1011,7 @@ final class InterpreterTests: XCTestCase {
   }
 
   func testFilterNestedFindFirstResolvesOuterDatumAndInnerBareFields() throws {
-    let messagesKey = uniqueKey("messages")
+    let messagesRef = EVYCoreResource.messages.ref
     let itemId = UUID().uuidString
     let openRequestId = UUID().uuidString
     let answeredRequestId = UUID().uuidString
@@ -988,22 +1020,22 @@ final class InterpreterTests: XCTestCase {
     try store(
       .array([
         EVYTestMessageFixtures.message(
-          id: answeredRequestId, fk: itemId, createdAt: "2026-06-01T00:00:00.000Z",
+          id: answeredRequestId, fk: itemId, created_at: "2026-06-01T00:00:00.000Z",
           type: "pickup", value: "pending"),
         EVYTestMessageFixtures.message(
-          id: responseId, fk: itemId, createdAt: "2026-06-01T00:01:00.000Z",
-          type: "pickup", value: "accept", parentMessageId: answeredRequestId,
+          id: responseId, fk: itemId, created_at: "2026-06-01T00:01:00.000Z",
+          type: "pickup", value: "accept", parent_message_id: answeredRequestId,
           time: "2026-06-03T09:00:00"),
         EVYTestMessageFixtures.message(
-          id: openRequestId, fk: itemId, createdAt: "2026-06-01T00:02:00.000Z",
+          id: openRequestId, fk: itemId, created_at: "2026-06-01T00:02:00.000Z",
           type: "delivery", value: "pending", time: "2026-06-04T10:00:00"),
       ]),
-      at: "\(MarketplaceTestFixture.serviceId):\(messagesKey)"
+      at: messagesRef
     )
 
     let filtered = try EVY.getDataFromText(
       """
-      {filter(\(messagesKey), $datum.data.value == pending && findFirst(sort(\(messagesKey), desc, createdAt), fk == $datum.fk && data.type == $datum.data.type).id == $datum.id)}
+      {filter(\(messagesRef), $datum.data.value == pending && findFirst(sort(\(messagesRef), desc, created_at), fk == $datum.fk && data.type == $datum.data.type).id == $datum.id)}
       """
     )
     guard case .array(let items) = filtered else {
@@ -1036,60 +1068,58 @@ final class InterpreterTests: XCTestCase {
   }
 
   func testFilterWatchTargetsIncludeCollectionKey() throws {
-    let messagesKey = uniqueKey("messages")
+    let messagesRef = EVYCoreResource.messages.ref
     let expression =
-      "{filter(\(messagesKey), $datum.data.value == pending)}"
+      "{filter(\(messagesRef), $datum.data.value == pending)}"
 
     let targets = EVY.watchTargets(for: expression)
 
-    XCTAssertTrue(targets.contains(messagesKey))
+    XCTAssertTrue(targets.contains(messagesRef))
   }
 
   func testOwnsReturnsTrueAfterRecordOwnership() throws {
     EVYOwnershipLedger.reset()
     defer { EVYOwnershipLedger.reset() }
 
-    let service = MarketplaceTestFixture.serviceId
-    let resource = MarketplaceTestFixture.itemsResourceId
+    let resource = MarketplaceTestFixture.itemsRef
     let id = UUID().uuidString
-    EVY.recordOwnership(service: service, resource: resource, id: id)
+    EVY.recordOwnership(resource: resource, id: id)
 
-    XCTAssertTrue(try EVY.evaluateFromText("{owns(\(service), \(resource), \(id)) == true}"))
+    XCTAssertTrue(try EVY.evaluateFromText("{owns(\(resource), \(id)) == true}"))
     XCTAssertFalse(
-      try EVY.evaluateFromText("{owns(\(service), \(resource), \(UUID().uuidString)) == true}"))
+      try EVY.evaluateFromText("{owns(\(resource), \(UUID().uuidString)) == true}"))
     XCTAssertTrue(
-      try EVY.evaluateFromText("{owns(\(service), \(resource), \(UUID().uuidString)) == false}"))
+      try EVY.evaluateFromText("{owns(\(resource), \(UUID().uuidString)) == false}"))
   }
 
   func testOwnsResolvesDatumArgsInsideFilter() throws {
     EVYOwnershipLedger.reset()
     defer { EVYOwnershipLedger.reset() }
 
-    let messagesKey = uniqueKey("messages")
+    let messagesRef = EVYCoreResource.messages.ref
     let itemId = UUID().uuidString
     let otherItemId = UUID().uuidString
     let ownedRequestId = UUID().uuidString
     let otherRequestId = UUID().uuidString
-    let service = MarketplaceTestFixture.serviceId
-    let resource = MarketplaceTestFixture.itemsResourceId
+    let resource = MarketplaceTestFixture.itemsRef
 
-    EVY.recordOwnership(service: service, resource: resource, id: itemId)
+    EVY.recordOwnership(resource: resource, id: itemId)
 
     try store(
       .array([
         EVYTestMessageFixtures.message(
-          id: ownedRequestId, fk: itemId, service: service, resource: resource,
-          createdAt: "2026-06-01T00:00:00.000Z", type: "pickup", value: "pending"),
+          id: ownedRequestId, fk: itemId, resource: resource,
+          created_at: "2026-06-01T00:00:00.000Z", type: "pickup", value: "pending"),
         EVYTestMessageFixtures.message(
-          id: otherRequestId, fk: otherItemId, service: service, resource: resource,
-          createdAt: "2026-06-01T00:01:00.000Z", type: "pickup", value: "pending"),
+          id: otherRequestId, fk: otherItemId, resource: resource,
+          created_at: "2026-06-01T00:01:00.000Z", type: "pickup", value: "pending"),
       ]),
-      at: "\(MarketplaceTestFixture.serviceId):\(messagesKey)"
+      at: messagesRef
     )
 
     let filtered = try EVY.getDataFromText(
       """
-      {filter(\(messagesKey), owns($datum.service, $datum.resource, $datum.fk) == true)}
+      {filter(\(messagesRef), owns($datum.resource, $datum.fk) == true)}
       """
     )
     guard case .array(let items) = filtered else {
@@ -1102,36 +1132,35 @@ final class InterpreterTests: XCTestCase {
     EVYOwnershipLedger.reset()
     defer { EVYOwnershipLedger.reset() }
 
-    let messagesKey = uniqueKey("messages")
+    let messagesRef = EVYCoreResource.messages.ref
     let itemId = UUID().uuidString
     let openRequestId = UUID().uuidString
     let settledRequestId = UUID().uuidString
     let responseId = UUID().uuidString
-    let service = MarketplaceTestFixture.serviceId
-    let resource = MarketplaceTestFixture.itemsResourceId
+    let resource = MarketplaceTestFixture.itemsRef
 
-    EVY.recordOwnership(service: service, resource: resource, id: itemId)
+    EVY.recordOwnership(resource: resource, id: itemId)
 
     try store(
       .array([
         EVYTestMessageFixtures.message(
-          id: settledRequestId, fk: itemId, service: service, resource: resource,
-          createdAt: "2026-06-01T00:00:00.000Z", type: "pickup", value: "pending"),
+          id: settledRequestId, fk: itemId, resource: resource,
+          created_at: "2026-06-01T00:00:00.000Z", type: "pickup", value: "pending"),
         EVYTestMessageFixtures.message(
-          id: responseId, fk: itemId, service: service, resource: resource,
-          createdAt: "2026-06-01T00:01:00.000Z", type: "pickup", value: "accept",
-          parentMessageId: settledRequestId, time: "2026-06-03T09:00:00"),
+          id: responseId, fk: itemId, resource: resource,
+          created_at: "2026-06-01T00:01:00.000Z", type: "pickup", value: "accept",
+          parent_message_id: settledRequestId, time: "2026-06-03T09:00:00"),
         EVYTestMessageFixtures.message(
-          id: openRequestId, fk: itemId, service: service, resource: resource,
-          createdAt: "2026-06-01T00:02:00.000Z", type: "delivery", value: "pending",
+          id: openRequestId, fk: itemId, resource: resource,
+          created_at: "2026-06-01T00:02:00.000Z", type: "delivery", value: "pending",
           time: "2026-06-04T10:00:00"),
       ]),
-      at: "\(MarketplaceTestFixture.serviceId):\(messagesKey)"
+      at: messagesRef
     )
 
     let filtered = try EVY.getDataFromText(
       """
-      {filter(\(messagesKey), $datum.data.value == pending && owns($datum.service, $datum.resource, $datum.fk) == true && findFirst(sort(\(messagesKey), desc, createdAt), fk == $datum.fk && data.type == $datum.data.type).id == $datum.id)}
+      {filter(\(messagesRef), $datum.data.value == pending && owns($datum.resource, $datum.fk) == true && findFirst(sort(\(messagesRef), desc, created_at), fk == $datum.fk && data.type == $datum.data.type).id == $datum.id)}
       """
     )
     guard case .array(let items) = filtered else {
@@ -1152,20 +1181,21 @@ final class InterpreterTests: XCTestCase {
 
   func testFindFirstTwoArgStillMatchesByIdentifier() throws {
     let conditionsKey = uniqueKey("conditions")
+    let conditionsRef = "\(MarketplaceTestFixture.service).\(conditionsKey)"
     let conditionId = UUID().uuidString
 
     try store(
       .array([.dictionary(["id": .string(conditionId), "value": .string("Good")])]),
-      at: "\(MarketplaceTestFixture.serviceId):\(conditionsKey)"
+      at: conditionsRef
     )
 
-    let result = try parseTextFromText("{findFirst(\(conditionsKey), \(conditionId)).value}")
+    let result = try parseTextFromText("{findFirst(\(conditionsRef), \(conditionId)).value}")
 
     XCTAssertEqual(result.value, "Good")
   }
 
   func testFindFirstNotNullMatchesAnsweringRecord() throws {
-    let messagesKey = uniqueKey("messages")
+    let messagesRef = EVYCoreResource.messages.ref
     let itemKey = uniqueKey("item")
     let itemId = UUID().uuidString
     let answerId = UUID().uuidString
@@ -1177,7 +1207,7 @@ final class InterpreterTests: XCTestCase {
           fk: itemId,
           type: "pickup",
           value: "accept",
-          parentMessageId: UUID().uuidString
+          parent_message_id: UUID().uuidString
         ),
         EVYTestMessageFixtures.message(
           id: UUID().uuidString,
@@ -1186,18 +1216,18 @@ final class InterpreterTests: XCTestCase {
           value: "pending"
         ),
       ]),
-      at: "\(MarketplaceTestFixture.serviceId):\(messagesKey)"
+      at: messagesRef
     )
     try store(.dictionary(["id": .string(itemId)]), at: itemKey)
 
     let result = try parseTextFromText(
-      "{findFirst(\(messagesKey), fk == \(itemKey).id && parentMessageId != null).id}")
+      "{findFirst(\(messagesRef), fk == \(itemKey).id && parent_message_id != null).id}")
 
     XCTAssertEqual(result.value, answerId)
   }
 
   func testFindFirstOrExpressionMatchesEitherStatus() throws {
-    let messagesKey = uniqueKey("messages")
+    let messagesRef = EVYCoreResource.messages.ref
     let itemKey = uniqueKey("item")
     let itemId = UUID().uuidString
     let acceptedId = UUID().uuidString
@@ -1211,12 +1241,12 @@ final class InterpreterTests: XCTestCase {
           value: "accept"
         )
       ]),
-      at: "\(MarketplaceTestFixture.serviceId):\(messagesKey)"
+      at: messagesRef
     )
     try store(.dictionary(["id": .string(itemId)]), at: itemKey)
 
     let result = try parseTextFromText(
-      "{findFirst(\(messagesKey), fk == \(itemKey).id && (data.value == pending || data.value == accept)).id}"
+      "{findFirst(\(messagesRef), fk == \(itemKey).id && (data.value == pending || data.value == accept)).id}"
     )
 
     XCTAssertEqual(result.value, acceptedId)
@@ -1243,29 +1273,29 @@ final class InterpreterTests: XCTestCase {
       .array([
         // Deliberately stored oldest-first, so store order and sort order disagree.
         EVYTestMessageFixtures.message(
-          id: oldestPickup, fk: itemId, createdAt: "2026-06-01T09:00:00.100Z",
+          id: oldestPickup, fk: itemId, created_at: "2026-06-01T09:00:00.100Z",
           type: "pickup", value: "pending"),
         EVYTestMessageFixtures.message(
-          id: delivery, fk: itemId, createdAt: "2026-06-01T09:00:00.200Z",
+          id: delivery, fk: itemId, created_at: "2026-06-01T09:00:00.200Z",
           type: "delivery", value: "pending"),
         EVYTestMessageFixtures.message(
-          id: newestPickup, fk: itemId, createdAt: "2026-06-01T09:00:00.300Z",
+          id: newestPickup, fk: itemId, created_at: "2026-06-01T09:00:00.300Z",
           type: "pickup", value: "accept", time: "2026-06-03T09:00:00"),
       ]),
-      at: "\(MarketplaceTestFixture.serviceId):\(key)"
+      at: key
     )
     return (oldestPickup, newestPickup, delivery)
   }
 
   func testFindFirstOverDescendingSortReturnsNewestMatch() throws {
-    let messagesKey = uniqueKey("messages")
+    let messagesRef = EVYCoreResource.messages.ref
     let itemKey = uniqueKey("item")
     let itemId = UUID().uuidString
-    let ids = try storeTransferMessages(at: messagesKey, itemId: itemId)
+    let ids = try storeTransferMessages(at: messagesRef, itemId: itemId)
     try store(.dictionary(["id": .string(itemId)]), at: itemKey)
 
     let latest = try parseTextFromText(
-      "{findFirst(sort(\(messagesKey), desc, createdAt), fk == \(itemKey).id && data.type == pickup).id}"
+      "{findFirst(sort(\(messagesRef), desc, created_at), fk == \(itemKey).id && data.type == pickup).id}"
     )
 
     XCTAssertEqual(latest.value, ids.newestPickup, "the newest match wins, not the first stored")
@@ -1274,30 +1304,30 @@ final class InterpreterTests: XCTestCase {
   /// The mirror image: same collection, same predicate, opposite direction. Proves the sort is
   /// what decides rather than anything about how the records happen to be stored.
   func testFindFirstOverAscendingSortReturnsOldestMatch() throws {
-    let messagesKey = uniqueKey("messages")
+    let messagesRef = EVYCoreResource.messages.ref
     let itemKey = uniqueKey("item")
     let itemId = UUID().uuidString
-    let ids = try storeTransferMessages(at: messagesKey, itemId: itemId)
+    let ids = try storeTransferMessages(at: messagesRef, itemId: itemId)
     try store(.dictionary(["id": .string(itemId)]), at: itemKey)
 
     let oldest = try parseTextFromText(
-      "{findFirst(sort(\(messagesKey), asc, createdAt), fk == \(itemKey).id && data.type == pickup).id}"
+      "{findFirst(sort(\(messagesRef), asc, created_at), fk == \(itemKey).id && data.type == pickup).id}"
     )
 
     XCTAssertEqual(oldest.value, ids.oldestPickup)
   }
 
   func testFindFirstOverSortReadsTheMatchedRecordsValue() throws {
-    let messagesKey = uniqueKey("messages")
+    let messagesRef = EVYCoreResource.messages.ref
     let itemKey = uniqueKey("item")
     let itemId = UUID().uuidString
-    _ = try storeTransferMessages(at: messagesKey, itemId: itemId)
+    _ = try storeTransferMessages(at: messagesRef, itemId: itemId)
     try store(.dictionary(["id": .string(itemId)]), at: itemKey)
 
     let latestPickup =
-      "findFirst(sort(\(messagesKey), desc, createdAt), fk == \(itemKey).id && data.type == pickup)"
+      "findFirst(sort(\(messagesRef), desc, created_at), fk == \(itemKey).id && data.type == pickup)"
     let latestDelivery =
-      "findFirst(sort(\(messagesKey), desc, createdAt), fk == \(itemKey).id && data.type == delivery)"
+      "findFirst(sort(\(messagesRef), desc, created_at), fk == \(itemKey).id && data.type == delivery)"
 
     XCTAssertTrue(try _evaluateFromText("{\(latestPickup).data.value == accept}"))
     XCTAssertFalse(try _evaluateFromText("{\(latestPickup).data.value == pending}"))
@@ -1309,14 +1339,14 @@ final class InterpreterTests: XCTestCase {
   /// value, which compares unequal to every state - so "no messages", "rejected" and "cancelled"
   /// all fall through to the same branch without a rule of their own.
   func testFindFirstOverSortWithNoMatchIsNeitherPendingNorAccepted() throws {
-    let messagesKey = uniqueKey("messages")
+    let messagesRef = EVYCoreResource.messages.ref
     let itemKey = uniqueKey("item")
     let itemId = UUID().uuidString
-    _ = try storeTransferMessages(at: messagesKey, itemId: itemId)
+    _ = try storeTransferMessages(at: messagesRef, itemId: itemId)
     try store(.dictionary(["id": .string(itemId)]), at: itemKey)
 
     let latestShipping =
-      "findFirst(sort(\(messagesKey), desc, createdAt), fk == \(itemKey).id && data.type == shipping)"
+      "findFirst(sort(\(messagesRef), desc, created_at), fk == \(itemKey).id && data.type == shipping)"
 
     XCTAssertTrue(
       try _evaluateFromText(
@@ -1327,14 +1357,14 @@ final class InterpreterTests: XCTestCase {
   /// what the accepted-request confirmation row interpolates. The function-matching pattern
   /// only tolerated one level of nested parentheses, so this rendered as its own source text.
   func testFormatDatetimeOverFindFirstOverSortInterpolates() throws {
-    let messagesKey = uniqueKey("messages")
+    let messagesRef = EVYCoreResource.messages.ref
     let itemKey = uniqueKey("item")
     let itemId = UUID().uuidString
-    _ = try storeTransferMessages(at: messagesKey, itemId: itemId)
+    _ = try storeTransferMessages(at: messagesRef, itemId: itemId)
     try store(.dictionary(["id": .string(itemId)]), at: itemKey)
 
     let latestPickup =
-      "findFirst(sort(\(messagesKey), desc, createdAt), fk == \(itemKey).id && data.type == pickup)"
+      "findFirst(sort(\(messagesRef), desc, created_at), fk == \(itemKey).id && data.type == pickup)"
     let rendered = try parseTextFromText(
       "Pickup confirmed for {formatDatetime(\(latestPickup).data.time, \"EEE do\")}")
 
@@ -1342,7 +1372,7 @@ final class InterpreterTests: XCTestCase {
   }
 
   func testFindFirstNestedRecordPathMatches() throws {
-    let messagesKey = uniqueKey("messages")
+    let messagesRef = EVYCoreResource.messages.ref
     let pickupId = UUID().uuidString
 
     try store(
@@ -1356,17 +1386,18 @@ final class InterpreterTests: XCTestCase {
           "data": .dictionary(["type": .string("pickup")]),
         ]),
       ]),
-      at: "\(MarketplaceTestFixture.serviceId):\(messagesKey)"
+      at: messagesRef
     )
 
     let result = try parseTextFromText(
-      "{findFirst(\(messagesKey), data.type == pickup).id}")
+      "{findFirst(\(messagesRef), data.type == pickup).id}")
 
     XCTAssertEqual(result.value, pickupId)
   }
 
   func testFindFirstNumericComparison() throws {
     let itemsKey = uniqueKey("priced")
+    let itemsRef = "\(MarketplaceTestFixture.service).\(itemsKey)"
     let expensiveId = UUID().uuidString
 
     try store(
@@ -1380,16 +1411,16 @@ final class InterpreterTests: XCTestCase {
           "price": .int(150),
         ]),
       ]),
-      at: "\(MarketplaceTestFixture.serviceId):\(itemsKey)"
+      at: itemsRef
     )
 
-    let result = try parseTextFromText("{findFirst(\(itemsKey), price > 100).id}")
+    let result = try parseTextFromText("{findFirst(\(itemsRef), price > 100).id}")
 
     XCTAssertEqual(result.value, expensiveId)
   }
 
   func testFindFirstOldPairFormThrows() throws {
-    let messagesKey = uniqueKey("messages")
+    let messagesRef = EVYCoreResource.messages.ref
     let itemKey = uniqueKey("item")
     let itemId = UUID().uuidString
 
@@ -1400,13 +1431,13 @@ final class InterpreterTests: XCTestCase {
           fk: itemId
         )
       ]),
-      at: "\(MarketplaceTestFixture.serviceId):\(messagesKey)"
+      at: messagesRef
     )
     try store(.dictionary(["id": .string(itemId)]), at: itemKey)
 
     XCTAssertThrowsError(
       try parseTextFromText(
-        "{findFirst(\(messagesKey), \(itemKey).id, fk, null, createdAt).id}")
+        "{findFirst(\(messagesRef), \(itemKey).id, fk, null, created_at).id}")
     )
   }
 

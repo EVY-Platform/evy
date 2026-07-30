@@ -3,7 +3,7 @@ import { RowLayout } from "./design-system/RowLayout";
 
 export const UnknownRow = defineRow("UnknownRow", {
 	config: {
-		type: "Text",
+		type: "text",
 		actions: {},
 		visible: "true",
 		title: "Unknown row",

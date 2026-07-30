@@ -57,7 +57,7 @@ A procedure is an RPC call that runs code rather than reading or writing a resou
 
 | Field | Meaning |
 | --- | --- |
-| `service` | The service UUID that owns it. Core procedures run in the gateway; anything else is forwarded to that service. |
+| `service` | The service slug that owns it (`evy`, `marketplace`, …). Core procedures run in the gateway; anything else is forwarded to that service. |
 | `response` | Schema path, relative to `types/schema/`. The generator reads it for the result attributes the builder offers. Request and response are both validated at dispatch, but by handlers wired in code rather than from this file. |
 
 The manifest is the single source of truth for which procedures exist:
@@ -76,25 +76,25 @@ This document covers EVY shared data: schema-backed rows stored in the API datab
 
 ## Wire contract vs persisted rows
 
-Clients call the API with JSON-RPC `get`, `sync`, `resources`, `api`, `create`, `update`, and `delete` using `service` and `resource` where applicable (see [`types/schema/rpc`](../../../types/schema/rpc)). `sync` and `resources` are top-level methods; `sync` is described on its own below. `resources` returns the aggregated service/resource catalog from the core manifest plus each registered external service's live `resources` RPC response. `service: "[evy_core_service_id]"` is dispatched by the API into resource modules under [`api/src/data/resources`](../../../api/src/data/resources) and maps to the row types below in the API Postgres schema. External services such as `service: "[service_id]"` are routed by service ID from normal core `services` rows. Each external service owns its resource manifest locally and exposes it through its required `resources` JSON-RPC method; the gateway aggregates those manifests and includes the full catalog on every successful sync as a singleton under the core `resources` key so clients can persist it offline.
+Clients call the API with JSON-RPC `get`, `sync`, `resources`, `api`, `create`, `update`, and `delete` (see [`types/schema/rpc`](../../../types/schema/rpc)). `get`, `create`, `update`, and `delete` carry a single `resource` field holding a dotted reference (`evy.flows`, `marketplace.items`); `api` carries a `service` slug (`evy`, `marketplace`, …) because procedures route by service, not resource. `sync` and `resources` are top-level methods; `sync` is described on its own below. `resources` returns the aggregated service/resource catalog from the core manifest plus each registered external service's live `resources` RPC response. Resources whose ref prefix is `evy` are dispatched by the API into resource modules under [`api/src/data/resources`](../../../api/src/data/resources) and map to the row types below in the API Postgres schema. Any other prefix is forwarded to the owning service's adapter, which the API resolves from the core `services` table at startup. Each external service owns its resource manifest locally and exposes it through its required `resources` JSON-RPC method; the gateway aggregates those manifests and includes the full catalog on every successful sync as a singleton under the core `resources` key so clients can persist it offline.
 
-Routing in practice: the API dispatches on `service`, comparing it against the generated core service UUID (`EVY_CORE_SERVICE`). Core resources are addressed by **name** (`flows`, `messages`, …); external resources are addressed by the **resource UUID** declared in the owning service's manifest. Anything that is not the core service is forwarded to the owning service's adapter, which the API resolves from the core `services` table at startup.
+Routing in practice: the API reads the service prefix from `resource` (`serviceOfRef`) and routes `evy.*` to core handlers; everything else goes to the matching external adapter.
 
 **`sync` in practice:** Send back the opaque `cursor` from the previous response, or omit it for a full sync. Alongside
-the cursor a client sends `ownedServiceResources`: the record ids it owns, grouped by the service
-and resource they belong to. Every resource is read the same way: the device gets every public row,
+the cursor a client sends `owned_resources`: the record ids it owns, grouped by the dotted
+resource ref they belong to. Every resource is read the same way: the device gets every public row,
 plus the private rows it declared. A device that declares nothing still syncs — it just receives the
 public rows only.
 
 A device's ownership set is the union of three sources:
 
-- **records it created**, kept in a small ledger of `(service, resource, id)` triples. This is the
+- **records it created**, kept in a small ledger of `(resource, id)` pairs. This is the
   only source that can claim a *public* record, and it is what keeps a seller entitled to messages
   about an item they listed. Anything created on the platform is owned by whoever created it.
 - **records it holds privately**, so a private row that arrives stays owned and its later updates
   keep coming. Local singletons share that store but are excluded: they are not records the server
   knows, and their id is not a uuid — which the request schema rejects, failing the whole sync.
-- **the `EVY_OWNED_SERVICE_RESOURCES` launch override**, standing in for the account-derived
+- **the `EVY_OWNED_RESOURCES` launch override**, standing in for the account-derived
   ownership that arrives with real auth. Changing that declaration voids the cursor — it makes
   records visible that may have changed long before the cursor was issued — so the client resyncs
   in full. The other two sources cannot: a created record has no messages older than itself, and a
@@ -111,8 +111,8 @@ Resource manifests may declare an `attributes` list per resource: the dotted att
 
 Tables that track updates use ISO 8601 / RFC 3339 strings (never numeric Unix timestamps):
 
-- `createdAt`: string (date-time)
-- `updatedAt`: string (date-time)
+- `created_at`: string (date-time)
+- `updated_at`: string (date-time)
 
 ---
 
@@ -136,13 +136,13 @@ These are defined in `types/schema/data/data.schema.json`. The API and generated
 
 Persisted flow shell. Clients assemble the nested [`UI_Flow`](sdui.md) shape from `flows`, `pages`, and `rows` at the serialization boundary.
 
-On the wire this is accessed with `service: "475731ac-31aa-4d65-94d2-7032782ae359"` and `resource: "flows"`.
+On the wire this is accessed with `resource: "evy.flows"`.
 
 ### DATA_EVY_Page
 
 Persisted page shell.
 
-On the wire this is accessed with `service: "475731ac-31aa-4d65-94d2-7032782ae359"` and `resource: "pages"`.
+On the wire this is accessed with `resource: "evy.pages"`.
 
 ### DATA_EVY_Row
 
@@ -156,7 +156,7 @@ Persisted row record. Row-type-specific SDUI fields live in `data`. Nested row r
 
 A Search row may persist both `child_row_id` and `sheet_row_id`. Relationship kind is explicit in storage; do not infer it from row type alone beyond the Search-only rule for `child`.
 
-On the wire this is accessed with `service: "475731ac-31aa-4d65-94d2-7032782ae359"` and `resource: "rows"`.
+On the wire this is accessed with `resource: "evy.rows"`.
 
 #### Visibility
 
@@ -174,17 +174,17 @@ On iOS the private store is also part of what a device declares as owned on sync
 
 ### DATA_EVY_Message
 
-Core message record in [`data.schema.json`](../../../types/schema/data/data.schema.json) (`$defs.DATA_EVY_Message`, Postgres table `Message`). A message always relates to one record of another resource: `fk` is that record's id, and `service` / `resource` identify which service and resource the `fk` belongs to. Use-case-specific fields (e.g. `type`, `time`, `postalcode`) live in the free-form `data` object.
+Core message record in [`data.schema.json`](../../../types/schema/data/data.schema.json) (`$defs.DATA_EVY_Message`, Postgres table `Message`). A message always relates to one record of another resource: `fk` is that record's id, and `resource` is the dotted ref of the resource the `fk` belongs to (e.g. `marketplace.items`). Use-case-specific fields (e.g. `type`, `time`, `postalcode`) live in the free-form `data` object.
 
-On the wire this is accessed with `service: "475731ac-31aa-4d65-94d2-7032782ae359"` and `resource: "messages"`.
+On the wire this is accessed with `resource: "evy.messages"`.
 
 #### A message is write-once
 
-**Nothing in the system updates a message.** A request's whole life is the sequence of messages naming it, ordered by `createdAt`: asked, then accepted, rejected or withdrawn. There is no `status` column and no `archivedAt` column; each held part of this before the lifecycle became append-only.
+**Nothing in the system updates a message.** A request's whole life is the sequence of messages naming it, ordered by `created_at`: asked, then accepted, rejected or withdrawn. There is no `status` column and no `archivedAt` column; each held part of this before the lifecycle became append-only.
 
 `data.value` holds the whole vocabulary — `"pending"` on a request, and `"accept"`, `"reject"` or `"cancel"` on the message that settles one. A request says `"pending"` outright rather than leaving the key absent, so the predicates read as one state machine and a message kind that carries no state is never mistaken for something to answer.
 
-A settling message addresses whatever record the request addressed — same `fk`, `service` and `resource` — and **carries the request's whole `data` forward**, overriding `value` and setting `parentMessageId` on the row to name what it answers. That duplication is load-bearing rather than sloppy: `findFirst` cannot nest, so a lookup that finds the settling message cannot reach through it to the request. Anything the settled state displays — the agreed time, the shipping postcode — has to be on the message that says so, or the confirmation row renders empty.
+A settling message addresses whatever record the request addressed — same `fk` and `resource` — and **carries the request's whole `data` forward**, overriding `value` and setting `parent_message_id` on the row to name what it answers. That duplication is load-bearing rather than sloppy: `findFirst` cannot nest, so a lookup that finds the settling message cannot reach through it to the request. Anything the settled state displays — the agreed time, the shipping postcode — has to be on the message that says so, or the confirmation row renders empty.
 
 Accepting, rejecting and cancelling are therefore the same operation with a different `value`. They differ only in who says it: the record's owner answers, its asker withdraws.
 
@@ -193,7 +193,7 @@ Accepting, rejecting and cancelling are therefore the same operation with a diff
 The item page reads one thing per transfer method: the **latest** message for that `(fk, data.type)` pair.
 
 ```
-findFirst(sort(messages, desc, createdAt), fk == <item>.id && data.type == pickup)
+findFirst(sort(evy.messages, desc, created_at), fk == <item>.id && data.type == pickup)
 ```
 
 `pending` means a request is open (offer to cancel it); `accept` means it is agreed (show the time). `reject`, `cancel` and "no message at all" are the same branch — nothing is in flight, so offer to request again.
@@ -202,13 +202,13 @@ Each `(fk, data.type)` pair is **tracked independently** — a rejected pickup s
 
 Two things follow that are easy to trip over:
 
-- **`createdAt` is the ordering key and has no fallback.** It is written with millisecond precision for exactly this reason. `sort` compares it as a string, so mixing second-resolution and fractional values compares *wrongly* (`.` sorts before `Z`), and equal keys fall back to store order — which would let a request outrank its own answer, since the request was stored first.
+- **`created_at` is the ordering key and has no fallback.** It is written with millisecond precision for exactly this reason. `sort` compares it as a string, so mixing second-resolution and fractional values compares *wrongly* (`.` sorts before `Z`), and equal keys fall back to store order — which would let a request outrank its own answer, since the request was stored first.
 - **`findFirst(sort(…), …)` is the whole mechanism.** `sort` accepts a field path and `findFirst`'s collection argument is function-aware, so no client-side special case is involved. See [methods.md](./methods.md#findfirst).
 
 Messages follow the same rule as every other private resource, with two additions:
 
-- as well as the device that owns the message (its creator, declaring the message's own id under `evy`/`messages`), a message reaches the device that owns the record it **addresses**, which declares that record's id under the message's `service`/`resource`;
-- a message reaches whoever owns the message it **answers** — matched on `parentMessageId`. Without it a response would never reach the party who asked, since they own neither the response nor the record it addresses.
+- as well as the device that owns the message (its creator, declaring the message's own id under `evy.messages`), a message reaches the device that owns the record it **addresses**, which declares that record's id under the message's `resource` ref;
+- a message reaches whoever owns the message it **answers** — matched on `parent_message_id`. Without it a response would never reach the party who asked, since they own neither the response nor the record it addresses.
 
 Those two are the only entitlements in the system that are not plain ownership. Everyone else never receives it.
 
@@ -277,3 +277,22 @@ ship: {
 id: uuid
 value: string (e.g. "30 minutes")
 ```
+
+## Naming
+
+Every **serialized** name is `snake_case`. Every **language identifier** is derived mechanically from it and never hand-written.
+
+Serialized surfaces include Postgres table/column/enum-type/index names, Drizzle column keys, JSON Schema property names, JSON Schema enum values and `const` values, generated TypeScript property names, RPC method names, RPC param names, SDUI row `type` values, SDUI row property names, SDUI action param names, SDUI trigger names, row `data` JSON keys, file-resource keys, resource names, and procedure names.
+
+Derived names stay in each language's usual style: TypeScript and Swift type names are PascalCase; Swift enum cases for row types are lowerCamelCase with `= "snake_case"` raw values; TypeScript/Swift source file names and local variables stay in their conventional casing.
+
+| Serialized name | TS type | Swift type | Swift enum case | Drizzle key | PG identifier |
+| --- | --- | --- | --- | --- | --- |
+| `horizontal_container` (row type) | `HorizontalContainer_Row` | `HorizontalContainerRowViewData` | `horizontalContainer` | — | — |
+| `service_provider` (table) | `DATA_EVY_ServiceProvider` | — | — | `service_provider` | `service_provider` |
+| `created_at` (prop) | `created_at` | `created_at` | — | `created_at` | `created_at` |
+| `swipe_left` (trigger) | `swipe_left` | `swipe_left` | — | — | — |
+| `web` (enum value) | `"web"` | `case web = "web"` | `web` | — | `'web'` |
+| `selling_reasons` (resource) | — | — | `sellingReasons` | — | — |
+
+Schema `title` fields remain PascalCase (for example `HorizontalContainer_Row`) because `json-schema-to-typescript` uses them verbatim as interface names.

@@ -2,19 +2,13 @@
 	"$schema": "https://json-schema.org/draft/2020-12/schema",
 	"$id": "delete-request",
 	"title": "DeleteRequest",
-	"description": "JSON-RPC params for delete method. Service, resource, and filter.id are required.",
+	"description": "JSON-RPC params for delete method. Resource and filter.id are required.",
 	"type": "object",
 	"additionalProperties": false,
-	"required": ["service", "resource", "filter"],
+	"required": ["resource", "filter"],
 	"properties": {
-		"service": {
-			"type": "string",
-			"minLength": 1
-		},
 		"resource": {
-			"type": "string",
-			"minLength": 1,
-			"maxLength": 50
+			"$ref": "../common/rpc.schema.json#/$defs/ResourceRef"
 		},
 		"filter": {
 			"type": "object",
@@ -25,8 +19,8 @@
 					"type": "string",
 					"minLength": 1
 				},
-				"expectedUpdatedAt": {
-					"description": "Optimistic lock. When present, the write only applies if the stored row still carries this updatedAt; otherwise it is rejected as a conflict. Omit to accept last-write-wins.",
+				"expected_updated_at": {
+					"description": "Optimistic lock. When present, the write only applies if the stored row still carries this updated_at; otherwise it is rejected as a conflict. Omit to accept last-write-wins.",
 					"type": "string",
 					"format": "date-time"
 				}

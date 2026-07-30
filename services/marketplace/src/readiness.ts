@@ -1,12 +1,11 @@
 import { runReadinessCli } from "evy-types/readiness";
 import { get } from "./data";
-import { MARKETPLACE_RESOURCE, MARKETPLACE_SERVICE } from "./resources";
+import { MARKETPLACE_RESOURCE } from "./resources";
 
 async function assertMarketplaceReadable(
 	requireSeeded: boolean,
 ): Promise<void> {
 	const response = await get({
-		service: MARKETPLACE_SERVICE,
 		resource: MARKETPLACE_RESOURCE.ITEMS,
 	});
 	if (!Array.isArray(response)) {

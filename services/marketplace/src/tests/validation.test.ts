@@ -10,7 +10,7 @@ const fixtureItem = {
 	photo_ids: ["cfa7e4aa-928d-4920-a370-57ed713b2917"],
 	price: { currency: "AUD", value: 250 },
 	seller_id: "04b34671-4eeb-4f1c-8435-5e029a0e455c",
-	createdAt: "2026-05-20T22:56:17.000Z",
+	created_at: "2026-05-20T22:56:17.000Z",
 	dimensions: { width: 500, height: 1600, length: 600, weight: 10 },
 	payment_methods: { cash: true, app: true },
 	transfer_options: {

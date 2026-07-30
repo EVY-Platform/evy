@@ -11,7 +11,7 @@ schema combines the common `UI_RowBase` shape from
 properties, a unique `type.const` discriminator, and a top-level `triggers` block declaring
 which action triggers that row type supports and whether each is `"required"` or `"optional"`
 (see [Trigger matrix](#trigger-matrix) below). See
-[`Calendar.schema.json`](../../types/schema/sdui/definitions/Calendar.schema.json) for an
+[`calendar.schema.json`](../../types/schema/sdui/definitions/calendar.schema.json) for an
 example.
 
 ## Flow
@@ -49,16 +49,16 @@ Rows are what are put into pages. They are the building block of the EVY server-
 -   All attributes can include:
     -   variables surrounded with curly braces: "Hello {name}, how are you?"
     -   inline icons as [Lucide](https://lucide.dev/icons) names in kebab-case, wrapped in double colons: "EVY ::image-plus:: is the best!"
-    -   Builder consequence: in text attributes the web builder resolves ids to named chips **only inside `{…}`**, because everything outside braces is literal. Binding attributes (`source`, `destination`, `secondary`), `visible`, and action arguments are whole-value expressions, so bare ids resolve there. Core resource ids are plural words (`messages`, `files`, `addresses`), so without that distinction prose like "No messages found" would be mistaken for a resource reference.
+    -   Builder consequence: in text attributes the web builder resolves ids to named chips **only inside `{…}`**, because everything outside braces is literal. Binding attributes (`source`, `destination`, `secondary`), `visible`, and action arguments are whole-value expressions, so bare ids resolve there. Resource references are dotted (`evy.messages`, `marketplace.items`); the dot is the discriminator, so prose like "No messages found" no longer collides with a resource reference.
 -   [ x ]
     -   Denotes a type array of x
 	-   Objects and arrays
-	    -   When objects or arrays are interpolated (e.g. `{[resource_id].dimensions}`), the UI runtime resolves the binding to structured data before rendering—use the schema and client behavior for the exact shape, not a hand-written JSON fragment in the flow string.
+	    -   When objects or arrays are interpolated (e.g. `{marketplace.items.dimensions}`), the UI runtime resolves the binding to structured data before rendering—use the schema and client behavior for the exact shape, not a hand-written JSON fragment in the flow string.
 
 ```
 {
     "id": "uuid",
-    "type": "Button" | "Calendar" | "HorizontalContainer" | "Heading" | "Text" | ... ,
+    "type": "button" | "calendar" | "horizontal_container" | "heading" | "text" | ... ,
 
     // Required. Developer-facing row name.
     "name": "string",
@@ -96,8 +96,7 @@ Rows are what are put into pages. They are the building block of the EVY server-
         "tap": [{
             "condition": "{length(title) > 0}",
             "false": { "fn": "highlight_required", "field": "title" },
-            "true": { "fn": "create", "service": "[service_id]",
-                      "resource": "[resource_id]", "mode": "submit" }
+            "true": { "fn": "create", "resource": "marketplace.items", "mode": "submit" }
         }]
     }
 }
@@ -157,9 +156,9 @@ Each row has an `actions` attribute: an object keyed by **trigger** name. Each t
   "tap": [{ "condition": "", "false": "", "true": { "fn": "close" } }],
   "submit": [{ "condition": "", "false": "", "true": { "fn": "close" } }],
   "delete": [{ "condition": "", "false": "", "true": { "fn": "delete_photo" } }],
-  "tap-row": [{ "condition": "", "false": "", "true": { "fn": "select", "value": "$datum" } }],
-  "tap-column": [{ "condition": "", "false": "", "true": { "fn": "select", "value": "$datum" } }],
-  "swipe-left": [{ "condition": "", "false": "", "true": { "fn": "show", "rowId": "sheetId" } }]
+  "tap_row": [{ "condition": "", "false": "", "true": { "fn": "select", "value": "$datum" } }],
+  "tap_column": [{ "condition": "", "false": "", "true": { "fn": "select", "value": "$datum" } }],
+  "swipe_left": [{ "condition": "", "false": "", "true": { "fn": "show", "rowId": "sheetId" } }]
 }
 ```
 
@@ -173,7 +172,7 @@ See [actions.md](./actions.md) for the reference on every action function (`crea
 
 Which triggers each row type supports, and whether they're required, is declared per row type
 in its `triggers` block in [`types/schema/sdui/definitions/*.schema.json`](../../types/schema/sdui/definitions/)
-(e.g. `Calendar.schema.json` declares `tap`, `tap-row`, and `tap-column` all `"required"`). This
+(e.g. `calendar.schema.json` declares `tap`, `tap_row`, and `tap_column` all `"required"`). This
 is generated into `SDUI_ROW_TRIGGERS` in
 [`types/generated/ts/sdui/definitions.generated.ts`](../../types/generated/ts/sdui/definitions.generated.ts)
 and enforced in `validateUiFlow` (`types/validators.ts`) — a row with actions on an
@@ -189,7 +188,7 @@ For row types that handle their own interactive elements (`SelectPhoto`, `TextEx
 
 On iOS, Heading, Input, ListItem, and Text rows with a non-empty `swipe-left` action list become swipeable (Mail-style trailing reveal). Dragging left reveals a single accent-colored button; releasing past the reveal threshold snaps open, and a fuller swipe executes immediately. Tapping the revealed button runs `actions.swipe-left` **in order with the row's datum** and closes the row. Only one row stays open at a time; tapping open content closes without firing `tap`. Empty or absent `swipe-left` means no swipe affordance.
 
-Optional **`swipeLabel`** (Heading, Input, ListItem, Text only) sets the revealed button content as EVY text (icons like `::check::`, interpolations, etc.). When omitted or blank, iOS shows a white ellipsis icon and uses the accessibility label “Swipe left”.
+Optional **`swipe_label`** (Heading, Input, ListItem, Text only) sets the revealed button content as EVY text (icons like `::check::`, interpolations, etc.). When omitted or blank, iOS shows a white ellipsis icon and uses the accessibility label “Swipe left”.
 
 For destructive or important `create`/`update` actions, attach a `sheet` row to the triggering row and use a `show` action with that sheet row's id (often the nested `sheet.id`). Put confirmation copy on the sheet root's `title` and message rows inside the sheet, then run the actual `create`/`update` followed by `close` from a confirm button in the sheet. **`show` presents the sheet in the triggering row's datum context**, so sheet buttons can read `$datum` the same way the row's own actions do. Container children (`VerticalContainer`, `HorizontalContainer`, `TabContainer`) inherit their parent's datum.
 
@@ -219,8 +218,8 @@ Each branch is either the empty string, meaning "do nothing", or a **structured 
 ```jsonc
 "true": { "fn": "close" }
 "true": { "fn": "show", "rowId": "b8c7d6e5-…" }
-"true": { "fn": "create", "service": "…", "resource": "items", "mode": "submit" }
-"true": { "fn": "update", "service": "…", "resource": "items",
+"true": { "fn": "create", "resource": "marketplace.items", "mode": "submit" }
+"true": { "fn": "update", "resource": "marketplace.items",
           "mode": "store", "filter": { "id": "item.id" },
           "changes": { "status": "accepted" } }
 ```
@@ -263,8 +262,7 @@ Submit:
 	{
 		"condition": "",
 		"false": "",
-		"true": { "fn": "create", "service": "[service_id]",
-		          "resource": "[resource_id]", "mode": "submit" }
+		"true": { "fn": "create", "resource": "marketplace.items", "mode": "submit" }
 	},
 	{
 		"condition": "",
@@ -279,7 +277,7 @@ Open a confirmation sheet after selecting a timeslot (`select` must run first so
 ```json
 {
 	"id": "timeslot-picker-row-id",
-	"type": "TimeslotPicker",
+	"type": "timeslot_picker",
 	"actions": {
 		"tap": [
 			{
@@ -296,7 +294,7 @@ Open a confirmation sheet after selecting a timeslot (`select` must run first so
 	},
 	"sheet": {
 		"id": "b8c7d6e5-f4a3-4b2c-9d1e-0f8a7b6c5d4e",
-		"type": "VerticalContainer",
+		"type": "vertical_container",
 		"title": "Confirmation",
 		"children": []
 	}
@@ -320,13 +318,13 @@ Each entity references others by ID only. Rows can nest arbitrarily deep via two
 
 ```mermaid
 flowchart TD
-    F["DATA_EVY_Flow\nid · name · pageIds[]"]
-    P["DATA_EVY_Page\nid · title · rowIds[] · footerRowId?"]
+    F["DATA_EVY_Flow\nid · name · page_ids[]"]
+    P["DATA_EVY_Page\nid · title · row_ids[] · footer_row_id?"]
     R["DATA_EVY_Row\nid · type · visible · data{}"]
 
-    F -- "pageIds[]" --> P
-    P -- "rowIds[]" --> R
-    P -- "footerRowId?" --> R
+    F -- "page_ids[]" --> P
+    P -- "row_ids[]" --> R
+    P -- "footer_row_id?" --> R
     R -- "data.sheet_row_id?" --> R
     R -- "data.child_row_id? (Search)" --> R
     R -- "data.children_row_ids[]?" --> R

@@ -33,7 +33,7 @@ struct EVYInputListRow: View {
     json: """
       {
         "id": "preview-inputlist-row",
-        "type": "InputList",
+        "type": "input_list",
         		"source": "{selling_reasons}",
         		"actions": {},
         		"title": "Selling Reasons",

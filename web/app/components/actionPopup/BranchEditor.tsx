@@ -18,11 +18,8 @@ import {
 } from "../../utils/actionFlowOptions";
 import { shouldOfferCreateSubmitWithFlow } from "../../utils/createDraftSignals";
 import type { IdCandidate } from "../../utils/idCandidates";
-import {
-	toResourceOptions,
-	toServiceOptions,
-} from "../../utils/serviceResourceOptions";
-import { BuilderAssist } from "../BuilderAssist";
+import { toResourceOptions } from "../../utils/serviceResourceOptions";
+import { AutocompleteSearch } from "../AutocompleteSearch";
 import { type PopoverOption, PopoverSelect } from "../PopoverSelect";
 import { BRANCH_FUNCTION_OPTIONS } from "./actionPopupConstants";
 
@@ -33,7 +30,6 @@ type BranchEditorProps = {
 	flowsById: Record<string, DATA_EVY_Flow>;
 	pagesById: Record<string, DATA_EVY_Page>;
 	serviceResources: ServiceResource[];
-	serviceNamesById: Map<string, string>;
 	idCandidates: IdCandidate[];
 	rowsById: Record<string, DATA_EVY_Row>;
 	defaultSheetRowId?: string;
@@ -52,7 +48,6 @@ function buildArgDropdowns(
 	flowsById: Record<string, DATA_EVY_Flow>,
 	pagesById: Record<string, DATA_EVY_Page>,
 	serviceResources: ServiceResource[],
-	serviceNamesById: Map<string, string>,
 	rowsById: Record<string, DATA_EVY_Row>,
 ): ArgDropdownSlot[] {
 	if (!functionName) {
@@ -88,19 +83,12 @@ function buildArgDropdowns(
 	}
 
 	if (functionName === "create" || functionName === "update") {
-		const dropdowns: ArgDropdownSlot[] = [
+		return [
 			{
-				slotId: `${functionName}-namespace`,
-				options: toServiceOptions(serviceNamesById),
+				slotId: `${functionName}-resource`,
+				options: toResourceOptions(serviceResources),
 			},
 		];
-		if (currentArgs[0]) {
-			dropdowns.push({
-				slotId: `${functionName}-resource`,
-				options: toResourceOptions(serviceResources, currentArgs[0]),
-			});
-		}
-		return dropdowns;
 	}
 
 	if (functionName === "highlight_required") {
@@ -126,7 +114,6 @@ export function BranchEditor({
 	flowsById,
 	pagesById,
 	serviceResources,
-	serviceNamesById,
 	idCandidates,
 	rowsById,
 	defaultSheetRowId,
@@ -182,13 +169,8 @@ export function BranchEditor({
 
 	const offerSubmitCreate = useMemo(() => {
 		if (selectedFunction !== "create") return false;
-		const serviceId = args[0]?.trim() ?? "";
-		const resourceId = args[1]?.trim() ?? "";
-		return shouldOfferCreateSubmitWithFlow(
-			serviceId,
-			resourceId,
-			declaredSubmits,
-		);
+		const resourceRef = args[0]?.trim() ?? "";
+		return shouldOfferCreateSubmitWithFlow(resourceRef, declaredSubmits);
 	}, [selectedFunction, args, declaredSubmits]);
 
 	const showSubmitCreateHint =
@@ -217,7 +199,6 @@ export function BranchEditor({
 		flowsById,
 		pagesById,
 		serviceResources,
-		serviceNamesById,
 		rowsById,
 	);
 
@@ -241,7 +222,7 @@ export function BranchEditor({
 			))}
 
 			{selectedFunction === "navigate" && args[0] && args[1] && (
-				<BuilderAssist
+				<AutocompleteSearch
 					ariaLabel={`${branchId}-navigate-query`}
 					value={args[2] ?? ""}
 					onChange={(v) => handleArgChange(2, v)}
@@ -256,27 +237,26 @@ export function BranchEditor({
 
 			{selectedFunction === "create" &&
 				args[0] &&
-				args[1] &&
 				(showSubmitCreateHint ? (
 					<p className="evy-create-draft-hint">
 						Creates from row destinations and draft updates
 					</p>
 				) : (
 					<>
-						<BuilderAssist
+						<AutocompleteSearch
 							ariaLabel={`${branchId}-create-data`}
-							value={args[2] ?? ""}
-							onChange={(v) => handleArgChange(2, v)}
+							value={args[1] ?? ""}
+							onChange={(v) => handleArgChange(1, v)}
 							candidates={idCandidates}
 							getAttributeCandidatesForQualifier={
 								getAttributeCandidatesForQualifier
 							}
 							placeholder="Data path or inline object, e.g. pickup_address"
 						/>
-						<BuilderAssist
+						<AutocompleteSearch
 							ariaLabel={`${branchId}-create-id-destination`}
-							value={args[3] ?? ""}
-							onChange={(v) => handleArgChange(3, v)}
+							value={args[2] ?? ""}
+							onChange={(v) => handleArgChange(2, v)}
 							candidates={idCandidates}
 							getAttributeCandidatesForQualifier={
 								getAttributeCandidatesForQualifier
@@ -287,7 +267,7 @@ export function BranchEditor({
 				))}
 
 			{selectedFunction === "select" && (
-				<BuilderAssist
+				<AutocompleteSearch
 					ariaLabel={`${branchId}-select-value`}
 					value={args[0] ?? "$datum"}
 					onChange={(v) => handleArgChange(0, v)}
@@ -299,7 +279,7 @@ export function BranchEditor({
 				/>
 			)}
 
-			{selectedFunction === "update" && args[0] && args[1] && (
+			{selectedFunction === "update" && args[0] && (
 				<>
 					<PopoverSelect
 						ariaLabel={`${branchId}-update-mode`}
@@ -317,22 +297,22 @@ export function BranchEditor({
 						onChange={(mode) => {
 							if (mode === "draft") {
 								applyArgUpdates([
-									[2, "{}"],
-									[4, "draft"],
+									[1, "{}"],
+									[3, "draft"],
 								]);
 							} else {
 								applyArgUpdates([
-									[2, ""],
-									[4, ""],
+									[1, ""],
+									[3, ""],
 								]);
 							}
 						}}
 					/>
 					{!updateUsesDraftMode && (
-						<BuilderAssist
+						<AutocompleteSearch
 							ariaLabel={`${branchId}-update-filter`}
-							value={args[2] ?? ""}
-							onChange={(v) => handleArgChange(2, v)}
+							value={args[1] ?? ""}
+							onChange={(v) => handleArgChange(1, v)}
 							candidates={idCandidates}
 							getAttributeCandidatesForQualifier={
 								getAttributeCandidatesForQualifier
@@ -341,10 +321,10 @@ export function BranchEditor({
 							multiline
 						/>
 					)}
-					<BuilderAssist
+					<AutocompleteSearch
 						ariaLabel={`${branchId}-update-changes`}
-						value={args[3] ?? ""}
-						onChange={(v) => handleArgChange(3, v)}
+						value={args[2] ?? ""}
+						onChange={(v) => handleArgChange(2, v)}
 						candidates={idCandidates}
 						getAttributeCandidatesForQualifier={
 							getAttributeCandidatesForQualifier

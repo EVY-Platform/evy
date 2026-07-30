@@ -13,7 +13,7 @@ function TextExpandRowInner({ rowId }: { rowId: string }) {
 	const textRef = useRef<HTMLParagraphElement | null>(null);
 	const title = row?.config.title ?? "";
 	const text = row?.config.text ?? "";
-	const expandLabel = row?.config.expandLabel ?? "";
+	const expandLabel = row?.config.expand_label ?? "";
 	const isCollapsible = expandLabel.trim().length > 0;
 	const [userExpanded, setUserExpanded] = useState(false);
 	const [canExpand, setCanExpand] = useState(false);
@@ -73,12 +73,12 @@ function TextExpandRowInner({ rowId }: { rowId: string }) {
 
 export default defineRow("TextExpandRow", {
 	config: {
-		type: "TextExpand",
+		type: "text_expand",
 		actions: {},
 		visible: "true",
 		title: "Expandable text title",
 		text: "This is a longer text row that can be expanded when it spans more lines than the configured maximum.",
-		expandLabel: "Read more",
+		expand_label: "Read more",
 	} satisfies RowConfig,
 	Component: TextExpandRowInner,
 });

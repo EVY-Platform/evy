@@ -20,7 +20,7 @@ function MapPreview() {
 
 export default defineRow("MapRow", {
 	config: {
-		type: "Map",
+		type: "map",
 		actions: {},
 		source: "{findFirst(addresses, resourceId.transfer_options.pickup.address_id)}",
 		visible: "true",

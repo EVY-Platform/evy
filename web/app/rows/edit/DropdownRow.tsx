@@ -5,7 +5,7 @@ import { RowLayout } from "../design-system/RowLayout";
 
 export default defineRow("DropdownRow", {
 	config: {
-		type: "Dropdown",
+		type: "dropdown",
 		actions: {},
 		source: "{resourceId}",
 		visible: "true",

@@ -1,7 +1,7 @@
 {
 	"$schema": "https://json-schema.org/draft/2020-12/schema",
-	"$id": "sdui/definitions/HorizontalContainer",
-	"title": "HorizontalContainer_Row",
+	"$id": "sdui/definitions/tab_container",
+	"title": "TabContainer_Row",
 	"triggers": {
 		"tap": "optional"
 	},
@@ -11,10 +11,10 @@
 		},
 		{
 			"type": "object",
-			"required": ["type", "children"],
+			"required": ["type", "children", "segments"],
 			"properties": {
 				"type": {
-					"const": "HorizontalContainer"
+					"const": "tab_container"
 				},
 				"title": {
 					"type": "string"
@@ -23,6 +23,12 @@
 					"type": "array",
 					"items": {
 						"$ref": "../evy.schema.json#/$defs/UI_Row"
+					}
+				},
+				"segments": {
+					"type": "array",
+					"items": {
+						"type": "string"
 					}
 				}
 			}

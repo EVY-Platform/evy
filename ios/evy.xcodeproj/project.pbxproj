@@ -66,6 +66,7 @@
 		737F00EC2B342EE600C35772 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 737F00EB2B342EE600C35772 /* LaunchScreen.storyboard */; };
 		73884AC42B2E9AE500BC8726 /* EVYTimeslotPicker.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73884AC32B2E9AE500BC8726 /* EVYTimeslotPicker.swift */; };
 		738B4AEE2B95DC3F005FF527 /* EVYData.swift in Sources */ = {isa = PBXBuildFile; fileRef = 738B4AED2B95DC3F005FF527 /* EVYData.swift */; };
+		73F8B0012F80B00800000001 /* EVYResourceRef.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73F8B0112F80B00800000001 /* EVYResourceRef.swift */; };
 		73A6BDFB2B85F75800C8F882 /* functions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73A6BDF82B85F75800C8F882 /* functions.swift */; };
 		DFM001012F90000100000001 /* EVYDynamicFormatters.swift in Sources */ = {isa = PBXBuildFile; fileRef = DFM001022F90000100000001 /* EVYDynamicFormatters.swift */; };
 		73A6BE012B85F75900C8F882 /* EVYDatetime.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73A6BE002B85F75900C8F882 /* EVYDatetime.swift */; };
@@ -233,6 +234,7 @@
 		737F00EB2B342EE600C35772 /* LaunchScreen.storyboard */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; path = LaunchScreen.storyboard; sourceTree = "<group>"; };
 		73884AC32B2E9AE500BC8726 /* EVYTimeslotPicker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EVYTimeslotPicker.swift; sourceTree = "<group>"; };
 		738B4AED2B95DC3F005FF527 /* EVYData.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = EVYData.swift; sourceTree = "<group>"; };
+		73F8B0112F80B00800000001 /* EVYResourceRef.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EVYResourceRef.swift; sourceTree = "<group>"; };
 		73A6BDF82B85F75800C8F882 /* functions.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = functions.swift; sourceTree = "<group>"; };
 		DFM001022F90000100000001 /* EVYDynamicFormatters.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = EVYDynamicFormatters.swift; sourceTree = "<group>"; };
 		73A6BE002B85F75900C8F882 /* EVYDatetime.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = EVYDatetime.swift; sourceTree = "<group>"; };
@@ -534,6 +536,7 @@
 			isa = PBXGroup;
 			children = (
 				738B4AED2B95DC3F005FF527 /* EVYData.swift */,
+				73F8B0112F80B00800000001 /* EVYResourceRef.swift */,
 				73F5D1002F50000100000001 /* EVYDraft.swift */,
 				7303B3192C3EB8A000796123 /* EVYCalendarSlot.swift */,
 			);
@@ -844,6 +847,7 @@
 				737334FB2B7B671100D2E1CF /* EVYTextField.swift in Sources */,
 				A6B2C3D4E5F60718293A4B01 /* EVYFieldChrome.swift in Sources */,
 				738B4AEE2B95DC3F005FF527 /* EVYData.swift in Sources */,
+				73F8B0012F80B00800000001 /* EVYResourceRef.swift in Sources */,
 				73F5D1012F50000100000001 /* EVYDraft.swift in Sources */,
 				73E77C9F2C3118D100A53363 /* EVYInlinePickerRow.swift in Sources */,
 				736D10572B78C4C500503C4D /* EVYPage.swift in Sources */,

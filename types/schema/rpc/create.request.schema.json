@@ -2,7 +2,7 @@
 	"$schema": "https://json-schema.org/draft/2020-12/schema",
 	"$id": "create-request",
 	"title": "CreateRequest",
-	"description": "JSON-RPC params for create method. Service and resource are validated at runtime against the service registry.",
+	"description": "JSON-RPC params for create method. Resource is validated at runtime against the service registry.",
 	"$defs": {
 		"CreateDataPayload": {
 			"type": "object",
@@ -13,16 +13,10 @@
 	},
 	"type": "object",
 	"additionalProperties": false,
-	"required": ["service", "resource", "data"],
+	"required": ["resource", "data"],
 	"properties": {
-		"service": {
-			"type": "string",
-			"minLength": 1
-		},
 		"resource": {
-			"type": "string",
-			"minLength": 1,
-			"maxLength": 50
+			"$ref": "../common/rpc.schema.json#/$defs/ResourceRef"
 		},
 		"filter": {
 			"$ref": "../common/rpc.schema.json#/$defs/DataFilter"

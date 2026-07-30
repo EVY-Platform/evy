@@ -44,8 +44,8 @@ private let evyRecordIdPattern =
 
 /// Whether a string is a record id as the API issues them - a uuid.
 ///
-/// Two callers, for the same reason: resource ids are uuids and so are the binding keys
-/// naming those resources, so uuid shape is what tells an identifier apart from a path.
+/// Record ids stay UUIDs; resource references are dotted slugs (`evy.messages`). UUID
+/// shape is what tells a record id apart from a path segment in bindings and filters.
 /// The sync request schema also requires it, and rejects the whole request otherwise.
 func isEvyRecordId(_ value: String) -> Bool {
   value.wholeMatch(of: evyRecordIdPattern) != nil

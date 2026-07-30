@@ -19,15 +19,10 @@
 			"description": "Domain entity this flow submits via create(...,submit).",
 			"type": "object",
 			"additionalProperties": false,
-			"required": ["service", "resource"],
+			"required": ["resource"],
 			"properties": {
-				"service": {
-					"type": "string",
-					"format": "uuid"
-				},
 				"resource": {
-					"type": "string",
-					"minLength": 1
+					"$ref": "../common/rpc.schema.json#/$defs/ResourceRef"
 				}
 			}
 		},
@@ -77,27 +72,27 @@
 				"type": {
 					"type": "string",
 					"enum": [
-						"Button",
-						"Calendar",
-						"HorizontalContainer",
-						"Dropdown",
-						"Heading",
-						"Text",
-						"TextAction",
-						"TextExpand",
-						"InlinePicker",
-						"Map",
-						"InputList",
-						"Input",
-						"VerticalContainer",
-						"ListItem",
-						"Search",
-						"PhotoGallery",
-						"SelectPhoto",
-						"TabContainer",
-						"TextArea",
-						"TextSelect",
-						"TimeslotPicker"
+						"button",
+						"calendar",
+						"horizontal_container",
+						"dropdown",
+						"heading",
+						"text",
+						"text_action",
+						"text_expand",
+						"inline_picker",
+						"map",
+						"input_list",
+						"input",
+						"vertical_container",
+						"list_item",
+						"search",
+						"photo_gallery",
+						"select_photo",
+						"tab_container",
+						"text_area",
+						"text_select",
+						"timeslot_picker"
 					]
 				},
 				"actions": {
@@ -122,67 +117,67 @@
 		"UI_Row": {
 			"oneOf": [
 				{
-					"$ref": "definitions/Button.schema.json"
+					"$ref": "definitions/button.schema.json"
 				},
 				{
-					"$ref": "definitions/Calendar.schema.json"
+					"$ref": "definitions/calendar.schema.json"
 				},
 				{
-					"$ref": "definitions/HorizontalContainer.schema.json"
+					"$ref": "definitions/horizontal_container.schema.json"
 				},
 				{
-					"$ref": "definitions/Dropdown.schema.json"
+					"$ref": "definitions/dropdown.schema.json"
 				},
 				{
-					"$ref": "definitions/Heading.schema.json"
+					"$ref": "definitions/heading.schema.json"
 				},
 				{
-					"$ref": "definitions/Text.schema.json"
+					"$ref": "definitions/text.schema.json"
 				},
 				{
-					"$ref": "definitions/TextAction.schema.json"
+					"$ref": "definitions/text_action.schema.json"
 				},
 				{
-					"$ref": "definitions/TextExpand.schema.json"
+					"$ref": "definitions/text_expand.schema.json"
 				},
 				{
-					"$ref": "definitions/InlinePicker.schema.json"
+					"$ref": "definitions/inline_picker.schema.json"
 				},
 				{
-					"$ref": "definitions/Map.schema.json"
+					"$ref": "definitions/map.schema.json"
 				},
 				{
-					"$ref": "definitions/InputList.schema.json"
+					"$ref": "definitions/input_list.schema.json"
 				},
 				{
-					"$ref": "definitions/Input.schema.json"
+					"$ref": "definitions/input.schema.json"
 				},
 				{
-					"$ref": "definitions/VerticalContainer.schema.json"
+					"$ref": "definitions/vertical_container.schema.json"
 				},
 				{
-					"$ref": "definitions/ListItem.schema.json"
+					"$ref": "definitions/list_item.schema.json"
 				},
 				{
-					"$ref": "definitions/Search.schema.json"
+					"$ref": "definitions/search.schema.json"
 				},
 				{
-					"$ref": "definitions/PhotoGallery.schema.json"
+					"$ref": "definitions/photo_gallery.schema.json"
 				},
 				{
-					"$ref": "definitions/SelectPhoto.schema.json"
+					"$ref": "definitions/select_photo.schema.json"
 				},
 				{
-					"$ref": "definitions/TabContainer.schema.json"
+					"$ref": "definitions/tab_container.schema.json"
 				},
 				{
-					"$ref": "definitions/TextArea.schema.json"
+					"$ref": "definitions/text_area.schema.json"
 				},
 				{
-					"$ref": "definitions/TextSelect.schema.json"
+					"$ref": "definitions/text_select.schema.json"
 				},
 				{
-					"$ref": "definitions/TimeslotPicker.schema.json"
+					"$ref": "definitions/timeslot_picker.schema.json"
 				}
 			]
 		},
@@ -203,19 +198,19 @@
 						"$ref": "action.schema.json"
 					}
 				},
-				"tap-row": {
+				"tap_row": {
 					"type": "array",
 					"items": {
 						"$ref": "action.schema.json"
 					}
 				},
-				"tap-column": {
+				"tap_column": {
 					"type": "array",
 					"items": {
 						"$ref": "action.schema.json"
 					}
 				},
-				"swipe-left": {
+				"swipe_left": {
 					"type": "array",
 					"items": {
 						"$ref": "action.schema.json"

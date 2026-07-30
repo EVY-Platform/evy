@@ -6,7 +6,7 @@ import type {
 	UI_Flow,
 	UI_Row,
 } from "evy-types";
-import { EVY_CORE_RESOURCE, EVY_CORE_SERVICE } from "evy-types/coreResources";
+import { EVY_CORE_RESOURCE_REF } from "evy-types/coreResources";
 import { Client } from "rpc-websockets";
 import { decomposeServerFlow } from "../app/utils/serverFlowDecompose";
 import {
@@ -24,7 +24,7 @@ import {
 
 const API_POLL_TIMEOUT_MS = 10_000;
 const TEST_TOKEN = "e2e-test-token";
-const TEST_OS = "Web";
+const TEST_OS = "web";
 
 type FlatFlowGraph = {
 	flowRows: DATA_EVY_Flow[];
@@ -69,9 +69,18 @@ async function withApiClient<T>(
 async function getFlowsFromApi(): Promise<UI_Flow[]> {
 	return withApiClient(async (client) => {
 		const [flowRows, pageRows, rowRows] = await Promise.all([
-			getFlatResourceRows<DATA_EVY_Flow>(client, EVY_CORE_RESOURCE.FLOWS),
-			getFlatResourceRows<DATA_EVY_Page>(client, EVY_CORE_RESOURCE.PAGES),
-			getFlatResourceRows<DATA_EVY_Row>(client, EVY_CORE_RESOURCE.ROWS),
+			getFlatResourceRows<DATA_EVY_Flow>(
+				client,
+				EVY_CORE_RESOURCE_REF.FLOWS,
+			),
+			getFlatResourceRows<DATA_EVY_Page>(
+				client,
+				EVY_CORE_RESOURCE_REF.PAGES,
+			),
+			getFlatResourceRows<DATA_EVY_Row>(
+				client,
+				EVY_CORE_RESOURCE_REF.ROWS,
+			),
 		]);
 		return assembleFlatFlows({ flowRows, pageRows, rowRows });
 	});
@@ -82,7 +91,6 @@ async function getFlatResourceRows<T>(
 	resource: string,
 ): Promise<T[]> {
 	const result = await client.call("get", {
-		service: EVY_CORE_SERVICE,
 		resource,
 	});
 	return Array.isArray(result) ? (result as T[]) : [];
@@ -96,13 +104,13 @@ async function createFlowInApi(flow: UI_Flow): Promise<void> {
 			new Date().toISOString(),
 		);
 		for (const row of graph.rowRows) {
-			await createFlatResource(client, EVY_CORE_RESOURCE.ROWS, row);
+			await createFlatResource(client, EVY_CORE_RESOURCE_REF.ROWS, row);
 		}
 		for (const page of graph.pageRows) {
-			await createFlatResource(client, EVY_CORE_RESOURCE.PAGES, page);
+			await createFlatResource(client, EVY_CORE_RESOURCE_REF.PAGES, page);
 		}
 		for (const flow of graph.flowRows) {
-			await createFlatResource(client, EVY_CORE_RESOURCE.FLOWS, flow);
+			await createFlatResource(client, EVY_CORE_RESOURCE_REF.FLOWS, flow);
 		}
 	});
 }
@@ -113,7 +121,6 @@ async function createFlatResource(
 	data: unknown,
 ): Promise<void> {
 	await client.call("create", {
-		service: EVY_CORE_SERVICE,
 		resource,
 		data,
 	});
@@ -125,7 +132,7 @@ function assembleFlatFlows(records: FlatFlowGraph): UI_Flow[] {
 	return records.flowRows.map((flow) => ({
 		id: flow.id,
 		name: flow.name,
-		pages: flow.pageIds
+		pages: flow.page_ids
 			.map((pageId) => pageById.get(pageId))
 			.filter((page): page is DATA_EVY_Page => Boolean(page))
 			.map((page) => assemblePage(page, rowById)),
@@ -137,11 +144,11 @@ function assemblePage(page: DATA_EVY_Page, rowById: Map<string, DATA_EVY_Row>) {
 		id: page.id,
 		name: page.name,
 		title: page.title ?? "",
-		rows: page.rowIds
+		rows: page.row_ids
 			.map((rowId) => assembleRow(rowId, rowById, new Set()))
 			.filter((row): row is UI_Row => Boolean(row)),
-		footer: page.footerRowId
-			? assembleRow(page.footerRowId, rowById, new Set())
+		footer: page.footer_row_id
+			? assembleRow(page.footer_row_id, rowById, new Set())
 			: undefined,
 	};
 }
@@ -159,7 +166,7 @@ function assembleRow(
 	const data = { ...row.data } as Record<string, unknown>;
 	const childRowId = data.child_row_id;
 	const sheetRowId = data.sheet_row_id;
-	const childrenRowIds = data.children_row_ids;
+	const children_row_ids = data.children_row_ids;
 	delete data.child_row_id;
 	delete data.sheet_row_id;
 	delete data.children_row_ids;
@@ -185,8 +192,8 @@ function assembleRow(
 			nextVisitedRowIds,
 		);
 	}
-	if (Array.isArray(childrenRowIds)) {
-		assembledRow.children = childrenRowIds
+	if (Array.isArray(children_row_ids)) {
+		assembledRow.children = children_row_ids
 			.filter(
 				(childRowId): childRowId is string =>
 					typeof childRowId === "string",
@@ -373,7 +380,7 @@ test.describe("Web E2E Integration Tests", () => {
 					rows: [
 						{
 							id: crypto.randomUUID(),
-							type: "Text",
+							type: "text",
 							source: "",
 							visible: "true",
 							actions: {},
@@ -400,7 +407,7 @@ test.describe("Web E2E Integration Tests", () => {
 
 		await titleInput.clear();
 		await titleInput.fill(uniqueTitle);
-		await expect(titleInput).toHaveText(uniqueTitle);
+		await expect(titleInput).toHaveValue(uniqueTitle);
 		await expectFlowRowTitlePersisted(uniqueFlowName, uniqueTitle);
 
 		await page.reload();
@@ -413,7 +420,7 @@ test.describe("Web E2E Integration Tests", () => {
 
 		await editedRow.click();
 		await expect(titleInput).toBeVisible();
-		await expect(titleInput).toHaveText(uniqueTitle);
+		await expect(titleInput).toHaveValue(uniqueTitle);
 	});
 
 	test("should keep existing child pages visible while opening nested child rows", async ({
@@ -423,7 +430,7 @@ test.describe("Web E2E Integration Tests", () => {
 		const uniqueFlowName = `E2E Child Page Flow ${Date.now()}`;
 		const firstChild: UI_Row = {
 			id: crypto.randomUUID(),
-			type: "Text",
+			type: "text",
 			source: "",
 			visible: "true",
 			actions: {},
@@ -431,7 +438,7 @@ test.describe("Web E2E Integration Tests", () => {
 			text: "First child text",
 			sheet: {
 				id: crypto.randomUUID(),
-				type: "Text",
+				type: "text",
 				source: "",
 				visible: "true",
 				actions: {},
@@ -439,7 +446,7 @@ test.describe("Web E2E Integration Tests", () => {
 				text: "Second child text",
 				sheet: {
 					id: crypto.randomUUID(),
-					type: "Text",
+					type: "text",
 					source: "",
 					visible: "true",
 					actions: {},
@@ -450,7 +457,7 @@ test.describe("Web E2E Integration Tests", () => {
 		};
 		const parentRow: UI_Row = {
 			id: crypto.randomUUID(),
-			type: "Text",
+			type: "text",
 			source: "",
 			visible: "true",
 			actions: {},
@@ -555,7 +562,7 @@ test.describe("Web E2E Integration Tests", () => {
 					rows: [],
 					footer: {
 						id: crypto.randomUUID(),
-						type: "Button",
+						type: "button",
 						source: "",
 						visible: "true",
 						destination: "",

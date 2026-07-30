@@ -7,7 +7,7 @@
 			"rows": [
 				{
 					"id": "29646c92-90d0-4a68-8c23-3acf88612d06",
-					"type": "TabContainer",
+					"type": "tab_container",
 					"name": "Message tabs",
 					"title": "",
 					"visible": "true",
@@ -27,38 +27,36 @@
 					"children": [
 						{
 							"id": "574da230-8f09-43b2-b003-deadf6786bc4",
-							"type": "Search",
+							"type": "search",
 							"name": "For you requests",
 							"title": "",
 							"placeholder": "",
-							"source": "{filter(messages, $datum.data.value == \"pending\" && owns($datum.service, $datum.resource, $datum.fk) == true && findFirst(sort(messages, desc, createdAt), fk == $datum.fk && data.type == $datum.data.type).id == $datum.id)}",
+							"source": "{filter(evy.messages, $datum.data.value == \"pending\" && owns($datum.resource, $datum.fk) == true && findFirst(sort(evy.messages, desc, created_at), fk == $datum.fk && data.type == $datum.data.type).id == $datum.id)}",
 							"no_results": "No requests",
 							"destination": "",
 							"visible": "true",
 							"actions": {},
 							"child": {
 								"id": "95444ce6-d4be-4001-8798-213cce23afd8",
-								"type": "ListItem",
+								"type": "list_item",
 								"name": "For you request row",
-								"title": "{findFirst(dc28ed59-298e-493c-8ff3-3e60f2ebccbd, $datum.fk).title}",
+								"title": "{findFirst(marketplace.items, $datum.fk).title}",
 								"subtitle": "{$datum.data.value}",
 								"visible": "true",
-								"swipeLabel": "Accept",
+								"swipe_label": "Accept",
 								"actions": {
-									"swipe-left": [
+									"swipe_left": [
 										{
 											"condition": "",
 											"false": "",
 											"true": {
 												"fn": "create",
-												"service": "475731ac-31aa-4d65-94d2-7032782ae359",
-												"resource": "messages",
+												"resource": "evy.messages",
 												"mode": "inline",
 												"data": {
 													"fk": "$datum.fk",
-													"service": "$datum.service",
 													"resource": "$datum.resource",
-													"parentMessageId": "$datum.id",
+													"parent_message_id": "$datum.id",
 													"data": "{value: accept, type: $datum.data.type, time: $datum.data.time, postalcode: $datum.data.postalcode}"
 												}
 											}
@@ -70,14 +68,14 @@
 											"false": "",
 											"true": {
 												"fn": "show",
-												"rowId": "b70f6354-50cb-47cc-91bc-3387deb7277f"
+												"row_id": "b70f6354-50cb-47cc-91bc-3387deb7277f"
 											}
 										}
 									]
 								},
 								"sheet": {
 									"id": "b70f6354-50cb-47cc-91bc-3387deb7277f",
-									"type": "VerticalContainer",
+									"type": "vertical_container",
 									"name": "Respond to request sheet",
 									"title": "Respond to request",
 									"visible": "true",
@@ -85,7 +83,7 @@
 									"children": [
 										{
 											"id": "daea8a6d-8d13-462f-98fa-5403e4f81463",
-											"type": "Text",
+											"type": "text",
 											"name": "Respond confirmation copy",
 											"title": "Accept this request, or reject it?",
 											"subtitle": "",
@@ -94,7 +92,7 @@
 										},
 										{
 											"id": "07ce5b44-8f2c-4183-a6e9-2f853a8dd255",
-											"type": "HorizontalContainer",
+											"type": "horizontal_container",
 											"name": "Respond buttons",
 											"title": "",
 											"visible": "true",
@@ -102,7 +100,7 @@
 											"children": [
 												{
 													"id": "e519e84d-9a7e-4563-bacb-388bba69e9b2",
-													"type": "Button",
+													"type": "button",
 													"name": "Accept request",
 													"label": "Accept",
 													"title": "",
@@ -114,14 +112,12 @@
 																"false": "",
 																"true": {
 																	"fn": "create",
-																	"service": "475731ac-31aa-4d65-94d2-7032782ae359",
-																	"resource": "messages",
+																	"resource": "evy.messages",
 																	"mode": "inline",
 																	"data": {
 																		"fk": "$datum.fk",
-																		"service": "$datum.service",
 																		"resource": "$datum.resource",
-																		"parentMessageId": "$datum.id",
+																		"parent_message_id": "$datum.id",
 																		"data": "{value: accept, type: $datum.data.type, time: $datum.data.time, postalcode: $datum.data.postalcode}"
 																	}
 																}
@@ -138,7 +134,7 @@
 												},
 												{
 													"id": "d780b1bf-b638-4e99-84fd-36be12bb96fb",
-													"type": "Button",
+													"type": "button",
 													"name": "Reject request",
 													"label": "Reject",
 													"style": "danger",
@@ -151,14 +147,12 @@
 																"false": "",
 																"true": {
 																	"fn": "create",
-																	"service": "475731ac-31aa-4d65-94d2-7032782ae359",
-																	"resource": "messages",
+																	"resource": "evy.messages",
 																	"mode": "inline",
 																	"data": {
 																		"fk": "$datum.fk",
-																		"service": "$datum.service",
 																		"resource": "$datum.resource",
-																		"parentMessageId": "$datum.id",
+																		"parent_message_id": "$datum.id",
 																		"data": "{value: reject, type: $datum.data.type, time: $datum.data.time, postalcode: $datum.data.postalcode}"
 																	}
 																}
@@ -181,38 +175,36 @@
 						},
 						{
 							"id": "396da583-4748-40b9-aa88-4f8bb9074fc3",
-							"type": "Search",
+							"type": "search",
 							"name": "From you requests",
 							"title": "",
 							"placeholder": "",
-							"source": "{filter(messages, $datum.data.value == \"pending\" && owns($datum.service, $datum.resource, $datum.fk) == false && findFirst(sort(messages, desc, createdAt), fk == $datum.fk && data.type == $datum.data.type).id == $datum.id)}",
+							"source": "{filter(evy.messages, $datum.data.value == \"pending\" && owns($datum.resource, $datum.fk) == false && findFirst(sort(evy.messages, desc, created_at), fk == $datum.fk && data.type == $datum.data.type).id == $datum.id)}",
 							"no_results": "No requests",
 							"destination": "",
 							"visible": "true",
 							"actions": {},
 							"child": {
 								"id": "373ff30f-dc80-425c-a382-fadc8fcdcd81",
-								"type": "ListItem",
+								"type": "list_item",
 								"name": "From you request row",
-								"title": "{findFirst(dc28ed59-298e-493c-8ff3-3e60f2ebccbd, $datum.fk).title}",
+								"title": "{findFirst(marketplace.items, $datum.fk).title}",
 								"subtitle": "{$datum.data.value}",
 								"visible": "true",
-								"swipeLabel": "Cancel",
+								"swipe_label": "Cancel",
 								"actions": {
-									"swipe-left": [
+									"swipe_left": [
 										{
 											"condition": "",
 											"false": "",
 											"true": {
 												"fn": "create",
-												"service": "475731ac-31aa-4d65-94d2-7032782ae359",
-												"resource": "messages",
+												"resource": "evy.messages",
 												"mode": "inline",
 												"data": {
 													"fk": "$datum.fk",
-													"service": "$datum.service",
 													"resource": "$datum.resource",
-													"parentMessageId": "$datum.id",
+													"parent_message_id": "$datum.id",
 													"data": "{value: cancel, type: $datum.data.type, time: $datum.data.time, postalcode: $datum.data.postalcode}"
 												}
 											}
@@ -223,20 +215,20 @@
 						},
 						{
 							"id": "4e81c7e7-f765-4864-ac63-35e2eff707cd",
-							"type": "Search",
+							"type": "search",
 							"name": "Scheduled requests",
 							"title": "",
 							"placeholder": "",
-							"source": "{filter(messages, $datum.data.value == \"accept\")}",
+							"source": "{filter(evy.messages, $datum.data.value == \"accept\")}",
 							"no_results": "No requests",
 							"destination": "",
 							"visible": "true",
 							"actions": {},
 							"child": {
 								"id": "c52a5527-ee4a-46c8-8f5c-1e18f782bcc0",
-								"type": "ListItem",
+								"type": "list_item",
 								"name": "Scheduled row",
-								"title": "{findFirst(dc28ed59-298e-493c-8ff3-3e60f2ebccbd, $datum.fk).title}",
+								"title": "{findFirst(marketplace.items, $datum.fk).title}",
 								"subtitle": "{$datum.data.value}",
 								"visible": "true",
 								"actions": {}
@@ -246,10 +238,10 @@
 				},
 				{
 					"id": "96d3efe4-ea20-4a81-9ccb-64d6b57646e9",
-					"type": "Search",
+					"type": "search",
 					"child": {
 						"id": "d5922ca1-fc26-430a-81ed-fd343c13dab1",
-						"type": "ListItem",
+						"type": "list_item",
 						"title": "{$datum.title}",
 						"subtitle": "{formatCurrency($datum.price)}",
 						"image": "{$datum.photo_ids.0}",
@@ -258,8 +250,8 @@
 								{
 									"true": {
 										"fn": "navigate",
-										"flowId": "74a49d4b-2176-4925-857a-e29e2991f1bd",
-										"pageId": "82cae120-c7b1-4c29-bd42-e1521320b109",
+										"flow_id": "74a49d4b-2176-4925-857a-e29e2991f1bd",
+										"page_id": "82cae120-c7b1-4c29-bd42-e1521320b109",
 										"query": {
 											"id": "$datum.id"
 										}
@@ -274,7 +266,7 @@
 					},
 					"title": "",
 					"placeholder": "Search anything",
-					"source": "{dc28ed59-298e-493c-8ff3-3e60f2ebccbd}",
+					"source": "{marketplace.items}",
 					"no_results": "Nothing found",
 					"destination": "",
 					"visible": "true",
@@ -285,7 +277,7 @@
 			"title": "Home",
 			"footer": {
 				"id": "cc86c53a-170d-4800-8897-8f99f3697053",
-				"type": "Button",
+				"type": "button",
 				"label": "Sell something",
 				"title": "",
 				"actions": {
@@ -293,8 +285,8 @@
 						{
 							"true": {
 								"fn": "navigate",
-								"flowId": "ca47e6c5-da19-4491-8422-adb40d9e8a27",
-								"pageId": "306ed62c-c2af-4652-a873-26c7a388972d"
+								"flow_id": "ca47e6c5-da19-4491-8422-adb40d9e8a27",
+								"page_id": "306ed62c-c2af-4652-a873-26c7a388972d"
 							},
 							"false": "",
 							"condition": ""

@@ -30,7 +30,7 @@ export function schemaPathToTsName(schemaPath: string): string {
 	return schemaPathRelativeToSchemaDir(schemaPath).replace(/[/\\]/g, "/");
 }
 
-function pascalCaseIdentifierPart(value: string): string {
+export function snakeToPascal(value: string): string {
 	return value
 		.split(/[^A-Za-z0-9]+/)
 		.filter(Boolean)
@@ -41,7 +41,7 @@ function pascalCaseIdentifierPart(value: string): string {
 export function schemaPathToTypeName(schemaPath: string): string {
 	return schemaPathRelativeToSchemaDir(schemaPath)
 		.split(/[/\\.]+/)
-		.map(pascalCaseIdentifierPart)
+		.map(snakeToPascal)
 		.join("");
 }
 
@@ -77,7 +77,7 @@ export function resourceKey(name: string): string {
 	return name.replace(/([a-z])([A-Z])/g, "$1_$2").toUpperCase();
 }
 
-export function swiftCaseName(name: string): string {
+export function snakeToCamel(name: string): string {
 	const camel = name.replace(/_([a-z])/g, (_match, character) =>
 		character.toUpperCase(),
 	);

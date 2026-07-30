@@ -58,11 +58,11 @@ extension EVY {
     try applySyncedRecord(namespace: namespace, resource: resource, value: value)
   }
 
-  /// A record the server has deleted. `deletedAt` is absent on live records.
+  /// A record the server has deleted. `deleted_at` is absent on live records.
   private static func isTombstoned(_ value: EVYJson) -> Bool {
     guard case .dictionary(let record) = value else { return false }
-    guard let deletedAt = record["deletedAt"] else { return false }
-    if case .null = deletedAt { return false }
+    guard let deleted_at = record["deleted_at"] else { return false }
+    if case .null = deleted_at { return false }
     return true
   }
 
@@ -130,12 +130,18 @@ extension EVY {
     return EVYNamespace.singletonId
   }
 
-  static func getSyncedJsonForBinding(key: String, cacheScopeId: String?) throws -> EVYJson {
-    do {
-      return try publicStore.getJsonForBinding(key: key, cacheScopeId: cacheScopeId)
-    } catch EVYDataError.keyNotFound {
-      return try privateStore.getJsonForBinding(key: key, cacheScopeId: cacheScopeId)
+  static func getSyncedJsonForRef(_ ref: String) throws -> EVYJson {
+    let namespace = try EVYResourceRef.serviceOf(ref)
+    if let collection = try getSyncedCollectionJson(namespace: namespace, resource: ref) {
+      return collection
     }
+    for store in syncedStores() {
+      if let row = try? store.get(namespace: namespace, resource: ref, id: EVYNamespace.singletonId)
+      {
+        return try row.decoded()
+      }
+    }
+    throw EVYDataError.keyNotFound
   }
 
   static func getSyncedCollectionJson(namespace: String, resource: String) throws -> EVYJson? {
@@ -145,21 +151,5 @@ extension EVY {
       return collection
     }
     return try privateStore.getCollectionJson(namespace: namespace, resource: resource)
-  }
-
-  static func namespaceForSyncedResource(_ resource: String) -> String? {
-    publicStore.namespace(forSyncedResource: resource)
-      ?? privateStore.namespace(forSyncedResource: resource)
-  }
-
-  static func findSyncedRow(matching resource: String) throws -> (row: EVYData, store: EVYDataStore)
-  {
-    for store in syncedStores() {
-      let allRows = (try? store.getAll()) ?? []
-      if let matched = allRows.first(where: { $0.resource == resource }) {
-        return (matched, store)
-      }
-    }
-    throw EVYDataError.keyNotFound
   }
 }

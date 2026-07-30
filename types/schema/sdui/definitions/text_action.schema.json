@@ -1,9 +1,9 @@
 {
 	"$schema": "https://json-schema.org/draft/2020-12/schema",
-	"$id": "sdui/definitions/Search",
-	"title": "Search_Row",
+	"$id": "sdui/definitions/text_action",
+	"title": "TextAction_Row",
 	"triggers": {
-		"tap": "optional"
+		"tap": "required"
 	},
 	"allOf": [
 		{
@@ -11,28 +11,19 @@
 		},
 		{
 			"type": "object",
-			"required": ["type", "source", "destination"],
+			"required": ["type"],
 			"properties": {
 				"type": {
-					"const": "Search"
+					"const": "text_action"
 				},
 				"title": {
 					"type": "string"
 				},
-				"source": {
+				"subtitle": {
 					"type": "string"
 				},
-				"destination": {
+				"action": {
 					"type": "string"
-				},
-				"placeholder": {
-					"type": "string"
-				},
-				"no_results": {
-					"type": "string"
-				},
-				"child": {
-					"$ref": "../evy.schema.json#/$defs/UI_Row"
 				}
 			}
 		}

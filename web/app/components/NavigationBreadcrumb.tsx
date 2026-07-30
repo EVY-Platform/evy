@@ -3,7 +3,7 @@ import { useRowById } from "../hooks/useRowById";
 import parseIconText from "../icons/parseIconText";
 import { storedRowToRow } from "../rows/rowElementFactory";
 import { useFlowsContext } from "../state/contexts/FlowsContext";
-import { splitCamelCaseToWords } from "../utils/labelFormatting";
+import { displayLabel } from "../utils/labelFormatting";
 import {
 	breadcrumbLabelForPage,
 	breadcrumbLabelForRow,
@@ -54,7 +54,7 @@ export function NavigationBreadcrumb() {
 		() => [
 			...Object.values(flowsById).map((f) => ({
 				value: f.id,
-				label: splitCamelCaseToWords(f.name),
+				label: displayLabel(f.name),
 			})),
 			{
 				value: CREATE_FLOW_OPTION_VALUE,

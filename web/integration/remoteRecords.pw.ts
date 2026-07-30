@@ -16,12 +16,12 @@ const PUSHED_VERSION = "2026-07-05T00:00:00.000Z";
 const mockRow = {
 	id: ROW_ID,
 	name: "Remote Row",
-	type: "Text",
+	type: "text",
 	visible: "true",
 	visibility: "public",
 	data: { title: "Before", actions: {} },
-	createdAt: SYNCED_VERSION,
-	updatedAt: SYNCED_VERSION,
+	created_at: SYNCED_VERSION,
+	updated_at: SYNCED_VERSION,
 };
 
 /**
@@ -38,33 +38,33 @@ test.describe("Remote records", () => {
 			syncedVersion: SYNCED_VERSION,
 			rows: [
 				{
-					resource: "flows",
+					resource: "evy.flows",
 					value: [
 						{
 							id: FLOW_ID,
 							name: "Remote Flow",
-							pageIds: [PAGE_ID],
+							page_ids: [PAGE_ID],
 							visibility: "public",
-							createdAt: SYNCED_VERSION,
-							updatedAt: SYNCED_VERSION,
+							created_at: SYNCED_VERSION,
+							updated_at: SYNCED_VERSION,
 						},
 					],
 				},
 				{
-					resource: "pages",
+					resource: "evy.pages",
 					value: [
 						{
 							id: PAGE_ID,
 							name: "Page",
 							title: "Page",
-							rowIds: [ROW_ID],
+							row_ids: [ROW_ID],
 							visibility: "public",
-							createdAt: SYNCED_VERSION,
-							updatedAt: SYNCED_VERSION,
+							created_at: SYNCED_VERSION,
+							updated_at: SYNCED_VERSION,
 						},
 					],
 				},
-				{ resource: "rows", value: [mockRow] },
+				{ resource: "evy.rows", value: [mockRow] },
 			],
 		});
 
@@ -77,12 +77,12 @@ test.describe("Remote records", () => {
 		await page.evaluate(
 			({ row, version }) =>
 				window.__evyPushRemote({
-					resource: "rows",
+					resource: "evy.rows",
 					operation: "update",
 					value: {
 						...row,
 						data: { title: "After", actions: {} },
-						updatedAt: version,
+						updated_at: version,
 					},
 				}),
 			{ row: mockRow, version: PUSHED_VERSION },
@@ -99,16 +99,16 @@ test.describe("Remote records", () => {
 		await page.evaluate(
 			({ pageId, rowId, version }) =>
 				window.__evyPushRemote({
-					resource: "pages",
+					resource: "evy.pages",
 					operation: "update",
 					value: {
 						id: pageId,
 						name: "Page",
 						title: "Page",
-						rowIds: [rowId],
+						row_ids: [rowId],
 						visibility: "public",
-						createdAt: "2026-07-01T00:00:00.000Z",
-						updatedAt: version,
+						created_at: "2026-07-01T00:00:00.000Z",
+						updated_at: version,
 					},
 				}),
 			{ pageId: PAGE_ID, rowId: ROW_ID, version: PUSHED_VERSION },
@@ -130,6 +130,6 @@ test.describe("Remote records", () => {
 					PAGE_ID,
 				),
 			)
-			.toMatchObject({ expectedUpdatedAt: PUSHED_VERSION });
+			.toMatchObject({ expected_updated_at: PUSHED_VERSION });
 	});
 });

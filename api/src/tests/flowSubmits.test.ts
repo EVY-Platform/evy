@@ -6,17 +6,16 @@ import {
 	collectSubmitTargetsFromFlatFlow,
 } from "evy-types/flowSubmits";
 
-const SERVICE = "66b092ae-7cd8-4d67-95b7-30b03568fd90";
-const RESOURCE = "dc28ed59-298e-493c-8ff3-3e60f2ebccbd";
+const RESOURCE = "marketplace.items";
 
 function makeFlow(overrides: Partial<DATA_EVY_Flow> = {}): DATA_EVY_Flow {
 	return {
 		id: "flow-1",
 		name: "Flow",
-		pageIds: ["page-1"],
+		page_ids: ["page-1"],
 		visibility: "public",
-		createdAt: "2026-01-01T00:00:00.000Z",
-		updatedAt: "2026-01-01T00:00:00.000Z",
+		created_at: "2026-01-01T00:00:00.000Z",
+		updated_at: "2026-01-01T00:00:00.000Z",
 		...overrides,
 	};
 }
@@ -25,10 +24,10 @@ function makePage(overrides: Partial<DATA_EVY_Page> = {}): DATA_EVY_Page {
 	return {
 		id: "page-1",
 		name: "Page",
-		rowIds: ["row-1"],
+		row_ids: ["row-1"],
 		visibility: "public",
-		createdAt: "2026-01-01T00:00:00.000Z",
-		updatedAt: "2026-01-01T00:00:00.000Z",
+		created_at: "2026-01-01T00:00:00.000Z",
+		updated_at: "2026-01-01T00:00:00.000Z",
 		...overrides,
 	};
 }
@@ -37,7 +36,7 @@ function makeSubmitRow(id = "row-1"): DATA_EVY_Row {
 	return {
 		id,
 		name: "Submit",
-		type: "Button",
+		type: "button",
 		visible: "true",
 		data: {
 			actions: {
@@ -47,7 +46,6 @@ function makeSubmitRow(id = "row-1"): DATA_EVY_Row {
 						false: "",
 						true: {
 							fn: "create",
-							service: SERVICE,
 							resource: RESOURCE,
 							mode: "submit",
 						},
@@ -56,8 +54,8 @@ function makeSubmitRow(id = "row-1"): DATA_EVY_Row {
 			},
 		},
 		visibility: "public",
-		createdAt: "2026-01-01T00:00:00.000Z",
-		updatedAt: "2026-01-01T00:00:00.000Z",
+		created_at: "2026-01-01T00:00:00.000Z",
+		updated_at: "2026-01-01T00:00:00.000Z",
 	};
 }
 
@@ -66,7 +64,7 @@ describe("flowSubmits flat graph", () => {
 		const flow = makeFlow();
 		const pagesById = {
 			"page-1": makePage({
-				rowIds: ["sheet-row"],
+				row_ids: ["sheet-row"],
 			}),
 		};
 		const rowsById = {
@@ -85,14 +83,14 @@ describe("flowSubmits flat graph", () => {
 			rowsById,
 		);
 
-		expect([...targets]).toEqual([`${SERVICE}/${RESOURCE}`]);
+		expect([...targets]).toEqual([RESOURCE]);
 	});
 
 	it("allows a declaration without a submit action", () => {
 		const flow = makeFlow({
-			submits: { service: SERVICE, resource: RESOURCE },
+			submits: { resource: RESOURCE },
 		});
-		const pagesById = { "page-1": makePage({ rowIds: [] }) };
+		const pagesById = { "page-1": makePage({ row_ids: [] }) };
 		const rowsById = {};
 
 		expect(() =>

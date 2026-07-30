@@ -10,21 +10,20 @@ import Foundation
 /// Domain entity a flow submits via `create(...,submit)`, declared on the flow
 /// record so clients validate rather than infer it from action strings.
 struct EVYFlowSubmits: Decodable, Equatable {
-  let service: String
   let resource: String
 }
 
 struct EVYStoredFlow: Decodable, Equatable {
   let id: String
-  let pageIds: [String]
+  let page_ids: [String]
   let submits: EVYFlowSubmits?
 }
 
 struct EVYStoredPage: Decodable, Equatable {
   let id: String
   let title: String?
-  let rowIds: [String]
-  let footerRowId: String?
+  let row_ids: [String]
+  let footer_row_id: String?
 }
 
 struct EVYStoredRow: Decodable, Equatable {
@@ -34,17 +33,17 @@ struct EVYStoredRow: Decodable, Equatable {
   let visible: String
   let data: [String: EVYJson]
 
-  var childRowId: String? {
+  var child_row_id: String? {
     guard case .string(let value) = data["child_row_id"] else { return nil }
     return value
   }
 
-  var sheetRowId: String? {
+  var sheet_row_id: String? {
     guard case .string(let value) = data["sheet_row_id"] else { return nil }
     return value
   }
 
-  var childrenRowIds: [String] {
+  var children_row_ids: [String] {
     guard case .array(let items) = data["children_row_ids"] else { return [] }
     return items.compactMap { item in
       guard case .string(let s) = item else { return nil }
@@ -54,7 +53,7 @@ struct EVYStoredRow: Decodable, Equatable {
 
   /// Builds a single-row `UI_Row` from this record's content.
   /// Relationship ids are intentionally NOT resolved — callers use
-  /// `sheetRowId`, `childRowId` (Search only), and `childrenRowIds` to render nested rows by id.
+  /// `sheet_row_id`, `child_row_id` (Search only), and `children_row_ids` to render nested rows by id.
   func uiRow() -> UI_Row? {
     var object = data.mapValues(evyJsonToAny)
     object.removeValue(forKey: "sheet_row_id")
@@ -120,7 +119,7 @@ enum EVYFlowStore {
   static func flowExists(id: String, from store: EVYDataStore = EVY.publicStore) -> Bool {
     (try? store.get(
       namespace: EVYNamespace.evy,
-      resource: EVYCoreResource.flows.rawValue,
+      resource: EVYCoreResource.flows.ref,
       id: id
     )) != nil
   }
@@ -129,7 +128,7 @@ enum EVYFlowStore {
     guard
       let evyData = try? store.get(
         namespace: EVYNamespace.evy,
-        resource: EVYCoreResource.flows.rawValue,
+        resource: EVYCoreResource.flows.ref,
         id: id
       )
     else { return nil }
@@ -140,14 +139,14 @@ enum EVYFlowStore {
     inFlowId flowId: String,
     from store: EVYDataStore = EVY.publicStore
   ) -> String? {
-    flow(id: flowId, from: store)?.pageIds.first
+    flow(id: flowId, from: store)?.page_ids.first
   }
 
   static func pageIds(
     inFlowId flowId: String,
     from store: EVYDataStore = EVY.publicStore
   ) -> [String] {
-    flow(id: flowId, from: store)?.pageIds ?? []
+    flow(id: flowId, from: store)?.page_ids ?? []
   }
 
   /// Returns the given `pageId` only if the flow with `flowId` contains it.
@@ -156,7 +155,7 @@ enum EVYFlowStore {
     pageId: String,
     from store: EVYDataStore = EVY.publicStore
   ) -> String? {
-    guard let flow = flow(id: flowId, from: store), flow.pageIds.contains(pageId) else {
+    guard let flow = flow(id: flowId, from: store), flow.page_ids.contains(pageId) else {
       return nil
     }
     return pageId
@@ -193,7 +192,7 @@ enum EVYPageStore {
     guard
       let evyData = try? store.get(
         namespace: EVYNamespace.evy,
-        resource: EVYCoreResource.pages.rawValue,
+        resource: EVYCoreResource.pages.ref,
         id: id
       )
     else { return nil }
@@ -209,7 +208,7 @@ enum EVYRowStore {
     guard
       let evyData = try? store.get(
         namespace: EVYNamespace.evy,
-        resource: EVYCoreResource.rows.rawValue,
+        resource: EVYCoreResource.rows.ref,
         id: id
       )
     else { return nil }

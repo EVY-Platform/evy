@@ -118,6 +118,13 @@ enum EVYDraft {
     }
   }
 
+  private static func entityKeySegments(for entityKey: String?) -> [String] {
+    guard let entityKey,
+      let (service, resource) = try? EVYResourceRef.parse(entityKey)
+    else { return [] }
+    return [service, resource]
+  }
+
   @MainActor
   static func binding(parsedProps: String, scopeId: String?) throws -> Binding {
     let segments = try splitPropsFromText(parsedProps)
@@ -133,12 +140,14 @@ enum EVYDraft {
 
     let effectiveScope = scopeId ?? Scope.fallbackUnscoped
     let entityKey = Scope.entityKey(fromScopeId: effectiveScope)
+    let entityKeySegments = entityKeySegments(for: entityKey)
+    let prefixMatches =
+      entityKey != nil
+      && segments.count >= entityKeySegments.count
+      && Array(segments.prefix(entityKeySegments.count)) == entityKeySegments
 
-    if let ek = entityKey,
-      segments.first == ek,
-      segments.count > 1
-    {
-      let rest = Array(segments.dropFirst())
+    if entityKey != nil, prefixMatches, segments.count > entityKeySegments.count {
+      let rest = Array(segments.dropFirst(entityKeySegments.count))
       return Binding(
         scopeId: effectiveScope,
         pathSegments: rest,
@@ -146,10 +155,7 @@ enum EVYDraft {
       )
     }
 
-    // Page-local aliases on an entity create/edit scope (e.g. `{pickup_address}`) stay in
-    // the same scope for reads, but use aliasFlat so create() can omit them from the
-    // submitted entity — only `{entityKey.*}` paths become item fields.
-    if let ek = entityKey, segments.first != ek {
+    if entityKey != nil && !prefixMatches {
       return Binding(
         scopeId: effectiveScope,
         pathSegments: segments,
@@ -199,12 +205,14 @@ enum EVYDraft {
     if splitProps.count >= path.count, Array(splitProps.prefix(path.count)) == path {
       return Array(splitProps.suffix(splitProps.count - path.count))
     }
-    if let ek = Scope.entityKey(fromScopeId: binding.scopeId),
-      splitProps.first == ek,
-      splitProps.count > 1,
-      Array(splitProps.dropFirst()) == path
-    {
-      return []
+    if let entityKey = Scope.entityKey(fromScopeId: binding.scopeId) {
+      let entityKeySegments = entityKeySegments(for: entityKey)
+      if splitProps.count > entityKeySegments.count,
+        Array(splitProps.prefix(entityKeySegments.count)) == entityKeySegments,
+        Array(splitProps.dropFirst(entityKeySegments.count)) == path
+      {
+        return []
+      }
     }
     return splitProps
   }

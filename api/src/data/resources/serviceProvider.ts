@@ -1,14 +1,14 @@
 import type { DATA_EVY_ServiceProvider } from "evy-types";
-import { serviceProvider } from "evy-types/db/schema.generated";
+import { service_provider } from "evy-types/db/schema.generated";
 import { validateDataEvyServiceProvider } from "evy-types/validators";
 import { makeCoreResource } from "./coreResource";
 
 export const providersResource = makeCoreResource<DATA_EVY_ServiceProvider>({
-	table: serviceProvider,
+	table: service_provider,
 	validate: validateDataEvyServiceProvider,
 	toUpdateSet: (validated) => ({
-		fkServiceId: validated.fkServiceId,
-		fkOrganizationId: validated.fkOrganizationId,
+		fk_service_id: validated.fk_service_id,
+		fk_organization_id: validated.fk_organization_id,
 		name: validated.name,
 		description: validated.description,
 		logo: validated.logo,

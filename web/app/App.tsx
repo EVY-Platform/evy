@@ -4,6 +4,7 @@ import type {
 	ElementDragType,
 } from "@atlaskit/pragmatic-drag-and-drop/types";
 import type { DATA_EVY_Formatter } from "evy-types";
+import { serviceOfRef } from "evy-types/resourceRef";
 import { FileSliders, Rows3 } from "lucide-react";
 import {
 	Fragment,
@@ -151,7 +152,7 @@ function AppContent() {
 	const activePage = activePageId ? pagesById[activePageId] : undefined;
 
 	const activeFlowPageIds = useMemo(
-		() => flowsById[activeFlowId ?? ""]?.pageIds ?? [],
+		() => flowsById[activeFlowId ?? ""]?.page_ids ?? [],
 		[flowsById, activeFlowId],
 	);
 
@@ -207,7 +208,7 @@ function AppContent() {
 	);
 
 	const shouldShowBlankSheetPage = Boolean(
-		activeLeafRowId && !activeLeafRow?.config.sheetRowId,
+		activeLeafRowId && !activeLeafRow?.config.sheet_row_id,
 	);
 
 	return (
@@ -372,8 +373,8 @@ export function App() {
 		? new Map(
 				[
 					...new Set(
-						(testServiceResources ?? []).map(
-							(resource) => resource.serviceId,
+						(testServiceResources ?? []).map((resource) =>
+							serviceOfRef(resource.id),
 						),
 					),
 				].map((serviceId) => [

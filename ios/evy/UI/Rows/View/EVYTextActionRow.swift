@@ -30,7 +30,7 @@ struct EVYTextActionRow: View {
     json: """
       {
         "id": "preview-text-action-row",
-        "type": "TextAction",
+        "type": "text_action",
         "actions": {},
         "visible": "true",
         "title": "Pickup location",

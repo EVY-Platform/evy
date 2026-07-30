@@ -15,7 +15,7 @@ test.describe("Row Selection", () => {
 				title: "Test Page",
 				rows: [
 					{
-						type: "Text",
+						type: "text",
 						title: "First Text Row",
 						subtitle: "First row subtitle content",
 					},
@@ -37,7 +37,7 @@ test.describe("Row Selection", () => {
 		).toBeVisible();
 		await expect(
 			configPanel.getByLabel("title", { exact: true }),
-		).toHaveText("First Text Row");
+		).toHaveValue("First Text Row");
 	});
 
 	test("should update configuration panel when different row is selected", async ({
@@ -49,12 +49,12 @@ test.describe("Row Selection", () => {
 				title: "Test Page",
 				rows: [
 					{
-						type: "Text",
+						type: "text",
 						title: "First Text Row",
 						subtitle: "First row subtitle content",
 					},
 					{
-						type: "Text",
+						type: "text",
 						title: "Second Text Row",
 						subtitle: "Second row subtitle content",
 					},
@@ -72,7 +72,7 @@ test.describe("Row Selection", () => {
 		// Verify first row's title is shown
 		await expect(
 			configPanel.getByLabel("title", { exact: true }),
-		).toHaveText("First Text Row");
+		).toHaveValue("First Text Row");
 
 		// Click on second Text row
 		const secondTextRow = page
@@ -83,7 +83,7 @@ test.describe("Row Selection", () => {
 		// Verify second row's title is now shown
 		await expect(
 			configPanel.getByLabel("title", { exact: true }),
-		).toHaveText("Second Text Row");
+		).toHaveValue("Second Text Row");
 	});
 
 	test("should show only one row selected at a time", async ({ page }) => {
@@ -93,12 +93,12 @@ test.describe("Row Selection", () => {
 				title: "Test Page",
 				rows: [
 					{
-						type: "Text",
+						type: "text",
 						title: "First Text Row",
 						subtitle: "First row subtitle content",
 					},
 					{
-						type: "Text",
+						type: "text",
 						title: "Text Row",
 						text: "Text row content",
 					},
@@ -120,7 +120,7 @@ test.describe("Row Selection", () => {
 		// Configuration should update to the newly selected row.
 		await expect(
 			configPanel.getByLabel("title", { exact: true }),
-		).toHaveText("Text Row");
+		).toHaveValue("Text Row");
 	});
 
 	test("should show configuration for dragged row after drop", async ({
@@ -156,7 +156,7 @@ test.describe("Row Selection", () => {
 				title: "Test Page",
 				rows: [
 					{
-						type: "Text",
+						type: "text",
 						title: "First Text Row",
 						subtitle: "First row subtitle content",
 					},
@@ -194,7 +194,7 @@ test.describe("Row Selection", () => {
 				title: "Test Page",
 				rows: [
 					{
-						type: "Text",
+						type: "text",
 						title: "First Text Row",
 						subtitle: "First row subtitle content",
 					},
@@ -217,10 +217,10 @@ test.describe("Row Selection", () => {
 		// Title should still show the same row's title
 		await expect(
 			configPanel.getByLabel("title", { exact: true }),
-		).toHaveText("First Text Row");
+		).toHaveValue("First Text Row");
 
 		// The updated subtitle should be visible
-		await expect(subtitleInput).toHaveText("New subtitle content");
+		await expect(subtitleInput).toHaveValue("New subtitle content");
 	});
 });
 
@@ -232,11 +232,11 @@ test.describe("Row Selection with Containers", () => {
 				title: "Test Page",
 				rows: [
 					{
-						type: "VerticalContainer",
+						type: "vertical_container",
 						title: "Container Row",
 						children: [
 							{
-								type: "Text",
+								type: "text",
 								title: "Child Text Row",
 								text: "Child row text",
 							},
@@ -253,7 +253,7 @@ test.describe("Row Selection with Containers", () => {
 		const configPanel = getConfigPanel(page);
 		await expect(
 			configPanel.getByLabel("title", { exact: true }).first(),
-		).toHaveText("Container Row");
+		).toHaveValue("Container Row");
 	});
 
 	test("should select the nested child row itself when clicked", async ({
@@ -265,11 +265,11 @@ test.describe("Row Selection with Containers", () => {
 				title: "Test Page",
 				rows: [
 					{
-						type: "VerticalContainer",
+						type: "vertical_container",
 						title: "Container Row",
 						children: [
 							{
-								type: "Text",
+								type: "text",
 								title: "Child Text Row",
 								text: "Child row text",
 							},
@@ -286,7 +286,7 @@ test.describe("Row Selection with Containers", () => {
 		const configPanel = getConfigPanel(page);
 		await expect(
 			configPanel.getByLabel("title", { exact: true }).first(),
-		).toHaveText("Child Text Row");
+		).toHaveValue("Child Text Row");
 		await expect(configPanel.getByLabel("Page title")).toHaveCount(0);
 		await expect(
 			page.getByRole("button", {
@@ -304,15 +304,15 @@ test.describe("Row Selection with Containers", () => {
 				title: "Test Page",
 				rows: [
 					{
-						type: "VerticalContainer",
+						type: "vertical_container",
 						title: "Outer Container",
 						children: [
 							{
-								type: "HorizontalContainer",
+								type: "horizontal_container",
 								title: "Inner Container",
 								children: [
 									{
-										type: "Text",
+										type: "text",
 										title: "Deep Text Row",
 										text: "deep",
 									},
@@ -328,7 +328,7 @@ test.describe("Row Selection with Containers", () => {
 		const configPanel = getConfigPanel(page);
 		await expect(
 			configPanel.getByLabel("title", { exact: true }).first(),
-		).toHaveText("Deep Text Row");
+		).toHaveValue("Deep Text Row");
 		await expect(
 			page.getByRole("button", {
 				name: "Configure nested row at depth 2: Deep Text Row",
@@ -345,11 +345,11 @@ test.describe("Row Selection with Containers", () => {
 				title: "Test Page",
 				rows: [
 					{
-						type: "VerticalContainer",
+						type: "vertical_container",
 						title: "Container Row",
 						children: [
 							{
-								type: "Input",
+								type: "input",
 								title: "Child Input Row",
 								placeholder: "type here",
 							},
@@ -363,7 +363,7 @@ test.describe("Row Selection with Containers", () => {
 		const configPanel = getConfigPanel(page);
 		await expect(
 			configPanel.getByLabel("title", { exact: true }).first(),
-		).toHaveText("Child Input Row");
+		).toHaveValue("Child Input Row");
 	});
 
 	test("should still select a container when its own title is clicked", async ({
@@ -375,11 +375,11 @@ test.describe("Row Selection with Containers", () => {
 				title: "Test Page",
 				rows: [
 					{
-						type: "VerticalContainer",
+						type: "vertical_container",
 						title: "Container Row",
 						children: [
 							{
-								type: "Text",
+								type: "text",
 								title: "Child Text Row",
 								text: "Child row text",
 							},
@@ -393,7 +393,7 @@ test.describe("Row Selection with Containers", () => {
 		const configPanel = getConfigPanel(page);
 		await expect(
 			configPanel.getByLabel("title", { exact: true }).first(),
-		).toHaveText("Container Row");
+		).toHaveValue("Container Row");
 	});
 
 	test("should switch selection between container and child", async ({
@@ -405,11 +405,11 @@ test.describe("Row Selection with Containers", () => {
 				title: "Test Page",
 				rows: [
 					{
-						type: "VerticalContainer",
+						type: "vertical_container",
 						title: "Container Row",
 						children: [
 							{
-								type: "Text",
+								type: "text",
 								title: "Child Text Row",
 								text: "Child row text",
 							},
@@ -427,13 +427,13 @@ test.describe("Row Selection with Containers", () => {
 		await childRow.click();
 		await expect(
 			configPanel.getByLabel("title", { exact: true }).first(),
-		).toHaveText("Child Text Row");
+		).toHaveValue("Child Text Row");
 
 		await page
 			.getByRole("button", { name: "Configure row: Container Row" })
 			.click();
 		await expect(
 			configPanel.getByLabel("title", { exact: true }).first(),
-		).toHaveText("Container Row");
+		).toHaveValue("Container Row");
 	});
 });

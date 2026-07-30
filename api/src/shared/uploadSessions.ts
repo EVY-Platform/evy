@@ -44,13 +44,13 @@ export function parseUploadChunkFrame(frame: Buffer): {
 export async function handleUploadChunk(frame: Buffer): Promise<void> {
 	const { metadata, chunkData } = parseUploadChunkFrame(frame);
 
-	if (chunkData.length !== metadata.byteLength) {
+	if (chunkData.length !== metadata.byte_length) {
 		throw new Error(
-			`Chunk byte length mismatch: expected ${metadata.byteLength}, got ${chunkData.length}`,
+			`Chunk byte length mismatch: expected ${metadata.byte_length}, got ${chunkData.length}`,
 		);
 	}
 
-	const session = uploadSessions.get(metadata.uploadId);
+	const session = uploadSessions.get(metadata.upload_id);
 
 	if (session) {
 		if (metadata.index !== session.expectedIndex) {
@@ -58,9 +58,9 @@ export async function handleUploadChunk(frame: Buffer): Promise<void> {
 				`Unexpected chunk index: expected ${session.expectedIndex}, got ${metadata.index}`,
 			);
 		}
-		if (metadata.byteOffset !== session.receivedBytes) {
+		if (metadata.byte_offset !== session.receivedBytes) {
 			throw new Error(
-				`Unexpected byte offset: expected ${session.receivedBytes}, got ${metadata.byteOffset}`,
+				`Unexpected byte offset: expected ${session.receivedBytes}, got ${metadata.byte_offset}`,
 			);
 		}
 		if (session.receivedBytes + chunkData.length > MAX_UPLOAD_BYTES) {
@@ -77,9 +77,9 @@ export async function handleUploadChunk(frame: Buffer): Promise<void> {
 	if (metadata.index !== 0) {
 		throw new Error(`First chunk must have index 0, got ${metadata.index}`);
 	}
-	if (metadata.byteOffset !== 0) {
+	if (metadata.byte_offset !== 0) {
 		throw new Error(
-			`First chunk must have byteOffset 0, got ${metadata.byteOffset}`,
+			`First chunk must have byte_offset 0, got ${metadata.byte_offset}`,
 		);
 	}
 	if (chunkData.length > MAX_UPLOAD_BYTES) {
@@ -87,19 +87,19 @@ export async function handleUploadChunk(frame: Buffer): Promise<void> {
 			`Upload exceeds maximum size of ${MAX_UPLOAD_BYTES} bytes`,
 		);
 	}
-	uploadSessions.set(metadata.uploadId, {
+	uploadSessions.set(metadata.upload_id, {
 		chunks: [chunkData],
 		receivedBytes: chunkData.length,
 		expectedIndex: 1,
 	});
 }
 
-export function getUploadSession(uploadId: string): UploadSession | undefined {
-	return uploadSessions.get(uploadId);
+export function getUploadSession(upload_id: string): UploadSession | undefined {
+	return uploadSessions.get(upload_id);
 }
 
-export function deleteUploadSession(uploadId: string): void {
-	uploadSessions.delete(uploadId);
+export function deleteUploadSession(upload_id: string): void {
+	uploadSessions.delete(upload_id);
 }
 
 export function uploadSessionToBuffer(session: UploadSession): Buffer {

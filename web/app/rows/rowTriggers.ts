@@ -11,8 +11,8 @@ export function getRowTriggers(type: string): RowTriggerSpec[] {
 export const TRIGGER_LABELS: Record<RowTriggerName, string> = {
 	tap: "Tap",
 	delete: "Delete",
-	"tap-row": "Tap row",
-	"tap-column": "Tap column",
-	"swipe-left": "Swipe left",
+	tap_row: "Tap row",
+	tap_column: "Tap column",
+	swipe_left: "Swipe left",
 	submit: "Submit",
 };

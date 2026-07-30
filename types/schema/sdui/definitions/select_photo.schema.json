@@ -1,9 +1,10 @@
 {
 	"$schema": "https://json-schema.org/draft/2020-12/schema",
-	"$id": "sdui/definitions/Dropdown",
-	"title": "Dropdown_Row",
+	"$id": "sdui/definitions/select_photo",
+	"title": "SelectPhoto_Row",
 	"triggers": {
-		"tap": "required"
+		"tap": "required",
+		"delete": "required"
 	},
 	"allOf": [
 		{
@@ -11,10 +12,10 @@
 		},
 		{
 			"type": "object",
-			"required": ["type", "value", "source", "destination"],
+			"required": ["type", "source", "destination"],
 			"properties": {
 				"type": {
-					"const": "Dropdown"
+					"const": "select_photo"
 				},
 				"title": {
 					"type": "string"
@@ -25,13 +26,13 @@
 				"destination": {
 					"type": "string"
 				},
-				"value": {
+				"icon": {
 					"type": "string"
 				},
-				"placeholder": {
+				"subtitle": {
 					"type": "string"
 				},
-				"initial": {
+				"content": {
 					"type": "string"
 				}
 			}

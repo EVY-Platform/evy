@@ -30,7 +30,7 @@ struct EVYButtonRow: View {
     json: """
       {
         "id": "preview-button-row",
-        "type": "Button",
+        "type": "button",
         "actions": {},
         "title": "Preview Action",
         "label": "Tap me"

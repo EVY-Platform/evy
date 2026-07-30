@@ -24,7 +24,7 @@ export function buildActiveSheetPages({
 		const currentRow = rowsById[currentRowId];
 		if (!currentRow) break;
 		const sheetRowId = currentRow.data[ROW_SHEET_FIELD];
-		const childrenRowIds = Array.isArray(currentRow.data.children_row_ids)
+		const children_row_ids = Array.isArray(currentRow.data.children_row_ids)
 			? (currentRow.data.children_row_ids as string[])
 			: [];
 
@@ -37,7 +37,7 @@ export function buildActiveSheetPages({
 			continue;
 		}
 
-		if (childrenRowIds.includes(descendantId)) {
+		if (children_row_ids.includes(descendantId)) {
 			currentRowId = descendantId;
 			continue;
 		}

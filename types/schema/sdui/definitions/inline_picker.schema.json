@@ -1,7 +1,7 @@
 {
 	"$schema": "https://json-schema.org/draft/2020-12/schema",
-	"$id": "sdui/definitions/Button",
-	"title": "Button_Row",
+	"$id": "sdui/definitions/inline_picker",
+	"title": "InlinePicker_Row",
 	"triggers": {
 		"tap": "required"
 	},
@@ -11,20 +11,25 @@
 		},
 		{
 			"type": "object",
-			"required": ["type", "label"],
+			"required": ["type", "value"],
 			"properties": {
 				"type": {
-					"const": "Button"
+					"const": "inline_picker"
 				},
 				"title": {
 					"type": "string"
 				},
-				"label": {
+				"source": {
 					"type": "string"
 				},
-				"style": {
-					"type": "string",
-					"enum": ["primary", "danger"]
+				"destination": {
+					"type": "string"
+				},
+				"value": {
+					"type": "string"
+				},
+				"initial": {
+					"type": "string"
 				}
 			}
 		}

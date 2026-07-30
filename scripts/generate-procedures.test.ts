@@ -9,7 +9,7 @@ const VALID = {
 	procedures: {
 		place_search: {
 			service: "svc-1",
-			response: "rpc/placeSearch.response.schema.json",
+			response: "rpc/place_search.response.schema.json",
 		},
 	},
 };
@@ -29,7 +29,7 @@ describe("procedures manifest validation", () => {
 		const manifest = {
 			procedures: {
 				place_search: {
-					response: "rpc/placeSearch.response.schema.json",
+					response: "rpc/place_search.response.schema.json",
 				},
 			},
 		};

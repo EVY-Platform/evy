@@ -4,7 +4,6 @@ import {
 	type DataChangedNotification,
 	type DataChangedOperation,
 } from "evy-types/ws";
-import { MARKETPLACE_SERVICE } from "./resources";
 
 export { DATA_CHANGED_EVENT };
 
@@ -19,7 +18,6 @@ export function emitDataChanged(
 	value: unknown,
 ): void {
 	const notification: DataChangedNotification = {
-		service: MARKETPLACE_SERVICE,
 		resource,
 		operation,
 		value,

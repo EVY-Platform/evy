@@ -65,13 +65,13 @@ final class EVYDataStoreSortIndexTests: XCTestCase {
     XCTAssertEqual(stored.sortIndex, 0)
   }
 
-  func testCollectionResolvesFromExactResourceId() throws {
-    let resourceId = UUID().uuidString
-    resourcesToDelete.append((namespace: MarketplaceTestFixture.serviceId, resource: resourceId))
+  func testCollectionResolvesFromDottedResourceRef() throws {
+    let itemsRef = "test.items"
+    resourcesToDelete.append((namespace: "test", resource: itemsRef))
 
     try EVY.publicStore.applySyncedValue(
-      namespace: MarketplaceTestFixture.serviceId,
-      resource: resourceId,
+      namespace: "test",
+      resource: itemsRef,
       value: .array([
         .dictionary([
           "id": .string("item-1"),
@@ -81,7 +81,7 @@ final class EVYDataStoreSortIndexTests: XCTestCase {
     )
 
     XCTAssertEqual(
-      try EVY.getDataFromText("{\(resourceId)}"),
+      try EVY.getDataFromText("{\(itemsRef)}"),
       .array([
         .dictionary([
           "id": .string("item-1"),
@@ -91,15 +91,13 @@ final class EVYDataStoreSortIndexTests: XCTestCase {
     )
   }
 
-  func testCollectionDoesNotResolveFromResourceName() throws {
-    let resourceId = UUID().uuidString
-    let resourceName =
-      "evy_data_store_sort_index_test_\(UUID().uuidString.replacingOccurrences(of: "-", with: "_"))"
-    resourcesToDelete.append((namespace: MarketplaceTestFixture.serviceId, resource: resourceId))
+  func testCollectionDoesNotResolveFromBareResourceName() throws {
+    let itemsRef = "test.items"
+    resourcesToDelete.append((namespace: "test", resource: itemsRef))
 
     try EVY.publicStore.applySyncedValue(
-      namespace: MarketplaceTestFixture.serviceId,
-      resource: resourceId,
+      namespace: "test",
+      resource: itemsRef,
       value: .array([
         .dictionary([
           "id": .string("item-1"),
@@ -108,7 +106,7 @@ final class EVYDataStoreSortIndexTests: XCTestCase {
       ])
     )
 
-    XCTAssertThrowsError(try EVY.getDataFromText("{\(resourceName)}"))
+    XCTAssertThrowsError(try EVY.getDataFromText("{items}"))
   }
 
   /// Regression: the store's manually created ModelContext never autosaves, so

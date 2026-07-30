@@ -1,6 +1,5 @@
 import { describe, expect, test } from "bun:test";
 
-import type { DATA_EVY_Flow, DATA_EVY_Page } from "evy-types";
 import type { ServiceResource } from "../types/resources";
 import {
 	buildDatumCandidate,
@@ -11,59 +10,31 @@ import {
 	createGetAttributeCandidatesForQualifier,
 	filterCandidates,
 	filterCandidatesForSuggestionContext,
-	getIdDisplayParts,
-	getIdDisplayText,
 	type IdCandidate,
 } from "./idCandidates";
 import { parseApiSourceMethod } from "./sourceBinding";
 
-const flowsById: Record<string, DATA_EVY_Flow> = {
-	"flow-1": {
-		id: "flow-1",
-		name: "Checkout",
-		pageIds: ["page-1", "page-2"],
-		createdAt: "",
-		updatedAt: "",
-		visibility: "public",
-	},
-};
-
-const pagesById: Record<string, DATA_EVY_Page> = {
-	"page-1": {
-		id: "page-1",
-		name: "page-1",
-		title: "Item Details",
-		rowIds: ["parent-row"],
-		createdAt: "",
-		updatedAt: "",
-		visibility: "public",
-	},
-	"page-2": {
-		id: "page-2",
-		name: "page-2",
-		title: "",
-		rowIds: [],
-		createdAt: "",
-		updatedAt: "",
-		visibility: "public",
-	},
-};
-
 const serviceResources = [
-	{ id: "res-1", serviceId: "service-1", name: "item" },
+	{ id: "test_service.items", name: "item" },
+	{ id: "test_service.selling_reasons", name: "selling reasons" },
 ] satisfies ServiceResource[];
 
-const serviceNamesById = new Map([["service-1", "Marketplace"]]);
+const serviceNamesById = new Map([["test_service", "Marketplace"]]);
 
 const candidates: IdCandidate[] = [
-	{ id: "res-1", name: "item", category: "Resource" },
-	{ id: "res-1-long", name: "item details", category: "Resource" },
-	{ id: "service-1", name: "Marketplace", category: "Service" },
-	{ id: "flow-1", name: "Edit item", category: "Flow" },
-	{ id: "page-1", name: "Checkout", category: "Page" },
-	// Core resources use plural word ids and singular names, so their ids
-	// collide with ordinary prose (see types/generated/ts/coreResources.ts).
-	{ id: "messages", name: "message", category: "Resource" },
+	{ id: "test_service.items", name: "item", category: "Resource" },
+	{
+		id: "test_service.item_details",
+		name: "item details",
+		category: "Resource",
+	},
+	{
+		id: "test_service.selling_reasons",
+		name: "selling reasons",
+		category: "Resource",
+	},
+	{ id: "test_service", name: "Marketplace", category: "Service" },
+	{ id: "evy.messages", name: "message", category: "Resource" },
 ];
 
 function makeAttributeCandidate(name: string): IdCandidate {
@@ -85,45 +56,44 @@ const functionCandidate: IdCandidate = {
 };
 
 describe("idCandidates", () => {
-	test("buildIdCandidates returns flows, pages, and resources", () => {
-		expect(
-			buildIdCandidates(
-				flowsById,
-				pagesById,
-				serviceResources,
-				serviceNamesById,
-			),
-		).toEqual([
-			{ id: "flow-1", name: "Checkout", category: "Flow" },
-			{ id: "page-1", name: "page-1", category: "Page" },
-			{ id: "page-2", name: "page-2", category: "Page" },
-			{ id: "service-1", name: "Marketplace", category: "Service" },
-			{ id: "res-1", name: "item", category: "Resource" },
+	test("buildIdCandidates returns services and resources", () => {
+		expect(buildIdCandidates(serviceResources, serviceNamesById)).toEqual([
+			{ id: "test_service", name: "Marketplace", category: "Service" },
+			{ id: "test_service.items", name: "item", category: "Resource" },
+			{
+				id: "test_service.selling_reasons",
+				name: "selling reasons",
+				category: "Resource",
+			},
 		]);
 	});
 
 	test("buildResourceAttributeCandidatesForResource returns only the selected resource attributes", () => {
 		const metadata = [
 			{
-				serviceId: "service-1",
-				resourceId: "res-1",
+				resourceId: "test_service.items",
 				attributeNames: ["title", "price"],
 			},
 			{
-				serviceId: "service-1",
-				resourceId: "res-2",
+				resourceId: "test_service.other",
 				attributeNames: ["name", "status"],
 			},
 		];
 
 		expect(
-			buildResourceAttributeCandidatesForResource(metadata, "res-1"),
+			buildResourceAttributeCandidatesForResource(
+				metadata,
+				"test_service.items",
+			),
 		).toEqual([
 			makeAttributeCandidate("price"),
 			makeAttributeCandidate("title"),
 		]);
 		expect(
-			buildResourceAttributeCandidatesForResource(metadata, "res-2"),
+			buildResourceAttributeCandidatesForResource(
+				metadata,
+				"test_service.other",
+			),
 		).toEqual([
 			makeAttributeCandidate("name"),
 			makeAttributeCandidate("status"),
@@ -153,9 +123,9 @@ describe("idCandidates", () => {
 		expect(names).toContain("visible");
 		expect(names).toContain("subtitle");
 		expect(names).toContain("placeholder");
-		expect(names).not.toContain("childRowId");
-		expect(names).not.toContain("childrenRowIds");
-		expect(names).not.toContain("sheetRowId");
+		expect(names).not.toContain("child_row_id");
+		expect(names).not.toContain("children_row_ids");
+		expect(names).not.toContain("sheet_row_id");
 		expect(names).not.toContain("actions");
 		expect(new Set(names).size).toBe(names.length);
 		expect(
@@ -191,18 +161,63 @@ describe("idCandidates", () => {
 		expect(filterCandidates(candidates, "")).toEqual(candidates);
 	});
 
-	test("filterCandidates only returns case-insensitive starts-with matches", () => {
+	test("filterCandidates matches insert value and last dotted segment prefixes", () => {
+		expect(
+			filterCandidates(candidates, "se").map((candidate) => candidate.id),
+		).toEqual(["test_service.selling_reasons"]);
+		expect(
+			filterCandidates(candidates, "test_service.se").map(
+				(candidate) => candidate.id,
+			),
+		).toEqual(["test_service.selling_reasons"]);
 		expect(
 			filterCandidates(candidates, "it").map((candidate) => candidate.id),
-		).toEqual(["res-1", "res-1-long"]);
+		).toEqual(["test_service.items", "test_service.item_details"]);
+		expect(
+			filterCandidates(candidates, "items").map(
+				(candidate) => candidate.id,
+			),
+		).toEqual(["test_service.items"]);
+		expect(
+			filterCandidates(candidates, "item").map(
+				(candidate) => candidate.id,
+			),
+		).toEqual(["test_service.items", "test_service.item_details"]);
 		expect(
 			filterCandidates(candidates, "ITEM").map(
 				(candidate) => candidate.id,
 			),
-		).toEqual(["res-1", "res-1-long"]);
+		).toEqual(["test_service.items", "test_service.item_details"]);
 	});
 
-	test("filterCandidates returns attributes and functions by name", () => {
+	test("filterCandidates does not match resource friendly names", () => {
+		expect(
+			filterCandidates(
+				[
+					{
+						id: "test_service.items",
+						name: "item",
+						category: "Resource",
+					},
+				],
+				"item",
+			).map((candidate) => candidate.id),
+		).toEqual(["test_service.items"]);
+		expect(
+			filterCandidates(
+				[
+					{
+						id: "test_service.items",
+						name: "item",
+						category: "Resource",
+					},
+				],
+				"marketplace",
+			),
+		).toEqual([]);
+	});
+
+	test("filterCandidates returns attributes and functions by insert value", () => {
 		const assistCandidates = [attributeCandidate, functionCandidate];
 		expect(filterCandidates(assistCandidates, "tit")).toEqual([
 			attributeCandidate,
@@ -233,7 +248,7 @@ describe("idCandidates", () => {
 					query: "it",
 				},
 			).map((candidate) => candidate.id),
-		).toEqual(["res-1", "res-1-long"]);
+		).toEqual(["test_service.items", "test_service.item_details"]);
 		expect(
 			filterCandidatesForSuggestionContext(
 				rootCandidates,
@@ -286,14 +301,14 @@ describe("idCandidates", () => {
 		).toEqual([]);
 	});
 
-	test("filterCandidates dedupes candidates by name and category", () => {
+	test("filterCandidates dedupes candidates by insert value and category", () => {
 		const duplicateAttributeCandidate: IdCandidate = {
 			id: "alternate-title",
 			name: "title",
 			category: "Attribute",
 			insertMode: "text",
 		};
-		const resourceWithMatchingName: IdCandidate = {
+		const resourceWithMatchingInsertPrefix: IdCandidate = {
 			id: "title-resource",
 			name: "title",
 			category: "Resource",
@@ -304,170 +319,11 @@ describe("idCandidates", () => {
 				[
 					attributeCandidate,
 					duplicateAttributeCandidate,
-					resourceWithMatchingName,
+					resourceWithMatchingInsertPrefix,
 				],
 				"tit",
 			),
-		).toEqual([attributeCandidate, resourceWithMatchingName]);
-	});
-
-	test("getIdDisplayParts returns text, candidate, and attribute parts for an embedded resource with attribute", () => {
-		expect(getIdDisplayParts("{res-1.title} hello", candidates)).toEqual([
-			{ type: "text", text: "{", start: 0, end: 1 },
-			{
-				type: "candidate",
-				rawId: "res-1",
-				displayName: "item",
-				start: 1,
-				end: 6,
-			},
-			{ type: "text", text: ".", start: 6, end: 7 },
-			{ type: "attribute", text: "title", start: 7, end: 12 },
-			{ type: "text", text: "} hello", start: 12, end: 19 },
-		]);
-	});
-
-	test("getIdDisplayParts highlights each attribute segment without separators", () => {
-		expect(getIdDisplayParts("{res-1.title.name}", candidates)).toEqual([
-			{ type: "text", text: "{", start: 0, end: 1 },
-			{
-				type: "candidate",
-				rawId: "res-1",
-				displayName: "item",
-				start: 1,
-				end: 6,
-			},
-			{ type: "text", text: ".", start: 6, end: 7 },
-			{ type: "attribute", text: "title", start: 7, end: 12 },
-			{ type: "text", text: ".", start: 12, end: 13 },
-			{ type: "attribute", text: "name", start: 13, end: 17 },
-			{ type: "text", text: "}", start: 17, end: 18 },
-		]);
-	});
-
-	test("getIdDisplayParts does not emit an attribute part for a lone dot with no name", () => {
-		const parts = getIdDisplayParts("{res-1.}", candidates);
-		const hasAttributePart = parts.some((p) => p.type === "attribute");
-		expect(hasAttributePart).toBe(false);
-	});
-
-	test("getIdDisplayParts does not resolve attribute or function text candidates", () => {
-		expect(getIdDisplayParts("title", [attributeCandidate])).toEqual([
-			{ type: "text", text: "title", start: 0, end: 5 },
-		]);
-		expect(getIdDisplayParts("length()", [functionCandidate])).toEqual([
-			{ type: "text", text: "length()", start: 0, end: 8 },
-		]);
-	});
-
-	test("getIdDisplayParts leaves prose matching a resource id as plain text", () => {
-		expect(
-			getIdDisplayParts("No messages found", candidates, "text"),
-		).toEqual([
-			{ type: "text", text: "No messages found", start: 0, end: 17 },
-		]);
-	});
-
-	test("getIdDisplayParts resolves only the braced occurrence in text", () => {
-		expect(
-			getIdDisplayParts(
-				"Filter messages by {messages}",
-				candidates,
-				"text",
-			),
-		).toEqual([
-			{ type: "text", text: "Filter messages by {", start: 0, end: 20 },
-			{
-				type: "candidate",
-				rawId: "messages",
-				displayName: "message",
-				start: 20,
-				end: 28,
-			},
-			{ type: "text", text: "}", start: 28, end: 29 },
-		]);
-	});
-
-	test("getIdDisplayParts resolves inside an unterminated interpolation in text", () => {
-		expect(getIdDisplayParts("Total: {res-1", candidates, "text")).toEqual([
-			{ type: "text", text: "Total: {", start: 0, end: 8 },
-			{
-				type: "candidate",
-				rawId: "res-1",
-				displayName: "item",
-				start: 8,
-				end: 13,
-			},
-		]);
-	});
-
-	test("getIdDisplayParts keeps trailing text after an interpolation plain in text", () => {
-		expect(
-			getIdDisplayParts("{res-1.title} hello", candidates, "text"),
-		).toEqual([
-			{ type: "text", text: "{", start: 0, end: 1 },
-			{
-				type: "candidate",
-				rawId: "res-1",
-				displayName: "item",
-				start: 1,
-				end: 6,
-			},
-			{ type: "text", text: ".", start: 6, end: 7 },
-			{ type: "attribute", text: "title", start: 7, end: 12 },
-			{ type: "text", text: "} hello", start: 12, end: 19 },
-		]);
-	});
-
-	test("getIdDisplayParts resolves unbraced ids in expression scope", () => {
-		expect(getIdDisplayParts("messages", candidates)).toEqual([
-			{
-				type: "candidate",
-				rawId: "messages",
-				displayName: "message",
-				start: 0,
-				end: 8,
-			},
-		]);
-	});
-
-	test("getIdDisplayText resolves IDs in action and interpolation text", () => {
-		expect(getIdDisplayText("create(service-1, res-1)", candidates)).toBe(
-			"create(Marketplace, item)",
-		);
-		expect(getIdDisplayText("Create {res-1.title}?", candidates)).toBe(
-			"Create {item.title}?",
-		);
-	});
-
-	test("getIdDisplayText preserves unknown IDs and ordinary text", () => {
-		expect(
-			getIdDisplayText("Create {unknown-resource.title}?", candidates),
-		).toBe("Create {unknown-resource.title}?");
-	});
-
-	test("getIdDisplayParts resolves flow and page ids as named candidate chips", () => {
-		expect(
-			getIdDisplayParts("navigate(flow-1, page-1)", candidates),
-		).toEqual([
-			{ type: "text", text: "navigate(", start: 0, end: 9 },
-			{
-				type: "candidate",
-				rawId: "flow-1",
-				displayName: "Edit item",
-				start: 9,
-				end: 15,
-			},
-			{ type: "text", text: ", ", start: 15, end: 17 },
-			{
-				type: "candidate",
-				rawId: "page-1",
-				displayName: "Checkout",
-				start: 17,
-				end: 23,
-			},
-			{ type: "text", text: ")", start: 23, end: 24 },
-		]);
+		).toEqual([attributeCandidate, resourceWithMatchingInsertPrefix]);
 	});
 });
 

@@ -14,7 +14,7 @@ final class EVYDataChangeNotificationTests: XCTestCase {
   func testCreatePostsRecordChangePayload() throws {
     let store = EVYDataStore(name: UUID().uuidString, inMemoryOnly: true)
     let namespace = EVYNamespace.evy
-    let resource = EVYCoreResource.rows.rawValue
+    let resource = EVYCoreResource.rows.ref
     let id = UUID().uuidString
 
     var receivedChanges: [EVYRecordChange] = []
@@ -43,7 +43,7 @@ final class EVYDataChangeNotificationTests: XCTestCase {
   func testCreatePostsValueChangeForResourceWatchKey() throws {
     let store = EVYDataStore(name: UUID().uuidString, inMemoryOnly: true)
     let namespace = EVYNamespace.evy
-    let resource = EVYCoreResource.rows.rawValue
+    let resource = EVYCoreResource.rows.ref
     let id = UUID().uuidString
 
     var receivedKeys: [String] = []
@@ -68,7 +68,7 @@ final class EVYDataChangeNotificationTests: XCTestCase {
   func testFromExtractsPayloadOrReturnsNil() {
     let change = EVYRecordChange(
       namespace: EVYNamespace.evy,
-      resource: EVYCoreResource.pages.rawValue,
+      resource: EVYCoreResource.pages.ref,
       id: "page-1"
     )
     let notificationWithPayload = Notification(
@@ -80,7 +80,7 @@ final class EVYDataChangeNotificationTests: XCTestCase {
 
     let notificationWithoutPayload = Notification(
       name: .evyValueChanged,
-      object: EVYCoreResource.rows.rawValue,
+      object: EVYCoreResource.rows.ref,
       userInfo: nil
     )
     XCTAssertNil(EVYRecordChange.from(notificationWithoutPayload))

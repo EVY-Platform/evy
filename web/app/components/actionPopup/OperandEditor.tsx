@@ -8,7 +8,7 @@ import {
 	serializeOperand,
 } from "../../utils/actionOperands";
 import type { IdCandidate } from "../../utils/idCandidates";
-import { BuilderAssist } from "../BuilderAssist";
+import { AutocompleteSearch } from "../AutocompleteSearch";
 import { type PopoverOption, PopoverSelect } from "../PopoverSelect";
 import { BOOLEAN_OPTIONS } from "./actionPopupConstants";
 
@@ -96,7 +96,7 @@ export function OperandEditor({
 	const valueMatchesVariableOption =
 		parsed.type === "value" &&
 		variableOptions.some((option) => option.value === parsed.value);
-	const showValueBuilderAssist =
+	const showValueAutocomplete =
 		parsed.type === "value" &&
 		parsed.value !== "" &&
 		!isBooleanValue &&
@@ -130,7 +130,7 @@ export function OperandEditor({
 				/>
 			)}
 			{parsed.type === "function" && (
-				<BuilderAssist
+				<AutocompleteSearch
 					ariaLabel={`${ariaLabel}-arg`}
 					value={parsed.arg}
 					onChange={handleArgChange}
@@ -141,8 +141,8 @@ export function OperandEditor({
 					placeholder="Argument, e.g. item.transfer_options.pickup.address_id"
 				/>
 			)}
-			{showValueBuilderAssist && (
-				<BuilderAssist
+			{showValueAutocomplete && (
+				<AutocompleteSearch
 					ariaLabel={`${ariaLabel}-expression`}
 					value={parsed.value}
 					onChange={onChange}

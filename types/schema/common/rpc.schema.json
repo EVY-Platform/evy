@@ -4,6 +4,16 @@
 	"title": "CommonRPC",
 	"description": "Shared RPC request/response definitions",
 	"$defs": {
+		"ServiceSlug": {
+			"type": "string",
+			"pattern": "^[a-z][a-z0-9_-]*$",
+			"maxLength": 50
+		},
+		"ResourceRef": {
+			"type": "string",
+			"pattern": "^[a-z][a-z0-9_-]*\\.[a-z][a-z0-9_-]*$",
+			"maxLength": 100
+		},
 		"DataFilter": {
 			"type": "object",
 			"additionalProperties": false,
@@ -12,7 +22,7 @@
 					"type": "string",
 					"format": "uuid"
 				},
-				"updatedAfter": {
+				"updated_after": {
 					"type": "string",
 					"format": "date-time"
 				}

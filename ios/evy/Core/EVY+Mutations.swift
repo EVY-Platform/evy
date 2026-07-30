@@ -7,7 +7,6 @@ import Foundation
 
 extension EVY {
   private struct MutationParams: Encodable {
-    let service: String
     let resource: String
     let filter: Filter
     let data: EVYJson
@@ -78,24 +77,27 @@ extension EVY {
     cleanVariableName: String
   ) -> Bool {
     guard let splitProps = try? splitPropsFromText(cleanVariableName),
-      let firstProp = splitProps.first
+      !splitProps.isEmpty
     else {
       return false
     }
-    let remainingProps = splitProps.count > 1 ? Array(splitProps.dropFirst()) : []
 
-    if let scopeId = activeCacheScopeId,
-      let cachedRow = try? cacheStore.get(
-        namespace: EVYNamespace.cache, resource: scopeId, id: firstProp),
-      let decoded = try? cachedRow.decoded(),
-      decoded.parsePropStrict(props: remainingProps) != nil
-    {
-      return true
+    if let scopeId = activeCacheScopeId {
+      for (cacheKey, remaining) in EVYResourceRef.cacheScopeCandidates(for: splitProps) {
+        guard
+          let cachedRow = try? cacheStore.get(
+            namespace: EVYNamespace.cache, resource: scopeId, id: cacheKey),
+          let decoded = try? cachedRow.decoded(),
+          decoded.parsePropStrict(props: remaining) != nil
+        else { continue }
+        return true
+      }
     }
 
-    if let json = try? EVY.getSyncedJsonForBinding(
-      key: firstProp, cacheScopeId: activeCacheScopeId),
-      json.parsePropStrict(props: remainingProps) != nil
+    if let split = EVYResourceRef.split(pathSegments: splitProps),
+      EVYResourceRef.isValid(split.ref),
+      let json = try? getSyncedJsonForRef(split.ref),
+      json.parsePropStrict(props: split.remaining) != nil
     {
       return true
     }
@@ -129,7 +131,7 @@ extension EVY {
     guard isSubmission else {
       throw EVYError.invalidData(
         context:
-          "create requires namespace, resource, and submit or data, e.g. create(marketplace,item,submit)"
+          "create requires resource, and submit or data, e.g. create(marketplace.items,submit)"
       )
     }
 
@@ -181,18 +183,17 @@ extension EVY {
     let newId = UUID().uuidString.lowercased()
     var payloadWithId = payload
     payloadWithId["id"] = .string(newId)
-    if payloadWithId["createdAt"] == nil {
-      payloadWithId["createdAt"] = .string(EVY.nowISO8601(fractional: true))
+    if payloadWithId["created_at"] == nil {
+      payloadWithId["created_at"] = .string(EVY.nowISO8601(fractional: true))
     }
     if payloadWithId["visibility"] == nil,
-      let declared = EVYCoreResource(rawValue: resource)?.visibility,
+      let declared = EVYCoreResource(ref: resource)?.visibility,
       namespace == EVYNamespace.evy
     {
       payloadWithId["visibility"] = .string(declared)
     }
     let dataWithId = EVYJson.dictionary(payloadWithId)
     let params = MutationParams(
-      service: namespace,
       resource: resource,
       filter: Filter(id: newId),
       data: dataWithId
@@ -207,7 +208,7 @@ extension EVY {
       value: encodedData,
       sortIndex: nextSortIndex
     )
-    recordOwnership(service: namespace, resource: resource, id: newId)
+    recordOwnership(resource: resource, id: newId)
 
     syncMutation(method: "create", params: params)
     return newId
@@ -327,7 +328,6 @@ extension EVY {
       }
 
       let params = MutationParams(
-        service: namespace,
         resource: resource,
         filter: Filter(id: update.recordId),
         data: update.updatedData
@@ -425,7 +425,7 @@ extension EVY {
     let variableName = _parsePropsFromText(destination)
     let (_, cleanVariableName) = store(for: variableName)
     let splitProps = try splitPropsFromText(cleanVariableName)
-    let rootVariable = splitProps.first!
+    let rootVariable = EVYResourceRef.split(pathSegments: splitProps)?.ref ?? splitProps.first!
     let resolvedScopeId = scopeId ?? draftStore.activeScopeId
 
     if let resolvedScopeId,
@@ -450,9 +450,9 @@ extension EVY {
     )
 
     if !writesIntoCreateEntity,
-      let existingRow = try? findRowForUpdate(rootVariable: rootVariable)
+      let existingRow = try? findRowForUpdate(splitProps: splitProps)
     {
-      let remainingProps = Array(splitProps.dropFirst())
+      let remainingProps = existingRow.remainingProps
       if remainingProps.isEmpty {
         existingRow.row.data = newData
       } else {
@@ -478,23 +478,40 @@ extension EVY {
     draftStore.notifyUpdate(binding: draftBinding)
   }
 
-  private static func findRowForUpdate(rootVariable: String) throws -> (
-    row: EVYData, store: EVYDataStore
+  private static func findRowForUpdate(splitProps: [String]) throws -> (
+    row: EVYData, store: EVYDataStore, remainingProps: [String]
   ) {
+    let rootVariable = EVYResourceRef.split(pathSegments: splitProps)?.ref ?? splitProps.first!
+    let syncedRemainingProps =
+      EVYResourceRef.split(pathSegments: splitProps)?.remaining
+      ?? Array(splitProps.dropFirst())
+
     for store in syncedStores() {
       if let localRow = try? store.get(
-        namespace: EVYNamespace.local, resource: rootVariable, id: EVYNamespace.singletonId)
+        namespace: EVYNamespace.local,
+        resource: splitProps.first!,
+        id: EVYNamespace.singletonId)
       {
-        return (localRow, store)
+        return (localRow, store, Array(splitProps.dropFirst()))
       }
     }
-    if let scopeId = activeCacheScopeId,
-      let cachedRow = try? cacheStore.get(
-        namespace: EVYNamespace.cache, resource: scopeId, id: rootVariable)
-    {
-      return (cachedRow, publicStore)
+    if let scopeId = activeCacheScopeId {
+      for (cacheKey, remaining) in EVYResourceRef.cacheScopeCandidates(for: splitProps) {
+        if let cachedRow = try? cacheStore.get(
+          namespace: EVYNamespace.cache, resource: scopeId, id: cacheKey)
+        {
+          return (cachedRow, publicStore, remaining)
+        }
+      }
     }
-    return try findSyncedRow(matching: rootVariable)
+    if let namespace = try? EVYResourceRef.serviceOf(rootVariable) {
+      for store in syncedStores() {
+        if let matched = try? store.getFirst(namespace: namespace, resource: rootVariable) {
+          return (matched, store, syncedRemainingProps)
+        }
+      }
+    }
+    throw EVYDataError.keyNotFound
   }
 
 }

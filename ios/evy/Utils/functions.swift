@@ -307,15 +307,14 @@ func evyFilter(_ args: String, remainingProps: [String] = []) throws -> EVYJson 
 @MainActor
 func evyOwns(_ args: String) throws -> EVYFunctionOutput {
   let parts = _splitFunctionArguments(args)
-  guard parts.count == 3 else {
-    throw EVYError.invalidData(context: "owns expects service, resource, id")
+  guard parts.count == 2 else {
+    throw EVYError.invalidData(context: "owns expects resource ref, id")
   }
 
-  let service = resolveLiteralOrBoundOperand(parts[0])
-  let resource = resolveLiteralOrBoundOperand(parts[1])
-  let id = resolveLiteralOrBoundOperand(parts[2])
+  let resource = resolveLiteralOrBoundOperand(parts[0])
+  let id = resolveLiteralOrBoundOperand(parts[1])
 
-  let isOwned = EVY.ownsRecord(service: service, resource: resource, id: id)
+  let isOwned = EVY.ownsRecord(resource: resource, id: id)
   return EVYFunctionOutput(value: isOwned ? "true" : "false", prefix: nil, suffix: nil)
 }
 

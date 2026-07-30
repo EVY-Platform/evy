@@ -6,7 +6,10 @@ import type {
 	ResourcesResponse,
 	SyncResponse,
 } from "evy-types";
-import { EVY_CORE_RESOURCE, EVY_CORE_SERVICE } from "evy-types/coreResources";
+import {
+	EVY_CORE_RESOURCE_REF,
+	EVY_CORE_SERVICE,
+} from "evy-types/coreResources";
 import {
 	validateDataEvyFlow,
 	validateDataEvyFormatter,
@@ -29,7 +32,6 @@ function flattenServiceResources(
 	return response.services.flatMap((service) =>
 		service.resources.map((resource) => ({
 			id: resource.id,
-			serviceId: service.id,
 			name: resource.name,
 		})),
 	);
@@ -43,15 +45,13 @@ function serviceNamesById(response: ResourcesResponse): Map<string, string> {
 
 function extractFlatResourceRows<T>(
 	response: SyncResponse,
-	resource: string,
+	resourceRef: string,
 	guard: (item: unknown) => item is T,
 ): T[] {
-	const row = response.data.find(
-		(row) => row.service === EVY_CORE_SERVICE && row.resource === resource,
-	);
+	const row = response.data.find((row) => row.resource === resourceRef);
 	if (!Array.isArray(row?.value)) return [];
 	if (!row.value.every(guard)) {
-		throw new Error(`Invalid ${resource} in sync response`);
+		throw new Error(`Invalid ${resourceRef} in sync response`);
 	}
 	return row.value;
 }
@@ -62,17 +62,17 @@ function extractFlowEntityCollections(
 	return {
 		flows: extractFlatResourceRows(
 			response,
-			EVY_CORE_RESOURCE.FLOWS,
+			EVY_CORE_RESOURCE_REF.FLOWS,
 			isDataEvyFlow,
 		),
 		pages: extractFlatResourceRows(
 			response,
-			EVY_CORE_RESOURCE.PAGES,
+			EVY_CORE_RESOURCE_REF.PAGES,
 			isDataEvyPage,
 		),
 		rows: extractFlatResourceRows(
 			response,
-			EVY_CORE_RESOURCE.ROWS,
+			EVY_CORE_RESOURCE_REF.ROWS,
 			isDataEvyRow,
 		),
 	};
@@ -134,12 +134,11 @@ function addAttributeNames(
 
 function inferAttributeNames(
 	response: SyncResponse,
-	serviceId: string,
-	resourceId: string,
+	resourceRef: string,
 ): string[] {
 	const attributeNames = new Set<string>();
 	for (const row of response.data) {
-		if (row.service !== serviceId || row.resource !== resourceId) continue;
+		if (row.resource !== resourceRef) continue;
 		if (!Array.isArray(row.value)) continue;
 		for (const item of row.value) {
 			addAttributeNames(item, attributeNames);
@@ -164,18 +163,13 @@ export function extractResourceAttributeMetadata(
 		.filter((service) => service.id !== EVY_CORE_SERVICE)
 		.flatMap((service) =>
 			service.resources.map((resource) => ({
-				serviceId: service.id,
 				resourceId: resource.id,
 				attributeNames:
 					resource.attributes && resource.attributes.length > 0
 						? [...resource.attributes].toSorted((a, b) =>
 								a.localeCompare(b),
 							)
-						: inferAttributeNames(
-								response,
-								service.id,
-								resource.id,
-							),
+						: inferAttributeNames(response, resource.id),
 			})),
 		)
 		.filter((metadata) => metadata.attributeNames.length > 0);
@@ -185,9 +179,7 @@ function extractResourceCatalog(
 	response: SyncResponse,
 ): ResourcesResponse | undefined {
 	const row = response.data.find(
-		(entry) =>
-			entry.service === EVY_CORE_SERVICE &&
-			entry.resource === EVY_CORE_RESOURCE.RESOURCES,
+		(entry) => entry.resource === EVY_CORE_RESOURCE_REF.RESOURCES,
 	);
 	if (
 		!row?.value ||
@@ -241,7 +233,7 @@ export async function syncWebData(): Promise<{
 		serviceNamesById: serviceNamesById(catalog),
 		formatters: extractFlatResourceRows(
 			syncResponse,
-			EVY_CORE_RESOURCE.FORMATTERS,
+			EVY_CORE_RESOURCE_REF.FORMATTERS,
 			isDataEvyFormatter,
 		),
 	};

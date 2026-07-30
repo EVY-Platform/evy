@@ -9,7 +9,7 @@ import {
 	spyOn,
 } from "bun:test";
 import type { GetRequest, GetResponse } from "evy-types";
-import { EVY_CORE_RESOURCE, EVY_CORE_SERVICE } from "evy-types/coreResources";
+import { EVY_CORE_RESOURCE_REF } from "evy-types/coreResources";
 import { Client } from "rpc-websockets";
 import * as data from "../data/data";
 import type { EvyDb } from "../database/db";
@@ -49,9 +49,9 @@ describe("initServer bootstrap", () => {
 			.register("create", async () => ({
 				id: "stub",
 				name: "Stub",
-				pageIds: [],
-				createdAt: new Date().toISOString(),
-				updatedAt: new Date().toISOString(),
+				page_ids: [],
+				created_at: new Date().toISOString(),
+				updated_at: new Date().toISOString(),
 			}))
 			.protected();
 	});
@@ -67,7 +67,7 @@ describe("initServer bootstrap", () => {
 
 	it("registers dataChanged event", () => {
 		const events = server.eventList("/");
-		expect(events).toContain("dataChanged");
+		expect(events).toContain("data_changed");
 		expect(events).not.toContain("flowUpdated");
 	});
 
@@ -76,12 +76,11 @@ describe("initServer bootstrap", () => {
 		await waitForClientOpen(client);
 		await expect(
 			client.call("create", {
-				service: EVY_CORE_SERVICE,
-				resource: EVY_CORE_RESOURCE.FLOWS,
+				resource: EVY_CORE_RESOURCE_REF.FLOWS,
 				data: {
 					id: crypto.randomUUID(),
 					name: "Unauth",
-					pageIds: [],
+					page_ids: [],
 				},
 			}),
 		).rejects.toThrow();
@@ -143,16 +142,15 @@ describe("assertApiReadable", () => {
 	it("resolves when requireSeeded is true and flows has at least one flow", async () => {
 		getImpl = async (params) => {
 			expect(params).toEqual({
-				service: EVY_CORE_SERVICE,
-				resource: EVY_CORE_RESOURCE.FLOWS,
+				resource: EVY_CORE_RESOURCE_REF.FLOWS,
 			});
 			return [
 				{
 					id: crypto.randomUUID(),
 					name: "Seeded",
-					pageIds: [],
-					createdAt: new Date().toISOString(),
-					updatedAt: new Date().toISOString(),
+					page_ids: [],
+					created_at: new Date().toISOString(),
+					updated_at: new Date().toISOString(),
 				},
 			] as GetResponse;
 		};
@@ -178,8 +176,8 @@ describe("assertApiReadable", () => {
 			{
 				id: EXTERNAL_TEST_SERVICE_ID,
 				name: "marketplace",
-				wsHost: null,
-				wsPort: null,
+				ws_host: null,
+				ws_port: null,
 			},
 		];
 		await withoutMarketplaceEnv(async () => {
@@ -200,8 +198,8 @@ describe("assertApiReadable", () => {
 			{
 				id: EXTERNAL_TEST_SERVICE_ID,
 				name: "marketplace",
-				wsHost: null,
-				wsPort: null,
+				ws_host: null,
+				ws_port: null,
 			},
 		];
 		await withoutMarketplaceEnv(async () => {
@@ -217,8 +215,8 @@ describe("assertApiReadable", () => {
 			{
 				id: EXTERNAL_TEST_SERVICE_ID,
 				name: "marketplace",
-				wsHost: "marketplace.internal",
-				wsPort: 8001,
+				ws_host: "marketplace.internal",
+				ws_port: 8001,
 			},
 		];
 		await withoutMarketplaceEnv(async () => {

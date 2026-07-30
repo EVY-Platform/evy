@@ -226,11 +226,11 @@ final class EVYCalendarTests: XCTestCase {
     ])
     let actions = UI_RowActions(
       tap: [rowAction(true: .close)],
-      tapRow: [rowAction(true: .select(value: "$datum"))]
+      tap_row: [rowAction(true: .select(value: "$datum"))]
     )
 
     EVYActionRunner.run(
-      actions: actions.tapRow,
+      actions: actions.tap_row,
       datum: datum,
       rowOperation: { operation in
         guard case .select(let value) = operation else {

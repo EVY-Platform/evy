@@ -5,6 +5,7 @@ import {
 	loadJson,
 	REPO_ROOT,
 	SDUI_DEFINITIONS_DIR,
+	snakeToPascal,
 } from "./types-generation-utils.js";
 
 const UI_ROW_REF = "../evy.schema.json#/$defs/UI_Row";
@@ -284,6 +285,13 @@ export function assertSduiRowDefinitionFileMatchesType(
 			`${fileName}: filename must match row type (${expectedFileName})`,
 		);
 	}
+	const expectedTitle = `${snakeToPascal(definition.type)}_Row`;
+	const title = definition.schema.title;
+	if (typeof title !== "string" || title !== expectedTitle) {
+		throw new Error(
+			`${fileName}: title must be ${expectedTitle}, got ${String(title)}`,
+		);
+	}
 }
 
 export function assertExactSduiRowTypeCoverage(
@@ -339,9 +347,9 @@ const ROW_BINDING_FIELD_NAMES = new Set(["source", "destination", "secondary"]);
 export const INHERITED_STRUCTURAL_ROW_FIELDS = ["sheet"] as const;
 
 const SCHEMA_TO_UI_FIELD_NAME: Record<string, string> = {
-	child: "childRowId",
-	children: "childrenRowIds",
-	sheet: "sheetRowId",
+	child: "child_row_id",
+	children: "children_row_ids",
+	sheet: "sheet_row_id",
 };
 
 const ROW_FIELD_SPEC_KINDS = [

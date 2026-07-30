@@ -63,7 +63,7 @@ private struct EVYTimeslotPickerRowPreview: View {
     let json = """
       {
         "id": "preview-timeslotpicker-row",
-        "type": "TimeslotPicker",
+        "type": "timeslot_picker",
         "source": "{pickup_selection}",
         "destination": "{selected_timeslot}",
         "actions": {"tap": [{"condition": "", "true": "{select($datum)}", "false": ""}]},

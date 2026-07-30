@@ -5,13 +5,12 @@
 
 import Foundation
 
-/// Created records, keyed by `(service, resource, id)`. Public records still need
+/// Created records, keyed by `(resource ref, id)`. Public records still need
 /// an owner for message entitlement; visibility alone cannot express that.
 enum EVYOwnershipLedger {
   private static let key = "ownedRecords"
 
   fileprivate struct Entry: Codable, Hashable {
-    let service: String
     let resource: String
     let id: String
   }
@@ -39,8 +38,8 @@ enum EVYOwnershipLedger {
     }
   }
 
-  fileprivate static func record(service: String, resource: String, id: String) {
-    entries.insert(Entry(service: service, resource: resource, id: id))
+  fileprivate static func record(resource: String, id: String) {
+    entries.insert(Entry(resource: resource, id: id))
   }
 
   // used by tests
@@ -51,19 +50,13 @@ enum EVYOwnershipLedger {
 }
 
 extension EVY {
-  static func recordOwnership(service: String, resource: String, id: String) {
-    EVYOwnershipLedger.record(service: service, resource: resource, id: id)
+  static func recordOwnership(resource: String, id: String) {
+    EVYOwnershipLedger.record(resource: resource, id: id)
   }
 
   private struct OwnedMembershipKey: Hashable {
-    let service: String
     let resource: String
     let id: String
-  }
-
-  private struct ServiceResourceKey: Hashable {
-    let service: String
-    let resource: String
   }
 
   @MainActor
@@ -77,18 +70,15 @@ extension EVY {
 
     var members = Set<OwnedMembershipKey>()
     for entry in EVYOwnershipLedger.entries {
-      members.insert(
-        OwnedMembershipKey(service: entry.service, resource: entry.resource, id: entry.id))
+      members.insert(OwnedMembershipKey(resource: entry.resource, id: entry.id))
     }
     for row in (try? privateStore.getAll()) ?? []
     where isSyncedNamespace(row.namespace) {
-      members.insert(
-        OwnedMembershipKey(service: row.namespace, resource: row.resource, id: row.id))
+      members.insert(OwnedMembershipKey(resource: row.resource, id: row.id))
     }
-    for declared in preownedServiceResources {
+    for declared in preownedResources {
       for id in declared.ids {
-        members.insert(
-          OwnedMembershipKey(service: declared.service, resource: declared.resource, id: id))
+        members.insert(OwnedMembershipKey(resource: declared.resource, id: id))
       }
     }
 
@@ -96,40 +86,36 @@ extension EVY {
     return members
   }
 
-  static func ownsRecord(service: String, resource: String, id: String) -> Bool {
-    ownedMembershipSet().contains(
-      OwnedMembershipKey(service: service, resource: resource, id: id))
+  static func ownsRecord(resource: String, id: String) -> Bool {
+    ownedMembershipSet().contains(OwnedMembershipKey(resource: resource, id: id))
   }
 
-  static func ownedServiceResources() -> [OwnedServiceResource] {
+  static func ownedResources() -> [OwnedResource] {
     let grouped = Dictionary(grouping: ownedMembershipSet()) { member in
-      ServiceResourceKey(service: member.service, resource: member.resource)
+      member.resource
     }
 
     return
       grouped
-      .map { serviceResource, members in
-        OwnedServiceResource(
-          service: serviceResource.service,
-          resource: serviceResource.resource,
+      .map { resource, members in
+        OwnedResource(
+          resource: resource,
           ids: members.map(\.id).filter(isEvyRecordId).sorted())
       }
       .filter { !$0.ids.isEmpty }
-      .sorted { ($0.service, $0.resource) < ($1.service, $1.resource) }
+      .sorted { $0.resource < $1.resource }
   }
 
   private static func isSyncedNamespace(_ namespace: String) -> Bool {
-    namespace != EVYNamespace.local
-      && namespace != EVYNamespace.cache
-      && namespace != EVYNamespace.draft
+    !EVYResourceRef.isReservedService(namespace)
   }
 
   /// Launch override for seeded ownership until auth lands.
-  private static let preownedServiceResources: [OwnedServiceResource] = {
+  private static let preownedResources: [OwnedResource] = {
     guard
-      let raw = ProcessInfo.processInfo.environment["EVY_OWNED_SERVICE_RESOURCES"],
+      let raw = ProcessInfo.processInfo.environment["EVY_OWNED_RESOURCES"],
       let data = raw.data(using: .utf8),
-      let decoded = try? JSONDecoder().decode([OwnedServiceResource].self, from: data)
+      let decoded = try? JSONDecoder().decode([OwnedResource].self, from: data)
     else {
       return []
     }
@@ -138,8 +124,8 @@ extension EVY {
 
   /// Fingerprint of declared ownership; a change invalidates the sync cursor.
   static func declaredOwnershipFingerprint() -> String {
-    preownedServiceResources
-      .map { "\($0.service)/\($0.resource):\($0.ids.sorted().joined(separator: ","))" }
+    preownedResources
+      .map { "\($0.resource):\($0.ids.sorted().joined(separator: ","))" }
       .sorted()
       .joined(separator: ";")
   }

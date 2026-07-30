@@ -32,7 +32,7 @@ async function startServer(): Promise<void> {
 	server.register("api", (params: unknown) => api(params, appDb));
 	server.register("sync", (params: unknown) => syncMethod(params, appDb));
 	server.register("resources", () => discoverResources(appDb));
-	server.register("cancelUpload", cancelUpload).protected();
+	server.register("cancel_upload", cancelUpload).protected();
 
 	server.register("get", (params: unknown) => get(params, appDb));
 	server

@@ -28,33 +28,33 @@ test.describe("Concurrent edit conflicts", () => {
 			syncedVersion: SERVER_VERSION,
 			rows: [
 				{
-					resource: "flows",
+					resource: "evy.flows",
 					value: [
 						{
 							id: FLOW_ID,
 							name: "Conflict Flow",
-							pageIds: [PAGE_ID],
+							page_ids: [PAGE_ID],
 							visibility: "public",
-							createdAt: SERVER_VERSION,
-							updatedAt: SERVER_VERSION,
+							created_at: SERVER_VERSION,
+							updated_at: SERVER_VERSION,
 						},
 					],
 				},
 				{
-					resource: "pages",
+					resource: "evy.pages",
 					value: [
 						{
 							id: PAGE_ID,
 							name: "Page",
 							title: "Page",
-							rowIds: [],
+							row_ids: [],
 							visibility: "public",
-							createdAt: SERVER_VERSION,
-							updatedAt: SERVER_VERSION,
+							created_at: SERVER_VERSION,
+							updated_at: SERVER_VERSION,
 						},
 					],
 				},
-				{ resource: "rows", value: [] },
+				{ resource: "evy.rows", value: [] },
 			],
 		});
 
@@ -82,7 +82,7 @@ test.describe("Concurrent edit conflicts", () => {
 		);
 		expect(updates.length).toBeGreaterThan(0);
 		expect(updates[0].params.filter).toMatchObject({
-			expectedUpdatedAt: SERVER_VERSION,
+			expected_updated_at: SERVER_VERSION,
 		});
 	});
 });

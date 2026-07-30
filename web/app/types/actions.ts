@@ -89,13 +89,13 @@ export type RowAction =
 	| {
 			type: "APPLY_REMOTE_RECORD";
 			resource: string;
-			record: { id: string; updatedAt?: string; deletedAt?: string };
+			record: { id: string; updated_at?: string; deleted_at?: string };
 			operation: "create" | "update" | "delete";
 	  }
 	| {
 			type: "UPDATE_FLOW_SUBMITS";
 			flowId: string;
-			submits: { service: string; resource: string } | undefined;
+			submits: { resource: string } | undefined;
 	  }
 	| {
 			type: "PUSH_CONFIG_STACK";

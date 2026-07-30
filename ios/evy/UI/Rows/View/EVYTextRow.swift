@@ -33,7 +33,7 @@ struct EVYTextRow: View {
     json: """
       {
         "id": "preview-text-row-full",
-        "type": "Text",
+        "type": "text",
         "actions": {},
         "visible": "true",
         "title": "Pickup address",
@@ -50,7 +50,7 @@ struct EVYTextRow: View {
     json: """
       {
         "id": "preview-text-row-title-only",
-        "type": "Text",
+        "type": "text",
         "actions": {},
         "visible": "true",
         "title": "Pickup address"
@@ -65,7 +65,7 @@ struct EVYTextRow: View {
     json: """
       {
         "id": "preview-text-row-subtitle-only",
-        "type": "Text",
+        "type": "text",
         "actions": {},
         "visible": "true",
         "subtitle": "Available between 10 AM and 2 PM"

@@ -53,15 +53,14 @@ actor EVYAPIManager {
             visibility: .visibilityPublic
           ),
           filter: CreateFileParamsFilter(id: uploadId),
-          resource: .files,
-          service: EVY_CORE_SERVICE
+          resource: .evyFiles
         ),
         expecting: EVYCreateFileData.self
       )
       return response.id
     } catch {
       _ = try? await rpcWS.fetch(
-        method: "cancelUpload",
+        method: "cancel_upload",
         params: EVYCancelUploadParams(uploadID: uploadId),
         expecting: EVYCancelUploadResponse.self
       )
@@ -75,8 +74,7 @@ actor EVYAPIManager {
       method: "get",
       params: EVYGetFilesParams(
         filter: GetFilesParamsFilter(id: id, updatedAfter: nil),
-        resource: .files,
-        service: EVY_CORE_SERVICE
+        resource: .evyFiles
       ),
       expecting: [EVYGetFileItem].self
     )
@@ -92,8 +90,7 @@ actor EVYAPIManager {
       method: "delete",
       params: EVYDeleteFileParams(
         filter: CreateFileParamsFilter(id: id),
-        resource: .files,
-        service: EVY_CORE_SERVICE
+        resource: .evyFiles
       ),
       expecting: EVYCreateFileData.self
     )
@@ -125,9 +122,9 @@ actor EVYAPIManager {
     let token = ProcessInfo.processInfo.environment["AUTH_TOKEN"] ?? AUTH_TOKEN
     let connected = try await rpcWS.connect(token: token, os: DataOS.ios)
 
-    let result = try await rpcWS.subscribe(event: "dataChanged")
-    if result["dataChanged"] != "ok" {
-      throw EVYRPCError.subscriptionError("Failed to subscribe to dataChanged events")
+    let result = try await rpcWS.subscribe(event: "data_changed")
+    if result["data_changed"] != "ok" {
+      throw EVYRPCError.subscriptionError("Failed to subscribe to data_changed events")
     }
 
     authed = connected
@@ -156,7 +153,7 @@ actor EVYAPIManager {
     scheduleReconnect()
   }
 
-  /// Re-establishes the session in the background so `dataChanged` pushes resume
+  /// Re-establishes the session in the background so `data_changed` pushes resume
   /// without waiting for the user to trigger a request.
   private func scheduleReconnect() {
     guard reconnectTask == nil else { return }

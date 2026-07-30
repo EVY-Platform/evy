@@ -34,11 +34,7 @@ function omitNulls<T extends Record<string, unknown>>(row: T): T {
 }
 
 import { emitDataChanged } from "./events";
-import {
-	MARKETPLACE_RESOURCE,
-	MARKETPLACE_SEED_RESOURCES,
-	MARKETPLACE_SERVICE,
-} from "./resources";
+import { MARKETPLACE_RESOURCE, MARKETPLACE_SEED_RESOURCES } from "./resources";
 
 /**
  * Resource-specific payload validation. Every marketplace resource has a
@@ -68,11 +64,6 @@ function assertResourcePayload(resource: string, payload: unknown): void {
 function assertMarketplaceRules(
 	params: GetRequest | CreateRequest | UpdateRequest | DeleteRequest,
 ): void {
-	if (params.service !== MARKETPLACE_SERVICE) {
-		throw new Error(
-			"Marketplace service requires the marketplace service id",
-		);
-	}
 	if (!MARKETPLACE_SEED_RESOURCES.has(params.resource)) {
 		throw new Error("Unsupported resource id for marketplace service");
 	}
@@ -86,18 +77,18 @@ export async function get(params: GetRequest): Promise<GetResponse> {
 	if (filter?.id) {
 		whereClauses.push(eq(data.id, filter.id));
 	}
-	if (filter?.updatedAfter) {
+	if (filter?.updated_after) {
 		// Incremental reads carry tombstones; plain reads exclude them.
-		whereClauses.push(gt(data.updatedAt, filter.updatedAfter));
+		whereClauses.push(gt(data.updated_at, filter.updated_after));
 	} else {
-		whereClauses.push(isNull(data.deletedAt));
+		whereClauses.push(isNull(data.deleted_at));
 	}
 
 	const rows = await db
 		.select({ data: data.data })
 		.from(data)
 		.where(and(...whereClauses))
-		.orderBy(asc(data.updatedAt), asc(data.id));
+		.orderBy(asc(data.updated_at), asc(data.id));
 
 	return validateGetResponse(rows.map((r) => r.data));
 }
@@ -115,8 +106,8 @@ export async function create(params: CreateRequest): Promise<CreateResponse> {
 	const insertValues: typeof data.$inferInsert = {
 		resource,
 		data: validatedPayload,
-		createdAt: nowIso,
-		updatedAt: nowIso,
+		created_at: nowIso,
+		updated_at: nowIso,
 	};
 	if (filterId) {
 		insertValues.id = filterId;
@@ -149,7 +140,7 @@ export async function update(params: UpdateRequest): Promise<UpdateResponse> {
 
 	const result = await db
 		.update(data)
-		.set({ data: validatedPayload, updatedAt: nowIso })
+		.set({ data: validatedPayload, updated_at: nowIso })
 		.where(and(eq(data.id, filter.id), eq(data.resource, resource)))
 		.returning();
 
@@ -173,12 +164,12 @@ export async function deleteResource(
 	// Soft delete, matching the core resources.
 	const result = await db
 		.update(data)
-		.set({ deletedAt: nowIso, updatedAt: nowIso })
+		.set({ deleted_at: nowIso, updated_at: nowIso })
 		.where(
 			and(
 				eq(data.id, filter.id),
 				eq(data.resource, resource),
-				isNull(data.deletedAt),
+				isNull(data.deleted_at),
 			),
 		)
 		.returning();

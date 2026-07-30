@@ -407,8 +407,8 @@ export const pageReducer = (state: AppState, action: RowAction): AppState => {
 
 		case "REMOVE_PAGE": {
 			const flow = state.flowsById[state.activeFlowId];
-			if (!flow || flow.pageIds.length <= 1) return state;
-			if (!flow.pageIds.includes(action.pageId)) return state;
+			if (!flow || flow.page_ids.length <= 1) return state;
+			if (!flow.page_ids.includes(action.pageId)) return state;
 
 			const nextMaps = removePage(
 				state,
@@ -416,7 +416,7 @@ export const pageReducer = (state: AppState, action: RowAction): AppState => {
 				action.pageId,
 			);
 			const nextPageIds =
-				nextMaps.flowsById[state.activeFlowId]?.pageIds ?? [];
+				nextMaps.flowsById[state.activeFlowId]?.page_ids ?? [];
 
 			const wasActive = state.activePageId === action.pageId;
 			return {

@@ -32,7 +32,7 @@ const calendarSchema = {
 				"destination",
 			],
 			properties: {
-				type: { const: "Calendar" },
+				type: { const: "calendar" },
 				title: { type: "string" },
 				start_time: { type: "string" },
 				end_time: { type: "string" },
@@ -53,10 +53,10 @@ describe("extractSduiRowDefinition", () => {
 	test("extracts required, optional, and binding-like string attributes from a row schema", () => {
 		const definition = extractSduiRowDefinition(
 			calendarSchema,
-			"Calendar.schema.json",
+			"calendar.schema.json",
 		);
 
-		expect(definition.type).toBe("Calendar");
+		expect(definition.type).toBe("calendar");
 		expect(definition.triggers).toEqual({ tap: "required" });
 		expect(definition.attributes).toEqual({
 			title: { required: false, type: "string" },
@@ -151,13 +151,13 @@ describe("rowTriggersFromDefinitions", () => {
 						type: "object",
 						required: ["type", "label"],
 						properties: {
-							type: { const: "Button" },
+							type: { const: "button" },
 							label: { type: "string" },
 						},
 					},
 				],
 			},
-			"Button.schema.json",
+			"button.schema.json",
 		);
 		const selectPhoto = extractSduiRowDefinition(
 			{
@@ -168,7 +168,7 @@ describe("rowTriggersFromDefinitions", () => {
 						type: "object",
 						required: ["type", "source", "destination"],
 						properties: {
-							type: { const: "SelectPhoto" },
+							type: { const: "select_photo" },
 							source: { type: "string" },
 							destination: { type: "string" },
 						},
@@ -179,8 +179,8 @@ describe("rowTriggersFromDefinitions", () => {
 		);
 
 		expect(rowTriggersFromDefinitions([button, selectPhoto])).toEqual({
-			Button: [{ trigger: "tap", required: true }],
-			SelectPhoto: [
+			button: [{ trigger: "tap", required: true }],
+			select_photo: [
 				{ trigger: "delete", required: true },
 				{ trigger: "tap", required: true },
 			],
@@ -192,8 +192,8 @@ describe("rowTriggersFromDefinitions", () => {
 			{
 				triggers: {
 					tap: "required",
-					"tap-row": "required",
-					"tap-column": "required",
+					tap_row: "required",
+					tap_column: "required",
 				},
 				allOf: [
 					{ $ref: "../evy.schema.json#/$defs/UI_RowBase" },
@@ -201,26 +201,26 @@ describe("rowTriggersFromDefinitions", () => {
 						type: "object",
 						required: ["type", "source", "destination"],
 						properties: {
-							type: { const: "Calendar" },
+							type: { const: "calendar" },
 							source: { type: "string" },
 							destination: { type: "string" },
 						},
 					},
 				],
 			},
-			"Calendar.schema.json",
+			"calendar.schema.json",
 		);
 
 		expect(calendar.triggers).toEqual({
 			tap: "required",
-			"tap-row": "required",
-			"tap-column": "required",
+			tap_row: "required",
+			tap_column: "required",
 		});
 		expect(rowTriggersFromDefinitions([calendar])).toEqual({
-			Calendar: [
+			calendar: [
 				{ trigger: "tap", required: true },
-				{ trigger: "tap-column", required: true },
-				{ trigger: "tap-row", required: true },
+				{ trigger: "tap_column", required: true },
+				{ trigger: "tap_row", required: true },
 			],
 		});
 	});
@@ -235,19 +235,19 @@ describe("rowTriggersFromDefinitions", () => {
 						type: "object",
 						required: ["type", "source", "destination"],
 						properties: {
-							type: { const: "Input" },
+							type: { const: "input" },
 							source: { type: "string" },
 							destination: { type: "string" },
 						},
 					},
 				],
 			},
-			"Input.schema.json",
+			"input.schema.json",
 		);
 
 		expect(input.triggers).toEqual({ tap: "optional", submit: "optional" });
 		expect(rowTriggersFromDefinitions([input])).toEqual({
-			Input: [
+			input: [
 				{ trigger: "submit", required: false },
 				{ trigger: "tap", required: false },
 			],
@@ -259,7 +259,7 @@ describe("rowTriggersFromDefinitions", () => {
 			{
 				triggers: {
 					tap: "optional",
-					"swipe-left": "optional",
+					swipe_left: "optional",
 				},
 				allOf: [
 					{ $ref: "../evy.schema.json#/$defs/UI_RowBase" },
@@ -267,21 +267,21 @@ describe("rowTriggersFromDefinitions", () => {
 						type: "object",
 						required: ["type"],
 						properties: {
-							type: { const: "Text" },
+							type: { const: "text" },
 						},
 					},
 				],
 			},
-			"Text.schema.json",
+			"text.schema.json",
 		);
 
 		expect(text.triggers).toEqual({
 			tap: "optional",
-			"swipe-left": "optional",
+			swipe_left: "optional",
 		});
 		expect(rowTriggersFromDefinitions([text])).toEqual({
-			Text: [
-				{ trigger: "swipe-left", required: false },
+			text: [
+				{ trigger: "swipe_left", required: false },
 				{ trigger: "tap", required: false },
 			],
 		});
@@ -369,17 +369,17 @@ describe("rowFieldsFromDefinitions", () => {
 		expect(rowFieldsFromDefinitions([definition])).toEqual({
 			Fixture: [
 				{
-					name: "sheetRowId",
+					name: "sheet_row_id",
 					kind: "sheet",
 					required: false,
 				},
 				{
-					name: "childRowId",
+					name: "child_row_id",
 					kind: "child",
 					required: true,
 				},
 				{
-					name: "childrenRowIds",
+					name: "children_row_ids",
 					kind: "children",
 					required: true,
 				},
@@ -412,7 +412,7 @@ describe("rowFieldsFromDefinitions", () => {
 describe("inherited structural sheet fields", () => {
 	test("allowlists only sheet as an inherited structural field", () => {
 		expect(inheritedStructuralRowFields()).toEqual([
-			{ name: "sheetRowId", kind: "sheet", required: false },
+			{ name: "sheet_row_id", kind: "sheet", required: false },
 		]);
 	});
 
@@ -423,34 +423,34 @@ describe("inherited structural sheet fields", () => {
 
 		for (const definition of definitions) {
 			expect(rowFields[definition.type]).toContainEqual({
-				name: "sheetRowId",
+				name: "sheet_row_id",
 				kind: "sheet",
 				required: false,
 			});
 			expect(rowSpec[definition.type]?.content.sheet).toBeUndefined();
 		}
 
-		const searchFields = rowFields.Search ?? [];
+		const searchFields = rowFields.search ?? [];
 		expect(searchFields).toContainEqual({
-			name: "childRowId",
+			name: "child_row_id",
 			kind: "child",
 			required: false,
 		});
 
 		for (const definition of definitions) {
-			if (definition.type === "Search") continue;
+			if (definition.type === "search") continue;
 			expect(
 				(rowFields[definition.type] ?? []).some(
-					(field) => field.name === "childRowId",
+					(field) => field.name === "child_row_id",
 				),
 			).toBe(false);
 			expect(definition.attributes.child).toBeUndefined();
 		}
 
 		for (const containerType of [
-			"VerticalContainer",
-			"HorizontalContainer",
-			"TabContainer",
+			"vertical_container",
+			"horizontal_container",
+			"tab_container",
 		]) {
 			expect(
 				definitions.find(
@@ -479,7 +479,7 @@ describe("SDUI row schema invariants", () => {
 	test("rejects schema definition invariant violations", () => {
 		const definition = extractSduiRowDefinition(
 			calendarSchema,
-			"Calendar.schema.json",
+			"calendar.schema.json",
 		);
 
 		expect(() =>
@@ -492,14 +492,14 @@ describe("SDUI row schema invariants", () => {
 		expect(() =>
 			assertExactSduiRowTypeCoverage(
 				[definition, definition],
-				["Calendar"],
+				["calendar"],
 			),
 		).toThrow("Duplicate SDUI row definition type values");
 
 		expect(() =>
 			assertExactSduiRowTypeCoverage(
 				[definition],
-				["Calendar", "Button"],
+				["calendar", "button"],
 			),
 		).toThrow("Missing SDUI definition");
 	});

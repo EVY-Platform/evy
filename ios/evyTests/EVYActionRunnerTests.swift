@@ -168,8 +168,8 @@ final class EVYActionRunnerTests: XCTestCase {
   }
 
   func testCreateActionPersistsFlowSubmissionAndEmitsNothing() throws {
-    let namespace = MarketplaceTestFixture.serviceId
-    let resource = MarketplaceTestFixture.itemsResourceId
+    let namespace = MarketplaceTestFixture.service
+    let resource = MarketplaceTestFixture.itemsRef
     let scopeId = "__test__:\(resource)"
     try? EVY.publicStore.deleteAll(namespace: namespace, resource: resource)
     EVY.draftStore.deleteDrafts()
@@ -186,7 +186,7 @@ final class EVYActionRunnerTests: XCTestCase {
 
     var received: ActionOperation?
     let action = rowAction(
-      true: .create(service: namespace, resource: resource, mode: .submit, idDestination: nil))
+      true: .create(resource: resource, mode: .submit, id_destination: nil))
     EVYActionRunner.run(actions: [action]) { received = $0 }
 
     XCTAssertNil(received)
@@ -202,8 +202,8 @@ final class EVYActionRunnerTests: XCTestCase {
   }
 
   func testCreateThenCloseRunsSequentially() throws {
-    let namespace = MarketplaceTestFixture.serviceId
-    let resource = MarketplaceTestFixture.itemsResourceId
+    let namespace = MarketplaceTestFixture.service
+    let resource = MarketplaceTestFixture.itemsRef
     let scopeId = "__test__:\(resource)"
     try? EVY.publicStore.deleteAll(namespace: namespace, resource: resource)
     EVY.draftStore.deleteDrafts()
@@ -219,7 +219,7 @@ final class EVYActionRunnerTests: XCTestCase {
 
     var receivedOperations: [ActionOperation] = []
     let createAction = rowAction(
-      true: .create(service: namespace, resource: resource, mode: .submit, idDestination: nil))
+      true: .create(resource: resource, mode: .submit, id_destination: nil))
     let closeAction = rowAction(true: .close)
     EVYActionRunner.run(actions: [createAction, closeAction]) { receivedOperations.append($0) }
 
@@ -242,13 +242,14 @@ final class EVYActionRunnerTests: XCTestCase {
   }
 
   func testCreateWithIdDestinationWritesGeneratedId() throws {
-    let namespace = UUID().uuidString
-    let resource = "addresses"
+    let namespace = EVYNamespace.evy
+    let resource = EVYCoreResource.addresses.ref
     let entityId = UUID().uuidString
     let scopeId = EVYDraft.ephemeralScopeId(forPageId: UUID().uuidString)
+    deleteFromSyncedStores(namespace: namespace, resource: resource)
     EVY.draftStore.activeScopeId = scopeId
     defer {
-      try? EVY.publicStore.deleteAll(namespace: namespace, resource: resource)
+      deleteFromSyncedStores(namespace: namespace, resource: resource)
       try? EVY.publicStore.delete(
         namespace: EVYNamespace.local, resource: entityId, id: EVYNamespace.singletonId)
       EVY.draftStore.deleteDrafts()
@@ -265,9 +266,9 @@ final class EVYActionRunnerTests: XCTestCase {
     let createAction = rowAction(
       true:
         .create(
-          service: namespace, resource: resource,
+          resource: resource,
           mode: .inline(data: ["street": "Rothschild Avenue"]),
-          idDestination: "\(entityId).transfer_options.pickup.address_id")
+          id_destination: "\(entityId).transfer_options.pickup.address_id")
     )
     var errors: [Error] = []
     let observer = NotificationCenter.default.addObserver(
@@ -282,7 +283,7 @@ final class EVYActionRunnerTests: XCTestCase {
     EVYActionRunner.run(actions: [createAction]) { _ in }
 
     XCTAssertTrue(errors.isEmpty, "create with id destination should not error: \(errors)")
-    let createdRows = try EVY.publicStore.getAll(namespace: namespace, resource: resource)
+    let createdRows = allFromSyncedStores(namespace: namespace, resource: resource)
     XCTAssertEqual(createdRows.count, 1)
     let created = try createdRows[0].decoded()
     guard case .dictionary(let record) = created,
@@ -297,8 +298,8 @@ final class EVYActionRunnerTests: XCTestCase {
   }
 
   func testCreateWithDataPathWritesGeneratedIdToDraft() throws {
-    let namespace = UUID().uuidString
-    let resource = "addresses"
+    let namespace = EVYNamespace.evy
+    let resource = EVYCoreResource.addresses.ref
     let scopeId = EVYDraft.ephemeralScopeId(forPageId: UUID().uuidString)
     EVY.draftStore.activeScopeId = scopeId
     defer {
@@ -316,12 +317,12 @@ final class EVYActionRunnerTests: XCTestCase {
 
     let createAction = rowAction(
       true: .create(
-        service: namespace, resource: resource, mode: .fromPath(dataPath: "pickup_address"),
-        idDestination: "pickup_address.id")
+        resource: resource, mode: .fromPath(data_path: "pickup_address"),
+        id_destination: "pickup_address.id")
     )
     EVYActionRunner.run(actions: [createAction]) { _ in }
 
-    let createdRows = try EVY.publicStore.getAll(namespace: namespace, resource: resource)
+    let createdRows = allFromSyncedStores(namespace: namespace, resource: resource)
     XCTAssertEqual(createdRows.count, 1)
     let created = try createdRows[0].decoded()
     guard case .dictionary(let record) = created,
@@ -336,8 +337,8 @@ final class EVYActionRunnerTests: XCTestCase {
   }
 
   func testUpdateWithDataPathStripsForeignIdFromChanges() throws {
-    let namespace = UUID().uuidString
-    let resource = "addresses"
+    let namespace = EVYNamespace.evy
+    let resource = EVYCoreResource.addresses.ref
     let recordId = UUID().uuidString
     let scopeId = EVYDraft.ephemeralScopeId(forPageId: UUID().uuidString)
     EVY.draftStore.activeScopeId = scopeId
@@ -368,7 +369,7 @@ final class EVYActionRunnerTests: XCTestCase {
 
     let updateAction = rowAction(
       true: .update(
-        service: namespace, resource: resource, mode: .store, filter: ["id": recordId],
+        resource: resource, mode: .store, filter: ["id": recordId],
         changes: .path("pickup_address"))
     )
     EVYActionRunner.run(actions: [updateAction]) { _ in }
@@ -388,10 +389,8 @@ final class EVYActionRunnerTests: XCTestCase {
   }
 
   private func pickupAddressSaveActions(
-    coreNamespace: String,
-    addressesResource: String,
-    itemsResource: String,
-    marketplaceNamespace: String = MarketplaceTestFixture.serviceId,
+    addressesRef: String = EVYCoreResource.addresses.ref,
+    itemsResource: String = MarketplaceTestFixture.itemsRef,
     linkMode: PickupLinkMode = .store
   ) -> [UI_RowAction] {
     let linkAction: EVYActionInvocation
@@ -399,13 +398,13 @@ final class EVYActionRunnerTests: XCTestCase {
     case .store:
       linkAction =
         .update(
-          service: marketplaceNamespace, resource: itemsResource, mode: .store,
+          resource: itemsResource, mode: .store,
           filter: ["id": "\(itemsResource).id"],
           changes: .literal(["transfer_options.pickup.address_id": "pickup_address.id"]))
     case .draft:
       linkAction =
         .update(
-          service: marketplaceNamespace, resource: itemsResource, mode: .draft, filter: [:],
+          resource: itemsResource, mode: .draft, filter: [:],
           changes: .literal(["transfer_options.pickup.address_id": "pickup_address.id"]))
     }
     return [
@@ -413,11 +412,11 @@ final class EVYActionRunnerTests: XCTestCase {
         condition: "{length(\(itemsResource).transfer_options.pickup.address_id) == 0}",
         true:
           .create(
-            service: coreNamespace, resource: addressesResource,
-            mode: .fromPath(dataPath: "pickup_address"), idDestination: "pickup_address.id"),
+            resource: addressesRef,
+            mode: .fromPath(data_path: "pickup_address"), id_destination: "pickup_address.id"),
         false:
           .update(
-            service: coreNamespace, resource: addressesResource, mode: .store,
+            resource: addressesRef, mode: .store,
             filter: ["id": "\(itemsResource).transfer_options.pickup.address_id"],
             changes: .path("pickup_address"))
       ),
@@ -426,21 +425,20 @@ final class EVYActionRunnerTests: XCTestCase {
   }
 
   func testTwoActionPickupAddressSaveSequence() throws {
-    let coreNamespace = "475731ac-31aa-4d65-94d2-7032782ae359"
-    let marketplaceNamespace = MarketplaceTestFixture.serviceId
-    let itemsResource = MarketplaceTestFixture.itemsResourceId
-    let addressesResource = "addresses"
+    let addressesRef = EVYCoreResource.addresses.ref
+    let marketplaceNamespace = MarketplaceTestFixture.service
+    let itemsResource = MarketplaceTestFixture.itemsRef
     let itemId = UUID().uuidString
     let pageId = "pickup-page-\(UUID().uuidString)"
     let scopeId = EVYDraft.ephemeralScopeId(forPageId: pageId)
 
-    deleteFromSyncedStores(namespace: coreNamespace, resource: addressesResource)
+    deleteFromSyncedStores(namespace: EVYNamespace.evy, resource: addressesRef)
     try? EVY.publicStore.deleteAll(namespace: marketplaceNamespace, resource: itemsResource)
     EVY.draftStore.deleteDrafts()
     EVY.draftStore.activeScopeId = scopeId
     EVY.activeCacheScopeId = pageId
     defer {
-      deleteFromSyncedStores(namespace: coreNamespace, resource: addressesResource)
+      deleteFromSyncedStores(namespace: EVYNamespace.evy, resource: addressesRef)
       try? EVY.publicStore.deleteAll(namespace: marketplaceNamespace, resource: itemsResource)
       EVY.draftStore.deleteDrafts()
       EVY.draftStore.activeScopeId = nil
@@ -477,15 +475,11 @@ final class EVYActionRunnerTests: XCTestCase {
     ])
     try EVY.writeRawValue(pickupDraft, to: "{pickup_address}", scopeId: scopeId)
 
-    let saveActions = pickupAddressSaveActions(
-      coreNamespace: coreNamespace,
-      addressesResource: addressesResource,
-      itemsResource: itemsResource
-    )
+    let saveActions = pickupAddressSaveActions(itemsResource: itemsResource)
     EVYActionRunner.run(actions: saveActions) { _ in }
 
     let addresses = allFromSyncedStores(
-      namespace: coreNamespace, resource: addressesResource)
+      namespace: EVYNamespace.evy, resource: addressesRef)
     XCTAssertEqual(addresses.count, 1)
     guard case .dictionary(let createdAddress) = try addresses[0].decoded(),
       case .string(let addressId) = createdAddress["id"]
@@ -524,9 +518,9 @@ final class EVYActionRunnerTests: XCTestCase {
     EVYActionRunner.run(actions: saveActions) { _ in }
 
     XCTAssertEqual(
-      allFromSyncedStores(namespace: coreNamespace, resource: addressesResource).count, 1)
+      allFromSyncedStores(namespace: EVYNamespace.evy, resource: addressesRef).count, 1)
     let updatedRows = allFromSyncedStores(
-      namespace: coreNamespace, resource: addressesResource)
+      namespace: EVYNamespace.evy, resource: addressesRef)
     guard case .dictionary(let updatedAddress) = try updatedRows[0].decoded() else {
       return XCTFail("expected address after second save")
     }
@@ -534,8 +528,8 @@ final class EVYActionRunnerTests: XCTestCase {
   }
 
   func testDraftModeUpdateWritesChangesIntoCreateDraft() throws {
-    let marketplaceNamespace = MarketplaceTestFixture.serviceId
-    let itemsResource = MarketplaceTestFixture.itemsResourceId
+    let marketplaceNamespace = MarketplaceTestFixture.service
+    let itemsResource = MarketplaceTestFixture.itemsRef
     let flowId = "create-flow"
     let scopeId = EVYDraft.createMergeScopeId(flowId: flowId, entityKey: itemsResource)
     let unrelatedItemId = UUID().uuidString
@@ -562,7 +556,7 @@ final class EVYActionRunnerTests: XCTestCase {
     let linkAction = rowAction(
       true:
         .update(
-          service: marketplaceNamespace, resource: itemsResource, mode: .draft, filter: [:],
+          resource: itemsResource, mode: .draft, filter: [:],
           changes: .literal(["transfer_options.pickup.address_id": "\"some-address-uuid\""]))
     )
     EVYActionRunner.run(actions: [linkAction]) { _ in }
@@ -581,8 +575,8 @@ final class EVYActionRunnerTests: XCTestCase {
   }
 
   func testStoreModeUpdateMatchingNothingNoOpsInCreateScope() throws {
-    let marketplaceNamespace = MarketplaceTestFixture.serviceId
-    let itemsResource = MarketplaceTestFixture.itemsResourceId
+    let marketplaceNamespace = MarketplaceTestFixture.service
+    let itemsResource = MarketplaceTestFixture.itemsRef
     let flowId = "create-flow"
     let scopeId = EVYDraft.createMergeScopeId(flowId: flowId, entityKey: itemsResource)
     let unrelatedItemId = UUID().uuidString
@@ -609,7 +603,7 @@ final class EVYActionRunnerTests: XCTestCase {
     let linkAction = rowAction(
       true:
         .update(
-          service: marketplaceNamespace, resource: itemsResource, mode: .store,
+          resource: itemsResource, mode: .store,
           filter: ["id": "\(itemsResource).id"],
           changes: .literal(["transfer_options.pickup.address_id": "\"some-address-uuid\""]))
     )
@@ -627,8 +621,8 @@ final class EVYActionRunnerTests: XCTestCase {
   }
 
   func testDraftModeUpdateOutsideMatchingCreateScopeErrors() throws {
-    let marketplaceNamespace = MarketplaceTestFixture.serviceId
-    let itemsResource = MarketplaceTestFixture.itemsResourceId
+    let marketplaceNamespace = MarketplaceTestFixture.service
+    let itemsResource = MarketplaceTestFixture.itemsRef
     let browseScopeId = "create-flow:browse"
 
     try? EVY.publicStore.deleteAll(namespace: marketplaceNamespace, resource: itemsResource)
@@ -654,7 +648,7 @@ final class EVYActionRunnerTests: XCTestCase {
     let linkAction = rowAction(
       true:
         .update(
-          service: marketplaceNamespace, resource: itemsResource, mode: .draft, filter: [:],
+          resource: itemsResource, mode: .draft, filter: [:],
           changes: .literal(["title": "\"patched\""]))
     )
     let errors = capturedErrors {
@@ -671,8 +665,8 @@ final class EVYActionRunnerTests: XCTestCase {
   }
 
   func testUpdateInCreateScopeWithMatchingRowStillUpdatesRow() throws {
-    let marketplaceNamespace = MarketplaceTestFixture.serviceId
-    let itemsResource = MarketplaceTestFixture.itemsResourceId
+    let marketplaceNamespace = MarketplaceTestFixture.service
+    let itemsResource = MarketplaceTestFixture.itemsRef
     let flowId = "create-flow"
     let scopeId = EVYDraft.createMergeScopeId(flowId: flowId, entityKey: itemsResource)
     let itemId = UUID().uuidString
@@ -699,7 +693,7 @@ final class EVYActionRunnerTests: XCTestCase {
     let updateAction = rowAction(
       true:
         .update(
-          service: marketplaceNamespace, resource: itemsResource, mode: .store,
+          resource: itemsResource, mode: .store,
           filter: ["id": "\"\(itemId)\""], changes: .literal(["title": "\"Archived title\""]))
     )
     EVYActionRunner.run(actions: [updateAction]) { _ in }
@@ -715,19 +709,18 @@ final class EVYActionRunnerTests: XCTestCase {
   }
 
   func testCreateFlowTwoActionAddressSaveLinksItemDraftAndRepickUpdates() throws {
-    let coreNamespace = "475731ac-31aa-4d65-94d2-7032782ae359"
-    let marketplaceNamespace = MarketplaceTestFixture.serviceId
-    let itemsResource = MarketplaceTestFixture.itemsResourceId
-    let addressesResource = "addresses"
+    let addressesRef = EVYCoreResource.addresses.ref
+    let marketplaceNamespace = MarketplaceTestFixture.service
+    let itemsResource = MarketplaceTestFixture.itemsRef
     let flowId = "create-flow"
     let scopeId = EVYDraft.createMergeScopeId(flowId: flowId, entityKey: itemsResource)
 
-    deleteFromSyncedStores(namespace: coreNamespace, resource: addressesResource)
+    deleteFromSyncedStores(namespace: EVYNamespace.evy, resource: addressesRef)
     try? EVY.publicStore.deleteAll(namespace: marketplaceNamespace, resource: itemsResource)
     EVY.draftStore.deleteDrafts()
     EVY.draftStore.activeScopeId = scopeId
     defer {
-      deleteFromSyncedStores(namespace: coreNamespace, resource: addressesResource)
+      deleteFromSyncedStores(namespace: EVYNamespace.evy, resource: addressesRef)
       try? EVY.publicStore.deleteAll(namespace: marketplaceNamespace, resource: itemsResource)
       EVY.draftStore.deleteDrafts(scopeId: scopeId)
       EVY.draftStore.activeScopeId = nil
@@ -741,15 +734,13 @@ final class EVYActionRunnerTests: XCTestCase {
     try EVY.writeRawValue(pickupDraft, to: "{pickup_address}", scopeId: scopeId)
 
     let saveActions = pickupAddressSaveActions(
-      coreNamespace: coreNamespace,
-      addressesResource: addressesResource,
       itemsResource: itemsResource,
       linkMode: .draft
     )
     EVYActionRunner.run(actions: saveActions) { _ in }
 
     let addresses = allFromSyncedStores(
-      namespace: coreNamespace, resource: addressesResource)
+      namespace: EVYNamespace.evy, resource: addressesRef)
     XCTAssertEqual(addresses.count, 1)
     guard case .dictionary(let createdAddress) = try addresses[0].decoded(),
       case .string(let addressId) = createdAddress["id"]
@@ -773,9 +764,9 @@ final class EVYActionRunnerTests: XCTestCase {
     EVYActionRunner.run(actions: saveActions) { _ in }
 
     XCTAssertEqual(
-      allFromSyncedStores(namespace: coreNamespace, resource: addressesResource).count, 1)
+      allFromSyncedStores(namespace: EVYNamespace.evy, resource: addressesRef).count, 1)
     let updatedRows = allFromSyncedStores(
-      namespace: coreNamespace, resource: addressesResource)
+      namespace: EVYNamespace.evy, resource: addressesRef)
     guard case .dictionary(let updatedAddress) = try updatedRows[0].decoded(),
       case .string(let updatedId) = updatedAddress["id"]
     else {
@@ -799,8 +790,8 @@ final class EVYActionRunnerTests: XCTestCase {
   }
 
   func testResolveInlineCreateDataMapsLiterals() throws {
-    let namespace = MarketplaceTestFixture.serviceId
-    let resource = "literal-create-actions"
+    let namespace = MarketplaceTestFixture.service
+    let resource = "\(MarketplaceTestFixture.service).literal-create-actions"
     let pinnedDate = Date(timeIntervalSince1970: 1_780_000_000)
     try? EVY.publicStore.deleteAll(namespace: namespace, resource: resource)
     EVY.nowProvider = { pinnedDate }
@@ -812,11 +803,11 @@ final class EVYActionRunnerTests: XCTestCase {
     let action = rowAction(
       true:
         .create(
-          service: namespace, resource: resource,
+          resource: resource,
           mode: .inline(data: [
             "fk": "item-1", "service": "\"svc-1\"", "closedAt": "null", "verified": "true",
             "data": "{type: pickup, time: 2026-06-03T09:00:00}",
-          ]), idDestination: nil)
+          ]), id_destination: nil)
     )
     var received: ActionOperation?
     EVYActionRunner.run(actions: [action]) { received = $0 }
@@ -837,25 +828,25 @@ final class EVYActionRunnerTests: XCTestCase {
         "type": .string("pickup"),
         "time": .string("2026-06-03T09:00:00"),
       ]))
-    // Millisecond precision: `createdAt` orders records against each other, and `sort`
+    // Millisecond precision: `created_at` orders records against each other, and `sort`
     // compares it as a string, so two writes in the same second must not tie.
     let fractional = ISO8601DateFormatter()
     fractional.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
-    XCTAssertEqual(values["createdAt"], .string(fractional.string(from: pinnedDate)))
+    XCTAssertEqual(values["created_at"], .string(fractional.string(from: pinnedDate)))
   }
 
   func testInlineCreateDataKeepsExplicitCreatedAt() throws {
-    let namespace = MarketplaceTestFixture.serviceId
-    let resource = "created-at-create-actions"
+    let namespace = MarketplaceTestFixture.service
+    let resource = "\(MarketplaceTestFixture.service).created-at-create-actions"
     try? EVY.publicStore.deleteAll(namespace: namespace, resource: resource)
     defer { try? EVY.publicStore.deleteAll(namespace: namespace, resource: resource) }
 
     let action = rowAction(
       true:
         .create(
-          service: namespace, resource: resource,
-          mode: .inline(data: ["fk": "item-1", "createdAt": "\"2026-06-01T00:00:00Z\""]),
-          idDestination: nil)
+          resource: resource,
+          mode: .inline(data: ["fk": "item-1", "created_at": "\"2026-06-01T00:00:00Z\""]),
+          id_destination: nil)
     )
     EVYActionRunner.run(actions: [action]) { _ in }
 
@@ -864,7 +855,7 @@ final class EVYActionRunnerTests: XCTestCase {
     guard case .dictionary(let values) = createdPayload else {
       return XCTFail("Expected inline create payload dictionary")
     }
-    XCTAssertEqual(values["createdAt"], .string("2026-06-01T00:00:00Z"))
+    XCTAssertEqual(values["created_at"], .string("2026-06-01T00:00:00Z"))
   }
 
   // MARK: - Bare ids in inline payload values
@@ -887,8 +878,8 @@ final class EVYActionRunnerTests: XCTestCase {
   /// Runs an inline create into a scratch resource of its own and returns the payload
   /// that landed in the store, cleaning up everything it and `seed*Binding` created.
   private func inlineCreatePayload(_ data: [String: String]) throws -> [String: EVYJson] {
-    let namespace = MarketplaceTestFixture.serviceId
-    let resource = uniqueKey("inline-create")
+    let namespace = MarketplaceTestFixture.service
+    let resource = "\(MarketplaceTestFixture.service).\(uniqueKey("inline-create"))"
     defer {
       try? EVY.publicStore.deleteAll(namespace: namespace, resource: resource)
       for key in seededBindingKeys {
@@ -899,8 +890,8 @@ final class EVYActionRunnerTests: XCTestCase {
 
     let action = rowAction(
       true: .create(
-        service: namespace, resource: resource,
-        mode: .inline(data: data), idDestination: nil)
+        resource: resource,
+        mode: .inline(data: data), id_destination: nil)
     )
     EVYActionRunner.run(actions: [action]) { _ in }
 
@@ -979,7 +970,7 @@ final class EVYActionRunnerTests: XCTestCase {
     )
     let resolved = EVYPlainTextResolution.resolveValues(
       [
-        "parentMessageId": "$datum.id",
+        "parent_message_id": "$datum.id",
         "value": "accept",
         "type": "$datum.data.type",
         "time": "$datum.data.time",
@@ -989,7 +980,7 @@ final class EVYActionRunnerTests: XCTestCase {
       omitUnresolvedDatumKeys: true
     )
 
-    XCTAssertEqual(resolved["parentMessageId"], .string(requestId))
+    XCTAssertEqual(resolved["parent_message_id"], .string(requestId))
     XCTAssertEqual(resolved["value"], .string("accept"))
     XCTAssertEqual(resolved["type"], .string("pickup"))
     XCTAssertEqual(resolved["time"], .string("2026-06-03T09:00:00"))
@@ -998,7 +989,7 @@ final class EVYActionRunnerTests: XCTestCase {
 
   func testUpdateChangesOmitUnresolvedDatumKeys() throws {
     let namespace = "test"
-    let resource = "omit-datum-changes"
+    let resource = "\(MarketplaceTestFixture.service).omit-datum-changes"
     let recordId = UUID().uuidString
     deleteFromSyncedStores(namespace: namespace, resource: resource)
     defer { deleteFromSyncedStores(namespace: namespace, resource: resource) }
@@ -1018,7 +1009,7 @@ final class EVYActionRunnerTests: XCTestCase {
     ])
     let action = rowAction(
       true: .update(
-        service: namespace, resource: resource, mode: .store,
+        resource: resource, mode: .store,
         filter: ["id": "$datum.id"],
         changes: .literal([
           "label": "$datum.label",
@@ -1053,8 +1044,8 @@ final class EVYActionRunnerTests: XCTestCase {
   /// it has no mutable field left to exercise - so using one here would test update mechanics
   /// against a shape the contract no longer permits.
   func testUpdateActionUpdatesOnlyTheMatchingRecordForDatum() throws {
-    let namespace = "test"
-    let resource = "store-update-actions"
+    let namespace = MarketplaceTestFixture.service
+    let resource = "\(MarketplaceTestFixture.service).store-update-actions"
     let matchingId = UUID().uuidString
     let otherOpenId = UUID().uuidString
     let alreadyClosedId = UUID().uuidString
@@ -1072,7 +1063,7 @@ final class EVYActionRunnerTests: XCTestCase {
     let closeAction = rowAction(
       true:
         .update(
-          service: namespace, resource: resource, mode: .store,
+          resource: resource, mode: .store,
           filter: ["id": "$datum.id", "closedAt": "null"],
           changes: .literal(["closedAt": "now()"]))
     )
@@ -1132,8 +1123,8 @@ final class EVYActionRunnerTests: XCTestCase {
   }
 
   func testInlineCreateActionWritesResolvedPayloadWithoutNavigating() throws {
-    let namespace = "test"
-    let resource = "inline-create-actions"
+    let namespace = MarketplaceTestFixture.service
+    let resource = "\(MarketplaceTestFixture.service).inline-create-actions"
     let scopeId = "__test__:inline-create"
     let selectedTimeslot = "2026-06-03T09:00:00"
     try? EVY.publicStore.deleteAll(namespace: namespace, resource: resource)
@@ -1156,10 +1147,10 @@ final class EVYActionRunnerTests: XCTestCase {
     let action = rowAction(
       true:
         .create(
-          service: namespace, resource: resource,
+          resource: resource,
           mode: .inline(data: [
             "fk": "$datum.id", "data": "{type: pickup, time: selected_pickup_timeslot}",
-          ]), idDestination: nil)
+          ]), id_destination: nil)
     )
     var receivedNavigation: ActionOperation?
 
@@ -1297,13 +1288,13 @@ final class EVYActionRunnerTests: XCTestCase {
     let actions = UI_RowActions(
       delete: [closeAction],
       submit: [closeAction],
-      swipeLeft: [closeAction],
+      swipe_left: [closeAction],
       tap: [closeAction]
     )
     let lists: [(String, [UI_RowAction])] = [
       ("tap", actions.tap),
       ("delete", actions.delete),
-      ("swipeLeft", actions.swipeLeft),
+      ("swipeLeft", actions.swipe_left),
       ("submit", actions.submit),
     ]
     for (name, onlyList) in lists {
@@ -1403,7 +1394,7 @@ final class EVYActionRunnerTests: XCTestCase {
   func testHighlightRequiredFormatsUuidQualifiedFieldLabel() {
     var received: ActionOperation?
     let action = rowAction(
-      true: .highlightRequired(field: "\(MarketplaceTestFixture.itemsResourceId).pickup_selection")
+      true: .highlightRequired(field: "\(MarketplaceTestFixture.itemsRef).pickup_selection")
     )
     EVYActionRunner.run(actions: [action]) { received = $0 }
     guard case .highlightRequired(let label) = received else {
@@ -1485,18 +1476,18 @@ final class EVYActionRunnerTests: XCTestCase {
   }
 
   func testFalseBranchWithoutCreateRunsHighlightRequired() {
-    let messagesResourceId = EVYCoreResource.messages.rawValue
-    let itemResourceId = MarketplaceTestFixture.itemsResourceId
+    let messagesResourceId = EVYCoreResource.messages.ref
+    let itemRef = MarketplaceTestFixture.itemsRef
     var received: ActionOperation?
     let action = rowAction(
       condition: "{length(shipping_address.postcode) > 0}",
       true:
         .create(
-          service: EVYNamespace.evy, resource: messagesResourceId,
+          resource: messagesResourceId,
           mode: .inline(data: [
-            "fk": "\(itemResourceId).id",
+            "fk": "\(itemRef).id",
             "data": "{type: shipping, value: pending, postalcode: shipping_address.postcode}",
-          ]), idDestination: nil),
+          ]), id_destination: nil),
       false: .highlightRequired(field: "postcode")
     )
     EVYActionRunner.run(actions: [action]) { received = $0 }
@@ -1505,20 +1496,20 @@ final class EVYActionRunnerTests: XCTestCase {
 
   func testCreateActionRunsImmediately() throws {
     let namespace = EVYNamespace.evy
-    let resource = EVYCoreResource.messages.rawValue
-    let itemResourceId = MarketplaceTestFixture.itemsResourceId
+    let resource = EVYCoreResource.messages.ref
+    let itemRef = MarketplaceTestFixture.itemsRef
     let itemId = UUID().uuidString
     let itemTitle = "Pickup Item Title"
     deleteFromSyncedStores(namespace: namespace, resource: resource)
-    try? EVY.publicStore.deleteAll(namespace: namespace, resource: itemResourceId)
+    try? EVY.publicStore.deleteAll(namespace: namespace, resource: itemRef)
     defer {
       deleteFromSyncedStores(namespace: namespace, resource: resource)
-      try? EVY.publicStore.deleteAll(namespace: namespace, resource: itemResourceId)
+      try? EVY.publicStore.deleteAll(namespace: namespace, resource: itemRef)
     }
 
     try EVY.publicStore.applySyncedValue(
       namespace: namespace,
-      resource: itemResourceId,
+      resource: itemRef,
       value: .array([
         .dictionary([
           "id": .string(itemId),
@@ -1526,17 +1517,17 @@ final class EVYActionRunnerTests: XCTestCase {
         ])
       ])
     )
-    EVY.cacheQueryParams([itemResourceId: [itemId]], forPageId: "test-page")
+    EVY.cacheQueryParams([itemRef: [itemId]], forPageId: "test-page")
 
     var received: ActionOperation?
     let action = rowAction(
       true:
         .create(
-          service: namespace, resource: resource,
+          resource: resource,
           mode: .inline(data: [
-            "fk": "\(itemResourceId).id",
+            "fk": "\(itemRef).id",
             "data": "{type: pickup, value: pending, time: 2026-06-03T09:00:00}",
-          ]), idDestination: nil)
+          ]), id_destination: nil)
     )
     EVYActionRunner.run(actions: [action]) { received = $0 }
 
@@ -1549,14 +1540,13 @@ final class EVYActionRunnerTests: XCTestCase {
     let navigateAction: EVYActionInvocation = .navigate(
       flowId: "flowX", pageId: "pageY", query: ["id": "$datum.id"])
     let updateAction: EVYActionInvocation = .create(
-      service: EVY_CORE_SERVICE,
-      resource: EVYCoreResource.messages.rawValue,
+      resource: EVYCoreResource.messages.ref,
       mode: .inline(data: [
         "fk": "$datum.fk",
-        "parentMessageId": "$datum.id",
+        "parent_message_id": "$datum.id",
         "data": "{value: cancel, type: $datum.data.type}",
       ]),
-      idDestination: nil)
+      id_destination: nil)
     let row = try decodeRow(
       content: """
         {
@@ -1565,7 +1555,7 @@ final class EVYActionRunnerTests: XCTestCase {
         }
         """,
       actions: UI_RowActions(
-        swipeLeft: [rowAction(true: updateAction)],
+        swipe_left: [rowAction(true: updateAction)],
         tap: [rowAction(true: navigateAction)]
       )
     )
@@ -1581,12 +1571,12 @@ final class EVYActionRunnerTests: XCTestCase {
     XCTAssertEqual(formattedRow.id, row.id)
     XCTAssertEqual(formattedRow.title, "Resolved Title")
     XCTAssertEqual(formattedRow.actions.tap.first?.true, branch(navigateAction))
-    XCTAssertEqual(formattedRow.actions.swipeLeft.first?.true, branch(updateAction))
+    XCTAssertEqual(formattedRow.actions.swipe_left.first?.true, branch(updateAction))
   }
 
   func testSwipeLeftUpdateActionRunsAgainstItsOwnFormattedSearchResult() throws {
-    let namespace = "test"
-    let resource = "swipe-left-formatted-results"
+    let namespace = MarketplaceTestFixture.service
+    let resource = "\(MarketplaceTestFixture.service).swipe-left-formatted-results"
     let openId = UUID().uuidString
     deleteFromSyncedStores(namespace: namespace, resource: resource)
     defer { deleteFromSyncedStores(namespace: namespace, resource: resource) }
@@ -1607,11 +1597,11 @@ final class EVYActionRunnerTests: XCTestCase {
         }
         """,
       actions: UI_RowActions(
-        swipeLeft: [
+        swipe_left: [
           rowAction(
             true:
               .update(
-                service: namespace, resource: resource, mode: .store,
+                resource: resource, mode: .store,
                 filter: ["id": "$datum.id", "closedAt": "null"],
                 changes: .literal(["closedAt": "now()"]))
           )
@@ -1626,7 +1616,7 @@ final class EVYActionRunnerTests: XCTestCase {
     let result = try XCTUnwrap(results.first)
 
     EVYActionRunner.run(
-      actions: result.displayRow.actions.swipeLeft,
+      actions: result.displayRow.actions.swipe_left,
       datum: result.datum
     ) { _ in }
 
@@ -1642,7 +1632,7 @@ final class EVYActionRunnerTests: XCTestCase {
           "label": "Show sheet",
           "sheet": {
             "id": "sheet-row",
-            "type": "Text",
+            "type": "text",
             "source": "",
             "destination": "",
             "title": "Sheet",
@@ -1680,7 +1670,7 @@ final class EVYActionRunnerTests: XCTestCase {
     let json = """
       {
         "id": "parent-row",
-        "type": "Button",
+        "type": "button",
         "source": "",
         "destination": "",
         "visible": "true",

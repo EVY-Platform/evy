@@ -38,13 +38,13 @@ struct EVYHorizontalContainerRow: View {
     json: """
       {
         "id": "preview-horizontal-row",
-        "type": "HorizontalContainer",
+        "type": "horizontal_container",
         "actions": {},
         "title": "Horizontal Container Preview",
         "children": [
           {
             "id": "horizontal-child-1",
-            "type": "Text",
+            "type": "text",
             "actions": {},
             "title": "First Child",
             "subtitle": "This is the first column item",
@@ -52,7 +52,7 @@ struct EVYHorizontalContainerRow: View {
           },
           {
             "id": "horizontal-child-2",
-            "type": "Text",
+            "type": "text",
             "actions": {},
             "title": "Second Child",
             "subtitle": "This is the second column item",

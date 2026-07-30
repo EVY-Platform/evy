@@ -5,8 +5,8 @@
 
 import XCTest
 
-private let MARKETPLACE_ITEMS_RESOURCE_ID = MarketplaceE2EFixture.itemsResourceId
-private let MARKETPLACE_SERVICE = MarketplaceE2EFixture.serviceId
+private let MARKETPLACE_ITEMS_RESOURCE_ID = MarketplaceE2EFixture.itemsRef
+private let MARKETPLACE_SERVICE = MarketplaceE2EFixture.service
 
 // MARK: - Action branch helpers
 
@@ -30,42 +30,42 @@ func e2eActionBranch(_ callSyntax: String) -> Any {
   case "close", "select_photo", "expand_photo", "delete_photo":
     return ["fn": name]
   case "show", "expand_text":
-    return ["fn": name, "rowId": args.first ?? ""]
+    return ["fn": name, "row_id": args.first ?? ""]
   case "highlight_required":
     return ["fn": name, "field": args.first ?? ""]
   case "select":
     return ["fn": name, "value": args.first ?? ""]
   case "navigate":
-    var out: [String: Any] = ["fn": "navigate", "flowId": args[0], "pageId": args[1]]
+    var out: [String: Any] = ["fn": "navigate", "flow_id": args[0], "page_id": args[1]]
     if args.count > 2, let query = e2ePlainObject(args[2]), !query.isEmpty {
       out["query"] = query
     }
     return out
   case "create":
-    var out: [String: Any] = ["fn": "create", "service": args[0], "resource": args[1]]
-    let third = args.count > 2 ? args[2] : ""
+    var out: [String: Any] = ["fn": "create", "resource": args[0]]
+    let third = args.count > 1 ? args[1] : ""
     if third == "submit" {
       out["mode"] = "submit"
     } else if let data = e2ePlainObject(third) {
       out["mode"] = "inline"
       out["data"] = data
     } else {
-      out["mode"] = "fromPath"
-      out["dataPath"] = third
+      out["mode"] = "from_path"
+      out["data_path"] = third
     }
-    if args.count > 3, !args[3].isEmpty { out["idDestination"] = args[3] }
+    if args.count > 2, !args[2].isEmpty { out["id_destination"] = args[2] }
     return out
   case "update":
-    let isDraft = args.count == 5 && args[4] == "draft"
+    let isDraft = args.count == 4 && args[3] == "draft"
     var out: [String: Any] = [
-      "fn": "update", "service": args[0], "resource": args[1],
+      "fn": "update", "resource": args[0],
       "mode": isDraft ? "draft" : "store",
     ]
-    if !isDraft, let filter = e2ePlainObject(args[2]) { out["filter"] = filter }
-    if let changes = e2ePlainObject(args[3]) {
+    if !isDraft, let filter = e2ePlainObject(args[1]) { out["filter"] = filter }
+    if let changes = e2ePlainObject(args[2]) {
       out["changes"] = changes
     } else {
-      out["changesPath"] = args[3]
+      out["changes_path"] = args[2]
     }
     return out
   default:
@@ -245,7 +245,7 @@ actor WSEmitter {
   }
 
   private func isMatchingDataChanged(_ event: [String: Any], resource: String) -> Bool {
-    guard event["method"] as? String == "dataChanged",
+    guard event["method"] as? String == "data_changed",
       let params = event["params"] as? [String: Any],
       params["resource"] as? String == resource
     else {
@@ -265,14 +265,14 @@ actor WSEmitter {
   private func saveFlowGraph(flowData: [String: Any], flowId: String) async throws {
     let graph = decomposeFlow(flowData: flowData, flowId: flowId)
     for row in graph.rows {
-      try await upsertResource(resource: EVYCoreResource.rows.rawValue, id: row.id, data: row.data)
+      try await upsertResource(resource: EVYCoreResource.rows.ref, id: row.id, data: row.data)
     }
     for page in graph.pages {
       try await upsertResource(
-        resource: EVYCoreResource.pages.rawValue, id: page.id, data: page.data)
+        resource: EVYCoreResource.pages.ref, id: page.id, data: page.data)
     }
     try await upsertResource(
-      resource: EVYCoreResource.flows.rawValue,
+      resource: EVYCoreResource.flows.ref,
       id: graph.flow.id,
       data: graph.flow.data
     )
@@ -280,14 +280,12 @@ actor WSEmitter {
 
   private func upsertResource(resource: String, id: String, data: [String: Any]) async throws {
     let existing = try await getResource(
-      service: EVY_CORE_SERVICE,
       resource: resource,
       filter: ["id": id]
     )
     let existingArray = existing as? [Any]
     let method = existingArray?.isEmpty == false ? "update" : "create"
     let params: [String: Any] = [
-      "service": EVY_CORE_SERVICE,
       "resource": resource,
       "filter": ["id": id],
       "data": data,
@@ -309,10 +307,10 @@ actor WSEmitter {
     var flowRow: [String: Any] = [
       "id": flowId,
       "name": nonEmptyString(flowData["name"]) ?? "Flow",
-      "pageIds": pages.map(\.id),
+      "page_ids": pages.map(\.id),
       "visibility": "public",
-      "createdAt": now,
-      "updatedAt": now,
+      "created_at": now,
+      "updated_at": now,
     ]
     if let submits = flowData["submits"] as? [String: Any] {
       flowRow["submits"] = submits
@@ -327,22 +325,22 @@ actor WSEmitter {
   ) -> (id: String, data: [String: Any]) {
     let pageId = (pageData["id"] as? String) ?? UUID().uuidString
     let rowInputs = pageData["rows"] as? [[String: Any]] ?? []
-    let rowIds = rowInputs.map { rowData in
+    let row_ids = rowInputs.map { rowData in
       decomposeRow(rowData: rowData, rows: &rows, now: now)
     }
-    let footerRowId = (pageData["footer"] as? [String: Any]).map { footerData in
+    let footer_row_id = (pageData["footer"] as? [String: Any]).map { footerData in
       decomposeRow(rowData: footerData, rows: &rows, now: now)
     }
     var pageRow: [String: Any] = [
       "id": pageId,
       "name": nonEmptyString(pageData["name"]) ?? nonEmptyString(pageData["title"]) ?? "Page",
       "title": (pageData["title"] as? String) ?? "",
-      "rowIds": rowIds,
+      "row_ids": row_ids,
       "visibility": "public",
-      "createdAt": now,
-      "updatedAt": now,
+      "created_at": now,
+      "updated_at": now,
     ]
-    if let footerRowId { pageRow["footerRowId"] = footerRowId }
+    if let footer_row_id { pageRow["footer_row_id"] = footer_row_id }
     return (pageId, pageRow)
   }
 
@@ -371,12 +369,12 @@ actor WSEmitter {
       "id": rowId,
       "name": nonEmptyString(rowData["name"]) ?? nonEmptyString(rowData["title"])
         ?? nonEmptyString(rowData["type"]) ?? "Row",
-      "type": (rowData["type"] as? String) ?? "Text",
+      "type": (rowData["type"] as? String) ?? "text",
       "visible": (rowData["visible"] as? String) ?? "true",
       "data": data,
       "visibility": "public",
-      "createdAt": now,
-      "updatedAt": now,
+      "created_at": now,
+      "updated_at": now,
     ]
     rows.append((rowId, row))
     return rowId
@@ -387,10 +385,10 @@ actor WSEmitter {
     return string
   }
 
-  func getResource(service: String, resource: String, filter: [String: Any]? = nil) async throws
+  func getResource(resource: String, filter: [String: Any]? = nil) async throws
     -> Any
   {
-    var params: [String: Any] = ["service": service, "resource": resource]
+    var params: [String: Any] = ["resource": resource]
     if let filter = filter {
       params["filter"] = filter
     }
@@ -398,12 +396,11 @@ actor WSEmitter {
   }
 
   func createResource(
-    service: String,
     resource: String,
     filter: [String: Any]? = nil,
     data: [String: Any]
   ) async throws -> Any {
-    var params: [String: Any] = ["service": service, "resource": resource, "data": data]
+    var params: [String: Any] = ["resource": resource, "data": data]
     if let filter = filter {
       params["filter"] = filter
     }
@@ -411,13 +408,11 @@ actor WSEmitter {
   }
 
   func updateResource(
-    service: String,
     resource: String,
     filter: [String: Any],
     data: [String: Any]
   ) async throws -> Any {
     let params: [String: Any] = [
-      "service": service,
       "resource": resource,
       "filter": filter,
       "data": data,
@@ -509,8 +504,7 @@ class E2ETestBase: XCTestCase {
       "id": E2EFlowIds.webSocketCreateFlow,
       "name": "Create item",
       "submits": [
-        "service": MARKETPLACE_SERVICE,
-        "resource": MARKETPLACE_ITEMS_RESOURCE_ID,
+        "resource": MARKETPLACE_ITEMS_RESOURCE_ID
       ],
       "pages": [
         [
@@ -542,7 +536,7 @@ class E2ETestBase: XCTestCase {
           ],
           "footer": [
             "id": "1cb41189-6fa5-4562-996a-7cefb88a08ca",
-            "type": "Button",
+            "type": "button",
             "visible": "true",
             "title": "",
             "label": "Submit",
@@ -557,7 +551,7 @@ class E2ETestBase: XCTestCase {
             ),
             "sheet": Self.submitListingSheetChild(
               createAction:
-                "{create(\(MARKETPLACE_SERVICE),\(MARKETPLACE_ITEMS_RESOURCE_ID), submit)}"
+                "{create(\(MARKETPLACE_ITEMS_RESOURCE_ID), submit)}"
             ),
           ] as [String: Any],
         ]
@@ -571,13 +565,12 @@ class E2ETestBase: XCTestCase {
     let addressFields =
       "street: \"1 Martin Place\", city: Sydney, postcode: \"2000\", state: NSW, country: Australia"
     let createAddress =
-      "{create(\(EVY_CORE_SERVICE), addresses, {\(addressFields)}, {\(MARKETPLACE_ITEMS_RESOURCE_ID).transfer_options.pickup.address_id})}"
+      "{create(\(EVYCoreResource.addresses.ref), {\(addressFields)}, {\(MARKETPLACE_ITEMS_RESOURCE_ID).transfer_options.pickup.address_id})}"
     return [
       "id": E2EFlowIds.webSocketCreateFlow,
       "name": "Create item with address",
       "submits": [
-        "service": MARKETPLACE_SERVICE,
-        "resource": MARKETPLACE_ITEMS_RESOURCE_ID,
+        "resource": MARKETPLACE_ITEMS_RESOURCE_ID
       ],
       "pages": [
         [
@@ -599,7 +592,7 @@ class E2ETestBase: XCTestCase {
           ],
           "footer": [
             "id": "1cb41189-6fa5-4562-996a-7cefb88a08ca",
-            "type": "Button",
+            "type": "button",
             "visible": "true",
             "title": "",
             "label": "Submit",
@@ -614,7 +607,7 @@ class E2ETestBase: XCTestCase {
             ),
             "sheet": Self.submitListingSheetChild(
               createAction:
-                "{create(\(MARKETPLACE_SERVICE),\(MARKETPLACE_ITEMS_RESOURCE_ID), submit)}"
+                "{create(\(MARKETPLACE_ITEMS_RESOURCE_ID), submit)}"
             ),
           ] as [String: Any],
         ]
@@ -663,17 +656,13 @@ class E2ETestBase: XCTestCase {
 
   func waitForResourceUpdate(
     emitter: WSEmitter,
-    service: String,
     resource: String,
     timeout: TimeInterval = 10,
     matches: (Any) -> Bool
   ) async throws -> Bool {
     let deadline = Date().addingTimeInterval(timeout)
     repeat {
-      let payload = try await emitter.getResource(
-        service: service,
-        resource: resource
-      )
+      let payload = try await emitter.getResource(resource: resource)
       if matches(payload) {
         return true
       }
@@ -681,16 +670,14 @@ class E2ETestBase: XCTestCase {
     return false
   }
 
-  /// Waits for a response message naming `messageId` in `parentMessageId`.
+  /// Waits for a response message naming `messageId` in `parent_message_id`.
   func waitForMessageResponse(
     emitter: WSEmitter,
     messageId: String,
     value: String
   ) async throws -> Bool {
     try await waitForResourceUpdate(
-      emitter: emitter,
-      service: EVY_CORE_SERVICE,
-      resource: EVYCoreResource.messages.rawValue
+      emitter: emitter, resource: EVYCoreResource.messages.ref
     ) { Self.messageHasResponse($0, messageId: messageId, value: value) != nil }
   }
 
@@ -702,7 +689,7 @@ class E2ETestBase: XCTestCase {
     guard let messageRows = responseDataArray(from: messages) else { return nil }
     for message in messageRows {
       guard let messageData = message as? [String: Any],
-        messageData["parentMessageId"] as? String == messageId,
+        messageData["parent_message_id"] as? String == messageId,
         let data = messageData["data"] as? [String: Any],
         data["value"] as? String == value,
         let id = messageData["id"] as? String
@@ -916,11 +903,11 @@ class E2ETestBase: XCTestCase {
 
   var homeFlowId: String? { nil }
 
-  typealias OwnedServiceResourceDeclaration = (
-    service: String, resource: String, ids: [String]
+  typealias OwnedResourceDeclaration = (
+    resource: String, ids: [String]
   )
 
-  var ownedServiceResources: [OwnedServiceResourceDeclaration] { [] }
+  var ownedResources: [OwnedResourceDeclaration] { [] }
 
   override func setUpWithError() throws {
     continueAfterFailure = false
@@ -935,12 +922,12 @@ class E2ETestBase: XCTestCase {
     if let homeFlowId {
       app.launchEnvironment["HOME_FLOW_ID"] = homeFlowId
     }
-    if !ownedServiceResources.isEmpty {
-      let declared = ownedServiceResources.map {
-        ["service": $0.service, "resource": $0.resource, "ids": $0.ids] as [String: Any]
+    if !ownedResources.isEmpty {
+      let declared = ownedResources.map {
+        ["resource": $0.resource, "ids": $0.ids] as [String: Any]
       }
       let encoded = try JSONSerialization.data(withJSONObject: declared)
-      app.launchEnvironment["EVY_OWNED_SERVICE_RESOURCES"] = String(
+      app.launchEnvironment["EVY_OWNED_RESOURCES"] = String(
         decoding: encoded, as: UTF8.self)
     }
     app.launch()
@@ -984,7 +971,7 @@ class E2ETestBase: XCTestCase {
           "rows": [
             [
               "id": "a74bc80e-ffda-4e19-b8f3-cd882405958b",
-              "type": "VerticalContainer",
+              "type": "vertical_container",
               "actions": [:],
               "visible": "true",
               "title": "",
@@ -1017,7 +1004,7 @@ class E2ETestBase: XCTestCase {
   ) -> [String: Any] {
     var row: [String: Any] = [
       "id": id,
-      "type": text.isEmpty ? "Text" : "TextExpand",
+      "type": text.isEmpty ? "text" : "text_expand",
       "actions": [:],
       "visible": visible,
       "title": title,
@@ -1027,7 +1014,7 @@ class E2ETestBase: XCTestCase {
       row["label"] = ""
     } else {
       row["text"] = text
-      row["expandLabel"] = "Read more"
+      row["expand_label"] = "Read more"
       row["actions"] = Self.actionsObject(
         tap: [Self.rowAction(true: "{expand_text(\(id))}")]
       )
@@ -1047,7 +1034,7 @@ class E2ETestBase: XCTestCase {
   ) -> [String: Any] {
     return [
       "id": id,
-      "type": "ListItem",
+      "type": "list_item",
       "actions": [:],
       "visible": visible,
       "title": title,
@@ -1066,7 +1053,7 @@ class E2ETestBase: XCTestCase {
   ) -> [String: Any] {
     var row: [String: Any] = [
       "id": id,
-      "type": "Input",
+      "type": "input",
       "visible": visible,
       "title": title,
       "placeholder": placeholder,
@@ -1103,7 +1090,7 @@ class E2ETestBase: XCTestCase {
     }
     var row: [String: Any] = [
       "id": id,
-      "type": "Button",
+      "type": "button",
       "visible": visible,
       "title": "",
       "label": label,
@@ -1124,7 +1111,7 @@ class E2ETestBase: XCTestCase {
   ) -> [String: Any] {
     return [
       "id": id,
-      "type": "Heading",
+      "type": "heading",
       "actions": [:],
       "visible": "true",
       "title": title,
@@ -1153,7 +1140,7 @@ class E2ETestBase: XCTestCase {
       result["tap"] = tap
     }
     if !swipeLeft.isEmpty {
-      result["swipe-left"] = swipeLeft
+      result["swipe_left"] = swipeLeft
     }
     return result
   }
@@ -1172,19 +1159,19 @@ class E2ETestBase: XCTestCase {
   /// The latest message about one transfer method for the item. Everything the item page
   /// shows is a read of `data.value` off this - see `docs/evy/data.md`.
   static func latestMessageExpression(type: String) -> String {
-    let messagesResourceId = EVYCoreResource.messages.rawValue
-    let itemId = MARKETPLACE_ITEMS_RESOURCE_ID
+    let messagesRef = EVYCoreResource.messages.ref
+    let itemRef = MARKETPLACE_ITEMS_RESOURCE_ID
     return
-      "findFirst(sort(\(messagesResourceId), desc, createdAt), fk == \(itemId).id && data.type == \(type))"
+      "findFirst(sort(\(messagesRef), desc, created_at), fk == \(itemRef).id && data.type == \(type))"
   }
 
   static let messageCreateEnvelope =
-    "fk: \(MARKETPLACE_ITEMS_RESOURCE_ID).id, service: \"\(MARKETPLACE_SERVICE)\", resource: \"\(MARKETPLACE_ITEMS_RESOURCE_ID)\""
+    "fk: \(MARKETPLACE_ITEMS_RESOURCE_ID).id, resource: \"\(MARKETPLACE_ITEMS_RESOURCE_ID)\""
 
   static func requestCreateAction(type: String, payload: String) -> String {
-    let messagesResourceId = EVYCoreResource.messages.rawValue
+    let messagesResourceId = EVYCoreResource.messages.ref
     return
-      "{create(\(EVY_CORE_SERVICE),\(messagesResourceId),{\(messageCreateEnvelope), data: {type: \(type), value: pending, \(payload)}})}"
+      "{create(\(messagesResourceId),{\(messageCreateEnvelope), data: {type: \(type), value: pending, \(payload)}})}"
   }
 
   /// Cancel is offered while the request is open, and each transfer method is independent, so
@@ -1233,7 +1220,7 @@ class E2ETestBase: XCTestCase {
   ) -> [String: Any] {
     [
       "id": id,
-      "type": "VerticalContainer",
+      "type": "vertical_container",
       "actions": [:],
       "visible": Self.activeRequestVisibilityExpression(type: type),
       "title": "",
@@ -1255,7 +1242,7 @@ class E2ETestBase: XCTestCase {
   }
 
   static func viewItemCancelRequestFlowData(flowId: String, pageId: String) -> [String: Any] {
-    let messagesResourceId = EVYCoreResource.messages.rawValue
+    let messagesResourceId = EVYCoreResource.messages.ref
     // Each transfer method gates on its own latest message, so a live pickup request leaves
     // delivery and shipping requestable. The tab container never hides - gating it is what
     // made the three mutually exclusive.
@@ -1270,8 +1257,8 @@ class E2ETestBase: XCTestCase {
       type: "shipping", payload: "postalcode: shipping_address.postcode")
     func cancelAction(type: String) -> String {
       let latest = latestMessageExpression(type: type)
-      return "{create(\(EVY_CORE_SERVICE),\(messagesResourceId),{\(messageCreateEnvelope),"
-        + " parentMessageId: \(latest).id, data: {value: cancel, type: \(type)}})}"
+      return "{create(\(messagesResourceId),{\(messageCreateEnvelope),"
+        + " parent_message_id: \(latest).id, data: {value: cancel, type: \(type)}})}"
     }
 
     return [
@@ -1284,7 +1271,7 @@ class E2ETestBase: XCTestCase {
           "rows": [
             [
               "id": "f1a2b3c4-d5e6-4f7a-8b9c-0d1e2f3a4b5c",
-              "type": "TabContainer",
+              "type": "tab_container",
               "actions": Self.actionsObject(
                 tap: [Self.rowAction(true: "{select($datum)}")]
               ),
@@ -1294,7 +1281,7 @@ class E2ETestBase: XCTestCase {
               "children": [
                 [
                   "id": "a2b3c4d5-e6f7-4a8b-9c0d-1e2f3a4b5c6d",
-                  "type": "VerticalContainer",
+                  "type": "vertical_container",
                   "actions": [:],
                   "visible": "true",
                   "title": "",
@@ -1315,7 +1302,7 @@ class E2ETestBase: XCTestCase {
                 ],
                 [
                   "id": "d5e6f7a8-b9c0-4d1e-2f3a-4b5c6d7e8f9a",
-                  "type": "VerticalContainer",
+                  "type": "vertical_container",
                   "actions": [:],
                   "visible": "true",
                   "title": "",
@@ -1343,7 +1330,7 @@ class E2ETestBase: XCTestCase {
                 ],
                 [
                   "id": "a8b9c0d1-e2f3-4a4b-5c6d-7e8f9a0b1c2d",
-                  "type": "VerticalContainer",
+                  "type": "vertical_container",
                   "actions": [:],
                   "visible": "true",
                   "title": "",
@@ -1489,7 +1476,7 @@ class E2ETestBase: XCTestCase {
   ) -> [String: Any] {
     var row: [String: Any] = [
       "id": id,
-      "type": "TimeslotPicker",
+      "type": "timeslot_picker",
       "source": source,
       "destination": destination,
       "actions": Self.actionsObject(
@@ -1544,7 +1531,7 @@ class E2ETestBase: XCTestCase {
   ) -> [String: Any] {
     [
       "id": id,
-      "type": "VerticalContainer",
+      "type": "vertical_container",
       "actions": [:],
       "visible": "true",
       "title": "Confirmation",
@@ -1733,7 +1720,7 @@ class E2ETestBase: XCTestCase {
             ),
             [
               "id": "b2c3d4e5-f6a7-4b8c-9d0e-1f2a3b4c5d6f",
-              "type": "TabContainer",
+              "type": "tab_container",
               "actions": Self.actionsObject(
                 tap: [Self.rowAction(true: "{select($datum)}")]
               ),
@@ -1743,7 +1730,7 @@ class E2ETestBase: XCTestCase {
               "children": [
                 [
                   "id": "c3d4e5f6-a7b8-4c9d-0e1f-2a3b4c5d6e7f",
-                  "type": "VerticalContainer",
+                  "type": "vertical_container",
                   "actions": [:],
                   "visible": "true",
                   "title": "",
@@ -1821,14 +1808,12 @@ class E2ETestBase: XCTestCase {
       "false": "",
       "true": [
         "fn": "create",
-        "service": EVY_CORE_SERVICE,
-        "resource": EVYCoreResource.messages.rawValue,
+        "resource": EVYCoreResource.messages.ref,
         "mode": "inline",
         "data": [
           "fk": "$datum.fk",
-          "service": "$datum.service",
           "resource": "$datum.resource",
-          "parentMessageId": "$datum.id",
+          "parent_message_id": "$datum.id",
           "data":
             "{value: \(value), type: $datum.data.type, time: $datum.data.time, postalcode: $datum.data.postalcode}",
         ],
@@ -1837,6 +1822,7 @@ class E2ETestBase: XCTestCase {
   }
 
   static func homeInboxTabRow() -> [String: Any] {
+    let messagesRef = EVYCoreResource.messages.ref
     var acceptButton = buttonRow(
       id: "e519e84d-9a7e-4563-bacb-388bba69e9b2",
       label: "Accept"
@@ -1864,7 +1850,7 @@ class E2ETestBase: XCTestCase {
 
     let responseSheet: [String: Any] = [
       "id": "b70f6354-50cb-47cc-91bc-3387deb7277f",
-      "type": "VerticalContainer",
+      "type": "vertical_container",
       "name": "Respond to request sheet",
       "title": "Respond to request",
       "visible": "true",
@@ -1872,7 +1858,7 @@ class E2ETestBase: XCTestCase {
       "children": [
         [
           "id": "daea8a6d-8d13-462f-98fa-5403e4f81463",
-          "type": "Text",
+          "type": "text",
           "name": "Respond confirmation copy",
           "title": "Accept this request, or reject it?",
           "subtitle": "",
@@ -1881,7 +1867,7 @@ class E2ETestBase: XCTestCase {
         ],
         [
           "id": "07ce5b44-8f2c-4183-a6e9-2f853a8dd255",
-          "type": "HorizontalContainer",
+          "type": "horizontal_container",
           "name": "Respond buttons",
           "title": "",
           "visible": "true",
@@ -1893,25 +1879,25 @@ class E2ETestBase: XCTestCase {
 
     let forYouSearch: [String: Any] = [
       "id": "574da230-8f09-43b2-b003-deadf6786bc4",
-      "type": "Search",
+      "type": "search",
       "name": "For you requests",
       "title": "",
       "placeholder": "",
       "source":
-        "{filter(messages, $datum.data.value == \"pending\" && owns($datum.service, $datum.resource, $datum.fk) == true && findFirst(sort(messages, desc, createdAt), fk == $datum.fk && data.type == $datum.data.type).id == $datum.id)}",
+        "{filter(\(messagesRef), $datum.data.value == \"pending\" && owns($datum.resource, $datum.fk) == true && findFirst(sort(\(messagesRef), desc, created_at), fk == $datum.fk && data.type == $datum.data.type).id == $datum.id)}",
       "no_results": "No requests",
       "destination": "",
       "visible": "true",
       "actions": [:],
       "child": [
         "id": homeInboxForYouChildRowId,
-        "type": "ListItem",
+        "type": "list_item",
         "name": "For you request row",
         "title":
           "{findFirst(\(MARKETPLACE_ITEMS_RESOURCE_ID), $datum.fk).title}",
         "subtitle": "{$datum.data.value}",
         "visible": "true",
-        "swipeLabel": "Accept",
+        "swipe_label": "Accept",
         "actions": actionsObject(
           tap: [rowAction(true: "{show(b70f6354-50cb-47cc-91bc-3387deb7277f)}")],
           swipeLeft: [homeInboxResponseAction(value: "accept")]
@@ -1922,25 +1908,25 @@ class E2ETestBase: XCTestCase {
 
     let fromYouSearch: [String: Any] = [
       "id": "396da583-4748-40b9-aa88-4f8bb9074fc3",
-      "type": "Search",
+      "type": "search",
       "name": "From you requests",
       "title": "",
       "placeholder": "",
       "source":
-        "{filter(messages, $datum.data.value == \"pending\" && owns($datum.service, $datum.resource, $datum.fk) == false && findFirst(sort(messages, desc, createdAt), fk == $datum.fk && data.type == $datum.data.type).id == $datum.id)}",
+        "{filter(\(messagesRef), $datum.data.value == \"pending\" && owns($datum.resource, $datum.fk) == false && findFirst(sort(\(messagesRef), desc, created_at), fk == $datum.fk && data.type == $datum.data.type).id == $datum.id)}",
       "no_results": "No requests",
       "destination": "",
       "visible": "true",
       "actions": [:],
       "child": [
         "id": homeInboxFromYouChildRowId,
-        "type": "ListItem",
+        "type": "list_item",
         "name": "From you request row",
         "title":
           "{findFirst(\(MARKETPLACE_ITEMS_RESOURCE_ID), $datum.fk).title}",
         "subtitle": "{$datum.data.value}",
         "visible": "true",
-        "swipeLabel": "Cancel",
+        "swipe_label": "Cancel",
         "actions": actionsObject(
           swipeLeft: [homeInboxResponseAction(value: "cancel")]
         ),
@@ -1949,18 +1935,18 @@ class E2ETestBase: XCTestCase {
 
     let scheduledSearch: [String: Any] = [
       "id": "4e81c7e7-f765-4864-ac63-35e2eff707cd",
-      "type": "Search",
+      "type": "search",
       "name": "Scheduled requests",
       "title": "",
       "placeholder": "",
-      "source": "{filter(messages, $datum.data.value == \"accept\")}",
+      "source": "{filter(\(messagesRef), $datum.data.value == \"accept\")}",
       "no_results": "No requests",
       "destination": "",
       "visible": "true",
       "actions": [:],
       "child": [
         "id": homeInboxScheduledChildRowId,
-        "type": "ListItem",
+        "type": "list_item",
         "name": "Scheduled row",
         "title":
           "{findFirst(\(MARKETPLACE_ITEMS_RESOURCE_ID), $datum.fk).title}",
@@ -1972,7 +1958,7 @@ class E2ETestBase: XCTestCase {
 
     return [
       "id": "29646c92-90d0-4a68-8c23-3acf88612d06",
-      "type": "TabContainer",
+      "type": "tab_container",
       "name": "Message tabs",
       "title": "",
       "visible": "true",
@@ -2024,7 +2010,7 @@ class E2ETestBase: XCTestCase {
               action: "{show(a9f8e7d6-c5b4-4a3f-2e1d-0c9b8a7f6e5d)}",
               sheet: [
                 "id": "a9f8e7d6-c5b4-4a3f-2e1d-0c9b8a7f6e5d",
-                "type": "VerticalContainer",
+                "type": "vertical_container",
                 "actions": [:],
                 "visible": "true",
                 "title": "{\(MARKETPLACE_ITEMS_RESOURCE_ID).title}",
@@ -2071,7 +2057,7 @@ class E2ETestBase: XCTestCase {
           "rows": [
             [
               "id": crossPageSheetRowId,
-              "type": "VerticalContainer",
+              "type": "vertical_container",
               "actions": [:],
               "visible": "true",
               "title": "Confirmation",
@@ -2164,7 +2150,6 @@ class E2ETestBase: XCTestCase {
       data["shipping_fee"] = shippingFee
     }
     _ = try await emitter.createResource(
-      service: MARKETPLACE_SERVICE,
       resource: MARKETPLACE_ITEMS_RESOURCE_ID,
       filter: ["id": selectedItemId],
       data: data
@@ -2656,7 +2641,7 @@ final class WebSocketE2ETests: E2ETestBase {
       itemId: selectedItemId,
       buttonExistenceMessage: "Request view button should load"
     )
-    try await emitter.subscribe(event: "dataChanged")
+    try await emitter.subscribe(event: "data_changed")
 
     let timeslot = app.staticTexts["09:00"].firstMatch
     XCTAssertTrue(timeslot.waitForExistence(timeout: 10), "Pickup timeslot should be visible")
@@ -2724,8 +2709,7 @@ final class WebSocketE2ETests: E2ETestBase {
     dismissConfirmationSheet()
 
     let messagesAfterCancel = try await emitter.getResource(
-      service: EVY_CORE_SERVICE,
-      resource: EVYCoreResource.messages.rawValue
+      resource: EVYCoreResource.messages.ref
     )
     XCTAssertFalse(
       Self.messagesContain(
@@ -2821,7 +2805,7 @@ final class WebSocketE2ETests: E2ETestBase {
       viewFlowDataBuilder: Self.viewItemCancelRequestFlowData,
       buttonExistenceMessage: "Request view button should load"
     )
-    try await emitter.subscribe(event: "dataChanged")
+    try await emitter.subscribe(event: "data_changed")
 
     let timeslot = app.staticTexts["09:00"].firstMatch
     XCTAssertTrue(timeslot.waitForExistence(timeout: 10), "Pickup timeslot should be visible")
@@ -2915,7 +2899,7 @@ final class WebSocketE2ETests: E2ETestBase {
       viewFlowDataBuilder: Self.viewItemCancelRequestFlowData,
       buttonExistenceMessage: "Request view button should load"
     )
-    try await emitter.subscribe(event: "dataChanged")
+    try await emitter.subscribe(event: "data_changed")
 
     let timeslot = app.staticTexts["09:00"].firstMatch
     XCTAssertTrue(timeslot.waitForExistence(timeout: 10), "Pickup timeslot should be visible")
@@ -2940,14 +2924,12 @@ final class WebSocketE2ETests: E2ETestBase {
     // The owner rejects. Like every other settling message it names the request and carries
     // its payload forward.
     _ = try await emitter.createResource(
-      service: EVY_CORE_SERVICE,
-      resource: EVYCoreResource.messages.rawValue,
+      resource: EVYCoreResource.messages.ref,
       data: [
         "fk": selectedItemId,
-        "service": MARKETPLACE_SERVICE,
         "resource": MARKETPLACE_ITEMS_RESOURCE_ID,
         "visibility": "private",
-        "parentMessageId": requestId,
+        "parent_message_id": requestId,
         "data": [
           "value": "reject",
           "type": "pickup",
@@ -3000,8 +2982,7 @@ final class WebSocketE2ETests: E2ETestBase {
     let deadline = Date().addingTimeInterval(timeout)
     repeat {
       let payload = try await emitter.getResource(
-        service: EVY_CORE_SERVICE,
-        resource: EVYCoreResource.messages.rawValue
+        resource: EVYCoreResource.messages.ref
       )
       if let rows = Self.responseDataArray(from: payload),
         let match = rows.compactMap({ $0 as? [String: Any] }).first(where: { row in
@@ -3019,7 +3000,7 @@ final class WebSocketE2ETests: E2ETestBase {
         return id
       }
     } while try await emitter.nextDataChanged(
-      resource: EVYCoreResource.messages.rawValue, deadline: deadline)
+      resource: EVYCoreResource.messages.ref, deadline: deadline)
     XCTFail(failureMessage)
     return ""
   }
@@ -3048,7 +3029,7 @@ final class WebSocketE2ETests: E2ETestBase {
       viewFlowDataBuilder: Self.viewItemCancelRequestFlowData,
       buttonExistenceMessage: "Request view button should load"
     )
-    try await emitter.subscribe(event: "dataChanged")
+    try await emitter.subscribe(event: "data_changed")
 
     let timeslot = app.staticTexts["09:00"].firstMatch
     XCTAssertTrue(timeslot.waitForExistence(timeout: 10), "Pickup timeslot should be visible")
@@ -3071,8 +3052,7 @@ final class WebSocketE2ETests: E2ETestBase {
       "Cancel pickup request should be visible for a pending request")
 
     let messagesPayload = try await emitter.getResource(
-      service: EVY_CORE_SERVICE,
-      resource: EVYCoreResource.messages.rawValue
+      resource: EVYCoreResource.messages.ref
     )
     let messageRows = try XCTUnwrap(
       Self.responseDataArray(from: messagesPayload),
@@ -3095,14 +3075,12 @@ final class WebSocketE2ETests: E2ETestBase {
     // the request's payload forward. `findFirst` predicates cannot nest, so the row that
     // says "Pickup confirmed for …" reads the time off the message that says "accepted".
     _ = try await emitter.createResource(
-      service: EVY_CORE_SERVICE,
-      resource: EVYCoreResource.messages.rawValue,
+      resource: EVYCoreResource.messages.ref,
       data: [
         "fk": selectedItemId,
-        "service": MARKETPLACE_SERVICE,
         "resource": MARKETPLACE_ITEMS_RESOURCE_ID,
         "visibility": "private",
-        "parentMessageId": messageId,
+        "parent_message_id": messageId,
         "data": [
           "value": "accept",
           "type": "pickup",
@@ -3179,7 +3157,7 @@ final class WebSocketE2ETests: E2ETestBase {
         flowData: senderFlowData,
         flowId: E2EFlowIds.webSocketViewFlow
       )
-      try await emitter.subscribe(event: "dataChanged")
+      try await emitter.subscribe(event: "data_changed")
     }
 
     app.terminate()
@@ -3289,7 +3267,7 @@ final class WebSocketE2ETests: E2ETestBase {
       itemId: selectedItemId,
       buttonExistenceMessage: "Request view button should load"
     )
-    try await emitter.subscribe(event: "dataChanged")
+    try await emitter.subscribe(event: "data_changed")
 
     let askToBuyButton = app.buttons["Ask to buy"]
     XCTAssertTrue(
@@ -3302,8 +3280,7 @@ final class WebSocketE2ETests: E2ETestBase {
       "An empty shipping postcode should show the missing-information alert"
     )
     let messagesAfterEmptyPostcode = try await emitter.getResource(
-      service: EVY_CORE_SERVICE,
-      resource: EVYCoreResource.messages.rawValue
+      resource: EVYCoreResource.messages.ref
     )
     XCTAssertFalse(
       Self.messagesContain(
@@ -3568,7 +3545,7 @@ final class WebSocketE2ETests: E2ETestBase {
 
     let itemsPayload = try awaitResult("fetch marketplace items") {
       try await emitter.getResource(
-        service: MARKETPLACE_SERVICE, resource: MARKETPLACE_ITEMS_RESOURCE_ID)
+        resource: MARKETPLACE_ITEMS_RESOURCE_ID)
     }
     XCTAssertTrue(
       Self.marketplaceItemsContainListing(
@@ -3687,9 +3664,7 @@ final class WebSocketE2ETests: E2ETestBase {
 
     let itemMatched = try awaitResult("wait for marketplace item with address_id") {
       try await self.waitForResourceUpdate(
-        emitter: emitter,
-        service: MARKETPLACE_SERVICE,
-        resource: MARKETPLACE_ITEMS_RESOURCE_ID,
+        emitter: emitter, resource: MARKETPLACE_ITEMS_RESOURCE_ID,
         timeout: 20
       ) { payload in
         Self.marketplaceItemsContainListingWithAddressId(title: testTitle, items: payload)
@@ -3698,7 +3673,7 @@ final class WebSocketE2ETests: E2ETestBase {
 
     let itemsPayload = try awaitResult("fetch marketplace items") {
       try await emitter.getResource(
-        service: MARKETPLACE_SERVICE, resource: MARKETPLACE_ITEMS_RESOURCE_ID)
+        resource: MARKETPLACE_ITEMS_RESOURCE_ID)
     }
     if !itemMatched {
       Self.failWithItemsSummary(
@@ -3719,8 +3694,7 @@ final class WebSocketE2ETests: E2ETestBase {
       let deadline = Date().addingTimeInterval(20)
       while Date() < deadline {
         let addressesPayload = try await emitter.getResource(
-          service: EVY_CORE_SERVICE,
-          resource: "addresses",
+          resource: EVYCoreResource.addresses.ref,
           filter: ["id": addressId]
         )
         if Self.coreAddressesContainId(addressId, addresses: addressesPayload) {
@@ -3732,7 +3706,7 @@ final class WebSocketE2ETests: E2ETestBase {
     }
     if !addressFound {
       let addressesPayload = try awaitResult("fetch core addresses for failure") {
-        try await emitter.getResource(service: EVY_CORE_SERVICE, resource: "addresses")
+        try await emitter.getResource(resource: EVYCoreResource.addresses.ref)
       }
       XCTFail(
         "Core addresses should contain the linked pickup address id \(addressId). Payload: \(String(describing: addressesPayload).prefix(400))"
@@ -3784,9 +3758,7 @@ final class WebSocketE2ETests: E2ETestBase {
     value: String? = nil
   ) async throws -> Bool {
     try await waitForResourceUpdate(
-      emitter: emitter,
-      service: EVY_CORE_SERVICE,
-      resource: EVYCoreResource.messages.rawValue
+      emitter: emitter, resource: EVYCoreResource.messages.ref
     ) {
       Self.messagesContain(
         $0,
@@ -4075,7 +4047,7 @@ final class WebSocketE2ETests: E2ETestBase {
     var homeRows: [[String: Any]] = [
       [
         "id": "a74bc80e-ffda-4e19-b8f3-cd882405958b",
-        "type": "VerticalContainer",
+        "type": "vertical_container",
         "actions": [:],
         "visible": "true",
         "title": "",
@@ -4208,11 +4180,11 @@ final class E2ESwipeLeftTests: E2ETestBase {
           "rows": [
             [
               "id": swipeRowId,
-              "type": "Text",
+              "type": "text",
               "visible": "true",
               "title": "Swipe me",
               "subtitle": "",
-              "swipeLabel": "Open",
+              "swipe_label": "Open",
               "name": "Swipeable text",
               "actions": Self.actionsObject(
                 swipeLeft: [
@@ -4298,7 +4270,7 @@ final class E2ESegmentContainerTests: E2ETestBase {
           "rows": [
             [
               "id": "6a5b4c3d-2e1f-4a0b-8c9d-1e2f3a4b5c6d",
-              "type": "TabContainer",
+              "type": "tab_container",
               "actions": Self.actionsObject(
                 tap: [Self.rowAction(true: "{select($datum)}")]
               ),
@@ -4420,9 +4392,9 @@ final class E2EPlaceSearchTests: E2ETestBase {
     let destination = "{pickup_address}"
     let subtitle = "{formatAddress(pickup_address)}"
     let saveCreate =
-      "{create(\(EVY_CORE_SERVICE), addresses, pickup_address, {pickup_address.id})}"
+      "{create(\(EVYCoreResource.addresses.ref), pickup_address, {pickup_address.id})}"
     let saveUpdate =
-      "{update(\(EVY_CORE_SERVICE), addresses, {id: pickup_address.id}, pickup_address)}"
+      "{update(\(EVYCoreResource.addresses.ref), {id: pickup_address.id}, pickup_address)}"
     return [
       "id": placeSearchHomeFlowId,
       "name": "E2E Place Search",
@@ -4442,7 +4414,7 @@ final class E2EPlaceSearchTests: E2ETestBase {
                 placeholder: "Search address",
                 child: [
                   "id": "c3d4e5f6-a7b8-4c9d-0e1f-2a3b4c5d6e7f",
-                  "type": "Text",
+                  "type": "text",
                   "title": "{$datum.street}",
                   "subtitle": "{$datum.city}",
                   "actions": [:],
@@ -4474,7 +4446,7 @@ final class E2EPlaceSearchTests: E2ETestBase {
     let sheetId = (sheet["id"] as? String) ?? UUID().uuidString
     return [
       "id": id,
-      "type": "TextAction",
+      "type": "text_action",
       "visible": visible,
       "title": title,
       "subtitle": subtitle,
@@ -4505,7 +4477,7 @@ final class E2EPlaceSearchTests: E2ETestBase {
       tapActions.isEmpty ? [:] : Self.actionsObject(tap: tapActions)
     return [
       "id": id,
-      "type": "Search",
+      "type": "search",
       "visible": visible,
       "title": "",
       "placeholder": placeholder,
@@ -4525,10 +4497,9 @@ final class E2EHomeInboxTests: E2ETestBase {
 
   override var homeFlowId: String? { E2EFlowIds.defaultHomeFlow }
 
-  override var ownedServiceResources: [OwnedServiceResourceDeclaration] {
+  override var ownedResources: [OwnedResourceDeclaration] {
     [
       (
-        service: MARKETPLACE_SERVICE,
         resource: MARKETPLACE_ITEMS_RESOURCE_ID,
         ids: [Self.seededMessageItemId]
       )
@@ -4546,10 +4517,10 @@ final class E2EHomeInboxTests: E2ETestBase {
   private static func homeInboxFlowData() -> [String: Any] {
     let itemSearchRow: [String: Any] = [
       "id": "96d3efe4-ea20-4a81-9ccb-64d6b57646e9",
-      "type": "Search",
+      "type": "search",
       "child": [
         "id": "d5922ca1-fc26-430a-81ed-fd343c13dab1",
-        "type": "ListItem",
+        "type": "list_item",
         "title": "{$datum.title}",
         "subtitle": "{formatCurrency($datum.price)}",
         "image": "{$datum.photo_ids.0}",
@@ -4716,13 +4687,11 @@ final class E2EHomeInboxTests: E2ETestBase {
       try await emitter.connect(host: host)
       try await emitter.login(token: "e2e-test", os: "ios")
       _ = try await emitter.createResource(
-        service: EVY_CORE_SERVICE,
-        resource: EVYCoreResource.messages.rawValue,
+        resource: EVYCoreResource.messages.ref,
         filter: ["id": requestId],
         data: [
           "id": requestId,
           "fk": Self.seededMessageItemId,
-          "service": MARKETPLACE_SERVICE,
           "resource": MARKETPLACE_ITEMS_RESOURCE_ID,
           "visibility": "private",
           "data": [
@@ -4734,16 +4703,14 @@ final class E2EHomeInboxTests: E2ETestBase {
       )
       if let responseValue, let responseId {
         _ = try await emitter.createResource(
-          service: EVY_CORE_SERVICE,
-          resource: EVYCoreResource.messages.rawValue,
+          resource: EVYCoreResource.messages.ref,
           filter: ["id": responseId],
           data: [
             "id": responseId,
             "fk": Self.seededMessageItemId,
-            "service": MARKETPLACE_SERVICE,
             "resource": MARKETPLACE_ITEMS_RESOURCE_ID,
             "visibility": "private",
-            "parentMessageId": requestId,
+            "parent_message_id": requestId,
             "data": [
               "value": responseValue,
               "type": "pickup",
@@ -4769,15 +4736,14 @@ final class E2EHomeInboxTests: E2ETestBase {
       let emitter = WSEmitter()
       try await emitter.connect(host: host)
       try await emitter.login(token: "e2e-test", os: "ios")
-      try await emitter.subscribe(event: "dataChanged")
+      try await emitter.subscribe(event: "data_changed")
       let answered = try await self.waitForMessageResponse(
         emitter: emitter,
         messageId: requestId,
         value: value
       )
       let payload = try await emitter.getResource(
-        service: EVY_CORE_SERVICE,
-        resource: EVYCoreResource.messages.rawValue
+        resource: EVYCoreResource.messages.ref
       )
       await emitter.disconnect()
       return (answered, payload)

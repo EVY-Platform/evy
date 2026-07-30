@@ -6,7 +6,7 @@ import { makeCoreResource, ownedIdsOf, type SyncScope } from "./coreResource";
 
 function responseClause(ownedMessageIds: string[]): SQL | undefined {
 	if (ownedMessageIds.length === 0) return undefined;
-	return inArray(message.parentMessageId, ownedMessageIds);
+	return inArray(message.parent_message_id, ownedMessageIds);
 }
 
 export const messagesResource = makeCoreResource<DATA_EVY_Message>({
@@ -14,10 +14,9 @@ export const messagesResource = makeCoreResource<DATA_EVY_Message>({
 	validate: validateDataEvyMessage,
 	toUpdateSet: (v) => ({
 		fk: v.fk,
-		service: v.service,
 		resource: v.resource,
 		data: v.data,
-		parentMessageId: v.parentMessageId,
+		parent_message_id: v.parent_message_id,
 		visibility: v.visibility,
 	}),
 	extraSyncEntitlements: (scope: SyncScope) => [

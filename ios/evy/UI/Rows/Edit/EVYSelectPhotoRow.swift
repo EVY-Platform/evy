@@ -42,7 +42,7 @@ struct EVYSelectPhotoRow: View {
     json: """
       {
         "id": "preview-selectphoto-row",
-        "type": "SelectPhoto",
+        "type": "select_photo",
         "source": "{item.photo_ids}",
         "destination": "{item.photo_ids}",
         "actions": {

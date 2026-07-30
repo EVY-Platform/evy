@@ -34,8 +34,8 @@ import type { DeleteRequest } from "./generated/ts/rpc/delete.request";
 import type { DeleteResponse } from "./generated/ts/rpc/delete.response";
 import type { GetRequest } from "./generated/ts/rpc/get.request";
 import type { GetResponse } from "./generated/ts/rpc/get.response";
-import type { PlaceSearchRequest } from "./generated/ts/rpc/placeSearch.request";
-import type { PlaceSearchResponse } from "./generated/ts/rpc/placeSearch.response";
+import type { PlaceSearchRequest } from "./generated/ts/rpc/place_search.request";
+import type { PlaceSearchResponse } from "./generated/ts/rpc/place_search.response";
 import type { ResourcesResponse } from "./generated/ts/rpc/resources.response";
 import type { SyncRequest } from "./generated/ts/rpc/sync.request";
 import type { SyncResponse } from "./generated/ts/rpc/sync.response";
@@ -84,10 +84,10 @@ import getRequestRaw from "./schema/rpc/get.request.schema.json" with {
 import getResponseRaw from "./schema/rpc/get.response.schema.json" with {
 	type: "json",
 };
-import placeSearchRequestRaw from "./schema/rpc/placeSearch.request.schema.json" with {
+import placeSearchRequestRaw from "./schema/rpc/place_search.request.schema.json" with {
 	type: "json",
 };
-import placeSearchResponseRaw from "./schema/rpc/placeSearch.response.schema.json" with {
+import placeSearchResponseRaw from "./schema/rpc/place_search.response.schema.json" with {
 	type: "json",
 };
 import resourcesResponseRaw from "./schema/rpc/resources.response.schema.json" with {
@@ -141,11 +141,11 @@ const RAW_SCHEMAS: Record<string, Record<string, unknown>> = {
 	...SDUI_DEFINITION_SCHEMAS,
 	"sdui/evy.schema.json": evySduiRaw as Record<string, unknown>,
 	"files/file.schema.json": fileSchemaRaw as Record<string, unknown>,
-	"rpc/placeSearch.request.schema.json": placeSearchRequestRaw as Record<
+	"rpc/place_search.request.schema.json": placeSearchRequestRaw as Record<
 		string,
 		unknown
 	>,
-	"rpc/placeSearch.response.schema.json": placeSearchResponseRaw as Record<
+	"rpc/place_search.response.schema.json": placeSearchResponseRaw as Record<
 		string,
 		unknown
 	>,
@@ -304,7 +304,7 @@ const REQUEST_SCHEMA_FILES = [
 	"rpc/update.request.schema.json",
 	"rpc/delete.request.schema.json",
 	"rpc/sync.request.schema.json",
-	"rpc/placeSearch.request.schema.json",
+	"rpc/place_search.request.schema.json",
 ] as const;
 
 /** data.schema references SDUI for DATA_EVY_Flow; register both in one instance */
@@ -323,7 +323,7 @@ const ENTITY_SCHEMA_FILES = [
 	"rpc/delete.response.schema.json",
 	"rpc/sync.response.schema.json",
 	"rpc/resources.response.schema.json",
-	"rpc/placeSearch.response.schema.json",
+	"rpc/place_search.response.schema.json",
 ];
 
 let requestAjv: InstanceType<typeof Ajv2020> | null = null;
@@ -466,11 +466,11 @@ const getValidateResourcesResponse = lazyValidator<ResourcesResponse>(
 );
 const getValidatePlaceSearchRequest = lazyValidator<PlaceSearchRequest>(
 	getRequestAjv,
-	fileId("rpc/placeSearch.request.schema.json"),
+	fileId("rpc/place_search.request.schema.json"),
 );
 const getValidatePlaceSearchResponse = lazyValidator<PlaceSearchResponse>(
 	getEntityAjv,
-	fileId("rpc/placeSearch.response.schema.json"),
+	fileId("rpc/place_search.response.schema.json"),
 );
 
 const getValidateFileUploadChunkMetadata =
@@ -590,18 +590,16 @@ function forEachFlowRow(
 	}
 }
 
-/** A submit-mode create -> `service/resource`, else null. */
+/** A submit-mode create -> resource ref, else null. */
 function submitCreateTarget(branch: unknown): string | null {
 	if (!branch || typeof branch !== "object") return null;
 	const invocation = branch as Record<string, unknown>;
 	if (invocation.fn !== "create" || invocation.mode !== "submit") return null;
 
-	const service =
-		typeof invocation.service === "string" ? invocation.service : "";
 	const resource =
 		typeof invocation.resource === "string" ? invocation.resource : "";
-	if (!service || !resource) return null;
-	return `${service}/${resource}`;
+	if (!resource) return null;
+	return resource;
 }
 
 function addSubmitTargets(row: UI_Row, into: Set<string>): void {
@@ -648,7 +646,7 @@ function assertUiFlowSubmitsDeclaration(
 		);
 	}
 
-	const declared = `${flow.submits.service}/${flow.submits.resource}`;
+	const declared = flow.submits.resource;
 	if (declared !== target) {
 		throw new Error(
 			`Flow validation failed: flow declares submits ${declared} but its create(...,submit) targets ${target}`,
@@ -757,7 +755,7 @@ export const validateFileWithBinary = makeValidator<FileWithBinary>(
 // ISO date-time field validation for data payloads (post-schema).
 
 function isIsoDateTimeFieldName(key: string): boolean {
-	return key === "createdAt" || key === "updatedAt";
+	return key === "created_at" || key === "updated_at";
 }
 
 function throwDataIsoValidationError(path: string, reason: string): never {

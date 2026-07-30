@@ -7,7 +7,7 @@ const typeName = "HorizontalContainerRow";
 
 export default defineRow(typeName, {
 	config: {
-		type: "HorizontalContainer",
+		type: "horizontal_container",
 		actions: {},
 		visible: "true",
 		title: "Horizontal container row title",
@@ -16,7 +16,7 @@ export default defineRow(typeName, {
 		<RowLayout title={row.config.title}>
 			<div className="evy-flex">
 				<ContainerChildren
-					childIds={row.config.childrenRowIds ?? []}
+					childIds={row.config.children_row_ids ?? []}
 					orientation="horizontal"
 					showIndicators
 					containerRowId={row.id}

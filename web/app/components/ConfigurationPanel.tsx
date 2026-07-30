@@ -22,19 +22,14 @@ import {
 	buildRowAttributeCandidates,
 	createGetAttributeCandidatesForQualifier,
 	type IdCandidate,
-	type IdDisplayScope,
 } from "../utils/idCandidates";
 import {
 	findPageReferences,
 	type PageReferenceEntry,
 } from "../utils/pageReferences";
-import {
-	parseSubmitTargetValue,
-	submitTargetOptions,
-	submitTargetValue,
-} from "../utils/serviceResourceOptions";
+import { toResourceOptions } from "../utils/serviceResourceOptions";
 import { ActionEditor } from "./ActionEditor";
-import { BuilderAssist } from "./BuilderAssist";
+import { AutocompleteSearch } from "./AutocompleteSearch";
 import { PageInUseDialog } from "./PageInUseDialog";
 import { type PopoverOption, PopoverSelect } from "./PopoverSelect";
 
@@ -48,7 +43,6 @@ function ConfigTextField({
 	labelClassName,
 	fieldClassName = "evy-mb-2",
 	candidates,
-	scope,
 	getAttributeCandidatesForQualifier,
 }: {
 	id: string;
@@ -56,9 +50,6 @@ function ConfigTextField({
 	value: string;
 	onChange: (next: string) => void;
 	candidates: IdCandidate[];
-	// Required: content fields are EVY text, bindings and conditions are
-	// expressions, and the two resolve ids differently.
-	scope: IdDisplayScope;
 	placeholder?: string;
 	ariaLabel?: string;
 	labelClassName?: string;
@@ -67,7 +58,7 @@ function ConfigTextField({
 }) {
 	return (
 		<div className={fieldClassName}>
-			<BuilderAssist
+			<AutocompleteSearch
 				id={id}
 				label={label}
 				value={value}
@@ -76,7 +67,6 @@ function ConfigTextField({
 				placeholder={placeholder}
 				ariaLabel={ariaLabel}
 				labelClassName={labelClassName}
-				scope={scope}
 				getAttributeCandidatesForQualifier={
 					getAttributeCandidatesForQualifier
 				}
@@ -171,24 +161,22 @@ export function ConfigurationPanel() {
 	const showPageTitleInPanel =
 		Boolean(activePage) && configStack.length === 0;
 
-	const builderAssistCandidates = useMemo(
+	const autocompleteCandidates = useMemo(
 		() => [
-			...buildIdCandidates(
-				flowsById,
-				pagesById,
-				serviceResources,
-				serviceNamesById,
-			),
+			...buildIdCandidates(serviceResources, serviceNamesById),
 			...buildRowAttributeCandidates(),
 			buildDatumCandidate(),
 			...buildFunctionCandidates(),
 		],
-		[flowsById, pagesById, serviceResources, serviceNamesById],
+		[serviceResources, serviceNamesById],
 	);
 
 	const submitsTargetOptions = useMemo<PopoverOption[]>(
-		() => submitTargetOptions(serviceResources, serviceNamesById),
-		[serviceResources, serviceNamesById],
+		() => [
+			{ value: "", label: "None" },
+			...toResourceOptions(serviceResources),
+		],
+		[serviceResources],
 	);
 
 	const handleSubmitsTargetChange = useCallback(
@@ -197,7 +185,7 @@ export function ConfigurationPanel() {
 			dispatchRow({
 				type: "UPDATE_FLOW_SUBMITS",
 				flowId: activeFlowId,
-				submits: parseSubmitTargetValue(value),
+				submits: value ? { resource: value } : undefined,
 			});
 		},
 		[activeFlowId, dispatchRow],
@@ -208,7 +196,7 @@ export function ConfigurationPanel() {
 	>([]);
 
 	const canDeleteCurrentPage = Boolean(
-		activeFlow && activePage && activeFlow.pageIds.length > 1,
+		activeFlow && activePage && activeFlow.page_ids.length > 1,
 	);
 
 	const handleDeletePageClick = useCallback(() => {
@@ -350,8 +338,7 @@ export function ConfigurationPanel() {
 						onChange={(next) =>
 							updateRowContent(field.name, next, configRow.id)
 						}
-						candidates={builderAssistCandidates}
-						scope="text"
+						candidates={autocompleteCandidates}
 						getAttributeCandidatesForQualifier={
 							getAttributeCandidatesForQualifier
 						}
@@ -438,8 +425,7 @@ export function ConfigurationPanel() {
 						onChange={(next) =>
 							updateRowRoot(field, next, configRow.id)
 						}
-						candidates={builderAssistCandidates}
-						scope="expression"
+						candidates={autocompleteCandidates}
 						getAttributeCandidatesForQualifier={
 							getAttributeCandidatesForQualifier
 						}
@@ -465,8 +451,7 @@ export function ConfigurationPanel() {
 						onChange={(next) =>
 							updateRowRoot("visible", next, configRow.id)
 						}
-						candidates={builderAssistCandidates}
-						scope="expression"
+						candidates={autocompleteCandidates}
 						getAttributeCandidatesForQualifier={
 							getAttributeCandidatesForQualifier
 						}
@@ -483,7 +468,7 @@ export function ConfigurationPanel() {
 			openChildConfiguration,
 			updateRowContent,
 			updateRowRoot,
-			builderAssistCandidates,
+			autocompleteCandidates,
 			resourceAttributeMetadata,
 			serviceResources,
 			rowsById,
@@ -566,7 +551,7 @@ export function ConfigurationPanel() {
 								ariaLabel="Flow submits target"
 								value={
 									activeFlow.submits
-										? submitTargetValue(activeFlow.submits)
+										? activeFlow.submits.resource
 										: ""
 								}
 								placeholder="None"
@@ -607,7 +592,7 @@ export function ConfigurationPanel() {
 										pagesById={pagesById}
 										rowsById={rowsById}
 										defaultSheetRowId={
-											currentConfigRow.config.sheetRowId
+											currentConfigRow.config.sheet_row_id
 										}
 										onUpdate={(next) =>
 											updateRowActionsForTrigger(

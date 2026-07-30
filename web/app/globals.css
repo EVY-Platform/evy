@@ -1051,7 +1051,7 @@ label {
 	background: transparent;
 }
 
-/* BuilderAssist */
+/* AutocompleteSearch */
 .evy-id-autocomplete-root {
 	width: 100%;
 }
@@ -1078,10 +1078,11 @@ label {
 .evy-id-autocomplete-field:focus-within {
 	box-shadow: 0 0 0 3px rgba(60, 60, 100, 0.1);
 }
-/* Reset global input styles — the field div provides all border/focus visuals */
-.evy-id-autocomplete-field input[type="text"],
-.evy-id-autocomplete-field input[type="text"]:hover,
-.evy-id-autocomplete-field input[type="text"]:focus {
+.evy-id-autocomplete-field--multiline {
+	min-height: 64px;
+	align-items: flex-start;
+}
+.evy-id-autocomplete-input {
 	width: 100%;
 	padding: 0;
 	border: none;
@@ -1089,61 +1090,14 @@ label {
 	box-shadow: none;
 	outline: none;
 	background: transparent;
-	transition: none;
+	font: inherit;
+	color: inherit;
 }
-.evy-id-autocomplete-plain {
-	min-height: 18px;
-	cursor: text;
-}
-.evy-id-autocomplete-field--multiline {
-	min-height: 64px;
-	align-items: flex-start;
-}
-.evy-id-autocomplete-token {
-	display: inline-flex;
-	align-items: center;
-	max-width: 100%;
-	padding: 1px 5px;
-	font-size: var(--text-sm);
-	color: var(--color-black);
-	background: var(--color-evy-gray-light);
-	border: 1px solid var(--color-evy-gray);
-	border-radius: 3px;
-	cursor: pointer;
-}
-.evy-id-autocomplete-token:hover {
-	background: var(--color-evy-gray-medium);
-}
-.evy-id-autocomplete-token:focus-visible {
-	outline: 2px solid var(--color-evy-blue);
-	outline-offset: 1px;
-}
-.evy-id-autocomplete-token-text {
-	overflow: hidden;
-	text-overflow: ellipsis;
-	white-space: nowrap;
-}
-.evy-id-autocomplete-inline-display {
-	display: block;
-	width: 100%;
-	outline: none;
-	cursor: text;
+.evy-id-autocomplete-field textarea.evy-id-autocomplete-input {
+	resize: vertical;
+	min-height: 48px;
 	word-break: break-word;
 	white-space: pre-wrap;
-}
-.evy-id-autocomplete-inline-display--empty::before {
-	content: attr(data-placeholder);
-	color: var(--color-evy-gray);
-	pointer-events: none;
-}
-.evy-id-autocomplete-inline-token {
-	padding: 0 4px;
-	border-color: var(--color-gray-border);
-	vertical-align: middle;
-	margin: 0 1px;
-}
-.evy-id-autocomplete-inline-attribute {
-	cursor: text;
 }
 .evy-id-autocomplete-dropdown {
 	background: var(--color-white);

@@ -50,7 +50,7 @@ describe("place search validators", () => {
 });
 
 describe("validateServicePayload", () => {
-	const id = "440dcda6-3a4c-4767-8de0-dffe860fd5ba";
+	const id = "marketplace";
 	const now = "2024-01-19T12:00:00.000Z";
 
 	it("accepts a valid Service row payload", () => {
@@ -58,8 +58,8 @@ describe("validateServicePayload", () => {
 			id,
 			name: "Svc",
 			description: "D",
-			createdAt: now,
-			updatedAt: now,
+			created_at: now,
+			updated_at: now,
 			visibility: "public",
 		});
 		expect(out.name).toBe("Svc");
@@ -81,21 +81,21 @@ describe("validateServicePayload", () => {
 				id,
 				name: "n",
 				description: "d",
-				sortOrder: Number.NaN,
-				createdAt: now,
-				updatedAt: now,
+				sort_order: Number.NaN,
+				created_at: now,
+				updated_at: now,
 			}),
 		).toThrow("Service validation failed");
 	});
 
-	it("rejects numeric timestamps for createdAt", () => {
+	it("rejects numeric timestamps for created_at", () => {
 		expect(() =>
 			validateServicePayload({
 				id,
 				name: "n",
 				description: "d",
-				createdAt: 1_705_651_372 as unknown as string,
-				updatedAt: now,
+				created_at: 1_705_651_372 as unknown as string,
+				updated_at: now,
 			}),
 		).toThrow("Service validation failed");
 	});
@@ -112,9 +112,9 @@ describe("validateOrganizationPayload", () => {
 			description: "D",
 			logo: "d92f474b-eebb-4c93-9487-dc864f3d814c",
 			url: "https://example.com",
-			supportEmail: "a@b.co",
-			createdAt: now,
-			updatedAt: now,
+			support_email: "a@b.co",
+			created_at: now,
+			updated_at: now,
 			visibility: "public",
 		});
 		expect(out.name).toBe("Org");
@@ -129,23 +129,24 @@ describe("validateOrganizationPayload", () => {
 
 describe("validateServiceProviderPayload", () => {
 	const id = "440dcda6-3a4c-4767-8de0-dffe860fd5ba";
-	const sid = "d92f474b-eebb-4c93-9487-dc864f3d814c";
+	const sid = "marketplace";
+	const logo = "d92f474b-eebb-4c93-9487-dc864f3d814c";
 	const oid = "02e8dadc-e141-46ff-81f3-17122d170caf";
 	const now = "2024-01-19T12:00:00.000Z";
 
 	it("accepts a valid ServiceProvider payload", () => {
 		const out = validateServiceProviderPayload({
 			id,
-			fkServiceId: sid,
-			fkOrganizationId: oid,
+			fk_service_id: sid,
+			fk_organization_id: oid,
 			name: "P",
 			description: "D",
-			logo: sid,
+			logo,
 			url: "https://x.com",
 			retired: false,
 			visibility: "public",
-			createdAt: now,
-			updatedAt: now,
+			created_at: now,
+			updated_at: now,
 		});
 		expect(out.name).toBe("P");
 	});
@@ -202,7 +203,7 @@ describe("validateFlowData", () => {
 			validateFlowData(
 				flowWithRow({
 					name: "Always Visible Row",
-					type: "Text",
+					type: "text",
 					actions: {},
 					title: "Always visible",
 				}),
@@ -214,7 +215,7 @@ describe("validateFlowData", () => {
 		const out = validateFlowData(
 			flowWithRow({
 				name: "Cash Accepted Row",
-				type: "Text",
+				type: "text",
 				actions: {},
 				visible: `{${EXTERNAL_TEST_RESOURCE.RECORDS}.payment_methods.cash == true}`,
 				title: "Cash accepted",
@@ -230,7 +231,7 @@ describe("validateFlowData", () => {
 			validateFlowData(
 				flowWithRow({
 					name: "Submit",
-					type: "Button",
+					type: "button",
 					actions: {},
 					visible: "true",
 					label: "Go",
@@ -244,7 +245,7 @@ describe("validateFlowData", () => {
 			validateFlowData(
 				flowWithRow({
 					name: "Submit",
-					type: "Button",
+					type: "button",
 					actions: {
 						delete: [
 							{
@@ -265,7 +266,7 @@ describe("validateFlowData", () => {
 		const out = validateFlowData(
 			flowWithRow({
 				name: "Field",
-				type: "Input",
+				type: "input",
 				source: "{item.title}",
 				destination: "{item.title}",
 				actions: {
@@ -287,15 +288,15 @@ describe("validateFlowData", () => {
 				visible: "true",
 			}),
 		);
-		expect(out.pages[0]?.rows[0]?.type).toBe("Input");
+		expect(out.pages[0]?.rows[0]?.type).toBe("input");
 	});
 
 	it("rejects submit trigger on Search rows", () => {
 		expect(() =>
 			validateFlowData(
 				flowWithRow({
-					name: "Search",
-					type: "Search",
+					name: "search",
+					type: "search",
 					source: "{search}",
 					destination: "{result}",
 					actions: {
@@ -317,13 +318,13 @@ describe("validateFlowData", () => {
 		const out = validateFlowData(
 			flowWithRow({
 				name: "Label",
-				type: "Text",
+				type: "text",
 				actions: {},
 				visible: "true",
 				title: "Hello",
 			}),
 		);
-		expect(out.pages[0]?.rows[0]?.type).toBe("Text");
+		expect(out.pages[0]?.rows[0]?.type).toBe("text");
 	});
 
 	it("rejects Calendar missing required tap-row actions", () => {
@@ -331,7 +332,7 @@ describe("validateFlowData", () => {
 			validateFlowData(
 				flowWithRow({
 					name: "Availability",
-					type: "Calendar",
+					type: "calendar",
 					actions: {
 						tap: [
 							{
@@ -340,7 +341,7 @@ describe("validateFlowData", () => {
 								true: { fn: "select", value: "$datum" },
 							},
 						],
-						"tap-column": [
+						tap_column: [
 							{
 								condition: "",
 								false: "",
@@ -371,11 +372,11 @@ describe("validateFlowData", () => {
 		const out = validateFlowData(
 			flowWithRow({
 				name: "Availability",
-				type: "Calendar",
+				type: "calendar",
 				actions: {
 					tap: [selectAction],
-					"tap-row": [selectAction],
-					"tap-column": [selectAction],
+					tap_row: [selectAction],
+					tap_column: [selectAction],
 				},
 				visible: "true",
 				source: "{item.pickup_selection}",
@@ -388,7 +389,7 @@ describe("validateFlowData", () => {
 				timeslot_format: "HH:mm",
 			}),
 		);
-		expect(out.pages[0]?.rows[0]?.type).toBe("Calendar");
+		expect(out.pages[0]?.rows[0]?.type).toBe("calendar");
 	});
 
 	it("rejects tap-row on a non-Calendar row", () => {
@@ -396,7 +397,7 @@ describe("validateFlowData", () => {
 			validateFlowData(
 				flowWithRow({
 					name: "Submit",
-					type: "Button",
+					type: "button",
 					actions: {
 						tap: [
 							{
@@ -405,7 +406,7 @@ describe("validateFlowData", () => {
 								true: { fn: "close" },
 							},
 						],
-						"tap-row": [
+						tap_row: [
 							{
 								condition: "",
 								false: "",
@@ -417,16 +418,16 @@ describe("validateFlowData", () => {
 					label: "Go",
 				}),
 			),
-		).toThrow('trigger "tap-row" is not declared');
+		).toThrow('trigger "tap_row" is not declared');
 	});
 
 	it("accepts Text with optional swipe-left actions", () => {
 		const out = validateFlowData(
 			flowWithRow({
 				name: "Label",
-				type: "Text",
+				type: "text",
 				actions: {
-					"swipe-left": [
+					swipe_left: [
 						{
 							condition: "",
 							false: "",
@@ -438,7 +439,7 @@ describe("validateFlowData", () => {
 				title: "Hello",
 			}),
 		);
-		expect(out.pages[0]?.rows[0]?.type).toBe("Text");
+		expect(out.pages[0]?.rows[0]?.type).toBe("text");
 	});
 
 	it("rejects swipe-left on a Button", () => {
@@ -446,7 +447,7 @@ describe("validateFlowData", () => {
 			validateFlowData(
 				flowWithRow({
 					name: "Submit",
-					type: "Button",
+					type: "button",
 					actions: {
 						tap: [
 							{
@@ -455,7 +456,7 @@ describe("validateFlowData", () => {
 								true: { fn: "close" },
 							},
 						],
-						"swipe-left": [
+						swipe_left: [
 							{
 								condition: "",
 								false: "",
@@ -467,20 +468,20 @@ describe("validateFlowData", () => {
 					label: "Go",
 				}),
 			),
-		).toThrow('trigger "swipe-left" is not declared');
+		).toThrow('trigger "swipe_left" is not declared');
 	});
 
 	it("accepts ListItem without swipe-left when optional", () => {
 		const out = validateFlowData(
 			flowWithRow({
 				name: "Item",
-				type: "ListItem",
+				type: "list_item",
 				actions: {},
 				visible: "true",
 				title: "Hello",
 			}),
 		);
-		expect(out.pages[0]?.rows[0]?.type).toBe("ListItem");
+		expect(out.pages[0]?.rows[0]?.type).toBe("list_item");
 	});
 });
 
@@ -488,10 +489,10 @@ describe("row actions shape validation", () => {
 	const baseRow = {
 		id: "11111111-1111-4111-8111-111111111111",
 		name: "R",
-		type: "Button",
+		type: "button",
 		visible: "true",
-		createdAt: "2024-01-01T00:00:00.000Z",
-		updatedAt: "2024-01-01T00:00:00.000Z",
+		created_at: "2024-01-01T00:00:00.000Z",
+		updated_at: "2024-01-01T00:00:00.000Z",
 		visibility: "public" as const,
 	};
 
@@ -550,14 +551,15 @@ describe("row actions shape validation", () => {
 });
 
 describe("structured action invocations", () => {
-	const SVC = "66b092ae-7cd8-4d67-95b7-30b03568fd90";
+	const ITEMS = "marketplace.items";
+	const ADDRESSES = "evy.addresses";
 	const baseRow = {
 		id: "11111111-1111-4111-8111-111111111111",
 		name: "R",
-		type: "Button",
+		type: "button",
 		visible: "true",
-		createdAt: "2024-01-01T00:00:00.000Z",
-		updatedAt: "2024-01-01T00:00:00.000Z",
+		created_at: "2024-01-01T00:00:00.000Z",
+		updated_at: "2024-01-01T00:00:00.000Z",
 		visibility: "public" as const,
 	};
 
@@ -574,30 +576,26 @@ describe("structured action invocations", () => {
 		["empty branch", ""],
 		["close", { fn: "close" }],
 		["delete_photo", { fn: "delete_photo" }],
-		["show", { fn: "show", rowId: "row-1" }],
-		["expand_text", { fn: "expand_text", rowId: "row-1" }],
+		["show", { fn: "show", row_id: "row-1" }],
+		["expand_text", { fn: "expand_text", row_id: "row-1" }],
 		["highlight_required", { fn: "highlight_required", field: "title" }],
 		["select", { fn: "select", value: "$datum" }],
-		["navigate", { fn: "navigate", flowId: "f", pageId: "p" }],
+		["navigate", { fn: "navigate", flow_id: "f", page_id: "p" }],
 		[
 			"navigate with query",
 			{
 				fn: "navigate",
-				flowId: "f",
-				pageId: "p",
+				flow_id: "f",
+				page_id: "p",
 				query: { id: "$datum.id" },
 			},
 		],
-		[
-			"create submit",
-			{ fn: "create", service: SVC, resource: "items", mode: "submit" },
-		],
+		["create submit", { fn: "create", resource: ITEMS, mode: "submit" }],
 		[
 			"create inline",
 			{
 				fn: "create",
-				service: SVC,
-				resource: "addresses",
+				resource: ADDRESSES,
 				mode: "inline",
 				data: { street: "$datum.street" },
 			},
@@ -606,19 +604,17 @@ describe("structured action invocations", () => {
 			"create from path with id destination",
 			{
 				fn: "create",
-				service: SVC,
-				resource: "addresses",
-				mode: "fromPath",
-				dataPath: "pickup_address",
-				idDestination: "{pickup_address.id}",
+				resource: ADDRESSES,
+				mode: "from_path",
+				data_path: "pickup_address",
+				id_destination: "{pickup_address.id}",
 			},
 		],
 		[
 			"update store",
 			{
 				fn: "update",
-				service: SVC,
-				resource: "items",
+				resource: ITEMS,
 				mode: "store",
 				filter: { id: "item.id" },
 				changes: { status: "accepted" },
@@ -628,8 +624,7 @@ describe("structured action invocations", () => {
 			"update draft",
 			{
 				fn: "update",
-				service: SVC,
-				resource: "items",
+				resource: ITEMS,
 				mode: "draft",
 				changes: { status: "accepted" },
 			},
@@ -638,11 +633,10 @@ describe("structured action invocations", () => {
 			"update store from path",
 			{
 				fn: "update",
-				service: SVC,
-				resource: "addresses",
+				resource: ADDRESSES,
 				mode: "store",
 				filter: { id: "item.id" },
-				changesPath: "pickup_address",
+				changes_path: "pickup_address",
 			},
 		],
 	])("accepts %s", (_label, branch) => {
@@ -652,27 +646,25 @@ describe("structured action invocations", () => {
 	it.each([
 		["an unknown function", { fn: "explode" }],
 		["show without a row id", { fn: "show" }],
-		["show with an empty row id", { fn: "show", rowId: "" }],
+		["show with an empty row id", { fn: "show", row_id: "" }],
 		[
 			"create submit carrying data",
 			{
 				fn: "create",
-				service: SVC,
-				resource: "a",
+				resource: "marketplace.a",
 				mode: "submit",
 				data: { x: "y" },
 			},
 		],
 		[
 			"create with an unknown mode",
-			{ fn: "create", service: SVC, resource: "a", mode: "magic" },
+			{ fn: "create", resource: "marketplace.a", mode: "magic" },
 		],
 		[
 			"a store update with an empty filter",
 			{
 				fn: "update",
-				service: SVC,
-				resource: "i",
+				resource: "marketplace.i",
 				mode: "store",
 				filter: {},
 				changes: { a: "b" },
@@ -682,34 +674,31 @@ describe("structured action invocations", () => {
 			"a draft update carrying a filter",
 			{
 				fn: "update",
-				service: SVC,
-				resource: "i",
+				resource: "marketplace.i",
 				mode: "draft",
 				filter: { id: "x" },
 				changes: { a: "b" },
 			},
 		],
 		[
-			"an update with both changes and changesPath",
+			"an update with both changes and changes_path",
 			{
 				fn: "update",
-				service: SVC,
-				resource: "i",
+				resource: "marketplace.i",
 				mode: "draft",
 				changes: { a: "b" },
-				changesPath: "p",
+				changes_path: "p",
 			},
 		],
 		[
 			"an update with no changes at all",
-			{ fn: "update", service: SVC, resource: "i", mode: "draft" },
+			{ fn: "update", resource: "marketplace.i", mode: "draft" },
 		],
 		[
 			"a non-string expression value",
 			{
 				fn: "create",
-				service: SVC,
-				resource: "a",
+				resource: "marketplace.a",
 				mode: "inline",
 				data: { x: 5 },
 			},
@@ -726,12 +715,13 @@ describe("structured action invocations", () => {
 });
 
 describe("validateFlowData submits declaration", () => {
-	const SERVICE = "66b092ae-1e3f-4f2a-8a7d-9b0c1d2e3f40";
+	const ITEMS = "marketplace.items";
+	const ADDRESSES = "evy.addresses";
 
-	function submitButton(service: string, resource: string) {
+	function submitButton(resource: string) {
 		return {
 			name: "Submit",
-			type: "Button",
+			type: "button",
 			actions: {
 				tap: [
 					{
@@ -739,7 +729,6 @@ describe("validateFlowData submits declaration", () => {
 						false: "",
 						true: {
 							fn: "create",
-							service,
 							resource,
 							mode: "submit",
 						},
@@ -753,7 +742,7 @@ describe("validateFlowData submits declaration", () => {
 
 	function flowWithSubmit(
 		row: Record<string, unknown>,
-		submits?: { service: string; resource: string },
+		submits?: { resource: string },
 	) {
 		const flow = flowWithRow(row) as Record<string, unknown>;
 		if (submits) flow.submits = submits;
@@ -762,44 +751,31 @@ describe("validateFlowData submits declaration", () => {
 
 	it("accepts a submitting flow whose declaration matches", () => {
 		const out = validateFlowData(
-			flowWithSubmit(submitButton(SERVICE, "items"), {
-				service: SERVICE,
-				resource: "items",
+			flowWithSubmit(submitButton(ITEMS), {
+				resource: ITEMS,
 			}),
 		);
-		expect(out.submits?.resource).toBe("items");
+		expect(out.submits?.resource).toBe(ITEMS);
 	});
 
 	it("rejects a submitting flow with no declaration", () => {
 		expect(() =>
-			validateFlowData(flowWithSubmit(submitButton(SERVICE, "items"))),
+			validateFlowData(flowWithSubmit(submitButton(ITEMS))),
 		).toThrow('declares no "submits"');
 	});
 
 	it("rejects a declaration whose resource does not match the action", () => {
 		expect(() =>
 			validateFlowData(
-				flowWithSubmit(submitButton(SERVICE, "items"), {
-					service: SERVICE,
-					resource: "addresses",
-				}),
-			),
-		).toThrow("but its create(...,submit) targets");
-	});
-
-	it("rejects a declaration whose service does not match the action", () => {
-		expect(() =>
-			validateFlowData(
-				flowWithSubmit(submitButton(SERVICE, "items"), {
-					service: "475731ac-31aa-4d65-94d2-7032782ae359",
-					resource: "items",
+				flowWithSubmit(submitButton(ITEMS), {
+					resource: ADDRESSES,
 				}),
 			),
 		).toThrow("but its create(...,submit) targets");
 	});
 
 	it("rejects a flow submitting more than one entity", () => {
-		const flow = flowWithRow(submitButton(SERVICE, "items")) as Record<
+		const flow = flowWithRow(submitButton(ITEMS)) as Record<
 			string,
 			unknown
 		>;
@@ -807,7 +783,7 @@ describe("validateFlowData submits declaration", () => {
 		const rows = pages[0]?.rows as Record<string, unknown>[];
 		rows.push({
 			id: crypto.randomUUID(),
-			...submitButton(SERVICE, "addresses"),
+			...submitButton(ADDRESSES),
 		});
 
 		expect(() => validateFlowData(flow)).toThrow(
@@ -819,7 +795,7 @@ describe("validateFlowData submits declaration", () => {
 		const out = validateFlowData(
 			flowWithRow({
 				name: "Inline",
-				type: "Button",
+				type: "button",
 				actions: {
 					tap: [
 						{
@@ -827,8 +803,7 @@ describe("validateFlowData submits declaration", () => {
 							false: "",
 							true: {
 								fn: "create",
-								service: SERVICE,
-								resource: "messages",
+								resource: "evy.messages",
 								mode: "inline",
 								data: { status: '"pending"' },
 							},
@@ -848,15 +823,15 @@ describe("validateFlowData submits declaration", () => {
 			flowWithSubmit(
 				{
 					name: "Plain",
-					type: "Text",
+					type: "text",
 					actions: {},
 					visible: "true",
 					title: "Hello",
 				},
-				{ service: SERVICE, resource: "items" },
+				{ resource: ITEMS },
 			),
 		);
-		expect(out.submits?.service).toBe(SERVICE);
+		expect(out.submits?.resource).toBe(ITEMS);
 	});
 
 	it("finds submit actions nested in a sheet", () => {
@@ -864,7 +839,7 @@ describe("validateFlowData submits declaration", () => {
 			validateFlowData(
 				flowWithRow({
 					name: "Opener",
-					type: "Button",
+					type: "button",
 					actions: {
 						tap: [
 							{ condition: "", false: "", true: { fn: "close" } },
@@ -874,7 +849,7 @@ describe("validateFlowData submits declaration", () => {
 					label: "Open",
 					sheet: {
 						id: crypto.randomUUID(),
-						...submitButton(SERVICE, "items"),
+						...submitButton(ITEMS),
 					},
 				}),
 			),
@@ -883,25 +858,25 @@ describe("validateFlowData submits declaration", () => {
 });
 
 describe("validateFileUploadChunkMetadata", () => {
-	const uploadId = "440dcda6-3a4c-4767-8de0-dffe860fd5ba";
+	const upload_id = "440dcda6-3a4c-4767-8de0-dffe860fd5ba";
 
 	it("accepts valid file chunk metadata", () => {
 		const out = validateFileUploadChunkMetadata({
-			uploadId,
+			upload_id,
 			index: 0,
-			byteOffset: 0,
-			byteLength: 1,
+			byte_offset: 0,
+			byte_length: 1,
 		});
-		expect(out.byteLength).toBe(1);
+		expect(out.byte_length).toBe(1);
 	});
 
 	it("rejects invalid chunk metadata", () => {
 		expect(() =>
 			validateFileUploadChunkMetadata({
-				uploadId,
+				upload_id,
 				index: 0,
-				byteOffset: 0,
-				byteLength: 0,
+				byte_offset: 0,
+				byte_length: 0,
 			}),
 		).toThrow("FileUploadChunkMetadata validation failed");
 	});
@@ -916,12 +891,12 @@ describe("validateFileWithBinary", () => {
 		const out = validateFileWithBinary({
 			id,
 			type,
-			createdAt: now,
-			updatedAt: now,
+			created_at: now,
+			updated_at: now,
 			visibility: "public",
-			dataBase64: "abc=",
+			data_base64: "abc=",
 		});
-		expect(out.dataBase64).toBe("abc=");
+		expect(out.data_base64).toBe("abc=");
 		expect(out.type).toBe(type);
 	});
 
@@ -930,8 +905,8 @@ describe("validateFileWithBinary", () => {
 			validateFileWithBinary({
 				id,
 				type,
-				createdAt: now,
-				updatedAt: now,
+				created_at: now,
+				updated_at: now,
 			}),
 		).toThrow("FileWithBinary validation failed");
 	});
@@ -940,9 +915,9 @@ describe("validateFileWithBinary", () => {
 		expect(() =>
 			validateFileWithBinary({
 				id,
-				createdAt: now,
-				updatedAt: now,
-				dataBase64: "abc=",
+				created_at: now,
+				updated_at: now,
+				data_base64: "abc=",
 			}),
 		).toThrow("FileWithBinary validation failed");
 	});
@@ -957,8 +932,8 @@ describe("validateDataEvyFile", () => {
 		const out = validateDataEvyFile({
 			id,
 			type,
-			createdAt: now,
-			updatedAt: now,
+			created_at: now,
+			updated_at: now,
 			visibility: "public",
 		});
 		expect(out.id).toBe(id);
@@ -969,8 +944,8 @@ describe("validateDataEvyFile", () => {
 		expect(() =>
 			validateDataEvyFile({
 				id,
-				createdAt: now,
-				updatedAt: now,
+				created_at: now,
+				updated_at: now,
 			}),
 		).toThrow("File validation failed");
 	});
@@ -979,8 +954,8 @@ describe("validateDataEvyFile", () => {
 		expect(() =>
 			validateDataEvyFile({
 				type,
-				createdAt: now,
-				updatedAt: now,
+				created_at: now,
+				updated_at: now,
 			}),
 		).toThrow("File validation failed");
 	});

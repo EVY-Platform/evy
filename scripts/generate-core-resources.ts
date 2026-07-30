@@ -10,6 +10,10 @@
 
 import { join } from "node:path";
 import {
+	assertValidServiceSlug,
+	formatResourceRef,
+} from "../types/resourceRef.js";
+import {
 	generatedFileHeader,
 	generatedSwiftHeader,
 	loadJson,
@@ -18,7 +22,7 @@ import {
 	resourceKey,
 	runMain,
 	SCHEMA_DIR,
-	swiftCaseName,
+	snakeToCamel,
 	writeGeneratedOutputs,
 } from "./types-generation-utils.js";
 
@@ -47,11 +51,12 @@ function validateSchema(value: unknown): asserts value is CoreResourcesSchema {
 		throw new Error("core.resources.json: root must be an object");
 	}
 	const obj = value as Record<string, unknown>;
-	if (typeof obj.service !== "string" || obj.service.length === 0) {
+	if (typeof obj.service !== "string") {
 		throw new Error(
-			"core.resources.json: service must be a non-empty string",
+			"core.resources.json: service must be a valid service slug",
 		);
 	}
+	assertValidServiceSlug(obj.service);
 	if (
 		typeof obj.resources !== "object" ||
 		obj.resources === null ||
@@ -100,7 +105,6 @@ function validateSchema(value: unknown): asserts value is CoreResourcesSchema {
 
 function generateTypeScript(schema: CoreResourcesSchema): string {
 	const { service, resources } = schema;
-	const resourceNames = Object.keys(resources);
 	const lines: string[] = [];
 
 	lines.push(...generatedFileHeader(CORE_RESOURCES_SCHEMA_PATH));
@@ -109,16 +113,12 @@ function generateTypeScript(schema: CoreResourcesSchema): string {
 	);
 	lines.push("");
 
-	// Individual resource constants
-	lines.push("export const EVY_CORE_RESOURCE = {");
-	for (const [plural, meta] of Object.entries(resources)) {
+	lines.push("export const EVY_CORE_RESOURCE_REF = {");
+	for (const [plural] of Object.entries(resources)) {
 		const key = resourceKey(plural);
-		const singular = meta.singular;
-		const comment =
-			singular !== plural
-				? ` // singular: ${JSON.stringify(singular)}`
-				: "";
-		lines.push(`\t${key}: ${JSON.stringify(plural)},${comment}`);
+		lines.push(
+			`\t${key}: ${JSON.stringify(formatResourceRef(service, plural))},`,
+		);
 	}
 	lines.push("} as const;");
 	lines.push("");
@@ -126,7 +126,7 @@ function generateTypeScript(schema: CoreResourcesSchema): string {
 	lines.push("export const EVY_CORE_RESOURCES = [");
 	for (const [plural, meta] of Object.entries(resources)) {
 		lines.push(
-			`\t{ id: ${JSON.stringify(plural)}, name: ${JSON.stringify(meta.singular)} },`,
+			`\t{ id: ${JSON.stringify(formatResourceRef(service, plural))}, name: ${JSON.stringify(meta.singular)} },`,
 		);
 	}
 	lines.push("] as const;");
@@ -153,28 +153,6 @@ function generateTypeScript(schema: CoreResourcesSchema): string {
 	);
 	lines.push("");
 
-	// Resource names tuple
-	lines.push("export const EVY_CORE_RESOURCE_NAMES = [");
-	for (const plural of resourceNames) {
-		const key = resourceKey(plural);
-		lines.push(`\tEVY_CORE_RESOURCE.${key},`);
-	}
-	lines.push("] as const;");
-	lines.push("");
-
-	// Type union
-	lines.push(
-		"export type EvyCoreResourceName = (typeof EVY_CORE_RESOURCE_NAMES)[number];",
-	);
-	lines.push("");
-
-	// Set
-	lines.push(
-		"export const EVY_CORE_RESOURCE_NAME_SET: ReadonlySet<EvyCoreResourceName> =",
-	);
-	lines.push("\tnew Set(EVY_CORE_RESOURCE_NAMES);");
-	lines.push("");
-
 	return lines.join("\n");
 }
 
@@ -192,7 +170,7 @@ function generateSwift(schema: CoreResourcesSchema): string {
 	// Resource enum
 	lines.push("public enum EVYCoreResource: String, CaseIterable {");
 	for (const plural of resourceNames) {
-		const caseName = swiftCaseName(plural);
+		const caseName = snakeToCamel(plural);
 		lines.push(`\tcase ${caseName} = ${JSON.stringify(plural)}`);
 	}
 	lines.push("");
@@ -201,7 +179,7 @@ function generateSwift(schema: CoreResourcesSchema): string {
 	lines.push("\tpublic var singular: String {");
 	lines.push("\t\tswitch self {");
 	for (const [plural, meta] of Object.entries(resources)) {
-		const caseName = swiftCaseName(plural);
+		const caseName = snakeToCamel(plural);
 		lines.push(
 			`\t\tcase .${caseName}: return ${JSON.stringify(meta.singular)}`,
 		);
@@ -220,11 +198,16 @@ function generateSwift(schema: CoreResourcesSchema): string {
 	lines.push("\tpublic var visibility: String? {");
 	lines.push("\t\tswitch self {");
 	for (const [plural, meta] of Object.entries(resources)) {
-		const caseName = swiftCaseName(plural);
+		const caseName = snakeToCamel(plural);
 		const value = meta.visibility ? JSON.stringify(meta.visibility) : "nil";
 		lines.push(`\t\tcase .${caseName}: return ${value}`);
 	}
 	lines.push("\t\t}");
+	lines.push("\t}");
+	lines.push("");
+
+	lines.push("\tpublic var ref: String {");
+	lines.push('\t\t"\\(EVY_CORE_SERVICE).\\(rawValue)"');
 	lines.push("\t}");
 	lines.push("}");
 

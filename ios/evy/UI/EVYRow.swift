@@ -45,7 +45,7 @@ struct EVYRow: View, Identifiable {
       )
       .onEVYRecordChange(
         namespace: EVYNamespace.evy,
-        resource: EVYCoreResource.rows.rawValue,
+        resource: EVYCoreResource.rows.ref,
         id: rowId
       ) {
         let latestRow = EVYRowStore.row(id: rowId)
@@ -195,7 +195,7 @@ private struct EVYResolvedRow: View {
     switch ref {
     case .id:
       guard storedRow?.type == .search else { return nil }
-      return storedRow?.childRowId.map(EVYRowRef.id)
+      return storedRow?.child_row_id.map(EVYRowRef.id)
     case .inline(let row):
       guard row.type == .search else { return nil }
       return row.child.map(EVYRowRef.inline)
@@ -205,7 +205,7 @@ private struct EVYResolvedRow: View {
   private var childRefs: [EVYRowRef] {
     switch ref {
     case .id:
-      return storedRow?.childrenRowIds.map(EVYRowRef.id) ?? []
+      return storedRow?.children_row_ids.map(EVYRowRef.id) ?? []
     case .inline(let row):
       return row.children.map(EVYRowRef.inline)
     }
@@ -330,10 +330,10 @@ private struct EVYResolvedRow: View {
 
   @ViewBuilder
   private func renderedRow(for payload: UI_RowPayload, contentRow: UI_Row) -> some View {
-    if !contentRow.actions.swipeLeft.isEmpty {
+    if !contentRow.actions.swipe_left.isEmpty {
       EVYSwipeableRow(
         swipeIdentity: EVYSwipeRowIdentity.make(rowId: contentRow.id, datum: datum),
-        label: contentRow.swipeLabel,
+        label: contentRow.swipe_label,
         run: { runActions(trigger: .swipeLeft, contentRow: contentRow) }
       ) {
         tappedOrPlainRow(for: payload, contentRow: contentRow)
@@ -516,7 +516,7 @@ private struct EVYSheetOverlay: View {
     .presentationBackground(.white)
     .onEVYRecordChange(
       namespace: EVYNamespace.evy,
-      resource: EVYCoreResource.rows.rawValue,
+      resource: EVYCoreResource.rows.ref,
       id: sheetRef.id
     ) {
       guard case .id = sheetRef else { return }

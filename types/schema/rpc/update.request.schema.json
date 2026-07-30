@@ -2,7 +2,7 @@
 	"$schema": "https://json-schema.org/draft/2020-12/schema",
 	"$id": "update-request",
 	"title": "UpdateRequest",
-	"description": "JSON-RPC params for update method. Service, resource, filter.id, and data are required.",
+	"description": "JSON-RPC params for update method. Resource, filter.id, and data are required.",
 	"$defs": {
 		"UpdateDataPayload": {
 			"type": "object",
@@ -13,16 +13,10 @@
 	},
 	"type": "object",
 	"additionalProperties": false,
-	"required": ["service", "resource", "filter", "data"],
+	"required": ["resource", "filter", "data"],
 	"properties": {
-		"service": {
-			"type": "string",
-			"minLength": 1
-		},
 		"resource": {
-			"type": "string",
-			"minLength": 1,
-			"maxLength": 50
+			"$ref": "../common/rpc.schema.json#/$defs/ResourceRef"
 		},
 		"filter": {
 			"type": "object",
@@ -33,12 +27,12 @@
 					"type": "string",
 					"minLength": 1
 				},
-				"updatedAfter": {
+				"updated_after": {
 					"type": "string",
 					"format": "date-time"
 				},
-				"expectedUpdatedAt": {
-					"description": "Optimistic lock. When present, the write only applies if the stored row still carries this updatedAt; otherwise it is rejected as a conflict. Omit to accept last-write-wins.",
+				"expected_updated_at": {
+					"description": "Optimistic lock. When present, the write only applies if the stored row still carries this updated_at; otherwise it is rejected as a conflict. Omit to accept last-write-wins.",
 					"type": "string",
 					"format": "date-time"
 				}

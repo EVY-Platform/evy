@@ -1,11 +1,9 @@
 {
 	"$schema": "https://json-schema.org/draft/2020-12/schema",
-	"$id": "sdui/definitions/Input",
-	"title": "Input_Row",
+	"$id": "sdui/definitions/text_select",
+	"title": "TextSelect_Row",
 	"triggers": {
-		"tap": "optional",
-		"submit": "optional",
-		"swipe-left": "optional"
+		"tap": "required"
 	},
 	"allOf": [
 		{
@@ -16,7 +14,7 @@
 			"required": ["type", "source", "destination"],
 			"properties": {
 				"type": {
-					"const": "Input"
+					"const": "text_select"
 				},
 				"title": {
 					"type": "string"
@@ -27,13 +25,7 @@
 				"destination": {
 					"type": "string"
 				},
-				"placeholder": {
-					"type": "string"
-				},
-				"initial": {
-					"type": "string"
-				},
-				"swipeLabel": {
+				"text": {
 					"type": "string"
 				}
 			}

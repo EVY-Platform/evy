@@ -10,10 +10,10 @@ function makeUiRow(id: string, config: Record<string, unknown>): Row {
 		id,
 		row: null,
 		config: {
-			type: "Search",
+			type: "search",
 			actions: {},
 			visible: "true",
-			title: "Search",
+			title: "search",
 			source: "",
 			destination: "",
 			...config,
@@ -23,7 +23,7 @@ function makeUiRow(id: string, config: Record<string, unknown>): Row {
 
 describe("rowCodec", () => {
 	it("serializes empty actions in row data", () => {
-		const row = makeUiRow("row-actions", { type: "Search", actions: {} });
+		const row = makeUiRow("row-actions", { type: "search", actions: {} });
 		const records = rowToFlatRecords(row, NOW);
 		const record = records.find((r) => r.id === "row-actions");
 		expect(record?.data.actions).toEqual({});
@@ -36,9 +36,9 @@ describe("rowCodec", () => {
 
 	it("round-trips Search child and sheet independently", () => {
 		const search = makeUiRow("search-1", {
-			type: "Search",
-			childRowId: "child-1",
-			sheetRowId: "sheet-1",
+			type: "search",
+			child_row_id: "child-1",
+			sheet_row_id: "sheet-1",
 		});
 		const records = rowToFlatRecords(search, NOW);
 		const searchRecord = records.find((r) => r.id === "search-1");
@@ -48,17 +48,17 @@ describe("rowCodec", () => {
 
 	it("decomposes nested child and sheet rows into separate records", () => {
 		const child = makeUiRow("child-nested", {
-			type: "Text",
+			type: "text",
 			title: "Child",
 			text: "c",
 		});
 		const sheet = makeUiRow("sheet-nested", {
-			type: "Text",
+			type: "text",
 			title: "Sheet",
 			text: "s",
 		});
 		const search = makeUiRow("search-2", {
-			type: "Search",
+			type: "search",
 			child,
 			sheet,
 		});
@@ -71,7 +71,7 @@ describe("rowCodec", () => {
 		const rebuilt = buildRowConfigFromRecord(
 			searchRecord as NonNullable<typeof searchRecord>,
 		);
-		expect(rebuilt.childRowId).toBe("child-nested");
-		expect(rebuilt.sheetRowId).toBe("sheet-nested");
+		expect(rebuilt.child_row_id).toBe("child-nested");
+		expect(rebuilt.sheet_row_id).toBe("sheet-nested");
 	});
 });

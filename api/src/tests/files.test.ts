@@ -8,7 +8,6 @@ import {
 } from "bun:test";
 import { migrate } from "drizzle-orm/pglite/migrator";
 
-import { EVY_CORE_SERVICE } from "evy-types/coreResources";
 import * as schema from "evy-types/db/schema.generated";
 import { get } from "../data/data";
 import { writeFileBinary } from "../data/resources/fileStorage";
@@ -45,8 +44,8 @@ async function insertFileMetadata(id: string): Promise<void> {
 		id,
 		type: fileType,
 		visibility: "public",
-		createdAt: now,
-		updatedAt: now,
+		created_at: now,
+		updated_at: now,
 	});
 }
 
@@ -57,8 +56,7 @@ describe("get files", () => {
 		await writeFileBinary({ id, bytes: opaqueBytes });
 
 		const result = await get(dataDb, {
-			service: EVY_CORE_SERVICE,
-			resource: "files",
+			resource: "evy.files",
 			filter: { id },
 		});
 		expect(result).toEqual([
@@ -66,9 +64,9 @@ describe("get files", () => {
 				id,
 				type: fileType,
 				visibility: "public",
-				createdAt: now,
-				updatedAt: now,
-				dataBase64: opaqueBytes.toString("base64"),
+				created_at: now,
+				updated_at: now,
+				data_base64: opaqueBytes.toString("base64"),
 			},
 		]);
 	});
@@ -79,31 +77,29 @@ describe("get files", () => {
 		await writeFileBinary({ id, bytes: opaqueBytes });
 
 		const result = await get(dataDb, {
-			service: EVY_CORE_SERVICE,
-			resource: "files",
+			resource: "evy.files",
 		});
 		expect(Array.isArray(result)).toBe(true);
 		const item = (result as Record<string, unknown>[]).find(
 			(r) => r.id === id,
 		);
 		expect(item).toMatchObject({ id, type: fileType });
-		expect(item).not.toHaveProperty("dataBase64");
+		expect(item).not.toHaveProperty("data_base64");
 	});
 
-	it("returns metadata without binaries for an updatedAfter read", async () => {
+	it("returns metadata without binaries for an updated_after read", async () => {
 		const id = "b2b1f2a8-6b1a-4c6f-9f1a-2f1c8d0a77aa";
 		await insertFileMetadata(id);
 		await writeFileBinary({ id, bytes: opaqueBytes });
 
 		const result = (await get(dataDb, {
-			service: EVY_CORE_SERVICE,
-			resource: "files",
-			filter: { updatedAfter: "1970-01-01T00:00:00.000Z" },
+			resource: "evy.files",
+			filter: { updated_after: "1970-01-01T00:00:00.000Z" },
 		})) as Record<string, unknown>[];
 
 		const item = result.find((r) => r.id === id);
 		expect(item).toBeDefined();
-		expect(item).not.toHaveProperty("dataBase64");
+		expect(item).not.toHaveProperty("data_base64");
 	});
 
 	// A binary missing from disk used to fail the whole sync, since sync reads
@@ -113,8 +109,7 @@ describe("get files", () => {
 		await insertFileMetadata(id);
 
 		const result = (await get(dataDb, {
-			service: EVY_CORE_SERVICE,
-			resource: "files",
+			resource: "evy.files",
 		})) as Record<string, unknown>[];
 
 		expect(result.find((r) => r.id === id)).toMatchObject({ id });
@@ -126,8 +121,7 @@ describe("get files", () => {
 
 		await expect(
 			get(dataDb, {
-				service: EVY_CORE_SERVICE,
-				resource: "files",
+				resource: "evy.files",
 				filter: { id },
 			}),
 		).rejects.toThrow("File binary not found");

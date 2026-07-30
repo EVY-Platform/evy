@@ -1,7 +1,7 @@
 {
 	"$schema": "https://json-schema.org/draft/2020-12/schema",
-	"$id": "sdui/definitions/InlinePicker",
-	"title": "InlinePicker_Row",
+	"$id": "sdui/definitions/text_expand",
+	"title": "TextExpand_Row",
 	"triggers": {
 		"tap": "required"
 	},
@@ -11,24 +11,18 @@
 		},
 		{
 			"type": "object",
-			"required": ["type", "value"],
+			"required": ["type"],
 			"properties": {
 				"type": {
-					"const": "InlinePicker"
+					"const": "text_expand"
 				},
 				"title": {
 					"type": "string"
 				},
-				"source": {
+				"text": {
 					"type": "string"
 				},
-				"destination": {
-					"type": "string"
-				},
-				"value": {
-					"type": "string"
-				},
-				"initial": {
+				"expand_label": {
 					"type": "string"
 				}
 			}

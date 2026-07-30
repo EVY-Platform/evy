@@ -18,9 +18,9 @@ function decomposeRow(row: Row, records: DATA_EVY_Row[], now: string): string {
 			key === "child" ||
 			key === "children" ||
 			key === "sheet" ||
-			key === "childRowId" ||
-			key === "childrenRowIds" ||
-			key === "sheetRowId" ||
+			key === "child_row_id" ||
+			key === "children_row_ids" ||
+			key === "sheet_row_id" ||
 			value === undefined
 		) {
 			continue;
@@ -42,16 +42,16 @@ function decomposeRow(row: Row, records: DATA_EVY_Row[], now: string): string {
 		);
 	}
 
-	if (typeof row.config.childRowId === "string") {
-		data.child_row_id = row.config.childRowId;
+	if (typeof row.config.child_row_id === "string") {
+		data.child_row_id = row.config.child_row_id;
 	}
 
-	if (typeof row.config.sheetRowId === "string") {
-		data.sheet_row_id = row.config.sheetRowId;
+	if (typeof row.config.sheet_row_id === "string") {
+		data.sheet_row_id = row.config.sheet_row_id;
 	}
 
-	if (row.config.childrenRowIds?.length) {
-		data.children_row_ids = row.config.childrenRowIds;
+	if (row.config.children_row_ids?.length) {
+		data.children_row_ids = row.config.children_row_ids;
 	}
 
 	// Required on the stored row, so it cannot be left undefined. Same fallback
@@ -68,8 +68,8 @@ function decomposeRow(row: Row, records: DATA_EVY_Row[], now: string): string {
 		// no default, so the value builder rows are created with is stated here.
 		visibility: "public",
 		data: data as DATA_EVY_RowData,
-		createdAt: now,
-		updatedAt: now,
+		created_at: now,
+		updated_at: now,
 	});
 
 	return row.id;

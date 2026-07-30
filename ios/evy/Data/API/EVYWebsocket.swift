@@ -33,7 +33,6 @@ struct EVYLoginParams: Encodable {
 }
 
 struct DataChangedNotification: Decodable {
-  let service: String
   let resource: String
   let operation: String
   let value: EVYJson
@@ -203,7 +202,7 @@ actor EVYWebsocket: EVYRPCTransport {
 
   private func handleNotification(method: String, params: Any?) {
     switch method {
-    case "dataChanged":
+    case "data_changed":
       handleDataChanged(params: params)
     default:
       #if DEBUG
@@ -219,22 +218,23 @@ actor EVYWebsocket: EVYRPCTransport {
         DataChangedNotification.self, from: paramsData)
     else {
       postError(
-        EVYError.parsingFailed(context: "dataChanged notification parsing failed"))
+        EVYError.parsingFailed(context: "data_changed notification parsing failed"))
       return
     }
 
     Task { @MainActor in
       do {
+        let namespace = try EVYResourceRef.serviceOf(notification.resource)
         switch notification.operation {
         case "create", "update":
           try EVY.applySyncedValue(
-            namespace: notification.service,
+            namespace: namespace,
             resource: notification.resource,
             value: notification.value
           )
         case "delete":
           try EVY.removeSyncedValue(
-            namespace: notification.service,
+            namespace: namespace,
             resource: notification.resource,
             value: notification.value
           )

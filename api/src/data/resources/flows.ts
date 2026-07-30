@@ -8,7 +8,7 @@ export const flowsResource = makeCoreResource<DATA_EVY_Flow>({
 	validate: validateDataEvyFlow,
 	toUpdateSet: (v) => ({
 		name: v.name,
-		pageIds: v.pageIds,
+		page_ids: v.page_ids,
 		submits: v.submits ?? null,
 		visibility: v.visibility,
 	}),

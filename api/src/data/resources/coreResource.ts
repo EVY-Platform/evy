@@ -10,8 +10,8 @@ import type {
 	UpdateRequest,
 	UpdateResponse,
 } from "evy-types";
-import { EVY_CORE_SERVICE } from "evy-types/coreResources";
 import { hasDatabaseErrorCode, PG_UNIQUE_VIOLATION } from "evy-types/dbErrors";
+import { isValidResourceRef } from "evy-types/resourceRef";
 import type { SyncRequest } from "evy-types/rpc/sync.request";
 import {
 	validateCreateResponse,
@@ -24,45 +24,36 @@ import { assertNotModified, monotonicUpdatedAt } from "../conflicts";
 
 type ResourceTable = AnyPgTable & {
 	id: AnyPgColumn;
-	updatedAt: AnyPgColumn;
-	deletedAt: AnyPgColumn;
+	updated_at: AnyPgColumn;
+	deleted_at: AnyPgColumn;
 	visibility?: AnyPgColumn;
 };
 
 type AddressableResourceTable = ResourceTable & {
 	fk: AnyPgColumn;
-	service: AnyPgColumn;
 	resource: AnyPgColumn;
 };
 
-export type OwnedServiceResource = NonNullable<
-	SyncRequest["ownedServiceResources"]
->[number];
+type OwnedResource = NonNullable<SyncRequest["owned_resources"]>[number];
 
 export type SyncScope = {
-	updatedAfter?: string;
+	updated_after?: string;
 	resource: string;
-	owned: OwnedServiceResource[];
+	owned: OwnedResource[];
 };
 
 export type SyncScopeInput = Omit<SyncScope, "resource">;
 
-const UUID_PATTERN =
-	/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-
 function isAddressableTable(
 	table: ResourceTable,
 ): table is AddressableResourceTable {
-	return "fk" in table && "service" in table && "resource" in table;
+	return "fk" in table && "resource" in table;
 }
 
 export function ownedIdsOf(scope: SyncScope): string[] {
 	const ids: string[] = [];
 	for (const group of scope.owned) {
-		if (
-			group.service === EVY_CORE_SERVICE &&
-			group.resource === scope.resource
-		) {
+		if (group.resource === scope.resource) {
 			ids.push(...group.ids);
 		}
 	}
@@ -81,30 +72,24 @@ function syncEntitlementClause(
 
 function syncTimeClause(
 	table: ResourceTable,
-	updatedAfter: string | undefined,
+	updated_after: string | undefined,
 ): SQL | undefined {
-	return updatedAfter
-		? gt(table.updatedAt, updatedAfter)
-		: isNull(table.deletedAt);
+	return updated_after
+		? gt(table.updated_at, updated_after)
+		: isNull(table.deleted_at);
 }
 
 function addressedRecordClause(
 	table: AddressableResourceTable,
-	owned: OwnedServiceResource[],
+	owned: OwnedResource[],
 ): SQL | undefined {
 	const clauses: SQL[] = [];
 
 	for (const group of owned) {
 		if (group.ids.length === 0) continue;
-		if (
-			!UUID_PATTERN.test(group.service) ||
-			!UUID_PATTERN.test(group.resource)
-		) {
-			continue;
-		}
+		if (!isValidResourceRef(group.resource)) continue; // reserved-slug refs from sync scope
 		clauses.push(
 			and(
-				eq(table.service, group.service),
 				eq(table.resource, group.resource),
 				inArray(table.fk, group.ids),
 			) as SQL,
@@ -138,7 +123,7 @@ export async function runListForSync<T>(
 	].filter((clause): clause is SQL => clause !== undefined);
 
 	const clauses = [
-		syncTimeClause(table, scope.updatedAfter),
+		syncTimeClause(table, scope.updated_after),
 		or(...entitlement),
 	].filter((clause): clause is SQL => clause !== undefined);
 
@@ -146,7 +131,7 @@ export async function runListForSync<T>(
 		.select()
 		.from(table)
 		.where(clauses.length > 0 ? and(...clauses) : undefined)
-		.orderBy(asc(table.updatedAt), asc(table.id));
+		.orderBy(asc(table.updated_at), asc(table.id));
 
 	return validateGetResponse(rows.map(norm));
 }
@@ -154,8 +139,8 @@ export async function runListForSync<T>(
 export function makeCoreResource<
 	T extends {
 		id: string;
-		createdAt: string;
-		updatedAt: string;
+		created_at: string;
+		updated_at: string;
 	},
 >(config: {
 	table: ResourceTable;
@@ -186,8 +171,8 @@ export function makeCoreResource<
 		const payload: Record<string, unknown> = {
 			...record,
 			id: idOverride ?? record.id ?? crypto.randomUUID(),
-			createdAt: createdAtOverride ?? record.createdAt ?? nowIso,
-			updatedAt: nowIso,
+			created_at: createdAtOverride ?? record.created_at ?? nowIso,
+			updated_at: nowIso,
 		};
 		// visibility comes from the client, never the API
 		return validate(payload);
@@ -200,15 +185,15 @@ export function makeCoreResource<
 		const base = db.select().from(table);
 		const whereClauses: ReturnType<typeof eq>[] = [];
 		if (filter?.id) whereClauses.push(eq(table.id, filter.id));
-		if (filter?.updatedAfter) {
-			whereClauses.push(gt(table.updatedAt, filter.updatedAfter));
+		if (filter?.updated_after) {
+			whereClauses.push(gt(table.updated_at, filter.updated_after));
 		} else {
-			whereClauses.push(isNull(table.deletedAt));
+			whereClauses.push(isNull(table.deleted_at));
 		}
 		const query = whereClauses.length
 			? base.where(and(...whereClauses))
 			: base;
-		const rows = await query.orderBy(asc(table.updatedAt), asc(table.id));
+		const rows = await query.orderBy(asc(table.updated_at), asc(table.id));
 		return validateGetResponse(rows.map(norm));
 	}
 
@@ -260,23 +245,26 @@ export function makeCoreResource<
 			.where(eq(table.id, filter.id))
 			.limit(1);
 		if (existingRows.length === 0) throw new Error("Resource not found");
-		assertNotModified(filter.expectedUpdatedAt, existingRows[0].updatedAt);
+		assertNotModified(
+			filter.expected_updated_at,
+			existingRows[0].updated_at,
+		);
 		const nextUpdatedAt = monotonicUpdatedAt(
 			nowIso,
-			existingRows[0].updatedAt,
+			existingRows[0].updated_at,
 		);
 		const validated = validatePayload(
 			dataPayload,
 			nowIso,
 			filter.id,
-			existingRows[0].createdAt,
+			existingRows[0].created_at,
 		);
 		const updated = await db
 			// biome-ignore lint/suspicious/noExplicitAny: Drizzle generic table requires cast
 			.update(table as any)
 			.set({
 				...toUpdateSet(validated, nowIso),
-				updatedAt: nextUpdatedAt,
+				updated_at: nextUpdatedAt,
 			})
 			.where(eq(table.id, filter.id))
 			.returning();
@@ -294,16 +282,16 @@ export function makeCoreResource<
 		const existing = await db
 			.select()
 			.from(table)
-			.where(and(eq(table.id, filter.id), isNull(table.deletedAt)))
+			.where(and(eq(table.id, filter.id), isNull(table.deleted_at)))
 			.limit(1);
 		if (existing.length === 0) throw new Error("Resource not found");
-		assertNotModified(filter.expectedUpdatedAt, existing[0].updatedAt);
-		const deletedAtIso = monotonicUpdatedAt(nowIso, existing[0].updatedAt);
+		assertNotModified(filter.expected_updated_at, existing[0].updated_at);
+		const deletedAtIso = monotonicUpdatedAt(nowIso, existing[0].updated_at);
 		const deleted = await db
 			// biome-ignore lint/suspicious/noExplicitAny: Drizzle generic table requires cast
 			.update(table as any)
-			.set({ deletedAt: deletedAtIso, updatedAt: deletedAtIso })
-			.where(and(eq(table.id, filter.id), isNull(table.deletedAt)))
+			.set({ deleted_at: deletedAtIso, updated_at: deletedAtIso })
+			.where(and(eq(table.id, filter.id), isNull(table.deleted_at)))
 			.returning();
 		if (deleted.length === 0) throw new Error("Resource not found");
 		const response = validateDeleteResponse(norm(deleted[0]));

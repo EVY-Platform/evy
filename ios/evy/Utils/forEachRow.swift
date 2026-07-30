@@ -15,11 +15,11 @@ func forEachStoredRow(
 ) {
   guard let page = EVYPageStore.page(id: pageId, from: store) else { return }
   var visitedRowIds = Set<String>()
-  for rowId in page.rowIds {
+  for rowId in page.row_ids {
     visitStoredRow(id: rowId, from: store, visitedRowIds: &visitedRowIds, visitor: visitor)
   }
-  if let footerRowId = page.footerRowId {
-    visitStoredRow(id: footerRowId, from: store, visitedRowIds: &visitedRowIds, visitor: visitor)
+  if let footer_row_id = page.footer_row_id {
+    visitStoredRow(id: footer_row_id, from: store, visitedRowIds: &visitedRowIds, visitor: visitor)
   }
 }
 
@@ -35,13 +35,13 @@ private func visitStoredRow(
   else { return }
   visitedRowIds.insert(id)
   visitor(storedRow)
-  for childId in storedRow.childrenRowIds {
+  for childId in storedRow.children_row_ids {
     visitStoredRow(id: childId, from: store, visitedRowIds: &visitedRowIds, visitor: visitor)
   }
-  if let childId = storedRow.childRowId {
+  if let childId = storedRow.child_row_id {
     visitStoredRow(id: childId, from: store, visitedRowIds: &visitedRowIds, visitor: visitor)
   }
-  if let sheetId = storedRow.sheetRowId {
+  if let sheetId = storedRow.sheet_row_id {
     visitStoredRow(id: sheetId, from: store, visitedRowIds: &visitedRowIds, visitor: visitor)
   }
 }

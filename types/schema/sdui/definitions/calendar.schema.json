@@ -1,9 +1,11 @@
 {
 	"$schema": "https://json-schema.org/draft/2020-12/schema",
-	"$id": "sdui/definitions/TimeslotPicker",
-	"title": "TimeslotPicker_Row",
+	"$id": "sdui/definitions/calendar",
+	"title": "Calendar_Row",
 	"triggers": {
-		"tap": "required"
+		"tap": "required",
+		"tap_row": "required",
+		"tap_column": "required"
 	},
 	"allOf": [
 		{
@@ -24,7 +26,7 @@
 			],
 			"properties": {
 				"type": {
-					"const": "TimeslotPicker"
+					"const": "calendar"
 				},
 				"title": {
 					"type": "string"
@@ -33,6 +35,9 @@
 					"type": "string"
 				},
 				"destination": {
+					"type": "string"
+				},
+				"secondary": {
 					"type": "string"
 				},
 				"start_time": {
@@ -48,9 +53,6 @@
 					"type": "string"
 				},
 				"header_format": {
-					"type": "string"
-				},
-				"header_subtitle": {
 					"type": "string"
 				},
 				"timeslot_format": {

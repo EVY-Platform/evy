@@ -78,14 +78,14 @@ private struct EVYCalendarRowPreview: View {
     let json = """
       {
         "id": "preview-calendar-row",
-        "type": "Calendar",
+        "type": "calendar",
         "source": "\(EVYPreviewMockData.calendarPreviewSource)",
         "destination": "\(EVYPreviewMockData.calendarPreviewDestination)",
         "secondary": "\(EVYPreviewMockData.calendarPreviewSecondary)",
         "actions": {
           "tap": [{"condition": "", "true": "{select($datum)}", "false": ""}],
-          "tap-row": [{"condition": "", "true": "{select($datum)}", "false": ""}],
-          "tap-column": [{"condition": "", "true": "{select($datum)}", "false": ""}]
+          "tap_row": [{"condition": "", "true": "{select($datum)}", "false": ""}],
+          "tap_column": [{"condition": "", "true": "{select($datum)}", "false": ""}]
         },
         "title": "",
         "start_time": "07:00",

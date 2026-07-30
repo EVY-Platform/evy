@@ -66,7 +66,7 @@ export default function AppPage({ pageId }: { pageId: string }) {
 	});
 
 	const page = pagesById[pageId];
-	const pageRowIds = page?.rowIds ?? [];
+	const pageRowIds = page?.row_ids ?? [];
 	const pageHasRows = pageRowIds.length > 0;
 	const lastRowId = pageHasRows
 		? pageRowIds[pageRowIds.length - 1]
@@ -78,7 +78,7 @@ export default function AppPage({ pageId }: { pageId: string }) {
 	const rowElements = useMemo(() => {
 		if (!page) return [];
 		return buildRowElements(
-			page.rowIds,
+			page.row_ids,
 			rowsById,
 			rows,
 			selectRow,
@@ -97,7 +97,7 @@ export default function AppPage({ pageId }: { pageId: string }) {
 		</button>
 	) : null;
 
-	const footerRowId = page?.footerRowId;
+	const footerRowId = page?.footer_row_id;
 	const footerRecord = footerRowId ? rowsById[footerRowId] : undefined;
 	const footerRowElement = footerRecord
 		? storedRowToRow(footerRecord).row

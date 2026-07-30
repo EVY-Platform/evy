@@ -12,11 +12,13 @@ extension XCTestCase {
   func seedLocalBinding(key: String, value: EVYJson) throws {
     let encodedValue = try JSONEncoder().encode(value)
 
-    let parts = key.split(separator: ":", maxSplits: 2).map(String.init)
-    if parts.count == 2 {
-      let namespace = parts[0]
-      let resource = parts[1]
-      try EVY.publicStore.applySyncedValue(namespace: namespace, resource: resource, value: value)
+    if let namespace = try? EVYResourceRef.serviceOf(key) {
+      // Re-seeding the same dotted ref within one test leaves upserted stragglers;
+      // applySyncedValue upserts per item and never clears stale rows.
+      if case .array = value {
+        try? EVY.publicStore.deleteAll(namespace: namespace, resource: key)
+      }
+      try EVY.publicStore.applySyncedValue(namespace: namespace, resource: key, value: value)
       return
     }
 

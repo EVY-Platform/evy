@@ -74,14 +74,14 @@ struct EVYTabContainerRow: View {
     json: """
       {
         "id": "preview-tab-row",
-        "type": "TabContainer",
+        "type": "tab_container",
         "actions": {"tap": [{"condition": "", "true": "{select($datum)}", "false": ""}]},
         "title": "Tab Container Preview",
         "segments": ["Tab One", "Tab Two"],
         "children": [
           {
             "id": "segment-tab-1",
-            "type": "Text",
+            "type": "text",
             "actions": {},
             "title": "First Tab Content",
             "subtitle": "Content for the first tab",
@@ -89,7 +89,7 @@ struct EVYTabContainerRow: View {
           },
           {
             "id": "segment-tab-2",
-            "type": "Text",
+            "type": "text",
             "actions": {},
             "title": "Second Tab Content",
             "subtitle": "Content for the second tab",

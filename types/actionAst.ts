@@ -18,6 +18,7 @@ import type {
 	UI_ActionExpressionMap,
 	UI_ActionInvocation,
 } from "./generated/ts/sdui/action";
+import { isValidResourceRef } from "./resourceRef";
 
 type ActionConversion =
 	| { ok: true; invocation: UI_ActionInvocation }
@@ -102,45 +103,43 @@ function parseObjectArgument(text: string): ObjectArgument | null {
 }
 
 function convertCreate(args: string[]): ActionConversion {
-	if (args.length < 3)
-		return fail("create requires service, resource and data");
-	const service = args[0].trim();
-	const resource = args[1].trim();
-	if (!service || !resource)
-		return fail("create requires service and resource");
+	if (args.length < 2) return fail("create requires resource and data");
+	const resource = args[0].trim();
+	if (!isValidResourceRef(resource)) {
+		return fail("create requires a service-prefixed resource ref");
+	}
 
-	const third = args[2].trim();
-	if (third === "submit") {
-		if (args.length !== 3) {
+	const second = args[1].trim();
+	if (second === "submit") {
+		if (args.length !== 2) {
 			return fail("create submit takes no further arguments");
 		}
 		return {
 			ok: true,
-			invocation: { fn: "create", service, resource, mode: "submit" },
+			invocation: { fn: "create", resource, mode: "submit" },
 		};
 	}
 
-	const data = parseObjectArgument(args[2]);
+	const data = parseObjectArgument(args[1]);
 	if (!data) return fail("create data is neither an object nor a path");
 
 	let idDestination: string | undefined;
-	if (args.length > 3) {
-		idDestination = args[3].trim();
+	if (args.length > 2) {
+		idDestination = args[2].trim();
 		if (!idDestination)
 			return fail("create id destination must not be empty");
 	}
-	if (args.length > 4) return fail("create accepts at most 4 arguments");
+	if (args.length > 3) return fail("create accepts at most 3 arguments");
 
 	if (data.kind === "map") {
 		return {
 			ok: true,
 			invocation: {
 				fn: "create",
-				service,
 				resource,
 				mode: "inline",
 				data: data.map,
-				...(idDestination ? { idDestination } : {}),
+				...(idDestination ? { id_destination: idDestination } : {}),
 			},
 		};
 	}
@@ -148,30 +147,29 @@ function convertCreate(args: string[]): ActionConversion {
 		ok: true,
 		invocation: {
 			fn: "create",
-			service,
 			resource,
-			mode: "fromPath",
-			dataPath: data.path,
-			...(idDestination ? { idDestination } : {}),
+			mode: "from_path",
+			data_path: data.path,
+			...(idDestination ? { id_destination: idDestination } : {}),
 		},
 	};
 }
 
 function convertUpdate(args: string[]): ActionConversion {
-	if (args.length < 4 || args.length > 5) {
-		return fail("update takes 4 or 5 arguments");
+	if (args.length < 3 || args.length > 4) {
+		return fail("update takes 3 or 4 arguments");
 	}
-	const service = args[0].trim();
-	const resource = args[1].trim();
-	if (!service || !resource)
-		return fail("update requires service and resource");
+	const resource = args[0].trim();
+	if (!isValidResourceRef(resource)) {
+		return fail("update requires a service-prefixed resource ref");
+	}
 
-	const isDraft = args.length === 5;
-	if (isDraft && args[4].trim() !== "draft") {
+	const isDraft = args.length === 4;
+	if (isDraft && args[3].trim() !== "draft") {
 		return fail("update mode argument must be `draft`");
 	}
 
-	const filter = parsePlainTextObject(args[2]);
+	const filter = parsePlainTextObject(args[1]);
 	if (filter === null) return fail("update filter must be an object");
 	const filterKeys = Object.keys(filter).length;
 	if (isDraft && filterKeys > 0) {
@@ -181,7 +179,7 @@ function convertUpdate(args: string[]): ActionConversion {
 		return fail("a store update requires a non-empty filter");
 	}
 
-	const changes = parseObjectArgument(args[3]);
+	const changes = parseObjectArgument(args[2]);
 	if (!changes)
 		return fail("update changes are neither an object nor a path");
 	if (changes.kind === "map" && Object.keys(changes.map).length === 0) {
@@ -192,14 +190,13 @@ function convertUpdate(args: string[]): ActionConversion {
 	const changePart =
 		changes.kind === "map"
 			? { changes: changes.map }
-			: { changesPath: changes.path };
+			: { changes_path: changes.path };
 
 	if (mode === "draft") {
 		return {
 			ok: true,
 			invocation: {
 				fn: "update",
-				service,
 				resource,
 				mode,
 				...changePart,
@@ -210,7 +207,6 @@ function convertUpdate(args: string[]): ActionConversion {
 		ok: true,
 		invocation: {
 			fn: "update",
-			service,
 			resource,
 			mode,
 			filter,
@@ -229,12 +225,18 @@ function convertNavigate(args: string[]): ActionConversion {
 
 	const rawQuery = args.length > 2 ? args[2].trim() : "";
 	if (!rawQuery) {
-		return { ok: true, invocation: { fn: "navigate", flowId, pageId } };
+		return {
+			ok: true,
+			invocation: { fn: "navigate", flow_id: flowId, page_id: pageId },
+		};
 	}
 
 	const query = parsePlainTextObject(rawQuery, true);
 	if (query === null) return fail("navigate query must be an object");
-	return { ok: true, invocation: { fn: "navigate", flowId, pageId, query } };
+	return {
+		ok: true,
+		invocation: { fn: "navigate", flow_id: flowId, page_id: pageId, query },
+	};
 }
 
 /** Empty branches stay empty; `{ ok: false }` means "leave this string alone". */
@@ -264,7 +266,7 @@ export function parseActionStringToInvocation(
 		if (!rowId) return fail(`${call.name} row id must not be empty`);
 		return {
 			ok: true,
-			invocation: { fn: call.name, rowId } as UI_ActionInvocation,
+			invocation: { fn: call.name, row_id: rowId } as UI_ActionInvocation,
 		};
 	}
 
@@ -318,36 +320,33 @@ export function serializeInvocationToEditorString(
 			return `{${invocation.fn}()}`;
 		case "show":
 		case "expand_text":
-			return call([invocation.rowId]);
+			return call([invocation.row_id]);
 		case "highlight_required":
 			return call([invocation.field]);
 		case "select":
 			return call([invocation.value]);
 		case "navigate":
 			return call([
-				invocation.flowId,
-				invocation.pageId,
+				invocation.flow_id,
+				invocation.page_id,
 				...(invocation.query
 					? [serializeExpressionMap(invocation.query)]
 					: []),
 			]);
 		case "create": {
 			if (invocation.mode === "submit") {
-				return call([
-					invocation.service,
-					invocation.resource,
-					"submit",
-				]);
+				return call([invocation.resource, "submit"]);
 			}
 			const dataArg =
 				invocation.mode === "inline"
 					? serializeExpressionMap(invocation.data)
-					: invocation.dataPath;
+					: invocation.data_path;
 			return call([
-				invocation.service,
 				invocation.resource,
 				dataArg,
-				...(invocation.idDestination ? [invocation.idDestination] : []),
+				...(invocation.id_destination
+					? [invocation.id_destination]
+					: []),
 			]);
 		}
 		case "update": {
@@ -358,9 +357,8 @@ export function serializeInvocationToEditorString(
 			const changesArg =
 				"changes" in invocation && invocation.changes
 					? serializeExpressionMap(invocation.changes)
-					: (invocation as { changesPath: string }).changesPath;
+					: (invocation as { changes_path: string }).changes_path;
 			return call([
-				invocation.service,
 				invocation.resource,
 				filterArg,
 				changesArg,

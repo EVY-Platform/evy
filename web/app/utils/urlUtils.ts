@@ -114,7 +114,7 @@ export function resolveUrlIds(
 
 	const flow = flowsById[urlFlowId];
 	if (!flow) {
-		const firstPageId = flowsById[defaultFlowId ?? ""]?.pageIds[0];
+		const firstPageId = flowsById[defaultFlowId ?? ""]?.page_ids[0];
 		return {
 			flowId: defaultFlowId,
 			pageId:
@@ -126,9 +126,9 @@ export function resolveUrlIds(
 		return { flowId: urlFlowId, pageId: undefined };
 	}
 
-	if (flow.pageIds.includes(urlPageId)) {
+	if (flow.page_ids.includes(urlPageId)) {
 		return { flowId: urlFlowId, pageId: urlPageId };
 	}
 
-	return { flowId: urlFlowId, pageId: flow.pageIds[0] };
+	return { flowId: urlFlowId, pageId: flow.page_ids[0] };
 }

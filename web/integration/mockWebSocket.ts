@@ -13,9 +13,9 @@ export type MockWriteBehaviour =
 export type MockWebSocketConfig = {
 	rows: MockSyncRow[];
 	write?: MockWriteBehaviour;
-	/** updatedAt the sync snapshot carries, and the version writes must send. */
+	/** updated_at the sync snapshot carries, and the version writes must send. */
 	syncedVersion?: string;
-	/** updatedAt returned by an accepted write. */
+	/** updated_at returned by an accepted write. */
 	writtenVersion?: string;
 };
 
@@ -45,7 +45,7 @@ export async function installMockWebSocket(
 	config: MockWebSocketConfig,
 ): Promise<void> {
 	await page.addInitScript((cfg: MockWebSocketConfig) => {
-		const EVY_CORE_SERVICE = "475731ac-31aa-4d65-94d2-7032782ae359";
+		const EVY_CORE_SERVICE = "evy";
 		const syncedVersion = cfg.syncedVersion ?? "2026-07-01T00:00:00.000Z";
 		const writtenVersion = cfg.writtenVersion ?? "2026-07-09T00:00:00.000Z";
 		const write = cfg.write ?? "accept";
@@ -75,9 +75,8 @@ export async function installMockWebSocket(
 				window.__evyPushRemote = (change) => {
 					this.respond({
 						jsonrpc: "2.0",
-						method: "dataChanged",
+						method: "data_changed",
 						params: {
-							service: EVY_CORE_SERVICE,
 							resource: change.resource,
 							operation: change.operation,
 							value: change.value,
@@ -106,7 +105,7 @@ export async function installMockWebSocket(
 					this.respond({
 						jsonrpc: "2.0",
 						id: request.id,
-						result: { dataChanged: "ok" },
+						result: { data_changed: "ok" },
 					});
 					return;
 				}
@@ -117,7 +116,6 @@ export async function installMockWebSocket(
 						result: {
 							cursor: "1970-01-01T00:00:00.000Z",
 							data: cfg.rows.map((row) => ({
-								service: EVY_CORE_SERVICE,
 								resource: row.resource,
 								value: row.value,
 							})),
@@ -166,7 +164,7 @@ export async function installMockWebSocket(
 							code: -32000,
 							message:
 								"Conflict: the record changed since you last read it " +
-								`(expected updatedAt ${syncedVersion}, found ${writtenVersion}). ` +
+								`(expected updated_at ${syncedVersion}, found ${writtenVersion}). ` +
 								"Re-read the record and reapply your change.",
 						},
 					});
@@ -184,8 +182,8 @@ export async function installMockWebSocket(
 					id: request.id,
 					result: {
 						...record,
-						createdAt: syncedVersion,
-						updatedAt: writtenVersion,
+						created_at: syncedVersion,
+						updated_at: writtenVersion,
 					},
 				});
 			}

@@ -68,16 +68,11 @@ export function ActionPopup({
 
 	const idCandidates = useMemo(
 		() => [
-			...buildIdCandidates(
-				flowsById,
-				pagesById,
-				serviceResources,
-				serviceNamesById,
-			),
+			...buildIdCandidates(serviceResources, serviceNamesById),
 			buildDatumCandidate(),
 			...buildFunctionCandidates(),
 		],
-		[flowsById, pagesById, serviceResources, serviceNamesById],
+		[serviceResources, serviceNamesById],
 	);
 
 	const getAttributeCandidatesForQualifier = useMemo(
@@ -159,7 +154,6 @@ export function ActionPopup({
 							flowsById={flowsById}
 							pagesById={pagesById}
 							serviceResources={serviceResources}
-							serviceNamesById={serviceNamesById}
 							idCandidates={idCandidates}
 							rowsById={rowsById}
 							defaultSheetRowId={defaultSheetRowId}
@@ -183,7 +177,6 @@ export function ActionPopup({
 							flowsById={flowsById}
 							pagesById={pagesById}
 							serviceResources={serviceResources}
-							serviceNamesById={serviceNamesById}
 							idCandidates={idCandidates}
 							rowsById={rowsById}
 							defaultSheetRowId={defaultSheetRowId}

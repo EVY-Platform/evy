@@ -5,7 +5,7 @@ import { RowLayout } from "../design-system/RowLayout";
 
 export default defineRow("SelectPhotoRow", {
 	config: {
-		type: "SelectPhoto",
+		type: "select_photo",
 		actions: defaultRowActions({
 			tap: { fn: "select_photo" },
 			delete: { fn: "delete_photo" },

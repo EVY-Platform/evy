@@ -19,11 +19,6 @@ import {
 	formatExpressionSummary,
 	parseCondition,
 } from "../utils/conditionExpression";
-import {
-	buildIdCandidates,
-	getIdDisplayText,
-	type IdCandidate,
-} from "../utils/idCandidates";
 import { ActionPopup } from "./ActionPopup";
 
 type ActionEditorProps = {
@@ -47,18 +42,7 @@ export function ActionEditor({
 	defaultSheetRowId,
 	onUpdate,
 }: ActionEditorProps) {
-	const { serviceResources, serviceNamesById } = useFlowsContext();
 	const [editingIndex, setEditingIndex] = useState<number | null>(null);
-	const idCandidates = useMemo(
-		() =>
-			buildIdCandidates(
-				flowsById,
-				pagesById,
-				serviceResources,
-				serviceNamesById,
-			),
-		[flowsById, pagesById, serviceResources, serviceNamesById],
-	);
 
 	const updateAction = useCallback(
 		(index: number, updated: UI_RowAction) => {
@@ -137,7 +121,6 @@ export function ActionEditor({
 							flowsById={flowsById}
 							pagesById={pagesById}
 							rowsById={rowsById}
-							idCandidates={idCandidates}
 							onEdit={() => setEditingIndex(index)}
 							onRemove={() => removeAction(index)}
 						/>
@@ -168,7 +151,6 @@ type ActionSummaryCardProps = {
 	flowsById: Record<string, DATA_EVY_Flow>;
 	pagesById: Record<string, DATA_EVY_Page>;
 	rowsById: Record<string, DATA_EVY_Row>;
-	idCandidates: IdCandidate[];
 	onEdit: () => void;
 	onRemove: () => void;
 };
@@ -179,7 +161,6 @@ function ActionSummaryCard({
 	flowsById,
 	pagesById,
 	rowsById,
-	idCandidates,
 	onEdit,
 	onRemove,
 }: ActionSummaryCardProps) {
@@ -189,14 +170,8 @@ function ActionSummaryCard({
 		[action.condition],
 	);
 	const summaryLines = useMemo(
-		() =>
-			formatExpressionSummary(conditionExpr, serviceResources).map(
-				(line) => ({
-					...line,
-					text: getIdDisplayText(line.text, idCandidates),
-				}),
-			),
-		[conditionExpr, serviceResources, idCandidates],
+		() => formatExpressionSummary(conditionExpr, serviceResources),
+		[conditionExpr, serviceResources],
 	);
 	const trueBranch = useMemo(() => parseBranch(action.true), [action.true]);
 	const falseBranch = useMemo(
@@ -206,39 +181,26 @@ function ActionSummaryCard({
 	const trueBranchDisplay = useMemo(
 		() =>
 			trueBranch
-				? getIdDisplayText(
-						formatBranchDisplay(
-							branchToEditableString(action.true),
-							flowsById,
-							pagesById,
-							rowsById,
-						),
-						idCandidates,
+				? formatBranchDisplay(
+						branchToEditableString(action.true),
+						flowsById,
+						pagesById,
+						rowsById,
 					)
 				: null,
-		[trueBranch, action.true, flowsById, pagesById, rowsById, idCandidates],
+		[trueBranch, action.true, flowsById, pagesById, rowsById],
 	);
 	const falseBranchDisplay = useMemo(
 		() =>
 			falseBranch
-				? getIdDisplayText(
-						formatBranchDisplay(
-							branchToEditableString(action.false),
-							flowsById,
-							pagesById,
-							rowsById,
-						),
-						idCandidates,
+				? formatBranchDisplay(
+						branchToEditableString(action.false),
+						flowsById,
+						pagesById,
+						rowsById,
 					)
 				: null,
-		[
-			falseBranch,
-			action.false,
-			flowsById,
-			pagesById,
-			rowsById,
-			idCandidates,
-		],
+		[falseBranch, action.false, flowsById, pagesById, rowsById],
 	);
 
 	return (

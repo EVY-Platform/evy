@@ -37,7 +37,7 @@ Each side of an atomic comparison is resolved in this order, first match wins:
 
 1. **Quoted literal** — `"pending"`; always a string, never resolved as a path.
 2. **Record path** — property on the candidate record, including nested paths (`data.type`).
-3. **Global data path** — `item.id`, resource UUIDs, etc.
+3. **Global data path** — `item.id`, dotted resource refs (`marketplace.items.title`), etc.
 4. **Unquoted literal** — bare words like `pending` / `accepted`.
 
 > **A quoted operand is always a string literal.** `{item.status == "pending"}` compares
@@ -58,12 +58,12 @@ Each side of an atomic comparison is resolved in this order, first match wins:
 **`null`:** `archivedAt == null` / `archivedAt != null` match records where the path is
 **absent or JSON null**. Only `==` and `!=` are allowed with `null`. `null == null` is true.
 
-**Ids collide with the resources they name.** Resource ids are UUIDs and so are the binding
-keys naming those resources, so a bare UUID is ambiguous: as a comparison operand it resolves
-as a data path (which is what makes the identity rule above useful), while in a `create` /
-`update` value position it stays the literal id — a payload carries identifiers, and what a
-resource key binds is a *record*, whose own id is a different UUID. See
-[actions.md](./actions.md#create) for the value-position rule.
+**Resource refs are always dotted.** Every synced resource is addressed as
+`service.resource` (`evy.messages`, `marketplace.items`). A bare UUID in a comparison operand
+resolves as a data path (which is what makes the identity rule above useful for record ids),
+while in a `create` / `update` value position it stays the literal record id — a payload
+carries identifiers, not the records they name. See [actions.md](./actions.md#create) for the
+value-position rule.
 
 See [methods.md](./methods.md) for the `count`/`length`/`sort` helpers usable inside these
 expressions, and the [Swift interpreter](../../ios/evy/Utils/interpreter.swift) /

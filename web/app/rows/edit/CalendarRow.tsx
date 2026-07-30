@@ -110,11 +110,11 @@ function CalendarGrid({ config }: { config: RowConfig }) {
 
 export default defineRow("CalendarRow", {
 	config: {
-		type: "Calendar",
+		type: "calendar",
 		actions: defaultRowActions({
 			tap: { fn: "select", value: "$datum" },
-			"tap-row": { fn: "select", value: "$datum" },
-			"tap-column": { fn: "select", value: "$datum" },
+			tap_row: { fn: "select", value: "$datum" },
+			tap_column: { fn: "select", value: "$datum" },
 		}),
 		source: "{resourceId.pickup_selection}",
 		visible: "true",

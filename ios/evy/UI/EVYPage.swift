@@ -8,7 +8,7 @@
 import SwiftUI
 import UIKit
 
-/// Renders a page by id, reading title/rowIds/footerRowId directly from the pages table.
+/// Renders a page by id, reading title/row_ids/footer_row_id directly from the pages table.
 struct EVYPage: View {
   let pageId: String
 
@@ -28,7 +28,7 @@ struct EVYPage: View {
     }
     .onEVYRecordChange(
       namespace: EVYNamespace.evy,
-      resource: EVYCoreResource.pages.rawValue,
+      resource: EVYCoreResource.pages.ref,
       id: pageId
     ) {
       let latestPage = EVYPageStore.page(id: pageId)
@@ -41,14 +41,14 @@ struct EVYPage: View {
   @ViewBuilder
   private func pageContent(page: EVYStoredPage) -> some View {
     VStack {
-      mainContent(rowIds: page.rowIds)
-      footerContent(footerRowId: page.footerRowId)
+      mainContent(rowIds: page.row_ids)
+      footerContent(footerRowId: page.footer_row_id)
     }
     .evyNavigationTitle(page.title ?? "", accessibilityIdentifier: "pageTitle_\(pageId)")
     .onAppear {
       activatePageScope()
     }
-    .onChange(of: page.rowIds) { _, _ in
+    .onChange(of: page.row_ids) { _, _ in
       // Newly added rows on the foreground page already resolve against the correct global
       // scope; just make sure their drafts are bootstrapped. Deliberately does not reassert
       // the global scope, so a backgrounded page whose rows change cannot steal it.

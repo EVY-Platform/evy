@@ -2,7 +2,7 @@ import { eq } from "drizzle-orm";
 
 import type { OS } from "evy-types";
 
-import { device, osEnum } from "evy-types/db/schema.generated";
+import { device, os_enum } from "evy-types/db/schema.generated";
 import type { EvyDb } from "../../database/db";
 
 // Public API
@@ -15,7 +15,7 @@ export async function validateAuth(
 	if (!token || token.length < 1) throw new Error("No token provided");
 	if (!os || os.length < 1) throw new Error("No os provided");
 
-	if (!osEnum.enumValues.includes(os)) return false;
+	if (!os_enum.enumValues.includes(os)) return false;
 
 	try {
 		const existing = await db
@@ -31,7 +31,7 @@ export async function validateAuth(
 		await db.insert(device).values({
 			token,
 			os,
-			createdAt: new Date().toISOString(),
+			created_at: new Date().toISOString(),
 			visibility: "private",
 		});
 

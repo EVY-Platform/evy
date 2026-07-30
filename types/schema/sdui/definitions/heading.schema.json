@@ -1,9 +1,10 @@
 {
 	"$schema": "https://json-schema.org/draft/2020-12/schema",
-	"$id": "sdui/definitions/TextAction",
-	"title": "TextAction_Row",
+	"$id": "sdui/definitions/heading",
+	"title": "Heading_Row",
 	"triggers": {
-		"tap": "required"
+		"tap": "optional",
+		"swipe_left": "optional"
 	},
 	"allOf": [
 		{
@@ -11,18 +12,18 @@
 		},
 		{
 			"type": "object",
-			"required": ["type"],
+			"required": ["type", "title"],
 			"properties": {
 				"type": {
-					"const": "TextAction"
+					"const": "heading"
 				},
 				"title": {
 					"type": "string"
 				},
-				"subtitle": {
+				"label": {
 					"type": "string"
 				},
-				"action": {
+				"swipe_label": {
 					"type": "string"
 				}
 			}

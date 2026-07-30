@@ -208,7 +208,7 @@ final class EVYSearchModelTests: XCTestCase {
   }
 
   func testLoadLocalResultsRefreshWhenMessageResourceChanges() throws {
-    let resource = EVYCoreResource.messages.rawValue
+    let resource = EVYCoreResource.messages.ref
     let pendingId = UUID().uuidString
     try? EVY.publicStore.deleteAll(namespace: EVYNamespace.evy, resource: resource)
     try? EVY.privateStore.deleteAll(namespace: EVYNamespace.evy, resource: resource)
@@ -258,13 +258,13 @@ final class EVYSearchModelTests: XCTestCase {
   /// Filtering open requests belongs in the Search `source` expression (`filter`/`owns`),
   /// not in the loader — so a raw `{messages}` source still returns every stored message.
   func testLoadLocalResultsReturnsSourceUnfiltered() throws {
-    let resource = EVYCoreResource.messages.rawValue
+    let resource = EVYCoreResource.messages.ref
     let openRequestId = UUID().uuidString.lowercased()
     let settledRequestId = UUID().uuidString.lowercased()
     let responseId = UUID().uuidString.lowercased()
     let itemId = UUID().uuidString.lowercased()
-    let service = UUID().uuidString.lowercased()
-    let itemResource = UUID().uuidString.lowercased()
+    let itemResourceSlug = UUID().uuidString.lowercased().replacingOccurrences(of: "-", with: "_")
+    let itemResource = "test_svc.\(itemResourceSlug)"
     try? EVY.publicStore.deleteAll(namespace: EVYNamespace.evy, resource: resource)
     try? EVY.privateStore.deleteAll(namespace: EVYNamespace.evy, resource: resource)
     defer {
@@ -277,15 +277,14 @@ final class EVYSearchModelTests: XCTestCase {
       resource: resource,
       value: .array([
         EVYTestMessageFixtures.request(
-          id: openRequestId, fk: itemId, service: service, resource: itemResource),
+          id: openRequestId, fk: itemId, resource: itemResource),
         EVYTestMessageFixtures.request(
-          id: settledRequestId, fk: itemId, service: service, resource: itemResource,
+          id: settledRequestId, fk: itemId, resource: itemResource,
           type: "delivery"),
         EVYTestMessageFixtures.response(
           id: responseId,
           to: settledRequestId,
           fk: itemId,
-          service: service,
           resource: itemResource,
           value: "accept",
           type: "delivery"
@@ -309,7 +308,7 @@ final class EVYSearchModelTests: XCTestCase {
     let resultTemplateJSON = """
       {
         "id": "message-status-template",
-        "type": "Text",
+        "type": "text",
         "actions": {},
         "title": "{$datum.data.type} request",
         "subtitle": "{$datum.data.value}",
@@ -327,7 +326,7 @@ final class EVYSearchModelTests: XCTestCase {
     let resultTemplateJSON = """
       {
         "id": "search-list-item-template",
-        "type": "ListItem",
+        "type": "list_item",
         "actions": {},
         "title": "{$datum.title}",
         "subtitle": "",
@@ -344,7 +343,7 @@ final class EVYSearchModelTests: XCTestCase {
     let resultTemplateJSON = """
       {
         "id": "search-result-template",
-        "type": "Text",
+        "type": "text",
         "actions": {},
         "title": "{$datum.street}",
         "subtitle": "{$datum.city}",

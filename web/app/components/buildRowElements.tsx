@@ -4,7 +4,7 @@ import { DraggableRowContainer } from "./DraggableRowContainer";
 import { resolveRowElement } from "./resolveRowElement";
 
 export function buildRowElements(
-	rowIds: string[],
+	row_ids: string[],
 	rowsById: Record<string, DATA_EVY_Row>,
 	paletteRows: Row[],
 	selectRow: (rowId: string) => void,
@@ -13,7 +13,7 @@ export function buildRowElements(
 		indicators: Array<"before" | "after">;
 	},
 ) {
-	return rowIds.map((rowId) => {
+	return row_ids.map((rowId) => {
 		const rowElement = resolveRowElement(rowId, rowsById, paletteRows);
 		const rowForcedIndicators =
 			forcedIndicators && forcedIndicators.rowId === rowId

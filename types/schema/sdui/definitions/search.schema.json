@@ -1,10 +1,9 @@
 {
 	"$schema": "https://json-schema.org/draft/2020-12/schema",
-	"$id": "sdui/definitions/Heading",
-	"title": "Heading_Row",
+	"$id": "sdui/definitions/search",
+	"title": "Search_Row",
 	"triggers": {
-		"tap": "optional",
-		"swipe-left": "optional"
+		"tap": "optional"
 	},
 	"allOf": [
 		{
@@ -12,19 +11,28 @@
 		},
 		{
 			"type": "object",
-			"required": ["type", "title"],
+			"required": ["type", "source", "destination"],
 			"properties": {
 				"type": {
-					"const": "Heading"
+					"const": "search"
 				},
 				"title": {
 					"type": "string"
 				},
-				"label": {
+				"source": {
 					"type": "string"
 				},
-				"swipeLabel": {
+				"destination": {
 					"type": "string"
+				},
+				"placeholder": {
+					"type": "string"
+				},
+				"no_results": {
+					"type": "string"
+				},
+				"child": {
+					"$ref": "../evy.schema.json#/$defs/UI_Row"
 				}
 			}
 		}

@@ -1,10 +1,9 @@
 {
 	"$schema": "https://json-schema.org/draft/2020-12/schema",
-	"$id": "sdui/definitions/ListItem",
-	"title": "ListItem_Row",
+	"$id": "sdui/definitions/photo_gallery",
+	"title": "PhotoGallery_Row",
 	"triggers": {
-		"tap": "optional",
-		"swipe-left": "optional"
+		"tap": "required"
 	},
 	"allOf": [
 		{
@@ -12,21 +11,15 @@
 		},
 		{
 			"type": "object",
-			"required": ["type"],
+			"required": ["type", "source"],
 			"properties": {
 				"type": {
-					"const": "ListItem"
+					"const": "photo_gallery"
 				},
 				"title": {
 					"type": "string"
 				},
-				"subtitle": {
-					"type": "string"
-				},
-				"image": {
-					"type": "string"
-				},
-				"swipeLabel": {
+				"source": {
 					"type": "string"
 				}
 			}

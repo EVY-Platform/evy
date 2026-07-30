@@ -171,7 +171,6 @@ function makeWsAdapter(wsUrl: string): ServiceAdapter {
 }
 
 let serviceAdapters: Map<string, ServiceAdapter> | null = null;
-let serviceNames: Map<string, string> = new Map();
 let serviceAdapterDb: EvyDb | null = null;
 let serviceBroadcast: BroadcastFn | null = null;
 
@@ -196,11 +195,11 @@ function serviceRpcTimeoutMs(): number {
 export function resolveServiceWsEndpoint(svc: {
 	id: string;
 	name: string;
-	wsHost?: string | null;
-	wsPort?: number | null;
+	ws_host?: string | null;
+	ws_port?: number | null;
 }): { host: string; port: string } {
-	const rowHost = svc.wsHost?.trim();
-	const rowPort = svc.wsPort;
+	const rowHost = svc.ws_host?.trim();
+	const rowPort = svc.ws_port;
 	if (rowHost && rowPort) {
 		return { host: rowHost, port: String(rowPort) };
 	}
@@ -208,7 +207,7 @@ export function resolveServiceWsEndpoint(svc: {
 	const prefix = svc.name.toUpperCase();
 	if (!ENV_SAFE_SERVICE_NAME.test(prefix)) {
 		throw new Error(
-			`Service "${svc.name}" (${svc.id}) has no wsHost/wsPort and its name ` +
+			`Service "${svc.name}" (${svc.id}) has no ws_host/ws_port and its name ` +
 				"cannot be used for env lookup (expected letters, digits and underscores)",
 		);
 	}
@@ -217,7 +216,7 @@ export function resolveServiceWsEndpoint(svc: {
 	const port = process.env[`${prefix}_WS_PORT`]?.trim();
 	if (!host || !port) {
 		throw new Error(
-			`Service "${svc.name}" (${svc.id}) requires wsHost/wsPort on its row, ` +
+			`Service "${svc.name}" (${svc.id}) requires ws_host/ws_port on its row, ` +
 				`or ${prefix}_WS_HOST and ${prefix}_WS_PORT`,
 		);
 	}
@@ -226,12 +225,9 @@ export function resolveServiceWsEndpoint(svc: {
 
 /** Carries which service failed so the client is not left guessing. */
 export class ServiceForwardError extends Error {
-	readonly data: { serviceId: string; serviceName: string; code: string };
+	readonly data: { service: string; code: string };
 
-	constructor(
-		message: string,
-		data: { serviceId: string; serviceName: string; code: string },
-	) {
+	constructor(message: string, data: { service: string; code: string }) {
 		super(message);
 		this.name = "ServiceForwardError";
 		this.data = data;
@@ -266,7 +262,6 @@ function disposeAdapterMap(adapters: Map<string, ServiceAdapter> | null): void {
 export function disposeServiceAdapters(): void {
 	disposeAdapterMap(serviceAdapters);
 	serviceAdapters = null;
-	serviceNames = new Map();
 	serviceAdapterDb = null;
 	serviceBroadcast = null;
 }
@@ -282,7 +277,6 @@ export async function initServiceAdapters(
 	const rows = await listExternalServices(db);
 
 	const next = new Map<string, ServiceAdapter>();
-	const names = new Map<string, string>();
 
 	for (const row of rows) {
 		const { host, port } = resolveServiceWsEndpoint(row);
@@ -291,12 +285,10 @@ export async function initServiceAdapters(
 			adapter.onEvent(serviceBroadcast);
 		}
 		next.set(row.id, adapter);
-		names.set(row.id, row.name);
 	}
 
 	const previous = serviceAdapters;
 	serviceAdapters = next;
-	serviceNames = names;
 	disposeAdapterMap(previous);
 }
 
@@ -341,7 +333,6 @@ async function forwardTo<T>(
 	call: (adapter: ServiceAdapter) => Promise<T>,
 ): Promise<T> {
 	const adapter = await getServiceAdapter(serviceId);
-	const serviceName = serviceNames.get(serviceId) ?? "unknown";
 	const timeoutMs = serviceRpcTimeoutMs();
 
 	try {
@@ -350,15 +341,15 @@ async function forwardTo<T>(
 			timeoutMs,
 			() =>
 				new ServiceForwardError(
-					`Service "${serviceName}" (${serviceId}) timed out after ${timeoutMs}ms on ${operation}`,
-					{ serviceId, serviceName, code: "SERVICE_TIMEOUT" },
+					`Service "${serviceId}" timed out after ${timeoutMs}ms on ${operation}`,
+					{ service: serviceId, code: "SERVICE_TIMEOUT" },
 				),
 		);
 	} catch (error) {
 		if (error instanceof ServiceForwardError) throw error;
 		throw new ServiceForwardError(
-			`Service "${serviceName}" (${serviceId}) failed on ${operation}: ${describeServiceFailure(error)}`,
-			{ serviceId, serviceName, code: "SERVICE_ERROR" },
+			`Service "${serviceId}" failed on ${operation}: ${describeServiceFailure(error)}`,
+			{ service: serviceId, code: "SERVICE_ERROR" },
 		);
 	}
 }

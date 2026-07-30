@@ -32,13 +32,13 @@ export function getChildrenRowIds(row: DATA_EVY_Row): string[] {
 }
 
 /**
- * Returns the root ids of all rows in a page (rowIds + footerRowId if present).
+ * Returns the root ids of all rows in a page (row_ids + footer_row_id if present).
  * Used to scope container searches.
  */
 export function pageRootIds(page: DATA_EVY_Page): string[] {
-	return page.footerRowId
-		? [...page.rowIds, page.footerRowId]
-		: [...page.rowIds];
+	return page.footer_row_id
+		? [...page.row_ids, page.footer_row_id]
+		: [...page.row_ids];
 }
 
 /**
@@ -96,7 +96,7 @@ export function forEachRowInFlow(
 	rowsById: Record<string, DATA_EVY_Row>,
 	visit: (id: string, row: DATA_EVY_Row) => void,
 ): void {
-	for (const pageId of flow.pageIds) {
+	for (const pageId of flow.page_ids) {
 		const page = pagesById[pageId];
 		if (!page) continue;
 		walkRows(rowsById, pageRootIds(page), (id, row) => {
@@ -122,7 +122,7 @@ export function forEachRowInFlows<T>(
 	) => T | null | undefined,
 ): T | null {
 	for (const flow of Object.values(flowsById)) {
-		for (const pageId of flow.pageIds) {
+		for (const pageId of flow.page_ids) {
 			const page = pagesById[pageId];
 			if (!page) continue;
 			const result = walkRows(rowsById, pageRootIds(page), (id, row) =>

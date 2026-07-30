@@ -17,8 +17,8 @@ const INITIAL_UNSUPPORTED_TYPES = ALL_ROW_TYPES.filter(
 
 describe("rowFields", () => {
 	test("separates binding fields from content fields", () => {
-		const bindingFields = getRowBindingFields("Input");
-		const contentFields = getRowContentFields("Input");
+		const bindingFields = getRowBindingFields("input");
+		const contentFields = getRowContentFields("input");
 		const contentNames = contentFields.map((field) => field.name);
 
 		expect(bindingFields.length).toBeGreaterThan(0);
@@ -59,7 +59,7 @@ describe("rowFields", () => {
 	});
 
 	test("exposes Button style as an enum field from the schema", () => {
-		const contentFields = getRowContentFields("Button");
+		const contentFields = getRowContentFields("button");
 		const styleField = contentFields.find((f) => f.name === "style");
 		expect(styleField).toEqual({
 			name: "style",
@@ -70,7 +70,7 @@ describe("rowFields", () => {
 	});
 
 	test("exposes Search no_results as an optional text field from the schema", () => {
-		const contentFields = getRowContentFields("Search");
+		const contentFields = getRowContentFields("search");
 		const noResultsField = contentFields.find(
 			(f) => f.name === "no_results",
 		);
@@ -87,7 +87,7 @@ describe("rowFields", () => {
 				(f) => f.kind === "sheet",
 			);
 			expect(sheetField).toEqual({
-				name: "sheetRowId",
+				name: "sheet_row_id",
 				kind: "sheet",
 				required: false,
 			});
@@ -99,9 +99,9 @@ describe("rowFields", () => {
 			const childField = getRowContentFields(type).find(
 				(f) => f.kind === "child",
 			);
-			if (type === "Search") {
+			if (type === "search") {
 				expect(childField).toEqual({
-					name: "childRowId",
+					name: "child_row_id",
 					kind: "child",
 					required: false,
 				});
@@ -127,8 +127,8 @@ describe("rowFields", () => {
 		).toBeLessThan(0);
 		expect(
 			compareRowFieldsForPanel(
-				field("childRowId", "child"),
-				field("childrenRowIds", "children"),
+				field("child_row_id", "child"),
+				field("children_row_ids", "children"),
 			),
 		).toBeLessThan(0);
 		expect(

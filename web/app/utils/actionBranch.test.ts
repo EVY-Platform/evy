@@ -1,10 +1,7 @@
 import { describe, expect, it } from "bun:test";
 import type { DATA_EVY_Flow, DATA_EVY_Page, DATA_EVY_Row } from "evy-types";
-import { EVY_CORE_RESOURCE, EVY_CORE_SERVICE } from "evy-types/coreResources";
-import {
-	TEST_RESOURCE_ID,
-	TEST_SERVICE_ID,
-} from "../../testFixtures/resourceCatalog";
+import { EVY_CORE_RESOURCE_REF } from "evy-types/coreResources";
+import { TEST_RESOURCE_ID } from "../../testFixtures/resourceCatalog";
 import {
 	branchForStorage,
 	branchToEditableString,
@@ -18,36 +15,26 @@ import {
 } from "./actionBranch";
 
 describe("action branch helpers", () => {
-	const serviceId = TEST_SERVICE_ID;
-	const resourceId = TEST_RESOURCE_ID.RECORDS;
+	const resourceRef = TEST_RESOURCE_ID.RECORDS;
 
 	describe("create mode helpers", () => {
-		it("detects inline data third argument", () => {
+		it("detects inline data second argument", () => {
 			expect(
-				createHasInlineDataArg([
-					serviceId,
-					resourceId,
-					"pickup_address",
-				]),
+				createHasInlineDataArg([resourceRef, "pickup_address"]),
 			).toBe(true);
-			expect(
-				createHasInlineDataArg([serviceId, resourceId, "submit"]),
-			).toBe(false);
+			expect(createHasInlineDataArg([resourceRef, "submit"])).toBe(false);
 		});
 
 		it("writes submit when draft signals are offered", () => {
 			expect(
-				finalizeCreateBranchForSave(
-					`{create(${serviceId},${resourceId})}`,
-					true,
-				),
-			).toBe(`{create(${serviceId},${resourceId},submit)}`);
+				finalizeCreateBranchForSave(`{create(${resourceRef})}`, true),
+			).toBe(`{create(${resourceRef},submit)}`);
 		});
 
 		it("clears submit when draft signals are not offered", () => {
 			expect(
 				finalizeCreateBranchForSave(
-					`{create(${serviceId},${resourceId},submit)}`,
+					`{create(${resourceRef},submit)}`,
 					false,
 				),
 			).toBeNull();
@@ -56,57 +43,45 @@ describe("action branch helpers", () => {
 		it("detects draft-mode update marker", () => {
 			expect(
 				updateUsesDraftMarker([
-					serviceId,
-					resourceId,
+					resourceRef,
 					"{}",
 					"{title: x}",
 					"draft",
 				]),
 			).toBe(true);
 			expect(
-				updateUsesDraftMarker([
-					serviceId,
-					resourceId,
-					"{}",
-					"{title: x}",
-				]),
+				updateUsesDraftMarker([resourceRef, "{}", "{title: x}"]),
 			).toBe(false);
 		});
 
 		it("finalizes create branches for save", () => {
 			expect(
-				finalizeCreateBranchForSave(
-					`{create(${serviceId},${resourceId})}`,
-					true,
-				),
-			).toBe(`{create(${serviceId},${resourceId},submit)}`);
+				finalizeCreateBranchForSave(`{create(${resourceRef})}`, true),
+			).toBe(`{create(${resourceRef},submit)}`);
 			expect(
 				finalizeCreateBranchForSave(
-					`{create(${serviceId},${resourceId},submit)}`,
+					`{create(${resourceRef},submit)}`,
 					false,
 				),
 			).toBeNull();
 			expect(
 				finalizeCreateBranchForSave(
-					`{create(${serviceId},${resourceId},pickup_address)}`,
+					`{create(${resourceRef},pickup_address)}`,
 					true,
 				),
-			).toBe(`{create(${serviceId},${resourceId},pickup_address)}`);
+			).toBe(`{create(${resourceRef},pickup_address)}`);
 			expect(
-				finalizeCreateBranchForSave(
-					`{create(${serviceId},${resourceId})}`,
-					false,
-				),
+				finalizeCreateBranchForSave(`{create(${resourceRef})}`, false),
 			).toBeNull();
 		});
 
 		it("preserves inline data when draft signals change", () => {
 			expect(
 				finalizeCreateBranchForSave(
-					`{create(${serviceId},${resourceId},pickup_address,dest)}`,
+					`{create(${resourceRef},pickup_address,dest)}`,
 					true,
 				),
-			).toBe(`{create(${serviceId},${resourceId},pickup_address,dest)}`);
+			).toBe(`{create(${resourceRef},pickup_address,dest)}`);
 		});
 	});
 
@@ -126,27 +101,24 @@ describe("action branch helpers", () => {
 	});
 
 	it("parses create with submit marker", () => {
-		expect(
-			parseBranchText(`{create(${serviceId},${resourceId},submit)}`),
-		).toEqual({
+		expect(parseBranchText(`{create(${resourceRef},submit)}`)).toEqual({
 			functionName: "create",
-			args: [serviceId, resourceId, "submit"],
+			args: [resourceRef, "submit"],
 		});
 	});
 
 	it("serializes create with submit marker", () => {
-		expect(
-			serializeBranch("create", [serviceId, resourceId, "submit"]),
-		).toBe(`{create(${serviceId},${resourceId},submit)}`);
+		expect(serializeBranch("create", [resourceRef, "submit"])).toBe(
+			`{create(${resourceRef},submit)}`,
+		);
 	});
 
 	it("round-trips draft-mode update with empty filter", () => {
-		const branch = `{update(${serviceId},${resourceId},{},{transfer_options.pickup.address_id: pickup_address.id},draft)}`;
+		const branch = `{update(${resourceRef},{},{transfer_options.pickup.address_id: pickup_address.id},draft)}`;
 		expect(parseBranchText(branch)).toEqual({
 			functionName: "update",
 			args: [
-				serviceId,
-				resourceId,
+				resourceRef,
 				"{}",
 				"{transfer_options.pickup.address_id: pickup_address.id}",
 				"draft",
@@ -154,8 +126,7 @@ describe("action branch helpers", () => {
 		});
 		expect(
 			serializeBranch("update", [
-				serviceId,
-				resourceId,
+				resourceRef,
 				"{}",
 				"{transfer_options.pickup.address_id: pickup_address.id}",
 				"draft",
@@ -163,31 +134,28 @@ describe("action branch helpers", () => {
 		).toBe(branch);
 	});
 
-	it("parses create with namespace and resource", () => {
-		expect(parseBranchText(`{create(${serviceId},${resourceId})}`)).toEqual(
-			{
-				functionName: "create",
-				args: [serviceId, resourceId],
-			},
-		);
+	it("parses create with resource ref", () => {
+		expect(parseBranchText(`{create(${resourceRef})}`)).toEqual({
+			functionName: "create",
+			args: [resourceRef],
+		});
 	});
 
-	it("serializes create with namespace and resource", () => {
-		expect(serializeBranch("create", [serviceId, resourceId])).toBe(
-			`{create(${serviceId},${resourceId})}`,
+	it("serializes create with resource ref", () => {
+		expect(serializeBranch("create", [resourceRef])).toBe(
+			`{create(${resourceRef})}`,
 		);
 	});
 
 	it("parses update with filter and changes objects", () => {
 		expect(
 			parseBranchText(
-				`{update(${EVY_CORE_SERVICE},${EVY_CORE_RESOURCE.MESSAGES},{fk: $datum.id, closedAt: null},{closedAt: now()})}`,
+				`{update(${EVY_CORE_RESOURCE_REF.MESSAGES},{fk: $datum.id, closedAt: null},{closedAt: now()})}`,
 			),
 		).toEqual({
 			functionName: "update",
 			args: [
-				EVY_CORE_SERVICE,
-				EVY_CORE_RESOURCE.MESSAGES,
+				EVY_CORE_RESOURCE_REF.MESSAGES,
 				"{fk: $datum.id, closedAt: null}",
 				"{closedAt: now()}",
 			],
@@ -197,23 +165,22 @@ describe("action branch helpers", () => {
 	it("serializes update with filter and changes objects", () => {
 		expect(
 			serializeBranch("update", [
-				EVY_CORE_SERVICE,
-				EVY_CORE_RESOURCE.MESSAGES,
+				EVY_CORE_RESOURCE_REF.MESSAGES,
 				"{fk: $datum.id, closedAt: null}",
 				"{closedAt: now()}",
 			]),
 		).toBe(
-			`{update(${EVY_CORE_SERVICE},${EVY_CORE_RESOURCE.MESSAGES},{fk: $datum.id, closedAt: null},{closedAt: now()})}`,
+			`{update(${EVY_CORE_RESOURCE_REF.MESSAGES},{fk: $datum.id, closedAt: null},{closedAt: now()})}`,
 		);
 	});
 
 	it("keeps filter and changes in update display text", () => {
 		expect(
 			formatBranchDisplay(
-				"{update(svc-1,res-1,{fk: id-1, closedAt: null},{closedAt: now()})}",
+				`{update(${TEST_RESOURCE_ID.RECORDS},{fk: id-1, closedAt: null},{closedAt: now()})}`,
 			),
 		).toBe(
-			"update(svc-1, res-1, {fk: id-1, closedAt: null}, {closedAt: now()})",
+			`update(${TEST_RESOURCE_ID.RECORDS}, {fk: id-1, closedAt: null}, {closedAt: now()})`,
 		);
 	});
 
@@ -291,10 +258,10 @@ describe("action branch helpers", () => {
 			"flow-1": {
 				id: "flow-1",
 				name: "Main",
-				pageIds: ["page-1"],
+				page_ids: ["page-1"],
 				visibility: "public",
-				createdAt: now,
-				updatedAt: now,
+				created_at: now,
+				updated_at: now,
 			},
 		};
 		const pagesById: Record<string, DATA_EVY_Page> = {
@@ -302,22 +269,22 @@ describe("action branch helpers", () => {
 				id: "page-1",
 				name: "Home",
 				title: "",
-				rowIds: ["row-expand"],
+				row_ids: ["row-expand"],
 				visibility: "public",
-				createdAt: now,
-				updatedAt: now,
+				created_at: now,
+				updated_at: now,
 			},
 		};
 		const rowsById: Record<string, DATA_EVY_Row> = {
 			"row-expand": {
 				id: "row-expand",
 				name: "Expand target",
-				type: "TextExpand",
+				type: "text_expand",
 				visible: "true",
 				data: {},
 				visibility: "public",
-				createdAt: now,
-				updatedAt: now,
+				created_at: now,
+				updated_at: now,
 			},
 		};
 
@@ -340,17 +307,14 @@ describe("action branch helpers", () => {
 });
 
 describe("structured branch storage", () => {
-	const SVC = "66b092ae-7cd8-4d67-95b7-30b03568fd90";
-
 	it("stores a convertible branch structurally", () => {
 		expect(branchForStorage("{close()}")).toEqual({ fn: "close" });
 	});
 
 	it("stores the submit keyword as a typed mode", () => {
-		expect(branchForStorage(`{create(${SVC},items,submit)}`)).toEqual({
+		expect(branchForStorage("{create(marketplace.items,submit)}")).toEqual({
 			fn: "create",
-			service: SVC,
-			resource: "items",
+			resource: "marketplace.items",
 			mode: "submit",
 		});
 	});
@@ -359,8 +323,6 @@ describe("structured branch storage", () => {
 		expect(branchForStorage("")).toBe("");
 	});
 
-	// An unconvertible branch is a bug in the editor to surface, rather than
-	// something to persist and discover later.
 	it("refuses to store an unconvertible branch", () => {
 		expect(() => branchForStorage("{teleport(x)}")).toThrow(
 			"Cannot store action branch",
@@ -371,20 +333,20 @@ describe("structured branch storage", () => {
 	});
 
 	it("renders a structured branch back to a string for editing", () => {
-		expect(branchToEditableString({ fn: "show", rowId: "row-1" })).toBe(
+		expect(branchToEditableString({ fn: "show", row_id: "row-1" })).toBe(
 			"{show(row-1)}",
 		);
 	});
 
 	it("round-trips a structured branch through the editor model", () => {
-		const stored = { fn: "show", rowId: "row-1" } as const;
+		const stored = { fn: "show", row_id: "row-1" } as const;
 		expect(branchForStorage(branchToEditableString(stored))).toEqual(
 			stored,
 		);
 	});
 
 	it("parses a structured branch into the editor model", () => {
-		expect(parseBranch({ fn: "show", rowId: "row-1" })).toEqual({
+		expect(parseBranch({ fn: "show", row_id: "row-1" })).toEqual({
 			functionName: "show",
 			args: ["row-1"],
 		});

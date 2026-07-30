@@ -4,8 +4,7 @@
  * and properties that exist in the schema (strict extension).
  */
 import { mkdir, writeFile } from "node:fs/promises";
-import { dirname, join } from "node:path";
-import decamelize from "decamelize";
+import { dirname, join, resolve } from "node:path";
 import {
 	loadJson,
 	OUT_TS,
@@ -14,6 +13,8 @@ import {
 } from "./types-generation-utils.js";
 
 const DATA_SCHEMA_PATH = join(SCHEMA_DIR, "data", "data.schema.json");
+const DATA_SCHEMA_DIR = join(SCHEMA_DIR, "data");
+const RPC_SCHEMA_PATH = join(SCHEMA_DIR, "common", "rpc.schema.json");
 const OS_SCHEMA_PATH = join(SCHEMA_DIR, "data", "os.schema.json");
 const DRIZZLE_CONFIG_PATH = join(SCHEMA_DIR, "data", "drizzle.config.json");
 const OUT_PATH = join(OUT_TS, "db", "schema.generated.ts");
@@ -325,10 +326,6 @@ export function validateConfigSemantic(
 	}
 }
 
-function tableNameToVariable(tableName: string): string {
-	return tableName.charAt(0).toLowerCase() + tableName.slice(1);
-}
-
 function getPropSchema(
 	def: { properties?: Record<string, JsonSchemaProp> },
 	key: string,
@@ -386,22 +383,54 @@ function buildNumberColumn(dbCol: string): string {
 	return `numeric("${dbCol}", { precision: 28, scale: 10, mode: "number" })`;
 }
 
-/** `#/$defs/Foo` -> `Foo`, for local refs only. */
-function localDefName(ref: string | undefined): string | null {
-	const match = /^#\/\$defs\/([A-Za-z0-9_]+)$/.exec(ref ?? "");
-	return match?.[1] ?? null;
+const schemaFileCache = new Map<string, JsonSchema>();
+
+export async function loadSchemaRefCache(): Promise<void> {
+	schemaFileCache.clear();
+	schemaFileCache.set(
+		DATA_SCHEMA_PATH,
+		await loadJson<JsonSchema>(DATA_SCHEMA_PATH),
+	);
+	schemaFileCache.set(
+		RPC_SCHEMA_PATH,
+		await loadJson<JsonSchema>(RPC_SCHEMA_PATH),
+	);
 }
 
-function resolveJsonbTypeAnnotation(ref: string | undefined): string {
-	if (ref?.includes("UI_Flow") || ref?.includes("evy.schema.json")) {
-		return "UI_Flow";
+function resolveRefTarget(ref: string): JsonSchemaProp | null {
+	const hashIndex = ref.indexOf("#");
+	if (hashIndex === -1) return null;
+	const relativeFile = ref.slice(0, hashIndex);
+	const fragment = ref.slice(hashIndex + 1);
+	const defMatch = /^\/\$defs\/([A-Za-z0-9_]+)$/.exec(fragment);
+	if (!defMatch?.[1]) return null;
+
+	const absolutePath =
+		relativeFile === ""
+			? DATA_SCHEMA_PATH
+			: resolve(DATA_SCHEMA_DIR, relativeFile);
+	const schema = schemaFileCache.get(absolutePath);
+	const def = schema?.$defs?.[defMatch[1]];
+	return def && typeof def === "object" ? def : null;
+}
+
+export function resolveJsonbTypeAnnotation(ref: string | undefined): string {
+	if (!ref) {
+		throw new Error("resolveJsonbTypeAnnotation: ref is required");
 	}
-	if (ref?.includes("JSONValue") || ref?.includes("json.schema.json")) {
-		return 'DATA_PRIMITIVE["data"]';
+	switch (ref) {
+		case "../sdui/evy.schema.json#/$defs/UI_Flow":
+			return "UI_Flow";
+		case "../common/json.schema.json#/$defs/JSONValue":
+			return 'DATA_PRIMITIVE["data"]';
 	}
-	// Any local $def is a generated type of the same name, so new nested value
-	// objects are typed automatically instead of needing a branch added here.
-	return localDefName(ref) ?? "unknown";
+	const externalMatch = /#\/\$defs\/([A-Za-z0-9_]+)$/.exec(ref);
+	if (externalMatch?.[1]) {
+		return externalMatch[1];
+	}
+	throw new Error(
+		`resolveJsonbTypeAnnotation: unrecognised object $ref: ${ref}`,
+	);
 }
 
 function buildArrayColumn(dbCol: string, prop: JsonSchemaProp): string {
@@ -426,8 +455,7 @@ function buildObjectColumn(
 }
 
 function enumKeyToConstName(enumKey: string): string {
-	if (enumKey === "OS") return "osEnum";
-	return `${enumKey.charAt(0).toLowerCase()}${enumKey.slice(1)}Enum`;
+	return `${enumKey}_enum`;
 }
 
 function buildRefColumn(
@@ -447,11 +475,45 @@ function buildRefColumn(
 			return col;
 		}
 	}
+	const resolved = resolveRefTarget(ref);
+	if (resolved?.type === "string") {
+		let col = buildStringColumn(
+			dbCol,
+			resolved.format,
+			resolved.maxLength,
+			{ isPk, hasDefaultRandom },
+		);
+		if (!col.includes(".notNull()")) col += ".notNull()";
+		return col;
+	}
 	const typeArg = resolveJsonbTypeAnnotation(ref);
 	let col = `jsonb("${dbCol}").$type<${typeArg}>().notNull()`;
 	if (isPk) col += ".primaryKey()";
 	if (hasDefaultRandom) col += ".defaultRandom()";
 	return col;
+}
+
+/** Test helper: emit a column from a bare `$ref` property. */
+export function emitRefColumn(
+	dbCol: string,
+	ref: string,
+	options: {
+		isPk?: boolean;
+		isRequired?: boolean;
+	} = {},
+): string {
+	const suffixes: ColumnSuffixes = {
+		isPk: options.isPk ?? false,
+		hasDefaultRandom: false,
+	};
+	const col = buildRefColumn(dbCol, ref, suffixes, [], undefined);
+	return applyNullabilityFallback(
+		col,
+		undefined,
+		undefined,
+		ref,
+		options.isRequired ?? true,
+	);
 }
 
 function applyNullabilityFallback(
@@ -488,7 +550,7 @@ function emitColumn(
 	tableConfig: { primaryKey: string; defaultRandom: string[] },
 	requiredSet: Set<string>,
 ): string {
-	const dbCol = decamelize(propName);
+	const dbCol = propName;
 	const suffixes: ColumnSuffixes = {
 		isPk: tableConfig.primaryKey === propName,
 		hasDefaultRandom: tableConfig.defaultRandom.includes(propName),
@@ -529,6 +591,7 @@ function isTypeUsed(typeName: string, columnLines: string[]): boolean {
 }
 
 async function main(): Promise<void> {
+	await loadSchemaRefCache();
 	const schemaRaw = await loadJson<unknown>(DATA_SCHEMA_PATH);
 	const config = await loadJson<unknown>(DRIZZLE_CONFIG_PATH);
 	assertDrizzleConfig(config);
@@ -573,7 +636,7 @@ async function main(): Promise<void> {
 		}
 		// os.schema.json declares the same enum standalone; fail on drift.
 		if (
-			enumKey === "OS" &&
+			enumKey === "os" &&
 			JSON.stringify(values) !== JSON.stringify(osSchema.enum ?? [])
 		) {
 			throw new Error(
@@ -593,7 +656,7 @@ async function main(): Promise<void> {
 		const def = defs[defKey];
 		if (!def?.properties) continue;
 
-		const varName = tableNameToVariable(tableConfig.tableName);
+		const varName = tableConfig.tableName;
 		lines.push(
 			`export const ${varName} = pgTable(`,
 			`	"${tableConfig.tableName}",`,
@@ -637,14 +700,14 @@ async function main(): Promise<void> {
 	for (const [fromKey, rels] of oneToManyByFrom) {
 		const fromTable = config.tables?.[fromKey];
 		if (!fromTable) continue;
-		const fromVar = tableNameToVariable(fromTable.tableName);
+		const fromVar = fromTable.tableName;
 		lines.push(
 			`export const ${fromVar}Relations = relations(${fromVar}, ({ many }) => ({`,
 		);
 		for (const rel of rels) {
 			const toTable = config.tables?.[rel.to];
 			if (!toTable) continue;
-			const toVar = tableNameToVariable(toTable.tableName);
+			const toVar = toTable.tableName;
 			lines.push(`	${rel.relationName}: many(${toVar}),`);
 		}
 		lines.push("}));");
@@ -661,7 +724,7 @@ async function main(): Promise<void> {
 	for (const [fromKey, rels] of manyToOneByFrom) {
 		const fromTable = config.tables?.[fromKey];
 		if (!fromTable) continue;
-		const fromVar = tableNameToVariable(fromTable.tableName);
+		const fromVar = fromTable.tableName;
 		const exportName = `${fromVar}Relations`;
 		const bodyLines: string[] = [];
 		for (const rel of rels) {
@@ -671,7 +734,7 @@ async function main(): Promise<void> {
 			if (!toTable || field === undefined || reference === undefined) {
 				continue;
 			}
-			const toVar = tableNameToVariable(toTable.tableName);
+			const toVar = toTable.tableName;
 			bodyLines.push(
 				`		${rel.relationName}: one(${toVar}, {`,
 				`			fields: [${fromVar}.${field}],`,

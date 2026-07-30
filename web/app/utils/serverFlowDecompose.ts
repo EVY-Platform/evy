@@ -38,14 +38,14 @@ export function decomposeServerFlow(
 			{
 				id: flow.id,
 				name: flow.name,
-				pageIds: pageRows.map((page) => page.id),
+				page_ids: pageRows.map((page) => page.id),
 				// Test-fixture decomposition only; these records feed the builder
 				// directly and are never written back, so the value matches what
 				// the builder creates rather than carrying real visibility.
 				visibility: "public",
 				...(flow.submits ? { submits: flow.submits } : {}),
-				createdAt: nowIso,
-				updatedAt: nowIso,
+				created_at: nowIso,
+				updated_at: nowIso,
 			},
 		],
 		pageRows,
@@ -62,15 +62,15 @@ function decomposeServerPage(
 		id: page.id,
 		name: page.name,
 		title: page.title,
-		rowIds: page.rows.map((row) =>
+		row_ids: page.rows.map((row) =>
 			decomposeServerRow(row, rowRows, nowIso),
 		),
-		footerRowId: page.footer
+		footer_row_id: page.footer
 			? decomposeServerRow(page.footer, rowRows, nowIso)
 			: undefined,
 		visibility: "public",
-		createdAt: nowIso,
-		updatedAt: nowIso,
+		created_at: nowIso,
+		updated_at: nowIso,
 	};
 }
 
@@ -124,8 +124,8 @@ function decomposeServerRow(
 		visible: row.visible || "true",
 		visibility: "public",
 		data: data as DATA_EVY_RowData,
-		createdAt: nowIso,
-		updatedAt: nowIso,
+		created_at: nowIso,
+		updated_at: nowIso,
 	});
 	return row.id;
 }

@@ -9,8 +9,8 @@ export const pagesResource = makeCoreResource<DATA_EVY_Page>({
 	toUpdateSet: (v) => ({
 		name: v.name,
 		title: v.title,
-		rowIds: v.rowIds,
-		footerRowId: v.footerRowId,
+		row_ids: v.row_ids,
+		footer_row_id: v.footer_row_id,
 		visibility: v.visibility,
 	}),
 });

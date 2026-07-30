@@ -318,20 +318,26 @@ private func _resolveBindingRoot(
     return (try match.draft.decoded(), match.remainingProps)
   }
 
-  if let scopeId = scope.cacheScopeId,
-    let cachedRow = try? EVY.cacheStore.get(
-      namespace: EVYNamespace.cache, resource: scopeId, id: firstProp)
-  {
-    return (try cachedRow.decoded(), remainingProps)
+  if let scopeId = scope.cacheScopeId {
+    for (cacheKey, remaining) in EVYResourceRef.cacheScopeCandidates(for: splitProps) {
+      guard
+        let cachedRow = try? EVY.cacheStore.get(
+          namespace: EVYNamespace.cache, resource: scopeId, id: cacheKey)
+      else { continue }
+      return (try cachedRow.decoded(), remaining)
+    }
   }
 
-  // 2. Fall back to persistent store — synced API data
   let json: EVYJson
   do {
     json = try store.getJsonForBinding(key: firstProp, cacheScopeId: scope.cacheScopeId)
   } catch EVYDataError.keyNotFound {
-    json = try EVY.getSyncedJsonForBinding(
-      key: firstProp, cacheScopeId: scope.cacheScopeId)
+    if let split = EVYResourceRef.split(pathSegments: splitProps),
+      EVYResourceRef.isValid(split.ref)
+    {
+      return (try EVY.getSyncedJsonForRef(split.ref), split.remaining)
+    }
+    throw EVYDataError.keyNotFound
   }
   return (json, remainingProps)
 }

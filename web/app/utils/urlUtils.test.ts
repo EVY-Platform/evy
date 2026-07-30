@@ -14,11 +14,11 @@ function makeDataRow(
 	return {
 		id,
 		name: id,
-		type: "Text",
+		type: "text",
 		visible: "true",
 		data: data as DATA_EVY_Row["data"],
-		createdAt: "",
-		updatedAt: "",
+		created_at: "",
+		updated_at: "",
 		visibility: "public",
 	};
 }
@@ -32,10 +32,10 @@ function makePage(
 		id,
 		name: id,
 		title: "P",
-		rowIds,
-		...(footerRowId ? { footerRowId } : {}),
-		createdAt: "",
-		updatedAt: "",
+		row_ids: rowIds,
+		...(footerRowId ? { footer_row_id: footerRowId } : {}),
+		created_at: "",
+		updated_at: "",
 		visibility: "public",
 	};
 }

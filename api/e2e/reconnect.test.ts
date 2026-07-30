@@ -1,5 +1,5 @@
 import { describe, expect, it } from "bun:test";
-import { EVY_CORE_RESOURCE, EVY_CORE_SERVICE } from "evy-types/coreResources";
+import { EVY_CORE_RESOURCE_REF } from "evy-types/coreResources";
 
 import {
 	connectAndLogin,
@@ -12,7 +12,7 @@ if (!API_URL) {
 }
 
 const TEST_TOKEN = "e2e-reconnect-token";
-const TEST_OS = "Web";
+const TEST_OS = "web";
 
 describe("API E2E WebSocket reconnect", () => {
 	it("new client subscribed after reconnect receives dataChanged from create", async () => {
@@ -20,7 +20,7 @@ describe("API E2E WebSocket reconnect", () => {
 			API_URL,
 			TEST_TOKEN,
 			TEST_OS,
-			"dataChanged",
+			"data_changed",
 		);
 		first.close();
 
@@ -28,10 +28,10 @@ describe("API E2E WebSocket reconnect", () => {
 			API_URL,
 			`${TEST_TOKEN}-2`,
 			TEST_OS,
-			"dataChanged",
+			"data_changed",
 		);
 
-		const notifyPromise = waitForNotification(second, "dataChanged");
+		const notifyPromise = waitForNotification(second, "data_changed");
 
 		const caller = await connectAndLogin(
 			API_URL,
@@ -40,20 +40,18 @@ describe("API E2E WebSocket reconnect", () => {
 		);
 
 		const createResult = await caller.call("create", {
-			service: EVY_CORE_SERVICE,
-			resource: EVY_CORE_RESOURCE.FLOWS,
+			resource: EVY_CORE_RESOURCE_REF.FLOWS,
 			data: {
 				id: crypto.randomUUID(),
 				name: `Reconnect test ${Date.now()}`,
-				pageIds: [],
+				page_ids: [],
 				visibility: "public",
 			},
 		});
 
 		const params = await notifyPromise;
 		expect(params).toEqual({
-			service: EVY_CORE_SERVICE,
-			resource: EVY_CORE_RESOURCE.FLOWS,
+			resource: EVY_CORE_RESOURCE_REF.FLOWS,
 			operation: "create",
 			value: createResult,
 		});

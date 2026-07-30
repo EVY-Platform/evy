@@ -3,12 +3,12 @@
 import { jsonb, pgTable, text, uuid, varchar } from "drizzle-orm/pg-core";
 import type { DATA_PRIMITIVE } from "evy-types";
 
-export const data = pgTable("Data", {
+export const data = pgTable("data", {
 	id: uuid("id").primaryKey().defaultRandom(),
 	resource: varchar("resource", { length: 50 }).notNull(),
 	data: jsonb("data").$type<DATA_PRIMITIVE["data"]>().notNull(),
-	createdAt: text("created_at").notNull(),
-	updatedAt: text("updated_at").notNull(),
+	created_at: text("created_at").notNull(),
+	updated_at: text("updated_at").notNull(),
 	// Tombstone: kept so incremental reads can tell clients the row is gone.
-	deletedAt: text("deleted_at"),
+	deleted_at: text("deleted_at"),
 });

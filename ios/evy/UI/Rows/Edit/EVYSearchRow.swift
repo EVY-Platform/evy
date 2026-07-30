@@ -44,7 +44,7 @@ struct EVYSearchRow: View {
     json: """
       {
         "id": "preview-search-row",
-        "type": "Search",
+        "type": "search",
         "source": "{items}",
         "destination": "{selected_item}",
         "actions": {},
@@ -53,7 +53,7 @@ struct EVYSearchRow: View {
         "no_results": "No items match your search",
         "child": {
           "id": "preview-search-result-template",
-          "type": "Text",
+          "type": "text",
           "actions": {},
           "title": "{$datum.title}",
           "subtitle": "{$datum.category}",

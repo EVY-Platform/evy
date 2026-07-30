@@ -19,7 +19,7 @@ export class ConflictError extends Error {
 	constructor(expectedUpdatedAt: string, actualUpdatedAt: string) {
 		super(
 			`Conflict: the record changed since you last read it ` +
-				`(expected updatedAt ${expectedUpdatedAt}, found ${actualUpdatedAt}). ` +
+				`(expected updated_at ${expectedUpdatedAt}, found ${actualUpdatedAt}). ` +
 				`Re-read the record and reapply your change.`,
 		);
 		this.name = "ConflictError";
@@ -40,9 +40,9 @@ export function assertNotModified(
 }
 
 /**
- * The row's next `updatedAt`, guaranteed to be greater than its current one.
+ * The row's next `updated_at`, guaranteed to be greater than its current one.
  *
- * `updatedAt` doubles as the version token, and wall-clock time has
+ * `updated_at` doubles as the version token, and wall-clock time has
  * millisecond resolution - two writes inside the same millisecond would leave
  * it unchanged, so a second writer's stale token would still match and the
  * lock would pass exactly when it needed to fail. Nudging forward by a

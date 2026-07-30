@@ -34,7 +34,7 @@ struct EVYTextAreaRow: View {
     json: """
       {
         "id": "preview-textarea-row",
-        "type": "TextArea",
+        "type": "text_area",
         "source": "{item.description}",
         "destination": "{item.description}",
         "actions": {},

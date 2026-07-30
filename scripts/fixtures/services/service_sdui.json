@@ -9,8 +9,8 @@
 				"rows": [
 					{
 						"id": "3fbadee6-dc70-434e-8d4d-443fe86e6a09",
-						"type": "PhotoGallery",
-						"source": "{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.photo_ids}",
+						"type": "photo_gallery",
+						"source": "{marketplace.items.photo_ids}",
 						"actions": {
 							"tap": [
 								{
@@ -28,75 +28,75 @@
 					},
 					{
 						"id": "8d5e3bb5-8fcf-45f4-ae3d-516ed0706e30",
-						"type": "Heading",
+						"type": "heading",
 						"visible": "true",
-						"title": "{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.title}",
-						"label": "{formatCurrency(dc28ed59-298e-493c-8ff3-3e60f2ebccbd.price)}",
+						"title": "{marketplace.items.title}",
+						"label": "{formatCurrency(marketplace.items.price)}",
 						"name": "Item title and price",
 						"actions": {}
 					},
 					{
 						"id": "9ee5693d-e3e5-4862-b714-eb81a86be83e",
-						"type": "Input",
-						"destination": "{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.title}",
+						"type": "input",
+						"destination": "{marketplace.items.title}",
 						"title": "",
 						"placeholder": "",
 						"visible": "true",
 						"name": "Item title",
-						"source": "{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.title}",
+						"source": "{marketplace.items.title}",
 						"actions": {}
 					},
 					{
 						"id": "61d8b13a-6e19-4251-84bf-94771af07e6c",
-						"type": "Text",
+						"type": "text",
 						"visible": "true",
 						"title": "Condition",
-						"subtitle": "{findFirst(cc2e6c74-a53a-4ed1-97a7-14aa9b9a3e3f, dc28ed59-298e-493c-8ff3-3e60f2ebccbd.condition_id).value}",
+						"subtitle": "{findFirst(marketplace.conditions, marketplace.items.condition_id).value}",
 						"name": "Item condition",
 						"actions": {
-							"swipe-left": [
+							"swipe_left": [
 								{
 									"condition": "",
 									"false": "",
 									"true": {
 										"fn": "show",
-										"rowId": "7c8d9e0f-1a2b-4c3d-8e5f-6a7b8c9d0e1f"
+										"row_id": "7c8d9e0f-1a2b-4c3d-8e5f-6a7b8c9d0e1f"
 									}
 								}
 							]
 						},
 						"sheet": {
 							"id": "7c8d9e0f-1a2b-4c3d-8e5f-6a7b8c9d0e1f",
-							"type": "Text",
+							"type": "text",
 							"visible": "true",
 							"title": "Condition",
-							"subtitle": "{findFirst(cc2e6c74-a53a-4ed1-97a7-14aa9b9a3e3f, dc28ed59-298e-493c-8ff3-3e60f2ebccbd.condition_id).value}",
+							"subtitle": "{findFirst(marketplace.conditions, marketplace.items.condition_id).value}",
 							"name": "Item condition sheet",
 							"actions": {}
 						}
 					},
 					{
 						"id": "b402e0e2-62a1-4eab-81ad-c9b522f5ff5a",
-						"type": "Text",
+						"type": "text",
 						"visible": "true",
 						"title": "Selling reason",
-						"subtitle": "{findFirst(e9ec5573-bd2f-4ad1-b24f-44a1bf8314e8, dc28ed59-298e-493c-8ff3-3e60f2ebccbd.selling_reason_id).value}",
+						"subtitle": "{findFirst(marketplace.selling_reasons, marketplace.items.selling_reason_id).value}",
 						"name": "Item selling reason",
 						"actions": {}
 					},
 					{
 						"id": "f22cb07b-d4eb-45bc-9d3e-528361564fd2",
-						"type": "Text",
+						"type": "text",
 						"visible": "true",
 						"title": "Dimensions",
-						"subtitle": "{formatDimension(dc28ed59-298e-493c-8ff3-3e60f2ebccbd.dimensions.width) (w) x formatDimension(dc28ed59-298e-493c-8ff3-3e60f2ebccbd.dimensions.height) (h) x formatDimension(dc28ed59-298e-493c-8ff3-3e60f2ebccbd.dimensions.length) (l)}",
+						"subtitle": "{formatDimension(marketplace.items.dimensions.width) (w) x formatDimension(marketplace.items.dimensions.height) (h) x formatDimension(marketplace.items.dimensions.length) (l)}",
 						"name": "Item dimensions",
 						"actions": {}
 					},
 					{
 						"id": "1f90a201-c24a-408f-b4e1-88624e90d2c1",
-						"type": "Text",
-						"visible": "{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.payment_methods.app == true}",
+						"type": "text",
+						"visible": "{marketplace.items.payment_methods.app == true}",
 						"title": "Card",
 						"subtitle": "EVY Buyer protection",
 						"name": "Card payment",
@@ -104,8 +104,8 @@
 					},
 					{
 						"id": "3444bbac-3f6a-4380-91c5-d4ef6545e7f1",
-						"type": "Text",
-						"visible": "{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.payment_methods.cash == true}",
+						"type": "text",
+						"visible": "{marketplace.items.payment_methods.cash == true}",
 						"title": "Cash",
 						"subtitle": "In person",
 						"name": "Cash payment",
@@ -113,7 +113,7 @@
 					},
 					{
 						"id": "ec3bef23-6d74-43eb-adde-8d498d9ed70e",
-						"type": "TabContainer",
+						"type": "tab_container",
 						"actions": {
 							"tap": [
 								{
@@ -126,30 +126,30 @@
 								}
 							]
 						},
-						"visible": "{findFirst(sort(messages, desc, createdAt), fk == dc28ed59-298e-493c-8ff3-3e60f2ebccbd.id && data.type == pickup).data.value != \"pending\" && findFirst(sort(messages, desc, createdAt), fk == dc28ed59-298e-493c-8ff3-3e60f2ebccbd.id && data.type == pickup).data.value != \"accept\" && findFirst(sort(messages, desc, createdAt), fk == dc28ed59-298e-493c-8ff3-3e60f2ebccbd.id && data.type == delivery).data.value != \"pending\" && findFirst(sort(messages, desc, createdAt), fk == dc28ed59-298e-493c-8ff3-3e60f2ebccbd.id && data.type == delivery).data.value != \"accept\" && findFirst(sort(messages, desc, createdAt), fk == dc28ed59-298e-493c-8ff3-3e60f2ebccbd.id && data.type == shipping).data.value != \"pending\" && findFirst(sort(messages, desc, createdAt), fk == dc28ed59-298e-493c-8ff3-3e60f2ebccbd.id && data.type == shipping).data.value != \"accept\"}",
+						"visible": "{findFirst(sort(evy.messages, desc, created_at), fk == marketplace.items.id && data.type == pickup).data.value != \"pending\" && findFirst(sort(evy.messages, desc, created_at), fk == marketplace.items.id && data.type == pickup).data.value != \"accept\" && findFirst(sort(evy.messages, desc, created_at), fk == marketplace.items.id && data.type == delivery).data.value != \"pending\" && findFirst(sort(evy.messages, desc, created_at), fk == marketplace.items.id && data.type == delivery).data.value != \"accept\" && findFirst(sort(evy.messages, desc, created_at), fk == marketplace.items.id && data.type == shipping).data.value != \"pending\" && findFirst(sort(evy.messages, desc, created_at), fk == marketplace.items.id && data.type == shipping).data.value != \"accept\"}",
 						"title": "",
 						"segments": ["Pickup", "Delivery", "Shipping"],
 						"children": [
 							{
 								"id": "256c223c-71df-42f5-b12f-5267517d87cd",
-								"type": "VerticalContainer",
+								"type": "vertical_container",
 								"visible": "true",
 								"title": "",
 								"children": [
 									{
 										"id": "0b02c2c0-6e19-49d5-9138-f60062a1f6d4",
-										"type": "Map",
-										"source": "{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.transfer_options.pickup}",
+										"type": "map",
+										"source": "{marketplace.items.transfer_options.pickup}",
 										"visible": "true",
 										"title": "",
-										"subtitle": "{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.transfer_options.pickup.postcode}",
+										"subtitle": "{marketplace.items.transfer_options.pickup.postcode}",
 										"name": "Pickup location",
 										"actions": {}
 									},
 									{
 										"id": "197531fd-1de3-4d4d-8e03-026b37892611",
-										"type": "TimeslotPicker",
-										"source": "{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.pickup_selection}",
+										"type": "timeslot_picker",
+										"source": "{marketplace.items.pickup_selection}",
 										"actions": {
 											"tap": [
 												{
@@ -164,13 +164,13 @@
 													"condition": "",
 													"true": {
 														"fn": "show",
-														"rowId": "b8c7d6e5-f4a3-4b2c-9d1e-0f8a7b6c5d4e"
+														"row_id": "b8c7d6e5-f4a3-4b2c-9d1e-0f8a7b6c5d4e"
 													},
 													"false": ""
 												}
 											]
 										},
-										"visible": "{findFirst(sort(messages, desc, createdAt), fk == dc28ed59-298e-493c-8ff3-3e60f2ebccbd.id && data.type == pickup).data.value != \"pending\" && findFirst(sort(messages, desc, createdAt), fk == dc28ed59-298e-493c-8ff3-3e60f2ebccbd.id && data.type == pickup).data.value != \"accept\"}",
+										"visible": "{findFirst(sort(evy.messages, desc, created_at), fk == marketplace.items.id && data.type == pickup).data.value != \"pending\" && findFirst(sort(evy.messages, desc, created_at), fk == marketplace.items.id && data.type == pickup).data.value != \"accept\"}",
 										"title": "",
 										"start_time": "07:00",
 										"end_time": "19:00",
@@ -183,44 +183,42 @@
 										"destination": "{selected_pickup_timeslot}",
 										"sheet": {
 											"id": "b8c7d6e5-f4a3-4b2c-9d1e-0f8a7b6c5d4e",
-											"type": "VerticalContainer",
+											"type": "vertical_container",
 											"visible": "true",
 											"title": "Confirmation",
 											"children": [
 												{
 													"id": "c9d8e7f6-a5b4-4c3d-8e2f-1a9b8c7d6e5f",
-													"type": "Text",
+													"type": "text",
 													"visible": "true",
 													"title": "",
-													"subtitle": "Request to pick up {dc28ed59-298e-493c-8ff3-3e60f2ebccbd.title} on {formatDatetime(selected_pickup_timeslot, \"EEE do\")} at {formatDatetime(selected_pickup_timeslot, \"HH:mm\")}",
+													"subtitle": "Request to pick up {marketplace.items.title} on {formatDatetime(selected_pickup_timeslot, \"EEE do\")} at {formatDatetime(selected_pickup_timeslot, \"HH:mm\")}",
 													"name": "Pickup confirmation message",
 													"actions": {}
 												},
 												{
 													"id": "d0e9f8a7-b6c5-4d4e-9f3a-2b0c9d8e7f6a",
-													"type": "Text",
-													"visible": "{selected_pickup_timeslot != findFirst(sort(dc28ed59-298e-493c-8ff3-3e60f2ebccbd.pickup_selection, asc))}",
+													"type": "text",
+													"visible": "{selected_pickup_timeslot != findFirst(sort(marketplace.items.pickup_selection, asc))}",
 													"title": "",
-													"subtitle": "Be advised someone may request to pick up {dc28ed59-298e-493c-8ff3-3e60f2ebccbd.title} earlier than your selected timeslot.",
+													"subtitle": "Be advised someone may request to pick up {marketplace.items.title} earlier than your selected timeslot.",
 													"name": "Pickup earlier timeslot warning",
 													"actions": {}
 												},
 												{
 													"id": "e1f0a9b8-c7d6-4e5f-a04b-3c1d0e9f8a7b",
-													"type": "Button",
+													"type": "button",
 													"actions": {
 														"tap": [
 															{
 																"condition": "",
 																"true": {
 																	"fn": "create",
-																	"service": "475731ac-31aa-4d65-94d2-7032782ae359",
-																	"resource": "messages",
+																	"resource": "evy.messages",
 																	"mode": "inline",
 																	"data": {
-																		"fk": "dc28ed59-298e-493c-8ff3-3e60f2ebccbd.id",
-																		"service": "66b092ae-7cd8-4d67-95b7-30b03568fd90",
-																		"resource": "dc28ed59-298e-493c-8ff3-3e60f2ebccbd",
+																		"fk": "marketplace.items.id",
+																		"resource": "marketplace.items",
 																		"data": "{type: pickup, value: pending, time: selected_pickup_timeslot}"
 																	}
 																},
@@ -251,13 +249,13 @@
 							},
 							{
 								"id": "0fa00e83-881b-4ecb-b7d3-958d8eaf807c",
-								"type": "VerticalContainer",
+								"type": "vertical_container",
 								"visible": "true",
 								"title": "",
 								"children": [
 									{
 										"id": "357d3351-93e6-47bd-91ab-3616fd70b8aa",
-										"type": "Text",
+										"type": "text",
 										"visible": "true",
 										"title": "",
 										"subtitle": "Buyer will drop off",
@@ -266,8 +264,8 @@
 									},
 									{
 										"id": "bd8fa85c-1b67-467a-983d-328e6dc49db7",
-										"type": "TimeslotPicker",
-										"source": "{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.delivery_selection}",
+										"type": "timeslot_picker",
+										"source": "{marketplace.items.delivery_selection}",
 										"actions": {
 											"tap": [
 												{
@@ -282,13 +280,13 @@
 													"condition": "",
 													"true": {
 														"fn": "show",
-														"rowId": "c4d5e6f7-a8b9-4c0d-1e2f-3a4b5c6d7e80"
+														"row_id": "c4d5e6f7-a8b9-4c0d-1e2f-3a4b5c6d7e80"
 													},
 													"false": ""
 												}
 											]
 										},
-										"visible": "{findFirst(sort(messages, desc, createdAt), fk == dc28ed59-298e-493c-8ff3-3e60f2ebccbd.id && data.type == delivery).data.value != \"pending\" && findFirst(sort(messages, desc, createdAt), fk == dc28ed59-298e-493c-8ff3-3e60f2ebccbd.id && data.type == delivery).data.value != \"accept\"}",
+										"visible": "{findFirst(sort(evy.messages, desc, created_at), fk == marketplace.items.id && data.type == delivery).data.value != \"pending\" && findFirst(sort(evy.messages, desc, created_at), fk == marketplace.items.id && data.type == delivery).data.value != \"accept\"}",
 										"title": "",
 										"start_time": "07:00",
 										"end_time": "19:00",
@@ -301,35 +299,33 @@
 										"destination": "{selected_delivery_timeslot}",
 										"sheet": {
 											"id": "c4d5e6f7-a8b9-4c0d-1e2f-3a4b5c6d7e80",
-											"type": "VerticalContainer",
+											"type": "vertical_container",
 											"visible": "true",
 											"title": "Confirmation",
 											"children": [
 												{
 													"id": "d5e6f7a8-b9c0-4d1e-2f3a-4b5c6d7e8f9b",
-													"type": "Text",
+													"type": "text",
 													"visible": "true",
 													"title": "",
-													"subtitle": "Request to deliver the \"{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.title}\" at {formatDatetime(selected_delivery_timeslot, \"EEE do\")} {formatDatetime(selected_delivery_timeslot, \"HH:mm\")}",
+													"subtitle": "Request to deliver the \"{marketplace.items.title}\" at {formatDatetime(selected_delivery_timeslot, \"EEE do\")} {formatDatetime(selected_delivery_timeslot, \"HH:mm\")}",
 													"name": "Delivery confirmation message",
 													"actions": {}
 												},
 												{
 													"id": "e6f7a8b9-c0d1-4e2f-3a4b-5c6d7e8f9a0b",
-													"type": "Button",
+													"type": "button",
 													"actions": {
 														"tap": [
 															{
 																"condition": "",
 																"true": {
 																	"fn": "create",
-																	"service": "475731ac-31aa-4d65-94d2-7032782ae359",
-																	"resource": "messages",
+																	"resource": "evy.messages",
 																	"mode": "inline",
 																	"data": {
-																		"fk": "dc28ed59-298e-493c-8ff3-3e60f2ebccbd.id",
-																		"service": "66b092ae-7cd8-4d67-95b7-30b03568fd90",
-																		"resource": "dc28ed59-298e-493c-8ff3-3e60f2ebccbd",
+																		"fk": "marketplace.items.id",
+																		"resource": "marketplace.items",
 																		"data": "{type: delivery, value: pending, time: selected_delivery_timeslot}"
 																	}
 																},
@@ -360,13 +356,13 @@
 							},
 							{
 								"id": "3ef805de-1386-4f2d-b0f6-54130dc1ba8d",
-								"type": "VerticalContainer",
+								"type": "vertical_container",
 								"visible": "true",
 								"title": "",
 								"children": [
 									{
 										"id": "4aac26f8-7c51-4c09-a6ac-910e5636cbb5",
-										"type": "Text",
+										"type": "text",
 										"visible": "true",
 										"title": "",
 										"subtitle": "Delivered to your door",
@@ -375,14 +371,14 @@
 									},
 									{
 										"id": "e47cc52b-c909-496d-bc9a-af7e8b9d7ed3",
-										"type": "Button",
+										"type": "button",
 										"actions": {
 											"tap": [
 												{
 													"condition": "{length(shipping_address.postcode) > 0}",
 													"true": {
 														"fn": "show",
-														"rowId": "f2a1b0c9-d8e7-4f6a-5b4c-3d2e1f0a9b8c"
+														"row_id": "f2a1b0c9-d8e7-4f6a-5b4c-3d2e1f0a9b8c"
 													},
 													"false": {
 														"fn": "highlight_required",
@@ -391,29 +387,29 @@
 												}
 											]
 										},
-										"visible": "{findFirst(sort(messages, desc, createdAt), fk == dc28ed59-298e-493c-8ff3-3e60f2ebccbd.id && data.type == shipping).data.value != \"pending\" && findFirst(sort(messages, desc, createdAt), fk == dc28ed59-298e-493c-8ff3-3e60f2ebccbd.id && data.type == shipping).data.value != \"accept\"}",
+										"visible": "{findFirst(sort(evy.messages, desc, created_at), fk == marketplace.items.id && data.type == shipping).data.value != \"pending\" && findFirst(sort(evy.messages, desc, created_at), fk == marketplace.items.id && data.type == shipping).data.value != \"accept\"}",
 										"title": "",
 										"label": "Ask to buy",
 										"name": "Ask to buy",
 										"sheet": {
 											"id": "f2a1b0c9-d8e7-4f6a-5b4c-3d2e1f0a9b8c",
-											"type": "VerticalContainer",
+											"type": "vertical_container",
 											"visible": "true",
 											"title": "Confirmation",
 											"children": [
 												{
 													"id": "a3b2c1d0-e9f8-4a7b-6c5d-4e3f2a1b0c9d",
-													"type": "Text",
+													"type": "text",
 													"visible": "true",
 													"title": "",
-													"subtitle": "You are about to request shipping {dc28ed59-298e-493c-8ff3-3e60f2ebccbd.title} to you",
+													"subtitle": "You are about to request shipping {marketplace.items.title} to you",
 													"name": "Shipping confirmation message",
 													"actions": {}
 												},
 												{
 													"id": "b4c3d2e1-f0a9-4b8c-7d6e-5f4a3b2c1d0e",
-													"type": "Text",
-													"visible": "{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.shipping_fee > 0}",
+													"type": "text",
+													"visible": "{marketplace.items.shipping_fee > 0}",
 													"title": "",
 													"subtitle": "Your payment will be held on EVY until shipping has been confirmed (within 48 hours). If the seller does not ship in time, you will be refunded the fee and the request will be cancelled.",
 													"name": "Shipping surcharge held payment notice",
@@ -421,8 +417,8 @@
 												},
 												{
 													"id": "c5d4e3f2-a1b0-4c9d-8e7f-6a5b4c3d2e1f",
-													"type": "Text",
-													"visible": "{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.shipping_fee <= 0}",
+													"type": "text",
+													"visible": "{marketplace.items.shipping_fee <= 0}",
 													"title": "",
 													"subtitle": "Shipping should be confirmed within 48 hours by the seller. If not, the request will be cancelled.",
 													"name": "Shipping no surcharge notice",
@@ -430,20 +426,18 @@
 												},
 												{
 													"id": "d6e5f4a3-b2c1-4d0e-9f8a-7b6c5d4e3f2a",
-													"type": "Button",
+													"type": "button",
 													"actions": {
 														"tap": [
 															{
 																"condition": "",
 																"true": {
 																	"fn": "create",
-																	"service": "475731ac-31aa-4d65-94d2-7032782ae359",
-																	"resource": "messages",
+																	"resource": "evy.messages",
 																	"mode": "inline",
 																	"data": {
-																		"fk": "dc28ed59-298e-493c-8ff3-3e60f2ebccbd.id",
-																		"service": "66b092ae-7cd8-4d67-95b7-30b03568fd90",
-																		"resource": "dc28ed59-298e-493c-8ff3-3e60f2ebccbd",
+																		"fk": "marketplace.items.id",
+																		"resource": "marketplace.items",
 																		"data": "{type: shipping, value: pending, postalcode: shipping_address.postcode}"
 																	}
 																},
@@ -477,82 +471,80 @@
 					},
 					{
 						"id": "f9a8b7c6-d5e4-4f3a-9b8c-7d6e5f4a3b2c",
-						"type": "VerticalContainer",
-						"visible": "{findFirst(sort(messages, desc, createdAt), fk == dc28ed59-298e-493c-8ff3-3e60f2ebccbd.id && data.type == pickup).data.value == \"pending\" || findFirst(sort(messages, desc, createdAt), fk == dc28ed59-298e-493c-8ff3-3e60f2ebccbd.id && data.type == pickup).data.value == \"accept\"}",
+						"type": "vertical_container",
+						"visible": "{findFirst(sort(evy.messages, desc, created_at), fk == marketplace.items.id && data.type == pickup).data.value == \"pending\" || findFirst(sort(evy.messages, desc, created_at), fk == marketplace.items.id && data.type == pickup).data.value == \"accept\"}",
 						"title": "",
 						"children": [
 							{
 								"id": "1a713180-a4a4-4f23-98cf-f3e79140c832",
-								"type": "Text",
-								"visible": "{findFirst(sort(messages, desc, createdAt), fk == dc28ed59-298e-493c-8ff3-3e60f2ebccbd.id && data.type == pickup).data.value == \"accept\"}",
+								"type": "text",
+								"visible": "{findFirst(sort(evy.messages, desc, created_at), fk == marketplace.items.id && data.type == pickup).data.value == \"accept\"}",
 								"title": "",
-								"subtitle": "Pickup confirmed for {formatDatetime(findFirst(sort(messages, desc, createdAt), fk == dc28ed59-298e-493c-8ff3-3e60f2ebccbd.id && data.type == pickup).data.time, \"EEE do\")} at {formatDatetime(findFirst(sort(messages, desc, createdAt), fk == dc28ed59-298e-493c-8ff3-3e60f2ebccbd.id && data.type == pickup).data.time, \"HH:mm\")}",
+								"subtitle": "Pickup confirmed for {formatDatetime(findFirst(sort(evy.messages, desc, created_at), fk == marketplace.items.id && data.type == pickup).data.time, \"EEE do\")} at {formatDatetime(findFirst(sort(evy.messages, desc, created_at), fk == marketplace.items.id && data.type == pickup).data.time, \"HH:mm\")}",
 								"name": "Pickup accepted confirmation",
 								"actions": {}
 							},
 							{
 								"id": "a2f59e42-ffea-41d1-b4dc-9a8fda4423c9",
-								"type": "Map",
-								"source": "{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.transfer_options.pickup}",
+								"type": "map",
+								"source": "{marketplace.items.transfer_options.pickup}",
 								"visible": "true",
 								"title": "",
-								"subtitle": "{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.transfer_options.pickup.postcode}",
+								"subtitle": "{marketplace.items.transfer_options.pickup.postcode}",
 								"name": "Pickup location",
 								"actions": {}
 							},
 							{
 								"id": "a1f3e8d2-4c5b-4a9e-8d1f-2b6c7e9a0d11",
-								"type": "Button",
+								"type": "button",
 								"actions": {
 									"tap": [
 										{
 											"condition": "",
 											"true": {
 												"fn": "show",
-												"rowId": "f1a2b3c4-d5e6-4f7a-8b9c-0d1e2f3a4b5d"
+												"row_id": "f1a2b3c4-d5e6-4f7a-8b9c-0d1e2f3a4b5d"
 											},
 											"false": ""
 										}
 									]
 								},
-								"visible": "{findFirst(sort(messages, desc, createdAt), fk == dc28ed59-298e-493c-8ff3-3e60f2ebccbd.id && data.type == pickup).data.value == \"pending\"}",
+								"visible": "{findFirst(sort(evy.messages, desc, created_at), fk == marketplace.items.id && data.type == pickup).data.value == \"pending\"}",
 								"title": "",
 								"label": "Cancel pickup request",
 								"style": "danger",
 								"name": "Cancel pickup request",
 								"sheet": {
 									"id": "f1a2b3c4-d5e6-4f7a-8b9c-0d1e2f3a4b5d",
-									"type": "VerticalContainer",
+									"type": "vertical_container",
 									"visible": "true",
 									"title": "Confirmation",
 									"children": [
 										{
 											"id": "a2b3c4d5-e6f7-4a8b-9c0d-1e2f3a4b5c6e",
-											"type": "Text",
+											"type": "text",
 											"visible": "true",
 											"title": "",
-											"subtitle": "Cancel pickup request for the \"{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.title}\"?",
+											"subtitle": "Cancel pickup request for the \"{marketplace.items.title}\"?",
 											"name": "Cancel pickup confirmation message",
 											"actions": {}
 										},
 										{
 											"id": "b3c4d5e6-f7a8-4b9c-0d1e-2f3a4b5c6d7f",
-											"type": "Button",
+											"type": "button",
 											"actions": {
 												"tap": [
 													{
 														"condition": "",
 														"true": {
 															"fn": "create",
-															"service": "475731ac-31aa-4d65-94d2-7032782ae359",
-															"resource": "messages",
+															"resource": "evy.messages",
 															"mode": "inline",
 															"data": {
-																"fk": "dc28ed59-298e-493c-8ff3-3e60f2ebccbd.id",
-																"service": "66b092ae-7cd8-4d67-95b7-30b03568fd90",
-																"resource": "dc28ed59-298e-493c-8ff3-3e60f2ebccbd",
-																"parentMessageId": "findFirst(sort(messages, desc, createdAt), fk == dc28ed59-298e-493c-8ff3-3e60f2ebccbd.id && data.type == pickup).id",
-																"data": "{value: cancel, type: pickup, time: findFirst(sort(messages, desc, createdAt), fk == dc28ed59-298e-493c-8ff3-3e60f2ebccbd.id && data.type == pickup).data.time}"
+																"fk": "marketplace.items.id",
+																"resource": "marketplace.items",
+																"parent_message_id": "findFirst(sort(evy.messages, desc, created_at), fk == marketplace.items.id && data.type == pickup).id",
+																"data": "{value: cancel, type: pickup, time: findFirst(sort(evy.messages, desc, created_at), fk == marketplace.items.id && data.type == pickup).data.time}"
 															}
 														},
 														"false": ""
@@ -583,23 +575,23 @@
 					},
 					{
 						"id": "e8a7b6c5-d4e3-4f2a-8b9c-6d5e4f3a2b1c",
-						"type": "VerticalContainer",
-						"visible": "{findFirst(sort(messages, desc, createdAt), fk == dc28ed59-298e-493c-8ff3-3e60f2ebccbd.id && data.type == delivery).data.value == \"pending\" || findFirst(sort(messages, desc, createdAt), fk == dc28ed59-298e-493c-8ff3-3e60f2ebccbd.id && data.type == delivery).data.value == \"accept\"}",
+						"type": "vertical_container",
+						"visible": "{findFirst(sort(evy.messages, desc, created_at), fk == marketplace.items.id && data.type == delivery).data.value == \"pending\" || findFirst(sort(evy.messages, desc, created_at), fk == marketplace.items.id && data.type == delivery).data.value == \"accept\"}",
 						"title": "",
 						"children": [
 							{
 								"id": "0fa0adba-aab4-4a0e-a8a4-fa1236f7dd9c",
-								"type": "Text",
-								"visible": "{findFirst(sort(messages, desc, createdAt), fk == dc28ed59-298e-493c-8ff3-3e60f2ebccbd.id && data.type == delivery).data.value == \"accept\"}",
+								"type": "text",
+								"visible": "{findFirst(sort(evy.messages, desc, created_at), fk == marketplace.items.id && data.type == delivery).data.value == \"accept\"}",
 								"title": "",
-								"subtitle": "Delivery confirmed for {formatDatetime(findFirst(sort(messages, desc, createdAt), fk == dc28ed59-298e-493c-8ff3-3e60f2ebccbd.id && data.type == delivery).data.time, \"EEE do\")} at {formatDatetime(findFirst(sort(messages, desc, createdAt), fk == dc28ed59-298e-493c-8ff3-3e60f2ebccbd.id && data.type == delivery).data.time, \"HH:mm\")}",
+								"subtitle": "Delivery confirmed for {formatDatetime(findFirst(sort(evy.messages, desc, created_at), fk == marketplace.items.id && data.type == delivery).data.time, \"EEE do\")} at {formatDatetime(findFirst(sort(evy.messages, desc, created_at), fk == marketplace.items.id && data.type == delivery).data.time, \"HH:mm\")}",
 								"name": "Delivery accepted confirmation",
 								"actions": {}
 							},
 							{
 								"id": "be5f9dc0-22dc-4d09-8d1f-47297b1ccb07",
-								"type": "Text",
-								"visible": "{findFirst(sort(messages, desc, createdAt), fk == dc28ed59-298e-493c-8ff3-3e60f2ebccbd.id && data.type == delivery).data.value != \"accept\"}",
+								"type": "text",
+								"visible": "{findFirst(sort(evy.messages, desc, created_at), fk == marketplace.items.id && data.type == delivery).data.value != \"accept\"}",
 								"title": "",
 								"subtitle": "Buyer will drop off",
 								"name": "Drop-off note",
@@ -607,57 +599,55 @@
 							},
 							{
 								"id": "b2e4f9d3-5d6c-4b0f-9e2a-3c7d8f0b1e22",
-								"type": "Button",
+								"type": "button",
 								"actions": {
 									"tap": [
 										{
 											"condition": "",
 											"true": {
 												"fn": "show",
-												"rowId": "f7a8b9c0-d1e2-4f3a-4b5c-6d7e8f9a0b1d"
+												"row_id": "f7a8b9c0-d1e2-4f3a-4b5c-6d7e8f9a0b1d"
 											},
 											"false": ""
 										}
 									]
 								},
-								"visible": "{findFirst(sort(messages, desc, createdAt), fk == dc28ed59-298e-493c-8ff3-3e60f2ebccbd.id && data.type == delivery).data.value == \"pending\"}",
+								"visible": "{findFirst(sort(evy.messages, desc, created_at), fk == marketplace.items.id && data.type == delivery).data.value == \"pending\"}",
 								"title": "",
 								"label": "Cancel delivery request",
 								"style": "danger",
 								"name": "Cancel delivery request",
 								"sheet": {
 									"id": "f7a8b9c0-d1e2-4f3a-4b5c-6d7e8f9a0b1d",
-									"type": "VerticalContainer",
+									"type": "vertical_container",
 									"visible": "true",
 									"title": "Confirmation",
 									"children": [
 										{
 											"id": "a8b9c0d1-e2f3-4a4b-5c6d-7e8f9a0b1c2e",
-											"type": "Text",
+											"type": "text",
 											"visible": "true",
 											"title": "",
-											"subtitle": "Cancel delivery request for the \"{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.title}\"?",
+											"subtitle": "Cancel delivery request for the \"{marketplace.items.title}\"?",
 											"name": "Cancel delivery confirmation message",
 											"actions": {}
 										},
 										{
 											"id": "b9c0d1e2-f3a4-4b5c-6d7e-8f9a0b1c2d3f",
-											"type": "Button",
+											"type": "button",
 											"actions": {
 												"tap": [
 													{
 														"condition": "",
 														"true": {
 															"fn": "create",
-															"service": "475731ac-31aa-4d65-94d2-7032782ae359",
-															"resource": "messages",
+															"resource": "evy.messages",
 															"mode": "inline",
 															"data": {
-																"fk": "dc28ed59-298e-493c-8ff3-3e60f2ebccbd.id",
-																"service": "66b092ae-7cd8-4d67-95b7-30b03568fd90",
-																"resource": "dc28ed59-298e-493c-8ff3-3e60f2ebccbd",
-																"parentMessageId": "findFirst(sort(messages, desc, createdAt), fk == dc28ed59-298e-493c-8ff3-3e60f2ebccbd.id && data.type == delivery).id",
-																"data": "{value: cancel, type: delivery, time: findFirst(sort(messages, desc, createdAt), fk == dc28ed59-298e-493c-8ff3-3e60f2ebccbd.id && data.type == delivery).data.time}"
+																"fk": "marketplace.items.id",
+																"resource": "marketplace.items",
+																"parent_message_id": "findFirst(sort(evy.messages, desc, created_at), fk == marketplace.items.id && data.type == delivery).id",
+																"data": "{value: cancel, type: delivery, time: findFirst(sort(evy.messages, desc, created_at), fk == marketplace.items.id && data.type == delivery).data.time}"
 															}
 														},
 														"false": ""
@@ -688,23 +678,23 @@
 					},
 					{
 						"id": "d7b6a5c4-e3f2-4a1b-9c8d-5e4f3a2b1c0d",
-						"type": "VerticalContainer",
-						"visible": "{findFirst(sort(messages, desc, createdAt), fk == dc28ed59-298e-493c-8ff3-3e60f2ebccbd.id && data.type == shipping).data.value == \"pending\" || findFirst(sort(messages, desc, createdAt), fk == dc28ed59-298e-493c-8ff3-3e60f2ebccbd.id && data.type == shipping).data.value == \"accept\"}",
+						"type": "vertical_container",
+						"visible": "{findFirst(sort(evy.messages, desc, created_at), fk == marketplace.items.id && data.type == shipping).data.value == \"pending\" || findFirst(sort(evy.messages, desc, created_at), fk == marketplace.items.id && data.type == shipping).data.value == \"accept\"}",
 						"title": "",
 						"children": [
 							{
 								"id": "ba000cfa-6a3b-4817-8296-0c14f77bc199",
-								"type": "Text",
-								"visible": "{findFirst(sort(messages, desc, createdAt), fk == dc28ed59-298e-493c-8ff3-3e60f2ebccbd.id && data.type == shipping).data.value == \"accept\"}",
+								"type": "text",
+								"visible": "{findFirst(sort(evy.messages, desc, created_at), fk == marketplace.items.id && data.type == shipping).data.value == \"accept\"}",
 								"title": "",
-								"subtitle": "Shipping confirmed to postcode {findFirst(sort(messages, desc, createdAt), fk == dc28ed59-298e-493c-8ff3-3e60f2ebccbd.id && data.type == shipping).data.postalcode}",
+								"subtitle": "Shipping confirmed to postcode {findFirst(sort(evy.messages, desc, created_at), fk == marketplace.items.id && data.type == shipping).data.postalcode}",
 								"name": "Shipping accepted confirmation",
 								"actions": {}
 							},
 							{
 								"id": "e0c7eb86-9e21-4aba-9248-22e97f56c604",
-								"type": "Text",
-								"visible": "{findFirst(sort(messages, desc, createdAt), fk == dc28ed59-298e-493c-8ff3-3e60f2ebccbd.id && data.type == shipping).data.value != \"accept\"}",
+								"type": "text",
+								"visible": "{findFirst(sort(evy.messages, desc, created_at), fk == marketplace.items.id && data.type == shipping).data.value != \"accept\"}",
 								"title": "",
 								"subtitle": "Delivered to your door",
 								"name": "Shipping note",
@@ -712,57 +702,55 @@
 							},
 							{
 								"id": "c3f5a0e4-6e7d-4c1a-0f3b-4d8e9a1c2f33",
-								"type": "Button",
+								"type": "button",
 								"actions": {
 									"tap": [
 										{
 											"condition": "",
 											"true": {
 												"fn": "show",
-												"rowId": "d1e2f3a4-b5c6-4d7e-8f9a-0b1c2d3e4f5b"
+												"row_id": "d1e2f3a4-b5c6-4d7e-8f9a-0b1c2d3e4f5b"
 											},
 											"false": ""
 										}
 									]
 								},
-								"visible": "{findFirst(sort(messages, desc, createdAt), fk == dc28ed59-298e-493c-8ff3-3e60f2ebccbd.id && data.type == shipping).data.value == \"pending\"}",
+								"visible": "{findFirst(sort(evy.messages, desc, created_at), fk == marketplace.items.id && data.type == shipping).data.value == \"pending\"}",
 								"title": "",
 								"label": "Cancel shipping request",
 								"style": "danger",
 								"name": "Cancel shipping request",
 								"sheet": {
 									"id": "d1e2f3a4-b5c6-4d7e-8f9a-0b1c2d3e4f5b",
-									"type": "VerticalContainer",
+									"type": "vertical_container",
 									"visible": "true",
 									"title": "Confirmation",
 									"children": [
 										{
 											"id": "e2f3a4b5-c6d7-4e8f-9a0b-1c2d3e4f5a6c",
-											"type": "Text",
+											"type": "text",
 											"visible": "true",
 											"title": "",
-											"subtitle": "Cancel shipping request for the \"{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.title}\"?",
+											"subtitle": "Cancel shipping request for the \"{marketplace.items.title}\"?",
 											"name": "Cancel shipping confirmation message",
 											"actions": {}
 										},
 										{
 											"id": "f3a4b5c6-d7e8-4f9a-0b1c-2d3e4f5a6b7d",
-											"type": "Button",
+											"type": "button",
 											"actions": {
 												"tap": [
 													{
 														"condition": "",
 														"true": {
 															"fn": "create",
-															"service": "475731ac-31aa-4d65-94d2-7032782ae359",
-															"resource": "messages",
+															"resource": "evy.messages",
 															"mode": "inline",
 															"data": {
-																"fk": "dc28ed59-298e-493c-8ff3-3e60f2ebccbd.id",
-																"service": "66b092ae-7cd8-4d67-95b7-30b03568fd90",
-																"resource": "dc28ed59-298e-493c-8ff3-3e60f2ebccbd",
-																"parentMessageId": "findFirst(sort(messages, desc, createdAt), fk == dc28ed59-298e-493c-8ff3-3e60f2ebccbd.id && data.type == shipping).id",
-																"data": "{value: cancel, type: shipping, time: findFirst(sort(messages, desc, createdAt), fk == dc28ed59-298e-493c-8ff3-3e60f2ebccbd.id && data.type == shipping).data.time}"
+																"fk": "marketplace.items.id",
+																"resource": "marketplace.items",
+																"parent_message_id": "findFirst(sort(evy.messages, desc, created_at), fk == marketplace.items.id && data.type == shipping).id",
+																"data": "{value: cancel, type: shipping, time: findFirst(sort(evy.messages, desc, created_at), fk == marketplace.items.id && data.type == shipping).data.time}"
 															}
 														},
 														"false": ""
@@ -800,8 +788,7 @@
 		"id": "ca47e6c5-da19-4491-8422-adb40d9e8a27",
 		"name": "Create item",
 		"submits": {
-			"service": "66b092ae-7cd8-4d67-95b7-30b03568fd90",
-			"resource": "dc28ed59-298e-493c-8ff3-3e60f2ebccbd"
+			"resource": "marketplace.items"
 		},
 		"pages": [
 			{
@@ -809,9 +796,9 @@
 				"rows": [
 					{
 						"id": "b2c3d4e5-f6a7-4b8c-9d0e-1f2a3b4c5d6e",
-						"type": "SelectPhoto",
-						"source": "{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.photo_ids}",
-						"destination": "{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.photo_ids}",
+						"type": "select_photo",
+						"source": "{marketplace.items.photo_ids}",
+						"destination": "{marketplace.items.photo_ids}",
 						"actions": {
 							"tap": [
 								{
@@ -833,7 +820,7 @@
 							]
 						},
 						"title": "",
-						"subtitle": "{count(dc28ed59-298e-493c-8ff3-3e60f2ebccbd.photo_ids)}/10{if(count(dc28ed59-298e-493c-8ff3-3e60f2ebccbd.photo_ids) == 0, \" - Choose your listing's main photo first.\", \"\")}",
+						"subtitle": "{count(marketplace.items.photo_ids)}/10{if(count(marketplace.items.photo_ids) == 0, \" - Choose your listing's main photo first.\", \"\")}",
 						"icon": "::image-plus::",
 						"content": "Add photos",
 						"visible": "true",
@@ -841,21 +828,21 @@
 					},
 					{
 						"id": "c3d4e5f6-a7b8-4c9d-8e1f-2a3b4c5d6e7f",
-						"type": "Input",
-						"destination": "{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.title}",
+						"type": "input",
+						"destination": "{marketplace.items.title}",
 						"title": "A row title ::star::",
 						"placeholder": "My iPhone ::star:: 20",
 						"visible": "true",
 						"name": "Listing title",
-						"source": "{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.title}",
+						"source": "{marketplace.items.title}",
 						"initial": "Geo",
 						"actions": {}
 					},
 					{
 						"id": "d4e5f6a7-b8c9-4d0e-8f2a-3b4c5d6e7f8a",
-						"type": "Input",
-						"source": "{formatCurrency(dc28ed59-298e-493c-8ff3-3e60f2ebccbd.price)}",
-						"destination": "{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.price: {value: $datum, currency: \"AUD\"}}",
+						"type": "input",
+						"source": "{formatCurrency(marketplace.items.price)}",
+						"destination": "{marketplace.items.price: {value: $datum, currency: \"AUD\"}}",
 						"title": "Price",
 						"placeholder": "",
 						"visible": "true",
@@ -865,9 +852,9 @@
 					},
 					{
 						"id": "e5f6a7b8-c9d0-4e1f-8a3b-4c5d6e7f8a9b",
-						"type": "Dropdown",
-						"source": "{cc2e6c74-a53a-4ed1-97a7-14aa9b9a3e3f}",
-						"destination": "{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.condition_id}",
+						"type": "dropdown",
+						"source": "{marketplace.conditions}",
+						"destination": "{marketplace.items.condition_id}",
 						"title": "Condition",
 						"placeholder": "Choose one",
 						"visible": "true",
@@ -881,7 +868,7 @@
 									"false": "",
 									"true": {
 										"fn": "show",
-										"rowId": "e5f6a7b8-c9d0-4e1f-8a3b-4c5d6e7f8a9b"
+										"row_id": "e5f6a7b8-c9d0-4e1f-8a3b-4c5d6e7f8a9b"
 									}
 								}
 							]
@@ -889,9 +876,9 @@
 					},
 					{
 						"id": "f6a7b8c9-d0e1-4f2a-8b4c-5d6e7f8a9b0c",
-						"type": "Dropdown",
-						"source": "{e9ec5573-bd2f-4ad1-b24f-44a1bf8314e8}",
-						"destination": "{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.selling_reason_id}",
+						"type": "dropdown",
+						"source": "{marketplace.selling_reasons}",
+						"destination": "{marketplace.items.selling_reason_id}",
 						"title": "Selling Reason",
 						"placeholder": "Choose one",
 						"visible": "true",
@@ -905,7 +892,7 @@
 									"false": "",
 									"true": {
 										"fn": "show",
-										"rowId": "f6a7b8c9-d0e1-4f2a-8b4c-5d6e7f8a9b0c"
+										"row_id": "f6a7b8c9-d0e1-4f2a-8b4c-5d6e7f8a9b0c"
 									}
 								}
 							]
@@ -913,14 +900,14 @@
 					},
 					{
 						"id": "a7b8c9d0-e1f2-4a3b-8c5d-6e7f8a9b0c1d",
-						"type": "HorizontalContainer",
+						"type": "horizontal_container",
 						"title": "Dimensions (width x height x depth)",
 						"children": [
 							{
 								"id": "b66e136d-828d-4ed0-ae27-cdc48f7cbffd",
-								"type": "Input",
-								"source": "{formatDimension(dc28ed59-298e-493c-8ff3-3e60f2ebccbd.dimensions.width)}",
-								"destination": "{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.dimensions.width}",
+								"type": "input",
+								"source": "{formatDimension(marketplace.items.dimensions.width)}",
+								"destination": "{marketplace.items.dimensions.width}",
 								"title": "",
 								"placeholder": "Width",
 								"visible": "true",
@@ -930,9 +917,9 @@
 							},
 							{
 								"id": "09a9f654-1c2c-42f8-9a6a-4608fc248478",
-								"type": "Input",
-								"source": "{formatDimension(dc28ed59-298e-493c-8ff3-3e60f2ebccbd.dimensions.height)}",
-								"destination": "{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.dimensions.height}",
+								"type": "input",
+								"source": "{formatDimension(marketplace.items.dimensions.height)}",
+								"destination": "{marketplace.items.dimensions.height}",
 								"title": "",
 								"placeholder": "Height",
 								"visible": "true",
@@ -942,9 +929,9 @@
 							},
 							{
 								"id": "7484ce1a-0771-45d2-a1cf-8b1336cfd018",
-								"type": "Input",
-								"source": "{formatDimension(dc28ed59-298e-493c-8ff3-3e60f2ebccbd.dimensions.length)}",
-								"destination": "{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.dimensions.length}",
+								"type": "input",
+								"source": "{formatDimension(marketplace.items.dimensions.length)}",
+								"destination": "{marketplace.items.dimensions.length}",
 								"title": "",
 								"placeholder": "Length",
 								"visible": "true",
@@ -961,62 +948,62 @@
 				"title": "Create listing",
 				"footer": {
 					"id": "acabbedc-0a5a-4f10-8e0c-3d6cf76d86e8",
-					"type": "Button",
+					"type": "button",
 					"actions": {
 						"tap": [
 							{
-								"condition": "{length(dc28ed59-298e-493c-8ff3-3e60f2ebccbd.title) > 0}",
+								"condition": "{length(marketplace.items.title) > 0}",
 								"false": {
 									"fn": "highlight_required",
-									"field": "dc28ed59-298e-493c-8ff3-3e60f2ebccbd.title"
+									"field": "marketplace.items.title"
 								},
 								"true": ""
 							},
 							{
-								"condition": "{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.price.value >= 1}",
+								"condition": "{marketplace.items.price.value >= 1}",
 								"false": {
 									"fn": "highlight_required",
-									"field": "dc28ed59-298e-493c-8ff3-3e60f2ebccbd.price"
+									"field": "marketplace.items.price"
 								},
 								"true": ""
 							},
 							{
-								"condition": "{length(dc28ed59-298e-493c-8ff3-3e60f2ebccbd.condition_id) > 0}",
+								"condition": "{length(marketplace.items.condition_id) > 0}",
 								"false": {
 									"fn": "highlight_required",
-									"field": "dc28ed59-298e-493c-8ff3-3e60f2ebccbd.condition_id"
+									"field": "marketplace.items.condition_id"
 								},
 								"true": ""
 							},
 							{
-								"condition": "{length(dc28ed59-298e-493c-8ff3-3e60f2ebccbd.selling_reason_id) > 0}",
+								"condition": "{length(marketplace.items.selling_reason_id) > 0}",
 								"false": {
 									"fn": "highlight_required",
-									"field": "dc28ed59-298e-493c-8ff3-3e60f2ebccbd.selling_reason_id"
+									"field": "marketplace.items.selling_reason_id"
 								},
 								"true": ""
 							},
 							{
-								"condition": "{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.dimensions.width > 0}",
+								"condition": "{marketplace.items.dimensions.width > 0}",
 								"false": {
 									"fn": "highlight_required",
-									"field": "dc28ed59-298e-493c-8ff3-3e60f2ebccbd.dimensions.width"
+									"field": "marketplace.items.dimensions.width"
 								},
 								"true": ""
 							},
 							{
-								"condition": "{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.dimensions.height > 0}",
+								"condition": "{marketplace.items.dimensions.height > 0}",
 								"false": {
 									"fn": "highlight_required",
-									"field": "dc28ed59-298e-493c-8ff3-3e60f2ebccbd.dimensions.height"
+									"field": "marketplace.items.dimensions.height"
 								},
 								"true": ""
 							},
 							{
-								"condition": "{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.dimensions.length >= 1}",
+								"condition": "{marketplace.items.dimensions.length >= 1}",
 								"false": {
 									"fn": "highlight_required",
-									"field": "dc28ed59-298e-493c-8ff3-3e60f2ebccbd.dimensions.length"
+									"field": "marketplace.items.dimensions.length"
 								},
 								"true": ""
 							},
@@ -1025,8 +1012,8 @@
 								"false": "",
 								"true": {
 									"fn": "navigate",
-									"flowId": "ca47e6c5-da19-4491-8422-adb40d9e8a27",
-									"pageId": "06b21b52-0845-468a-ace1-170a3b05f3a2"
+									"flow_id": "ca47e6c5-da19-4491-8422-adb40d9e8a27",
+									"page_id": "06b21b52-0845-468a-ace1-170a3b05f3a2"
 								}
 							}
 						]
@@ -1043,8 +1030,8 @@
 				"rows": [
 					{
 						"id": "c9d0e1f2-a3b4-4c5d-8e7f-8a9b0c1d2e3f",
-						"type": "TextArea",
-						"destination": "{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.description}",
+						"type": "text_area",
+						"destination": "{marketplace.items.description}",
 						"title": "",
 						"placeholder": "Write a short description of your product",
 						"visible": "true",
@@ -1056,19 +1043,19 @@
 				"title": "Describe item",
 				"footer": {
 					"id": "cc86c53a-170d-4800-8897-8f99f3697055",
-					"type": "Button",
+					"type": "button",
 					"actions": {
 						"tap": [
 							{
-								"condition": "{length(dc28ed59-298e-493c-8ff3-3e60f2ebccbd.description) > 0}",
+								"condition": "{length(marketplace.items.description) > 0}",
 								"false": {
 									"fn": "highlight_required",
-									"field": "dc28ed59-298e-493c-8ff3-3e60f2ebccbd.description"
+									"field": "marketplace.items.description"
 								},
 								"true": {
 									"fn": "navigate",
-									"flowId": "ca47e6c5-da19-4491-8422-adb40d9e8a27",
-									"pageId": "26dae81a-4122-4b5c-8396-a72a319ccd8b"
+									"flow_id": "ca47e6c5-da19-4491-8422-adb40d9e8a27",
+									"page_id": "26dae81a-4122-4b5c-8396-a72a319ccd8b"
 								}
 							}
 						]
@@ -1085,7 +1072,7 @@
 				"rows": [
 					{
 						"id": "d0e1f2a3-b4c5-4d6e-8f8a-9b0c1d2e3f4a",
-						"type": "TabContainer",
+						"type": "tab_container",
 						"actions": {
 							"tap": [
 								{
@@ -1103,12 +1090,12 @@
 						"children": [
 							{
 								"id": "22222222-2222-4222-8222-222222222201",
-								"type": "VerticalContainer",
+								"type": "vertical_container",
 								"title": "",
 								"children": [
 									{
 										"id": "22222222-2222-4222-8222-222222222202",
-										"type": "Text",
+										"type": "text",
 										"title": "",
 										"subtitle": "Allow buyers to pick up from an address of your choice. You may choose to send the address in advance or 1 hour before pickup.",
 										"visible": "true",
@@ -1117,13 +1104,13 @@
 									},
 									{
 										"id": "586ffa1a-639b-475e-a0b5-1fbe51083274",
-										"type": "TextAction",
+										"type": "text_action",
 										"actions": {
 											"tap": [
 												{
 													"true": {
 														"fn": "show",
-														"rowId": "3bb1bad9-a193-4eef-825e-da6f63a1a38e"
+														"row_id": "3bb1bad9-a193-4eef-825e-da6f63a1a38e"
 													},
 													"false": "",
 													"condition": ""
@@ -1137,10 +1124,10 @@
 										"name": "Pickup address",
 										"sheet": {
 											"id": "3bb1bad9-a193-4eef-825e-da6f63a1a38e",
-											"type": "Search",
+											"type": "search",
 											"child": {
 												"id": "e27d87b7-aa2c-4672-aaac-9e1222928f45",
-												"type": "Text",
+												"type": "text",
 												"title": "{formatAddressLine1($datum)}",
 												"subtitle": "{formatAddressLine2($datum)}",
 												"visible": "true",
@@ -1157,32 +1144,29 @@
 											"actions": {
 												"tap": [
 													{
-														"condition": "{length(dc28ed59-298e-493c-8ff3-3e60f2ebccbd.transfer_options.pickup.address_id) == 0}",
+														"condition": "{length(marketplace.items.transfer_options.pickup.address_id) == 0}",
 														"true": {
 															"fn": "create",
-															"service": "475731ac-31aa-4d65-94d2-7032782ae359",
-															"resource": "addresses",
-															"mode": "fromPath",
-															"dataPath": "pickup_address",
-															"idDestination": "{pickup_address.id}"
+															"resource": "evy.addresses",
+															"mode": "from_path",
+															"data_path": "pickup_address",
+															"id_destination": "{pickup_address.id}"
 														},
 														"false": {
 															"fn": "update",
-															"service": "475731ac-31aa-4d65-94d2-7032782ae359",
-															"resource": "addresses",
+															"resource": "evy.addresses",
 															"mode": "store",
 															"filter": {
-																"id": "dc28ed59-298e-493c-8ff3-3e60f2ebccbd.transfer_options.pickup.address_id"
+																"id": "marketplace.items.transfer_options.pickup.address_id"
 															},
-															"changesPath": "pickup_address"
+															"changes_path": "pickup_address"
 														}
 													},
 													{
 														"condition": "",
 														"true": {
 															"fn": "update",
-															"service": "66b092ae-7cd8-4d67-95b7-30b03568fd90",
-															"resource": "dc28ed59-298e-493c-8ff3-3e60f2ebccbd",
+															"resource": "marketplace.items",
 															"mode": "draft",
 															"changes": {
 																"transfer_options.pickup.address_id": "pickup_address.id",
@@ -1199,7 +1183,7 @@
 									},
 									{
 										"id": "22222222-2222-4222-8222-222222222206",
-										"type": "Input",
+										"type": "input",
 										"destination": "{pickup_address.instructions}",
 										"title": "",
 										"placeholder": "Additional information",
@@ -1210,14 +1194,13 @@
 										"actions": {
 											"submit": [
 												{
-													"condition": "{length(dc28ed59-298e-493c-8ff3-3e60f2ebccbd.transfer_options.pickup.address_id) > 0}",
+													"condition": "{length(marketplace.items.transfer_options.pickup.address_id) > 0}",
 													"true": {
 														"fn": "update",
-														"service": "475731ac-31aa-4d65-94d2-7032782ae359",
-														"resource": "addresses",
+														"resource": "evy.addresses",
 														"mode": "store",
 														"filter": {
-															"id": "dc28ed59-298e-493c-8ff3-3e60f2ebccbd.transfer_options.pickup.address_id"
+															"id": "marketplace.items.transfer_options.pickup.address_id"
 														},
 														"changes": {
 															"instructions": "pickup_address.instructions"
@@ -1230,9 +1213,9 @@
 									},
 									{
 										"id": "92890469-10f3-43d3-9895-fb419425baf9",
-										"type": "Input",
-										"source": "{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.transfer_options.pickup.lead_time_hours}",
-										"destination": "{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.transfer_options.pickup.lead_time_hours}",
+										"type": "input",
+										"source": "{marketplace.items.transfer_options.pickup.lead_time_hours}",
+										"destination": "{marketplace.items.transfer_options.pickup.lead_time_hours}",
 										"title": "Lead time (hours)",
 										"placeholder": "Hours of notice required",
 										"visible": "true",
@@ -1242,7 +1225,7 @@
 									},
 									{
 										"id": "22222222-2222-4222-8222-222222222207",
-										"type": "Text",
+										"type": "text",
 										"title": "When",
 										"subtitle": "When are you available for buyers to inspect or pick up this item",
 										"visible": "true",
@@ -1251,10 +1234,10 @@
 									},
 									{
 										"id": "22222222-2222-4222-8222-222222222208",
-										"type": "Calendar",
-										"source": "{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.pickup_selection}",
-										"destination": "{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.pickup_selection}",
-										"secondary": "{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.delivery_selection}",
+										"type": "calendar",
+										"source": "{marketplace.items.pickup_selection}",
+										"destination": "{marketplace.items.pickup_selection}",
+										"secondary": "{marketplace.items.delivery_selection}",
 										"actions": {
 											"tap": [
 												{
@@ -1266,7 +1249,7 @@
 													"false": ""
 												}
 											],
-											"tap-row": [
+											"tap_row": [
 												{
 													"condition": "",
 													"true": {
@@ -1276,7 +1259,7 @@
 													"false": ""
 												}
 											],
-											"tap-column": [
+											"tap_column": [
 												{
 													"condition": "",
 													"true": {
@@ -1304,12 +1287,12 @@
 							},
 							{
 								"id": "22222222-2222-4222-8222-222222222209",
-								"type": "VerticalContainer",
+								"type": "vertical_container",
 								"title": "",
 								"children": [
 									{
 										"id": "22222222-2222-4222-8222-222222222210",
-										"type": "Text",
+										"type": "text",
 										"title": "",
 										"subtitle": "Offer to deliver directly to the buyer for free or for a small surcharge.",
 										"visible": "true",
@@ -1318,19 +1301,19 @@
 									},
 									{
 										"id": "22222222-2222-4222-8222-222222222211",
-										"type": "Input",
-										"destination": "{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.delivery_fee}",
+										"type": "input",
+										"destination": "{marketplace.items.delivery_fee}",
 										"title": "Surcharge",
 										"placeholder": "Do you want to charge for delivery?",
 										"visible": "true",
 										"name": "Delivery surcharge",
-										"source": "{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.delivery_fee}",
+										"source": "{marketplace.items.delivery_fee}",
 										"initial": "1",
 										"actions": {}
 									},
 									{
 										"id": "22222222-2222-4222-8222-222222222212",
-										"type": "Text",
+										"type": "text",
 										"title": "How far",
 										"subtitle": "How long can you travel to deliver this item",
 										"visible": "true",
@@ -1339,9 +1322,9 @@
 									},
 									{
 										"id": "22222222-2222-4222-8222-222222222213",
-										"type": "InlinePicker",
-										"source": "{e82e1baa-6d33-4649-b495-4e10a4d1d8bf}",
-										"destination": "{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.distance}",
+										"type": "inline_picker",
+										"source": "{marketplace.durations}",
+										"destination": "{marketplace.items.distance}",
 										"actions": {
 											"tap": [
 												{
@@ -1362,7 +1345,7 @@
 									},
 									{
 										"id": "22222222-2222-4222-8222-222222222214",
-										"type": "Text",
+										"type": "text",
 										"title": "When",
 										"subtitle": "When are you available to deliver this item",
 										"visible": "true",
@@ -1371,10 +1354,10 @@
 									},
 									{
 										"id": "22222222-2222-4222-8222-222222222215",
-										"type": "Calendar",
-										"source": "{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.delivery_selection}",
-										"destination": "{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.delivery_selection}",
-										"secondary": "{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.pickup_selection}",
+										"type": "calendar",
+										"source": "{marketplace.items.delivery_selection}",
+										"destination": "{marketplace.items.delivery_selection}",
+										"secondary": "{marketplace.items.pickup_selection}",
 										"actions": {
 											"tap": [
 												{
@@ -1386,7 +1369,7 @@
 													"false": ""
 												}
 											],
-											"tap-row": [
+											"tap_row": [
 												{
 													"condition": "",
 													"true": {
@@ -1396,7 +1379,7 @@
 													"false": ""
 												}
 											],
-											"tap-column": [
+											"tap_column": [
 												{
 													"condition": "",
 													"true": {
@@ -1424,12 +1407,12 @@
 							},
 							{
 								"id": "22222222-2222-4222-8222-222222222216",
-								"type": "VerticalContainer",
+								"type": "vertical_container",
 								"title": "",
 								"children": [
 									{
 										"id": "22222222-2222-4222-8222-222222222217",
-										"type": "Text",
+										"type": "text",
 										"title": "",
 										"subtitle": "Postal shipping at the buyer's expense. When requested, you will have 48 hours to ship the item or the request will be cancelled.",
 										"visible": "true",
@@ -1438,31 +1421,31 @@
 									},
 									{
 										"id": "be9e0bfd-066a-4c64-b058-a7bc4c61442b",
-										"type": "Input",
-										"destination": "{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.shipping_fee}",
+										"type": "input",
+										"destination": "{marketplace.items.shipping_fee}",
 										"title": "Shipping fee",
 										"placeholder": "How much will it cost to ship?",
 										"visible": "true",
 										"name": "Shipping fee",
-										"source": "{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.shipping_fee}",
+										"source": "{marketplace.items.shipping_fee}",
 										"initial": "1",
 										"actions": {}
 									},
 									{
 										"id": "22222222-2222-4222-8222-222222222218",
-										"type": "Input",
-										"destination": "{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.shipping_source_postal_code}",
+										"type": "input",
+										"destination": "{marketplace.items.shipping_source_postal_code}",
 										"title": "Where from",
 										"placeholder": "Postal code you will be shipping from",
 										"visible": "true",
 										"name": "Shipping origin postal code",
-										"source": "{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.shipping_source_postal_code}",
+										"source": "{marketplace.items.shipping_source_postal_code}",
 										"initial": "2018",
 										"actions": {}
 									},
 									{
 										"id": "22222222-2222-4222-8222-222222222219",
-										"type": "Text",
+										"type": "text",
 										"title": "Where to",
 										"subtitle": "Select how far you are willing to ship",
 										"visible": "true",
@@ -1471,9 +1454,9 @@
 									},
 									{
 										"id": "22222222-2222-4222-8222-222222222220",
-										"type": "InlinePicker",
-										"source": "{2532b561-3b14-458b-9039-307e99c4a4ba}",
-										"destination": "{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.shipping_destination_areas}",
+										"type": "inline_picker",
+										"source": "{marketplace.areas}",
+										"destination": "{marketplace.items.shipping_destination_areas}",
 										"actions": {
 											"tap": [
 												{
@@ -1494,9 +1477,9 @@
 									},
 									{
 										"id": "22222222-2222-4222-8222-222222222221",
-										"type": "Input",
-										"source": "{formatDimension(dc28ed59-298e-493c-8ff3-3e60f2ebccbd.dimensions.weight)}",
-										"destination": "{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.dimensions.weight}",
+										"type": "input",
+										"source": "{formatDimension(marketplace.items.dimensions.weight)}",
+										"destination": "{marketplace.items.dimensions.weight}",
 										"title": "Weight (kg)",
 										"placeholder": "Weight",
 										"visible": "true",
@@ -1517,19 +1500,19 @@
 				"title": "Pickup & delivery",
 				"footer": {
 					"id": "b1600fd2-aac2-4399-8a94-72baca75b9ba",
-					"type": "Button",
+					"type": "button",
 					"actions": {
 						"tap": [
 							{
-								"condition": "{count(dc28ed59-298e-493c-8ff3-3e60f2ebccbd.pickup_selection) > 0 || count(dc28ed59-298e-493c-8ff3-3e60f2ebccbd.delivery_selection) > 0 || count(dc28ed59-298e-493c-8ff3-3e60f2ebccbd.shipping_destination_areas) > 0}",
+								"condition": "{count(marketplace.items.pickup_selection) > 0 || count(marketplace.items.delivery_selection) > 0 || count(marketplace.items.shipping_destination_areas) > 0}",
 								"false": {
 									"fn": "highlight_required",
-									"field": "dc28ed59-298e-493c-8ff3-3e60f2ebccbd.pickup_selection"
+									"field": "marketplace.items.pickup_selection"
 								},
 								"true": {
 									"fn": "navigate",
-									"flowId": "ca47e6c5-da19-4491-8422-adb40d9e8a27",
-									"pageId": "25a3269b-344c-477d-89c8-b2f5426a5d91"
+									"flow_id": "ca47e6c5-da19-4491-8422-adb40d9e8a27",
+									"page_id": "25a3269b-344c-477d-89c8-b2f5426a5d91"
 								}
 							}
 						]
@@ -1546,7 +1529,7 @@
 				"rows": [
 					{
 						"id": "e1f2a3b4-c5d6-4e7f-8a9b-0c1d2e3f4a5b",
-						"type": "Text",
+						"type": "text",
 						"title": "",
 						"subtitle": "Payment will be made by the buyers on pickup",
 						"visible": "true",
@@ -1555,13 +1538,13 @@
 					},
 					{
 						"id": "f2a3b4c5-d6e7-4f8a-9b0c-1d2e3f4a5b6c",
-						"type": "VerticalContainer",
+						"type": "vertical_container",
 						"title": "",
 						"children": [
 							{
 								"id": "33333333-3333-4333-8333-333333333301",
-								"type": "TextSelect",
-								"destination": "{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.payment_cash}",
+								"type": "text_select",
+								"destination": "{marketplace.items.payment_cash}",
 								"actions": {
 									"tap": [
 										{
@@ -1578,12 +1561,12 @@
 								"text": "Let buyers know you will accept cash on pickup",
 								"visible": "true",
 								"name": "Accept cash payment",
-								"source": "{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.payment_cash}"
+								"source": "{marketplace.items.payment_cash}"
 							},
 							{
 								"id": "33333333-3333-4333-8333-333333333302",
-								"type": "TextSelect",
-								"destination": "{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.payment_app}",
+								"type": "text_select",
+								"destination": "{marketplace.items.payment_app}",
 								"actions": {
 									"tap": [
 										{
@@ -1600,7 +1583,7 @@
 								"text": "Benefit from EVY seller protection when accepting payments through the app on pickup\\n- Cards are verified before the purchase\\n- Payment is transferred immediately when both buyer and seller confirm using a temporary code",
 								"visible": "true",
 								"name": "Accept app payment",
-								"source": "{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.payment_app}"
+								"source": "{marketplace.items.payment_app}"
 							}
 						],
 						"visible": "true",
@@ -1611,18 +1594,18 @@
 				"title": "Payment options",
 				"footer": {
 					"id": "db46724f-c8f0-43cb-b888-6a23e4ca76cb",
-					"type": "Button",
+					"type": "button",
 					"actions": {
 						"tap": [
 							{
-								"condition": "{dc28ed59-298e-493c-8ff3-3e60f2ebccbd.payment_cash == true || dc28ed59-298e-493c-8ff3-3e60f2ebccbd.payment_app == true}",
+								"condition": "{marketplace.items.payment_cash == true || marketplace.items.payment_app == true}",
 								"false": {
 									"fn": "highlight_required",
-									"field": "dc28ed59-298e-493c-8ff3-3e60f2ebccbd.payment_app"
+									"field": "marketplace.items.payment_app"
 								},
 								"true": {
 									"fn": "show",
-									"rowId": "a4b5c6d7-e8f9-4a0b-1c2d-3e4f5a6b7c8d"
+									"row_id": "a4b5c6d7-e8f9-4a0b-1c2d-3e4f5a6b7c8d"
 								}
 							}
 						]
@@ -1633,20 +1616,20 @@
 					"name": "Submit listing",
 					"sheet": {
 						"id": "a4b5c6d7-e8f9-4a0b-1c2d-3e4f5a6b7c8d",
-						"type": "VerticalContainer",
+						"type": "vertical_container",
 						"visible": "true",
 						"title": "Confirmation",
 						"children": [
 							{
 								"id": "b5c6d7e8-f9a0-4b1c-2d3e-4f5a6b7c8d9e",
-								"type": "TextExpand",
+								"type": "text_expand",
 								"actions": {
 									"tap": [
 										{
 											"condition": "",
 											"true": {
 												"fn": "expand_text",
-												"rowId": "b5c6d7e8-f9a0-4b1c-2d3e-4f5a6b7c8d9e"
+												"row_id": "b5c6d7e8-f9a0-4b1c-2d3e-4f5a6b7c8d9e"
 											},
 											"false": ""
 										}
@@ -1659,7 +1642,7 @@
 							},
 							{
 								"id": "c6d7e8f9-a0b1-4c2d-3e4f-5a6b7c8d9e0f",
-								"type": "Button",
+								"type": "button",
 								"actions": {
 									"tap": [
 										{
@@ -1667,8 +1650,7 @@
 											"false": "",
 											"true": {
 												"fn": "create",
-												"service": "66b092ae-7cd8-4d67-95b7-30b03568fd90",
-												"resource": "dc28ed59-298e-493c-8ff3-3e60f2ebccbd",
+												"resource": "marketplace.items",
 												"mode": "submit"
 											}
 										},
@@ -1683,8 +1665,8 @@
 											"condition": "",
 											"true": {
 												"fn": "navigate",
-												"flowId": "f267c629-2594-4770-8cec-d5324ebb4058",
-												"pageId": "55e427ac-263c-441f-9673-f60627b1baea"
+												"flow_id": "f267c629-2594-4770-8cec-d5324ebb4058",
+												"page_id": "55e427ac-263c-441f-9673-f60627b1baea"
 											},
 											"false": ""
 										}

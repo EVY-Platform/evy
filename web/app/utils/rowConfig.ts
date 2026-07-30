@@ -51,8 +51,10 @@ export function buildRowConfigFromRecord(record: DATA_EVY_Row): RowConfig {
 		visible: record.visible,
 		title: typeof data.title === "string" ? data.title : "",
 		actions: normalizeStoredRowActions(data.actions),
-		...(childRowId !== undefined ? { childRowId } : {}),
-		...(sheetRowId !== undefined ? { sheetRowId } : {}),
-		...(childrenRowIds !== undefined ? { childrenRowIds } : {}),
+		...(childRowId !== undefined ? { child_row_id: childRowId } : {}),
+		...(sheetRowId !== undefined ? { sheet_row_id: sheetRowId } : {}),
+		...(childrenRowIds !== undefined
+			? { children_row_ids: childrenRowIds }
+			: {}),
 	} as RowConfig;
 }

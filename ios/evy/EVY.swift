@@ -48,20 +48,19 @@ enum EVYSyncState {
   }
 }
 
-/// Record ids this device owns within one service resource.
+/// Record ids this device owns within one resource.
 ///
 /// Property names are the wire keys, both outbound and in: `SyncParams` uses synthesised
 /// `Codable` with no `CodingKeys`, the sync request schema is `additionalProperties: false`,
-/// and the `EVY_OWNED_SERVICE_RESOURCES` launch override is parsed with these same names.
-struct OwnedServiceResource: Codable {
-  let service: String
+/// and the `EVY_OWNED_RESOURCES` launch override is parsed with these same names.
+struct OwnedResource: Codable {
   let resource: String
   let ids: [String]
 }
 
 struct SyncParams: Encodable {
   let cursor: String?
-  let ownedServiceResources: [OwnedServiceResource]
+  let owned_resources: [OwnedResource]
 }
 
 struct CoreAPIParams<T: Encodable>: Encodable {
@@ -71,13 +70,11 @@ struct CoreAPIParams<T: Encodable>: Encodable {
 }
 
 struct SyncRow: Codable {
-  let service: String
   let resource: String
   let value: EVYJson
 }
 
 struct SyncError: Codable {
-  let service: String
   let resource: String
   let message: String
 }
@@ -103,7 +100,7 @@ struct EVY {
   static let draftStore = EVYDraftStore(dataStore: cacheStore)
   static var activeCacheScopeId: String?
 
-  /// Injectable clock so tests can pin `now()` and generated `createdAt` values
+  /// Injectable clock so tests can pin `now()` and generated `created_at` values
   static var nowProvider: () -> Date = { Date() }
 
   /// When set (e.g. in unit tests), skips fire-and-forget create/update JSON-RPC.

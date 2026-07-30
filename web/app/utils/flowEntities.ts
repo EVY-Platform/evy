@@ -78,9 +78,9 @@ export function collectSubtreeRowIds(
 		collectSubtreeRowIds(sheetRowId, rowsById, visited);
 	}
 
-	const childrenRowIds = row.data.children_row_ids;
-	if (Array.isArray(childrenRowIds)) {
-		for (const childId of childrenRowIds) {
+	const children_row_ids = row.data.children_row_ids;
+	if (Array.isArray(children_row_ids)) {
+		for (const childId of children_row_ids) {
 			if (typeof childId === "string") {
 				collectSubtreeRowIds(childId, rowsById, visited);
 			}
@@ -102,15 +102,15 @@ export function collectReachableEntityIds(
 	if (!flow) return { flowIds, pageIds, rowIds };
 	flowIds.add(flow.id);
 
-	for (const pageId of flow.pageIds) {
+	for (const pageId of flow.page_ids) {
 		const page = maps.pagesById[pageId];
 		if (!page) continue;
 		pageIds.add(page.id);
-		for (const rowId of page.rowIds) {
+		for (const rowId of page.row_ids) {
 			collectSubtreeRowIds(rowId, maps.rowsById, rowIds);
 		}
-		if (page.footerRowId) {
-			collectSubtreeRowIds(page.footerRowId, maps.rowsById, rowIds);
+		if (page.footer_row_id) {
+			collectSubtreeRowIds(page.footer_row_id, maps.rowsById, rowIds);
 		}
 	}
 
@@ -151,13 +151,16 @@ export function collectionsEqual(
 function withoutTimestamps(collections: FlowEntityCollections) {
 	return {
 		flows: collections.flows.map(
-			({ createdAt: _createdAt, updatedAt: _updatedAt, ...flow }) => flow,
+			({ created_at: _created_at, updated_at: _updated_at, ...flow }) =>
+				flow,
 		),
 		pages: collections.pages.map(
-			({ createdAt: _createdAt, updatedAt: _updatedAt, ...page }) => page,
+			({ created_at: _created_at, updated_at: _updated_at, ...page }) =>
+				page,
 		),
 		rows: collections.rows.map(
-			({ createdAt: _createdAt, updatedAt: _updatedAt, ...row }) => row,
+			({ created_at: _created_at, updated_at: _updated_at, ...row }) =>
+				row,
 		),
 	};
 }

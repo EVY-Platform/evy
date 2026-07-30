@@ -58,7 +58,7 @@ export function findPageReferences(
 	if (!flow) return [];
 
 	const results: PageReferenceEntry[] = [];
-	for (const pageId of flow.pageIds) {
+	for (const pageId of flow.page_ids) {
 		const page = pagesById[pageId];
 		if (!page) continue;
 		const pageLabel = breadcrumbLabelForPage(page);

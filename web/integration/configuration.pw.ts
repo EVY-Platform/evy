@@ -1,9 +1,6 @@
 import { expect, test } from "@playwright/test";
 import type { UI_RowActions } from "evy-types";
-import {
-	TEST_RESOURCE_ID,
-	TEST_SERVICE_ID,
-} from "../testFixtures/resourceCatalog";
+import { TEST_RESOURCE_ID } from "../testFixtures/resourceCatalog";
 import { initFullFlows, openAppWithTestFlows, tapAction } from "./flowFixtures";
 import {
 	getConfigPanel,
@@ -16,7 +13,6 @@ import {
 const TEST_SERVICE_RESOURCES = [
 	{
 		id: TEST_RESOURCE_ID.RECORDS,
-		serviceId: TEST_SERVICE_ID,
 		name: "item",
 	},
 ];
@@ -31,11 +27,11 @@ test.describe("Row configuration", () => {
 				title: "Test Page",
 				rows: [
 					{
-						type: "HorizontalContainer",
+						type: "horizontal_container",
 						title: "Container Row",
 						children: [
 							{
-								type: "Input",
+								type: "input",
 								title: "Input Row",
 								placeholder: "First placeholder",
 							},
@@ -56,11 +52,11 @@ test.describe("Row configuration", () => {
 			page.getByRole("button", { name: "Select page Test Page" }),
 		).toBeVisible();
 		await expect(
-			configPanel.getByRole("button", { name: /^Input Row: Input$/ }),
+			configPanel.getByRole("button", { name: /^Input Row: input$/ }),
 		).toBeVisible();
 
 		await configPanel
-			.getByRole("button", { name: /^Input Row: Input$/ })
+			.getByRole("button", { name: /^Input Row: input$/ })
 			.click();
 
 		await expect(configPanel.getByLabel("Page title")).toHaveCount(0);
@@ -69,10 +65,10 @@ test.describe("Row configuration", () => {
 				name: "Configure nested row at depth 1: Input Row",
 			}),
 		).toBeVisible();
-		await expect(configPanel.getByLabel("placeholder")).toHaveText(
+		await expect(configPanel.getByLabel("placeholder")).toHaveValue(
 			"First placeholder",
 		);
-		await expect(configPanel.getByLabel("title")).toHaveText("Input Row");
+		await expect(configPanel.getByLabel("title")).toHaveValue("Input Row");
 	});
 
 	test("should display row configurations in configuration panel", async ({
@@ -84,7 +80,7 @@ test.describe("Row configuration", () => {
 				title: "Test Page",
 				rows: [
 					{
-						type: "Text",
+						type: "text",
 						title: "Test Text Row",
 						subtitle: "Initial subtitle content",
 					},
@@ -108,7 +104,7 @@ test.describe("Row configuration", () => {
 		await subtitleInput.clear();
 		await subtitleInput.fill("Updated subtitle text");
 
-		await expect(subtitleInput).toHaveText("Updated subtitle text");
+		await expect(subtitleInput).toHaveValue("Updated subtitle text");
 	});
 
 	test("should display and edit Source binding in configuration panel", async ({
@@ -120,7 +116,7 @@ test.describe("Row configuration", () => {
 				title: "Test Page",
 				rows: [
 					{
-						type: "Input",
+						type: "input",
 						source: "{initial}",
 						title: "Binding row",
 						placeholder: "Enter value",
@@ -133,12 +129,12 @@ test.describe("Row configuration", () => {
 		const configPanel = getConfigPanel(page);
 		const sourceInput = configPanel.getByLabel("Row data source");
 		await expect(sourceInput).toBeVisible();
-		await expect(sourceInput).toHaveText("{initial}");
+		await expect(sourceInput).toHaveValue("{initial}");
 
 		await sourceInput.clear();
 		await sourceInput.fill("{items}");
 
-		await expect(sourceInput).toHaveText("{items}");
+		await expect(sourceInput).toHaveValue("{items}");
 	});
 
 	test("should display and edit no_results text on a Search row in configuration panel", async ({
@@ -150,7 +146,7 @@ test.describe("Row configuration", () => {
 				title: "Test Page",
 				rows: [
 					{
-						type: "Search",
+						type: "search",
 						source: "{$api:place_search}",
 						destination: "{selected_item}",
 						title: "Search row",
@@ -166,11 +162,11 @@ test.describe("Row configuration", () => {
 			exact: true,
 		});
 		await expect(noResultsInput).toBeVisible();
-		await expect(noResultsInput).toHaveText("");
+		await expect(noResultsInput).toHaveValue("");
 
 		await noResultsInput.fill("No addresses found");
 
-		await expect(noResultsInput).toHaveText("No addresses found");
+		await expect(noResultsInput).toHaveValue("No addresses found");
 	});
 
 	test("should display InputList format in configuration panel", async ({
@@ -182,7 +178,7 @@ test.describe("Row configuration", () => {
 				title: "Test Page",
 				rows: [
 					{
-						type: "InputList",
+						type: "input_list",
 						title: "Selling Reasons",
 						placeholder: "Search for reasons",
 						format: "{$datum.value}",
@@ -198,12 +194,12 @@ test.describe("Row configuration", () => {
 		const configPanel = getConfigPanel(page);
 		const formatInput = configPanel.getByLabel("format");
 		await expect(formatInput).toBeVisible();
-		await expect(formatInput).toHaveText("{$datum.value}");
+		await expect(formatInput).toHaveValue("{$datum.value}");
 
 		await formatInput.clear();
 		await formatInput.fill("{$datum.label}");
 
-		await expect(formatInput).toHaveText("{$datum.label}");
+		await expect(formatInput).toHaveValue("{$datum.label}");
 	});
 
 	// The declaration is one value, not two: the schema requires a non-empty
@@ -220,7 +216,7 @@ test.describe("Row configuration", () => {
 					title: "Test Page",
 					rows: [
 						{
-							type: "Text",
+							type: "text",
 							title: "Hello",
 							visible: "true",
 						},
@@ -238,10 +234,10 @@ test.describe("Row configuration", () => {
 		await expect(targetSelect).toBeVisible();
 		await expect(targetSelect).toHaveAttribute("data-value", "");
 
-		await popoverSelect(page, targetSelect, "Test Service / Item");
+		await popoverSelect(page, targetSelect, "Item");
 		await expect(targetSelect).toHaveAttribute(
 			"data-value",
-			`${TEST_SERVICE_ID}/${TEST_RESOURCE_ID.RECORDS}`,
+			TEST_RESOURCE_ID.RECORDS,
 		);
 
 		await popoverSelect(page, targetSelect, "None");
@@ -257,7 +253,7 @@ test.describe("Row configuration", () => {
 				title: "Test Page",
 				rows: [
 					{
-						type: "Button",
+						type: "button",
 						title: "",
 						label: "Test Button",
 						actions: tapAction({ fn: "close" }),
@@ -303,7 +299,7 @@ test.describe("Row configuration", () => {
 				title: "Test Page",
 				rows: [
 					{
-						type: "Button",
+						type: "button",
 						title: "",
 						label: "Test Button",
 						actions: tapAction({ fn: "close" }),
@@ -353,7 +349,7 @@ test.describe("Row configuration", () => {
 				title: "Test Page",
 				rows: [
 					{
-						type: "Button",
+						type: "button",
 						title: "",
 						label: "Nav Button",
 						actions: tapAction({ fn: "close" }),
@@ -403,7 +399,7 @@ test.describe("Row configuration", () => {
 							rows: [
 								{
 									id: "name_input",
-									type: "Input",
+									type: "input",
 									source: "",
 									title: "Name",
 									value: `{${TEST_RESOURCE_ID.RECORDS}.name}`,
@@ -412,7 +408,7 @@ test.describe("Row configuration", () => {
 								},
 								{
 									id: "submit_button",
-									type: "Button",
+									type: "button",
 									source: "",
 									title: "",
 									label: "Submit",
@@ -497,7 +493,7 @@ test.describe("Row configuration", () => {
 				title: "Test Page",
 				rows: [
 					{
-						type: "Text",
+						type: "text",
 						title: "No Action Row",
 						subtitle: "Some subtitle",
 					},
@@ -525,14 +521,14 @@ test.describe("Row configuration", () => {
 				title: "Test Page",
 				rows: [
 					{
-						type: "Input",
+						type: "input",
 						title: "Price",
 						value: "{price}",
 						placeholder: "",
 						destination: "{price}",
 					},
 					{
-						type: "Button",
+						type: "button",
 						title: "",
 						label: "Check",
 						actions: tapAction({ fn: "close" }),
@@ -576,14 +572,14 @@ test.describe("Row configuration", () => {
 				title: "Test Page",
 				rows: [
 					{
-						type: "Input",
+						type: "input",
 						title: "Items",
 						value: "{items}",
 						placeholder: "",
 						destination: "{items}",
 					},
 					{
-						type: "Button",
+						type: "button",
 						title: "",
 						label: "Validate",
 						actions: tapAction({ fn: "close" }),
@@ -630,21 +626,21 @@ test.describe("Row configuration", () => {
 				title: "Test Page",
 				rows: [
 					{
-						type: "Input",
+						type: "input",
 						title: "Name",
 						value: "{name}",
 						placeholder: "",
 						destination: "{name}",
 					},
 					{
-						type: "Input",
+						type: "input",
 						title: "Email",
 						value: "{email}",
 						placeholder: "",
 						destination: "{email}",
 					},
 					{
-						type: "Button",
+						type: "button",
 						title: "",
 						label: "Send",
 						actions: tapAction({ fn: "close" }),
@@ -695,7 +691,7 @@ test.describe("Row configuration", () => {
 				title: "Test Page",
 				rows: [
 					{
-						type: "Button",
+						type: "button",
 						title: "",
 						label: "Cancel Test",
 						actions: tapAction({ fn: "close" }),
@@ -737,7 +733,7 @@ test.describe("Row configuration", () => {
 				title: "Test Page",
 				rows: [
 					{
-						type: "Button",
+						type: "button",
 						title: "",
 						label: "Multi Action",
 						actions: {
@@ -752,7 +748,6 @@ test.describe("Row configuration", () => {
 									false: "",
 									true: {
 										fn: "create",
-										service: TEST_SERVICE_ID,
 										resource: TEST_RESOURCE_ID.RECORDS,
 										mode: "submit",
 									},
@@ -790,12 +785,11 @@ test.describe("Row configuration", () => {
 					title: "Create Page",
 					rows: [
 						{
-							type: "Button",
+							type: "button",
 							title: "",
 							label: "Inline Create",
 							actions: tapAction({
 								fn: "create",
-								service: TEST_SERVICE_ID,
 								resource: TEST_RESOURCE_ID.RECORDS,
 								mode: "submit",
 							}),
@@ -822,7 +816,7 @@ test.describe("Row configuration", () => {
 
 		await expect(
 			configPanel.getByText(
-				"create(Test Service, item, pickup_address)",
+				`create(${TEST_RESOURCE_ID.RECORDS}, pickup_address)`,
 				{
 					exact: true,
 				},
@@ -840,12 +834,11 @@ test.describe("Row configuration", () => {
 					title: "Create Page",
 					rows: [
 						{
-							type: "Button",
+							type: "button",
 							title: "",
 							label: "Inline Create",
 							actions: tapAction({
 								fn: "create",
-								service: TEST_SERVICE_ID,
 								resource: TEST_RESOURCE_ID.RECORDS,
 								mode: "submit",
 							}),
@@ -870,9 +863,12 @@ test.describe("Row configuration", () => {
 		await expect(popup).not.toBeVisible();
 
 		await expect(
-			configPanel.getByText("create(Test Service, item, submit)", {
-				exact: true,
-			}),
+			configPanel.getByText(
+				`create(${TEST_RESOURCE_ID.RECORDS}, submit)`,
+				{
+					exact: true,
+				},
+			),
 		).toBeVisible();
 	});
 
@@ -886,19 +882,18 @@ test.describe("Row configuration", () => {
 					title: "Create Page",
 					rows: [
 						{
-							type: "Input",
+							type: "input",
 							title: "Title",
 							value: "",
 							placeholder: "",
 							destination: `{${TEST_RESOURCE_ID.RECORDS}.title}`,
 						},
 						{
-							type: "Button",
+							type: "button",
 							title: "",
 							label: "Submit Create",
 							actions: tapAction({
 								fn: "create",
-								service: TEST_SERVICE_ID,
 								resource: TEST_RESOURCE_ID.RECORDS,
 								mode: "submit",
 							}),
@@ -909,7 +904,6 @@ test.describe("Row configuration", () => {
 			TEST_SERVICE_RESOURCES,
 			[],
 			{
-				service: TEST_SERVICE_ID,
 				resource: TEST_RESOURCE_ID.RECORDS,
 			},
 		);
@@ -929,9 +923,12 @@ test.describe("Row configuration", () => {
 		await expect(popup).not.toBeVisible();
 
 		await expect(
-			configPanel.getByText("create(Test Service, item, submit)", {
-				exact: true,
-			}),
+			configPanel.getByText(
+				`create(${TEST_RESOURCE_ID.RECORDS}, submit)`,
+				{
+					exact: true,
+				},
+			),
 		).toBeVisible();
 	});
 
@@ -949,7 +946,7 @@ test.describe("Row configuration", () => {
 						rows: [
 							{
 								id: "row_input",
-								type: "Input",
+								type: "input",
 								source: "",
 								title: "Name",
 								value: "{name}",
@@ -958,7 +955,7 @@ test.describe("Row configuration", () => {
 							},
 							{
 								id: "row_btn",
-								type: "Button",
+								type: "button",
 								source: "",
 								title: "",
 								label: "Prefilled",
@@ -968,8 +965,8 @@ test.describe("Row configuration", () => {
 											condition: "{name == true}",
 											true: {
 												fn: "navigate",
-												flowId: "flow_x",
-												pageId: "page_x",
+												flow_id: "flow_x",
+												page_id: "page_x",
 											},
 											false: { fn: "close" },
 										},
@@ -1041,7 +1038,7 @@ test.describe("Row configuration", () => {
 							rows: [
 								{
 									id: "or_test_button",
-									type: "Button",
+									type: "button",
 									source: "",
 									title: "",
 									label: "OR Test",
@@ -1093,7 +1090,7 @@ test.describe("Row configuration", () => {
 							rows: [
 								{
 									id: "nested_test_button",
-									type: "Button",
+									type: "button",
 									source: "",
 									title: "",
 									label: "Nested Test",
@@ -1140,21 +1137,21 @@ test.describe("Row configuration", () => {
 				title: "Test Page",
 				rows: [
 					{
-						type: "Input",
+						type: "input",
 						title: "Name",
 						value: "{name}",
 						placeholder: "",
 						destination: "{name}",
 					},
 					{
-						type: "Input",
+						type: "input",
 						title: "Email",
 						value: "{email}",
 						placeholder: "",
 						destination: "{email}",
 					},
 					{
-						type: "Button",
+						type: "button",
 						title: "",
 						label: "Toggle Test",
 						actions: {
@@ -1213,21 +1210,21 @@ test.describe("Row configuration", () => {
 				title: "Test Page",
 				rows: [
 					{
-						type: "Input",
+						type: "input",
 						title: "Name",
 						value: "{name}",
 						placeholder: "",
 						destination: "{name}",
 					},
 					{
-						type: "Input",
+						type: "input",
 						title: "Email",
 						value: "{email}",
 						placeholder: "",
 						destination: "{email}",
 					},
 					{
-						type: "Button",
+						type: "button",
 						title: "",
 						label: "Nest Test",
 						actions: {
@@ -1285,7 +1282,7 @@ test.describe("Row configuration", () => {
 		page,
 	}) => {
 		type DeepNestRow = {
-			type: "Input" | "HorizontalContainer";
+			type: "input" | "horizontal_container";
 			title: string;
 			placeholder?: string;
 			value?: string;
@@ -1296,14 +1293,14 @@ test.describe("Row configuration", () => {
 		function deepNest(level: number): DeepNestRow {
 			if (level === 0) {
 				return {
-					type: "Input",
+					type: "input",
 					title: "Deep leaf",
 					placeholder: "",
 					value: "",
 				};
 			}
 			return {
-				type: "HorizontalContainer",
+				type: "horizontal_container",
 				title: `Nest level ${level}`,
 				children: [deepNest(level - 1)],
 			};
@@ -1322,13 +1319,13 @@ test.describe("Row configuration", () => {
 
 		for (let i = 0; i < 11; i++) {
 			const nextButton = configPanel.getByRole("button", {
-				name: /: HorizontalContainer$/,
+				name: /: horizontal_container$/,
 			});
 			await expect(nextButton.first()).toBeVisible();
 			await nextButton.first().click();
 		}
 
-		await configPanel.getByRole("button", { name: /: Input$/ }).click();
+		await configPanel.getByRole("button", { name: /: input$/ }).click();
 
 		const breadcrumbScroll = page.getByTestId("nav-breadcrumb-scroll");
 		await expect(
@@ -1351,7 +1348,7 @@ test.describe("Row configuration", () => {
 
 		await expect(
 			configPanel.getByLabel("title", { exact: true }),
-		).toHaveText("Nest level 7");
+		).toHaveValue("Nest level 7");
 	});
 
 	test("should clear a branch by selecting -- and persist on save", async ({
@@ -1363,7 +1360,7 @@ test.describe("Row configuration", () => {
 				title: "Test Page",
 				rows: [
 					{
-						type: "Button",
+						type: "button",
 						title: "",
 						label: "Clear Branch",
 						actions: tapAction({ fn: "close" }),
@@ -1426,7 +1423,7 @@ test.describe("Row configuration", () => {
 				title: "Test Page",
 				rows: [
 					{
-						type: "Button",
+						type: "button",
 						title: "",
 						label: "Cancel Clear",
 						actions: tapAction({ fn: "close" }),
@@ -1485,7 +1482,7 @@ test.describe("Row configuration", () => {
 				title: "Test Page",
 				rows: [
 					{
-						type: "Input",
+						type: "input",
 						source: "{title}",
 						destination: "{title}",
 						title: "Initial value row",
@@ -1503,11 +1500,11 @@ test.describe("Row configuration", () => {
 		const configPanel = getConfigPanel(page);
 		const initialInput = configPanel.getByLabel("initial");
 		await expect(initialInput).toBeVisible();
-		await expect(initialInput).toHaveText("Default title");
+		await expect(initialInput).toHaveValue("Default title");
 
 		await initialInput.fill("Updated default");
 
-		await expect(initialInput).toHaveText("Updated default");
+		await expect(initialInput).toHaveValue("Updated default");
 	});
 
 	test("selecting Show defaults to the configured row sheet id", async ({
@@ -1519,11 +1516,11 @@ test.describe("Row configuration", () => {
 				title: "Page 1",
 				rows: [
 					{
-						type: "Button",
+						type: "button",
 						title: "Open Sheet",
 						label: "Open",
 						sheet: {
-							type: "Text",
+							type: "text",
 							title: "Sheet Content",
 							text: "Inside sheet",
 						},
@@ -1555,11 +1552,11 @@ test.describe("Row configuration", () => {
 				title: "Page 1",
 				rows: [
 					{
-						type: "Button",
+						type: "button",
 						title: "Trigger",
 						label: "Go",
 						sheet: {
-							type: "Text",
+							type: "text",
 							title: "Local Sheet",
 							text: "Local",
 						},
@@ -1571,7 +1568,7 @@ test.describe("Row configuration", () => {
 				title: "Page 2",
 				rows: [
 					{
-						type: "Text",
+						type: "text",
 						title: "Remote Target Row",
 						text: "Remote",
 					},
@@ -1608,13 +1605,13 @@ test.describe("Row configuration", () => {
 				title: "Test Page",
 				rows: [
 					{
-						type: "Button",
+						type: "button",
 						title: "",
 						label: "Trigger Button",
 						actions: tapAction({ fn: "close" }),
 					},
 					{
-						type: "SelectPhoto",
+						type: "select_photo",
 						title: "Photos",
 						subtitle: "0/10",
 						icon: "::image-plus::",
@@ -1667,7 +1664,7 @@ test.describe("Row configuration", () => {
 				title: "Test Page",
 				rows: [
 					{
-						type: "Button",
+						type: "button",
 						title: "",
 						label: "Warn Button",
 						actions: tapAction({ fn: "close" }),
@@ -1698,7 +1695,7 @@ test.describe("Row configuration", () => {
 		const configPanel = getConfigPanel(page);
 		await expect(
 			configPanel.getByLabel("title", { exact: true }),
-		).toHaveText("Dropdown row title");
+		).toHaveValue("Dropdown row title");
 		await expect(
 			configPanel.getByText("Tap", { exact: true }),
 		).toBeVisible();
@@ -1719,7 +1716,7 @@ test.describe("Row configuration", () => {
 		const configPanel = getConfigPanel(page);
 		await expect(
 			configPanel.getByLabel("title", { exact: true }),
-		).toHaveText("Calendar row title");
+		).toHaveValue("Calendar row title");
 		await expect(
 			configPanel.getByText("Tap", { exact: true }),
 		).toBeVisible();
@@ -1742,12 +1739,12 @@ test.describe("Row configuration", () => {
 				title: "Test Page",
 				rows: [
 					{
-						type: "Text",
+						type: "text",
 						title: "Slide Text",
 						subtitle: "",
 					},
 					{
-						type: "Button",
+						type: "button",
 						title: "",
 						label: "Slide Button",
 						actions: tapAction({ fn: "close" }),

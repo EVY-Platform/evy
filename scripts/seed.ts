@@ -30,9 +30,10 @@ import {
 	organization as organizationTable,
 	page as pageTable,
 	row as rowTable,
-	serviceProvider as serviceProviderTable,
+	service_provider as service_providerTable,
 	service as serviceTable,
 } from "../types/generated/ts/db/schema.generated";
+import { isValidResourceRef, parseResourceRef } from "../types/resourceRef";
 import { STANDARD_FORMATTERS } from "../types/standardFormatters";
 import { validateUiFlow } from "../types/validators";
 import { copySeedFileBinaries } from "./seed-files";
@@ -79,7 +80,7 @@ type SeedDataMap = Record<string, SeedDataItem[]>;
 const coreSchema = {
 	organization: organizationTable,
 	service: serviceTable,
-	serviceProvider: serviceProviderTable,
+	service_provider: service_providerTable,
 	flow: flowTable,
 	page: pageTable,
 	row: rowTable,
@@ -108,14 +109,6 @@ const SEED_IDS = {
 } as const;
 
 const MARKETPLACE_SERVICE = MARKETPLACE_SERVICE_DESCRIPTOR.id;
-
-const MARKETPLACE_SEED_RESOURCE_KEY_TO_ID: Record<string, string> =
-	Object.fromEntries(
-		MARKETPLACE_SERVICE_DESCRIPTOR.resources.map((resource) => [
-			resource.name,
-			resource.id,
-		]),
-	);
 
 type SeedInputPaths = {
 	evyFlowsPath?: string;
@@ -164,10 +157,13 @@ function partitionSeedResourceData(dataJson: SeedDataMap): {
 	const marketplace: SeedDataMap = {};
 	const evy: SeedDataMap = {};
 	for (const [resource, value] of Object.entries(dataJson)) {
-		if (resource in MARKETPLACE_SEED_RESOURCE_KEY_TO_ID) {
+		const { service } = parseResourceRef(resource);
+		if (service === MARKETPLACE_SERVICE) {
 			marketplace[resource] = value;
-		} else {
+		} else if (service === EVY_CORE_SERVICE) {
 			evy[resource] = value;
+		} else {
+			throw new Error(`Unknown service in seed data: ${service}`);
 		}
 	}
 	return { marketplace, evy };
@@ -177,25 +173,20 @@ type SeedDataRow = {
 	id: string;
 	resource: string;
 	data: SeedDataItem;
-	createdAt: string;
-	updatedAt: string;
+	created_at: string;
+	updated_at: string;
 };
 
-function buildDataRows(
-	dataJson: SeedDataMap,
-	now: string,
-	resourceKeyToId: Partial<Record<string, string>> = {},
-): SeedDataRow[] {
+function buildDataRows(dataJson: SeedDataMap, now: string): SeedDataRow[] {
 	const rows: SeedDataRow[] = [];
 	for (const [resource, value] of Object.entries(dataJson)) {
-		const rowResource = resourceKeyToId[resource] ?? resource;
 		for (const item of value) {
 			rows.push({
 				id: item.id,
-				resource: rowResource,
+				resource,
 				data: item,
-				createdAt: now,
-				updatedAt: now,
+				created_at: now,
+				updated_at: now,
 			});
 		}
 	}
@@ -206,8 +197,8 @@ type SeedFileRow = {
 	id: string;
 	type: string;
 	visibility: "public" | "private";
-	createdAt: string;
-	updatedAt: string;
+	created_at: string;
+	updated_at: string;
 };
 
 function buildFileRows(files: SeedDataItem[], now: string): SeedFileRow[] {
@@ -217,13 +208,13 @@ function buildFileRows(files: SeedDataItem[], now: string): SeedFileRow[] {
 				`Seed file "${item.id}" must have a non-empty string "type" field`,
 			);
 		}
-		const { createdAt, updatedAt } = seedTimestamps(item, now);
+		const { created_at, updated_at } = seedTimestamps(item, now);
 		return {
 			id: item.id,
 			type: item.type,
 			visibility: "public",
-			createdAt,
-			updatedAt,
+			created_at,
+			updated_at,
 		};
 	});
 }
@@ -240,8 +231,8 @@ type SeedAddressRow = {
 	longitude?: number;
 	instructions?: string;
 	visibility: "public" | "private";
-	createdAt: string;
-	updatedAt: string;
+	created_at: string;
+	updated_at: string;
 };
 
 function buildAddressRows(
@@ -259,7 +250,7 @@ function buildAddressRows(
 	] as const;
 	const numberKeys = ["latitude", "longitude"] as const;
 	return addresses.map((item) => {
-		const { createdAt, updatedAt } = seedTimestamps(item, now);
+		const { created_at, updated_at } = seedTimestamps(item, now);
 		const optionalStrings = Object.fromEntries(
 			stringKeys
 				.filter((key) => typeof item[key] === "string")
@@ -278,8 +269,8 @@ function buildAddressRows(
 				item.visibility === "private" || item.visibility === "public"
 					? item.visibility
 					: "private",
-			createdAt,
-			updatedAt,
+			created_at,
+			updated_at,
 		};
 	});
 }
@@ -287,15 +278,15 @@ function buildAddressRows(
 function seedTimestamps(
 	item: SeedDataItem,
 	now: string,
-): { createdAt: string; updatedAt: string } {
+): { created_at: string; updated_at: string } {
 	return {
-		createdAt: typeof item.createdAt === "string" ? item.createdAt : now,
-		updatedAt: typeof item.updatedAt === "string" ? item.updatedAt : now,
+		created_at: typeof item.created_at === "string" ? item.created_at : now,
+		updated_at: typeof item.updated_at === "string" ? item.updated_at : now,
 	};
 }
 
-function timestamped(now: string): { createdAt: string; updatedAt: string } {
-	return { createdAt: now, updatedAt: now };
+function timestamped(now: string): { created_at: string; updated_at: string } {
+	return { created_at: now, updated_at: now };
 }
 
 function buildFormatterRows(now: string) {
@@ -308,13 +299,12 @@ function buildFormatterRows(now: string) {
 type SeedMessageRow = {
 	id: string;
 	fk: string;
-	service: string;
 	resource: string;
-	createdAt: string;
-	updatedAt: string;
+	created_at: string;
+	updated_at: string;
 	data: Record<string, unknown>;
 	visibility: "public" | "private";
-	parentMessageId?: string;
+	parent_message_id?: string;
 };
 
 function buildMessageRows(
@@ -322,20 +312,20 @@ function buildMessageRows(
 	now: string,
 ): SeedMessageRow[] {
 	return messages.map((item) => {
-		const { createdAt, updatedAt } = seedTimestamps(item, now);
+		const { created_at, updated_at } = seedTimestamps(item, now);
 		if (typeof item.fk !== "string") {
 			throw new Error(
 				`Seed message "${item.id}" must have a string "fk" field`,
 			);
 		}
-		if (typeof item.service !== "string") {
-			throw new Error(
-				`Seed message "${item.id}" must have a string "service" field`,
-			);
-		}
 		if (typeof item.resource !== "string") {
 			throw new Error(
 				`Seed message "${item.id}" must have a string "resource" field`,
+			);
+		}
+		if (!isValidResourceRef(item.resource)) {
+			throw new Error(
+				`Seed message "${item.id}" has invalid resource ref "${item.resource}"`,
 			);
 		}
 		const data =
@@ -368,24 +358,23 @@ function buildMessageRows(
 			);
 		}
 		if (
-			item.parentMessageId !== undefined &&
-			typeof item.parentMessageId !== "string"
+			item.parent_message_id !== undefined &&
+			typeof item.parent_message_id !== "string"
 		) {
 			throw new Error(
-				`Seed message "${item.id}" must have a string "parentMessageId" field when set`,
+				`Seed message "${item.id}" must have a string "parent_message_id" field when set`,
 			);
 		}
 		return {
 			id: item.id,
 			fk: item.fk,
-			service: item.service,
 			resource: item.resource,
-			createdAt,
-			updatedAt,
+			created_at,
+			updated_at,
 			data,
 			visibility: item.visibility === "public" ? "public" : "private",
-			...(typeof item.parentMessageId === "string"
-				? { parentMessageId: item.parentMessageId }
+			...(typeof item.parent_message_id === "string"
+				? { parent_message_id: item.parent_message_id }
 				: {}),
 		};
 	});
@@ -406,7 +395,7 @@ function decomposeFlow(flow: SeedFlow, now: string): DecomposedFlow {
 		flowRow: {
 			id: flow.id,
 			name: flow.name,
-			pageIds: pageRows.map((page) => page.id),
+			page_ids: pageRows.map((page) => page.id),
 			...(flow.submits ? { submits: flow.submits } : {}),
 			visibility: "public",
 			...timestamped(now),
@@ -425,8 +414,8 @@ function decomposePage(
 		id: page.id,
 		name: page.name,
 		title: page.title,
-		rowIds: page.rows.map((row) => decomposeRow(row, rowRows, now)),
-		footerRowId: page.footer
+		row_ids: page.rows.map((row) => decomposeRow(row, rowRows, now)),
+		footer_row_id: page.footer
 			? decomposeRow(page.footer, rowRows, now)
 			: undefined,
 		visibility: "public",
@@ -602,9 +591,9 @@ async function seedDatabase({
 	now?: string;
 }) {
 	const {
-		files: evyFiles = [],
-		addresses: evyAddresses = [],
-		messages: evyMessages = [],
+		"evy.files": evyFiles = [],
+		"evy.addresses": evyAddresses = [],
+		"evy.messages": evyMessages = [],
 		...unsupportedEvy
 	} = evyDataJson;
 	const unsupportedResources = Object.keys(unsupportedEvy);
@@ -628,7 +617,7 @@ async function seedDatabase({
 	});
 
 	await coreDb.transaction(async (tx) => {
-		await tx.delete(coreSchema.serviceProvider);
+		await tx.delete(coreSchema.service_provider);
 		await tx.delete(coreSchema.organization);
 		await tx.delete(coreSchema.service);
 
@@ -638,7 +627,7 @@ async function seedDatabase({
 			description: "EVY organization",
 			logo: SEED_IDS.logo,
 			url: "evy.local",
-			supportEmail: "support@evy.local",
+			support_email: "support@evy.local",
 			visibility: "public",
 			...timestamped(now),
 		});
@@ -648,7 +637,7 @@ async function seedDatabase({
 				id: EVY_CORE_SERVICE,
 				name: "evy",
 				description: "EVY core service",
-				sortOrder: 0,
+				sort_order: 0,
 				visibility: "public",
 				...timestamped(now),
 			},
@@ -656,7 +645,7 @@ async function seedDatabase({
 				id: MARKETPLACE_SERVICE,
 				name: "marketplace",
 				description: "Marketplace service",
-				sortOrder: 1,
+				sort_order: 1,
 				visibility: "public",
 				// Records the endpoint on the row when the environment knows it,
 				// so routing does not depend on the env convention at runtime.
@@ -664,10 +653,10 @@ async function seedDatabase({
 			},
 		]);
 
-		await tx.insert(coreSchema.serviceProvider).values({
+		await tx.insert(coreSchema.service_provider).values({
 			id: SEED_IDS.evyMarketplaceProvider,
-			fkServiceId: MARKETPLACE_SERVICE,
-			fkOrganizationId: SEED_IDS.evyOrganization,
+			fk_service_id: MARKETPLACE_SERVICE,
+			fk_organization_id: SEED_IDS.evyOrganization,
 			name: "evy",
 			description: "EVY marketplace provider",
 			logo: SEED_IDS.logo,
@@ -719,11 +708,7 @@ async function seedDatabase({
 		}
 	});
 
-	const marketplaceRows = buildDataRows(
-		marketplaceDataJson,
-		now,
-		MARKETPLACE_SEED_RESOURCE_KEY_TO_ID,
-	);
+	const marketplaceRows = buildDataRows(marketplaceDataJson, now);
 
 	await marketplaceDb.transaction(async (tx) => {
 		await tx.delete(marketplaceSchema.data);

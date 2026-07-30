@@ -67,12 +67,11 @@ async function startTestWsServer(port: number): Promise<WSServer> {
 			id: rowData.id ?? crypto.randomUUID(),
 			resource: params.resource,
 			data: rowData,
-			createdAt: nowIso,
-			updatedAt: nowIso,
+			created_at: nowIso,
+			updated_at: nowIso,
 		};
 		storedData.push(rowData);
 		emitJsonRpc(server, DATA_CHANGED_EVENT, {
-			service: EXTERNAL_TEST_SERVICE_ID,
 			resource: params.resource,
 			operation: "create",
 			value: rowData,
@@ -110,10 +109,10 @@ describe("service WebSocket adapters", () => {
 			id: EXTERNAL_TEST_SERVICE_ID,
 			name: "marketplace",
 			description: "Marketplace",
-			sortOrder: 1,
+			sort_order: 1,
 			visibility: "public",
-			createdAt: nowIso,
-			updatedAt: nowIso,
+			created_at: nowIso,
+			updated_at: nowIso,
 		});
 
 		testServer = await startTestWsServer(wsPort);
@@ -182,14 +181,12 @@ describe("service WebSocket adapters", () => {
 		const eventsBefore = receivedEvents.length;
 
 		await forwardCreate(EXTERNAL_TEST_SERVICE_ID, {
-			service: EXTERNAL_TEST_SERVICE_ID,
 			resource: EXTERNAL_TEST_RESOURCE.CONDITIONS,
 			data: row,
 		});
 
 		expect(receivedEvents.length - eventsBefore).toBe(1);
 		expect(receivedEvents.at(-1)).toEqual({
-			service: EXTERNAL_TEST_SERVICE_ID,
 			resource: EXTERNAL_TEST_RESOURCE.CONDITIONS,
 			operation: "create",
 			value: row,
@@ -209,7 +206,6 @@ describe("service WebSocket adapters", () => {
 		while (Date.now() < reconnectDeadline) {
 			try {
 				await forwardGet(EXTERNAL_TEST_SERVICE_ID, {
-					service: EXTERNAL_TEST_SERVICE_ID,
 					resource: EXTERNAL_TEST_RESOURCE.CONDITIONS,
 				});
 				reconnected = true;
@@ -224,21 +220,18 @@ describe("service WebSocket adapters", () => {
 		const eventsBefore = receivedEvents.length;
 
 		await forwardCreate(EXTERNAL_TEST_SERVICE_ID, {
-			service: EXTERNAL_TEST_SERVICE_ID,
 			resource: EXTERNAL_TEST_RESOURCE.CONDITIONS,
 			data: row,
 		});
 
 		expect(receivedEvents.length - eventsBefore).toBe(1);
 		expect(receivedEvents.at(-1)).toEqual({
-			service: EXTERNAL_TEST_SERVICE_ID,
 			resource: EXTERNAL_TEST_RESOURCE.CONDITIONS,
 			operation: "create",
 			value: row,
 		});
 
 		const got = await forwardGet(EXTERNAL_TEST_SERVICE_ID, {
-			service: EXTERNAL_TEST_SERVICE_ID,
 			resource: EXTERNAL_TEST_RESOURCE.CONDITIONS,
 		});
 		expect(got).toEqual(expect.arrayContaining([row]));
@@ -264,8 +257,8 @@ describe("resolveServiceWsEndpoint", () => {
 			expect(
 				resolveServiceWsEndpoint({
 					...base,
-					wsHost: "row-host",
-					wsPort: 8001,
+					ws_host: "row-host",
+					ws_port: 8001,
 				}),
 			).toEqual({ host: "row-host", port: "8001" });
 		});
@@ -276,8 +269,8 @@ describe("resolveServiceWsEndpoint", () => {
 			expect(
 				resolveServiceWsEndpoint({
 					...base,
-					wsHost: null,
-					wsPort: null,
+					ws_host: null,
+					ws_port: null,
 				}),
 			).toEqual({ host: "env-host", port: "9999" });
 		});
@@ -289,8 +282,8 @@ describe("resolveServiceWsEndpoint", () => {
 			expect(
 				resolveServiceWsEndpoint({
 					...base,
-					wsHost: "row-host",
-					wsPort: null,
+					ws_host: "row-host",
+					ws_port: null,
 				}),
 			).toEqual({ host: "env-host", port: "9999" });
 		});
@@ -301,8 +294,8 @@ describe("resolveServiceWsEndpoint", () => {
 			expect(() =>
 				resolveServiceWsEndpoint({
 					...base,
-					wsHost: null,
-					wsPort: null,
+					ws_host: null,
+					ws_port: null,
 				}),
 			).toThrow("marketplace");
 		});
@@ -315,8 +308,8 @@ describe("resolveServiceWsEndpoint", () => {
 			resolveServiceWsEndpoint({
 				id: EXTERNAL_TEST_SERVICE_ID,
 				name: "my service!",
-				wsHost: null,
-				wsPort: null,
+				ws_host: null,
+				ws_port: null,
 			}),
 		).toThrow("cannot be used for env lookup");
 	});
@@ -331,8 +324,8 @@ describe("resolveServiceWsEndpoint", () => {
 				resolveServiceWsEndpoint({
 					id: EXTERNAL_TEST_SERVICE_ID,
 					name: "svc_2",
-					wsHost: null,
-					wsPort: null,
+					ws_host: null,
+					ws_port: null,
 				}),
 			).toEqual({ host: "h", port: "1" });
 		} finally {
@@ -364,10 +357,10 @@ describe("forwarded call failures are attributed", () => {
 			id: serviceId,
 			name: "marketplace",
 			description: "Marketplace",
-			sortOrder: 1,
+			sort_order: 1,
 			visibility: "public",
-			createdAt: nowIso,
-			updatedAt: nowIso,
+			created_at: nowIso,
+			updated_at: nowIso,
 		});
 
 		slowPort = await getFreePort();
@@ -413,18 +406,16 @@ describe("forwarded call failures are attributed", () => {
 			"../procedures/services"
 		);
 		const failure = await forwardGet(serviceId, {
-			service: serviceId,
 			resource: EXTERNAL_TEST_RESOURCE.CONDITIONS,
 		}).catch((error: unknown) => error);
 
 		expect(failure).toBeInstanceOf(ServiceForwardError);
 		const err = failure as InstanceType<typeof ServiceForwardError>;
 		expect(err.data).toMatchObject({
-			serviceId,
-			serviceName: "marketplace",
+			service: serviceId,
 			code: "SERVICE_TIMEOUT",
 		});
-		expect(err.message).toContain("marketplace");
+		expect(err.message).toContain("test_svc");
 	});
 
 	it("attributes a service-side failure to the service", async () => {
@@ -432,15 +423,17 @@ describe("forwarded call failures are attributed", () => {
 			"../procedures/services"
 		);
 		const failure = await forwardCreate(serviceId, {
-			service: serviceId,
 			resource: EXTERNAL_TEST_RESOURCE.CONDITIONS,
 			data: { id: crypto.randomUUID(), value: "x" },
 		}).catch((error: unknown) => error);
 
 		expect(failure).toBeInstanceOf(ServiceForwardError);
 		const err = failure as InstanceType<typeof ServiceForwardError>;
-		expect(err.data).toMatchObject({ serviceId, code: "SERVICE_ERROR" });
-		expect(err.message).toContain("marketplace");
+		expect(err.data).toMatchObject({
+			service: serviceId,
+			code: "SERVICE_ERROR",
+		});
+		expect(err.message).toContain("test_svc");
 	});
 
 	// Services own the validation of their own payloads, so the reason a
@@ -452,7 +445,6 @@ describe("forwarded call failures are attributed", () => {
 			"../procedures/services"
 		);
 		const failure = await forwardCreate(serviceId, {
-			service: serviceId,
 			resource: EXTERNAL_TEST_RESOURCE.CONDITIONS,
 			data: { id: crypto.randomUUID(), value: "x" },
 		}).catch((error: unknown) => error);

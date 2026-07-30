@@ -11,11 +11,11 @@ import type { ResourcesResponse } from "evy-types";
 import { getFreePort } from "evy-types/wsTestHelpers";
 import { Client } from "rpc-websockets";
 import { schema } from "../db";
+import { MARKETPLACE_RESOURCE } from "../resources";
 import {
 	createPgliteTestDatabase,
 	registerMarketplaceTestDb,
 } from "./dbTestHelpers";
-import { discoverMarketplaceIds } from "./discoverMarketplaceIds";
 
 const { pgliteClient, testDb } = createPgliteTestDatabase();
 
@@ -65,19 +65,15 @@ describe("marketplace JSON-RPC server", () => {
 	it("Create and Get round-trip typed params", async () => {
 		const client = createClient();
 		await waitForOpen(client);
-		const response = await client.call("resources", {});
-		const discovered = discoverMarketplaceIds(response, ["conditions"]);
 		const row = { id: crypto.randomUUID(), value: "rpc-condition" };
 
 		await client.call("create", {
-			service: discovered.serviceId,
-			resource: discovered.resourceIds.conditions,
+			resource: MARKETPLACE_RESOURCE.CONDITIONS,
 			data: row,
 		});
 
 		const got = await client.call("get", {
-			service: discovered.serviceId,
-			resource: discovered.resourceIds.conditions,
+			resource: MARKETPLACE_RESOURCE.CONDITIONS,
 		});
 
 		expect(got).toEqual([row]);
@@ -88,15 +84,15 @@ describe("marketplace JSON-RPC server", () => {
 		const client = createClient();
 		await waitForOpen(client);
 
-		const response = await client.call("resources", {});
-		const discovered = discoverMarketplaceIds(response, [
-			"items",
-			"conditions",
-		]);
+		const response = (await client.call(
+			"resources",
+			{},
+		)) as ResourcesResponse;
+		const resources = response.services[0]?.resources ?? [];
 
-		expect(discovered.serviceId).toBeTruthy();
-		expect(discovered.resourceIds.items).toBeTruthy();
-		expect(discovered.resourceIds.conditions).toBeTruthy();
+		expect(resources.map((entry) => entry.id)).toEqual(
+			Object.values(MARKETPLACE_RESOURCE),
+		);
 		client.close();
 	});
 
@@ -111,9 +107,11 @@ describe("marketplace JSON-RPC server", () => {
 			{},
 		)) as ResourcesResponse;
 		const resources = response.services[0]?.resources ?? [];
-		const items = resources.find((entry) => entry.name === "items");
+		const items = resources.find(
+			(entry) => entry.id === MARKETPLACE_RESOURCE.ITEMS,
+		);
 		const conditions = resources.find(
-			(entry) => entry.name === "conditions",
+			(entry) => entry.id === MARKETPLACE_RESOURCE.CONDITIONS,
 		);
 
 		expect(items?.attributes).toContain("price.currency");
