@@ -53,7 +53,7 @@ describe("extractSduiRowDefinition", () => {
 	test("extracts required, optional, and binding-like string attributes from a row schema", () => {
 		const definition = extractSduiRowDefinition(
 			calendarSchema,
-			"Calendar.schema.json",
+			"calendar.schema.json",
 		);
 
 		expect(definition.type).toBe("calendar");
@@ -157,7 +157,7 @@ describe("rowTriggersFromDefinitions", () => {
 					},
 				],
 			},
-			"Button.schema.json",
+			"button.schema.json",
 		);
 		const selectPhoto = extractSduiRowDefinition(
 			{
@@ -208,7 +208,7 @@ describe("rowTriggersFromDefinitions", () => {
 					},
 				],
 			},
-			"Calendar.schema.json",
+			"calendar.schema.json",
 		);
 
 		expect(calendar.triggers).toEqual({
@@ -242,7 +242,7 @@ describe("rowTriggersFromDefinitions", () => {
 					},
 				],
 			},
-			"Input.schema.json",
+			"input.schema.json",
 		);
 
 		expect(input.triggers).toEqual({ tap: "optional", submit: "optional" });
@@ -272,7 +272,7 @@ describe("rowTriggersFromDefinitions", () => {
 					},
 				],
 			},
-			"Text.schema.json",
+			"text.schema.json",
 		);
 
 		expect(text.triggers).toEqual({
@@ -479,7 +479,7 @@ describe("SDUI row schema invariants", () => {
 	test("rejects schema definition invariant violations", () => {
 		const definition = extractSduiRowDefinition(
 			calendarSchema,
-			"Calendar.schema.json",
+			"calendar.schema.json",
 		);
 
 		expect(() =>

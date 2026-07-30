@@ -11,7 +11,7 @@ schema combines the common `UI_RowBase` shape from
 properties, a unique `type.const` discriminator, and a top-level `triggers` block declaring
 which action triggers that row type supports and whether each is `"required"` or `"optional"`
 (see [Trigger matrix](#trigger-matrix) below). See
-[`Calendar.schema.json`](../../types/schema/sdui/definitions/Calendar.schema.json) for an
+[`calendar.schema.json`](../../types/schema/sdui/definitions/calendar.schema.json) for an
 example.
 
 ## Flow
@@ -172,7 +172,7 @@ See [actions.md](./actions.md) for the reference on every action function (`crea
 
 Which triggers each row type supports, and whether they're required, is declared per row type
 in its `triggers` block in [`types/schema/sdui/definitions/*.schema.json`](../../types/schema/sdui/definitions/)
-(e.g. `Calendar.schema.json` declares `tap`, `tap-row`, and `tap-column` all `"required"`). This
+(e.g. `calendar.schema.json` declares `tap`, `tap_row`, and `tap_column` all `"required"`). This
 is generated into `SDUI_ROW_TRIGGERS` in
 [`types/generated/ts/sdui/definitions.generated.ts`](../../types/generated/ts/sdui/definitions.generated.ts)
 and enforced in `validateUiFlow` (`types/validators.ts`) — a row with actions on an
