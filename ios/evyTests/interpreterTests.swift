@@ -290,6 +290,7 @@ final class InterpreterTests: XCTestCase {
 
   func testResolveQueryParamsStoresMatchingEntityUnderQueryKey() throws {
     let entityKey = uniqueKey("entities")
+    let entityRef = "\(MarketplaceTestFixture.service).\(entityKey)"
     let firstId = UUID().uuidString
     let secondId = UUID().uuidString
 
@@ -304,19 +305,20 @@ final class InterpreterTests: XCTestCase {
           "title": .string("Selected item"),
         ]),
       ]),
-      at: "\(MarketplaceTestFixture.service).\(entityKey)"
+      at: entityRef
     )
 
-    EVY.resolveQueryParams([entityKey: [secondId]])
+    EVY.resolveQueryParams([entityRef: [secondId]])
 
-    XCTAssertEqual(try EVY.getDataFromText("{\(entityKey).title}"), .string("Selected item"))
+    XCTAssertEqual(try EVY.getDataFromText("{\(entityRef).title}"), .string("Selected item"))
 
-    EVY.resolveQueryParams([entityKey: [firstId, secondId]])
-    XCTAssertEqual(try EVY.getDataFromText("{\(entityKey).title}"), .string("First item"))
+    EVY.resolveQueryParams([entityRef: [firstId, secondId]])
+    XCTAssertEqual(try EVY.getDataFromText("{\(entityRef).title}"), .string("First item"))
   }
 
   func testResolveQueryParamsRefreshesStatesWhenSelectedEntityChanges() throws {
     let entityKey = uniqueKey("entities")
+    let entityRef = "\(MarketplaceTestFixture.service).\(entityKey)"
     let firstId = UUID().uuidString
     let secondId = UUID().uuidString
     let firstAddressId = UUID().uuidString
@@ -357,18 +359,18 @@ final class InterpreterTests: XCTestCase {
           ]),
         ]),
       ]),
-      at: "\(MarketplaceTestFixture.service).\(entityKey)"
+      at: entityRef
     )
     let pickupSelections = EVYState<[String]>(
-      watches: ["{\(entityKey).pickup_selection}"],
-      setter: { EVYDatetime.readTimeslots("{\(entityKey).pickup_selection}") }
+      watches: ["{\(entityRef).pickup_selection}"],
+      setter: { EVYDatetime.readTimeslots("{\(entityRef).pickup_selection}") }
     )
     let deliverySelections = EVYState<[String]>(
-      watches: ["{\(entityKey).delivery_selection}"],
-      setter: { EVYDatetime.readTimeslots("{\(entityKey).delivery_selection}") }
+      watches: ["{\(entityRef).delivery_selection}"],
+      setter: { EVYDatetime.readTimeslots("{\(entityRef).delivery_selection}") }
     )
     let pickupAddressExpression =
-      "{findFirst(\(EVYCoreResource.addresses.ref), \(entityKey).transfer_options.pickup.address_id)}"
+      "{findFirst(\(EVYCoreResource.addresses.ref), \(entityRef).transfer_options.pickup.address_id)}"
     let pickupAddress = EVYState<EVYJson>(
       watches: EVY.watchTargets(for: pickupAddressExpression),
       setter: {
@@ -391,6 +393,8 @@ final class InterpreterTests: XCTestCase {
     let randomId = UUID().uuidString.replacingOccurrences(of: "-", with: "_").lowercased()
     let resourceKey = "evy_interpreter_tests_\(randomId)_items"
     let entityKey = "evy_interpreter_tests_\(randomId)_item"
+    let resourceRef = "\(MarketplaceTestFixture.service).\(resourceKey)"
+    let entityRef = "\(MarketplaceTestFixture.service).\(entityKey)"
     let id = UUID().uuidString
 
     try store(
@@ -400,16 +404,16 @@ final class InterpreterTests: XCTestCase {
           "title": .string("Selected exact item"),
         ])
       ]),
-      at: "\(MarketplaceTestFixture.service).\(resourceKey)"
+      at: resourceRef
     )
 
-    EVY.resolveQueryParams([resourceKey: [id]])
+    EVY.resolveQueryParams([resourceRef: [id]])
 
     XCTAssertEqual(
-      try EVY.getDataFromText("{\(resourceKey).title}"),
+      try EVY.getDataFromText("{\(resourceRef).title}"),
       .string("Selected exact item")
     )
-    XCTAssertThrowsError(try EVY.getDataFromText("{\(entityKey).title}"))
+    XCTAssertThrowsError(try EVY.getDataFromText("{\(entityRef).title}"))
   }
 
   func testResolveQueryParamsResolvesExplicitResourceRef() throws {
@@ -559,6 +563,29 @@ final class InterpreterTests: XCTestCase {
     XCTAssertEqual(try EVY.getDataFromText("{item.title}"), .string("Real title"))
   }
 
+  func testEnsureDraftExistsDoesNotShadowCachedDottedResourceRef() throws {
+    let itemsRef = "\(MarketplaceTestFixture.service).\(uniqueKey("items"))"
+    let scopeId = EVYDraft.ephemeralScopeId(forPageId: testPageId)
+    EVY.draftStore.activeScopeId = scopeId
+
+    let item = EVYJson.dictionary(["id": .string("id-1"), "title": .string("Selected title")])
+    try EVY.cacheStore.create(
+      namespace: EVYNamespace.cache,
+      resource: testPageId,
+      id: itemsRef,
+      value: try JSONEncoder().encode(item)
+    )
+
+    EVY.ensureDraftExists(variableName: "\(itemsRef).title", scopeId: scopeId)
+
+    let binding = try EVY.draftStore.binding(
+      fromParsedProps: "\(itemsRef).title", scopeId: scopeId)
+    XCTAssertNil(
+      EVY.draftStore.draftIfPresent(binding: binding),
+      "Bootstrap must not create an empty draft over a navigate-query cached entity")
+    XCTAssertEqual(try EVY.getDataFromText("{\(itemsRef).title}"), .string("Selected title"))
+  }
+
   func testEnsureDraftExistsSeedsWhenNoInstanceValueExists() throws {
     let variableName = "\(uniqueKey("item")).title"
     let scopeId = EVYDraft.ephemeralScopeId(forPageId: testPageId)
@@ -585,6 +612,7 @@ final class InterpreterTests: XCTestCase {
 
   func testResolveQueryParamsResolvesGenericIdFromSyncedCollection() throws {
     let entityKey = uniqueKey("entities")
+    let entityRef = "\(MarketplaceTestFixture.service).\(entityKey)"
     let id = UUID().uuidString
 
     try store(
@@ -594,13 +622,13 @@ final class InterpreterTests: XCTestCase {
           "title": .string("Selected by generic id"),
         ])
       ]),
-      at: "\(MarketplaceTestFixture.service).\(entityKey)"
+      at: entityRef
     )
 
     EVY.resolveQueryParams(["id": [id]])
 
     XCTAssertEqual(
-      try EVY.getDataFromText("{\(entityKey).title}"),
+      try EVY.getDataFromText("{\(entityRef).title}"),
       .string("Selected by generic id")
     )
   }

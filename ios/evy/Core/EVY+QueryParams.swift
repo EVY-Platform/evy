@@ -71,7 +71,7 @@ extension EVY {
 
   private static func cacheKeyForResolvedEntity(queryKey: String?, resourceRef: String) -> String {
     if let queryKey, !queryKey.isEmpty { return queryKey }
-    return (try? EVYResourceRef.resourceOf(resourceRef)) ?? resourceRef
+    return resourceRef
   }
 
   private static func cacheValue(scopeId: String, cacheKey: String, value: Data) {

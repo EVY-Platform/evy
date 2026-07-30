@@ -54,15 +54,22 @@ enum EVYResourceRef {
     (try? parse(ref)) != nil
   }
 
-  static func cacheScopeCacheKey(for pathSegments: [String]) -> String? {
-    if let split = split(pathSegments: pathSegments) {
-      return (try? resourceOf(split.ref)) ?? split.ref
+  /// Candidate cache-scope row keys for a binding path, most specific first, each
+  /// paired with the props left over after that key. Rows are keyed either by a
+  /// full dotted resource ref (query-resolved entities) or by a plain query key,
+  /// and binding text can't distinguish the two ("item.title" parses as a ref),
+  /// so callers try candidates in order.
+  static func cacheScopeCandidates(
+    for pathSegments: [String]
+  ) -> [(key: String, remaining: [String])] {
+    var candidates: [(key: String, remaining: [String])] = []
+    if let split = split(pathSegments: pathSegments), isValid(split.ref) {
+      candidates.append((split.ref, split.remaining))
     }
-    guard let first = pathSegments.first, !first.isEmpty else { return nil }
-    if isValid(first) {
-      return (try? resourceOf(first)) ?? first
+    if let first = pathSegments.first, !first.isEmpty {
+      candidates.append((first, Array(pathSegments.dropFirst())))
     }
-    return first
+    return candidates
   }
 }
 

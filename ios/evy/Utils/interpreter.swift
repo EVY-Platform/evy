@@ -318,27 +318,23 @@ private func _resolveBindingRoot(
     return (try match.draft.decoded(), match.remainingProps)
   }
 
-  if let scopeId = scope.cacheScopeId,
-    let cacheKey = EVYResourceRef.cacheScopeCacheKey(for: splitProps),
-    let cachedRow = try? EVY.cacheStore.get(
-      namespace: EVYNamespace.cache, resource: scopeId, id: cacheKey)
-  {
-    let remaining: [String] =
-      if let split = EVYResourceRef.split(pathSegments: splitProps) {
-        split.remaining
-      } else if splitProps.first == cacheKey {
-        Array(splitProps.dropFirst())
-      } else {
-        remainingProps
-      }
-    return (try cachedRow.decoded(), remaining)
+  if let scopeId = scope.cacheScopeId {
+    for (cacheKey, remaining) in EVYResourceRef.cacheScopeCandidates(for: splitProps) {
+      guard
+        let cachedRow = try? EVY.cacheStore.get(
+          namespace: EVYNamespace.cache, resource: scopeId, id: cacheKey)
+      else { continue }
+      return (try cachedRow.decoded(), remaining)
+    }
   }
 
   let json: EVYJson
   do {
     json = try store.getJsonForBinding(key: firstProp, cacheScopeId: scope.cacheScopeId)
   } catch EVYDataError.keyNotFound {
-    if let split = EVYResourceRef.split(pathSegments: splitProps) {
+    if let split = EVYResourceRef.split(pathSegments: splitProps),
+      EVYResourceRef.isValid(split.ref)
+    {
       return (try EVY.getSyncedJsonForRef(split.ref), split.remaining)
     }
     throw EVYDataError.keyNotFound

@@ -146,7 +146,7 @@ enum EVYDraft {
       && segments.count >= entityKeySegments.count
       && Array(segments.prefix(entityKeySegments.count)) == entityKeySegments
 
-    if let entityKey, prefixMatches, segments.count > entityKeySegments.count {
+    if entityKey != nil, prefixMatches, segments.count > entityKeySegments.count {
       let rest = Array(segments.dropFirst(entityKeySegments.count))
       return Binding(
         scopeId: effectiveScope,

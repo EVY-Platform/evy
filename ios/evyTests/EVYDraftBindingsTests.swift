@@ -329,7 +329,8 @@ final class EVYDraftBindingTests: XCTestCase {
   }
 
   func testWriteRawValueUpdatesPageCacheNotFirstSyncedCollectionItem() throws {
-    let resourceId = uniqueKey("items")
+    let itemsKey = uniqueKey("items")
+    let itemsRef = "\(MarketplaceTestFixture.service).\(itemsKey)"
     let pageId = "page_\(UUID().uuidString)"
     let selectedItemId = UUID().uuidString
     let otherItemId = UUID().uuidString
@@ -348,12 +349,12 @@ final class EVYDraftBindingTests: XCTestCase {
 
     try EVY.publicStore.applySyncedValue(
       namespace: MarketplaceTestFixture.service,
-      resource: resourceId,
+      resource: itemsRef,
       value: .array([otherItem, selectedItem])
     )
     defer {
       try? EVY.publicStore.deleteAll(
-        namespace: MarketplaceTestFixture.service, resource: resourceId)
+        namespace: MarketplaceTestFixture.service, resource: itemsRef)
     }
 
     EVY.activeCacheScopeId = pageId
@@ -361,7 +362,7 @@ final class EVYDraftBindingTests: XCTestCase {
     try EVY.cacheStore.create(
       namespace: EVYNamespace.cache,
       resource: pageId,
-      id: resourceId,
+      id: itemsRef,
       value: try JSONEncoder().encode(selectedItem)
     )
 
@@ -377,21 +378,21 @@ final class EVYDraftBindingTests: XCTestCase {
     }
     defer { NotificationCenter.default.removeObserver(observer) }
 
-    try EVY.writeRawStringValue(updatedTitle, to: "{\(resourceId).title}")
+    try EVY.writeRawStringValue(updatedTitle, to: "{\(itemsRef).title}")
 
     XCTAssertEqual(
-      try EVY.getDataFromText("{\(resourceId).title}"),
+      try EVY.getDataFromText("{\(itemsRef).title}"),
       .string(updatedTitle),
       "Title writes must update the page-scoped cache row so live watchers recompute"
     )
     XCTAssertTrue(
-      notificationKeys.contains("\(resourceId).title"),
+      notificationKeys.contains("\(itemsRef).title"),
       "Title writes must post a value-changed notification for heading/input watchers"
     )
 
     let otherRow = try EVY.publicStore.get(
       namespace: MarketplaceTestFixture.service,
-      resource: resourceId,
+      resource: itemsRef,
       id: otherItemId
     )
     XCTAssertEqual(
@@ -402,7 +403,7 @@ final class EVYDraftBindingTests: XCTestCase {
 
     let selectedPublicRow = try EVY.publicStore.get(
       namespace: MarketplaceTestFixture.service,
-      resource: resourceId,
+      resource: itemsRef,
       id: selectedItemId
     )
     XCTAssertEqual(

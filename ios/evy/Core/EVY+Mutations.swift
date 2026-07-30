@@ -77,22 +77,25 @@ extension EVY {
     cleanVariableName: String
   ) -> Bool {
     guard let splitProps = try? splitPropsFromText(cleanVariableName),
-      let firstProp = splitProps.first
+      !splitProps.isEmpty
     else {
       return false
     }
-    let remainingProps = splitProps.count > 1 ? Array(splitProps.dropFirst()) : []
 
-    if let scopeId = activeCacheScopeId,
-      let cachedRow = try? cacheStore.get(
-        namespace: EVYNamespace.cache, resource: scopeId, id: firstProp),
-      let decoded = try? cachedRow.decoded(),
-      decoded.parsePropStrict(props: remainingProps) != nil
-    {
-      return true
+    if let scopeId = activeCacheScopeId {
+      for (cacheKey, remaining) in EVYResourceRef.cacheScopeCandidates(for: splitProps) {
+        guard
+          let cachedRow = try? cacheStore.get(
+            namespace: EVYNamespace.cache, resource: scopeId, id: cacheKey),
+          let decoded = try? cachedRow.decoded(),
+          decoded.parsePropStrict(props: remaining) != nil
+        else { continue }
+        return true
+      }
     }
 
     if let split = EVYResourceRef.split(pathSegments: splitProps),
+      EVYResourceRef.isValid(split.ref),
       let json = try? getSyncedJsonForRef(split.ref),
       json.parsePropStrict(props: split.remaining) != nil
     {
@@ -447,9 +450,9 @@ extension EVY {
     )
 
     if !writesIntoCreateEntity,
-      let existingRow = try? findRowForUpdate(rootVariable: rootVariable)
+      let existingRow = try? findRowForUpdate(splitProps: splitProps)
     {
-      let remainingProps = Array(splitProps.dropFirst())
+      let remainingProps = existingRow.remainingProps
       if remainingProps.isEmpty {
         existingRow.row.data = newData
       } else {
@@ -475,26 +478,36 @@ extension EVY {
     draftStore.notifyUpdate(binding: draftBinding)
   }
 
-  private static func findRowForUpdate(rootVariable: String) throws -> (
-    row: EVYData, store: EVYDataStore
+  private static func findRowForUpdate(splitProps: [String]) throws -> (
+    row: EVYData, store: EVYDataStore, remainingProps: [String]
   ) {
+    let rootVariable = EVYResourceRef.split(pathSegments: splitProps)?.ref ?? splitProps.first!
+    let syncedRemainingProps =
+      EVYResourceRef.split(pathSegments: splitProps)?.remaining
+      ?? Array(splitProps.dropFirst())
+
     for store in syncedStores() {
       if let localRow = try? store.get(
-        namespace: EVYNamespace.local, resource: rootVariable, id: EVYNamespace.singletonId)
+        namespace: EVYNamespace.local,
+        resource: splitProps.first!,
+        id: EVYNamespace.singletonId)
       {
-        return (localRow, store)
+        return (localRow, store, Array(splitProps.dropFirst()))
       }
     }
-    if let scopeId = activeCacheScopeId,
-      let cachedRow = try? cacheStore.get(
-        namespace: EVYNamespace.cache, resource: scopeId, id: rootVariable)
-    {
-      return (cachedRow, publicStore)
+    if let scopeId = activeCacheScopeId {
+      for (cacheKey, remaining) in EVYResourceRef.cacheScopeCandidates(for: splitProps) {
+        if let cachedRow = try? cacheStore.get(
+          namespace: EVYNamespace.cache, resource: scopeId, id: cacheKey)
+        {
+          return (cachedRow, publicStore, remaining)
+        }
+      }
     }
     if let namespace = try? EVYResourceRef.serviceOf(rootVariable) {
       for store in syncedStores() {
         if let matched = try? store.getFirst(namespace: namespace, resource: rootVariable) {
-          return (matched, store)
+          return (matched, store, syncedRemainingProps)
         }
       }
     }

@@ -246,9 +246,10 @@ final class EVYActionRunnerTests: XCTestCase {
     let resource = EVYCoreResource.addresses.ref
     let entityId = UUID().uuidString
     let scopeId = EVYDraft.ephemeralScopeId(forPageId: UUID().uuidString)
+    deleteFromSyncedStores(namespace: namespace, resource: resource)
     EVY.draftStore.activeScopeId = scopeId
     defer {
-      try? EVY.publicStore.deleteAll(namespace: namespace, resource: resource)
+      deleteFromSyncedStores(namespace: namespace, resource: resource)
       try? EVY.publicStore.delete(
         namespace: EVYNamespace.local, resource: entityId, id: EVYNamespace.singletonId)
       EVY.draftStore.deleteDrafts()

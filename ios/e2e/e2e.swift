@@ -1812,7 +1812,6 @@ class E2ETestBase: XCTestCase {
         "mode": "inline",
         "data": [
           "fk": "$datum.fk",
-          "service": "$datum.service",
           "resource": "$datum.resource",
           "parent_message_id": "$datum.id",
           "data":
@@ -1823,6 +1822,7 @@ class E2ETestBase: XCTestCase {
   }
 
   static func homeInboxTabRow() -> [String: Any] {
+    let messagesRef = EVYCoreResource.messages.ref
     var acceptButton = buttonRow(
       id: "e519e84d-9a7e-4563-bacb-388bba69e9b2",
       label: "Accept"
@@ -1884,7 +1884,7 @@ class E2ETestBase: XCTestCase {
       "title": "",
       "placeholder": "",
       "source":
-        "{filter(messages, $datum.data.value == \"pending\" && owns($datum.resource, $datum.fk) == true && findFirst(sort(messages, desc, created_at), fk == $datum.fk && data.type == $datum.data.type).id == $datum.id)}",
+        "{filter(\(messagesRef), $datum.data.value == \"pending\" && owns($datum.resource, $datum.fk) == true && findFirst(sort(\(messagesRef), desc, created_at), fk == $datum.fk && data.type == $datum.data.type).id == $datum.id)}",
       "no_results": "No requests",
       "destination": "",
       "visible": "true",
@@ -1913,7 +1913,7 @@ class E2ETestBase: XCTestCase {
       "title": "",
       "placeholder": "",
       "source":
-        "{filter(messages, $datum.data.value == \"pending\" && owns($datum.resource, $datum.fk) == false && findFirst(sort(messages, desc, created_at), fk == $datum.fk && data.type == $datum.data.type).id == $datum.id)}",
+        "{filter(\(messagesRef), $datum.data.value == \"pending\" && owns($datum.resource, $datum.fk) == false && findFirst(sort(\(messagesRef), desc, created_at), fk == $datum.fk && data.type == $datum.data.type).id == $datum.id)}",
       "no_results": "No requests",
       "destination": "",
       "visible": "true",
@@ -1939,7 +1939,7 @@ class E2ETestBase: XCTestCase {
       "name": "Scheduled requests",
       "title": "",
       "placeholder": "",
-      "source": "{filter(messages, $datum.data.value == \"accept\")}",
+      "source": "{filter(\(messagesRef), $datum.data.value == \"accept\")}",
       "no_results": "No requests",
       "destination": "",
       "visible": "true",
@@ -2927,7 +2927,6 @@ final class WebSocketE2ETests: E2ETestBase {
       resource: EVYCoreResource.messages.ref,
       data: [
         "fk": selectedItemId,
-        "service": MARKETPLACE_SERVICE,
         "resource": MARKETPLACE_ITEMS_RESOURCE_ID,
         "visibility": "private",
         "parent_message_id": requestId,
@@ -3079,7 +3078,6 @@ final class WebSocketE2ETests: E2ETestBase {
       resource: EVYCoreResource.messages.ref,
       data: [
         "fk": selectedItemId,
-        "service": MARKETPLACE_SERVICE,
         "resource": MARKETPLACE_ITEMS_RESOURCE_ID,
         "visibility": "private",
         "parent_message_id": messageId,
@@ -3696,7 +3694,7 @@ final class WebSocketE2ETests: E2ETestBase {
       let deadline = Date().addingTimeInterval(20)
       while Date() < deadline {
         let addressesPayload = try await emitter.getResource(
-          resource: "addresses",
+          resource: EVYCoreResource.addresses.ref,
           filter: ["id": addressId]
         )
         if Self.coreAddressesContainId(addressId, addresses: addressesPayload) {
@@ -3708,7 +3706,7 @@ final class WebSocketE2ETests: E2ETestBase {
     }
     if !addressFound {
       let addressesPayload = try awaitResult("fetch core addresses for failure") {
-        try await emitter.getResource(resource: "addresses")
+        try await emitter.getResource(resource: EVYCoreResource.addresses.ref)
       }
       XCTFail(
         "Core addresses should contain the linked pickup address id \(addressId). Payload: \(String(describing: addressesPayload).prefix(400))"
@@ -4694,7 +4692,6 @@ final class E2EHomeInboxTests: E2ETestBase {
         data: [
           "id": requestId,
           "fk": Self.seededMessageItemId,
-          "service": MARKETPLACE_SERVICE,
           "resource": MARKETPLACE_ITEMS_RESOURCE_ID,
           "visibility": "private",
           "data": [
@@ -4711,7 +4708,6 @@ final class E2EHomeInboxTests: E2ETestBase {
           data: [
             "id": responseId,
             "fk": Self.seededMessageItemId,
-            "service": MARKETPLACE_SERVICE,
             "resource": MARKETPLACE_ITEMS_RESOURCE_ID,
             "visibility": "private",
             "parent_message_id": requestId,
