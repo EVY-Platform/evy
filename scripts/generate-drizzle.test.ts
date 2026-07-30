@@ -2,7 +2,9 @@ import { describe, expect, test } from "bun:test";
 import {
 	assertDrizzleConfig,
 	type DrizzleConfig,
+	emitRefColumn,
 	type JsonSchema,
+	loadSchemaRefCache,
 	resolveJsonbTypeAnnotation,
 	validateEveryDataDefHasATable,
 } from "./generate-drizzle";
@@ -46,6 +48,40 @@ describe("resolveJsonbTypeAnnotation", () => {
 		expect(() =>
 			resolveJsonbTypeAnnotation("../unknown/schema.json"),
 		).toThrow(/unrecognised object \$ref/);
+	});
+});
+
+describe("string $ref columns", () => {
+	test("ServiceSlug ref emits varchar(50)", async () => {
+		await loadSchemaRefCache();
+		expect(
+			emitRefColumn(
+				"id",
+				"../common/rpc.schema.json#/$defs/ServiceSlug",
+				{
+					isPk: true,
+				},
+			),
+		).toBe('varchar("id", { length: 50 }).primaryKey().notNull()');
+	});
+
+	test("ResourceRef ref emits varchar(100)", async () => {
+		await loadSchemaRefCache();
+		expect(
+			emitRefColumn(
+				"resource",
+				"../common/rpc.schema.json#/$defs/ResourceRef",
+			),
+		).toBe('varchar("resource", { length: 100 }).notNull()');
+	});
+
+	test("object $ref still emits jsonb", async () => {
+		await loadSchemaRefCache();
+		expect(
+			emitRefColumn("submits", "#/$defs/DATA_EVY_FlowSubmits", {
+				isRequired: false,
+			}),
+		).toBe('jsonb("submits").$type<DATA_EVY_FlowSubmits>()');
 	});
 });
 

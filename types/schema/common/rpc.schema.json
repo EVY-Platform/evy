@@ -14,7 +14,7 @@
 			"type": "string",
 			"pattern": "^[a-z][a-z0-9_-]*\\.[a-z][a-z0-9_-]*$",
 			"minLength": 1,
-			"maxLength": 50
+			"maxLength": 100
 		},
 		"DataFilter": {
 			"type": "object",

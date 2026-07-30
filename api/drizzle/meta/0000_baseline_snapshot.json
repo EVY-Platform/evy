@@ -1,5 +1,5 @@
 {
-	"id": "6aa11798-35e1-456d-858f-686dc3bd1765",
+	"id": "9c0cd58c-489c-43e2-8b5e-93a9bfd55c88",
 	"prevId": "00000000-0000-0000-0000-000000000000",
 	"version": "7",
 	"dialect": "postgresql",
@@ -368,7 +368,7 @@
 				},
 				"resource": {
 					"name": "resource",
-					"type": "jsonb",
+					"type": "varchar(100)",
 					"primaryKey": false,
 					"notNull": true
 				},
@@ -652,7 +652,7 @@
 			"columns": {
 				"id": {
 					"name": "id",
-					"type": "jsonb",
+					"type": "varchar(50)",
 					"primaryKey": true,
 					"notNull": true
 				},
@@ -748,7 +748,7 @@
 				},
 				"fk_service_id": {
 					"name": "fk_service_id",
-					"type": "jsonb",
+					"type": "varchar(50)",
 					"primaryKey": false,
 					"notNull": true
 				},

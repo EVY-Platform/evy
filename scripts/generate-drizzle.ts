@@ -4,7 +4,7 @@
  * and properties that exist in the schema (strict extension).
  */
 import { mkdir, writeFile } from "node:fs/promises";
-import { dirname, join } from "node:path";
+import { dirname, join, resolve } from "node:path";
 import {
 	loadJson,
 	OUT_TS,
@@ -13,6 +13,8 @@ import {
 } from "./types-generation-utils.js";
 
 const DATA_SCHEMA_PATH = join(SCHEMA_DIR, "data", "data.schema.json");
+const DATA_SCHEMA_DIR = join(SCHEMA_DIR, "data");
+const RPC_SCHEMA_PATH = join(SCHEMA_DIR, "common", "rpc.schema.json");
 const OS_SCHEMA_PATH = join(SCHEMA_DIR, "data", "os.schema.json");
 const DRIZZLE_CONFIG_PATH = join(SCHEMA_DIR, "data", "drizzle.config.json");
 const OUT_PATH = join(OUT_TS, "db", "schema.generated.ts");
@@ -391,6 +393,37 @@ function localDefName(ref: string | undefined): string | null {
 	return match?.[1] ?? null;
 }
 
+const schemaFileCache = new Map<string, JsonSchema>();
+
+export async function loadSchemaRefCache(): Promise<void> {
+	schemaFileCache.clear();
+	schemaFileCache.set(
+		DATA_SCHEMA_PATH,
+		await loadJson<JsonSchema>(DATA_SCHEMA_PATH),
+	);
+	schemaFileCache.set(
+		RPC_SCHEMA_PATH,
+		await loadJson<JsonSchema>(RPC_SCHEMA_PATH),
+	);
+}
+
+export function resolveRefTarget(ref: string): JsonSchemaProp | null {
+	const hashIndex = ref.indexOf("#");
+	if (hashIndex === -1) return null;
+	const relativeFile = ref.slice(0, hashIndex);
+	const fragment = ref.slice(hashIndex + 1);
+	const defMatch = /^\/\$defs\/([A-Za-z0-9_]+)$/.exec(fragment);
+	if (!defMatch?.[1]) return null;
+
+	const absolutePath =
+		relativeFile === ""
+			? DATA_SCHEMA_PATH
+			: resolve(DATA_SCHEMA_DIR, relativeFile);
+	const schema = schemaFileCache.get(absolutePath);
+	const def = schema?.$defs?.[defMatch[1]];
+	return def && typeof def === "object" ? def : null;
+}
+
 export function resolveJsonbTypeAnnotation(ref: string | undefined): string {
 	if (!ref) {
 		throw new Error("resolveJsonbTypeAnnotation: ref is required");
@@ -456,11 +489,54 @@ function buildRefColumn(
 			return col;
 		}
 	}
+	const resolved = resolveRefTarget(ref);
+	if (resolved?.type === "string") {
+		let col = buildStringColumn(
+			dbCol,
+			resolved.format,
+			resolved.maxLength,
+			{ isPk, hasDefaultRandom },
+		);
+		if (!col.includes(".notNull()")) col += ".notNull()";
+		return col;
+	}
 	const typeArg = resolveJsonbTypeAnnotation(ref);
 	let col = `jsonb("${dbCol}").$type<${typeArg}>().notNull()`;
 	if (isPk) col += ".primaryKey()";
 	if (hasDefaultRandom) col += ".defaultRandom()";
 	return col;
+}
+
+/** Test helper: emit a column from a bare `$ref` property. */
+export function emitRefColumn(
+	dbCol: string,
+	ref: string,
+	options: {
+		isPk?: boolean;
+		hasDefaultRandom?: boolean;
+		enumKeys?: string[];
+		defaultVal?: unknown;
+		isRequired?: boolean;
+	} = {},
+): string {
+	const suffixes: ColumnSuffixes = {
+		isPk: options.isPk ?? false,
+		hasDefaultRandom: options.hasDefaultRandom ?? false,
+	};
+	const col = buildRefColumn(
+		dbCol,
+		ref,
+		suffixes,
+		options.enumKeys ?? [],
+		options.defaultVal,
+	);
+	return applyNullabilityFallback(
+		col,
+		undefined,
+		undefined,
+		ref,
+		options.isRequired ?? true,
+	);
 }
 
 function applyNullabilityFallback(
@@ -538,6 +614,7 @@ function isTypeUsed(typeName: string, columnLines: string[]): boolean {
 }
 
 async function main(): Promise<void> {
+	await loadSchemaRefCache();
 	const schemaRaw = await loadJson<unknown>(DATA_SCHEMA_PATH);
 	const config = await loadJson<unknown>(DRIZZLE_CONFIG_PATH);
 	assertDrizzleConfig(config);
