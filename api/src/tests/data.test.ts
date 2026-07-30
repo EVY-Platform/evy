@@ -37,6 +37,7 @@ const coreModule = await import("../data/data");
 const {
 	create,
 	get,
+	getSyncRows,
 	update,
 	deleteResource: deleteCore,
 	validateAuth,
@@ -102,6 +103,7 @@ function addressRow(
 	return {
 		...ROTHCHILD_CANONICAL_ADDRESS,
 		id: crypto.randomUUID(),
+		visibility: "private",
 		...timestamps(),
 		...overrides,
 	};
@@ -342,8 +344,6 @@ describe("flat flow resources", () => {
 		})) as DATA_EVY_Page;
 
 		expect(deleted.id).toBe(payload.id);
-		// Soft delete: the row survives as a tombstone so incremental syncs can
-		// tell clients it is gone, but plain reads no longer return it.
 		const [tombstone] = await testDb.select().from(schema.page);
 		expect(tombstone?.deletedAt).toBeTruthy();
 		expect(
@@ -412,8 +412,6 @@ describe("address resources", () => {
 			filter: { id: payload.id },
 		})) as DATA_EVY_Address;
 		expect(deleted.id).toBe(payload.id);
-		// Soft delete: the row survives as a tombstone so incremental syncs can
-		// tell clients it is gone, but plain reads no longer return it.
 		const [tombstone] = await testDb.select().from(schema.address);
 		expect(tombstone?.deletedAt).toBeTruthy();
 		expect(
@@ -444,6 +442,7 @@ describe("address resources", () => {
 			data: {
 				id: crypto.randomUUID(),
 				street: "Manual Street",
+				visibility: "private",
 			},
 		})) as DATA_EVY_Address;
 		expect(created.street).toBe("Manual Street");
@@ -453,12 +452,26 @@ describe("address resources", () => {
 	});
 });
 
-describe("visibility defaults", () => {
+describe("visibility", () => {
 	beforeEach(async () => {
 		await clearAllTestTables(testDb);
 	});
 
-	it("defaults flow visibility to public when omitted from payload", async () => {
+	it("rejects a create with no visibility rather than choosing one", async () => {
+		await expect(
+			create(dataDb, {
+				service: EVY_CORE_SERVICE,
+				resource: FLOW_RESOURCE,
+				data: {
+					id: crypto.randomUUID(),
+					name: "Flow With No Visibility",
+					pageIds: [],
+				},
+			}),
+		).rejects.toThrow("visibility");
+	});
+
+	it("round-trips explicit public visibility on flows", async () => {
 		const created = (await create(dataDb, {
 			service: EVY_CORE_SERVICE,
 			resource: FLOW_RESOURCE,
@@ -466,6 +479,7 @@ describe("visibility defaults", () => {
 				id: crypto.randomUUID(),
 				name: "Public Flow",
 				pageIds: [],
+				visibility: "public",
 			},
 		})) as DATA_EVY_Flow;
 		expect(created.visibility).toBe("public");
@@ -509,8 +523,12 @@ describe("message resources", () => {
 			fk: crypto.randomUUID(),
 			service: crypto.randomUUID(),
 			resource: crypto.randomUUID(),
-			status: "pending" as const,
-			data: { type: "pickup", time: "2026-06-03T09:00:00" },
+			data: {
+				type: "pickup",
+				value: "pending",
+				time: "2026-06-03T09:00:00",
+			},
+			visibility: "private" as const,
 		};
 		const created = (await create(dataDb, {
 			service: EVY_CORE_SERVICE,
@@ -519,8 +537,8 @@ describe("message resources", () => {
 		})) as DATA_EVY_Message;
 		expect(created.id).toBeDefined();
 		expect(created.updatedAt).toBeDefined();
-		expect(created.status).toBe("pending");
-		expect(created.visibility).toBe("public");
+		expect(created.data.value).toBe("pending");
+		expect(created.visibility).toBe("private");
 
 		const listed = (await get(dataDb, {
 			service: EVY_CORE_SERVICE,
@@ -528,30 +546,12 @@ describe("message resources", () => {
 		})) as DATA_EVY_Message[];
 		expect(listed).toHaveLength(1);
 
-		const updated = (await update(dataDb, {
-			service: EVY_CORE_SERVICE,
-			resource: MESSAGE_RESOURCE,
-			filter: { id: created.id },
-			data: { ...created, status: "accepted" },
-		})) as DATA_EVY_Message;
-		expect(updated.status).toBe("accepted");
-
-		const archived = (await update(dataDb, {
-			service: EVY_CORE_SERVICE,
-			resource: MESSAGE_RESOURCE,
-			filter: { id: created.id },
-			data: { ...updated, archivedAt: nowIso() },
-		})) as DATA_EVY_Message;
-		expect(archived.archivedAt).toBeDefined();
-
 		const deleted = (await deleteCore(dataDb, {
 			service: EVY_CORE_SERVICE,
 			resource: MESSAGE_RESOURCE,
 			filter: { id: created.id },
 		})) as DATA_EVY_Message;
 		expect(deleted.id).toBe(created.id);
-		// Soft delete: the row survives as a tombstone so incremental syncs can
-		// tell clients it is gone, but plain reads no longer return it.
 		const [tombstone] = await testDb.select().from(schema.message);
 		expect(tombstone?.deletedAt).toBeTruthy();
 		expect(
@@ -569,14 +569,357 @@ describe("message resources", () => {
 				resource: MESSAGE_RESOURCE,
 				data: {
 					id: crypto.randomUUID(),
-					fk: crypto.randomUUID(),
+					fk: "not-a-uuid",
 					service: crypto.randomUUID(),
 					resource: crypto.randomUUID(),
-					status: "invalid",
 					data: {},
+					visibility: "private",
 				},
 			}),
 		).rejects.toThrow("Message validation failed");
+	});
+
+	it.each([
+		"status",
+		"archivedAt",
+	])("rejects a message still carrying the removed %s field", async (removed) => {
+		await expect(
+			create(dataDb, {
+				service: EVY_CORE_SERVICE,
+				resource: MESSAGE_RESOURCE,
+				data: {
+					id: crypto.randomUUID(),
+					fk: crypto.randomUUID(),
+					service: crypto.randomUUID(),
+					resource: crypto.randomUUID(),
+					[removed]: removed === "status" ? "pending" : null,
+					data: { type: "pickup", value: "pending" },
+					visibility: "private",
+				},
+			}),
+		).rejects.toThrow("Message validation failed");
+	});
+});
+
+describe("getSyncRows", () => {
+	const targetService = crypto.randomUUID();
+	const targetResource = crypto.randomUUID();
+	const ownedFk = crypto.randomUUID();
+	const otherFk = crypto.randomUUID();
+
+	async function createMessage(fk: string): Promise<DATA_EVY_Message> {
+		return (await create(dataDb, {
+			service: EVY_CORE_SERVICE,
+			resource: MESSAGE_RESOURCE,
+			data: {
+				fk,
+				service: targetService,
+				resource: targetResource,
+				data: { type: "pickup", value: "pending" },
+				visibility: "private" as const,
+			},
+		})) as DATA_EVY_Message;
+	}
+
+	async function createResponse(
+		requestId: string,
+	): Promise<DATA_EVY_Message> {
+		return (await create(dataDb, {
+			service: EVY_CORE_SERVICE,
+			resource: MESSAGE_RESOURCE,
+			data: {
+				fk: otherFk,
+				service: targetService,
+				resource: targetResource,
+				parentMessageId: requestId,
+				data: { value: "accept", type: "pickup" },
+				visibility: "private" as const,
+			},
+		})) as DATA_EVY_Message;
+	}
+
+	function owns(...fks: string[]) {
+		return [{ service: targetService, resource: targetResource, ids: fks }];
+	}
+
+	function ownsCoreMessage(...ids: string[]) {
+		return [
+			{
+				service: EVY_CORE_SERVICE,
+				resource: MESSAGE_RESOURCE,
+				ids,
+			},
+		];
+	}
+
+	async function ownedIds(
+		params: Parameters<typeof getSyncRows>[2],
+	): Promise<string[]> {
+		const owned = (await getSyncRows(
+			dataDb,
+			MESSAGE_RESOURCE,
+			params,
+		)) as DATA_EVY_Message[];
+		return owned.map((message) => message.id);
+	}
+
+	beforeEach(async () => {
+		await clearAllTestTables(testDb);
+	});
+
+	it("returns nothing when the device owns nothing", async () => {
+		await createMessage(ownedFk);
+
+		expect(await ownedIds({ owned: [] })).toEqual([]);
+	});
+
+	it("returns only messages the device created", async () => {
+		const mine = await createMessage(otherFk);
+		await createMessage(otherFk);
+
+		expect(
+			await ownedIds({
+				owned: ownsCoreMessage(mine.id),
+			}),
+		).toEqual([mine.id]);
+	});
+
+	it("returns only messages addressed to a record the device owns", async () => {
+		const addressed = await createMessage(ownedFk);
+		await createMessage(otherFk);
+
+		expect(
+			await ownedIds({
+				owned: owns(ownedFk),
+			}),
+		).toEqual([addressed.id]);
+	});
+
+	it("returns the union of created and addressed messages", async () => {
+		const addressed = await createMessage(ownedFk);
+		const mine = await createMessage(otherFk);
+		await createMessage(otherFk);
+
+		const owned = await ownedIds({
+			owned: [...ownsCoreMessage(mine.id), ...owns(ownedFk)],
+		});
+
+		expect(owned.toSorted()).toEqual([addressed.id, mine.id].toSorted());
+	});
+
+	it("matches the fk only within its own service and resource", async () => {
+		await createMessage(ownedFk);
+
+		expect(
+			await ownedIds({
+				owned: [
+					{
+						service: crypto.randomUUID(),
+						resource: targetResource,
+						ids: [ownedFk],
+					},
+				],
+			}),
+		).toEqual([]);
+	});
+
+	it("excludes owned messages unchanged since updatedAfter", async () => {
+		const mine = await createMessage(otherFk);
+
+		expect(
+			await ownedIds({
+				updatedAfter: mine.updatedAt,
+				owned: ownsCoreMessage(mine.id),
+			}),
+		).toEqual([]);
+	});
+
+	it("carries tombstones to the owner on an incremental read", async () => {
+		const mine = await createMessage(otherFk);
+		const before = mine.updatedAt;
+		await deleteCore(dataDb, {
+			service: EVY_CORE_SERVICE,
+			resource: MESSAGE_RESOURCE,
+			filter: { id: mine.id },
+		});
+
+		const incremental = (await getSyncRows(dataDb, MESSAGE_RESOURCE, {
+			updatedAfter: before,
+			owned: ownsCoreMessage(mine.id),
+		})) as DATA_EVY_Message[];
+		expect(incremental).toHaveLength(1);
+		expect(incremental[0].deletedAt).toBeTruthy();
+
+		expect(
+			await ownedIds({
+				owned: ownsCoreMessage(mine.id),
+			}),
+		).toEqual([]);
+	});
+
+	it("ignores owned groups that cannot address a message", async () => {
+		const addressed = await createMessage(ownedFk);
+
+		expect(
+			await ownedIds({
+				owned: [
+					{
+						service: EVY_CORE_SERVICE,
+						resource: EVY_CORE_RESOURCE.ADDRESSES,
+						ids: [crypto.randomUUID()],
+					},
+					...owns(ownedFk),
+				],
+			}),
+		).toEqual([addressed.id]);
+	});
+
+	it("ignores owned groups with no ids", async () => {
+		await createMessage(ownedFk);
+
+		expect(await ownedIds({ owned: owns() })).toEqual([]);
+	});
+
+	it("returns responses to a message the device owns", async () => {
+		const request = await createMessage(otherFk);
+		const response = await createResponse(request.id);
+
+		const owned = await ownedIds({
+			owned: ownsCoreMessage(request.id),
+		});
+
+		expect(owned.toSorted()).toEqual([request.id, response.id].toSorted());
+	});
+
+	it("does not return responses to a message the device does not own", async () => {
+		const request = await createMessage(otherFk);
+		const mine = await createMessage(otherFk);
+		await createResponse(request.id);
+
+		expect(
+			await ownedIds({
+				owned: ownsCoreMessage(mine.id),
+			}),
+		).toEqual([mine.id]);
+	});
+
+	it("leaves messages with no parentMessageId unaffected", async () => {
+		const mine = await createMessage(otherFk);
+		await createMessage(otherFk);
+
+		expect(
+			await ownedIds({
+				owned: ownsCoreMessage(mine.id),
+			}),
+		).toEqual([mine.id]);
+	});
+});
+
+describe("getSyncRows entitlement", () => {
+	beforeEach(async () => {
+		await clearAllTestTables(testDb);
+	});
+
+	async function syncedIds(
+		resource: string,
+		params: Parameters<typeof getSyncRows>[2],
+	): Promise<string[]> {
+		const rows = (await getSyncRows(dataDb, resource, params)) as {
+			id: string;
+		}[];
+		return rows.map((row) => row.id);
+	}
+
+	const ownsNothing = { owned: [] };
+
+	function ownsCoreResource(resource: string, ...ids: string[]) {
+		return [
+			{
+				service: EVY_CORE_SERVICE,
+				resource,
+				ids,
+			},
+		];
+	}
+
+	it("sends a public row to a device that owns nothing", async () => {
+		const flow = flowRow({ visibility: "public" });
+		await create(dataDb, {
+			service: EVY_CORE_SERVICE,
+			resource: FLOW_RESOURCE,
+			data: flow,
+		});
+
+		expect(await syncedIds(FLOW_RESOURCE, ownsNothing)).toEqual([flow.id]);
+	});
+
+	it("withholds a private row from a device that owns nothing", async () => {
+		await create(dataDb, {
+			service: EVY_CORE_SERVICE,
+			resource: FLOW_RESOURCE,
+			data: flowRow({ visibility: "private" }),
+		});
+
+		expect(await syncedIds(FLOW_RESOURCE, ownsNothing)).toEqual([]);
+	});
+
+	it("sends a private row to the device that owns it", async () => {
+		const mine = flowRow({ visibility: "private" });
+		const theirs = flowRow({ visibility: "private" });
+		for (const data of [mine, theirs]) {
+			await create(dataDb, {
+				service: EVY_CORE_SERVICE,
+				resource: FLOW_RESOURCE,
+				data,
+			});
+		}
+
+		expect(
+			await syncedIds(FLOW_RESOURCE, {
+				owned: ownsCoreResource(FLOW_RESOURCE, mine.id),
+			}),
+		).toEqual([mine.id]);
+	});
+
+	it("sends rows of a resource that has no visibility at all", async () => {
+		const formatterId = crypto.randomUUID();
+		await create(dataDb, {
+			service: EVY_CORE_SERVICE,
+			resource: FORMATTER_RESOURCE,
+			data: {
+				id: formatterId,
+				name: `fmt-${formatterId.slice(0, 8)}`,
+				formatting_config: "{input.country}",
+				formatting: { default: "{input.postcode}" },
+				...timestamps(),
+			},
+		});
+
+		expect(await syncedIds(FORMATTER_RESOURCE, ownsNothing)).toEqual([
+			formatterId,
+		]);
+	});
+
+	it("carries a tombstone for a private row its owner still owns", async () => {
+		const mine = flowRow({ visibility: "private" });
+		const created = (await create(dataDb, {
+			service: EVY_CORE_SERVICE,
+			resource: FLOW_RESOURCE,
+			data: mine,
+		})) as DATA_EVY_Flow;
+		await deleteCore(dataDb, {
+			service: EVY_CORE_SERVICE,
+			resource: FLOW_RESOURCE,
+			filter: { id: mine.id },
+		});
+
+		const rows = (await getSyncRows(dataDb, FLOW_RESOURCE, {
+			updatedAfter: created.updatedAt,
+			owned: ownsCoreResource(FLOW_RESOURCE, mine.id),
+		})) as DATA_EVY_Flow[];
+
+		expect(rows).toHaveLength(1);
+		expect(rows[0].deletedAt).toBeTruthy();
 	});
 });
 
@@ -591,6 +934,7 @@ describe("service resources", () => {
 			id: serviceId,
 			name: "CreateSvc",
 			description: "D",
+			visibility: "public" as const,
 			...timestamps(),
 		};
 
@@ -637,7 +981,12 @@ describe("files", () => {
 			service: EVY_CORE_SERVICE,
 			resource: EVY_CORE_RESOURCE.FILES,
 			filter: { id: fileId },
-			data: { id: fileId, type: "text/plain", ...timestamps() },
+			data: {
+				id: fileId,
+				type: "text/plain",
+				visibility: "public",
+				...timestamps(),
+			},
 		} as CreateRequest);
 
 		const { filesDir, uploadTmpDir } = getFileStorageDirs();
@@ -726,7 +1075,6 @@ describe("tombstones", () => {
 		).toEqual([]);
 	});
 
-	// Without this a client can never learn that a record it holds is gone.
 	it("includes the tombstone in an incremental read", async () => {
 		const payload = await createAndDeleteFlow();
 

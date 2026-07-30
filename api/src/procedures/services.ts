@@ -32,22 +32,28 @@ type ServiceAdapter = {
 	delete(params: DeleteRequest): Promise<DeleteResponse>;
 	resources(): Promise<ResourcesResponse>;
 	onEvent(listener: (eventName: string, payload: unknown) => void): void;
+	dispose(): void;
 };
 
+const SERVICE_WS_CONNECT_TIMEOUT_MS = 5_000;
+
 function makeWsAdapter(wsUrl: string): ServiceAdapter {
-	const client = new Client(wsUrl);
+	// Own reconnect so a clean server shutdown (close code 1000) still comes
+	// back — the library's built-in reconnect skips that code and caps attempts.
+	const client = new Client(wsUrl, { reconnect: false });
 	let eventListener: ((eventName: string, payload: unknown) => void) | null =
 		null;
 	let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
 	let reconnectDelayMs = 1000;
 	const reconnectMaxDelayMs = 30_000;
 	let connected = false;
+	let disposed = false;
 	let connectPromise: Promise<void> | null = null;
 
 	client.on("close", () => {
 		connected = false;
 		connectPromise = null;
-		scheduleReconnect();
+		if (!disposed) scheduleReconnect();
 	});
 
 	client.on(DATA_CHANGED_EVENT, (payload: unknown) => {
@@ -55,7 +61,7 @@ function makeWsAdapter(wsUrl: string): ServiceAdapter {
 	});
 
 	function scheduleReconnect(): void {
-		if (reconnectTimer) return;
+		if (disposed || reconnectTimer) return;
 		reconnectTimer = setTimeout(() => {
 			reconnectTimer = null;
 			reconnectDelayMs = Math.min(
@@ -67,21 +73,39 @@ function makeWsAdapter(wsUrl: string): ServiceAdapter {
 	}
 
 	async function connectClient(): Promise<void> {
+		if (disposed) {
+			throw new Error(`Service WebSocket adapter disposed (${wsUrl})`);
+		}
 		if (connected) return;
 		if (connectPromise) return connectPromise;
 
 		connectPromise = (async () => {
 			await new Promise<void>((resolve, reject) => {
+				const timeout = setTimeout(() => {
+					client.removeListener("open", onOpen);
+					client.removeListener("error", onError);
+					reject(
+						new Error(
+							`WebSocket connection timeout to ${wsUrl} after ${SERVICE_WS_CONNECT_TIMEOUT_MS}ms`,
+						),
+					);
+				}, SERVICE_WS_CONNECT_TIMEOUT_MS);
+
 				const onOpen = () => {
+					clearTimeout(timeout);
 					client.removeListener("error", onError);
 					resolve();
 				};
 				const onError = (err: Error) => {
+					clearTimeout(timeout);
 					client.removeListener("open", onOpen);
 					reject(err);
 				};
 				client.on("open", onOpen);
 				client.on("error", onError);
+				// After close the library clears its socket; connect() is a
+				// no-op while one still exists (including an in-flight open).
+				client.connect();
 			});
 			connected = true;
 			reconnectDelayMs = 1000;
@@ -132,6 +156,16 @@ function makeWsAdapter(wsUrl: string): ServiceAdapter {
 			),
 		onEvent(listener) {
 			eventListener = listener;
+		},
+		dispose() {
+			disposed = true;
+			if (reconnectTimer) {
+				clearTimeout(reconnectTimer);
+				reconnectTimer = null;
+			}
+			connected = false;
+			connectPromise = null;
+			client.close();
 		},
 	};
 }
@@ -222,6 +256,21 @@ async function withTimeout<T>(
 	}
 }
 
+function disposeAdapterMap(adapters: Map<string, ServiceAdapter> | null): void {
+	if (!adapters) return;
+	for (const adapter of adapters.values()) {
+		adapter.dispose();
+	}
+}
+
+export function disposeServiceAdapters(): void {
+	disposeAdapterMap(serviceAdapters);
+	serviceAdapters = null;
+	serviceNames = new Map();
+	serviceAdapterDb = null;
+	serviceBroadcast = null;
+}
+
 export async function initServiceAdapters(
 	db: EvyDb,
 	broadcast: BroadcastFn | null = null,
@@ -245,8 +294,10 @@ export async function initServiceAdapters(
 		names.set(row.id, row.name);
 	}
 
+	const previous = serviceAdapters;
 	serviceAdapters = next;
 	serviceNames = names;
+	disposeAdapterMap(previous);
 }
 
 /**

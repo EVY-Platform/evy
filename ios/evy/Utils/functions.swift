@@ -200,14 +200,18 @@ private func recordPathIsNull(_ record: EVYJson, path: String) -> Bool {
 }
 
 @MainActor
-private func resolveFindFirstOperand(_ operand: String, record: EVYJson) -> String {
-  if let recordValue = recordPathValue(record, path: operand) {
+private func resolveLiteralOrBoundOperand(_ operand: String, record: EVYJson? = nil) -> String {
+  let trimmed = operand.trimmingCharacters(in: .whitespacesAndNewlines)
+  if trimmed.first == "\"", trimmed.last == "\"", trimmed.count >= 2 {
+    return _stripOptionalSurroundingQuotes(trimmed)
+  }
+  if let record, let recordValue = recordPathValue(record, path: trimmed) {
     return recordValue.toString()
   }
-  if let dataValue = try? EVY.getDataFromProps(operand) {
-    return dataValue.toString()
+  if let dataValue = try? EVY.getDataFromProps(trimmed) {
+    return evyComparisonOperandString(dataValue)
   }
-  return _stripOptionalSurroundingQuotes(operand)
+  return _stripOptionalSurroundingQuotes(trimmed)
 }
 
 @MainActor
@@ -232,8 +236,8 @@ private func evaluateFindFirstAtom(
     return op == "==" ? isNull : !isNull
   }
 
-  let resolvedLeft = resolveFindFirstOperand(left, record: record)
-  let resolvedRight = resolveFindFirstOperand(right, record: record)
+  let resolvedLeft = resolveLiteralOrBoundOperand(left, record: record)
+  let resolvedRight = resolveLiteralOrBoundOperand(right, record: record)
   return evyComparison(op, left: resolvedLeft, right: resolvedRight)
 }
 
@@ -274,6 +278,45 @@ func evyFindFirst(_ args: String, remainingProps: [String] = []) throws -> EVYJs
     return .string("")
   }
   return match.parseProp(props: remainingProps)
+}
+
+@MainActor
+func evyFilter(_ args: String, remainingProps: [String] = []) throws -> EVYJson {
+  let parts = _splitFunctionArguments(args)
+  guard parts.count == 2 else {
+    throw EVYError.invalidData(context: "filter expects collection, predicate")
+  }
+
+  let collectionArg = parts[0].trimmingCharacters(in: .whitespacesAndNewlines)
+  let predicate = parts[1].trimmingCharacters(in: .whitespacesAndNewlines)
+
+  let collection = try EVY.getDataFromProps(collectionArg)
+  guard case .array(let items) = collection else {
+    throw EVYError.invalidData(context: "filter expects a collection")
+  }
+
+  let matches = items.filter { candidate in
+    (try? evyEvaluate(predicate, boundTo: candidate) {
+      try _evaluateFromText(wrappedExpression($0))
+    }) ?? false
+  }
+
+  return EVYJson.array(matches).parseProp(props: remainingProps)
+}
+
+@MainActor
+func evyOwns(_ args: String) throws -> EVYFunctionOutput {
+  let parts = _splitFunctionArguments(args)
+  guard parts.count == 3 else {
+    throw EVYError.invalidData(context: "owns expects service, resource, id")
+  }
+
+  let service = resolveLiteralOrBoundOperand(parts[0])
+  let resource = resolveLiteralOrBoundOperand(parts[1])
+  let id = resolveLiteralOrBoundOperand(parts[2])
+
+  let isOwned = EVY.ownsRecord(service: service, resource: resource, id: id)
+  return EVYFunctionOutput(value: isOwned ? "true" : "false", prefix: nil, suffix: nil)
 }
 
 @MainActor
@@ -838,4 +881,15 @@ func evyComparison(_ comparisonOperator: String, left: String, right: String) ->
   }
 
   return evyCompareValues(comparisonOperator, left: left, right: right)
+}
+
+/// Records compare by id, not JSON dump.
+func evyComparisonOperandString(_ value: EVYJson) -> String {
+  guard case .dictionary(let record) = value,
+    case .string(let id)? = record["id"],
+    !id.isEmpty
+  else {
+    return value.toString()
+  }
+  return id
 }

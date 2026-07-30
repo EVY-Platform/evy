@@ -181,15 +181,15 @@ describe("action branch helpers", () => {
 	it("parses update with filter and changes objects", () => {
 		expect(
 			parseBranchText(
-				`{update(${EVY_CORE_SERVICE},${EVY_CORE_RESOURCE.MESSAGES},{fk: $datum.id, archivedAt: null},{archivedAt: now()})}`,
+				`{update(${EVY_CORE_SERVICE},${EVY_CORE_RESOURCE.MESSAGES},{fk: $datum.id, closedAt: null},{closedAt: now()})}`,
 			),
 		).toEqual({
 			functionName: "update",
 			args: [
 				EVY_CORE_SERVICE,
 				EVY_CORE_RESOURCE.MESSAGES,
-				"{fk: $datum.id, archivedAt: null}",
-				"{archivedAt: now()}",
+				"{fk: $datum.id, closedAt: null}",
+				"{closedAt: now()}",
 			],
 		});
 	});
@@ -199,21 +199,21 @@ describe("action branch helpers", () => {
 			serializeBranch("update", [
 				EVY_CORE_SERVICE,
 				EVY_CORE_RESOURCE.MESSAGES,
-				"{fk: $datum.id, archivedAt: null}",
-				"{archivedAt: now()}",
+				"{fk: $datum.id, closedAt: null}",
+				"{closedAt: now()}",
 			]),
 		).toBe(
-			`{update(${EVY_CORE_SERVICE},${EVY_CORE_RESOURCE.MESSAGES},{fk: $datum.id, archivedAt: null},{archivedAt: now()})}`,
+			`{update(${EVY_CORE_SERVICE},${EVY_CORE_RESOURCE.MESSAGES},{fk: $datum.id, closedAt: null},{closedAt: now()})}`,
 		);
 	});
 
 	it("keeps filter and changes in update display text", () => {
 		expect(
 			formatBranchDisplay(
-				"{update(svc-1,res-1,{fk: id-1, archivedAt: null},{archivedAt: now()})}",
+				"{update(svc-1,res-1,{fk: id-1, closedAt: null},{closedAt: now()})}",
 			),
 		).toBe(
-			"update(svc-1, res-1, {fk: id-1, archivedAt: null}, {archivedAt: now()})",
+			"update(svc-1, res-1, {fk: id-1, closedAt: null}, {closedAt: now()})",
 		);
 	});
 

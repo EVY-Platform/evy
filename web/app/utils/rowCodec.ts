@@ -64,8 +64,8 @@ function decomposeRow(row: Row, records: DATA_EVY_Row[], now: string): string {
 		name,
 		type: row.config.type,
 		visible: row.config.visible ?? "true",
-		// The builder's row model has no visibility, and the API applies this
-		// same default when a record omits it. Stated rather than implied.
+		// The builder's row model has no visibility of its own, and the API applies
+		// no default, so the value builder rows are created with is stated here.
 		visibility: "public",
 		data: data as DATA_EVY_RowData,
 		createdAt: now,

@@ -337,7 +337,7 @@ export function BranchEditor({
 							getAttributeCandidatesForQualifier={
 								getAttributeCandidatesForQualifier
 							}
-							placeholder="Filter, e.g. {fk: $datum.id, archivedAt: null}"
+							placeholder="Filter, e.g. {fk: $datum.id, closedAt: null}"
 							multiline
 						/>
 					)}
@@ -349,7 +349,7 @@ export function BranchEditor({
 						getAttributeCandidatesForQualifier={
 							getAttributeCandidatesForQualifier
 						}
-						placeholder="Changes, e.g. {archivedAt: now()}"
+						placeholder="Changes, e.g. {closedAt: now()}"
 						multiline
 					/>
 				</>

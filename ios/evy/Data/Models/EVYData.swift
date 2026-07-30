@@ -39,6 +39,18 @@ enum EVYNamespace {
   static let singletonId = "current"
 }
 
+private let evyRecordIdPattern =
+  /[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}/
+
+/// Whether a string is a record id as the API issues them - a uuid.
+///
+/// Two callers, for the same reason: resource ids are uuids and so are the binding keys
+/// naming those resources, so uuid shape is what tells an identifier apart from a path.
+/// The sync request schema also requires it, and rejects the whole request otherwise.
+func isEvyRecordId(_ value: String) -> Bool {
+  value.wholeMatch(of: evyRecordIdPattern) != nil
+}
+
 @Model
 class EVYData {
   var namespace: String
@@ -202,6 +214,16 @@ enum EVYJson: Codable, Hashable {
       return parseProp(props: ["id"]).toString()
     default:
       return toString()
+    }
+  }
+
+  /// A record or a collection, rather than a single scalar value.
+  var isContainer: Bool {
+    switch self {
+    case .dictionary, .array:
+      return true
+    default:
+      return false
     }
   }
 

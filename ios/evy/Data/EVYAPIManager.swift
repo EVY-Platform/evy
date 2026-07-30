@@ -48,7 +48,9 @@ actor EVYAPIManager {
             createdAt: createdAt,
             id: uploadId,
             type: "image/jpeg",
-            updatedAt: createdAt
+            updatedAt: createdAt,
+            // Stated like every other create; the API defaults nothing.
+            visibility: .visibilityPublic
           ),
           filter: CreateFileParamsFilter(id: uploadId),
           resource: .files,

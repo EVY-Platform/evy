@@ -155,7 +155,7 @@ private struct EVYResolvedRow: View {
   @Environment(\.action) private var action
   @Environment(\.sheetDismiss) private var sheetDismiss
   @Environment(\.evyScope) private var evyScope
-  @State private var presentedSheetRef: EVYRowRef?
+  @State private var presentedSheet: EVYPresentedSheet?
   @State private var isVisible = EVYState<Bool>(staticString: true)
 
   init(
@@ -229,10 +229,11 @@ private struct EVYResolvedRow: View {
       if isVisible.value {
         if let payload = try? UI_RowPayload.from(row: contentRow) {
           renderedRow(for: payload, contentRow: contentRow)
-            .sheet(item: $presentedSheetRef) { sheetRef in
+            .sheet(item: $presentedSheet) { sheet in
               EVYSheetOverlay(
-                sheetRef: sheetRef,
-                onDismiss: { presentedSheetRef = nil }
+                sheetRef: sheet.ref,
+                datum: sheet.datum,
+                onDismiss: { presentedSheet = nil }
               )
             }
             .onAppear {
@@ -305,14 +306,15 @@ private struct EVYResolvedRow: View {
     // from. Action execution is synchronous, so this covers every mutation it
     // performs.
     EVY.withScope(evyScope) {
+      let actionDatum = datum ?? self.datum
       EVYActionRunner.run(
         actions: actions,
-        datum: datum ?? self.datum,
+        datum: actionDatum,
         show: { rowId in
           guard EVYRowStore.row(id: rowId) != nil else {
             throw EVYError.invalidData(context: "show could not resolve row id \(rowId)")
           }
-          presentedSheetRef = .id(rowId)
+          presentedSheet = EVYPresentedSheet(ref: .id(rowId), datum: actionDatum)
         },
         rowOperation: rowOperation,
         action: { operation in
@@ -331,10 +333,8 @@ private struct EVYResolvedRow: View {
     if !contentRow.actions.swipeLeft.isEmpty {
       EVYSwipeableRow(
         swipeIdentity: EVYSwipeRowIdentity.make(rowId: contentRow.id, datum: datum),
-        swipeLabel: contentRow.swipeLabel,
-        onExecute: {
-          runActions(trigger: .swipeLeft, contentRow: contentRow)
-        }
+        label: contentRow.swipeLabel,
+        run: { runActions(trigger: .swipeLeft, contentRow: contentRow) }
       ) {
         tappedOrPlainRow(for: payload, contentRow: contentRow)
       }
@@ -387,7 +387,7 @@ private struct EVYResolvedRow: View {
         }
       )
     case .horizontalContainer(let view, _):
-      EVYHorizontalContainerRow(view: view, childRefs: childRefs)
+      EVYHorizontalContainerRow(view: view, childRefs: childRefs, datum: self.datum)
     case .dropdown(let view, _):
       EVYDropdownRow(view: view)
     case .heading(let view, _):
@@ -407,7 +407,7 @@ private struct EVYResolvedRow: View {
           : { runActions(trigger: .submit, contentRow: contentRow) }
       )
     case .verticalContainer(let view, _):
-      EVYVerticalContainerRow(view: view, childRefs: childRefs)
+      EVYVerticalContainerRow(view: view, childRefs: childRefs, datum: self.datum)
     case .listItem(let view, _):
       EVYListItemRow(view: view)
     case .map(let view, _):
@@ -431,7 +431,9 @@ private struct EVYResolvedRow: View {
         runActions(trigger: .delete, contentRow: contentRow, rowOperation: rowOperation)
       }
     case .tabContainer(let view, _):
-      EVYTabContainerRow(view: view, childRefs: childRefs) { segmentIndex, rowOperation in
+      EVYTabContainerRow(view: view, childRefs: childRefs, datum: self.datum) {
+        segmentIndex,
+        rowOperation in
         runActions(
           contentRow: contentRow,
           datum: .string(String(segmentIndex)),
@@ -476,15 +478,24 @@ private struct EVYResolvedRow: View {
 }
 
 /// Sheet presented by `{show(rowId)}`: child row `title` is the main header (like a page title).
+/// Carries the triggering row's datum so Accept/Reject (and any other) actions can read `$datum`.
+private struct EVYPresentedSheet: Identifiable {
+  let ref: EVYRowRef
+  let datum: EVYJson?
+  var id: String { ref.id }
+}
+
 private struct EVYSheetOverlay: View {
   let sheetRef: EVYRowRef
+  let datum: EVYJson?
   let onDismiss: () -> Void
 
   /// Refreshed when the sheet root row updates (e.g. web builder title edit).
   @State private var sheetTitleTemplate: String
 
-  init(sheetRef: EVYRowRef, onDismiss: @escaping () -> Void) {
+  init(sheetRef: EVYRowRef, datum: EVYJson?, onDismiss: @escaping () -> Void) {
     self.sheetRef = sheetRef
+    self.datum = datum
     self.onDismiss = onDismiss
     _sheetTitleTemplate = State(initialValue: Self.titleTemplate(for: sheetRef))
   }
@@ -492,7 +503,7 @@ private struct EVYSheetOverlay: View {
   var body: some View {
     NavigationStack {
       ScrollView {
-        EVYRow(ref: sheetRef, hidesTitle: true)
+        EVYRow(ref: sheetRef, datum: datum, hidesTitle: true)
           .environment(\.sheetDismiss, onDismiss)
       }
       .padding(.vertical, Constants.majorPadding)

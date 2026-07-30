@@ -178,17 +178,17 @@ extension EVY {
     resource: String,
     payload: [String: EVYJson]
   ) throws -> String {
-    // Lowercased to match the canonical form Postgres `uuid` columns normalize to on
-    // storage/retrieval, so id comparisons (e.g. `fk == item.id` visibility expressions)
-    // never silently mismatch on case once a value round-trips through such a column.
     let newId = UUID().uuidString.lowercased()
     var payloadWithId = payload
     payloadWithId["id"] = .string(newId)
     if payloadWithId["createdAt"] == nil {
-      payloadWithId["createdAt"] = .string(EVY.nowISO8601())
+      payloadWithId["createdAt"] = .string(EVY.nowISO8601(fractional: true))
     }
-    if payloadWithId["visibility"] == nil {
-      payloadWithId["visibility"] = .string("public")
+    if payloadWithId["visibility"] == nil,
+      let declared = EVYCoreResource(rawValue: resource)?.visibility,
+      namespace == EVYNamespace.evy
+    {
+      payloadWithId["visibility"] = .string(declared)
     }
     let dataWithId = EVYJson.dictionary(payloadWithId)
     let params = MutationParams(
@@ -207,6 +207,7 @@ extension EVY {
       value: encodedData,
       sortIndex: nextSortIndex
     )
+    recordOwnership(service: namespace, resource: resource, id: newId)
 
     syncMutation(method: "create", params: params)
     return newId

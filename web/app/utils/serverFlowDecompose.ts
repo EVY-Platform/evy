@@ -39,9 +39,9 @@ export function decomposeServerFlow(
 				id: flow.id,
 				name: flow.name,
 				pageIds: pageRows.map((page) => page.id),
-				// Test-fixture decomposition only; these records feed the
-				// builder directly and are never written back, so this matches
-				// the column default rather than carrying real visibility.
+				// Test-fixture decomposition only; these records feed the builder
+				// directly and are never written back, so the value matches what
+				// the builder creates rather than carrying real visibility.
 				visibility: "public",
 				...(flow.submits ? { submits: flow.submits } : {}),
 				createdAt: nowIso,

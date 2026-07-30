@@ -117,6 +117,16 @@
 						"address_id": {
 							"type": "string",
 							"format": "uuid"
+						},
+						"postcode": {
+							"description": "Copied from the linked address. The item is public and the address is private, so the public page reads the location from here rather than from the address record - the unit and street stay behind on it.",
+							"type": "string"
+						},
+						"latitude": {
+							"type": "number"
+						},
+						"longitude": {
+							"type": "number"
 						}
 					}
 				},

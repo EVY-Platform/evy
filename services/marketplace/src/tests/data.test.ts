@@ -361,6 +361,48 @@ describe("marketplace item payload validation", () => {
 		);
 	});
 
+	// The item is public and the address it links to is private, so the public
+	// page cannot read the address record. It carries the fields that page needs
+	// itself - the unit and street stay behind on the private record.
+	it("round-trips the public pickup location alongside the address id", async () => {
+		const created = (await createItem({
+			...fixtureItem,
+			transfer_options: {
+				...fixtureItem.transfer_options,
+				pickup: {
+					...fixtureItem.transfer_options.pickup,
+					postcode: "2018",
+					latitude: -33.9172075,
+					longitude: 151.1985883,
+				},
+			},
+		})) as { data: { transfer_options: { pickup: unknown } } };
+
+		expect(created.data.transfer_options.pickup).toMatchObject({
+			address_id: "c81e85dd-f7fb-4310-8fc6-7c018aeaf82a",
+			postcode: "2018",
+			latitude: -33.9172075,
+			longitude: 151.1985883,
+		});
+	});
+
+	it("rejects an unknown key under pickup", async () => {
+		await expect(
+			createItem({
+				...fixtureItem,
+				transfer_options: {
+					...fixtureItem.transfer_options,
+					pickup: {
+						...fixtureItem.transfer_options.pickup,
+						postcodee: "2018",
+					},
+				},
+			}),
+		).rejects.toThrow(
+			"/transfer_options/pickup: must NOT have additional propert",
+		);
+	});
+
 	it("rejects an item with no id", async () => {
 		const { id: _omitted, ...withoutId } = fixtureItem;
 		await expect(createItem(withoutId)).rejects.toThrow(

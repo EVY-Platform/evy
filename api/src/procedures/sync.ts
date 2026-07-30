@@ -24,12 +24,6 @@ function resumePoint(syncParams: SyncRequest): string {
 	return syncParams.cursor ?? EPOCH;
 }
 
-/**
- * The high-water mark actually observed in this response, so the next sync
- * resumes from server-recorded time rather than the client's clock. Falls back
- * to where we resumed from when nothing changed, which keeps the cursor stable
- * instead of drifting forward past unseen writes.
- */
 function nextCursor(rows: SyncRow[], resumedFrom: string): string {
 	let highWater = resumedFrom;
 	for (const row of rows) {
@@ -56,12 +50,6 @@ function describe(error: unknown): string {
 	return error instanceof Error ? error.message : String(error);
 }
 
-/**
- * Pulls everything changed since `since` for each resource.
- *
- * One resource failing degrades the response rather than failing the sync for
- * every other resource, so each is caught and reported on its own.
- */
 async function fetchResources(
 	refs: ResourceRef[],
 	since: string,
@@ -100,7 +88,6 @@ function externalResourceRefs(
 	});
 }
 
-/** Devices and the resource catalog are handled outside the core fetch loop. */
 function coreResourceRefs(): ResourceRef[] {
 	return EVY_CORE_RESOURCE_NAMES.filter(
 		(name) =>
@@ -130,10 +117,14 @@ export async function sync(
 	const externalRefs = externalResourceRefs(catalog, EVY_CORE_SERVICE);
 
 	const resumedFrom = resumePoint(syncParams);
+	const owned = syncParams.ownedServiceResources ?? [];
 
 	const [core, external] = await Promise.all([
-		fetchResources(coreResourceRefs(), resumedFrom, (_ref, request) =>
-			data.get(db, request),
+		fetchResources(coreResourceRefs(), resumedFrom, (ref) =>
+			data.getSyncRows(db, ref.resource, {
+				updatedAfter: resumedFrom,
+				owned,
+			}),
 		),
 		fetchResources(externalRefs, resumedFrom, (ref, request) =>
 			services.forwardGet(ref.service, request),
@@ -155,8 +146,7 @@ export async function sync(
 		});
 	}
 
-	// A partial response must not advance the cursor, or the resources that
-	// failed would never be retried.
+	// Partial responses must not advance the cursor
 	const cursor =
 		errors.length > 0 ? resumedFrom : nextCursor(rows, resumedFrom);
 

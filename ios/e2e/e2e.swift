@@ -310,6 +310,7 @@ actor WSEmitter {
       "id": flowId,
       "name": nonEmptyString(flowData["name"]) ?? "Flow",
       "pageIds": pages.map(\.id),
+      "visibility": "public",
       "createdAt": now,
       "updatedAt": now,
     ]
@@ -337,6 +338,7 @@ actor WSEmitter {
       "name": nonEmptyString(pageData["name"]) ?? nonEmptyString(pageData["title"]) ?? "Page",
       "title": (pageData["title"] as? String) ?? "",
       "rowIds": rowIds,
+      "visibility": "public",
       "createdAt": now,
       "updatedAt": now,
     ]
@@ -372,6 +374,7 @@ actor WSEmitter {
       "type": (rowData["type"] as? String) ?? "Text",
       "visible": (rowData["visible"] as? String) ?? "true",
       "data": data,
+      "visibility": "public",
       "createdAt": now,
       "updatedAt": now,
     ]
@@ -678,31 +681,48 @@ class E2ETestBase: XCTestCase {
     return false
   }
 
-  func waitForMessageStatus(
+  /// Waits for a response message naming `messageId` in `parentMessageId`.
+  func waitForMessageResponse(
     emitter: WSEmitter,
     messageId: String,
-    status: String
+    value: String
   ) async throws -> Bool {
     try await waitForResourceUpdate(
       emitter: emitter,
       service: EVY_CORE_SERVICE,
       resource: EVYCoreResource.messages.rawValue
-    ) { Self.messageHasStatus($0, messageId: messageId, status: status) }
+    ) { Self.messageHasResponse($0, messageId: messageId, value: value) != nil }
   }
 
-  static func messageHasStatus(
+  static func messageHasResponse(
     _ messages: Any,
     messageId: String,
-    status: String
-  ) -> Bool {
-    guard let messageRows = responseDataArray(from: messages) else { return false }
-    return messageRows.contains { message in
+    value: String
+  ) -> String? {
+    guard let messageRows = responseDataArray(from: messages) else { return nil }
+    for message in messageRows {
       guard let messageData = message as? [String: Any],
-        messageData["id"] as? String == messageId,
-        messageData["status"] as? String == status
-      else { return false }
-      return true
+        messageData["parentMessageId"] as? String == messageId,
+        let data = messageData["data"] as? [String: Any],
+        data["value"] as? String == value,
+        let id = messageData["id"] as? String
+      else { continue }
+      return id
     }
+    return nil
+  }
+
+  /// Scrolls the enclosing scroll view until `element` can actually be interacted with.
+  /// `exists` is true for an offscreen row, and swiping one fails with an empty frame.
+  @MainActor
+  func scrollUntilHittable(_ element: XCUIElement, attempts: Int = 6) -> Bool {
+    if element.isHittable { return true }
+    let scrollView = app.scrollViews.firstMatch
+    for _ in 0..<attempts {
+      scrollView.swipeUp()
+      if element.isHittable { return true }
+    }
+    return element.isHittable
   }
 
   /// Returns the hittable button with the given label, waiting for one to appear.
@@ -896,6 +916,12 @@ class E2ETestBase: XCTestCase {
 
   var homeFlowId: String? { nil }
 
+  typealias OwnedServiceResourceDeclaration = (
+    service: String, resource: String, ids: [String]
+  )
+
+  var ownedServiceResources: [OwnedServiceResourceDeclaration] { [] }
+
   override func setUpWithError() throws {
     continueAfterFailure = false
     try launchApp()
@@ -908,6 +934,14 @@ class E2ETestBase: XCTestCase {
     app.launchEnvironment["API_HOST"] = apiHost
     if let homeFlowId {
       app.launchEnvironment["HOME_FLOW_ID"] = homeFlowId
+    }
+    if !ownedServiceResources.isEmpty {
+      let declared = ownedServiceResources.map {
+        ["service": $0.service, "resource": $0.resource, "ids": $0.ids] as [String: Any]
+      }
+      let encoded = try JSONSerialization.data(withJSONObject: declared)
+      app.launchEnvironment["EVY_OWNED_SERVICE_RESOURCES"] = String(
+        decoding: encoded, as: UTF8.self)
     }
     app.launch()
   }
@@ -1124,52 +1158,67 @@ class E2ETestBase: XCTestCase {
     return result
   }
 
-  static func cancelRequestVisibilityExpressions() -> (
-    hasActive: String, noActive: String
-  ) {
+  /// Nothing arranged or being arranged: the exact complement of the three `Active … request`
+  /// gates, term for term. The tab container holds all three request controls, so while one
+  /// arrangement is live the page shows that one alone.
+  static func noArrangementLiveVisibilityExpression() -> String {
+    let terms = ["pickup", "delivery", "shipping"].flatMap { type -> [String] in
+      let latest = latestMessageExpression(type: type)
+      return ["\(latest).data.value != \"pending\"", "\(latest).data.value != \"accept\""]
+    }
+    return "{\(terms.joined(separator: " && "))}"
+  }
+
+  /// The latest message about one transfer method for the item. Everything the item page
+  /// shows is a read of `data.value` off this - see `docs/evy/data.md`.
+  static func latestMessageExpression(type: String) -> String {
     let messagesResourceId = EVYCoreResource.messages.rawValue
     let itemId = MARKETPLACE_ITEMS_RESOURCE_ID
-    let hasActive =
-      "{findFirst(\(messagesResourceId), fk == \(itemId).id && archivedAt == null && status == pending).fk == \(itemId).id}"
+    return
+      "findFirst(sort(\(messagesResourceId), desc, createdAt), fk == \(itemId).id && data.type == \(type))"
+  }
+
+  static let messageCreateEnvelope =
+    "fk: \(MARKETPLACE_ITEMS_RESOURCE_ID).id, service: \"\(MARKETPLACE_SERVICE)\", resource: \"\(MARKETPLACE_ITEMS_RESOURCE_ID)\""
+
+  static func requestCreateAction(type: String, payload: String) -> String {
+    let messagesResourceId = EVYCoreResource.messages.rawValue
+    return
+      "{create(\(EVY_CORE_SERVICE),\(messagesResourceId),{\(messageCreateEnvelope), data: {type: \(type), value: pending, \(payload)}})}"
+  }
+
+  /// Cancel is offered while the request is open, and each transfer method is independent, so
+  /// the pickers gate on their own method rather than on anything page-wide.
+  static func cancelRequestVisibilityExpressions(type: String) -> (
+    hasActive: String, noActive: String
+  ) {
+    let latest = latestMessageExpression(type: type)
+    let hasActive = "{\(latest).data.value == \"pending\"}"
+    // Nothing in flight for this method: `reject`, `cancel` and "nothing yet" all land here.
     let noActive =
-      "{findFirst(\(messagesResourceId), fk == \(itemId).id && archivedAt == null).fk != \(itemId).id}"
+      "{\(latest).data.value != \"pending\" && \(latest).data.value != \"accept\"}"
     return (hasActive, noActive)
   }
 
-  static func acceptedRequestFindFirstExpression(type: String) -> String {
-    let messagesResourceId = EVYCoreResource.messages.rawValue
-    let itemId = MARKETPLACE_ITEMS_RESOURCE_ID
-    return
-      "findFirst(\(messagesResourceId), fk == \(itemId).id && archivedAt == null && status == accepted && data.type == \(type))"
-  }
-
+  /// A separate message says a request was accepted, and it carries the request's payload
+  /// forward - which is what the confirmation row reads the agreed time from.
   static func acceptedRequestVisibilityExpression(type: String) -> String {
-    let itemId = MARKETPLACE_ITEMS_RESOURCE_ID
-    return "{\(acceptedRequestFindFirstExpression(type: type)).fk == \(itemId).id}"
+    "{\(latestMessageExpression(type: type)).data.value == \"accept\"}"
   }
 
   static func hideSegmentInfoWhenAcceptedVisibilityExpression(type: String) -> String {
-    let itemId = MARKETPLACE_ITEMS_RESOURCE_ID
-    return "{\(acceptedRequestFindFirstExpression(type: type)).fk != \(itemId).id}"
+    "{\(latestMessageExpression(type: type)).data.value != \"accept\"}"
   }
 
-  static func activeRequestFindFirstExpression(type: String) -> String {
-    let messagesResourceId = EVYCoreResource.messages.rawValue
-    let itemId = MARKETPLACE_ITEMS_RESOURCE_ID
-    return
-      "findFirst(\(messagesResourceId), fk == \(itemId).id && archivedAt == null && data.type == \(type))"
-  }
-
+  /// The request container stays up while the request is open and once it has been accepted -
+  /// the confirmation row lives inside it. Exact complement of the picker's gate.
   static func activeRequestVisibilityExpression(type: String) -> String {
-    let itemId = MARKETPLACE_ITEMS_RESOURCE_ID
-    return "{\(activeRequestFindFirstExpression(type: type)).fk == \(itemId).id}"
+    let latest = latestMessageExpression(type: type)
+    return "{\(latest).data.value == \"pending\" || \(latest).data.value == \"accept\"}"
   }
 
   static func pendingRequestVisibilityExpression(type: String) -> String {
-    let messagesResourceId = EVYCoreResource.messages.rawValue
-    let itemId = MARKETPLACE_ITEMS_RESOURCE_ID
-    return
-      "{findFirst(\(messagesResourceId), fk == \(itemId).id && archivedAt == null && status == pending && data.type == \(type)).fk == \(itemId).id}"
+    "{\(latestMessageExpression(type: type)).data.value == \"pending\"}"
   }
 
   static func cancelRequestButtonLabel(type: String) -> String {
@@ -1195,29 +1244,35 @@ class E2ETestBase: XCTestCase {
 
   static func timeAcceptedConfirmationSubtitle(type: String) -> String {
     let capitalizedType = type.prefix(1).uppercased() + type.dropFirst()
-    let match = acceptedRequestFindFirstExpression(type: type)
+    let match = latestMessageExpression(type: type)
     return
       "\(capitalizedType) confirmed for {formatDatetime(\(match).data.time, \"EEE do\")} at {formatDatetime(\(match).data.time, \"HH:mm\")}"
   }
 
   static func shippingAcceptedConfirmationSubtitle() -> String {
-    let match = acceptedRequestFindFirstExpression(type: "shipping")
+    let match = latestMessageExpression(type: "shipping")
     return "Shipping confirmed to postcode {\(match).data.postalcode}"
   }
 
   static func viewItemCancelRequestFlowData(flowId: String, pageId: String) -> [String: Any] {
     let messagesResourceId = EVYCoreResource.messages.rawValue
-    let visibility = cancelRequestVisibilityExpressions()
-    let messageEnvelope =
-      "fk: \(MARKETPLACE_ITEMS_RESOURCE_ID).id, service: \"\(MARKETPLACE_SERVICE)\", resource: \"\(MARKETPLACE_ITEMS_RESOURCE_ID)\", archivedAt: null, status: \"pending\""
-    let pickupCreateAction =
-      "{create(\(EVY_CORE_SERVICE),\(messagesResourceId),{\(messageEnvelope), data: {type: pickup, time: selected_pickup_timeslot}})}"
-    let deliveryCreateAction =
-      "{create(\(EVY_CORE_SERVICE),\(messagesResourceId),{\(messageEnvelope), data: {type: delivery, time: selected_delivery_timeslot}})}"
-    let shippingCreateAction =
-      "{create(\(EVY_CORE_SERVICE),\(messagesResourceId),{\(messageEnvelope), data: {type: shipping, postalcode: shipping_address.postcode}})}"
-    let cancelAction =
-      "{update(\(EVY_CORE_SERVICE),\(messagesResourceId),{fk: \(MARKETPLACE_ITEMS_RESOURCE_ID).id, archivedAt: null, status: \"pending\"},{archivedAt: now()})}"
+    // Each transfer method gates on its own latest message, so a live pickup request leaves
+    // delivery and shipping requestable. The tab container never hides - gating it is what
+    // made the three mutually exclusive.
+    let pickupVisibility = cancelRequestVisibilityExpressions(type: "pickup")
+    let deliveryVisibility = cancelRequestVisibilityExpressions(type: "delivery")
+    let shippingVisibility = cancelRequestVisibilityExpressions(type: "shipping")
+    let pickupCreateAction = requestCreateAction(
+      type: "pickup", payload: "time: selected_pickup_timeslot")
+    let deliveryCreateAction = requestCreateAction(
+      type: "delivery", payload: "time: selected_delivery_timeslot")
+    let shippingCreateAction = requestCreateAction(
+      type: "shipping", payload: "postalcode: shipping_address.postcode")
+    func cancelAction(type: String) -> String {
+      let latest = latestMessageExpression(type: type)
+      return "{create(\(EVY_CORE_SERVICE),\(messagesResourceId),{\(messageCreateEnvelope),"
+        + " parentMessageId: \(latest).id, data: {value: cancel, type: \(type)}})}"
+    }
 
     return [
       "id": flowId,
@@ -1233,7 +1288,7 @@ class E2ETestBase: XCTestCase {
               "actions": Self.actionsObject(
                 tap: [Self.rowAction(true: "{select($datum)}")]
               ),
-              "visible": visibility.noActive,
+              "visible": Self.noArrangementLiveVisibilityExpression(),
               "title": "",
               "segments": ["Pickup", "Delivery", "Shipping"],
               "children": [
@@ -1250,7 +1305,7 @@ class E2ETestBase: XCTestCase {
                       actions: [
                         Self.rowAction(true: "{show(b8c7d6e5-f4a3-4b2c-9d1e-0f8a7b6c5d4e)}")
                       ],
-                      visible: visibility.noActive,
+                      visible: pickupVisibility.noActive,
                       name: "Pickup request times",
                       sheet: Self.pickupConfirmationSheetChild(
                         pickupCreateAction: pickupCreateAction
@@ -1278,7 +1333,7 @@ class E2ETestBase: XCTestCase {
                       actions: [
                         Self.rowAction(true: "{show(c4d5e6f7-a8b9-4c0d-1e2f-3a4b5c6d7e80)}")
                       ],
-                      visible: visibility.noActive,
+                      visible: deliveryVisibility.noActive,
                       name: "Delivery request times",
                       sheet: Self.deliveryConfirmationSheetChild(
                         deliveryCreateAction: deliveryCreateAction
@@ -1305,7 +1360,7 @@ class E2ETestBase: XCTestCase {
                       source: nil,
                       placeholder: "Postcode",
                       destination: "{shipping_address.postcode}",
-                      visible: visibility.noActive
+                      visible: shippingVisibility.noActive
                     ),
                     Self.buttonRow(
                       id: "c0d1e2f3-a4b5-4c6d-7e8f-9a0b1c2d3e4f",
@@ -1313,7 +1368,7 @@ class E2ETestBase: XCTestCase {
                       action: "{show(f2a1b0c9-d8e7-4f6a-5b4c-3d2e1f0a9b8c)}",
                       condition: "{length(shipping_address.postcode) > 0}",
                       falseAction: "{highlight_required(postcode)}",
-                      visible: visibility.noActive,
+                      visible: shippingVisibility.noActive,
                       sheet: Self.shippingConfirmationSheetChild(
                         shippingCreateAction: shippingCreateAction
                       )
@@ -1337,11 +1392,12 @@ class E2ETestBase: XCTestCase {
                 Self.buttonRow(
                   id: "c4d5e6f7-a8b9-4c0d-1e2f-3a4b5c6d7e8f",
                   label: Self.cancelRequestButtonLabel(type: "pickup"),
-                  action: "{show(f1a2b3c4-d5e6-4f7a-8b9c-0d1e2f3a4b5d)}",
+                  action: "{show(\(Self.cancelRequestSheetId(type: "pickup")))}",
                   visible: Self.pendingRequestVisibilityExpression(type: "pickup"),
                   style: "danger",
                   sheet: Self.cancelRequestSheetChild(
-                    cancelAction: cancelAction,
+                    type: "pickup",
+                    cancelAction: cancelAction(type: "pickup"),
                     message:
                       "Cancel pickup request for the \"{\(MARKETPLACE_ITEMS_RESOURCE_ID).title}\"?"
                   )
@@ -1370,11 +1426,12 @@ class E2ETestBase: XCTestCase {
                 Self.buttonRow(
                   id: "f7a8b9c0-d1e2-4f3a-4b5c-6d7e8f9a0b1c",
                   label: Self.cancelRequestButtonLabel(type: "delivery"),
-                  action: "{show(f1a2b3c4-d5e6-4f7a-8b9c-0d1e2f3a4b5d)}",
+                  action: "{show(\(Self.cancelRequestSheetId(type: "delivery")))}",
                   visible: Self.pendingRequestVisibilityExpression(type: "delivery"),
                   style: "danger",
                   sheet: Self.cancelRequestSheetChild(
-                    cancelAction: cancelAction,
+                    type: "delivery",
+                    cancelAction: cancelAction(type: "delivery"),
                     message:
                       "Cancel delivery request for the \"{\(MARKETPLACE_ITEMS_RESOURCE_ID).title}\"?"
                   )
@@ -1403,11 +1460,12 @@ class E2ETestBase: XCTestCase {
                 Self.buttonRow(
                   id: "d1e2f3a4-b5c6-4d7e-8f9a-0b1c2d3e4f5a",
                   label: Self.cancelRequestButtonLabel(type: "shipping"),
-                  action: "{show(f1a2b3c4-d5e6-4f7a-8b9c-0d1e2f3a4b5d)}",
+                  action: "{show(\(Self.cancelRequestSheetId(type: "shipping")))}",
                   visible: Self.pendingRequestVisibilityExpression(type: "shipping"),
                   style: "danger",
                   sheet: Self.cancelRequestSheetChild(
-                    cancelAction: cancelAction,
+                    type: "shipping",
+                    cancelAction: cancelAction(type: "shipping"),
                     message:
                       "Cancel shipping request for the \"{\(MARKETPLACE_ITEMS_RESOURCE_ID).title}\"?"
                   )
@@ -1586,26 +1644,41 @@ class E2ETestBase: XCTestCase {
     )
   }
 
+  private static let cancelRequestSheetSuffixes: [String: (sheet: String, row: String)] = [
+    "pickup": ("d", "e"),
+    "delivery": ("e", "f"),
+    "shipping": ("f", "a"),
+  ]
+
+  /// Rows are stored globally by id, so each transfer method needs its own sheet: a shared id
+  /// means the last one seeded wins and every cancel button shows that method's action.
+  static func cancelRequestSheetId(type: String) -> String {
+    let sheetSuffix = cancelRequestSheetSuffixes[type]?.sheet ?? "f"
+    return "f1a2b3c4-d5e6-4f7a-8b9c-0d1e2f3a4b5\(sheetSuffix)"
+  }
+
   static func cancelRequestSheetChild(
+    type: String,
     cancelAction: String,
     message: String
   ) -> [String: Any] {
-    Self.confirmationSheetChild(
-      id: "f1a2b3c4-d5e6-4f7a-8b9c-0d1e2f3a4b5d",
-      name: "Cancel request confirmation sheet",
+    let rowSuffix = cancelRequestSheetSuffixes[type]?.row ?? "a"
+    return Self.confirmationSheetChild(
+      id: cancelRequestSheetId(type: type),
+      name: "Cancel \(type) confirmation sheet",
       messageRows: [
         Self.textRow(
-          id: "a2b3c4d5-e6f7-4a8b-9c0d-1e2f3a4b5c6e",
+          id: "a2b3c4d5-e6f7-4a8b-9c0d-1e2f3a4b5c6\(rowSuffix)",
           title: "",
           subtitle: message,
-          name: "Cancel request confirmation message"
+          name: "Cancel \(type) confirmation message"
         )
       ],
       confirmButton: Self.confirmSheetButton(
-        id: "f3a4b5c6-d7e8-4f9a-0b1c-2d3e4f5a6b7d",
+        id: "f3a4b5c6-d7e8-4f9a-0b1c-2d3e4f5a6b7\(rowSuffix)",
         label: "Cancel request",
         action: cancelAction,
-        name: "Confirm cancel request",
+        name: "Confirm cancel \(type) request",
         style: "danger"
       )
     )
@@ -1693,13 +1766,10 @@ class E2ETestBase: XCTestCase {
   }
 
   static func viewItemRequestFlowData(flowId: String, pageId: String) -> [String: Any] {
-    let messagesResourceId = EVYCoreResource.messages.rawValue
-    let messageEnvelope =
-      "fk: \(MARKETPLACE_ITEMS_RESOURCE_ID).id, service: \"\(MARKETPLACE_SERVICE)\", resource: \"\(MARKETPLACE_ITEMS_RESOURCE_ID)\", archivedAt: null, status: \"pending\""
-    let pickupCreateAction =
-      "{create(\(EVY_CORE_SERVICE),\(messagesResourceId),{\(messageEnvelope), data: {type: pickup, time: selected_pickup_timeslot}})}"
-    let shippingCreateAction =
-      "{create(\(EVY_CORE_SERVICE),\(messagesResourceId),{\(messageEnvelope), data: {type: shipping, postalcode: shipping_address.postcode}})}"
+    let pickupCreateAction = requestCreateAction(
+      type: "pickup", payload: "time: selected_pickup_timeslot")
+    let shippingCreateAction = requestCreateAction(
+      type: "shipping", payload: "postalcode: shipping_address.postcode")
 
     return [
       "id": flowId,
@@ -1736,6 +1806,204 @@ class E2ETestBase: XCTestCase {
               )
             ),
           ],
+        ]
+      ],
+    ]
+  }
+
+  static let homeInboxForYouChildRowId = "95444ce6-d4be-4001-8798-213cce23afd8"
+  static let homeInboxFromYouChildRowId = "373ff30f-dc80-425c-a382-fadc8fcdcd81"
+  static let homeInboxScheduledChildRowId = "c52a5527-ee4a-46c8-8f5c-1e18f782bcc0"
+
+  private static func homeInboxResponseAction(value: String) -> [String: Any] {
+    [
+      "condition": "",
+      "false": "",
+      "true": [
+        "fn": "create",
+        "service": EVY_CORE_SERVICE,
+        "resource": EVYCoreResource.messages.rawValue,
+        "mode": "inline",
+        "data": [
+          "fk": "$datum.fk",
+          "service": "$datum.service",
+          "resource": "$datum.resource",
+          "parentMessageId": "$datum.id",
+          "data":
+            "{value: \(value), type: $datum.data.type, time: $datum.data.time, postalcode: $datum.data.postalcode}",
+        ],
+      ],
+    ]
+  }
+
+  static func homeInboxTabRow() -> [String: Any] {
+    var acceptButton = buttonRow(
+      id: "e519e84d-9a7e-4563-bacb-388bba69e9b2",
+      label: "Accept"
+    )
+    acceptButton["name"] = "Accept request"
+    acceptButton["actions"] = actionsObject(
+      tap: [
+        homeInboxResponseAction(value: "accept"),
+        rowAction(true: "{close()}"),
+      ]
+    )
+
+    var rejectButton = buttonRow(
+      id: "d780b1bf-b638-4e99-84fd-36be12bb96fb",
+      label: "Reject",
+      style: "danger"
+    )
+    rejectButton["name"] = "Reject request"
+    rejectButton["actions"] = actionsObject(
+      tap: [
+        homeInboxResponseAction(value: "reject"),
+        rowAction(true: "{close()}"),
+      ]
+    )
+
+    let responseSheet: [String: Any] = [
+      "id": "b70f6354-50cb-47cc-91bc-3387deb7277f",
+      "type": "VerticalContainer",
+      "name": "Respond to request sheet",
+      "title": "Respond to request",
+      "visible": "true",
+      "actions": [:],
+      "children": [
+        [
+          "id": "daea8a6d-8d13-462f-98fa-5403e4f81463",
+          "type": "Text",
+          "name": "Respond confirmation copy",
+          "title": "Accept this request, or reject it?",
+          "subtitle": "",
+          "visible": "true",
+          "actions": [:],
+        ],
+        [
+          "id": "07ce5b44-8f2c-4183-a6e9-2f853a8dd255",
+          "type": "HorizontalContainer",
+          "name": "Respond buttons",
+          "title": "",
+          "visible": "true",
+          "actions": [:],
+          "children": [acceptButton, rejectButton],
+        ],
+      ],
+    ]
+
+    let forYouSearch: [String: Any] = [
+      "id": "574da230-8f09-43b2-b003-deadf6786bc4",
+      "type": "Search",
+      "name": "For you requests",
+      "title": "",
+      "placeholder": "",
+      "source":
+        "{filter(messages, $datum.data.value == \"pending\" && owns($datum.service, $datum.resource, $datum.fk) == true && findFirst(sort(messages, desc, createdAt), fk == $datum.fk && data.type == $datum.data.type).id == $datum.id)}",
+      "no_results": "No requests",
+      "destination": "",
+      "visible": "true",
+      "actions": [:],
+      "child": [
+        "id": homeInboxForYouChildRowId,
+        "type": "ListItem",
+        "name": "For you request row",
+        "title":
+          "{findFirst(\(MARKETPLACE_ITEMS_RESOURCE_ID), $datum.fk).title}",
+        "subtitle": "{$datum.data.value}",
+        "visible": "true",
+        "swipeLabel": "Accept",
+        "actions": actionsObject(
+          tap: [rowAction(true: "{show(b70f6354-50cb-47cc-91bc-3387deb7277f)}")],
+          swipeLeft: [homeInboxResponseAction(value: "accept")]
+        ),
+        "sheet": responseSheet,
+      ],
+    ]
+
+    let fromYouSearch: [String: Any] = [
+      "id": "396da583-4748-40b9-aa88-4f8bb9074fc3",
+      "type": "Search",
+      "name": "From you requests",
+      "title": "",
+      "placeholder": "",
+      "source":
+        "{filter(messages, $datum.data.value == \"pending\" && owns($datum.service, $datum.resource, $datum.fk) == false && findFirst(sort(messages, desc, createdAt), fk == $datum.fk && data.type == $datum.data.type).id == $datum.id)}",
+      "no_results": "No requests",
+      "destination": "",
+      "visible": "true",
+      "actions": [:],
+      "child": [
+        "id": homeInboxFromYouChildRowId,
+        "type": "ListItem",
+        "name": "From you request row",
+        "title":
+          "{findFirst(\(MARKETPLACE_ITEMS_RESOURCE_ID), $datum.fk).title}",
+        "subtitle": "{$datum.data.value}",
+        "visible": "true",
+        "swipeLabel": "Cancel",
+        "actions": actionsObject(
+          swipeLeft: [homeInboxResponseAction(value: "cancel")]
+        ),
+      ],
+    ]
+
+    let scheduledSearch: [String: Any] = [
+      "id": "4e81c7e7-f765-4864-ac63-35e2eff707cd",
+      "type": "Search",
+      "name": "Scheduled requests",
+      "title": "",
+      "placeholder": "",
+      "source": "{filter(messages, $datum.data.value == \"accept\")}",
+      "no_results": "No requests",
+      "destination": "",
+      "visible": "true",
+      "actions": [:],
+      "child": [
+        "id": homeInboxScheduledChildRowId,
+        "type": "ListItem",
+        "name": "Scheduled row",
+        "title":
+          "{findFirst(\(MARKETPLACE_ITEMS_RESOURCE_ID), $datum.fk).title}",
+        "subtitle": "{$datum.data.value}",
+        "visible": "true",
+        "actions": [:],
+      ],
+    ]
+
+    return [
+      "id": "29646c92-90d0-4a68-8c23-3acf88612d06",
+      "type": "TabContainer",
+      "name": "Message tabs",
+      "title": "",
+      "visible": "true",
+      "segments": ["For you", "From you", "Scheduled"],
+      "actions": actionsObject(
+        tap: [rowAction(true: "{select($datum)}")]
+      ),
+      "children": [forYouSearch, fromYouSearch, scheduledSearch],
+    ]
+  }
+
+  static func senderViewFlowData(flowId: String, pageId: String) -> [String: Any] {
+    let createAction = requestCreateAction(
+      type: "pickup", payload: "time: selected_pickup_timeslot")
+
+    let picker = Self.timeslotPickerRow(
+      id: "20000000-0000-4000-8000-000000000001",
+      source: "{\(MARKETPLACE_ITEMS_RESOURCE_ID).pickup_selection}",
+      actions: [Self.rowAction(true: "{show(b8c7d6e5-f4a3-4b2c-9d1e-0f8a7b6c5d4e)}")],
+      name: "Pickup request times",
+      sheet: Self.pickupConfirmationSheetChild(pickupCreateAction: createAction)
+    )
+
+    return [
+      "id": flowId,
+      "name": "E2E Message Sender",
+      "pages": [
+        [
+          "id": pageId,
+          "title": "Requests",
+          "rows": [picker],
         ]
       ],
     ]
@@ -2583,27 +2851,27 @@ final class WebSocketE2ETests: E2ETestBase {
     XCTAssertFalse(timeslot.exists, "Pickup timeslot should be hidden after creating a request")
     XCTAssertFalse(
       app.segmentedControls.buttons["Shipping"].waitForExistence(timeout: 2),
-      "Transfer tabs should hide while a pickup request is active")
-    XCTAssertFalse(
-      app.buttons["Ask to buy"].exists,
-      "Ask to buy should be hidden while an active request exists")
+      "Transfer tabs collapse while an arrangement is in flight, leaving just that request")
 
     cancelButton.tap()
     XCTAssertTrue(
       waitForConfirmationSheet(timeout: 5),
       "Cancel pickup confirmation sheet should appear")
     // The row button and the sheet's confirm button share the "Cancel request" label; tap the
-    // hittable one (the confirm button on top of the sheet) so the archive action actually fires.
+    // hittable one (the confirm button on top of the sheet) so the write actually fires.
     let confirmCancelButton = try XCTUnwrap(
       waitForHittableButton(labeled: "Cancel request"),
       "Confirm cancel button should be tappable in the sheet")
     confirmCancelButton.tap()
 
-    let messageArchived = try await waitForArchivedMessage(
+    let requestWithdrawn = try await waitForMessage(
       emitter: emitter,
-      itemId: selectedItemId
+      itemId: selectedItemId,
+      valueKey: "value",
+      value: "cancel"
     )
-    XCTAssertTrue(messageArchived, "Cancel request should archive the active message")
+    XCTAssertTrue(
+      requestWithdrawn, "Cancel request should append a cancel message, not rewrite the request")
     XCTAssertTrue(
       timeslot.waitForExistence(timeout: 10),
       "Pickup timeslot should return after cancelling the request")
@@ -2617,6 +2885,143 @@ final class WebSocketE2ETests: E2ETestBase {
       app.buttons["Cancel pickup request"].firstMatch.waitForExistence(timeout: 10),
       "Cancel pickup request should reappear after creating another request")
     await emitter.disconnect()
+  }
+
+  /// The case the latest-message model exists for: a rejection is terminal but leaves nothing
+  /// in flight, so the buyer is back to picking a timeslot and can ask again. The old
+  /// predicates could not express this - the request was still there, unanswered as far as any
+  /// flat lookup could tell.
+  @MainActor
+  func testRejectedRequestReturnsTheTimeslots() async throws {
+    let viewItemButton = app.buttons["View"]
+    XCTAssertTrue(
+      viewItemButton.waitForExistence(timeout: 20),
+      "Home screen not loaded - verify API is running and database is seeded")
+
+    let emitter = WSEmitter()
+    try await emitter.connect(host: apiHost)
+    try await emitter.login(token: "e2e-test", os: "ios")
+    let selectedTimeslot = "2026-06-03T09:00:00"
+    let (selectedItemId, _) = try await createMarketplaceItem(
+      emitter: emitter,
+      titlePrefix: "Rejected request item",
+      pickupSelection: [selectedTimeslot]
+    )
+
+    _ = try await openViewItemPage(
+      emitter: emitter,
+      labelPrefix: "Rejected request",
+      itemId: selectedItemId,
+      viewFlowDataBuilder: Self.viewItemCancelRequestFlowData,
+      buttonExistenceMessage: "Request view button should load"
+    )
+    try await emitter.subscribe(event: "dataChanged")
+
+    let timeslot = app.staticTexts["09:00"].firstMatch
+    XCTAssertTrue(timeslot.waitForExistence(timeout: 10), "Pickup timeslot should be visible")
+    timeslot.tap()
+    XCTAssertTrue(
+      waitForConfirmationSheet(timeout: 5),
+      "Pickup confirmation sheet should appear after selecting a timeslot")
+    tapConfirmationSheetRequestButton()
+
+    XCTAssertTrue(
+      waitForCancelRequestVisible(timeout: 10),
+      "Cancel pickup request should be visible while the request is open")
+
+    let requestId = try await waitForMessageId(
+      emitter: emitter,
+      itemId: selectedItemId,
+      type: "pickup",
+      value: "pending",
+      failureMessage: "An open pickup request should exist for the item"
+    )
+
+    // The owner rejects. Like every other settling message it names the request and carries
+    // its payload forward.
+    _ = try await emitter.createResource(
+      service: EVY_CORE_SERVICE,
+      resource: EVYCoreResource.messages.rawValue,
+      data: [
+        "fk": selectedItemId,
+        "service": MARKETPLACE_SERVICE,
+        "resource": MARKETPLACE_ITEMS_RESOURCE_ID,
+        "visibility": "private",
+        "parentMessageId": requestId,
+        "data": [
+          "value": "reject",
+          "type": "pickup",
+          "time": selectedTimeslot,
+        ],
+      ]
+    )
+    let rejectedOnServer = try await waitForMessageResponse(
+      emitter: emitter,
+      messageId: requestId,
+      value: "reject"
+    )
+    XCTAssertTrue(rejectedOnServer, "The API should hold the message rejecting the request")
+
+    XCTAssertTrue(
+      waitForCancelRequestHidden(timeout: 10),
+      "Cancel pickup request should go once the request has been answered")
+    XCTAssertTrue(
+      timeslot.waitForExistence(timeout: 10),
+      "Pickup timeslots should return after a rejection")
+    XCTAssertFalse(
+      app.staticTexts.matching(
+        NSPredicate(format: "label BEGINSWITH %@", "Pickup confirmed for")
+      ).firstMatch.exists,
+      "A rejection is not a confirmation")
+
+    // And the buyer can ask again, which is the whole point.
+    timeslot.tap()
+    XCTAssertTrue(
+      waitForConfirmationSheet(timeout: 5),
+      "Pickup confirmation sheet should reopen after a rejection")
+    tapConfirmationSheetRequestButton()
+    XCTAssertTrue(
+      waitForCancelRequestVisible(timeout: 10),
+      "A fresh request after a rejection is open again")
+
+    await emitter.disconnect()
+  }
+
+  /// The id of a message for an item, as the server holds it.
+  @MainActor
+  private func waitForMessageId(
+    emitter: WSEmitter,
+    itemId: String,
+    type: String = "pickup",
+    value: String? = "pending",
+    failureMessage: String,
+    timeout: TimeInterval = 10
+  ) async throws -> String {
+    let deadline = Date().addingTimeInterval(timeout)
+    repeat {
+      let payload = try await emitter.getResource(
+        service: EVY_CORE_SERVICE,
+        resource: EVYCoreResource.messages.rawValue
+      )
+      if let rows = Self.responseDataArray(from: payload),
+        let match = rows.compactMap({ $0 as? [String: Any] }).first(where: { row in
+          let data = row["data"] as? [String: Any]
+          guard row["fk"] as? String == itemId,
+            data?["type"] as? String == type
+          else { return false }
+          if let value {
+            return data?["value"] as? String == value
+          }
+          return true
+        }),
+        let id = match["id"] as? String
+      {
+        return id
+      }
+    } while try await emitter.nextDataChanged(
+      resource: EVYCoreResource.messages.rawValue, deadline: deadline)
+    XCTFail(failureMessage)
+    return ""
   }
 
   @MainActor
@@ -2673,7 +3078,7 @@ final class WebSocketE2ETests: E2ETestBase {
       Self.responseDataArray(from: messagesPayload),
       "Messages payload should be an array"
     )
-    var acceptedMessage = try XCTUnwrap(
+    let request = try XCTUnwrap(
       messageRows.compactMap { $0 as? [String: Any] }.first {
         $0["id"] as? String != nil
           && ($0["data"] as? [String: Any])?["type"] as? String == "pickup"
@@ -2682,28 +3087,41 @@ final class WebSocketE2ETests: E2ETestBase {
       "Created pickup message should be readable from the API"
     )
     let messageId = try XCTUnwrap(
-      acceptedMessage["id"] as? String,
+      request["id"] as? String,
       "Created pickup message should include an id"
     )
-    acceptedMessage["status"] = "accepted"
-    _ = try await emitter.updateResource(
+
+    // Accepting is a new message naming the request, not an edit to it - and it carries
+    // the request's payload forward. `findFirst` predicates cannot nest, so the row that
+    // says "Pickup confirmed for …" reads the time off the message that says "accepted".
+    _ = try await emitter.createResource(
       service: EVY_CORE_SERVICE,
       resource: EVYCoreResource.messages.rawValue,
-      filter: ["id": messageId],
-      data: acceptedMessage
+      data: [
+        "fk": selectedItemId,
+        "service": MARKETPLACE_SERVICE,
+        "resource": MARKETPLACE_ITEMS_RESOURCE_ID,
+        "visibility": "private",
+        "parentMessageId": messageId,
+        "data": [
+          "value": "accept",
+          "type": "pickup",
+          "time": selectedTimeslot,
+        ],
+      ]
     )
-    let acceptedOnServer = try await waitForMessageStatus(
+    let acceptedOnServer = try await waitForMessageResponse(
       emitter: emitter,
       messageId: messageId,
-      status: "accepted"
+      value: "accept"
     )
     XCTAssertTrue(
       acceptedOnServer,
-      "Marketplace should persist accepted status for the pickup message")
+      "The API should persist the message that accepts the pickup request")
 
     XCTAssertTrue(
       waitForCancelRequestHidden(timeout: 10),
-      "Cancel pickup request should hide once the message is accepted")
+      "Cancel pickup request should hide once the request is answered")
     XCTAssertTrue(
       app.staticTexts.matching(
         NSPredicate(format: "label BEGINSWITH %@", "Pickup confirmed for")
@@ -2711,7 +3129,7 @@ final class WebSocketE2ETests: E2ETestBase {
       "Pickup segment should show the accepted confirmation row")
     XCTAssertFalse(
       app.segmentedControls.buttons["Shipping"].waitForExistence(timeout: 2),
-      "Transfer tabs should stay hidden for an accepted pickup request")
+      "Transfer tabs stay collapsed once an arrangement is agreed")
     let shippingConfirmation = app.staticTexts.matching(
       NSPredicate(format: "label BEGINSWITH %@", "Shipping confirmed")
     ).firstMatch
@@ -2720,6 +3138,132 @@ final class WebSocketE2ETests: E2ETestBase {
       "Shipping confirmation should stay hidden for an accepted pickup request")
 
     await emitter.disconnect()
+  }
+
+  @MainActor
+  func testSenderIsOfferedCancelAndCannotAnswerItsOwnRequest() throws {
+    let viewItemButton = app.buttons["View"]
+    XCTAssertTrue(
+      viewItemButton.waitForExistence(timeout: 20),
+      "Home screen not loaded - verify API is running and database is seeded")
+
+    let emitter = WSEmitter()
+    let host = apiHost
+    let selectedTimeslot = "2026-06-03T09:00:00"
+    let (itemId, _) = try awaitResult("create sender cancel item") {
+      try await emitter.connect(host: host)
+      try await emitter.login(token: "e2e-test", os: "ios")
+      return try await self.createMarketplaceItem(
+        emitter: emitter,
+        titlePrefix: "Sender cancel item",
+        pickupSelection: [selectedTimeslot]
+      )
+    }
+
+    let viewLabel = "Sender cancel \(Int(Date().timeIntervalSince1970))"
+    let homeFlowData = createHomeFlowData(
+      buttonLabel: viewLabel,
+      viewItemId: itemId,
+      includeHomeInbox: true
+    )
+    let senderFlowData = E2ETestBase.senderViewFlowData(
+      flowId: E2EFlowIds.webSocketViewFlow,
+      pageId: E2EFlowIds.webSocketViewPage
+    )
+    try awaitResult("seed sender inbox flow") {
+      try await emitter.updateSDUI(
+        flowData: homeFlowData,
+        flowId: E2EFlowIds.webSocketHomeFlow
+      )
+      try await emitter.updateSDUI(
+        flowData: senderFlowData,
+        flowId: E2EFlowIds.webSocketViewFlow
+      )
+      try await emitter.subscribe(event: "dataChanged")
+    }
+
+    app.terminate()
+    try launchApp()
+    let viewButton = app.buttons[viewLabel]
+    XCTAssertTrue(
+      viewButton.waitForExistence(timeout: 20),
+      "Sender request view button should load")
+    XCTAssertTrue(
+      scrollUntilHittable(viewButton),
+      "Sender request view button should be reachable")
+    viewButton.tap()
+
+    let timeslot = app.staticTexts["09:00"].firstMatch
+    XCTAssertTrue(timeslot.waitForExistence(timeout: 15), "Pickup timeslot should be visible")
+    timeslot.tap()
+    XCTAssertTrue(
+      waitForConfirmationSheet(timeout: 5),
+      "Pickup confirmation sheet should appear after selecting a timeslot")
+    tapConfirmationSheetRequestButton()
+
+    let requestId = try awaitResult("wait for sender request") {
+      try await self.waitForMessageId(
+        emitter: emitter,
+        itemId: itemId,
+        type: "pickup",
+        value: nil,
+        failureMessage: "Tapping a pickup timeslot should have created a request"
+      )
+    }
+    let backButton = app.navigationBars.buttons.firstMatch
+    XCTAssertTrue(
+      backButton.waitForExistence(timeout: 5), "The request page should have a back button")
+    backButton.tap()
+
+    let fromYouTab = app.segmentedControls.buttons["From you"]
+    XCTAssertTrue(
+      fromYouTab.waitForExistence(timeout: 10),
+      "The inbox should include a From you tab")
+    XCTAssertTrue(
+      scrollUntilHittable(fromYouTab),
+      "The From you tab should be reachable below the request picker")
+    fromYouTab.tap()
+
+    let childRowId = E2ETestBase.homeInboxFromYouChildRowId
+    let row = app.otherElements["swipeRow_\(childRowId)_\(requestId)"]
+    XCTAssertTrue(
+      row.waitForExistence(timeout: 10),
+      "The request created by this device should appear under From you")
+    XCTAssertTrue(
+      scrollUntilHittable(row),
+      "The request row should be reachable after scrolling")
+    row.swipeLeft(velocity: .slow)
+
+    let swipeButtonId = "swipeLeft_\(childRowId)_\(requestId)"
+    let swipeButton = app.buttons[swipeButtonId]
+    XCTAssertTrue(
+      swipeButton.waitForExistence(timeout: 3),
+      "The sender should be offered cancel")
+    XCTAssertEqual(swipeButton.label, "Cancel")
+    XCTAssertEqual(
+      app.buttons.matching(identifier: swipeButtonId).count,
+      1,
+      "The From you row should reveal exactly one declarative action")
+
+    XCTAssertTrue(
+      swipeButton.isHittable,
+      "The revealed Cancel action should accept taps"
+    )
+    swipeButton.tap()
+    XCTAssertTrue(
+      row.waitForNonExistence(timeout: 5),
+      "Cancel should optimistically remove the request from From you"
+    )
+
+    let cancelled = try awaitResult("wait for cancel response") {
+      try await self.waitForMessageResponse(
+        emitter: emitter,
+        messageId: requestId,
+        value: "cancel"
+      )
+    }
+    XCTAssertTrue(cancelled, "Cancel should persist a response naming the request")
+    try awaitResult("disconnect sender emitter") { await emitter.disconnect() }
   }
 
   @MainActor
@@ -3232,38 +3776,12 @@ final class WebSocketE2ETests: E2ETestBase {
     return labels.allSatisfy { !app.buttons[$0].exists }
   }
 
-  private func waitForArchivedMessage(
-    emitter: WSEmitter,
-    itemId: String
-  ) async throws -> Bool {
-    try await waitForResourceUpdate(
-      emitter: emitter,
-      service: EVY_CORE_SERVICE,
-      resource: EVYCoreResource.messages.rawValue
-    ) { Self.messagesArchived($0, itemId: itemId) }
-  }
-
-  private static func messagesArchived(
-    _ messages: Any,
-    itemId: String
-  ) -> Bool {
-    guard let messageRows = responseDataArray(from: messages) else { return false }
-    return messageRows.contains { message in
-      guard let messageData = message as? [String: Any],
-        messageData["fk"] as? String == itemId,
-        let archivedAt = messageData["archivedAt"] as? String,
-        !archivedAt.isEmpty
-      else { return false }
-      return true
-    }
-  }
-
   private func waitForMessage(
     emitter: WSEmitter,
-    type: String,
+    type: String? = nil,
     itemId: String,
-    valueKey: String,
-    value: String
+    valueKey: String? = nil,
+    value: String? = nil
   ) async throws -> Bool {
     try await waitForResourceUpdate(
       emitter: emitter,
@@ -3282,7 +3800,7 @@ final class WebSocketE2ETests: E2ETestBase {
 
   private static func messagesContain(
     _ messages: Any,
-    type: String,
+    type: String? = nil,
     itemId: String,
     valueKey: String? = nil,
     value: String? = nil
@@ -3291,9 +3809,11 @@ final class WebSocketE2ETests: E2ETestBase {
     return messageRows.contains { message in
       guard let messageData = message as? [String: Any],
         messageData["fk"] as? String == itemId,
-        let messageDetails = messageData["data"] as? [String: Any],
-        messageDetails["type"] as? String == type
+        let messageDetails = messageData["data"] as? [String: Any]
       else {
+        return false
+      }
+      if let type, messageDetails["type"] as? String != type {
         return false
       }
       guard let valueKey, let value else { return true }
@@ -3497,7 +4017,8 @@ final class WebSocketE2ETests: E2ETestBase {
     buttonLabel: String,
     viewItemId: String? = nil,
     includeAddedSharedRow: Bool = false,
-    includeHeadingRow: Bool = false
+    includeHeadingRow: Bool = false,
+    includeHomeInbox: Bool = false
   ) -> [String: Any] {
     let viewAction = Self.viewItemNavigateAction(viewItemId: viewItemId)
 
@@ -3551,6 +4072,20 @@ final class WebSocketE2ETests: E2ETestBase {
       ),
     ])
 
+    var homeRows: [[String: Any]] = [
+      [
+        "id": "a74bc80e-ffda-4e19-b8f3-cd882405958b",
+        "type": "VerticalContainer",
+        "actions": [:],
+        "visible": "true",
+        "title": "",
+        "children": children,
+      ]
+    ]
+    if includeHomeInbox {
+      homeRows.insert(Self.homeInboxTabRow(), at: 0)
+    }
+
     return [
       "id": E2EFlowIds.webSocketHomeFlow,
       "name": "Home",
@@ -3558,16 +4093,7 @@ final class WebSocketE2ETests: E2ETestBase {
         [
           "id": E2EFlowIds.webSocketHomePage,
           "title": "Home",
-          "rows": [
-            [
-              "id": "a74bc80e-ffda-4e19-b8f3-cd882405958b",
-              "type": "VerticalContainer",
-              "actions": [:],
-              "visible": "true",
-              "title": "",
-              "children": children,
-            ]
-          ],
+          "rows": homeRows,
         ],
         [
           "id": E2EFlowIds.webSocketHomeDetailsPage,
@@ -3878,6 +4404,10 @@ final class E2EPlaceSearchTests: E2ETestBase {
     let sheetStillOpen = searchField.waitForExistence(timeout: 2)
     XCTAssertFalse(sheetStillOpen, "Search sheet should dismiss after selecting a result")
 
+    // This flow's row renders `formatAddress(pickup_address)` - the picker's own
+    // draft, on the screen of the person choosing the address. Showing the street
+    // here is correct; it is the *public item page* that reads only the postcode
+    // copied onto the item.
     let formattedAddress = app.staticTexts.matching(
       NSPredicate(format: "label CONTAINS[c] 'NSW' OR label CONTAINS[c] 'Australia'")
     ).firstMatch
@@ -3987,61 +4517,33 @@ final class E2EPlaceSearchTests: E2ETestBase {
   }
 }
 
-// MARK: - Homepage message search
+// MARK: - Home inbox
 
-final class E2EHomepageMessageSearchTests: E2ETestBase {
+final class E2EHomeInboxTests: E2ETestBase {
   private static let homePageId = E2EFlowIds.webSocketHomePage
-  private static let messageChildRowId = "8d5b9e32-ac4e-5f7b-b2d3-9e8f4a6c0b12"
-  private static let pickupMessageId = "c84f227e-69ed-4c69-9f53-aafd7a918c6b"
-  private static let matchingTypeQuery = "pickup"
-  private static let unmatchedTypeQuery = "nomatch"
-  private static let seededMessageTypeLabels = [
-    "pickup request", "delivery request", "shipping request",
-  ]
+  private static let seededMessageItemId = "12401f50-cf1a-45d7-a112-2e68a2070466"
 
   override var homeFlowId: String? { E2EFlowIds.defaultHomeFlow }
 
-  // Page ids are stored globally, so the synthetic home flows other test classes seed
-  // (homeFlowData/createHomeFlowData) overwrite the production home page's rows with their
-  // button content. Reseed the production home page's message + item search rows before each
-  // launch so this test is independent of execution order.
+  override var ownedServiceResources: [OwnedServiceResourceDeclaration] {
+    [
+      (
+        service: MARKETPLACE_SERVICE,
+        resource: MARKETPLACE_ITEMS_RESOURCE_ID,
+        ids: [Self.seededMessageItemId]
+      )
+    ]
+  }
+
   override func setUpWithError() throws {
     continueAfterFailure = false
     try seedFlows([
-      (flowId: E2EFlowIds.defaultHomeFlow, flowData: Self.messageSearchHomeFlowData())
+      (flowId: E2EFlowIds.defaultHomeFlow, flowData: Self.homeInboxFlowData())
     ])
     try launchApp()
   }
 
-  private static func messageSearchHomeFlowData() -> [String: Any] {
-    let messageSearchRow: [String: Any] = [
-      "id": "7c4a8f21-9b3d-4e6a-a1c2-8f7d3e5b9a01",
-      "type": "Search",
-      "child": [
-        "id": Self.messageChildRowId,
-        "type": "Text",
-        "title": "{$datum.data.type} request",
-        "subtitle": "{$datum.status}",
-        "swipeLabel": "::check::",
-        "actions": Self.actionsObject(
-          swipeLeft: [
-            Self.rowAction(
-              true:
-                "{update(\(EVY_CORE_SERVICE),\(EVYCoreResource.messages.rawValue),{id: $datum.id, status: \"pending\"},{status: \"accepted\"})}"
-            )
-          ]
-        ),
-        "visible": "true",
-        "name": "Message search result",
-      ],
-      "title": "",
-      "placeholder": "Filter messages by type",
-      "source": "{\(EVYCoreResource.messages.rawValue)}",
-      "destination": "",
-      "actions": [:],
-      "visible": "true",
-      "name": "Search messages",
-    ]
+  private static func homeInboxFlowData() -> [String: Any] {
     let itemSearchRow: [String: Any] = [
       "id": "96d3efe4-ea20-4a81-9ccb-64d6b57646e9",
       "type": "Search",
@@ -4065,6 +4567,7 @@ final class E2EHomepageMessageSearchTests: E2ETestBase {
       "title": "",
       "placeholder": "Search anything",
       "source": "{\(MARKETPLACE_ITEMS_RESOURCE_ID)}",
+      "no_results": "Nothing found",
       "destination": "",
       "actions": [:],
       "visible": "true",
@@ -4077,132 +4580,243 @@ final class E2EHomepageMessageSearchTests: E2ETestBase {
         [
           "id": E2EFlowIds.webSocketHomePage,
           "title": "Home",
-          "rows": [messageSearchRow, itemSearchRow],
+          "rows": [homeInboxTabRow(), itemSearchRow],
+          "footer": buttonRow(
+            id: "cc86c53a-170d-4800-8897-8f99f3697053",
+            label: "Sell something",
+            action:
+              "{navigate(ca47e6c5-da19-4491-8422-adb40d9e8a27,306ed62c-c2af-4652-a873-26c7a388972d)}"
+          ),
         ]
       ],
     ]
   }
 
-  func testHomepageMessageSearchShowsAllMessagesAndFiltersByType() throws {
+  @MainActor
+  func testRecipientAcceptsRequestAndItMovesToScheduled() throws {
     let homePage = app.scrollViews["page_\(Self.homePageId)"]
     XCTAssertTrue(
       homePage.waitForExistence(timeout: 20),
       "Home screen not loaded - verify API is running and database is seeded")
 
-    let firstSearchField = homePage.textFields.firstMatch
+    let (requestId, _) = try seedOwnRequest()
+    let row = ownRequestRow(requestId: requestId)
     XCTAssertTrue(
-      firstSearchField.waitForExistence(timeout: 10),
-      "Message search field should be visible on Home")
-
-    let orderedHomeSearchFields = Self.orderedSearchTextFields(in: homePage)
-    XCTAssertEqual(
-      orderedHomeSearchFields.count, 2,
-      "Home should expose exactly two search fields")
-    let messageSearchField = orderedHomeSearchFields[0]
-    let itemSearchField = orderedHomeSearchFields[1]
-    XCTAssertLessThan(
-      messageSearchField.frame.minY, itemSearchField.frame.minY,
-      "Message search should appear above item search")
-
-    assertSeededMessageLabelsVisible(
-      ["pickup request", "delivery request", "shipping request"])
-
-    clearAndType(field: messageSearchField, text: Self.matchingTypeQuery)
-    assertSeededMessageLabelsVisible(["pickup request"])
-    assertSeededMessageLabelsHidden(["delivery request", "shipping request"])
-
-    clearAndType(field: messageSearchField, text: Self.unmatchedTypeQuery)
-    assertSeededMessageLabelsHidden(Self.seededMessageTypeLabels)
+      row.waitForExistence(timeout: 15),
+      "A request for the owned item should appear under For you")
     XCTAssertTrue(
-      itemSearchField.exists,
-      "Item search field should remain on Home after filtering messages")
-  }
-
-  func testHomepageSwipeAcceptUpdatesPickupMessageStatus() throws {
-    let homePage = app.scrollViews["page_\(Self.homePageId)"]
+      row.staticTexts["Amazing Fridge"].waitForExistence(timeout: 5),
+      "The request row should show the addressed item title")
     XCTAssertTrue(
-      homePage.waitForExistence(timeout: 20),
-      "Home screen not loaded - verify API is running and database is seeded")
+      row.staticTexts["pending"].waitForExistence(timeout: 5),
+      "The request row should show its pending state")
 
-    let messageSearchField = Self.orderedSearchTextFields(in: homePage)[0]
-    clearAndType(field: messageSearchField, text: Self.matchingTypeQuery)
-
-    let pickupRowId =
-      "swipeRow_\(Self.messageChildRowId)_\(Self.pickupMessageId)"
-    let pickupRow = app.otherElements[pickupRowId]
-    XCTAssertTrue(
-      pickupRow.waitForExistence(timeout: 10),
-      "Seeded pickup message row should be visible")
-    XCTAssertTrue(
-      pickupRow.staticTexts["pickup request"].waitForExistence(timeout: 5),
-      "Pickup message row should show pickup request title")
-    XCTAssertTrue(
-      pickupRow.staticTexts["pending"].waitForExistence(timeout: 5),
-      "Pickup message should show pending status")
-
-    pickupRow.swipeLeft(velocity: .slow)
-
+    row.swipeLeft(velocity: .slow)
     let swipeButtonId =
-      "swipeLeft_\(Self.messageChildRowId)_\(Self.pickupMessageId)"
+      "swipeLeft_\(E2ETestBase.homeInboxForYouChildRowId)_\(requestId)"
     let swipeButton = app.buttons[swipeButtonId]
     XCTAssertTrue(
       swipeButton.waitForExistence(timeout: 3),
-      "Swipe-left action button should be revealed for the pickup message")
-    XCTAssertEqual(swipeButton.label, "::check::")
+      "The recipient should be offered Accept")
+    XCTAssertEqual(swipeButton.label, "Accept")
+    XCTAssertEqual(
+      app.buttons.matching(identifier: swipeButtonId).count,
+      1,
+      "The For you row should reveal exactly one declarative action")
+
     swipeButton.tap()
+    _ = try assertResponsePersisted(requestId: requestId, value: "accept")
 
     XCTAssertTrue(
-      pickupRow.staticTexts["accepted"].waitForExistence(timeout: 5),
-      "Pickup message subtitle should show accepted after swipe")
+      row.waitForNonExistence(timeout: 10),
+      "An accepted request should leave For you")
+    XCTAssertFalse(
+      swipeButton.exists,
+      "An answered request should no longer offer an action")
 
-    let acceptedOnServer = try awaitResult("pickup message status accepted") {
+    app.segmentedControls.buttons["Scheduled"].tap()
+    XCTAssertTrue(
+      app.staticTexts["Amazing Fridge"].waitForExistence(timeout: 10),
+      "The accepted request should appear under Scheduled")
+    XCTAssertTrue(
+      app.staticTexts["accept"].exists,
+      "The Scheduled row should show the accepted state")
+  }
+
+  @MainActor
+  func testRecipientCanRejectFromRequestSheet() throws {
+    let homePage = app.scrollViews["page_\(Self.homePageId)"]
+    XCTAssertTrue(
+      homePage.waitForExistence(timeout: 20),
+      "Home screen not loaded - verify API is running and database is seeded")
+
+    let (requestId, _) = try seedOwnRequest()
+    let row = ownRequestRow(requestId: requestId)
+    XCTAssertTrue(
+      row.waitForExistence(timeout: 15),
+      "A request for the owned item should appear under For you")
+    XCTAssertTrue(scrollUntilHittable(row), "The request row should be reachable")
+    row.tap()
+
+    let sheetCopy = app.staticTexts["Accept this request, or reject it?"]
+    XCTAssertTrue(
+      sheetCopy.waitForExistence(timeout: 5),
+      "Tapping the request should open its response sheet")
+    let rejectButton = try XCTUnwrap(
+      waitForHittableButton(labeled: "Reject"),
+      "The response sheet should offer Reject"
+    )
+    rejectButton.tap()
+
+    _ = try assertResponsePersisted(requestId: requestId, value: "reject")
+    XCTAssertTrue(
+      sheetCopy.waitForNonExistence(timeout: 5),
+      "Reject should dismiss the response sheet")
+    XCTAssertTrue(
+      row.waitForNonExistence(timeout: 10),
+      "A rejected request should leave For you")
+  }
+
+  @MainActor
+  func testAnsweredRequestOffersNothing() throws {
+    let homePage = app.scrollViews["page_\(Self.homePageId)"]
+    XCTAssertTrue(
+      homePage.waitForExistence(timeout: 20),
+      "Home screen not loaded - verify API is running and database is seeded")
+
+    let (requestId, _) = try seedOwnRequest(responseValue: "accept")
+
+    app.segmentedControls.buttons["Scheduled"].tap()
+    XCTAssertTrue(
+      app.staticTexts["Amazing Fridge"].waitForExistence(timeout: 15),
+      "The pre-answered request should reach Scheduled")
+    XCTAssertTrue(app.staticTexts["accept"].exists)
+
+    app.segmentedControls.buttons["For you"].tap()
+    let requestRow = ownRequestRow(requestId: requestId)
+    XCTAssertFalse(
+      requestRow.waitForExistence(timeout: 3),
+      "An answered request should not remain under For you")
+    XCTAssertFalse(
+      app.buttons[
+        "swipeLeft_\(E2ETestBase.homeInboxForYouChildRowId)_\(requestId)"
+      ].exists,
+      "An answered request should offer no swipe action")
+  }
+
+  @MainActor
+  private func seedOwnRequest(responseValue: String? = nil) throws -> (
+    requestId: String, responseId: String?
+  ) {
+    let requestId = UUID().uuidString.lowercased()
+    let responseId = responseValue == nil ? nil : UUID().uuidString.lowercased()
+    let host = apiHost
+    return try awaitResult("seed owned item request") {
       let emitter = WSEmitter()
-      try await emitter.connect(host: self.apiHost)
+      try await emitter.connect(host: host)
       try await emitter.login(token: "e2e-test", os: "ios")
-      let accepted = try await self.waitForMessageStatus(
+      _ = try await emitter.createResource(
+        service: EVY_CORE_SERVICE,
+        resource: EVYCoreResource.messages.rawValue,
+        filter: ["id": requestId],
+        data: [
+          "id": requestId,
+          "fk": Self.seededMessageItemId,
+          "service": MARKETPLACE_SERVICE,
+          "resource": MARKETPLACE_ITEMS_RESOURCE_ID,
+          "visibility": "private",
+          "data": [
+            "type": "pickup",
+            "value": "pending",
+            "time": "2026-06-03T09:00:00",
+          ],
+        ]
+      )
+      if let responseValue, let responseId {
+        _ = try await emitter.createResource(
+          service: EVY_CORE_SERVICE,
+          resource: EVYCoreResource.messages.rawValue,
+          filter: ["id": responseId],
+          data: [
+            "id": responseId,
+            "fk": Self.seededMessageItemId,
+            "service": MARKETPLACE_SERVICE,
+            "resource": MARKETPLACE_ITEMS_RESOURCE_ID,
+            "visibility": "private",
+            "parentMessageId": requestId,
+            "data": [
+              "value": responseValue,
+              "type": "pickup",
+              "time": "2026-06-03T09:00:00",
+            ],
+          ]
+        )
+      }
+      await emitter.disconnect()
+      return (requestId, responseId)
+    }
+  }
+
+  @MainActor
+  private func assertResponsePersisted(
+    requestId: String,
+    value: String,
+    file: StaticString = #filePath,
+    line: UInt = #line
+  ) throws -> String {
+    let host = apiHost
+    let (answered, payload) = try awaitResult("wait for \(value) response") {
+      let emitter = WSEmitter()
+      try await emitter.connect(host: host)
+      try await emitter.login(token: "e2e-test", os: "ios")
+      try await emitter.subscribe(event: "dataChanged")
+      let answered = try await self.waitForMessageResponse(
         emitter: emitter,
-        messageId: Self.pickupMessageId,
-        status: "accepted"
+        messageId: requestId,
+        value: value
+      )
+      let payload = try await emitter.getResource(
+        service: EVY_CORE_SERVICE,
+        resource: EVYCoreResource.messages.rawValue
       )
       await emitter.disconnect()
-      return accepted
+      return (answered, payload)
     }
-    XCTAssertTrue(acceptedOnServer, "Marketplace should persist accepted status for pickup message")
+
+    XCTAssertTrue(
+      answered,
+      "The API should hold a message answering the request with \(value)",
+      file: file,
+      line: line)
+    // Answering writes nothing to the request: it supersedes the ask by being newer.
+    XCTAssertTrue(
+      Self.messageHasValue(payload, messageId: requestId, value: "pending"),
+      "The request itself should still read as pending",
+      file: file,
+      line: line)
+    return try XCTUnwrap(
+      Self.messageHasResponse(payload, messageId: requestId, value: value),
+      "The response should include an id",
+      file: file,
+      line: line
+    )
   }
 
-  private static func orderedSearchTextFields(in homePage: XCUIElement) -> [XCUIElement] {
-    let fieldCount = homePage.textFields.count
-    return (0..<fieldCount)
-      .map { homePage.textFields.element(boundBy: $0) }
-      .filter { $0.exists }
-      .sorted { $0.frame.minY < $1.frame.minY }
-  }
-
-  private func assertSeededMessageLabelsVisible(
-    _ labels: [String],
-    file: StaticString = #filePath,
-    line: UInt = #line
-  ) {
-    for label in labels {
-      let messageLabel = app.staticTexts[label]
-      XCTAssertTrue(
-        messageLabel.waitForExistence(timeout: 5),
-        "Expected seeded message '\(label)' to be visible",
-        file: file, line: line)
+  private static func messageHasValue(_ messages: Any, messageId: String, value: String) -> Bool {
+    guard let messageRows = responseDataArray(from: messages) else { return false }
+    return messageRows.contains { message in
+      guard let messageData = message as? [String: Any],
+        messageData["id"] as? String == messageId,
+        let data = messageData["data"] as? [String: Any]
+      else { return false }
+      return data["value"] as? String == value
     }
   }
 
-  private func assertSeededMessageLabelsHidden(
-    _ labels: [String],
-    file: StaticString = #filePath,
-    line: UInt = #line
-  ) {
-    for label in labels {
-      let messageLabel = app.staticTexts[label]
-      XCTAssertFalse(
-        messageLabel.exists,
-        "Expected seeded message '\(label)' to be hidden",
-        file: file, line: line)
-    }
+  @MainActor
+  private func ownRequestRow(requestId: String) -> XCUIElement {
+    app.otherElements[
+      "swipeRow_\(E2ETestBase.homeInboxForYouChildRowId)_\(requestId)"
+    ]
   }
 }

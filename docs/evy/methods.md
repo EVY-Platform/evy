@@ -97,14 +97,64 @@ Collection: `cc2e6c74-a53a-4ed1-97a7-14aa9b9a3e3f` = `[{ "id": "c1", "value": "E
 
 Id match: `{findFirst(cc2e6c74-a53a-4ed1-97a7-14aa9b9a3e3f, item.condition_id).value}` → `"Excellent"`
 
-Expression match (active message exists for an item — self-comparison idiom):
+Expression match (a request of this type exists for an item — self-comparison idiom):
 
 ```
-{findFirst(messages, fk == item.id && archivedAt == null).fk == item.id}
+{findFirst(messages, fk == item.id && data.value == pending).fk == item.id}
 ```
+
+**The latest matching record.** The collection argument is function-aware, so it takes a `sort`
+rather than only a binding key — which is how you ask for the most recent match rather than the
+first stored one. This is what the item page uses to read a transfer method's current state:
+
+```
+{findFirst(sort(messages, desc, createdAt), fk == item.id && data.type == pickup).data.value}
+```
+
+Two things to know before relying on it. `sort` breaks equal keys by **original order regardless
+of direction**, so the field has to be unique enough to order by — a `desc` sort over
+second-resolution timestamps can return the older of two records written in the same second.
+And a predicate that matches nothing yields an empty value, which compares unequal to every
+literal; that is what lets "nothing yet" share a branch with any terminal state instead of
+needing a case of its own.
 
 Active match → its `fk` equals the item's id → `true`. No match (or all archived) → `""` →
 `false`.
+
+#### filter
+
+Returns every element of a collection for which a predicate is true. Unlike `findFirst`, the
+predicate binds the candidate as `$datum` (the same ephemeral-datum mechanism used by
+format-with-`$datum`), not as bare fields. Nested `findFirst` / `sort` calls keep their own
+bare-field binding for *their* candidates — so inside
+`filter(messages, … findFirst(sort(messages, desc, createdAt), fk == $datum.fk && …) …)` the
+bare `fk` is the inner `findFirst` candidate and `$datum` is the outer `filter` candidate.
+
+```
+filter({_collection_}, {_predicate_})
+```
+
+Open requests this device owns (the homepage "For you" tab source):
+
+```
+{filter(messages, $datum.data.value == "pending" && owns($datum.service, $datum.resource, $datum.fk) == true && findFirst(sort(messages, desc, createdAt), fk == $datum.fk && data.type == $datum.data.type).id == $datum.id)}
+```
+
+A non-collection first argument is an error. An empty match set is an empty array (not an empty
+string). Cost note: a predicate that nests `findFirst(sort(…))` re-sorts per candidate; fine at
+seed scale, not free at catalogue scale.
+
+#### owns
+
+Whether this device owns a record, as `"true"` / `"false"`. Reads
+[`EVY.ownedServiceResources()`](../../ios/evy/Core/EVY+Ownership.swift): the creation ledger,
+privately held synced rows, and the `EVY_OWNED_SERVICE_RESOURCES` launch override. There is no
+`!` operator, so fixtures write `owns(…) == false`. Web has no ownership concept and stubs this
+to `"false"`.
+
+```
+owns({_service_}, {_resource_}, {_id_})
+```
 
 #### if
 

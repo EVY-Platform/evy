@@ -2,6 +2,11 @@
 
 The EVY app! Open Xcode, hit run, and Bob's your uncle.
 
+Almost everything the app shows comes from synced flows — including the homepage
+inbox tabs and their Accept / Reject / Cancel affordances. See
+[`docs/evy/sdui.md`](../docs/evy/sdui.md#swipe-swipe-left) and
+[`docs/evy/methods.md`](../docs/evy/methods.md) (`filter`, `owns`).
+
 ### Prerequisites
 
 The Xcode project references generated Swift types under `types/generated/swift`, which are gitignored and produced by codegen. On a fresh checkout, run this from the repo root **before** opening Xcode or building:

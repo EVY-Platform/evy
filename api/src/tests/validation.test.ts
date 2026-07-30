@@ -918,6 +918,7 @@ describe("validateFileWithBinary", () => {
 			type,
 			createdAt: now,
 			updatedAt: now,
+			visibility: "public",
 			dataBase64: "abc=",
 		});
 		expect(out.dataBase64).toBe("abc=");

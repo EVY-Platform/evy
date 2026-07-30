@@ -47,11 +47,23 @@ Each side of an atomic comparison is resolved in this order, first match wins:
 > path first, falling back to the literal. Reach for quotes when the literal contains a space
 > or an operator character, which bare words cannot express: `{item.status == "in progress"}`.
 
+> **An operand that resolves to a record compares by its `id`.** `{message.fk == [item_id]}`
+> is true when the message's `fk` points at the record bound under `[item_id]` — the same rule
+> the two-argument `findFirst(collection, id)` form follows. Without it a record would
+> stringify to its whole JSON and could never equal an id. This applies to records only: a
+> collection has no single identity, and a record with no usable `id` keeps its rendered form.
+> Coercion is scoped to comparison operands — rendering a record (`{item}`) still shows the
+> whole record.
+
 **`null`:** `archivedAt == null` / `archivedAt != null` match records where the path is
 **absent or JSON null**. Only `==` and `!=` are allowed with `null`. `null == null` is true.
 
-Record-prop names that collide with global datum keys are theoretically possible but keys are
-UUIDs at runtime.
+**Ids collide with the resources they name.** Resource ids are UUIDs and so are the binding
+keys naming those resources, so a bare UUID is ambiguous: as a comparison operand it resolves
+as a data path (which is what makes the identity rule above useful), while in a `create` /
+`update` value position it stays the literal id — a payload carries identifiers, and what a
+resource key binds is a *record*, whose own id is a different UUID. See
+[actions.md](./actions.md#create) for the value-position rule.
 
 See [methods.md](./methods.md) for the `count`/`length`/`sort` helpers usable inside these
 expressions, and the [Swift interpreter](../../ios/evy/Utils/interpreter.swift) /

@@ -181,6 +181,123 @@
 			}
 		},
 		{
+			"id": "comparison-record-binding-matches-by-id",
+			"category": "comparison",
+			"platforms": ["ios"],
+			"input": "{message_holder.fk == item_holder}",
+			"data": {
+				"message_holder": {
+					"fk": "12401f50-cf1a-45d7-a112-2e68a2070466"
+				},
+				"item_holder": {
+					"id": "12401f50-cf1a-45d7-a112-2e68a2070466",
+					"title": "Amazing Fridge"
+				}
+			},
+			"expect": {
+				"value": true
+			},
+			"notes": "An operand that resolves to a record compares by its id, so a foreign key can be compared against a bound record. Same rule as the two-argument findFirst(collection, id) form. Without it the record stringifies to JSON and can never equal an id."
+		},
+		{
+			"id": "comparison-record-binding-mismatched-id",
+			"category": "comparison",
+			"platforms": ["ios"],
+			"input": "{message_holder.fk == item_holder}",
+			"data": {
+				"message_holder": {
+					"fk": "12401f50-cf1a-45d7-a112-2e68a2070466"
+				},
+				"item_holder": {
+					"id": "56e5da4b-5cf0-4a2c-9f0d-9e02c4c0f5a1",
+					"title": "Amazing Freezer"
+				}
+			},
+			"expect": {
+				"value": false
+			}
+		},
+		{
+			"id": "comparison-record-binding-without-id",
+			"category": "comparison",
+			"platforms": ["ios"],
+			"input": "{message_holder.fk == item_holder}",
+			"data": {
+				"message_holder": {
+					"fk": ""
+				},
+				"item_holder": {
+					"title": "Amazing Fridge"
+				}
+			},
+			"expect": {
+				"value": false
+			},
+			"notes": "A record with no usable id has no identity to compare, so it keeps its rendered form rather than matching on an empty string."
+		},
+		{
+			"id": "comparison-collection-binding-is-not-an-identity",
+			"category": "comparison",
+			"platforms": ["ios"],
+			"input": "{message_holder.fk == items_holder}",
+			"data": {
+				"message_holder": {
+					"fk": "12401f50-cf1a-45d7-a112-2e68a2070466"
+				},
+				"items_holder": [
+					{
+						"id": "12401f50-cf1a-45d7-a112-2e68a2070466"
+					}
+				]
+			},
+			"expect": {
+				"value": false
+			},
+			"notes": "A collection has no single identity, so identity comparison applies to records only."
+		},
+		{
+			"id": "expression-find-first-matches-record-binding-by-id",
+			"category": "expression",
+			"platforms": ["ios"],
+			"input": "{findFirst(messages_holder, fk == item_holder).status}",
+			"data": {
+				"messages_holder": [
+					{
+						"id": "3f4c1d2b-8a9e-4c7d-9b1f-5e6a7b8c9d01",
+						"fk": "56e5da4b-5cf0-4a2c-9f0d-9e02c4c0f5a1"
+					},
+					{
+						"id": "7a8b9c0d-1e2f-4a3b-8c4d-5e6f7a8b9c02",
+						"fk": "12401f50-cf1a-45d7-a112-2e68a2070466",
+						"status": "pending"
+					}
+				],
+				"item_holder": {
+					"id": "12401f50-cf1a-45d7-a112-2e68a2070466",
+					"title": "Amazing Fridge"
+				}
+			},
+			"expect": {
+				"text": "pending"
+			},
+			"notes": "findFirst operands resolve through their own path, so identity comparison has to hold there too, not only in a top-level comparison."
+		},
+		{
+			"id": "expression-record-binding-renders-json",
+			"category": "expression",
+			"platforms": ["ios"],
+			"input": "{item_holder}",
+			"data": {
+				"item_holder": {
+					"id": "12401f50-cf1a-45d7-a112-2e68a2070466"
+				}
+			},
+			"expect": {
+				"text": "{\"id\":\"12401f50-cf1a-45d7-a112-2e68a2070466\"}"
+			},
+			"notes": "Identity coercion is scoped to comparison operands. Rendering a record still shows the whole record, so a change to comparison cannot leak into display."
+		},
+		{
 			"id": "comparison-quoted-literal-matches",
 			"category": "comparison",
 			"platforms": ["ios"],
@@ -919,6 +1036,130 @@
 			"expect": {
 				"error": true
 			}
+		},
+		{
+			"id": "split-args-filter-nested-find-first-sort",
+			"category": "split-args",
+			"platforms": ["ios", "web"],
+			"input": "messages, $datum.data.value == \"pending\" && findFirst(sort(messages, desc, createdAt), fk == $datum.fk && data.type == $datum.data.type).id == $datum.id",
+			"expect": {
+				"args": [
+					"messages",
+					"$datum.data.value == \"pending\" && findFirst(sort(messages, desc, createdAt), fk == $datum.fk && data.type == $datum.data.type).id == $datum.id"
+				]
+			},
+			"notes": "filter's nested findFirst(sort(…)) argument must stay one arg — commas inside the nested calls are not separators."
+		},
+		{
+			"id": "split-args-four-level-function-nesting",
+			"category": "split-args",
+			"platforms": ["ios", "web"],
+			"input": "middle(inner(leaf(a, b), c), d), e",
+			"expect": {
+				"args": ["middle(inner(leaf(a, b), c), d)", "e"]
+			},
+			"notes": "Four levels of call nesting inside one argument is still one argument."
+		},
+		{
+			"id": "expression-format-datetime-four-level-nesting",
+			"category": "expression",
+			"platforms": ["ios"],
+			"input": "{formatDatetime(findFirst(sort(messages_holder, desc, createdAt), fk == item.id).data.time, \"HH:mm\")}",
+			"data": {
+				"messages_holder": [
+					{
+						"id": "dfc53233-6152-4878-bf4f-b11a47c636ac",
+						"fk": "12401f50-cf1a-45d7-a112-2e68a2070466",
+						"createdAt": "2026-06-01T00:00:00.000Z",
+						"data": {
+							"type": "pickup",
+							"time": "2026-06-03T09:00:00.000Z"
+						}
+					}
+				],
+				"item": { "id": "12401f50-cf1a-45d7-a112-2e68a2070466" }
+			},
+			"expect": {
+				"text": "09:00"
+			},
+			"notes": "formatDatetime(findFirst(sort(…))) is four function levels deep and must parse as one wrapped call."
+		},
+		{
+			"id": "expression-filter-matches-by-datum-field",
+			"category": "expression",
+			"platforms": ["ios"],
+			"input": "{filter(rows_holder, $datum.status == pending).0.id}",
+			"data": {
+				"rows_holder": [
+					{
+						"id": "3f4c1d2b-8a9e-4c7d-9b1f-5e6a7b8c9d01",
+						"status": "accept"
+					},
+					{
+						"id": "7a8b9c0d-1e2f-4a3b-8c4d-5e6f7a8b9c02",
+						"status": "pending"
+					}
+				]
+			},
+			"expect": {
+				"text": "7a8b9c0d-1e2f-4a3b-8c4d-5e6f7a8b9c02"
+			},
+			"notes": "filter binds each candidate as $datum, not as bare fields."
+		},
+		{
+			"id": "expression-filter-latest-message-self-id-idiom",
+			"category": "expression",
+			"platforms": ["ios"],
+			"input": "{filter(messages_holder, $datum.data.value == \"pending\" && findFirst(sort(messages_holder, desc, createdAt), fk == $datum.fk && data.type == $datum.data.type).id == $datum.id).0.id}",
+			"data": {
+				"messages_holder": [
+					{
+						"id": "dfc53233-6152-4878-bf4f-b11a47c636ac",
+						"fk": "12401f50-cf1a-45d7-a112-2e68a2070466",
+						"createdAt": "2026-06-01T00:00:00.000Z",
+						"data": { "type": "pickup", "value": "pending" }
+					},
+					{
+						"id": "b0897a47-c45c-4e9c-8021-8ec3bdcac59c",
+						"fk": "12401f50-cf1a-45d7-a112-2e68a2070466",
+						"createdAt": "2026-06-01T00:01:00.000Z",
+						"parentMessageId": "dfc53233-6152-4878-bf4f-b11a47c636ac",
+						"data": {
+							"type": "pickup",
+							"value": "accept"
+						}
+					},
+					{
+						"id": "a1b2c3d4-e5f6-4789-a012-3456789abcde",
+						"fk": "12401f50-cf1a-45d7-a112-2e68a2070466",
+						"createdAt": "2026-06-01T00:02:00.000Z",
+						"data": { "type": "delivery", "value": "pending" }
+					}
+				]
+			},
+			"expect": {
+				"text": "a1b2c3d4-e5f6-4789-a012-3456789abcde"
+			},
+			"notes": "Only the open request survives: settled pending rows fail the latest-message self-id check."
+		},
+		{
+			"id": "expression-compound-dimension-labels",
+			"category": "expression",
+			"platforms": ["ios"],
+			"input": "{formatDimension(item_holder.dimensions.width) (w) x formatDimension(item_holder.dimensions.height) (h) x formatDimension(item_holder.dimensions.length) (l)}",
+			"data": {
+				"item_holder": {
+					"dimensions": {
+						"width": 500,
+						"height": 300,
+						"length": 200
+					}
+				}
+			},
+			"expect": {
+				"text": "50cm (w) x 30cm (h) x 20cm (l)"
+			},
+			"notes": "Substituted unit suffixes must not be parsed as function names when mixed text continues with more calls."
 		}
 	]
 }

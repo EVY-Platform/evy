@@ -155,9 +155,12 @@ describe("Marketplace E2E (via API WebSocket)", () => {
 			fk: crypto.randomUUID(),
 			service: marketplaceServiceId,
 			resource: itemsResourceId,
-			archivedAt: null,
-			status: "pending",
-			data: { type: "pickup", time: "2026-06-03T10:00:00" },
+			data: {
+				type: "pickup",
+				value: "pending",
+				time: "2026-06-03T10:00:00",
+			},
+			visibility: "private",
 		};
 
 		const created = await client.call("create", {
@@ -170,8 +173,8 @@ describe("Marketplace E2E (via API WebSocket)", () => {
 		expect(isRecord(created)).toBe(true);
 		expect(created).toMatchObject({
 			id: messageId,
-			status: "pending",
-			visibility: "public",
+			data: { type: "pickup", value: "pending" },
+			visibility: "private",
 		});
 		expect(created.updatedAt).toBeDefined();
 
@@ -181,7 +184,10 @@ describe("Marketplace E2E (via API WebSocket)", () => {
 			filter: { id: messageId },
 		});
 		expect(rows).toHaveLength(1);
-		expect(rows[0]).toMatchObject({ id: messageId, status: "pending" });
+		expect(rows[0]).toMatchObject({
+			id: messageId,
+			data: { type: "pickup", value: "pending" },
+		});
 	});
 
 	it("create marketplace item with transfer_options.pickup.address_id round-trips", async () => {

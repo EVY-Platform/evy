@@ -8,13 +8,8 @@
 import Foundation
 
 private let comparisonOperators = [">=", "<=", "==", "!=", ">", "<"]
-// Matches a props object literal with no quoted values. e.g. {archivedAt: now()}, {name: test}
+// Matches a props object literal with no quoted values. e.g. {value: cancel}, {name: test}
 private let propsPattern = "\\{(?!\")[^}^\"]*(?!\")\\}"
-// Matches a parenthesized arg list allowing one level of nested calls,
-// e.g. update(..., {archivedAt: now()}) — matches (a, b), (x, foo(y))
-private let functionParamsPattern = "\\((?:[^()]|\\([^()]*\\))*\\)"
-// Matches a function call: identifier followed by its params. e.g. now(), update(id, {archivedAt: now()})
-private let functionPattern = "[a-zA-Z_][a-zA-Z0-9_]*\(functionParamsPattern)"
 // Matches a numeric array index accessor. e.g. [0], [123]
 private let arrayPattern = "\\[([\\d]*)\\]"
 let PROP_SEPARATOR = "."
@@ -36,6 +31,26 @@ func evyWithEphemeralDatum<T>(
     ephemeralDatumRegistry.removeValue(forKey: key)
   }
   return try body()
+}
+
+@MainActor
+func evySubstituteDatum(_ text: String, temporaryId: String) -> String {
+  text
+    .replacingOccurrences(of: EVY.datumPrefix, with: "\(temporaryId).")
+    .replacingOccurrences(of: EVY.datumToken, with: temporaryId)
+}
+
+@MainActor
+func evyEvaluate<T>(
+  _ text: String,
+  boundTo datum: EVYJson,
+  _ body: (String) throws -> T
+) rethrows -> T {
+  let temporaryId = UUID().uuidString
+  let substituted = evySubstituteDatum(text, temporaryId: temporaryId)
+  return try evyWithEphemeralDatum(key: temporaryId, value: datum) {
+    try body(substituted)
+  }
 }
 
 @MainActor
@@ -74,7 +89,7 @@ func parseTextFromText(
 @MainActor
 func _parseFunctionCall(_ input: String) -> (functionName: String, functionArgs: String)? {
   let trimmedInput = input.trimmingCharacters(in: .whitespacesAndNewlines)
-  if let (_, functionName, functionArgs) = parseFunctionInText(trimmedInput) {
+  if let (_, functionName, functionArgs) = parseEntireFunctionInText(trimmedInput) {
     return (functionName, functionArgs)
   }
   return nil
@@ -249,11 +264,7 @@ private func findFirstTopLevelPrefix(
 
 @MainActor
 func _parsePropsFromText(_ input: String) -> String {
-  guard let match = try? firstMatch(input, pattern: propsPattern) else {
-    return input
-  }
-
-  return String(match.0.dropFirst().dropLast())
+  parseWrappedProps(input)?.content ?? input
 }
 
 @MainActor
@@ -284,6 +295,9 @@ private func _resolveBindingRoot(
   if let (funcName, funcArgs) = _parseFunctionCall(firstProp) {
     if funcName == "findFirst" {
       return (try evyFindFirst(funcArgs, remainingProps: remainingProps), [])
+    }
+    if funcName == "filter" {
+      return (try evyFilter(funcArgs, remainingProps: remainingProps), [])
     }
     if funcName == "sort" {
       return (try evySort(funcArgs), remainingProps)
@@ -452,16 +466,9 @@ func _displayText(forDatum datum: EVYJson, valueTemplate: String?) throws -> Str
 func _formatData(json: EVYJson, format: String) throws -> String {
   if format.count < 1 { return "" }
 
-  let temporaryId = UUID().uuidString
-  let formatWithNewData =
-    format
-    .replacingOccurrences(of: EVY.datumPrefix, with: "\(temporaryId).")
-    .replacingOccurrences(of: "$datum", with: temporaryId)
-
-  if formatWithNewData.isEmpty { return "" }
-
-  return try evyWithEphemeralDatum(key: temporaryId, value: json) {
-    try _getValueFromText(formatWithNewData).toString()
+  return try evyEvaluate(format, boundTo: json) { substituted in
+    if substituted.isEmpty { return "" }
+    return try _getValueFromText(substituted).toString()
   }
 }
 
@@ -490,7 +497,7 @@ private func parseText(
         return parsedOperand.value
       }
       if let propsValue = try? _getDataFromText("{\(trimmedOperand)}", scope: scope) {
-        return propsValue.toString()
+        return evyComparisonOperandString(propsValue)
       }
       return parsedOperand.value
     }
@@ -515,9 +522,9 @@ private func parseText(
 
   if let (match, funcName, funcArgs) =
     parseFunctionFromText(input.value)
-    ?? parseFunctionInText(input.value)
+    ?? firstFunctionCall(in: input.value.trimmingCharacters(in: .whitespacesAndNewlines))
   {
-    let returnPrefix = match.startIndex == 0
+    let returnPrefix = match.startIndex == input.value.startIndex
     let upperBound = match.range.upperBound.utf16Offset(in: input.value)
     let returnSuffix = upperBound == input.value.count
 
@@ -530,6 +537,8 @@ private func parseText(
       value = evyLength(funcArgs)
     case "if":
       value = try evyIf(funcArgs)
+    case "owns":
+      value = try evyOwns(funcArgs)
     case "now":
       value = evyNow()
     case "formatCurrency":
@@ -565,7 +574,7 @@ private func parseText(
         returnSuffix ? "" : value.suffix ?? "",
       ]
       let parsedInput = input.value.replacingOccurrences(
-        of: match.0.description,
+        of: match.matchedText,
         with: returnValuesToJoin.joined()
       )
       return try parseText(
@@ -576,20 +585,46 @@ private func parseText(
     }
   }
 
-  if let (match, props) = parseProps(input.value) {
-    let data = try _getDataFromProps(props, scope: scope)
+  if let wrappedProps = parseWrappedProps(input.value) {
+    let data = try _getDataFromProps(wrappedProps.content, scope: scope)
+    let resolved = data.toString()
+    if wrappedProps.isEntireInput {
+      return EVYValue(resolved, input.prefix, input.suffix)
+    }
     let parsedInput = input.value.replacingOccurrences(
-      of: match.0.description,
-      with: data.toString())
+      of: wrappedProps.fullMatch,
+      with: resolved)
     return try parseText(EVYValue(parsedInput, input.prefix, input.suffix), editing, scope)
   }
 
   return input
 }
 
-private func parseProps(_ input: String) -> (Regex<AnyRegexOutput>.Match, String)? {
+private struct WrappedProps {
+  let fullMatch: String
+  let content: String
+  let isEntireInput: Bool
+}
+
+private func parseWrappedProps(_ input: String) -> WrappedProps? {
+  let trimmedInput = input.trimmingCharacters(in: .whitespacesAndNewlines)
+  if let block = interpolations(in: trimmedInput).first {
+    let isEntireInput =
+      block.fullMatch.trimmingCharacters(in: .whitespacesAndNewlines) == trimmedInput
+    if isEntireInput {
+      return WrappedProps(fullMatch: block.fullMatch, content: block.inner, isEntireInput: true)
+    }
+  }
+
   if let match = try? firstMatch(input, pattern: propsPattern) {
-    return (match, String(match.0.dropFirst().dropLast()))
+    let fullMatch = match.0.description
+    let isEntireInput =
+      fullMatch.trimmingCharacters(in: .whitespacesAndNewlines) == trimmedInput
+    return WrappedProps(
+      fullMatch: fullMatch,
+      content: String(match.0.dropFirst().dropLast()),
+      isEntireInput: isEntireInput
+    )
   }
   return nil
 }
@@ -597,8 +632,16 @@ private func parseProps(_ input: String) -> (Regex<AnyRegexOutput>.Match, String
 private func parseTextExpressionInterpolation(_ input: String) -> (
   fullMatch: String, inner: String
 )? {
-  interpolations(in: input).first {
-    containsMixedFunctionTextExpression($0.inner.trimmingCharacters(in: .whitespacesAndNewlines))
+  let trimmedInput = input.trimmingCharacters(in: .whitespacesAndNewlines)
+  return interpolations(in: input).first { block in
+    let inner = block.inner.trimmingCharacters(in: .whitespacesAndNewlines)
+    if containsMixedFunctionTextExpression(inner) {
+      return true
+    }
+    // A lone `{count(key)}` is handled by parseProps or parseFunctionFromText.
+    // Only peel off a single-function block when it sits inside surrounding text.
+    return parseEntireFunctionInText(inner) != nil
+      && block.fullMatch.trimmingCharacters(in: .whitespacesAndNewlines) != trimmedInput
   }
 }
 
@@ -606,12 +649,14 @@ private func containsMixedFunctionTextExpression(_ input: String) -> Bool {
   var remaining = input
   var functionCount = 0
 
-  while let function = parseFunctionInText(remaining) {
+  while let function = firstFunctionCall(in: remaining) {
     functionCount += 1
-    remaining = advancePastFunction(function.match, in: remaining)
+    let between = remaining[..<function.match.range.lowerBound]
+    if functionCount > 1, containsTopLevelLiteralText(between) {
+      return true
+    }
+    remaining = String(remaining[function.match.range.upperBound...])
   }
-
-  if functionCount > 1 { return true }
 
   // A single function with a prop continuation, like `findFirst(<resource>, id).value`,
   // is still a prop expression. Anything else around the function is literal text.
@@ -620,13 +665,15 @@ private func containsMixedFunctionTextExpression(_ input: String) -> Bool {
     && !isPropContinuation(trimmedRemainder)
 }
 
-private func advancePastFunction(_ match: Regex<AnyRegexOutput>.Match, in string: String) -> String
-{
-  string.replacingOccurrences(
-    of: match.0.description,
-    with: "",
-    range: string.startIndex..<match.range.upperBound
-  )
+private func containsTopLevelLiteralText(_ segment: Substring) -> Bool {
+  var state = ParserScanState()
+  for character in segment {
+    state.scan(character)
+    if !state.isInString && state.isTopLevel && character.isLetter {
+      return true
+    }
+  }
+  return false
 }
 
 private func isPropContinuation(_ input: String) -> Bool {
@@ -801,49 +848,146 @@ private func isWrappedInParentheses(_ input: String) -> Bool {
   return false
 }
 
-private func parseFunctionFromText(_ input: String) -> (
-  match: Regex<AnyRegexOutput>.Match,
-  functionName: String,
-  functionArgs: String
-)? {
-  guard let match = try? firstMatch(input, pattern: "\\{\(functionPattern)\\}") else {
-    return nil
-  }
+private struct FunctionCallMatch {
+  let range: Range<String.Index>
+  let matchedText: String
 
-  guard let (_, functionName, functionArgs) = parseFunctionInText(input) else {
-    return nil
-  }
-
-  return (match, functionName, functionArgs)
+  var startIndex: String.Index { range.lowerBound }
 }
 
-private func parseFunctionInText(_ input: String) -> (
-  match: Regex<AnyRegexOutput>.Match,
+private func scanIdentifierEnd(in input: String, from start: String.Index) -> String.Index? {
+  guard start < input.endIndex else { return nil }
+  let first = input[start]
+  guard first.isLetter || first == "_" else { return nil }
+
+  var end = input.index(after: start)
+  while end < input.endIndex {
+    let character = input[end]
+    guard character.isLetter || character.isNumber || character == "_" else { break }
+    end = input.index(after: end)
+  }
+  return end
+}
+
+private func isIdentifierStartBoundary(in input: String, at start: String.Index) -> Bool {
+  guard start > input.startIndex else { return true }
+  let previous = input[input.index(before: start)]
+  return !(previous.isLetter || previous.isNumber || previous == "_")
+}
+
+private func scanClosingParenthesis(in input: String, openingAt openIndex: String.Index)
+  -> String.Index?
+{
+  guard input[openIndex] == "(" else { return nil }
+
+  var state = ParserScanState()
+  state.scan("(")
+
+  for index in input[input.index(after: openIndex)...].indices {
+    let character = input[index]
+    state.scan(character)
+    if !state.isInString && state.parenDepth == 0 {
+      return index
+    }
+  }
+
+  return nil
+}
+
+private func scanFunctionCall(
+  in input: String,
+  from start: String.Index
+) -> (match: FunctionCallMatch, functionName: String, functionArgs: String)? {
+  var index = start
+  while index < input.endIndex, input[index].isWhitespace {
+    index = input.index(after: index)
+  }
+
+  guard let nameEnd = scanIdentifierEnd(in: input, from: index) else { return nil }
+  let functionName = String(input[index..<nameEnd])
+  index = nameEnd
+  while index < input.endIndex, input[index].isWhitespace {
+    index = input.index(after: index)
+  }
+
+  guard index < input.endIndex, input[index] == "(" else { return nil }
+  guard let closeIndex = scanClosingParenthesis(in: input, openingAt: index) else { return nil }
+
+  let argsStart = input.index(after: index)
+  let functionArgs = String(input[argsStart..<closeIndex])
+  let fullEnd = input.index(after: closeIndex)
+  return (
+    FunctionCallMatch(
+      range: start..<fullEnd,
+      matchedText: String(input[start..<fullEnd])
+    ),
+    functionName,
+    functionArgs
+  )
+}
+
+private func parseEntireFunctionInText(_ input: String) -> (
+  match: FunctionCallMatch,
   functionName: String,
   functionArgs: String
 )? {
-  guard let match = try? firstMatch(input, pattern: functionPattern) else {
-    return nil
-  }
-
-  // Remove opening { from match
-  let functionCall = match.0.description
-  guard
-    let argsAndParenthesisMatch = try? firstMatch(
-      functionCall,
-      pattern: functionParamsPattern)
+  let trimmedInput = input.trimmingCharacters(in: .whitespacesAndNewlines)
+  guard let found = firstFunctionCall(in: trimmedInput) else { return nil }
+  guard found.match.range.lowerBound == trimmedInput.startIndex,
+    found.match.range.upperBound == trimmedInput.endIndex
   else {
     return nil
   }
+  return found
+}
 
-  let parenthesisStartIndex = argsAndParenthesisMatch.range.lowerBound
-  let functionNameEndIndex = functionCall.index(before: parenthesisStartIndex)
-  let functionName = functionCall[functionCall.startIndex...functionNameEndIndex]
+private func firstFunctionCall(in input: String) -> (
+  match: FunctionCallMatch, functionName: String, functionArgs: String
+)? {
+  var searchIndex = input.startIndex
+  while searchIndex < input.endIndex {
+    if isIdentifierStartBoundary(in: input, at: searchIndex),
+      let nameEnd = scanIdentifierEnd(in: input, from: searchIndex)
+    {
+      var afterName = nameEnd
+      while afterName < input.endIndex, input[afterName].isWhitespace {
+        afterName = input.index(after: afterName)
+      }
+      if afterName < input.endIndex, input[afterName] == "(",
+        let scanned = scanFunctionCall(in: input, from: searchIndex)
+      {
+        return scanned
+      }
+    }
+    searchIndex = input.index(after: searchIndex)
+  }
+  return nil
+}
 
-  let argsAndParenthesis = argsAndParenthesisMatch.0.description
-  let functionArgs = argsAndParenthesis.dropFirst().dropLast()
-
-  return (match, String(functionName), String(functionArgs))
+private func parseFunctionFromText(_ input: String) -> (
+  match: FunctionCallMatch,
+  functionName: String,
+  functionArgs: String
+)? {
+  let trimmedInput = input.trimmingCharacters(in: .whitespacesAndNewlines)
+  guard trimmedInput.first == "{", trimmedInput.last == "}" else { return nil }
+  let innerStart = trimmedInput.index(after: trimmedInput.startIndex)
+  let innerEnd = trimmedInput.index(before: trimmedInput.endIndex)
+  guard innerStart < innerEnd else { return nil }
+  guard
+    let scanned = scanFunctionCall(in: trimmedInput, from: innerStart),
+    scanned.match.range.upperBound == innerEnd
+  else {
+    return nil
+  }
+  return (
+    FunctionCallMatch(
+      range: trimmedInput.startIndex..<trimmedInput.endIndex,
+      matchedText: trimmedInput
+    ),
+    scanned.functionName,
+    scanned.functionArgs
+  )
 }
 
 /// Compiled patterns, shared across every caller.
@@ -984,12 +1128,12 @@ private func appendWatchTargetsFromFunctions(in text: String, to paths: inout [S
   var remaining = text
   var foundFunction = false
 
-  while let functionCall = parseFunctionInText(remaining) {
+  while let functionCall = firstFunctionCall(in: remaining) {
     foundFunction = true
     for argument in _splitFunctionArguments(functionCall.functionArgs) {
       appendWatchTargets(fromExpression: argument, to: &paths)
     }
-    remaining = advancePastFunction(functionCall.match, in: remaining)
+    remaining = String(remaining[functionCall.match.range.upperBound...])
   }
 
   return foundFunction

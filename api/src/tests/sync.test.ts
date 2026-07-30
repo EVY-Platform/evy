@@ -2,6 +2,8 @@ import { afterEach, beforeEach, describe, expect, it, spyOn } from "bun:test";
 import type { GetRequest, GetResponse } from "evy-types";
 import {
 	EVY_CORE_RESOURCE,
+	EVY_CORE_RESOURCE_NAMES,
+	EVY_CORE_RESOURCE_VISIBILITY,
 	EVY_CORE_RESOURCES,
 	EVY_CORE_SERVICE,
 } from "evy-types/coreResources";
@@ -63,7 +65,23 @@ let forwardGetImpl = async (
 		},
 	]);
 
+type SyncScope = Parameters<typeof data.getSyncRows>[2];
+
+function mockRowFor(resource: string) {
+	return {
+		id: `${resource}-mock-1`,
+		visibility:
+			EVY_CORE_RESOURCE_VISIBILITY[resource] ?? ("public" as const),
+	};
+}
+
+let getSyncRowsImpl = async (
+	resource: string,
+	_scope: SyncScope,
+): Promise<GetResponse> => [mockRowFor(resource)];
+
 function resetSyncMocks(): void {
+	getSyncRowsImpl = async (resource) => [mockRowFor(resource)];
 	getImpl = async (params) =>
 		buildMockGetResponse([
 			{
@@ -85,6 +103,7 @@ function resetSyncMocks(): void {
 
 describe("sync", () => {
 	let getSpy: ReturnType<typeof spyOn>;
+	let getSyncRowsSpy: ReturnType<typeof spyOn>;
 	let discoverResourcesSpy: ReturnType<typeof spyOn>;
 	let forwardGetSpy: ReturnType<typeof spyOn>;
 
@@ -92,6 +111,9 @@ describe("sync", () => {
 		resetSyncMocks();
 		getSpy = spyOn(data, "get").mockImplementation((_db, params) =>
 			getImpl(params),
+		);
+		getSyncRowsSpy = spyOn(data, "getSyncRows").mockImplementation(
+			(_db, resource, scope) => getSyncRowsImpl(resource, scope),
 		);
 		discoverResourcesSpy = spyOn(
 			resources,
@@ -104,6 +126,7 @@ describe("sync", () => {
 
 	afterEach(() => {
 		getSpy.mockRestore();
+		getSyncRowsSpy.mockRestore();
 		discoverResourcesSpy.mockRestore();
 		forwardGetSpy.mockRestore();
 	});
@@ -132,8 +155,8 @@ describe("sync", () => {
 		expect(evyResourceNames).toContain("providers");
 		expect(evyResourceNames).toContain("files");
 		expect(evyResourceNames).toContain("addresses");
-		expect(evyResourceNames).toContain("messages");
 		expect(evyResourceNames).toContain("formatters");
+		expect(evyResourceNames).toContain("messages");
 		expect(evyResourceNames).not.toContain("devices");
 		expect(evyResourceNames).toContain(EVY_CORE_RESOURCE.RESOURCES);
 
@@ -174,10 +197,10 @@ describe("sync", () => {
 		expect(rowResources).not.toContain("messages");
 	});
 
-	it("passes updatedAfter to getCore", async () => {
-		getImpl = async (params) => {
-			expect(params.filter?.updatedAfter).toBe(EPOCH);
-			return buildMockGetResponse([{ id: `${params.resource}-1` }]);
+	it("passes updatedAfter to the core read", async () => {
+		getSyncRowsImpl = async (resource, scope) => {
+			expect(scope.updatedAfter).toBe(EPOCH);
+			return buildMockGetResponse([{ id: `${resource}-1` }]);
 		};
 		await sync({ cursor: EPOCH }, db);
 	});
@@ -191,7 +214,7 @@ describe("sync", () => {
 	});
 
 	it("returns only the catalog when no resource data changed", async () => {
-		getImpl = async () => buildMockGetResponse([]);
+		getSyncRowsImpl = async () => buildMockGetResponse([]);
 		forwardGetImpl = async () => buildMockGetResponse([]);
 		const result = await sync({ cursor: "2999-01-01T00:00:00.000Z" }, db);
 		expect(result.data).toEqual([
@@ -220,7 +243,7 @@ describe("sync", () => {
 	});
 
 	it("still returns core rows when an external service is down", async () => {
-		getImpl = async () =>
+		getSyncRowsImpl = async () =>
 			[
 				{ id: "core-1", updatedAt: "2026-01-01T00:00:00.000Z" },
 			] as unknown as GetResponse;
@@ -235,7 +258,7 @@ describe("sync", () => {
 	});
 
 	it("holds the cursor when any resource failed", async () => {
-		getImpl = async () =>
+		getSyncRowsImpl = async () =>
 			[
 				{ id: "core-1", updatedAt: "2099-01-01T00:00:00.000Z" },
 			] as unknown as GetResponse;
@@ -273,7 +296,7 @@ describe("sync", () => {
 	});
 
 	it("omits errors entirely when everything succeeded", async () => {
-		getImpl = async () => buildMockGetResponse([]);
+		getSyncRowsImpl = async () => buildMockGetResponse([]);
 		forwardGetImpl = async () => buildMockGetResponse([]);
 
 		const result = await sync({ cursor: EPOCH }, db);
@@ -282,9 +305,8 @@ describe("sync", () => {
 	});
 
 	it("keeps a failing core resource from hiding the others", async () => {
-		getImpl = async (params) => {
-			if (params.resource === "rows")
-				throw new Error("rows table broken");
+		getSyncRowsImpl = async (resource) => {
+			if (resource === "rows") throw new Error("rows table broken");
 			return [
 				{ id: "ok", updatedAt: "2026-01-01T00:00:00.000Z" },
 			] as unknown as GetResponse;
@@ -312,19 +334,139 @@ describe("sync", () => {
 				continue;
 			}
 			expect(row.value).toHaveLength(1);
-			expect(row.value).toEqual([
-				{
-					id: `${row.resource}-mock-1`,
-					visibility:
-						row.resource === "addresses" ? "private" : "public",
-				},
-			]);
+			expect(row.value).toEqual([mockRowFor(row.resource)]);
 		}
+	});
+
+	it("reads every resource the sync loop asks for", async () => {
+		const attempted: string[] = [];
+		getSyncRowsImpl = async (resource) => {
+			attempted.push(resource);
+			return [mockRowFor(resource)];
+		};
+
+		const result = await sync({ cursor: EPOCH }, db);
+
+		const expected = EVY_CORE_RESOURCE_NAMES.filter(
+			(name) =>
+				name !== EVY_CORE_RESOURCE.DEVICES &&
+				name !== EVY_CORE_RESOURCE.RESOURCES,
+		);
+		expect(attempted.toSorted()).toEqual([...expected].toSorted());
+		expect(result.errors).toBeUndefined();
+	});
+
+	describe("ownership-scoped rows", () => {
+		const OWNED_MESSAGE_ID = "0f5f1a1e-6a1e-4f6e-9c1a-2b3c4d5e6f70";
+		const OWNED_ITEM_ID = "1a2b3c4d-5e6f-4a8b-9c0d-1e2f3a4b5c6d";
+		const OWNED_ADDRESS_ID = "2b3c4d5e-6f70-4a1b-8c2d-3e4f5a6b7c8d";
+
+		function ownershipFor(resource: string) {
+			const call = getSyncRowsSpy.mock.calls.find(
+				(entry) => entry[1] === resource,
+			);
+			return call?.[2] as SyncScope | undefined;
+		}
+
+		it("reads every core resource through the ownership-scoped path", async () => {
+			await sync({ cursor: EPOCH }, db);
+
+			for (const resource of [
+				EVY_CORE_RESOURCE.FLOWS,
+				EVY_CORE_RESOURCE.ADDRESSES,
+				EVY_CORE_RESOURCE.MESSAGES,
+				EVY_CORE_RESOURCE.FORMATTERS,
+			]) {
+				expect(ownershipFor(resource)).toBeDefined();
+			}
+			expect(getSpy).not.toHaveBeenCalled();
+		});
+
+		it("passes the resumed-from point to every resource", async () => {
+			await sync({ cursor: RECENT_CURSOR }, db);
+
+			expect(ownershipFor(EVY_CORE_RESOURCE.FLOWS)?.updatedAfter).toBe(
+				RECENT_CURSOR,
+			);
+		});
+
+		it("gives each resource the same full ownership declaration", async () => {
+			const ownedServiceResources = [
+				{
+					service: EVY_CORE_SERVICE,
+					resource: EVY_CORE_RESOURCE.MESSAGES,
+					ids: [OWNED_MESSAGE_ID],
+				},
+				{
+					service: EVY_CORE_SERVICE,
+					resource: EVY_CORE_RESOURCE.ADDRESSES,
+					ids: [OWNED_ADDRESS_ID],
+				},
+			];
+
+			await sync(
+				{
+					cursor: EPOCH,
+					ownedServiceResources,
+				},
+				db,
+			);
+
+			for (const resource of [
+				EVY_CORE_RESOURCE.MESSAGES,
+				EVY_CORE_RESOURCE.ADDRESSES,
+				EVY_CORE_RESOURCE.FLOWS,
+			]) {
+				expect(ownershipFor(resource)?.owned).toEqual(
+					ownedServiceResources,
+				);
+			}
+		});
+
+		it("passes the full ownership declaration to every resource", async () => {
+			const externalGroup = {
+				service: EXTERNAL_SERVICE_ID,
+				resource: EXTERNAL_TEST_RESOURCE.RECORDS,
+				ids: [OWNED_ITEM_ID],
+			};
+
+			await sync(
+				{ cursor: EPOCH, ownedServiceResources: [externalGroup] },
+				db,
+			);
+
+			expect(ownershipFor(EVY_CORE_RESOURCE.MESSAGES)?.owned).toEqual([
+				externalGroup,
+			]);
+		});
+
+		it("keeps a failing resource from hiding the rest, and holds the cursor", async () => {
+			getSyncRowsImpl = async (resource) => {
+				if (resource === EVY_CORE_RESOURCE.ADDRESSES) {
+					throw new Error("addresses table broken");
+				}
+				return [mockRowFor(resource)];
+			};
+
+			const result = await sync({ cursor: RECENT_CURSOR }, db);
+
+			expect(result.errors).toContainEqual({
+				service: EVY_CORE_SERVICE,
+				resource: EVY_CORE_RESOURCE.ADDRESSES,
+				message: "addresses table broken",
+			});
+			expect(
+				result.data.some(
+					(row) => row.resource === EVY_CORE_RESOURCE.FLOWS,
+				),
+			).toBe(true);
+			expect(result.cursor).toBe(RECENT_CURSOR);
+		});
 	});
 
 	describe("cursor", () => {
 		it("issues a cursor derived from the newest updatedAt it returned", async () => {
-			getImpl = async () =>
+			getSyncRowsImpl = async () =>
 				[
 					{ id: "a", updatedAt: "2026-01-01T00:00:00.000Z" },
 					{ id: "b", updatedAt: "2026-03-01T00:00:00.000Z" },
@@ -338,7 +480,7 @@ describe("sync", () => {
 		});
 
 		it("holds the cursor steady when nothing changed", async () => {
-			getImpl = async () => buildMockGetResponse([]);
+			getSyncRowsImpl = async () => buildMockGetResponse([]);
 			forwardGetImpl = async () => buildMockGetResponse([]);
 
 			const result = await sync({ cursor: RECENT_CURSOR }, db);
@@ -348,8 +490,8 @@ describe("sync", () => {
 
 		it("treats a missing cursor as a full sync", async () => {
 			const seen: string[] = [];
-			getImpl = async (params) => {
-				seen.push(params.filter?.updatedAfter ?? "none");
+			getSyncRowsImpl = async (_resource, scope) => {
+				seen.push(scope.updatedAfter ?? "none");
 				return buildMockGetResponse([]);
 			};
 			forwardGetImpl = async () => buildMockGetResponse([]);

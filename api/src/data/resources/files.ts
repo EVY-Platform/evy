@@ -24,7 +24,7 @@ import {
 	getUploadSession,
 	uploadSessionToBuffer,
 } from "../../shared/uploadSessions";
-import { omitNulls } from "./coreResource";
+import { omitNulls, runListForSync, type SyncScope } from "./coreResource";
 import {
 	deleteFileBinaryIfExists,
 	readFileBinary,
@@ -40,12 +40,6 @@ type PreparedFileUpload = {
 
 // Resource operations
 
-/**
- * Binaries are returned only when a single file is addressed by id. Collection
- * reads - notably every `sync` - return metadata alone, so a sync payload does
- * not carry every changed file's bytes and a binary missing from disk cannot
- * fail the whole sync. Clients fetch content lazily by id.
- */
 export async function listFileRows(
 	db: EvyDb,
 	filter: GetRequest["filter"] | undefined,
@@ -57,7 +51,6 @@ export async function listFileRows(
 		whereClauses.push(eq(file.id, filter.id));
 	}
 	if (filter?.updatedAfter) {
-		// Incremental reads carry tombstones so clients can drop deleted files.
 		whereClauses.push(gt(file.updatedAt, filter.updatedAfter));
 	} else {
 		whereClauses.push(isNull(file.deletedAt));
@@ -72,6 +65,13 @@ export async function listFileRows(
 		: rows.map(omitNulls);
 
 	return validateGetResponse(response);
+}
+
+export async function listFilesForSync(
+	db: EvyDb,
+	scope: SyncScope,
+): Promise<GetResponse> {
+	return runListForSync(db, file, scope, omitNulls);
 }
 
 export async function createFileResource(
@@ -140,7 +140,7 @@ async function insertFileMetadata(
 			type: validated.type,
 			createdAt: nowIso,
 			updatedAt: nowIso,
-			visibility: validated.visibility ?? "public",
+			visibility: validated.visibility,
 		})
 		.returning()
 		.catch((err: unknown) => {
@@ -187,11 +187,7 @@ async function createFileFromUpload(params: {
 		typeof params.dataPayload === "object" && params.dataPayload !== null
 			? (params.dataPayload as Record<string, unknown>)
 			: {};
-	const validated = validateFilePayload({
-		...record,
-		visibility:
-			(record.visibility as "public" | "private" | undefined) ?? "public",
-	});
+	const validated = validateFilePayload(record);
 	const fileId = params.filter?.id ?? validated.id;
 	const uploadSession = getUploadSession(fileId);
 
@@ -213,7 +209,7 @@ async function createFileFromUpload(params: {
 			type: validated.type,
 			createdAt: params.nowIso,
 			updatedAt: params.nowIso,
-			visibility: validated.visibility ?? "public",
+			visibility: validated.visibility,
 		},
 	};
 }

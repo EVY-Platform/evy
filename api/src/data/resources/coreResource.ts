@@ -1,4 +1,4 @@
-import { and, asc, eq, gt, isNull } from "drizzle-orm";
+import { and, asc, eq, gt, inArray, isNull, or, type SQL } from "drizzle-orm";
 import type { AnyPgColumn, AnyPgTable } from "drizzle-orm/pg-core";
 import type {
 	CreateRequest,
@@ -10,7 +10,9 @@ import type {
 	UpdateRequest,
 	UpdateResponse,
 } from "evy-types";
+import { EVY_CORE_SERVICE } from "evy-types/coreResources";
 import { hasDatabaseErrorCode, PG_UNIQUE_VIOLATION } from "evy-types/dbErrors";
+import type { SyncRequest } from "evy-types/rpc/sync.request";
 import {
 	validateCreateResponse,
 	validateDeleteResponse,
@@ -24,12 +26,129 @@ type ResourceTable = AnyPgTable & {
 	id: AnyPgColumn;
 	updatedAt: AnyPgColumn;
 	deletedAt: AnyPgColumn;
+	visibility?: AnyPgColumn;
 };
+
+type AddressableResourceTable = ResourceTable & {
+	fk: AnyPgColumn;
+	service: AnyPgColumn;
+	resource: AnyPgColumn;
+};
+
+export type OwnedServiceResource = NonNullable<
+	SyncRequest["ownedServiceResources"]
+>[number];
+
+export type SyncScope = {
+	updatedAfter?: string;
+	resource: string;
+	owned: OwnedServiceResource[];
+};
+
+export type SyncScopeInput = Omit<SyncScope, "resource">;
+
+const UUID_PATTERN =
+	/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+function isAddressableTable(
+	table: ResourceTable,
+): table is AddressableResourceTable {
+	return "fk" in table && "service" in table && "resource" in table;
+}
+
+export function ownedIdsOf(scope: SyncScope): string[] {
+	const ids: string[] = [];
+	for (const group of scope.owned) {
+		if (
+			group.service === EVY_CORE_SERVICE &&
+			group.resource === scope.resource
+		) {
+			ids.push(...group.ids);
+		}
+	}
+	return ids;
+}
+
+function syncEntitlementClause(
+	table: ResourceTable,
+	ownedIds: string[],
+): SQL | undefined {
+	if (!table.visibility) return undefined;
+	const publicRows = eq(table.visibility, "public");
+	if (ownedIds.length === 0) return publicRows;
+	return or(publicRows, inArray(table.id, ownedIds));
+}
+
+function syncTimeClause(
+	table: ResourceTable,
+	updatedAfter: string | undefined,
+): SQL | undefined {
+	return updatedAfter
+		? gt(table.updatedAt, updatedAfter)
+		: isNull(table.deletedAt);
+}
+
+function addressedRecordClause(
+	table: AddressableResourceTable,
+	owned: OwnedServiceResource[],
+): SQL | undefined {
+	const clauses: SQL[] = [];
+
+	for (const group of owned) {
+		if (group.ids.length === 0) continue;
+		if (
+			!UUID_PATTERN.test(group.service) ||
+			!UUID_PATTERN.test(group.resource)
+		) {
+			continue;
+		}
+		clauses.push(
+			and(
+				eq(table.service, group.service),
+				eq(table.resource, group.resource),
+				inArray(table.fk, group.ids),
+			) as SQL,
+		);
+	}
+
+	if (clauses.length === 0) return undefined;
+	return or(...clauses);
+}
 
 export function omitNulls<T extends Record<string, unknown>>(row: T): T {
 	return Object.fromEntries(
 		Object.entries(row).filter(([, value]) => value !== null),
 	) as T;
+}
+
+export async function runListForSync<T>(
+	db: EvyDb,
+	table: ResourceTable,
+	scope: SyncScope,
+	norm: (raw: unknown) => T,
+	extraEntitlements: SQL[] = [],
+): Promise<GetResponse> {
+	const ownedIds = ownedIdsOf(scope);
+	const entitlement = [
+		syncEntitlementClause(table, ownedIds),
+		isAddressableTable(table)
+			? addressedRecordClause(table, scope.owned)
+			: undefined,
+		...extraEntitlements,
+	].filter((clause): clause is SQL => clause !== undefined);
+
+	const clauses = [
+		syncTimeClause(table, scope.updatedAfter),
+		or(...entitlement),
+	].filter((clause): clause is SQL => clause !== undefined);
+
+	const rows = await db
+		.select()
+		.from(table)
+		.where(clauses.length > 0 ? and(...clauses) : undefined)
+		.orderBy(asc(table.updatedAt), asc(table.id));
+
+	return validateGetResponse(rows.map(norm));
 }
 
 export function makeCoreResource<
@@ -43,16 +162,10 @@ export function makeCoreResource<
 	validate: (raw: unknown) => T;
 	toUpdateSet: (validated: T, nowIso: string) => Record<string, unknown>;
 	normalize?: (raw: unknown) => T;
-	/** Default for the payload's `visibility`; `false` for tables without the column. */
-	visibility?: "public" | "private" | false;
+	extraSyncEntitlements?: (scope: SyncScope) => (SQL | undefined)[];
 }) {
-	const {
-		table,
-		validate,
-		toUpdateSet,
-		normalize,
-		visibility = "public",
-	} = config;
+	const { table, validate, toUpdateSet, normalize, extraSyncEntitlements } =
+		config;
 	// Nullable columns come back from Drizzle as null, which the schemas do not
 	// allow for optional fields, so stripping nulls is the default rather than
 	// something each resource has to remember when a nullable column is added.
@@ -76,9 +189,7 @@ export function makeCoreResource<
 			createdAt: createdAtOverride ?? record.createdAt ?? nowIso,
 			updatedAt: nowIso,
 		};
-		if (visibility !== false) {
-			payload.visibility = record.visibility ?? visibility;
-		}
+		// visibility comes from the client, never the API
 		return validate(payload);
 	}
 
@@ -90,8 +201,6 @@ export function makeCoreResource<
 		const whereClauses: ReturnType<typeof eq>[] = [];
 		if (filter?.id) whereClauses.push(eq(table.id, filter.id));
 		if (filter?.updatedAfter) {
-			// An incremental read must carry tombstones, otherwise a client can
-			// never learn that a record it holds was deleted.
 			whereClauses.push(gt(table.updatedAt, filter.updatedAfter));
 		} else {
 			whereClauses.push(isNull(table.deletedAt));
@@ -101,6 +210,17 @@ export function makeCoreResource<
 			: base;
 		const rows = await query.orderBy(asc(table.updatedAt), asc(table.id));
 		return validateGetResponse(rows.map(norm));
+	}
+
+	async function listForSync(
+		db: EvyDb,
+		scope: SyncScope,
+	): Promise<GetResponse> {
+		const extra =
+			extraSyncEntitlements?.(scope).filter(
+				(clause): clause is SQL => clause !== undefined,
+			) ?? [];
+		return runListForSync(db, table, scope, norm, extra);
 	}
 
 	async function create(
@@ -165,12 +285,6 @@ export function makeCoreResource<
 		return response;
 	}
 
-	/**
-	 * Soft delete. The row is kept as a tombstone so incremental syncs can tell
-	 * clients it is gone; plain reads exclude it. Tombstones are kept
-	 * permanently, so a client can resume from any cursor and still learn about
-	 * every delete.
-	 */
 	async function remove(
 		db: EvyDb,
 		filter: DeleteRequest["filter"],
@@ -197,5 +311,5 @@ export function makeCoreResource<
 		return response;
 	}
 
-	return { list, create, update, remove };
+	return { list, listForSync, create, update, remove };
 }

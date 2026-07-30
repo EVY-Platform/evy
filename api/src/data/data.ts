@@ -17,12 +17,13 @@ import {
 	type DataChangedOperation,
 } from "evy-types/ws";
 import type { EvyDb } from "../database/db";
-
 import { addressesResource } from "./resources/addresses";
+import type { SyncScope, SyncScopeInput } from "./resources/coreResource";
 import {
 	createFileResource,
 	deleteFileResource,
 	listFileRows,
+	listFilesForSync,
 } from "./resources/files";
 import { flowsResource } from "./resources/flows";
 import { formattersResource } from "./resources/formatters";
@@ -40,6 +41,7 @@ type CoreResourceOps = {
 		db: EvyDb,
 		filter: GetRequest["filter"] | undefined,
 	) => Promise<GetResponse>;
+	listForSync: (db: EvyDb, scope: SyncScope) => Promise<GetResponse>;
 	create?: (
 		db: EvyDb,
 		filter: CreateRequest["filter"] | undefined,
@@ -73,21 +75,25 @@ const CORE_RESOURCE_REGISTRY: Record<string, CoreResourceOps> = {
 	[EVY_CORE_RESOURCE.MESSAGES]: messagesResource,
 	[EVY_CORE_RESOURCE.SERVICES]: {
 		list: servicesResource.list,
+		listForSync: servicesResource.listForSync,
 		create: servicesResource.create,
 		update: servicesResource.update,
 	},
 	[EVY_CORE_RESOURCE.ORGANISATIONS]: {
 		list: organisationsResource.list,
+		listForSync: organisationsResource.listForSync,
 		create: organisationsResource.create,
 		update: organisationsResource.update,
 	},
 	[EVY_CORE_RESOURCE.PROVIDERS]: {
 		list: providersResource.list,
+		listForSync: providersResource.listForSync,
 		create: providersResource.create,
 		update: providersResource.update,
 	},
 	[EVY_CORE_RESOURCE.FILES]: {
 		list: listFileRows,
+		listForSync: listFilesForSync,
 		create: createFileResource,
 		remove: deleteFileResource,
 	},
@@ -104,6 +110,14 @@ export { validateAuth } from "./resources/devices";
 export async function get(db: EvyDb, params: GetRequest): Promise<GetResponse> {
 	assertEvyCoreAccess(params);
 	return getCoreBody(db, params);
+}
+
+export async function getSyncRows(
+	db: EvyDb,
+	resource: string,
+	scope: SyncScopeInput,
+): Promise<GetResponse> {
+	return getResourceOps(resource).listForSync(db, { ...scope, resource });
 }
 
 type ExternalServiceRow = {

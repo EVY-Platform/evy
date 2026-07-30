@@ -76,8 +76,7 @@
 					"type": "string"
 				},
 				"visibility": {
-					"$ref": "#/$defs/Visibility",
-					"default": "private"
+					"$ref": "#/$defs/Visibility"
 				},
 				"createdAt": {
 					"type": "string",
@@ -153,7 +152,6 @@
 				"resource",
 				"createdAt",
 				"updatedAt",
-				"status",
 				"data",
 				"visibility"
 			],
@@ -174,10 +172,6 @@
 					"type": "string",
 					"format": "uuid"
 				},
-				"archivedAt": {
-					"type": ["string", "null"],
-					"format": "date-time"
-				},
 				"createdAt": {
 					"type": "string",
 					"format": "date-time"
@@ -191,19 +185,19 @@
 					"type": "string",
 					"format": "date-time"
 				},
-				"status": {
-					"type": "string",
-					"enum": ["pending", "accepted"]
-				},
 				"data": {
 					"type": "object",
 					"additionalProperties": {
 						"$ref": "../common/json.schema.json#/$defs/JSONValue"
 					}
 				},
+				"parentMessageId": {
+					"type": "string",
+					"format": "uuid",
+					"description": "The id of the message this one answers. Absent on a request; present on accept/reject/cancel. Forms a linked list with the request."
+				},
 				"visibility": {
-					"$ref": "#/$defs/Visibility",
-					"default": "public"
+					"$ref": "#/$defs/Visibility"
 				}
 			}
 		},
@@ -238,8 +232,7 @@
 					"$ref": "#/$defs/DATA_EVY_FlowSubmits"
 				},
 				"visibility": {
-					"$ref": "#/$defs/Visibility",
-					"default": "public"
+					"$ref": "#/$defs/Visibility"
 				},
 				"createdAt": {
 					"type": "string",
@@ -289,8 +282,7 @@
 					"$ref": "#/$defs/OS"
 				},
 				"visibility": {
-					"$ref": "#/$defs/Visibility",
-					"default": "public"
+					"$ref": "#/$defs/Visibility"
 				},
 				"createdAt": {
 					"type": "string",
@@ -336,8 +328,7 @@
 					"type": "integer"
 				},
 				"visibility": {
-					"$ref": "#/$defs/Visibility",
-					"default": "public"
+					"$ref": "#/$defs/Visibility"
 				},
 				"createdAt": {
 					"type": "string",
@@ -393,8 +384,7 @@
 					"maxLength": 50
 				},
 				"visibility": {
-					"$ref": "#/$defs/Visibility",
-					"default": "public"
+					"$ref": "#/$defs/Visibility"
 				},
 				"createdAt": {
 					"type": "string",
@@ -456,8 +446,7 @@
 					"maxLength": 50
 				},
 				"visibility": {
-					"$ref": "#/$defs/Visibility",
-					"default": "public"
+					"$ref": "#/$defs/Visibility"
 				},
 				"createdAt": {
 					"type": "string",
@@ -492,8 +481,7 @@
 					"minLength": 1
 				},
 				"visibility": {
-					"$ref": "#/$defs/Visibility",
-					"default": "public"
+					"$ref": "#/$defs/Visibility"
 				},
 				"createdAt": {
 					"type": "string",
@@ -545,8 +533,7 @@
 					"format": "uuid"
 				},
 				"visibility": {
-					"$ref": "#/$defs/Visibility",
-					"default": "public"
+					"$ref": "#/$defs/Visibility"
 				},
 				"createdAt": {
 					"type": "string",
@@ -645,8 +632,7 @@
 					"$ref": "#/$defs/DATA_EVY_RowData"
 				},
 				"visibility": {
-					"$ref": "#/$defs/Visibility",
-					"default": "public"
+					"$ref": "#/$defs/Visibility"
 				},
 				"createdAt": {
 					"type": "string",

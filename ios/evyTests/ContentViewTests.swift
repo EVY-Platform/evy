@@ -662,13 +662,20 @@ final class ContentViewTests: XCTestCase {
 
   // MARK: - Sync state tests
 
-  func testSyncStateKeepsCursorAfterMarkSynced() {
+  /// The cursor is only valid for the entitlements it was issued under, so both are
+  /// stored together.
+  func testSyncStateKeepsCursorAndDeclaredOwnershipAfterMarkSynced() {
     EVYSyncState.reset()
     defer { EVYSyncState.reset() }
 
-    EVYSyncState.markSynced(cursor: "2026-05-05T00:00:00.000Z")
+    XCTAssertNil(EVYSyncState.cursor)
+    XCTAssertNil(EVYSyncState.declaredOwnership)
+
+    EVYSyncState.markSynced(
+      cursor: "2026-05-05T00:00:00.000Z", declaredOwnership: "svc/res:id")
 
     XCTAssertEqual(EVYSyncState.cursor, "2026-05-05T00:00:00.000Z")
+    XCTAssertEqual(EVYSyncState.declaredOwnership, "svc/res:id")
   }
 
   // MARK: - Row payload decoding tests (in-memory UI_Row path)

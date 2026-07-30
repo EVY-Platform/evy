@@ -9,15 +9,21 @@ enum EVYTestMessageFixtures {
   static func message(
     id: String,
     fk: String? = nil,
-    status: String? = nil,
-    archivedAt: EVYJson? = nil,
+    service: String? = nil,
+    resource: String? = nil,
+    createdAt: String? = nil,
     type: String? = nil,
+    value: String? = nil,
+    parentMessageId: String? = nil,
     time: String? = nil,
     postalcode: String? = nil
   ) -> EVYJson {
     var data: [String: EVYJson] = [:]
     if let type {
       data["type"] = .string(type)
+    }
+    if let value {
+      data["value"] = .string(value)
     }
     if let time {
       data["time"] = .string(time)
@@ -32,16 +38,63 @@ enum EVYTestMessageFixtures {
     if let fk {
       dict["fk"] = .string(fk)
     }
-    if let archivedAt {
-      dict["archivedAt"] = archivedAt
+    if let service {
+      dict["service"] = .string(service)
     }
-    if let status {
-      dict["status"] = .string(status)
+    if let resource {
+      dict["resource"] = .string(resource)
+    }
+    if let createdAt {
+      dict["createdAt"] = .string(createdAt)
+    }
+    if let parentMessageId {
+      dict["parentMessageId"] = .string(parentMessageId)
     }
     if !data.isEmpty {
       dict["data"] = .dictionary(data)
     }
-    dict["visibility"] = .string("public")
+    dict["visibility"] = .string("private")
     return .dictionary(dict)
+  }
+
+  static func request(
+    id: String,
+    fk: String,
+    service: String,
+    resource: String,
+    type: String = "pickup",
+    time: String? = "2026-06-03T09:00:00",
+    createdAt: String? = nil
+  ) -> EVYJson {
+    message(
+      id: id,
+      fk: fk,
+      service: service,
+      resource: resource,
+      createdAt: createdAt,
+      type: type,
+      value: "pending",
+      time: time
+    )
+  }
+
+  static func response(
+    id: String,
+    to requestId: String,
+    fk: String,
+    service: String,
+    resource: String,
+    value: String,
+    type: String = "pickup"
+  ) -> EVYJson {
+    message(
+      id: id,
+      fk: fk,
+      service: service,
+      resource: resource,
+      type: type,
+      value: value,
+      parentMessageId: requestId
+    )
   }
 }

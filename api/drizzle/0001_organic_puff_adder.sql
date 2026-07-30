@@ -1,0 +1,1 @@
+ALTER TABLE "Message" ADD COLUMN "parent_message_id" uuid;

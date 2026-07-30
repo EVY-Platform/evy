@@ -23,7 +23,12 @@ async function createFlow() {
 	return dataModule.create(db, {
 		service: EVY_CORE_SERVICE,
 		resource: EVY_CORE_RESOURCE.FLOWS,
-		data: { id: crypto.randomUUID(), name: "Flow", pageIds: [] },
+		data: {
+			id: crypto.randomUUID(),
+			name: "Flow",
+			pageIds: [],
+			visibility: "public",
+		},
 	});
 }
 
@@ -36,7 +41,7 @@ function updateFlow(
 		service: EVY_CORE_SERVICE,
 		resource: EVY_CORE_RESOURCE.FLOWS,
 		filter: { id, ...(expectedUpdatedAt ? { expectedUpdatedAt } : {}) },
-		data: { id, name, pageIds: [] },
+		data: { id, name, pageIds: [], visibility: "public" },
 	});
 }
 

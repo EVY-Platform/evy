@@ -37,8 +37,9 @@ function evyLength(): EVYFunctionOutput {
 	return { value: "1" };
 }
 
+// Split on top-level commas only; nested calls like findFirst(sort(...), ...) need it
 function evyCollectionPlaceholder(args: string): EVYFunctionOutput {
-	const [data] = args.split(",");
+	const [data] = splitFunctionArguments(args);
 	return { value: data?.trim() ?? "" };
 }
 
@@ -302,11 +303,17 @@ function evyIfStub(args: string): EVYFunctionOutput {
 	return { value: trimmed };
 }
 
+function evyOwnsPlaceholder(_args: string): EVYFunctionOutput {
+	return { value: "false" };
+}
+
 const functionHandlers: Record<string, EVYFunctionHandler> = {
 	count: evyCount,
 	length: evyLength,
 	findFirst: evyCollectionPlaceholder,
+	filter: evyCollectionPlaceholder,
 	sort: evyCollectionPlaceholder,
+	owns: evyOwnsPlaceholder,
 	formatCurrency: evyFormatCurrency,
 	formatDimension: evyFormatDimension,
 	formatWeight: evyFormatWeight,

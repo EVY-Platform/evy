@@ -20,6 +20,7 @@ function rowPayload(id = crypto.randomUUID()) {
 		type: "Text",
 		visible: "true",
 		data: { title: "Hello", text: "World" },
+		visibility: "public" as const,
 	};
 }
 
@@ -29,6 +30,7 @@ function pagePayload(rowIds: string[], id = crypto.randomUUID()) {
 		name: "E2E Page",
 		title: "Test Page",
 		rowIds,
+		visibility: "public" as const,
 	};
 }
 
@@ -37,6 +39,7 @@ function flowPayload(pageIds: string[], id = crypto.randomUUID()) {
 		id,
 		name: "E2E Test Flow",
 		pageIds,
+		visibility: "public" as const,
 	};
 }
 
@@ -90,8 +93,6 @@ describe("API E2E Tests", () => {
 					),
 			);
 
-			// Nothing changed in between, so the cursor holds and no data rows repeat.
-			// The resource catalog singleton is re-sent whenever discovery succeeds.
 			expect(incrementalRows).toEqual([]);
 			expect(second.cursor).toBe(first.cursor);
 		});
@@ -231,6 +232,66 @@ describe("API E2E Tests", () => {
 
 			expect(updated.name).toBe("Updated Flow Name");
 			expect(updated.pageIds).toEqual([]);
+		});
+
+		it("sync delivers a response to the sender of the message it answers", async () => {
+			const itemService = crypto.randomUUID();
+			const itemResource = crypto.randomUUID();
+			const itemId = crypto.randomUUID();
+
+			const request = await client.call("create", {
+				service: EVY_CORE_SERVICE,
+				resource: EVY_CORE_RESOURCE.MESSAGES,
+				data: {
+					fk: itemId,
+					service: itemService,
+					resource: itemResource,
+					visibility: "private",
+					data: { type: "pickup", value: "pending" },
+				},
+			});
+
+			const response = await client.call("create", {
+				service: EVY_CORE_SERVICE,
+				resource: EVY_CORE_RESOURCE.MESSAGES,
+				data: {
+					fk: itemId,
+					service: itemService,
+					resource: itemResource,
+					parentMessageId: request.id,
+					visibility: "private",
+					data: { value: "accept", type: "pickup" },
+				},
+			});
+
+			const synced = await client.call("sync", {
+				ownedServiceResources: [
+					{
+						service: EVY_CORE_SERVICE,
+						resource: EVY_CORE_RESOURCE.MESSAGES,
+						ids: [request.id],
+					},
+				],
+			});
+
+			const messages =
+				synced.data.find(
+					(row: { resource: string }) =>
+						row.resource === EVY_CORE_RESOURCE.MESSAGES,
+				)?.value ?? [];
+			const ids = messages.map((message: { id: string }) => message.id);
+
+			expect(ids).toContain(request.id);
+			expect(ids).toContain(response.id);
+
+			const delivered = messages.find(
+				(message: { id: string }) => message.id === response.id,
+			);
+			expect(delivered.parentMessageId).toBe(request.id);
+			expect(delivered.data).toMatchObject({
+				value: "accept",
+				type: "pickup",
+			});
 		});
 	});
 });

@@ -70,16 +70,45 @@ enum EVYObjectLiteral {
 
 @MainActor
 enum EVYPlainTextResolution {
+  /// A record id with no property path after it. Resource ids are uuids, and so are the
+  /// binding keys that name those resources, so a bare uuid in a value position is
+  /// ambiguous - this is what disambiguates it. See `resolveValue`.
+  private static func isBareIdToken(_ value: String) -> Bool {
+    !value.contains(".") && isEvyRecordId(value)
+  }
+
   static func resolveValues(
     _ data: [String: String],
-    datum: EVYJson?
+    datum: EVYJson?,
+    omitUnresolvedDatumKeys: Bool = false
   ) -> [String: EVYJson] {
-    data.mapValues { resolveValue($0, datum: datum) }
+    var resolved: [String: EVYJson] = [:]
+    for (key, value) in data {
+      if omitUnresolvedDatumKeys, shouldOmitUnresolvedDatumKey(value, datum: datum) {
+        continue
+      }
+      resolved[key] = resolveValue(
+        value, datum: datum, omitUnresolvedDatumKeys: omitUnresolvedDatumKeys)
+    }
+    return resolved
+  }
+
+  /// True when `value` is a `$datum.…` path that does not resolve on the given datum.
+  /// Used only for create/update payload maps so a missing optional field is dropped rather
+  /// than written as the literal source text.
+  private static func shouldOmitUnresolvedDatumKey(_ value: String, datum: EVYJson?) -> Bool {
+    let trimmedValue = value.trimmingCharacters(in: .whitespacesAndNewlines)
+    guard trimmedValue.hasPrefix(EVY.datumPrefix) else { return false }
+    guard let datum else { return true }
+    let props = String(trimmedValue.dropFirst(EVY.datumPrefix.count)).split(separator: ".").map(
+      String.init)
+    return datum.parsePropStrict(props: props) == nil
   }
 
   static func resolveValue(
     _ value: String,
-    datum: EVYJson?
+    datum: EVYJson?,
+    omitUnresolvedDatumKeys: Bool = false
   ) -> EVYJson {
     let trimmedValue = value.trimmingCharacters(in: .whitespacesAndNewlines)
     if trimmedValue == EVY.datumToken, let datum {
@@ -109,9 +138,25 @@ enum EVYPlainTextResolution {
       let nestedObject = try? EVYObjectLiteral.parse(
         from: value, context: "nested action data")
     {
-      return .dictionary(resolveValues(nestedObject, datum: datum))
+      return .dictionary(
+        resolveValues(
+          nestedObject, datum: datum, omitUnresolvedDatumKeys: omitUnresolvedDatumKeys))
     }
 
-    return (try? EVY.getDataFromText("{\(value)}")) ?? .string(value)
+    guard let resolved = try? EVY.getDataFromText("{\(value)}") else {
+      return .string(value)
+    }
+
+    // A bare id is an identifier, not a place to read from. Because a resource id
+    // doubles as that resource's binding key, resolving it hands back the
+    // resource's data instead of the id. Nor can that data stand in for the id:
+    // what a resource key binds is a *record*, whose own id is a different uuid,
+    // so substituting it would quietly send the wrong id. The token is the only
+    // correct answer. Reach for `<id>.id` to read from the bound record instead.
+    if isBareIdToken(trimmedValue), resolved.isContainer {
+      return .string(trimmedValue)
+    }
+
+    return resolved
   }
 }

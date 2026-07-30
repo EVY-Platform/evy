@@ -76,9 +76,30 @@ This document covers EVY shared data: schema-backed rows stored in the API datab
 
 ## Wire contract vs persisted rows
 
-Clients call the API with JSON-RPC `get`, `sync`, `resources`, `api`, `create`, `update`, and `delete` using `service` and `resource` where applicable (see [`types/schema/rpc`](../../../types/schema/rpc)). `sync` is a top-level method: send back the opaque `cursor` from the previous response, or omit it for a full sync. `resources` is also a top-level method: it returns the aggregated service/resource catalog from the core manifest plus each registered external service's live `resources` RPC response. `service: "[evy_core_service_id]"` is dispatched by the API into resource modules under [`api/src/data/resources`](../../../api/src/data/resources) and maps to the row types below in the API Postgres schema. External services such as `service: "[service_id]"` are routed by service ID from normal core `services` rows. Each external service owns its resource manifest locally and exposes it through its required `resources` JSON-RPC method; the gateway aggregates those manifests and includes the full catalog on every successful sync as a singleton under the core `resources` key so clients can persist it offline.
+Clients call the API with JSON-RPC `get`, `sync`, `resources`, `api`, `create`, `update`, and `delete` using `service` and `resource` where applicable (see [`types/schema/rpc`](../../../types/schema/rpc)). `sync` and `resources` are top-level methods; `sync` is described on its own below. `resources` returns the aggregated service/resource catalog from the core manifest plus each registered external service's live `resources` RPC response. `service: "[evy_core_service_id]"` is dispatched by the API into resource modules under [`api/src/data/resources`](../../../api/src/data/resources) and maps to the row types below in the API Postgres schema. External services such as `service: "[service_id]"` are routed by service ID from normal core `services` rows. Each external service owns its resource manifest locally and exposes it through its required `resources` JSON-RPC method; the gateway aggregates those manifests and includes the full catalog on every successful sync as a singleton under the core `resources` key so clients can persist it offline.
 
 Routing in practice: the API dispatches on `service`, comparing it against the generated core service UUID (`EVY_CORE_SERVICE`). Core resources are addressed by **name** (`flows`, `messages`, …); external resources are addressed by the **resource UUID** declared in the owning service's manifest. Anything that is not the core service is forwarded to the owning service's adapter, which the API resolves from the core `services` table at startup.
+
+**`sync` in practice:** Send back the opaque `cursor` from the previous response, or omit it for a full sync. Alongside
+the cursor a client sends `ownedServiceResources`: the record ids it owns, grouped by the service
+and resource they belong to. Every resource is read the same way: the device gets every public row,
+plus the private rows it declared. A device that declares nothing still syncs — it just receives the
+public rows only.
+
+A device's ownership set is the union of three sources:
+
+- **records it created**, kept in a small ledger of `(service, resource, id)` triples. This is the
+  only source that can claim a *public* record, and it is what keeps a seller entitled to messages
+  about an item they listed. Anything created on the platform is owned by whoever created it.
+- **records it holds privately**, so a private row that arrives stays owned and its later updates
+  keep coming. Local singletons share that store but are excluded: they are not records the server
+  knows, and their id is not a uuid — which the request schema rejects, failing the whole sync.
+- **the `EVY_OWNED_SERVICE_RESOURCES` launch override**, standing in for the account-derived
+  ownership that arrives with real auth. Changing that declaration voids the cursor — it makes
+  records visible that may have changed long before the cursor was issued — so the client resyncs
+  in full. The other two sources cannot: a created record has no messages older than itself, and a
+  received private row only entitles the device to that row's own later updates. Nor can the
+  response rule, for the same reason: a message cannot answer one that does not exist yet.
 
 ## Who validates what
 
@@ -139,13 +160,61 @@ On the wire this is accessed with `service: "475731ac-31aa-4d65-94d2-7032782ae35
 
 #### Visibility
 
-Every `DATA_EVY_*` row carries a required `visibility` attribute: `"public"` or `"private"`. Clients may omit it in create/update payloads; the server defaults omitted values to `"public"` (`"private"` for addresses). On iOS, public rows sync into `publicStore` and private rows into `privateStore`; web keeps a single data path and treats `visibility` as an ordinary field.
+Every `DATA_EVY_*` row carries a required `visibility` attribute: `"public"` or `"private"`. **Every create states it, and nothing fills one in** — not the resource module, not the schema, not the database column. A payload without a visibility is rejected, because a record whose visibility nobody chose is a bug rather than something to guess at.
+
+Each resource declares the value its records are created with in [`core.resources.json`](../../../types/schema/resources/core.resources.json), which the generator emits for both platforms (`EVY_CORE_RESOURCE_VISIBILITY` in TypeScript, `EVYCoreResource.visibility` in Swift). iOS attaches it on create; web states it where it builds records; seeds and tests state it in their payloads. Resources with no visibility of their own — the `resources` catalog, `formatters`, and every external service resource — declare nothing and get nothing.
+
+**What the two values mean for sync:** a public row goes to every device; a private row goes only to the device that owns it. Messages add one case — whoever owns the record a message addresses receives it too, even before they hold it. So `private` is an access rule, not just a storage choice, and flipping a resource to private removes its rows from every device but the owner's. That happens with no error anywhere: the app simply renders less. Before making a resource private, ask who reads it — a public record that reads a private one (as the marketplace item once read its pickup address) has to carry what it needs itself.
+
+On iOS, public rows sync into `publicStore` and private rows into `privateStore`; web keeps a single data path and treats `visibility` as an ordinary field.
+
+Two limits worth knowing. `get` is **not** an access boundary — it takes no ownership and returns whatever it is asked for; sync is the only path that populates a device, so that is where the rule lives. And external service resources have no `visibility` of their own and the gateway forwards their payloads without inspecting them, so they are public by construction; a service that needs private rows declares and filters them itself.
+
+On iOS the private store is also part of what a device declares as owned on sync, which is how a message that arrives for you stays owned and keeps receiving updates. Note what `visibility` is **not**: it is one global column choosing a store, not an access rule and not ownership. Every device syncs every private row it is sent — every device holds every seeded address privately — so `"private"` means "stored privately on whichever device receives it", never "mine". Ownership of a **public** record therefore cannot be expressed by visibility at all, and is recorded separately when the device creates it (see [`sync`](#wire-contract-vs-persisted-rows)).
 
 ### DATA_EVY_Message
 
 Core message record in [`data.schema.json`](../../../types/schema/data/data.schema.json) (`$defs.DATA_EVY_Message`, Postgres table `Message`). A message always relates to one record of another resource: `fk` is that record's id, and `service` / `resource` identify which service and resource the `fk` belongs to. Use-case-specific fields (e.g. `type`, `time`, `postalcode`) live in the free-form `data` object.
 
-On the wire this is accessed with `service: "475731ac-31aa-4d65-94d2-7032782ae359"` and `resource: "messages"`. Cancelling sets `archivedAt`; accepting sets `status` to `accepted` via `{update(...)}`.
+On the wire this is accessed with `service: "475731ac-31aa-4d65-94d2-7032782ae359"` and `resource: "messages"`.
+
+#### A message is write-once
+
+**Nothing in the system updates a message.** A request's whole life is the sequence of messages naming it, ordered by `createdAt`: asked, then accepted, rejected or withdrawn. There is no `status` column and no `archivedAt` column; each held part of this before the lifecycle became append-only.
+
+`data.value` holds the whole vocabulary — `"pending"` on a request, and `"accept"`, `"reject"` or `"cancel"` on the message that settles one. A request says `"pending"` outright rather than leaving the key absent, so the predicates read as one state machine and a message kind that carries no state is never mistaken for something to answer.
+
+A settling message addresses whatever record the request addressed — same `fk`, `service` and `resource` — and **carries the request's whole `data` forward**, overriding `value` and setting `parentMessageId` on the row to name what it answers. That duplication is load-bearing rather than sloppy: `findFirst` cannot nest, so a lookup that finds the settling message cannot reach through it to the request. Anything the settled state displays — the agreed time, the shipping postcode — has to be on the message that says so, or the confirmation row renders empty.
+
+Accepting, rejecting and cancelling are therefore the same operation with a different `value`. They differ only in who says it: the record's owner answers, its asker withdraws.
+
+#### The state of a transfer method is its latest message
+
+The item page reads one thing per transfer method: the **latest** message for that `(fk, data.type)` pair.
+
+```
+findFirst(sort(messages, desc, createdAt), fk == <item>.id && data.type == pickup)
+```
+
+`pending` means a request is open (offer to cancel it); `accept` means it is agreed (show the time). `reject`, `cancel` and "no message at all" are the same branch — nothing is in flight, so offer to request again.
+
+Each `(fk, data.type)` pair is **tracked independently** — a rejected pickup says nothing about delivery — but only one arrangement is live at a time in the UI. The tab container holding the three request controls is gated on *nothing* being live, so while one method is pending or agreed the page shows that one arrangement alone. Requesting another means settling the current one first.
+
+Two things follow that are easy to trip over:
+
+- **`createdAt` is the ordering key and has no fallback.** It is written with millisecond precision for exactly this reason. `sort` compares it as a string, so mixing second-resolution and fractional values compares *wrongly* (`.` sorts before `Z`), and equal keys fall back to store order — which would let a request outrank its own answer, since the request was stored first.
+- **`findFirst(sort(…), …)` is the whole mechanism.** `sort` accepts a field path and `findFirst`'s collection argument is function-aware, so no client-side special case is involved. See [methods.md](./methods.md#findfirst).
+
+Messages follow the same rule as every other private resource, with two additions:
+
+- as well as the device that owns the message (its creator, declaring the message's own id under `evy`/`messages`), a message reaches the device that owns the record it **addresses**, which declares that record's id under the message's `service`/`resource`;
+- a message reaches whoever owns the message it **answers** — matched on `parentMessageId`. Without it a response would never reach the party who asked, since they own neither the response nor the record it addresses.
+
+Those two are the only entitlements in the system that are not plain ownership. Everyone else never receives it.
+
+> **A trap for anything reading `data` in SQL.** The `bun-sql` driver stores a jsonb column by JSON-stringifying its value, so a row written through the API holds a jsonb *string* containing the object rather than the object. Reads are symmetric, so JavaScript never notices — but `data ->> 'key'` is NULL on that shape and `jsonb_set` refuses it outright. Note that the pglite-backed unit tests store jsonb properly, so they will not catch a clause that only works on the normalised shape.
+
+Messages are `private`, so a received one lands in the receiving device's private store and stays owned from then on — it keeps receiving anything that follows without needing to own the record it addresses. A device that is reinstalled, or that never created the record a seeded message addresses, still has no claim on those messages until it declares the ownership explicitly; that resolves when auth lands and ownership can be derived from an account.
 
 ---
 

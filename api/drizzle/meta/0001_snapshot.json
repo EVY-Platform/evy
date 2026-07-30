@@ -1,6 +1,6 @@
 {
-	"id": "91c961e4-63e8-48bb-8159-02a21fb7ac76",
-	"prevId": "00000000-0000-0000-0000-000000000000",
+	"id": "147f4b9d-4098-4d78-ac3c-3da9edf8aa9b",
+	"prevId": "91c961e4-63e8-48bb-8159-02a21fb7ac76",
 	"version": "7",
 	"dialect": "postgresql",
 	"tables": {
@@ -401,6 +401,12 @@
 					"type": "jsonb",
 					"primaryKey": false,
 					"notNull": true
+				},
+				"parent_message_id": {
+					"name": "parent_message_id",
+					"type": "uuid",
+					"primaryKey": false,
+					"notNull": false
 				},
 				"visibility": {
 					"name": "visibility",

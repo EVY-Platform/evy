@@ -17,7 +17,10 @@ import type {
 	UI_Page,
 	UI_Row,
 } from "../types/generated/ts";
-import { EVY_CORE_SERVICE } from "../types/generated/ts/coreResources";
+import {
+	EVY_CORE_SERVICE,
+	EVY_MESSAGE_DATA_VALUES,
+} from "../types/generated/ts/coreResources";
 import {
 	address as addressTable,
 	file as fileTable,
@@ -307,12 +310,11 @@ type SeedMessageRow = {
 	fk: string;
 	service: string;
 	resource: string;
-	archivedAt: string | null;
 	createdAt: string;
 	updatedAt: string;
-	status: "pending" | "accepted";
 	data: Record<string, unknown>;
 	visibility: "public" | "private";
+	parentMessageId?: string;
 };
 
 function buildMessageRows(
@@ -336,31 +338,55 @@ function buildMessageRows(
 				`Seed message "${item.id}" must have a string "resource" field`,
 			);
 		}
-		if (item.status !== "pending" && item.status !== "accepted") {
-			throw new Error(
-				`Seed message "${item.id}" must have status "pending" or "accepted"`,
-			);
-		}
 		const data =
 			item.data !== null &&
 			typeof item.data === "object" &&
 			!Array.isArray(item.data)
 				? (item.data as Record<string, unknown>)
 				: {};
+		// A message's state lives in `data.value`: "pending" on a request, "accept" or
+		// "reject" on the response that answers one. Not every message is a request, so
+		// an absent value is fine - a misspelled one is not, and would otherwise only
+		// show up as a row the item page silently never matches.
+		if (
+			data.value !== undefined &&
+			!EVY_MESSAGE_DATA_VALUES.includes(
+				data.value as (typeof EVY_MESSAGE_DATA_VALUES)[number],
+			)
+		) {
+			throw new Error(
+				`Seed message "${item.id}" has data.value "${String(data.value)}"; expected one of ${EVY_MESSAGE_DATA_VALUES.join(", ")}`,
+			);
+		}
+		if (
+			item.visibility !== undefined &&
+			item.visibility !== "private" &&
+			item.visibility !== "public"
+		) {
+			throw new Error(
+				`Seed message "${item.id}" has visibility "${String(item.visibility)}"; expected "public" or "private"`,
+			);
+		}
+		if (
+			item.parentMessageId !== undefined &&
+			typeof item.parentMessageId !== "string"
+		) {
+			throw new Error(
+				`Seed message "${item.id}" must have a string "parentMessageId" field when set`,
+			);
+		}
 		return {
 			id: item.id,
 			fk: item.fk,
 			service: item.service,
 			resource: item.resource,
-			archivedAt:
-				item.archivedAt === null || typeof item.archivedAt === "string"
-					? (item.archivedAt ?? null)
-					: null,
 			createdAt,
 			updatedAt,
-			status: item.status,
 			data,
-			visibility: "public",
+			visibility: item.visibility === "public" ? "public" : "private",
+			...(typeof item.parentMessageId === "string"
+				? { parentMessageId: item.parentMessageId }
+				: {}),
 		};
 	});
 }

@@ -90,6 +90,7 @@ describe("create/update real-time notifications", () => {
 			id: crypto.randomUUID(),
 			name: "WS Notify Flow",
 			pageIds: [],
+			visibility: "public",
 			createdAt: nowIso,
 			updatedAt: nowIso,
 		};
@@ -131,6 +132,7 @@ describe("create/update real-time notifications", () => {
 			id: serviceId,
 			name: "NotifySvc",
 			description: "D",
+			visibility: "public",
 			createdAt: nowIso,
 			updatedAt: nowIso,
 		};
@@ -179,6 +181,7 @@ describe("create/update real-time notifications", () => {
 				id: crypto.randomUUID(),
 				name: "Subscribed Only",
 				pageIds: [],
+				visibility: "public",
 				createdAt: new Date().toISOString(),
 				updatedAt: new Date().toISOString(),
 			},
@@ -195,6 +198,7 @@ describe("create/update real-time notifications", () => {
 				id: crypto.randomUUID(),
 				name: "Subscribed Only Again",
 				pageIds: [],
+				visibility: "public",
 				createdAt: new Date().toISOString(),
 				updatedAt: new Date().toISOString(),
 			},

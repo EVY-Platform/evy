@@ -431,10 +431,10 @@ test.describe("Builder Assist flows", () => {
 					mode: "store",
 					filter: {
 						fk: `${ITEM_RESOURCE_ID}.id`,
-						archivedAt: "null",
+						closedAt: "null",
 					},
 					changes: {
-						archivedAt: "now()",
+						closedAt: "now()",
 					},
 				},
 			},
@@ -452,19 +452,19 @@ test.describe("Builder Assist flows", () => {
 		await expect(filterField).not.toContainText(ITEM_RESOURCE_ID);
 		await expect
 			.poll(() => readBuilderAssistRawValue(filterField))
-			.toBe(`{fk: ${ITEM_RESOURCE_ID}.id, archivedAt: null}`);
+			.toBe(`{fk: ${ITEM_RESOURCE_ID}.id, closedAt: null}`);
 
 		const changesField = popup.getByLabel("true-0-update-changes");
 		await expect
 			.poll(() => readBuilderAssistRawValue(changesField))
-			.toBe("{archivedAt: now()}");
+			.toBe("{closedAt: now()}");
 
 		await popup.getByRole("button", { name: "Save" }).click();
 		await expect(popup).not.toBeVisible();
 
 		await expect(
 			configPanel.getByText(
-				"update(Test Service, item, {fk: item.id, archivedAt: null}, {archivedAt: now()})",
+				"update(Test Service, item, {fk: item.id, closedAt: null}, {closedAt: now()})",
 				{ exact: true },
 			),
 		).toBeVisible();
