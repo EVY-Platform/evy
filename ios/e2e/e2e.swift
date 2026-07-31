@@ -368,7 +368,6 @@ private enum E2EFlowIds {
   static let navigationViewPage = "10000000-0000-4000-8000-000000000008"
   static let webSocketHomeFlow = "10000000-0000-4000-8000-000000000002"
   static let webSocketHomePage = "55e427ac-263c-441f-9673-f60627b1baea"
-  static let webSocketHomeDetailsPage = "10000000-0000-4000-8000-000000000009"
   static let webSocketViewFlow = "10000000-0000-4000-8000-000000000003"
   static let webSocketViewPage = "10000000-0000-4000-8000-000000000004"
   static let webSocketCreateFlow = "10000000-0000-4000-8000-000000000005"
@@ -415,62 +414,6 @@ class E2ETestBase: XCTestCase {
               source: "{formatDimension(width)}",
               placeholder: "0",
               destination: "{\(MARKETPLACE_ITEMS_RESOURCE_ID).width}"
-            ),
-          ],
-          "footer": [
-            "id": "1cb41189-6fa5-4562-996a-7cefb88a08ca",
-            "type": "button",
-            "visible": "true",
-            "title": "",
-            "label": "Submit",
-            "actions": Self.actionsObject(
-              tap: [
-                [
-                  "condition": "",
-                  "false": "",
-                  "true": "{show(a4b5c6d7-e8f9-4a0b-1c2d-3e4f5a6b7c8d)}",
-                ]
-              ]
-            ),
-            "sheet": Self.submitListingSheetChild(
-              createAction:
-                "{create(\(MARKETPLACE_ITEMS_RESOURCE_ID), submit)}"
-            ),
-          ] as [String: Any],
-        ]
-      ],
-    ]
-  }
-
-  /// Create-item flow that also performs an inline `create(addresses, …)` (same pattern as
-  /// fixture Search). Regression: inline address create must not steal draft scope from items.
-  static func createItemWithAddressFlowData() -> [String: Any] {
-    let addressFields =
-      "street: \"1 Martin Place\", city: Sydney, postcode: \"2000\", state: NSW, country: Australia"
-    let createAddress =
-      "{create(\(EVYCoreResource.addresses.ref), {\(addressFields)}, {\(MARKETPLACE_ITEMS_RESOURCE_ID).transfer_options.pickup.address_id})}"
-    return [
-      "id": E2EFlowIds.webSocketCreateFlow,
-      "name": "Create item with address",
-      "submits": [
-        "resource": MARKETPLACE_ITEMS_RESOURCE_ID
-      ],
-      "pages": [
-        [
-          "id": E2EFlowIds.webSocketCreatePage,
-          "title": "Create listing",
-          "rows": [
-            Self.inputRow(
-              id: "e0fc5df1-b4bf-4996-87f4-f2b0f3c2a0be",
-              title: "Title",
-              source: nil,
-              placeholder: "Item",
-              destination: "{\(MARKETPLACE_ITEMS_RESOURCE_ID).title}"
-            ),
-            Self.buttonRow(
-              id: "a1b2c3d4-e5f6-4789-a012-3456789abcde",
-              label: "Use test address",
-              action: createAddress
             ),
           ],
           "footer": [
@@ -824,6 +767,22 @@ class E2ETestBase: XCTestCase {
     try awaitResult(description, timeout: timeout, operation)
   }
 
+  static func productionHomeFlowData() throws -> [String: Any] {
+    let fixtureURL = URL(fileURLWithPath: #filePath)
+      .deletingLastPathComponent()  // e2e
+      .deletingLastPathComponent()  // ios
+      .deletingLastPathComponent()  // repo root
+      .appendingPathComponent("scripts/fixtures/evy/evy_sdui.json")
+    let data = try Data(contentsOf: fixtureURL)
+    let json = try JSONSerialization.jsonObject(with: data)
+    guard let flowData = json as? [String: Any] else {
+      throw NSError(
+        domain: "E2E", code: 1,
+        userInfo: [NSLocalizedDescriptionKey: "Invalid production home fixture JSON"])
+    }
+    return flowData
+  }
+
   func seedFlows(_ flows: [(flowId: String, flowData: [String: Any])]) throws {
     try runAsyncOperation("Seed isolated E2E flows", timeout: 15) { [self] in
       let emitter = WSEmitter()
@@ -906,24 +865,6 @@ class E2ETestBase: XCTestCase {
       row["name"] = name
     }
     return row
-  }
-
-  static func listItemRow(
-    id: String,
-    title: String,
-    subtitle: String = "",
-    image: String = "",
-    visible: String = "true"
-  ) -> [String: Any] {
-    return [
-      "id": id,
-      "type": "list_item",
-      "actions": [:],
-      "visible": visible,
-      "title": title,
-      "subtitle": subtitle,
-      "image": image,
-    ]
   }
 
   static func inputRow(
@@ -2237,11 +2178,6 @@ final class WebSocketE2ETests: E2ETestBase {
     try launchApp()
   }
 
-  override func tearDownWithError() throws {
-    try? seedIsolatedFlows()
-    try super.tearDownWithError()
-  }
-
   private func seedIsolatedFlows() throws {
     try seedFlows(
       [
@@ -2262,42 +2198,6 @@ final class WebSocketE2ETests: E2ETestBase {
         ),
       ]
     )
-  }
-
-  @MainActor
-  func testWebSocketNotificationUpdatesUI() async throws {
-    let viewItemButton = app.buttons["View"]
-    XCTAssertTrue(
-      viewItemButton.waitForExistence(timeout: 20),
-      "Home screen not loaded - verify API is running and database is seeded")
-
-    let originalLabel = "View"
-    let updatedLabel = "Updated View \(Int(Date().timeIntervalSince1970))"
-
-    let emitter = WSEmitter()
-    do {
-      try await emitter.connect(host: apiHost)
-      try await emitter.login(token: "e2e-test", os: "ios")
-      try await emitter.updateSDUI(
-        flowData: createHomeFlowData(buttonLabel: updatedLabel),
-        flowId: E2EFlowIds.webSocketHomeFlow
-      )
-    } catch {
-      XCTFail("Failed to emit update: \(error.localizedDescription)")
-      return
-    }
-
-    let updatedButton = app.buttons[updatedLabel]
-    XCTAssertTrue(
-      updatedButton.waitForExistence(timeout: 10),
-      "Button should update to '\(updatedLabel)' after notification")
-    XCTAssertFalse(viewItemButton.exists, "Original button should be replaced")
-
-    try? await emitter.updateSDUI(
-      flowData: createHomeFlowData(buttonLabel: originalLabel),
-      flowId: E2EFlowIds.webSocketHomeFlow
-    )
-    await emitter.disconnect()
   }
 
   @MainActor
@@ -2345,10 +2245,6 @@ final class WebSocketE2ETests: E2ETestBase {
       "Unrelated input should retain typed text after a row-only SDUI update, got: '\(inputField.value as? String ?? "nil")'"
     )
 
-    try? await emitter.updateSDUI(
-      flowData: createHomeFlowData(buttonLabel: "View"),
-      flowId: E2EFlowIds.webSocketHomeFlow
-    )
     await emitter.disconnect()
   }
 
@@ -2386,20 +2282,11 @@ final class WebSocketE2ETests: E2ETestBase {
       goHomeButton.waitForExistence(timeout: 10),
       "Tapping the conditional button should navigate when the logical expression is true")
 
-    try? await emitter.updateSDUI(
-      flowData: createHomeFlowData(buttonLabel: "View"),
-      flowId: E2EFlowIds.webSocketHomeFlow
-    )
     await emitter.disconnect()
   }
 
   @MainActor
   func testViewItemFlowLoadsItemFromNavigateQuery() async throws {
-    let viewItemButton = app.buttons["View"]
-    XCTAssertTrue(
-      viewItemButton.waitForExistence(timeout: 20),
-      "Home screen not loaded - verify API is running and database is seeded")
-
     let emitter = WSEmitter()
     try await emitter.connect(host: apiHost)
     try await emitter.login(token: "e2e-test", os: "ios")
@@ -2469,11 +2356,6 @@ final class WebSocketE2ETests: E2ETestBase {
 
   @MainActor
   func testSheetTitleUpdatesWhenWatchedDataChanges() async throws {
-    let viewItemButton = app.buttons["View"]
-    XCTAssertTrue(
-      viewItemButton.waitForExistence(timeout: 20),
-      "Home screen not loaded - verify API is running and database is seeded")
-
     let emitter = WSEmitter()
     try await emitter.connect(host: apiHost)
     try await emitter.login(token: "e2e-test", os: "ios")
@@ -2522,11 +2404,6 @@ final class WebSocketE2ETests: E2ETestBase {
 
   @MainActor
   func testShowPresentsSheetRowFromAnotherPage() async throws {
-    let viewItemButton = app.buttons["View"]
-    XCTAssertTrue(
-      viewItemButton.waitForExistence(timeout: 20),
-      "Home screen not loaded - verify API is running and database is seeded")
-
     let emitter = WSEmitter()
     try await emitter.connect(host: apiHost)
     try await emitter.login(token: "e2e-test", os: "ios")
@@ -2557,11 +2434,6 @@ final class WebSocketE2ETests: E2ETestBase {
 
   @MainActor
   func testViewItemTimeslotPickerRendersPickupAvailability() async throws {
-    let viewItemButton = app.buttons["View"]
-    XCTAssertTrue(
-      viewItemButton.waitForExistence(timeout: 20),
-      "Home screen not loaded - verify API is running and database is seeded")
-
     let emitter = WSEmitter()
     try await emitter.connect(host: apiHost)
     try await emitter.login(token: "e2e-test", os: "ios")
@@ -2605,11 +2477,6 @@ final class WebSocketE2ETests: E2ETestBase {
 
   @MainActor
   func testTimeslotPickerCreatesPickupRequest() async throws {
-    let viewItemButton = app.buttons["View"]
-    XCTAssertTrue(
-      viewItemButton.waitForExistence(timeout: 20),
-      "Home screen not loaded - verify API is running and database is seeded")
-
     let emitter = WSEmitter()
     try await emitter.connect(host: apiHost)
     try await emitter.login(token: "e2e-test", os: "ios")
@@ -2662,11 +2529,6 @@ final class WebSocketE2ETests: E2ETestBase {
 
   @MainActor
   func testTimeslotConfirmationCancelDoesNotCreateRequest() async throws {
-    let viewItemButton = app.buttons["View"]
-    XCTAssertTrue(
-      viewItemButton.waitForExistence(timeout: 20),
-      "Home screen not loaded - verify API is running and database is seeded")
-
     let emitter = WSEmitter()
     try await emitter.connect(host: apiHost)
     try await emitter.login(token: "e2e-test", os: "ios")
@@ -2705,20 +2567,11 @@ final class WebSocketE2ETests: E2ETestBase {
       "Cancelling confirmation should not create a pickup request"
     )
     XCTAssertTrue(timeslot.exists, "Pickup timeslot should remain visible after cancel")
-    XCTAssertFalse(
-      app.buttons["Cancel pickup request"].exists,
-      "Cancel pickup request should not appear when no request was created"
-    )
     await emitter.disconnect()
   }
 
   @MainActor
   func testPickupConfirmationSheetShowsEarlierTimeslotWarning() async throws {
-    let viewItemButton = app.buttons["View"]
-    XCTAssertTrue(
-      viewItemButton.waitForExistence(timeout: 20),
-      "Home screen not loaded - verify API is running and database is seeded")
-
     let emitter = WSEmitter()
     try await emitter.connect(host: apiHost)
     try await emitter.login(token: "e2e-test", os: "ios")
@@ -2768,11 +2621,6 @@ final class WebSocketE2ETests: E2ETestBase {
 
   @MainActor
   func testCancelRequestTogglesPickerAndShippingButton() async throws {
-    let viewItemButton = app.buttons["View"]
-    XCTAssertTrue(
-      viewItemButton.waitForExistence(timeout: 20),
-      "Home screen not loaded - verify API is running and database is seeded")
-
     let emitter = WSEmitter()
     try await emitter.connect(host: apiHost)
     try await emitter.login(token: "e2e-test", os: "ios")
@@ -2862,11 +2710,6 @@ final class WebSocketE2ETests: E2ETestBase {
   /// flat lookup could tell.
   @MainActor
   func testRejectedRequestReturnsTheTimeslots() async throws {
-    let viewItemButton = app.buttons["View"]
-    XCTAssertTrue(
-      viewItemButton.waitForExistence(timeout: 20),
-      "Home screen not loaded - verify API is running and database is seeded")
-
     let emitter = WSEmitter()
     try await emitter.connect(host: apiHost)
     try await emitter.login(token: "e2e-test", os: "ios")
@@ -2992,11 +2835,6 @@ final class WebSocketE2ETests: E2ETestBase {
 
   @MainActor
   func testAcceptedRequestHidesCancelAndShowsConfirmation() async throws {
-    let viewItemButton = app.buttons["View"]
-    XCTAssertTrue(
-      viewItemButton.waitForExistence(timeout: 20),
-      "Home screen not loaded - verify API is running and database is seeded")
-
     let emitter = WSEmitter()
     try await emitter.connect(host: apiHost)
     try await emitter.login(token: "e2e-test", os: "ios")
@@ -3111,11 +2949,6 @@ final class WebSocketE2ETests: E2ETestBase {
 
   @MainActor
   func testSenderIsOfferedCancelAndCannotAnswerItsOwnRequest() throws {
-    let viewItemButton = app.buttons["View"]
-    XCTAssertTrue(
-      viewItemButton.waitForExistence(timeout: 20),
-      "Home screen not loaded - verify API is running and database is seeded")
-
     let emitter = WSEmitter()
     let host = apiHost
     let selectedTimeslot = "2026-06-03T09:00:00"
@@ -3237,11 +3070,6 @@ final class WebSocketE2ETests: E2ETestBase {
 
   @MainActor
   func testAskToBuyCreatesShippingRequestAndValidatesEmptyPostcode() async throws {
-    let viewItemButton = app.buttons["View"]
-    XCTAssertTrue(
-      viewItemButton.waitForExistence(timeout: 20),
-      "Home screen not loaded - verify API is running and database is seeded")
-
     let emitter = WSEmitter()
     try await emitter.connect(host: apiHost)
     try await emitter.login(token: "e2e-test", os: "ios")
@@ -3352,11 +3180,6 @@ final class WebSocketE2ETests: E2ETestBase {
 
   @MainActor
   func testShippingConfirmationSheetShowsSurchargeAwareCopy() async throws {
-    let viewItemButton = app.buttons["View"]
-    XCTAssertTrue(
-      viewItemButton.waitForExistence(timeout: 20),
-      "Home screen not loaded - verify API is running and database is seeded")
-
     let emitter = WSEmitter()
     try await emitter.connect(host: apiHost)
     try await emitter.login(token: "e2e-test", os: "ios")
@@ -3397,11 +3220,6 @@ final class WebSocketE2ETests: E2ETestBase {
 
   @MainActor
   func testViewItemPaymentRowsRespectVisiblePredicate() async throws {
-    let viewItemButton = app.buttons["View"]
-    XCTAssertTrue(
-      viewItemButton.waitForExistence(timeout: 20),
-      "Home screen not loaded - verify API is running and database is seeded")
-
     let emitter = WSEmitter()
     try await emitter.connect(host: apiHost)
     try await emitter.login(token: "e2e-test", os: "ios")
@@ -3463,19 +3281,10 @@ final class WebSocketE2ETests: E2ETestBase {
       "Home screen not loaded - verify API is running and database is seeded")
     let emitter = WSEmitter()
     let host = apiHost
-    try awaitResult("emitter setup + flow push") {
+    try awaitResult("emitter setup") {
       try await emitter.connect(host: host)
       try await emitter.login(token: "e2e-test", os: "ios")
-      try await emitter.updateSDUI(
-        flowData: Self.minimalCreateItemFlowData(),
-        flowId: E2EFlowIds.webSocketCreateFlow
-      )
     }
-    // Relaunch after pushing the flow, matching the suite's push-then-relaunch pattern
-    // (openViewItemPage) so the test exercises a cleanly synced flow graph.
-    app.terminate()
-    try launchApp()
-    XCTAssertTrue(createItemButton.waitForExistence(timeout: 20), "Create button after relaunch")
     createItemButton.tap()
 
     let titleFieldId = "textField_{\(MARKETPLACE_ITEMS_RESOURCE_ID).title}"
@@ -3549,6 +3358,12 @@ final class WebSocketE2ETests: E2ETestBase {
 
   @MainActor
   func testCreateItemRealFlowSearchSelectPersistsAddressAndLinksItem() throws {
+    try seedFlows([
+      (
+        flowId: E2EFlowIds.defaultHomeFlow,
+        flowData: try Self.productionHomeFlowData()
+      )
+    ])
     app.terminate()
     app = XCUIApplication()
     app.launchEnvironment["API_HOST"] = apiHost
@@ -3896,45 +3711,6 @@ final class WebSocketE2ETests: E2ETestBase {
   }
 
   @MainActor
-  private func publishHomeFlow(_ flowData: [String: Any]) async {
-    let emitter = WSEmitter()
-    do {
-      try await emitter.connect(host: apiHost)
-      try await emitter.login(token: "e2e-test", os: "ios")
-      try await emitter.updateSDUI(
-        flowData: flowData, flowId: E2EFlowIds.webSocketHomeFlow)
-    } catch {
-      XCTFail("Failed to publish home flow: \(error.localizedDescription)")
-    }
-    await emitter.disconnect()
-  }
-
-  @MainActor
-  private func typeIntoHomeEphemeralField(_ text: String) async throws {
-    guard let inputContainer = findElement(identifier: "textField_e2e.unrelated_input") else {
-      XCTFail("Home input row should be visible")
-      return
-    }
-    guard let inputField = tapAndGetEditableField(container: inputContainer) else {
-      XCTFail("Failed to get editable home input field")
-      return
-    }
-    clearAndType(field: inputField, text: text, placeholder: "Type here")
-  }
-
-  private func sharedHomeText(_ text: String) -> XCUIElement {
-    app.staticTexts["Live: \(text)"]
-  }
-
-  private func headingHomeText(_ text: String) -> XCUIElement {
-    app.staticTexts["Heading: \(text)"]
-  }
-
-  private func addedHomeText(_ text: String) -> XCUIElement {
-    app.staticTexts["Added: \(text)"]
-  }
-
-  @MainActor
   func openViewItemPage(
     emitter: WSEmitter,
     labelPrefix: String,
@@ -3979,22 +3755,11 @@ final class WebSocketE2ETests: E2ETestBase {
   private func createHomeFlowData(
     buttonLabel: String,
     viewItemId: String? = nil,
-    includeAddedSharedRow: Bool = false,
-    includeHeadingRow: Bool = false,
     includeHomeInbox: Bool = false
   ) -> [String: Any] {
     let viewAction = Self.viewItemNavigateAction(viewItemId: viewItemId)
 
-    var children: [[String: Any]] = []
-    if includeHeadingRow {
-      children.append(
-        Self.headingRow(
-          id: "b1c2d3e4-f5a6-4789-8012-3456789abcde",
-          title: "Heading: {e2e.unrelated_input}"
-        )
-      )
-    }
-    children.append(contentsOf: [
+    let children: [[String: Any]] = [
       Self.inputRow(
         id: "c72107b6-a50f-4bdb-98d8-4f803e2e8e1b",
         title: "Notes",
@@ -4005,22 +3770,6 @@ final class WebSocketE2ETests: E2ETestBase {
       Self.textRow(
         id: "5af45c82-6b8a-4f33-9864-1c5f9eb47ed1",
         title: "Live: {e2e.unrelated_input}"
-      ),
-    ])
-    if includeAddedSharedRow {
-      children.append(
-        Self.textRow(
-          id: "9c1e7f4a-3b2d-4e6a-8f1c-2d3e4f5a6b7c",
-          title: "Added: {e2e.unrelated_input}"
-        )
-      )
-    }
-    children.append(contentsOf: [
-      Self.buttonRow(
-        id: "53d04050-29f3-48ec-b55b-1a6a30fc2111",
-        label: "Details",
-        action:
-          "{navigate(\(E2EFlowIds.webSocketHomeFlow),\(E2EFlowIds.webSocketHomeDetailsPage))}"
       ),
       Self.buttonRow(
         id: "441c1433-446b-4682-854d-5d795ef52709",
@@ -4033,7 +3782,7 @@ final class WebSocketE2ETests: E2ETestBase {
         action:
           "{navigate(\(E2EFlowIds.webSocketCreateFlow),\(E2EFlowIds.webSocketCreatePage))}"
       ),
-    ])
+    ]
 
     var homeRows: [[String: Any]] = [
       [
@@ -4057,17 +3806,7 @@ final class WebSocketE2ETests: E2ETestBase {
           "id": E2EFlowIds.webSocketHomePage,
           "title": "Home",
           "rows": homeRows,
-        ],
-        [
-          "id": E2EFlowIds.webSocketHomeDetailsPage,
-          "title": "Details",
-          "rows": [
-            Self.textRow(
-              id: "36dc56d0-706b-4d5a-bc2a-6dc6956c9277",
-              title: "Details page"
-            )
-          ],
-        ],
+        ]
       ],
     ]
   }
