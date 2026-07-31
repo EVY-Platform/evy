@@ -108,7 +108,7 @@ export default defineRow("TimeslotPickerRow", {
 	config: {
 		type: "timeslot_picker",
 		actions: defaultRowActions({
-			tap: { fn: "select", value: "$datum" },
+			tap: "{select($datum)}",
 		}),
 		source: "{resourceId.delivery_selection}",
 		visible: "true",

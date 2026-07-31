@@ -230,7 +230,7 @@ export function BranchEditor({
 					getAttributeCandidatesForQualifier={
 						getAttributeCandidatesForQualifier
 					}
-					placeholder="Optional query, e.g. {items: [$datum.id]}"
+					placeholder="Optional query, e.g. {id: {$datum.id}}"
 					multiline
 				/>
 			)}
@@ -251,7 +251,7 @@ export function BranchEditor({
 							getAttributeCandidatesForQualifier={
 								getAttributeCandidatesForQualifier
 							}
-							placeholder="Data path or inline object, e.g. pickup_address"
+							placeholder="From-path or inline map, e.g. pickup_address or {status: pending}"
 						/>
 						<AutocompleteSearch
 							ariaLabel={`${branchId}-create-id-destination`}
@@ -261,7 +261,7 @@ export function BranchEditor({
 							getAttributeCandidatesForQualifier={
 								getAttributeCandidatesForQualifier
 							}
-							placeholder="Optional id destination, e.g. {item.transfer_options.pickup.address_id}"
+							placeholder="Optional id destination, e.g. {pickup_address.id}"
 						/>
 					</>
 				))}
@@ -317,7 +317,7 @@ export function BranchEditor({
 							getAttributeCandidatesForQualifier={
 								getAttributeCandidatesForQualifier
 							}
-							placeholder="Filter, e.g. {fk: $datum.id, closedAt: null}"
+							placeholder="Filter, e.g. {fk: {$datum.id}, closedAt: null}"
 							multiline
 						/>
 					)}
@@ -329,7 +329,7 @@ export function BranchEditor({
 						getAttributeCandidatesForQualifier={
 							getAttributeCandidatesForQualifier
 						}
-						placeholder="Changes, e.g. {closedAt: now()}"
+						placeholder="Changes, e.g. {closedAt: {now()}}"
 						multiline
 					/>
 				</>

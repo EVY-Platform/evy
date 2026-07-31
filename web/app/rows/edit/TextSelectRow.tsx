@@ -8,7 +8,7 @@ export default defineRow("TextSelectRow", {
 	config: {
 		type: "text_select",
 		actions: defaultRowActions({
-			tap: { fn: "select", value: "$datum" },
+			tap: "{select($datum)}",
 		}),
 		source: "{resourceId.payment_cash}",
 		visible: "true",

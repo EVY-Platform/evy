@@ -52,6 +52,7 @@
 		FA10A0072F90000100000001 /* EVYScope.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA10A0082F90000100000001 /* EVYScope.swift */; };
 		FA10A0092F90000100000001 /* EVYObjectLiteral.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA10A0102F90000100000001 /* EVYObjectLiteral.swift */; };
 		AI0000012FAB000200000001 /* EVYActionInvocation.swift in Sources */ = {isa = PBXBuildFile; fileRef = AI0000022FAB000200000001 /* EVYActionInvocation.swift */; };
+		AI0000032FAB000200000001 /* EVYActionParser.swift in Sources */ = {isa = PBXBuildFile; fileRef = AI0000042FAB000200000001 /* EVYActionParser.swift */; };
 		736D10572B78C4C500503C4D /* EVYPage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 736D10562B78C4C500503C4D /* EVYPage.swift */; };
 
 		737334F92B7B5F1800D2E1CF /* EVYInputRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 737334F82B7B5F1800D2E1CF /* EVYInputRow.swift */; };
@@ -218,6 +219,7 @@
 		FA10A0082F90000100000001 /* EVYScope.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EVYScope.swift; sourceTree = "<group>"; };
 		FA10A0102F90000100000001 /* EVYObjectLiteral.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EVYObjectLiteral.swift; sourceTree = "<group>"; };
 		AI0000022FAB000200000001 /* EVYActionInvocation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EVYActionInvocation.swift; sourceTree = "<group>"; };
+		AI0000042FAB000200000001 /* EVYActionParser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EVYActionParser.swift; sourceTree = "<group>"; };
 		736D10562B78C4C500503C4D /* EVYPage.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = EVYPage.swift; sourceTree = "<group>"; };
 
 		737334F82B7B5F1800D2E1CF /* EVYInputRow.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = EVYInputRow.swift; sourceTree = "<group>"; };
@@ -424,6 +426,7 @@
 				A7R0W0022F90000100000001 /* EVYRowActionOperation.swift */,
 				FA10A0102F90000100000001 /* EVYObjectLiteral.swift */,
 				AI0000022FAB000200000001 /* EVYActionInvocation.swift */,
+				AI0000042FAB000200000001 /* EVYActionParser.swift */,
 				73C78AFB2BC564E30026F39D /* Assets */,
 				736D104F2B78C4A100503C4D /* Rows */,
 				73CDCAB42B27176700D4E82A /* Views */,
@@ -870,6 +873,7 @@
 				FA10A0072F90000100000001 /* EVYScope.swift in Sources */,
 				FA10A0092F90000100000001 /* EVYObjectLiteral.swift in Sources */,
 				AI0000012FAB000200000001 /* EVYActionInvocation.swift in Sources */,
+				AI0000032FAB000200000001 /* EVYActionParser.swift in Sources */,
 				7333F45B2FAA2D1C006BEA92 /* EVY+QueryParams.swift in Sources */,
 				7333F45C2FAA2D1C006BEA92 /* EVYFlowStore.swift in Sources */,
 				7333F45D2FAA2D1C006BEA92 /* EVY+Sync.swift in Sources */,

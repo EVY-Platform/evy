@@ -1,27 +1,75 @@
 /**
- * Converts legacy `{fn(arg,arg)}` action branch strings into structured
- * UI_ActionInvocation objects.
+ * Validator and editor parser for inline action expression strings (`{fn(arg, …)}`).
+ * Storage is the expression string; this module parses to an AST for validation,
+ * editor tooling, and conformance tests.
  *
- * The rules here mirror EVYActionParser / EVYActionRunner on iOS exactly,
- * including the quirks: which argument counts are legal, which arguments must
- * be brace-wrapped objects, and that a store update needs a non-empty filter
- * while a draft update needs an empty one. Value expressions are carried across
- * unchanged as strings, because whether a bare word is a data path or a literal
- * is decided at execution time against live data.
+ * Rules mirror EVYActionParser / EVYActionRunner on iOS: legal argument counts,
+ * brace-wrapped object literals for maps, and store vs draft update modes.
+ * Map values are carried as strings; value-position resolution happens at runtime.
  *
- * Conversions are pinned by the shared corpus (types/grammar/conformance.json),
- * so a divergence between this and the clients fails a named test.
+ * Pinned by types/grammar/conformance.json (`action-parse` vectors).
  */
 
 import { splitFunctionArguments } from "./functionArgs";
-import type {
-	UI_ActionExpressionMap,
-	UI_ActionInvocation,
-} from "./generated/ts/sdui/action";
 import { isValidResourceRef } from "./resourceRef";
 
-type ActionConversion =
-	| { ok: true; invocation: UI_ActionInvocation }
+export type ActionExpressionMap = Record<string, string>;
+
+export type ActionExpressionAst =
+	| { fn: "close" | "select_photo" | "expand_photo" | "delete_photo" }
+	| { fn: "show" | "expand_text"; row_id: string }
+	| { fn: "highlight_required"; field: string }
+	| { fn: "select"; value: string }
+	| {
+			fn: "navigate";
+			flow_id: string;
+			page_id: string;
+			query?: ActionExpressionMap;
+	  }
+	| { fn: "create"; resource: string; mode: "submit" }
+	| {
+			fn: "create";
+			resource: string;
+			mode: "inline";
+			data: ActionExpressionMap;
+			id_destination?: string;
+	  }
+	| {
+			fn: "create";
+			resource: string;
+			mode: "from_path";
+			data_path: string;
+			id_destination?: string;
+	  }
+	| {
+			fn: "update";
+			resource: string;
+			mode: "store";
+			filter: ActionExpressionMap;
+			changes: ActionExpressionMap;
+	  }
+	| {
+			fn: "update";
+			resource: string;
+			mode: "store";
+			filter: ActionExpressionMap;
+			changes_path: string;
+	  }
+	| {
+			fn: "update";
+			resource: string;
+			mode: "draft";
+			changes: ActionExpressionMap;
+	  }
+	| {
+			fn: "update";
+			resource: string;
+			mode: "draft";
+			changes_path: string;
+	  };
+
+type ActionParseResult =
+	| { ok: true; ast: ActionExpressionAst }
 	| { ok: false; reason: string };
 
 const ZERO_ARG_FUNCTIONS = new Set([
@@ -32,7 +80,7 @@ const ZERO_ARG_FUNCTIONS = new Set([
 ]);
 const ROW_TARGET_FUNCTIONS = new Set(["show", "expand_text"]);
 
-function fail(reason: string): ActionConversion {
+function fail(reason: string): ActionParseResult {
 	return { ok: false, reason };
 }
 
@@ -48,7 +96,7 @@ function stripOptionalSurroundingQuotes(value: string): string {
 	return trimmed;
 }
 
-/** Mirrors EVYActionParser.functionCall: optional braces, then `name(args)`. */
+/** Optional braces, then `name(args)`. */
 function parseFunctionCall(
 	rawBranch: string,
 ): { name: string; args: string } | null {
@@ -63,18 +111,17 @@ function parseFunctionCall(
 	return { name, args: branch.slice(parenIndex + 1, -1).trim() };
 }
 
-/** Mirrors EVYActionParser.plainTextObject, splitting each pair on its first colon. */
 function parsePlainTextObject(
 	text: string,
 	allowEmptyValues = false,
-): UI_ActionExpressionMap | null {
+): ActionExpressionMap | null {
 	const trimmed = text.trim();
 	if (!trimmed.startsWith("{") || !trimmed.endsWith("}")) return null;
 
 	const inner = trimmed.slice(1, -1).trim();
 	if (!inner) return {};
 
-	const object: UI_ActionExpressionMap = {};
+	const object: ActionExpressionMap = {};
 	for (const pair of splitFunctionArguments(inner)) {
 		const colonIndex = pair.indexOf(":");
 		if (colonIndex === -1) return null;
@@ -88,10 +135,9 @@ function parsePlainTextObject(
 }
 
 type ObjectArgument =
-	| { kind: "map"; map: UI_ActionExpressionMap }
+	| { kind: "map"; map: ActionExpressionMap }
 	| { kind: "path"; path: string };
 
-/** Brace-wrapped means an inline map; anything else non-empty is a data path. */
 function parseObjectArgument(text: string): ObjectArgument | null {
 	const trimmed = text.trim();
 	if (trimmed.startsWith("{") && trimmed.endsWith("}")) {
@@ -102,7 +148,7 @@ function parseObjectArgument(text: string): ObjectArgument | null {
 	return { kind: "path", path: trimmed };
 }
 
-function convertCreate(args: string[]): ActionConversion {
+function convertCreate(args: string[]): ActionParseResult {
 	if (args.length < 2) return fail("create requires resource and data");
 	const resource = args[0].trim();
 	if (!isValidResourceRef(resource)) {
@@ -116,7 +162,7 @@ function convertCreate(args: string[]): ActionConversion {
 		}
 		return {
 			ok: true,
-			invocation: { fn: "create", resource, mode: "submit" },
+			ast: { fn: "create", resource, mode: "submit" },
 		};
 	}
 
@@ -134,7 +180,7 @@ function convertCreate(args: string[]): ActionConversion {
 	if (data.kind === "map") {
 		return {
 			ok: true,
-			invocation: {
+			ast: {
 				fn: "create",
 				resource,
 				mode: "inline",
@@ -145,7 +191,7 @@ function convertCreate(args: string[]): ActionConversion {
 	}
 	return {
 		ok: true,
-		invocation: {
+		ast: {
 			fn: "create",
 			resource,
 			mode: "from_path",
@@ -155,7 +201,7 @@ function convertCreate(args: string[]): ActionConversion {
 	};
 }
 
-function convertUpdate(args: string[]): ActionConversion {
+function convertUpdate(args: string[]): ActionParseResult {
 	if (args.length < 3 || args.length > 4) {
 		return fail("update takes 3 or 4 arguments");
 	}
@@ -195,7 +241,7 @@ function convertUpdate(args: string[]): ActionConversion {
 	if (mode === "draft") {
 		return {
 			ok: true,
-			invocation: {
+			ast: {
 				fn: "update",
 				resource,
 				mode,
@@ -205,7 +251,7 @@ function convertUpdate(args: string[]): ActionConversion {
 	}
 	return {
 		ok: true,
-		invocation: {
+		ast: {
 			fn: "update",
 			resource,
 			mode,
@@ -215,7 +261,7 @@ function convertUpdate(args: string[]): ActionConversion {
 	};
 }
 
-function convertNavigate(args: string[]): ActionConversion {
+function convertNavigate(args: string[]): ActionParseResult {
 	if (args.length < 2) return fail("navigate requires flowId and pageId");
 	if (args.length > 3) return fail("navigate accepts at most 3 arguments");
 
@@ -227,7 +273,7 @@ function convertNavigate(args: string[]): ActionConversion {
 	if (!rawQuery) {
 		return {
 			ok: true,
-			invocation: { fn: "navigate", flow_id: flowId, page_id: pageId },
+			ast: { fn: "navigate", flow_id: flowId, page_id: pageId },
 		};
 	}
 
@@ -235,14 +281,11 @@ function convertNavigate(args: string[]): ActionConversion {
 	if (query === null) return fail("navigate query must be an object");
 	return {
 		ok: true,
-		invocation: { fn: "navigate", flow_id: flowId, page_id: pageId, query },
+		ast: { fn: "navigate", flow_id: flowId, page_id: pageId, query },
 	};
 }
 
-/** Empty branches stay empty; `{ ok: false }` means "leave this string alone". */
-export function parseActionStringToInvocation(
-	branch: string,
-): ActionConversion {
+export function parseActionExpression(branch: string): ActionParseResult {
 	const trimmed = branch.trim();
 	if (!trimmed) return fail("empty branch");
 
@@ -255,7 +298,7 @@ export function parseActionStringToInvocation(
 		if (args.length > 0) return fail(`${call.name} takes no arguments`);
 		return {
 			ok: true,
-			invocation: { fn: call.name } as UI_ActionInvocation,
+			ast: { fn: call.name } as ActionExpressionAst,
 		};
 	}
 
@@ -266,7 +309,7 @@ export function parseActionStringToInvocation(
 		if (!rowId) return fail(`${call.name} row id must not be empty`);
 		return {
 			ok: true,
-			invocation: { fn: call.name, row_id: rowId } as UI_ActionInvocation,
+			ast: { fn: call.name, row_id: rowId } as ActionExpressionAst,
 		};
 	}
 
@@ -279,14 +322,14 @@ export function parseActionStringToInvocation(
 				return fail("highlight_required field must not be empty");
 			return {
 				ok: true,
-				invocation: { fn: "highlight_required", field },
+				ast: { fn: "highlight_required", field },
 			};
 		}
 		case "select": {
 			if (args.length !== 1) return fail("select takes one value");
 			const value = args[0].trim();
 			if (!value) return fail("select value must not be empty");
-			return { ok: true, invocation: { fn: "select", value } };
+			return { ok: true, ast: { fn: "select", value } };
 		}
 		case "navigate":
 			return convertNavigate(args);
@@ -299,70 +342,61 @@ export function parseActionStringToInvocation(
 	}
 }
 
-function serializeExpressionMap(map: UI_ActionExpressionMap): string {
+function serializeExpressionMap(map: ActionExpressionMap): string {
 	const pairs = Object.entries(map).map(([key, value]) => `${key}: ${value}`);
 	return `{${pairs.join(", ")}}`;
 }
 
-/**
- * Round-trips an invocation back to its editor string for the web action editor.
- */
-export function serializeInvocationToEditorString(
-	invocation: UI_ActionInvocation,
-): string {
-	const call = (args: string[]) => `{${invocation.fn}(${args.join(",")})}`;
+export function serializeActionExpression(ast: ActionExpressionAst): string {
+	const call = (args: string[]) => `{${ast.fn}(${args.join(",")})}`;
 
-	switch (invocation.fn) {
+	switch (ast.fn) {
 		case "close":
 		case "select_photo":
 		case "expand_photo":
 		case "delete_photo":
-			return `{${invocation.fn}()}`;
+			return `{${ast.fn}()}`;
 		case "show":
 		case "expand_text":
-			return call([invocation.row_id]);
+			return call([ast.row_id]);
 		case "highlight_required":
-			return call([invocation.field]);
+			return call([ast.field]);
 		case "select":
-			return call([invocation.value]);
+			return call([ast.value]);
 		case "navigate":
 			return call([
-				invocation.flow_id,
-				invocation.page_id,
-				...(invocation.query
-					? [serializeExpressionMap(invocation.query)]
-					: []),
+				ast.flow_id,
+				ast.page_id,
+				...(ast.query ? [serializeExpressionMap(ast.query)] : []),
 			]);
 		case "create": {
-			if (invocation.mode === "submit") {
-				return call([invocation.resource, "submit"]);
+			if (ast.mode === "submit") {
+				return call([ast.resource, "submit"]);
 			}
 			const dataArg =
-				invocation.mode === "inline"
-					? serializeExpressionMap(invocation.data)
-					: invocation.data_path;
+				ast.mode === "inline"
+					? serializeExpressionMap(ast.data)
+					: ast.data_path;
 			return call([
-				invocation.resource,
+				ast.resource,
 				dataArg,
-				...(invocation.id_destination
-					? [invocation.id_destination]
-					: []),
+				...(ast.id_destination ? [ast.id_destination] : []),
 			]);
 		}
 		case "update": {
 			const filterArg =
-				"filter" in invocation && invocation.filter
-					? serializeExpressionMap(invocation.filter)
+				"filter" in ast && ast.filter
+					? serializeExpressionMap(ast.filter)
 					: "{}";
 			const changesArg =
-				"changes" in invocation && invocation.changes
-					? serializeExpressionMap(invocation.changes)
-					: (invocation as { changes_path: string }).changes_path;
+				"changes" in ast && ast.changes
+					? serializeExpressionMap(ast.changes)
+					: (ast as { changes_path: string }).changes_path;
 			return call([
-				invocation.resource,
+				ast.resource,
 				filterArg,
 				changesArg,
-				...(invocation.mode === "draft" ? ["draft"] : []),
+				...(ast.mode === "draft" ? ["draft"] : []),
 			]);
 		}
 	}

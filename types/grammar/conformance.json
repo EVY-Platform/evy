@@ -773,9 +773,9 @@
 			"notes": "A boolean word followed by a comparison operator is an operand, not a standalone boolean."
 		},
 		{
-			"id": "ast-convert-close",
-			"category": "action-ast-convert",
-			"platforms": ["web"],
+			"id": "action-parse-close",
+			"category": "action-parse",
+			"platforms": ["ios", "web"],
 			"input": "{close()}",
 			"expect": {
 				"ast": {
@@ -784,9 +784,9 @@
 			}
 		},
 		{
-			"id": "ast-convert-show",
-			"category": "action-ast-convert",
-			"platforms": ["web"],
+			"id": "action-parse-show",
+			"category": "action-parse",
+			"platforms": ["ios", "web"],
 			"input": "{show(b8c7d6e5-f4a3-4b2c-9d1e-0f8a7b6c5d4e)}",
 			"expect": {
 				"ast": {
@@ -796,9 +796,9 @@
 			}
 		},
 		{
-			"id": "ast-convert-select-datum",
-			"category": "action-ast-convert",
-			"platforms": ["web"],
+			"id": "action-parse-select-datum",
+			"category": "action-parse",
+			"platforms": ["ios", "web"],
 			"input": "{select($datum)}",
 			"expect": {
 				"ast": {
@@ -808,25 +808,25 @@
 			}
 		},
 		{
-			"id": "ast-convert-navigate-query",
-			"category": "action-ast-convert",
-			"platforms": ["web"],
-			"input": "{navigate(flow-1,page-1,{id: $datum.id})}",
+			"id": "action-parse-navigate-query",
+			"category": "action-parse",
+			"platforms": ["ios", "web"],
+			"input": "{navigate(flow-1,page-1,{id: {$datum.id}})}",
 			"expect": {
 				"ast": {
 					"fn": "navigate",
 					"flow_id": "flow-1",
 					"page_id": "page-1",
 					"query": {
-						"id": "$datum.id"
+						"id": "{$datum.id}"
 					}
 				}
 			}
 		},
 		{
-			"id": "ast-convert-create-submit",
-			"category": "action-ast-convert",
-			"platforms": ["web"],
+			"id": "action-parse-create-submit",
+			"category": "action-parse",
+			"platforms": ["ios", "web"],
 			"input": "{create(marketplace.items,submit)}",
 			"expect": {
 				"ast": {
@@ -834,14 +834,13 @@
 					"resource": "marketplace.items",
 					"mode": "submit"
 				}
-			},
-			"notes": "The bare `submit` keyword becomes a typed mode."
+			}
 		},
 		{
-			"id": "ast-convert-create-inline-quoted",
-			"category": "action-ast-convert",
-			"platforms": ["web"],
-			"input": "{create(evy.messages,{status: \"pending\", type: pickup})}",
+			"id": "action-parse-create-inline",
+			"category": "action-parse",
+			"platforms": ["ios", "web"],
+			"input": "{create(evy.messages,{status: pending, type: pickup})}",
 			"expect": {
 				"ast": {
 					"fn": "create",
@@ -853,12 +852,31 @@
 					}
 				}
 			},
-			"notes": "Surrounding quotes on map values are stripped at conversion; whether `pickup` is a path or a literal is decided at execution."
+			"notes": "Map values are bare literals in value position; resolution is opted in with braces."
 		},
 		{
-			"id": "ast-convert-create-from-path",
-			"category": "action-ast-convert",
-			"platforms": ["web"],
+			"id": "action-parse-create-nested-inline",
+			"category": "action-parse",
+			"platforms": ["ios", "web"],
+			"input": "{create(evy.messages,{fk: {marketplace.items.id}, resource: marketplace.items, data: {type: delivery, value: pending, time: {selected_delivery_timeslot}}})}",
+			"expect": {
+				"ast": {
+					"fn": "create",
+					"resource": "evy.messages",
+					"mode": "inline",
+					"data": {
+						"fk": "{marketplace.items.id}",
+						"resource": "marketplace.items",
+						"data": "{type: delivery, value: pending, time: {selected_delivery_timeslot}}"
+					}
+				}
+			},
+			"notes": "Nested braces inside inline create maps parse via brace-aware argument splitting."
+		},
+		{
+			"id": "action-parse-create-from-path",
+			"category": "action-parse",
+			"platforms": ["ios", "web"],
 			"input": "{create(evy.addresses,pickup_address,{pickup_address.id})}",
 			"expect": {
 				"ast": {
@@ -871,17 +889,17 @@
 			}
 		},
 		{
-			"id": "ast-convert-update-store",
-			"category": "action-ast-convert",
-			"platforms": ["web"],
-			"input": "{update(marketplace.items,{id: item.id},{status: accepted})}",
+			"id": "action-parse-update-store",
+			"category": "action-parse",
+			"platforms": ["ios", "web"],
+			"input": "{update(marketplace.items,{id: {item.id}},{status: accepted})}",
 			"expect": {
 				"ast": {
 					"fn": "update",
 					"resource": "marketplace.items",
 					"mode": "store",
 					"filter": {
-						"id": "item.id"
+						"id": "{item.id}"
 					},
 					"changes": {
 						"status": "accepted"
@@ -890,9 +908,9 @@
 			}
 		},
 		{
-			"id": "ast-convert-update-draft",
-			"category": "action-ast-convert",
-			"platforms": ["web"],
+			"id": "action-parse-update-draft",
+			"category": "action-parse",
+			"platforms": ["ios", "web"],
 			"input": "{update(marketplace.items,{},{a: b},draft)}",
 			"expect": {
 				"ast": {
@@ -903,48 +921,241 @@
 						"a": "b"
 					}
 				}
-			},
-			"notes": "The bare `draft` keyword becomes a typed mode; the empty filter slot disappears."
+			}
 		},
 		{
-			"id": "ast-convert-rejects-bare-name",
-			"category": "action-ast-convert",
-			"platforms": ["web"],
+			"id": "action-parse-rejects-bare-name",
+			"category": "action-parse",
+			"platforms": ["ios", "web"],
 			"input": "close()",
 			"expect": {
-				"ast": null
+				"error": "not a brace-wrapped function call"
 			},
-			"notes": "Branches must be brace-wrapped to execute, so an unwrapped call is not convertible."
+			"notes": "Branches must be brace-wrapped to execute."
 		},
 		{
-			"id": "ast-convert-rejects-one-arg-create",
-			"category": "action-ast-convert",
-			"platforms": ["web"],
+			"id": "action-parse-rejects-one-arg-create",
+			"category": "action-parse",
+			"platforms": ["ios", "web"],
 			"input": "{create(marketplace.items)}",
 			"expect": {
-				"ast": null
-			},
-			"notes": "A one-argument create is invalid — resource and data are required."
+				"error": "create requires resource and data"
+			}
 		},
 		{
-			"id": "ast-convert-rejects-unprefixed-resource",
-			"category": "action-ast-convert",
-			"platforms": ["web"],
+			"id": "action-parse-rejects-unprefixed-resource",
+			"category": "action-parse",
+			"platforms": ["ios", "web"],
 			"input": "{create(items,submit)}",
 			"expect": {
-				"ast": null
-			},
-			"notes": "Resource refs must carry the service prefix."
+				"error": "create requires a service-prefixed resource ref"
+			}
 		},
 		{
-			"id": "ast-convert-rejects-store-update-without-filter",
-			"category": "action-ast-convert",
-			"platforms": ["web"],
+			"id": "action-parse-rejects-store-update-without-filter",
+			"category": "action-parse",
+			"platforms": ["ios", "web"],
 			"input": "{update(marketplace.items,{},{a: b})}",
 			"expect": {
-				"ast": null
+				"error": "a store update requires a non-empty filter"
+			}
+		},
+		{
+			"id": "action-parse-rejects-close-with-args",
+			"category": "action-parse",
+			"platforms": ["ios", "web"],
+			"input": "{close(x)}",
+			"expect": {
+				"error": "close takes no arguments"
+			}
+		},
+		{
+			"id": "action-parse-rejects-unknown-function",
+			"category": "action-parse",
+			"platforms": ["ios", "web"],
+			"input": "{explode()}",
+			"expect": {
+				"error": "unknown action function `explode`"
+			}
+		},
+		{
+			"id": "action-parse-rejects-structured-looking",
+			"category": "action-parse",
+			"platforms": ["ios", "web"],
+			"input": "{\"fn\":\"close\"}",
+			"expect": {
+				"error": "not a brace-wrapped function call"
 			},
-			"notes": "Store mode requires a non-empty filter."
+			"notes": "JSON-shaped strings are not action expressions."
+		},
+		{
+			"id": "value-resolution-bare-literal",
+			"category": "value-resolution",
+			"platforms": ["ios"],
+			"input": "marketplace.items",
+			"expect": {
+				"json": "marketplace.items"
+			}
+		},
+		{
+			"id": "value-resolution-braced-path",
+			"category": "value-resolution",
+			"platforms": ["ios"],
+			"input": "{item.id}",
+			"data": {
+				"item": { "id": "item-42" }
+			},
+			"expect": {
+				"json": "item-42"
+			}
+		},
+		{
+			"id": "value-resolution-braced-object",
+			"category": "value-resolution",
+			"platforms": ["ios"],
+			"input": "{item}",
+			"data": {
+				"item": { "title": "Desk", "price": 50 }
+			},
+			"expect": {
+				"json": { "title": "Desk", "price": 50 }
+			}
+		},
+		{
+			"id": "value-resolution-interpolation",
+			"category": "value-resolution",
+			"platforms": ["ios"],
+			"input": "Hello {user.name}!",
+			"data": {
+				"user": { "name": "Alice" }
+			},
+			"expect": {
+				"text": "Hello Alice!"
+			}
+		},
+		{
+			"id": "value-resolution-bare-true",
+			"category": "value-resolution",
+			"platforms": ["ios"],
+			"input": "true",
+			"expect": {
+				"json": true
+			}
+		},
+		{
+			"id": "value-resolution-bare-false",
+			"category": "value-resolution",
+			"platforms": ["ios"],
+			"input": "false",
+			"expect": {
+				"json": false
+			}
+		},
+		{
+			"id": "value-resolution-bare-null",
+			"category": "value-resolution",
+			"platforms": ["ios"],
+			"input": "null",
+			"expect": {
+				"json": null
+			}
+		},
+		{
+			"id": "value-resolution-bare-number",
+			"category": "value-resolution",
+			"platforms": ["ios"],
+			"input": "42",
+			"expect": {
+				"json": 42
+			}
+		},
+		{
+			"id": "value-resolution-bare-uuid-literal",
+			"category": "value-resolution",
+			"platforms": ["ios"],
+			"input": "b8c7d6e5-f4a3-4b2c-9d1e-0f8a7b6c5d4e",
+			"expect": {
+				"json": "b8c7d6e5-f4a3-4b2c-9d1e-0f8a7b6c5d4e"
+			},
+			"notes": "Bare UUIDs are literals like any other bare string."
+		},
+		{
+			"id": "value-resolution-bare-datum",
+			"category": "value-resolution",
+			"platforms": ["ios"],
+			"input": "$datum",
+			"datum": { "id": "datum-1", "status": "pending" },
+			"expect": {
+				"json": { "id": "datum-1", "status": "pending" }
+			}
+		},
+		{
+			"id": "value-resolution-braced-datum-id",
+			"category": "value-resolution",
+			"platforms": ["ios"],
+			"input": "{$datum.id}",
+			"datum": { "id": "datum-99" },
+			"expect": {
+				"json": "datum-99"
+			}
+		},
+		{
+			"id": "value-resolution-datum-missing-omit",
+			"category": "value-resolution",
+			"platforms": ["ios"],
+			"input": "{$datum.missing}",
+			"datum": { "id": "datum-1" },
+			"expect": {
+				"omit": true
+			}
+		},
+		{
+			"id": "value-resolution-nested-path",
+			"category": "value-resolution",
+			"platforms": ["ios"],
+			"input": "{parent.child.value}",
+			"data": {
+				"parent": { "child": { "value": "deep" } }
+			},
+			"expect": {
+				"json": "deep"
+			}
+		},
+		{
+			"id": "value-resolution-nested-map-value",
+			"category": "value-resolution",
+			"platforms": ["ios"],
+			"input": "{outer.inner.id}",
+			"data": {
+				"outer": { "inner": { "id": "nested-id" } }
+			},
+			"expect": {
+				"json": "nested-id"
+			},
+			"notes": "Braced paths resolve through nested object maps."
+		},
+		{
+			"id": "value-resolution-braced-string-literal",
+			"category": "value-resolution",
+			"platforms": ["ios"],
+			"input": "{pending}",
+			"data": {
+				"pending": "resolved-pending"
+			},
+			"expect": {
+				"json": "resolved-pending"
+			},
+			"notes": "A braced whole value resolves even when the binding name matches a common literal word."
+		},
+		{
+			"id": "value-resolution-quoted-string-literal",
+			"category": "value-resolution",
+			"platforms": ["ios"],
+			"input": "\"AUD\"",
+			"expect": {
+				"json": "AUD"
+			},
+			"notes": "Whole-value quotes are string delimiters (destination templates); not the dead escape-to-force-literal rule."
 		},
 		{
 			"id": "expression-sort-scalar-asc-first",

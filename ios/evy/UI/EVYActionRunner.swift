@@ -201,7 +201,12 @@ enum EVYActionRunner {
       return EVYPlainTextResolution.resolveValues(
         object, datum: datum, omitUnresolvedDatumKeys: true)
     case .path(let path):
-      let resolved = EVYPlainTextResolution.resolveValue(path, datum: datum)
+      let bindingExpression = path.trimmingCharacters(in: .whitespacesAndNewlines)
+      let resolved = try EVY.getDataFromText(
+        bindingExpression.hasPrefix("{") && bindingExpression.hasSuffix("}")
+          ? bindingExpression
+          : "{\(bindingExpression)}"
+      )
       guard case .dictionary(var dictionary) = resolved else {
         throw EVYError.invalidData(context: "data path must resolve to an object: \(path)")
       }

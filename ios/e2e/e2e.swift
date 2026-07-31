@@ -8,123 +8,6 @@ import XCTest
 private let MARKETPLACE_ITEMS_RESOURCE_ID = MarketplaceE2EFixture.itemsRef
 private let MARKETPLACE_SERVICE = MarketplaceE2EFixture.service
 
-// MARK: - Action branch helpers
-
-/// Builds a structured action branch from the compact call syntax.
-///
-/// The stored format is a structured invocation and the API rejects legacy
-/// strings, but spelling every action out longhand would make these fixtures
-/// unreadable. This converts at the seam. It is deliberately small: it handles
-/// only the forms this harness uses.
-func e2eActionBranch(_ callSyntax: String) -> Any {
-  let trimmed = callSyntax.trimmingCharacters(in: .whitespacesAndNewlines)
-  guard trimmed.hasPrefix("{"), trimmed.hasSuffix("}") else { return "" }
-  let inner = String(trimmed.dropFirst().dropLast())
-  guard let parenIndex = inner.firstIndex(of: "("), inner.hasSuffix(")") else { return "" }
-
-  let name = String(inner[..<parenIndex]).trimmingCharacters(in: .whitespacesAndNewlines)
-  let argsText = String(inner[inner.index(after: parenIndex)..<inner.index(before: inner.endIndex)])
-  let args = e2eSplitTopLevel(argsText)
-
-  switch name {
-  case "close", "select_photo", "expand_photo", "delete_photo":
-    return ["fn": name]
-  case "show", "expand_text":
-    return ["fn": name, "row_id": args.first ?? ""]
-  case "highlight_required":
-    return ["fn": name, "field": args.first ?? ""]
-  case "select":
-    return ["fn": name, "value": args.first ?? ""]
-  case "navigate":
-    var out: [String: Any] = ["fn": "navigate", "flow_id": args[0], "page_id": args[1]]
-    if args.count > 2, let query = e2ePlainObject(args[2]), !query.isEmpty {
-      out["query"] = query
-    }
-    return out
-  case "create":
-    var out: [String: Any] = ["fn": "create", "resource": args[0]]
-    let third = args.count > 1 ? args[1] : ""
-    if third == "submit" {
-      out["mode"] = "submit"
-    } else if let data = e2ePlainObject(third) {
-      out["mode"] = "inline"
-      out["data"] = data
-    } else {
-      out["mode"] = "from_path"
-      out["data_path"] = third
-    }
-    if args.count > 2, !args[2].isEmpty { out["id_destination"] = args[2] }
-    return out
-  case "update":
-    let isDraft = args.count == 4 && args[3] == "draft"
-    var out: [String: Any] = [
-      "fn": "update", "resource": args[0],
-      "mode": isDraft ? "draft" : "store",
-    ]
-    if !isDraft, let filter = e2ePlainObject(args[1]) { out["filter"] = filter }
-    if let changes = e2ePlainObject(args[2]) {
-      out["changes"] = changes
-    } else {
-      out["changes_path"] = args[2]
-    }
-    return out
-  default:
-    return ""
-  }
-}
-
-/// `{a: b, c: d}` -> map, or nil when the text is not a brace-wrapped object.
-private func e2ePlainObject(_ text: String) -> [String: String]? {
-  let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
-  guard trimmed.hasPrefix("{"), trimmed.hasSuffix("}") else { return nil }
-  let inner = String(trimmed.dropFirst().dropLast()).trimmingCharacters(in: .whitespacesAndNewlines)
-  guard !inner.isEmpty else { return [:] }
-
-  var out: [String: String] = [:]
-  for pair in e2eSplitTopLevel(inner) {
-    guard let colon = pair.firstIndex(of: ":") else { continue }
-    let key = String(pair[..<colon]).trimmingCharacters(in: .whitespacesAndNewlines)
-    let value = String(pair[pair.index(after: colon)...])
-      .trimmingCharacters(in: .whitespacesAndNewlines)
-    if !key.isEmpty { out[key] = value }
-  }
-  return out
-}
-
-/// Splits on top-level commas, respecting nesting and quotes.
-private func e2eSplitTopLevel(_ input: String) -> [String] {
-  var parts: [String] = []
-  var current = ""
-  var depth = 0
-  var quote: Character?
-
-  for character in input {
-    if let openQuote = quote {
-      current.append(character)
-      if character == openQuote { quote = nil }
-      continue
-    }
-    switch character {
-    case "\"", "'":
-      quote = character
-      current.append(character)
-    case "(", "[", "{":
-      depth += 1
-      current.append(character)
-    case ")", "]", "}":
-      depth -= 1
-      current.append(character)
-    case "," where depth == 0:
-      parts.append(current.trimmingCharacters(in: .whitespacesAndNewlines))
-      current = ""
-    default: current.append(character)
-    }
-  }
-  let last = current.trimmingCharacters(in: .whitespacesAndNewlines)
-  if !last.isEmpty { parts.append(last) }
-  return parts
-}
-
 // MARK: - Minimal WebSocket Emitter for E2E Tests
 
 actor WSEmitter {
@@ -545,7 +428,7 @@ class E2ETestBase: XCTestCase {
                 [
                   "condition": "",
                   "false": "",
-                  "true": e2eActionBranch("{show(a4b5c6d7-e8f9-4a0b-1c2d-3e4f5a6b7c8d)}"),
+                  "true": "{show(a4b5c6d7-e8f9-4a0b-1c2d-3e4f5a6b7c8d)}",
                 ]
               ]
             ),
@@ -601,7 +484,7 @@ class E2ETestBase: XCTestCase {
                 [
                   "condition": "",
                   "false": "",
-                  "true": e2eActionBranch("{show(a4b5c6d7-e8f9-4a0b-1c2d-3e4f5a6b7c8d)}"),
+                  "true": "{show(a4b5c6d7-e8f9-4a0b-1c2d-3e4f5a6b7c8d)}",
                 ]
               ]
             ),
@@ -1126,8 +1009,8 @@ class E2ETestBase: XCTestCase {
   ) -> [String: Any] {
     [
       "condition": condition,
-      "false": falseAction.isEmpty ? "" : e2eActionBranch(falseAction),
-      "true": action.isEmpty ? "" : e2eActionBranch(action),
+      "false": falseAction,
+      "true": action,
     ]
   }
 
@@ -1166,7 +1049,7 @@ class E2ETestBase: XCTestCase {
   }
 
   static let messageCreateEnvelope =
-    "fk: \(MARKETPLACE_ITEMS_RESOURCE_ID).id, resource: \"\(MARKETPLACE_ITEMS_RESOURCE_ID)\""
+    "fk: {\(MARKETPLACE_ITEMS_RESOURCE_ID).id}, resource: \(MARKETPLACE_ITEMS_RESOURCE_ID)"
 
   static func requestCreateAction(type: String, payload: String) -> String {
     let messagesResourceId = EVYCoreResource.messages.ref
@@ -1250,15 +1133,15 @@ class E2ETestBase: XCTestCase {
     let deliveryVisibility = cancelRequestVisibilityExpressions(type: "delivery")
     let shippingVisibility = cancelRequestVisibilityExpressions(type: "shipping")
     let pickupCreateAction = requestCreateAction(
-      type: "pickup", payload: "time: selected_pickup_timeslot")
+      type: "pickup", payload: "time: {selected_pickup_timeslot}")
     let deliveryCreateAction = requestCreateAction(
-      type: "delivery", payload: "time: selected_delivery_timeslot")
+      type: "delivery", payload: "time: {selected_delivery_timeslot}")
     let shippingCreateAction = requestCreateAction(
-      type: "shipping", payload: "postalcode: shipping_address.postcode")
+      type: "shipping", payload: "postalcode: {shipping_address.postcode}")
     func cancelAction(type: String) -> String {
       let latest = latestMessageExpression(type: type)
       return "{create(\(messagesResourceId),{\(messageCreateEnvelope),"
-        + " parent_message_id: \(latest).id, data: {value: cancel, type: \(type)}})}"
+        + " parent_message_id: {\(latest).id}, data: {value: cancel, type: \(type)}})}"
     }
 
     return [
@@ -1754,9 +1637,9 @@ class E2ETestBase: XCTestCase {
 
   static func viewItemRequestFlowData(flowId: String, pageId: String) -> [String: Any] {
     let pickupCreateAction = requestCreateAction(
-      type: "pickup", payload: "time: selected_pickup_timeslot")
+      type: "pickup", payload: "time: {selected_pickup_timeslot}")
     let shippingCreateAction = requestCreateAction(
-      type: "shipping", payload: "postalcode: shipping_address.postcode")
+      type: "shipping", payload: "postalcode: {shipping_address.postcode}")
 
     return [
       "id": flowId,
@@ -1806,18 +1689,8 @@ class E2ETestBase: XCTestCase {
     [
       "condition": "",
       "false": "",
-      "true": [
-        "fn": "create",
-        "resource": EVYCoreResource.messages.ref,
-        "mode": "inline",
-        "data": [
-          "fk": "$datum.fk",
-          "resource": "$datum.resource",
-          "parent_message_id": "$datum.id",
-          "data":
-            "{value: \(value), type: $datum.data.type, time: $datum.data.time, postalcode: $datum.data.postalcode}",
-        ],
-      ],
+      "true":
+        "{create(\(EVYCoreResource.messages.ref),{fk: {$datum.fk}, resource: {$datum.resource}, parent_message_id: {$datum.id}, data: {value: \(value), type: {$datum.data.type}, time: {$datum.data.time}, postalcode: {$datum.data.postalcode}}})}",
     ]
   }
 
@@ -1972,7 +1845,7 @@ class E2ETestBase: XCTestCase {
 
   static func senderViewFlowData(flowId: String, pageId: String) -> [String: Any] {
     let createAction = requestCreateAction(
-      type: "pickup", payload: "time: selected_pickup_timeslot")
+      type: "pickup", payload: "time: {selected_pickup_timeslot}")
 
     let picker = Self.timeslotPickerRow(
       id: "20000000-0000-4000-8000-000000000001",
@@ -4456,7 +4329,7 @@ final class E2EPlaceSearchTests: E2ETestBase {
           [
             "condition": "",
             "false": "",
-            "true": e2eActionBranch("{show(\(sheetId))}"),
+            "true": "{show(\(sheetId))}",
           ]
         ]
       ),

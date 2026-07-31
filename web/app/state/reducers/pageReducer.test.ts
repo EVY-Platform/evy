@@ -446,7 +446,7 @@ describe("pageReducer", () => {
 	it("UPDATE_ROW_ACTIONS sets actions", () => {
 		const state = initialState();
 		const actions: UI_RowActions = {
-			tap: [{ condition: "", true: { fn: "close" }, false: "" }],
+			tap: [{ condition: "", true: "{close()}", false: "" }],
 		};
 		const next = pageReducer(state, {
 			type: "UPDATE_ROW_ACTIONS",
@@ -710,7 +710,7 @@ describe("pageReducer", () => {
 			tap: [
 				{
 					condition: "",
-					true: { fn: "show", row_id: newId },
+					true: `{show(${newId})}`,
 					false: "",
 				},
 			],
@@ -724,7 +724,7 @@ describe("pageReducer", () => {
 				tap: [
 					{
 						condition: "",
-						true: { fn: "show", row_id: "existing-sheet" },
+						true: "{show(existing-sheet)}",
 						false: "",
 					},
 				],
@@ -758,7 +758,7 @@ describe("pageReducer", () => {
 			tap: [
 				{
 					condition: "",
-					true: { fn: "show", row_id: "existing-sheet" },
+					true: "{show(existing-sheet)}",
 					false: "",
 				},
 			],
@@ -772,12 +772,12 @@ describe("pageReducer", () => {
 				tap: [
 					{
 						condition: "",
-						true: { fn: "show", row_id: "old-sheet" },
+						true: "{show(old-sheet)}",
 						false: "",
 					},
 					{
 						condition: "other",
-						true: { fn: "show", row_id: "other-page-row" },
+						true: "{show(other-page-row)}",
 						false: "",
 					},
 				],
@@ -810,12 +810,12 @@ describe("pageReducer", () => {
 			tap: [
 				{
 					condition: "",
-					true: { fn: "show", row_id: newSheetId },
+					true: `{show(${newSheetId})}`,
 					false: "",
 				},
 				{
 					condition: "other",
-					true: { fn: "show", row_id: "other-page-row" },
+					true: "{show(other-page-row)}",
 					false: "",
 				},
 			],

@@ -770,8 +770,7 @@ export function ensureShowAction(
 	if (!row) return maps;
 	const existingActions =
 		normalizeStoredRowActions(row.data.actions).tap ?? [];
-	// New actions are written in the structured form; existing ones are only
-	// converted when the author saves them.
+	// Action branches are expression strings validated by parseActionExpression.
 	const showBranch = branchForStorage(`{show(${sheetRowId})}`);
 
 	let updatedExisting = false;

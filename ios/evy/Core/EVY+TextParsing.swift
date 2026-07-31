@@ -10,11 +10,11 @@ extension EVY {
     _parseFunctionCall(input)
   }
 
-  static func splitFunctionArguments(_ args: String) -> [String] {
+  nonisolated static func splitFunctionArguments(_ args: String) -> [String] {
     _splitFunctionArguments(args)
   }
 
-  static func stripOptionalSurroundingQuotes(_ s: String) -> String {
+  nonisolated static func stripOptionalSurroundingQuotes(_ s: String) -> String {
     _stripOptionalSurroundingQuotes(s)
   }
 

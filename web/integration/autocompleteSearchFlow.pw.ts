@@ -375,18 +375,7 @@ test.describe("Autocomplete search flows", () => {
 			{
 				condition: "",
 				false: "",
-				true: {
-					fn: "update",
-					resource: ITEM_RESOURCE_REF,
-					mode: "store",
-					filter: {
-						fk: `${ITEM_RESOURCE_REF}.id`,
-						closedAt: "null",
-					},
-					changes: {
-						closedAt: "now()",
-					},
-				},
+				true: `{update(${ITEM_RESOURCE_REF},{fk: {${ITEM_RESOURCE_REF}.id}, closedAt: null},{closedAt: {now()}})}`,
 			},
 		]);
 
@@ -400,22 +389,22 @@ test.describe("Autocomplete search flows", () => {
 		const filterField = popup.getByLabel("true-0-update-filter");
 		await expect
 			.poll(() => readAutocompleteValue(filterField))
-			.toBe(`{fk: ${ITEM_RESOURCE_REF}.id, closedAt: null}`);
+			.toBe(`{fk: {${ITEM_RESOURCE_REF}.id}, closedAt: null}`);
 		await expect(filterField).toHaveValue(
-			`{fk: ${ITEM_RESOURCE_REF}.id, closedAt: null}`,
+			`{fk: {${ITEM_RESOURCE_REF}.id}, closedAt: null}`,
 		);
 
 		const changesField = popup.getByLabel("true-0-update-changes");
 		await expect
 			.poll(() => readAutocompleteValue(changesField))
-			.toBe("{closedAt: now()}");
+			.toBe("{closedAt: {now()}}");
 
 		await popup.getByRole("button", { name: "Save" }).click();
 		await expect(popup).not.toBeVisible();
 
 		await expect(
 			configPanel.getByText(
-				`update(${ITEM_RESOURCE_REF}, {fk: ${ITEM_RESOURCE_REF}.id, closedAt: null}, {closedAt: now()})`,
+				`update(${ITEM_RESOURCE_REF}, {fk: {${ITEM_RESOURCE_REF}.id}, closedAt: null}, {closedAt: {now()}})`,
 				{ exact: true },
 			),
 		).toBeVisible();

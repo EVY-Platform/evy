@@ -107,7 +107,7 @@ final class SduiRowAttributeContractTests: XCTestCase {
         "type": "button",
         "visible": "true",
         "actions": [
-          "tap": [["condition": "", "false": "", "true": ["fn": "close"]]]
+          "tap": [["condition": "", "false": "", "true": "{close()}"]]
         ],
       ])
 
@@ -117,8 +117,8 @@ final class SduiRowAttributeContractTests: XCTestCase {
     XCTAssertTrue(row.actions.delete.isEmpty)
   }
 
-  /// Structured create actions decode a resource ref from the row model.
-  func testRowDecodesStructuredActionBranches() throws {
+  /// Expression-string action branches decode from the row model.
+  func testRowDecodesExpressionActionBranches() throws {
     let rowData = try JSONSerialization.data(
       withJSONObject: [
         "id": "ast-actions-row",
@@ -128,12 +128,8 @@ final class SduiRowAttributeContractTests: XCTestCase {
           "tap": [
             [
               "condition": "",
-              "false": ["fn": "close"],
-              "true": [
-                "fn": "create",
-                "resource": MarketplaceTestFixture.itemsRef,
-                "mode": "submit",
-              ],
+              "false": "{close()}",
+              "true": "{create(\(MarketplaceTestFixture.itemsRef),submit)}",
             ]
           ]
         ],
@@ -147,10 +143,10 @@ final class SduiRowAttributeContractTests: XCTestCase {
     XCTAssertEqual(row.actions.tap.first?.false, .invocation(.close))
   }
 
-  func testStructuredBranchesRoundTripThroughCoding() throws {
+  func testExpressionBranchesRoundTripThroughCoding() throws {
     let branches: [EVYActionBranch] = [
       .invocation(.show(rowId: "row-1")),
-      .invocation(.navigate(flowId: "f", pageId: "p", query: ["id": "$datum.id"])),
+      .invocation(.navigate(flowId: "f", pageId: "p", query: ["id": "{$datum.id}"])),
       .invocation(
         .create(
           resource: MarketplaceTestFixture.itemsRef, mode: .inline(data: ["a": "b"]),
@@ -169,6 +165,8 @@ final class SduiRowAttributeContractTests: XCTestCase {
       let encoded = try JSONEncoder().encode(branch)
       let decoded = try JSONDecoder().decode(EVYActionBranch.self, from: encoded)
       XCTAssertEqual(decoded, branch)
+      let text = try JSONDecoder().decode(String.self, from: encoded)
+      XCTAssertTrue(text.hasPrefix("{"), "encoded branch should be an expression string")
     }
   }
 

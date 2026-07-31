@@ -28,7 +28,7 @@ export default defineRow(typeName, {
 	config: {
 		type: "tab_container",
 		actions: defaultRowActions({
-			tap: { fn: "select", value: "$datum" },
+			tap: "{select($datum)}",
 		}),
 		visible: "true",
 		title: "Tab container row title",

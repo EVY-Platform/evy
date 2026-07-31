@@ -251,7 +251,7 @@ describe("validateFlowData", () => {
 							{
 								condition: "",
 								false: "",
-								true: { fn: "delete_photo" },
+								true: "{delete_photo()}",
 							},
 						],
 					},
@@ -274,14 +274,14 @@ describe("validateFlowData", () => {
 						{
 							condition: "",
 							false: "",
-							true: { fn: "close" },
+							true: "{close()}",
 						},
 					],
 					submit: [
 						{
 							condition: "",
 							false: "",
-							true: { fn: "close" },
+							true: "{close()}",
 						},
 					],
 				},
@@ -304,7 +304,7 @@ describe("validateFlowData", () => {
 							{
 								condition: "",
 								false: "",
-								true: { fn: "close" },
+								true: "{close()}",
 							},
 						],
 					},
@@ -338,14 +338,14 @@ describe("validateFlowData", () => {
 							{
 								condition: "",
 								false: "",
-								true: { fn: "select", value: "$datum" },
+								true: "{select($datum)}",
 							},
 						],
 						tap_column: [
 							{
 								condition: "",
 								false: "",
-								true: { fn: "select", value: "$datum" },
+								true: "{select($datum)}",
 							},
 						],
 					},
@@ -367,7 +367,7 @@ describe("validateFlowData", () => {
 		const selectAction = {
 			condition: "",
 			false: "",
-			true: { fn: "select", value: "$datum" },
+			true: "{select($datum)}",
 		};
 		const out = validateFlowData(
 			flowWithRow({
@@ -403,14 +403,14 @@ describe("validateFlowData", () => {
 							{
 								condition: "",
 								false: "",
-								true: { fn: "close" },
+								true: "{close()}",
 							},
 						],
 						tap_row: [
 							{
 								condition: "",
 								false: "",
-								true: { fn: "select", value: "$datum" },
+								true: "{select($datum)}",
 							},
 						],
 					},
@@ -431,7 +431,7 @@ describe("validateFlowData", () => {
 						{
 							condition: "",
 							false: "",
-							true: { fn: "close" },
+							true: "{close()}",
 						},
 					],
 				},
@@ -453,14 +453,14 @@ describe("validateFlowData", () => {
 							{
 								condition: "",
 								false: "",
-								true: { fn: "close" },
+								true: "{close()}",
 							},
 						],
 						swipe_left: [
 							{
 								condition: "",
 								false: "",
-								true: { fn: "close" },
+								true: "{close()}",
 							},
 						],
 					},
@@ -502,9 +502,9 @@ describe("row actions shape validation", () => {
 
 	it("accepts a well-formed trigger list", () => {
 		const out = rowWithActions({
-			tap: [{ condition: "", false: "", true: { fn: "close" } }],
+			tap: [{ condition: "", false: "", true: "{close()}" }],
 		});
-		expect(out.data.actions?.tap?.[0]?.true).toEqual({ fn: "close" });
+		expect(out.data.actions?.tap?.[0]?.true).toBe("{close()}");
 	});
 
 	it("accepts the canonical empty actions object", () => {
@@ -550,7 +550,7 @@ describe("row actions shape validation", () => {
 	});
 });
 
-describe("structured action invocations", () => {
+describe("action expression strings", () => {
 	const ITEMS = "marketplace.items";
 	const ADDRESSES = "evy.addresses";
 	const baseRow = {
@@ -574,142 +574,67 @@ describe("structured action invocations", () => {
 
 	it.each([
 		["empty branch", ""],
-		["close", { fn: "close" }],
-		["delete_photo", { fn: "delete_photo" }],
-		["show", { fn: "show", row_id: "row-1" }],
-		["expand_text", { fn: "expand_text", row_id: "row-1" }],
-		["highlight_required", { fn: "highlight_required", field: "title" }],
-		["select", { fn: "select", value: "$datum" }],
-		["navigate", { fn: "navigate", flow_id: "f", page_id: "p" }],
-		[
-			"navigate with query",
-			{
-				fn: "navigate",
-				flow_id: "f",
-				page_id: "p",
-				query: { id: "$datum.id" },
-			},
-		],
-		["create submit", { fn: "create", resource: ITEMS, mode: "submit" }],
-		[
-			"create inline",
-			{
-				fn: "create",
-				resource: ADDRESSES,
-				mode: "inline",
-				data: { street: "$datum.street" },
-			},
-		],
+		["close", "{close()}"],
+		["delete_photo", "{delete_photo()}"],
+		["show", "{show(row-1)}"],
+		["expand_text", "{expand_text(row-1)}"],
+		["highlight_required", "{highlight_required(title)}"],
+		["select", "{select($datum)}"],
+		["navigate", "{navigate(f,p)}"],
+		["navigate with query", "{navigate(f,p,{id: {$datum.id}})}"],
+		["create submit", `{create(${ITEMS},submit)}`],
+		["create inline", `{create(${ADDRESSES},{street: {$datum.street}})}`],
 		[
 			"create from path with id destination",
-			{
-				fn: "create",
-				resource: ADDRESSES,
-				mode: "from_path",
-				data_path: "pickup_address",
-				id_destination: "{pickup_address.id}",
-			},
+			`{create(${ADDRESSES},pickup_address,{pickup_address.id})}`,
 		],
 		[
 			"update store",
-			{
-				fn: "update",
-				resource: ITEMS,
-				mode: "store",
-				filter: { id: "item.id" },
-				changes: { status: "accepted" },
-			},
+			`{update(${ITEMS},{id: {item.id}},{status: accepted})}`,
 		],
-		[
-			"update draft",
-			{
-				fn: "update",
-				resource: ITEMS,
-				mode: "draft",
-				changes: { status: "accepted" },
-			},
-		],
+		["update draft", `{update(${ITEMS},{},{status: accepted},draft)}`],
 		[
 			"update store from path",
-			{
-				fn: "update",
-				resource: ADDRESSES,
-				mode: "store",
-				filter: { id: "item.id" },
-				changes_path: "pickup_address",
-			},
+			`{update(${ADDRESSES},{id: {item.id}},pickup_address)}`,
 		],
 	])("accepts %s", (_label, branch) => {
 		expect(() => rowWithBranch(branch)).not.toThrow();
 	});
 
 	it.each([
-		["an unknown function", { fn: "explode" }],
-		["show without a row id", { fn: "show" }],
-		["show with an empty row id", { fn: "show", row_id: "" }],
+		["an unknown function", "{explode()}"],
+		["show without a row id", "{show()}"],
 		[
-			"create submit carrying data",
-			{
-				fn: "create",
-				resource: "marketplace.a",
-				mode: "submit",
-				data: { x: "y" },
-			},
+			"create submit with extra args",
+			"{create(marketplace.a,submit,extra)}",
 		],
-		[
-			"create with an unknown mode",
-			{ fn: "create", resource: "marketplace.a", mode: "magic" },
-		],
+		["create with unprefixed resource", "{create(items,submit)}"],
 		[
 			"a store update with an empty filter",
-			{
-				fn: "update",
-				resource: "marketplace.i",
-				mode: "store",
-				filter: {},
-				changes: { a: "b" },
-			},
+			"{update(marketplace.i,{},{a: b})}",
 		],
 		[
 			"a draft update carrying a filter",
-			{
-				fn: "update",
-				resource: "marketplace.i",
-				mode: "draft",
-				filter: { id: "x" },
-				changes: { a: "b" },
-			},
+			"{update(marketplace.i,{id: x},{a: b},draft)}",
 		],
 		[
-			"an update with both changes and changes_path",
-			{
-				fn: "update",
-				resource: "marketplace.i",
-				mode: "draft",
-				changes: { a: "b" },
-				changes_path: "p",
-			},
+			"an update with empty changes",
+			"{update(marketplace.i,{id: x},{},draft)}",
 		],
-		[
-			"an update with no changes at all",
-			{ fn: "update", resource: "marketplace.i", mode: "draft" },
-		],
-		[
-			"a non-string expression value",
-			{
-				fn: "create",
-				resource: "marketplace.a",
-				mode: "inline",
-				data: { x: 5 },
-			},
-		],
+		["not a brace-wrapped call", "close()"],
 	])("rejects %s", (_label, branch) => {
 		expect(() => rowWithBranch(branch)).toThrow("Row validation failed");
 	});
 
-	it("reports the offending branch path", () => {
+	it("rejects structured invocations", () => {
 		expect(() => rowWithBranch({ fn: "explode" })).toThrow(
 			"/data/actions/tap/0/true",
+		);
+	});
+
+	it("reports the offending branch path for parse errors", () => {
+		expect(() => rowWithBranch("{explode()}")).toThrow(
+			"data/actions/tap/0/true",
 		);
 	});
 });
@@ -727,11 +652,7 @@ describe("validateFlowData submits declaration", () => {
 					{
 						condition: "",
 						false: "",
-						true: {
-							fn: "create",
-							resource,
-							mode: "submit",
-						},
+						true: `{create(${resource},submit)}`,
 					},
 				],
 			},
@@ -801,12 +722,7 @@ describe("validateFlowData submits declaration", () => {
 						{
 							condition: "",
 							false: "",
-							true: {
-								fn: "create",
-								resource: "evy.messages",
-								mode: "inline",
-								data: { status: '"pending"' },
-							},
+							true: "{create(evy.messages,{status: pending})}",
 						},
 					],
 				},
@@ -841,9 +757,7 @@ describe("validateFlowData submits declaration", () => {
 					name: "Opener",
 					type: "button",
 					actions: {
-						tap: [
-							{ condition: "", false: "", true: { fn: "close" } },
-						],
+						tap: [{ condition: "", false: "", true: "{close()}" }],
 					},
 					visible: "true",
 					label: "Open",

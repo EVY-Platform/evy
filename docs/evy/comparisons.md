@@ -33,6 +33,15 @@ The `visible` field on rows uses these expressions natively. A row with
 
 ## Operand resolution
 
+EVY has two evaluation contexts. **Expression position** — anything inside `{…}` in
+conditions, comparisons, `findFirst`, and row template fields (`visible`, `title`, `source`,
+`destination`, …) — follows the rules below. **Value position** — map values in action
+`data`, `filter`, `changes`, and `query` arguments — follows a different rule set: bare strings
+are always literals; wrap a binding in braces to resolve it. See
+[actions.md](./actions.md#value-position).
+
+### Expression position
+
 Each side of an atomic comparison is resolved in this order, first match wins:
 
 1. **Quoted literal** — `"pending"`; always a string, never resolved as a path.
@@ -41,11 +50,10 @@ Each side of an atomic comparison is resolved in this order, first match wins:
 4. **Unquoted literal** — bare words like `pending` / `accepted`.
 
 > **A quoted operand is always a string literal.** `{item.status == "pending"}` compares
-> against the text `pending` and never looks up a path called `pending` — the same rule
-> `create`/`update` action data (see [actions.md](./actions.md)) and `findFirst` operands
-> already follow. Bare words still work (`{item.title == Amazing}`) and are tried as a data
-> path first, falling back to the literal. Reach for quotes when the literal contains a space
-> or an operator character, which bare words cannot express: `{item.status == "in progress"}`.
+> against the text `pending` and never looks up a path called `pending`. Bare words still work
+> (`{item.title == Amazing}`) and are tried as a data path first, falling back to the literal.
+> Reach for quotes when the literal contains a space or an operator character, which bare words
+> cannot express: `{item.status == "in progress"}`.
 
 > **An operand that resolves to a record compares by its `id`.** `{message.fk == [item_id]}`
 > is true when the message's `fk` points at the record bound under `[item_id]` — the same rule
@@ -60,10 +68,11 @@ Each side of an atomic comparison is resolved in this order, first match wins:
 
 **Resource refs are always dotted.** Every synced resource is addressed as
 `service.resource` (`evy.messages`, `marketplace.items`). A bare UUID in a comparison operand
-resolves as a data path (which is what makes the identity rule above useful for record ids),
-while in a `create` / `update` value position it stays the literal record id — a payload
-carries identifiers, not the records they name. See [actions.md](./actions.md#create) for the
-value-position rule.
+resolves as a data path (which is what makes the identity rule above useful for record ids).
+
+For action map values (`data`, `filter`, `changes`, `query`), see
+[actions.md](./actions.md#value-position): bare strings — including bare UUIDs — are literals;
+use `{marketplace.items.id}` when you want a resolved binding.
 
 See [methods.md](./methods.md) for the `count`/`length`/`sort` helpers usable inside these
 expressions, and the [Swift interpreter](../../ios/evy/Utils/interpreter.swift) /

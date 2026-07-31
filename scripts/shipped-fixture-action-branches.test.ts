@@ -1,17 +1,14 @@
 import { describe, expect, test } from "bun:test";
 
+import {
+	type ActionExpressionAst,
+	parseActionExpression,
+} from "../types/actionAst";
 import { validateDataEvyRow } from "../types/validators";
-
-/**
- * Every action branch in the shipped fixtures satisfies the row schema.
- *
- * The schema admits only the empty string or a structured invocation, so this
- * also catches a fixture drifting to any other branch shape.
- */
 
 const FIXTURES = ["evy/evy_sdui.json", "services/service_sdui.json"] as const;
 
-type Branch = { source: string; branch: unknown };
+type Branch = { source: string; branch: string };
 
 async function loadFixtureBranches(): Promise<Branch[]> {
 	const branches: Branch[] = [];
@@ -39,9 +36,8 @@ function walk(node: unknown, source: string, out: Branch[]): void {
 				if (!action || typeof action !== "object") continue;
 				for (const key of ["true", "false"] as const) {
 					const branch = (action as Record<string, unknown>)[key];
-					// An empty string is the canonical "do nothing" branch.
 					if (branch === "" || branch === undefined) continue;
-					out.push({ source, branch });
+					out.push({ source, branch: branch as string });
 				}
 			}
 		}
@@ -52,7 +48,7 @@ function walk(node: unknown, source: string, out: Branch[]): void {
 
 const fixtureBranches = await loadFixtureBranches();
 
-function rowWithBranch(branch: unknown) {
+function rowWithBranch(branch: string) {
 	return {
 		id: "11111111-1111-4111-8111-111111111111",
 		name: "R",
@@ -67,9 +63,37 @@ function rowWithBranch(branch: unknown) {
 	};
 }
 
+function findUpdateChanges(
+	ast: ActionExpressionAst,
+): Record<string, string> | null {
+	if (ast.fn !== "update" || !("changes" in ast) || !ast.changes) return null;
+	return ast.changes;
+}
+
 describe("shipped fixtures satisfy the row schema", () => {
 	test("the fixtures actually contain action branches", () => {
 		expect(fixtureBranches.length).toBeGreaterThan(20);
+	});
+
+	test("no structured fn objects remain in fixture branches", () => {
+		const structured: string[] = [];
+		for (const { source, branch } of fixtureBranches) {
+			if (typeof branch === "object" && branch !== null) {
+				structured.push(`${source}: ${JSON.stringify(branch)}`);
+			}
+		}
+		expect(structured).toEqual([]);
+	});
+
+	test("every branch parses as an action expression", () => {
+		const rejected: string[] = [];
+		for (const { source, branch } of fixtureBranches) {
+			const parsed = parseActionExpression(branch.trim());
+			if (!parsed.ok) {
+				rejected.push(`${source}: ${branch} -> ${parsed.reason}`);
+			}
+		}
+		expect(rejected).toEqual([]);
 	});
 
 	test("every branch satisfies the row schema", () => {
@@ -81,19 +105,13 @@ describe("shipped fixtures satisfy the row schema", () => {
 				const detail =
 					error instanceof Error ? error.message : String(error);
 				rejected.push(
-					`${source}: ${JSON.stringify(branch)} -> ${detail.slice(0, 120)}`,
+					`${source}: ${branch} -> ${detail.slice(0, 120)}`,
 				);
 			}
 		}
 		expect(rejected).toEqual([]);
 	});
 
-	/**
-	 * A marketplace item is public and the address it links to is private, so the
-	 * public page reads the pickup location off the item. Linking an address
-	 * without copying those fields leaves a page that renders a blank map and no
-	 * location - which no other test notices, because nothing errors.
-	 */
 	test("linking a pickup address also copies the public location", () => {
 		const ADDRESS_ID = "transfer_options.pickup.address_id";
 		const REQUIRED = [
@@ -104,10 +122,11 @@ describe("shipped fixtures satisfy the row schema", () => {
 		const incomplete: string[] = [];
 
 		for (const { source, branch } of fixtureBranches) {
-			if (!branch || typeof branch !== "object") continue;
-			const changes = (branch as { changes?: unknown }).changes;
-			if (!changes || typeof changes !== "object") continue;
-			const keys = Object.keys(changes as Record<string, unknown>);
+			const parsed = parseActionExpression(branch.trim());
+			if (!parsed.ok) continue;
+			const changes = findUpdateChanges(parsed.ast);
+			if (!changes) continue;
+			const keys = Object.keys(changes);
 			if (!keys.includes(ADDRESS_ID)) continue;
 
 			const missing = REQUIRED.filter((field) => !keys.includes(field));
@@ -122,15 +141,14 @@ describe("shipped fixtures satisfy the row schema", () => {
 	test("covers the action functions the flows rely on", () => {
 		const functions = new Set(
 			fixtureBranches
-				.map(({ branch }) =>
-					branch && typeof branch === "object"
-						? (branch as { fn?: string }).fn
-						: undefined,
-				)
+				.map(({ branch }) => {
+					if (!branch.trim()) return undefined;
+					const parsed = parseActionExpression(branch.trim());
+					return parsed.ok ? parsed.ast.fn : undefined;
+				})
 				.filter((fn): fn is string => Boolean(fn)),
 		);
 
-		// Guards against the fixtures quietly losing coverage of a function.
 		for (const expected of [
 			"create",
 			"update",

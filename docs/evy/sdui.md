@@ -49,7 +49,7 @@ Rows are what are put into pages. They are the building block of the EVY server-
 -   All attributes can include:
     -   variables surrounded with curly braces: "Hello {name}, how are you?"
     -   inline icons as [Lucide](https://lucide.dev/icons) names in kebab-case, wrapped in double colons: "EVY ::image-plus:: is the best!"
-    -   Builder consequence: in text attributes the web builder resolves ids to named chips **only inside `{…}`**, because everything outside braces is literal. Binding attributes (`source`, `destination`, `secondary`), `visible`, and action arguments are whole-value expressions, so bare ids resolve there. Resource references are dotted (`evy.messages`, `marketplace.items`); the dot is the discriminator, so prose like "No messages found" no longer collides with a resource reference.
+    -   Builder consequence: in text attributes the web builder resolves ids to named chips **only inside `{…}`**, because everything outside braces is literal. Binding attributes (`source`, `destination`, `secondary`) and `visible` are braced template fields — identifiers inside `{…}` are data paths. Map values inside action expression arguments follow [value-position](./actions.md#value-position) rules (bare = literal, `{expr}` = resolve). Resource references are dotted (`evy.messages`, `marketplace.items`); the dot is the discriminator, so prose like "No messages found" no longer collides with a resource reference.
 -   [ x ]
     -   Denotes a type array of x
 	-   Objects and arrays
@@ -95,8 +95,8 @@ Rows are what are put into pages. They are the building block of the EVY server-
     "actions": {
         "tap": [{
             "condition": "{length(title) > 0}",
-            "false": { "fn": "highlight_required", "field": "title" },
-            "true": { "fn": "create", "resource": "marketplace.items", "mode": "submit" }
+            "false": "{highlight_required(title)}",
+            "true": "{create(marketplace.items,submit)}"
         }]
     }
 }
@@ -153,18 +153,18 @@ Each row has an `actions` attribute: an object keyed by **trigger** name. Each t
 
 ```jsonc
 "actions": {
-  "tap": [{ "condition": "", "false": "", "true": { "fn": "close" } }],
-  "submit": [{ "condition": "", "false": "", "true": { "fn": "close" } }],
-  "delete": [{ "condition": "", "false": "", "true": { "fn": "delete_photo" } }],
-  "tap_row": [{ "condition": "", "false": "", "true": { "fn": "select", "value": "$datum" } }],
-  "tap_column": [{ "condition": "", "false": "", "true": { "fn": "select", "value": "$datum" } }],
-  "swipe_left": [{ "condition": "", "false": "", "true": { "fn": "show", "rowId": "sheetId" } }]
+  "tap": [{ "condition": "", "false": "", "true": "{close()}" }],
+  "submit": [{ "condition": "", "false": "", "true": "{close()}" }],
+  "delete": [{ "condition": "", "false": "", "true": "{delete_photo()}" }],
+  "tap_row": [{ "condition": "", "false": "", "true": "{select($datum)}" }],
+  "tap_column": [{ "condition": "", "false": "", "true": "{select($datum)}" }],
+  "swipe_left": [{ "condition": "", "false": "", "true": "{show(sheetId)}" }]
 }
 ```
 
 An empty object `{}` is the canonical “no actions” state (do not use `{"tap": []}`). The iOS client treats a missing trigger key the same as an empty list.
 
-The **shape** of `actions` is validated by the API on every `create`/`update` of a row: only the six trigger names are accepted, each must map to a list, and each entry must have exactly `condition`, `true`, and `false`. A malformed shape is rejected at write time with the offending path (e.g. `/data/actions/tap/0`) rather than being stored and then silently dropped when a client fails to decode the row. Branch contents are validated too: a branch is either the empty string or one of the structured invocations in [`action.schema.json`](../../types/schema/sdui/action.schema.json), so an unknown `fn` or a missing field is rejected at write time along with a malformed shape.
+The **shape** of `actions` is validated by the API on every `create`/`update` of a row: only the six trigger names are accepted, each must map to a list, and each entry must have exactly `condition`, `true`, and `false`. A malformed shape is rejected at write time with the offending path (e.g. `/data/actions/tap/0`) rather than being stored and then silently dropped when a client fails to decode the row. Branch contents are validated too: a branch is either the empty string or a single inline action expression `{fn(…)}` per [`action.schema.json`](../../types/schema/sdui/action.schema.json); the shared `parseActionExpression` parser rejects unknown functions, wrong argument counts, and malformed object literals at write time.
 
 See [actions.md](./actions.md) for the reference on every action function (`create`, `update`, `show`, `select`, `navigate`, …).
 
@@ -213,22 +213,20 @@ evaluates false as usual.
 
 #### Branches (`true` / `false`)
 
-Each branch is either the empty string, meaning "do nothing", or a **structured action invocation**: an object naming the function and its arguments.
+Each branch is either the empty string, meaning "do nothing", or a single **inline action expression** string `{fn(arg, …)}`.
 
 ```jsonc
-"true": { "fn": "close" }
-"true": { "fn": "show", "rowId": "b8c7d6e5-…" }
-"true": { "fn": "create", "resource": "marketplace.items", "mode": "submit" }
-"true": { "fn": "update", "resource": "marketplace.items",
-          "mode": "store", "filter": { "id": "item.id" },
-          "changes": { "status": "accepted" } }
+"true": "{close()}"
+"true": "{show(b8c7d6e5-…)}"
+"true": "{create(marketplace.items,submit)}"
+"true": "{update(marketplace.items,{id: {item.id}},{status: accepted})}"
 ```
 
-The shape of every invocation is defined in [`types/schema/sdui/action.schema.json`](../../types/schema/sdui/action.schema.json) and enforced by the API on write, so a malformed action is rejected at the source rather than failing silently when tapped.
+The grammar is defined in [`types/grammar/README.md`](../../types/grammar/README.md) and enforced by the API via `parseActionExpression` on write, so a malformed expression is rejected at the source rather than failing silently when tapped.
 
-Legacy `{functionName(arg1, arg2)}` **strings are no longer accepted** — the API rejects them on write, and clients cannot decode them. Stored rows use structured invocations only; a regression test keeps the shipped fixtures from drifting back.
+Structured `{ "fn": … }` objects are **no longer accepted** — the API rejects them on write, and clients cannot decode them. Stored rows use expression strings only; a regression test keeps the shipped fixtures from drifting back.
 
-Value expressions inside `data`, `filter`, `changes` and `query` remain strings and resolve exactly as before (data path, `$datum`, quoted literal, bare word), because whether a bare word is a path or a literal depends on the data present when the action runs.
+Map values inside `data`, `filter`, `changes`, and `query` follow **value-position** rules: bare strings are literals; wrap a binding in braces to resolve it. See [actions.md](./actions.md#value-position) and the [grammar README](../../types/grammar/README.md).
 
 See [actions.md](./actions.md) for the full per-function reference (fields, semantics, and the
 Address save pattern for linking a newly created record to its parent entity).
@@ -240,7 +238,7 @@ Validate several fields with empty `true` steps, then navigate:
 ```json
 {
 	"condition": "{length(title) > 0}",
-	"false": { "fn": "highlight_required", "field": "title" },
+	"false": "{highlight_required(title)}",
 	"true": ""
 }
 ```
@@ -251,7 +249,7 @@ Final “Next” after validations:
 {
 	"condition": "",
 	"false": "",
-	"true": { "fn": "navigate", "flowId": "[flow_id]", "pageId": "[page_id]" }
+	"true": "{navigate([flow_id],[page_id])}"
 }
 ```
 
@@ -262,12 +260,12 @@ Submit:
 	{
 		"condition": "",
 		"false": "",
-		"true": { "fn": "create", "resource": "marketplace.items", "mode": "submit" }
+		"true": "{create(marketplace.items,submit)}"
 	},
 	{
 		"condition": "",
 		"false": "",
-		"true": { "fn": "close" }
+		"true": "{close()}"
 	}
 ]
 ```
@@ -283,12 +281,12 @@ Open a confirmation sheet after selecting a timeslot (`select` must run first so
 			{
 				"condition": "",
 				"false": "",
-				"true": { "fn": "select", "value": "$datum" }
+				"true": "{select($datum)}"
 			},
 			{
 				"condition": "",
 				"false": "",
-				"true": { "fn": "show", "rowId": "b8c7d6e5-f4a3-4b2c-9d1e-0f8a7b6c5d4e" }
+				"true": "{show(b8c7d6e5-f4a3-4b2c-9d1e-0f8a7b6c5d4e)}"
 			}
 		]
 	},

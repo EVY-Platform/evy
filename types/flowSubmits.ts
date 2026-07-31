@@ -1,3 +1,4 @@
+import { parseActionExpression } from "./actionAst";
 import type {
 	DATA_EVY_Flow,
 	DATA_EVY_Page,
@@ -71,14 +72,16 @@ function forEachRowInFlow(
 }
 
 function submitCreateTarget(branch: unknown): string | null {
-	if (!branch || typeof branch !== "object") return null;
-	const invocation = branch as Record<string, unknown>;
-	if (invocation.fn !== "create" || invocation.mode !== "submit") return null;
-
-	const resource =
-		typeof invocation.resource === "string" ? invocation.resource : "";
-	if (!resource) return null;
-	return resource;
+	if (typeof branch !== "string" || !branch.trim()) return null;
+	const parsed = parseActionExpression(branch.trim());
+	if (
+		!parsed.ok ||
+		parsed.ast.fn !== "create" ||
+		parsed.ast.mode !== "submit"
+	) {
+		return null;
+	}
+	return parsed.ast.resource;
 }
 
 function addSubmitTargetsFromRow(row: DATA_EVY_Row, into: Set<string>): void {

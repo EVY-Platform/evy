@@ -154,6 +154,10 @@ Persisted row record. Row-type-specific SDUI fields live in `data`. Nested row r
 | `child_row_id` | `child` | One result-row template (not a sheet), for example for search row |
 | `children_row_ids` | `children` | Container rows with static nested children |
 
+Action branches in `data.actions` are stored as expression strings (`""` or `{fn(…)}`), not
+structured objects — see [actions.md](./actions.md) and
+[`types/grammar/README.md`](../../types/grammar/README.md).
+
 A Search row may persist both `child_row_id` and `sheet_row_id`. Relationship kind is explicit in storage; do not infer it from row type alone beyond the Search-only rule for `child`.
 
 On the wire this is accessed with `resource: "evy.rows"`.

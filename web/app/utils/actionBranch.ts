@@ -4,10 +4,7 @@ import type {
 	DATA_EVY_Row,
 	UI_ActionBranch,
 } from "evy-types";
-import {
-	parseActionStringToInvocation,
-	serializeInvocationToEditorString,
-} from "evy-types/actionAst";
+import { parseActionExpression } from "evy-types/actionAst";
 import { splitFunctionArguments } from "./functionArgs";
 import { forEachRowInFlows, rowLocationLabel } from "./rowTraversal";
 import { unwrapOptionalBraces } from "./unwrapBraces";
@@ -62,50 +59,29 @@ function isActionFunction(name: string): name is ActionFunction {
 	return ACTION_FUNCTIONS.includes(name as ActionFunction);
 }
 
-/**
- * The argument-slot editor works on a flat `fn(a,b)` rendering of a branch.
- * That text form is an editing convenience internal to the builder - it is
- * never persisted, and the API rejects it.
- */
+/** Storage is the expression string; return it for the argument-slot editor. */
 export function branchToEditableString(branch: UI_ActionBranch): string {
-	if (typeof branch === "string") {
-		if (branch === "") return "";
-		throw new Error(
-			`Stored action branches must be structured invocations, got string: ${branch}`,
-		);
-	}
-	return serializeInvocationToEditorString(branch);
+	return branch;
 }
 
-/**
- * Turns the editor's text form into what gets persisted. Only the empty string
- * and structured invocations are storable, so an unconvertible branch is a bug
- * in the editor rather than something to persist and discover later.
- */
+/** Validates and returns the expression string for persistence. */
 export function branchForStorage(branchString: string): UI_ActionBranch {
 	const trimmed = branchString.trim();
 	if (!trimmed) return "";
-	const converted = parseActionStringToInvocation(trimmed);
-	if (!converted.ok) {
+	const parsed = parseActionExpression(trimmed);
+	if (!parsed.ok) {
 		throw new Error(
-			`Cannot store action branch "${branchString}": ${converted.reason}`,
+			`Cannot store action branch "${branchString}": ${parsed.reason}`,
 		);
 	}
-	return converted.invocation;
+	return trimmed;
 }
 
-/**
- * Parses a stored branch.
- *
- * Storage is structured; the editor works in text. Both forms are readable, so
- * this converts and hands off to `parseBranchText` rather than each caller
- * guessing which one it holds.
- */
 export function parseBranch(branch: UI_ActionBranch): ParsedBranch | null {
-	return parseBranchText(branchToEditableString(branch));
+	return parseBranchText(branch);
 }
 
-/** Parses the editor's text form, which is not storable until finalized. */
+/** Parses the editor's text form. */
 export function parseBranchText(branchText: string): ParsedBranch | null {
 	const trimmed = branchText.trim();
 	if (!trimmed) return null;

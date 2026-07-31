@@ -462,7 +462,7 @@ describe("updateRowActions", () => {
 		const row = makeRow("r1");
 		const maps = makeMaps([], [], [row]);
 		const actions: UI_RowAction[] = [
-			{ condition: "", true: { fn: "close" }, false: "" },
+			{ condition: "", true: "{close()}", false: "" },
 		];
 		const next = updateRowActions(maps, "r1", { tap: actions });
 		expect(next.rowsById.r1?.data.actions).toEqual({ tap: actions });
@@ -602,26 +602,22 @@ describe("pageRootIds", () => {
 // ---------------------------------------------------------------------------
 
 describe("ensureShowAction", () => {
-	it("adds a structured show action when missing", () => {
+	it("adds a show action when missing", () => {
 		const row = makeRow("r1", { actions: {} });
 		const maps = makeMaps([], [], [row]);
 		const next = ensureShowAction(maps, "r1", "sheet-1");
 		const actions = next.rowsById.r1?.data.actions as {
 			tap?: { condition: string; true: unknown; false: unknown }[];
 		};
-		expect(
-			actions.tap?.some(
-				(a) =>
-					JSON.stringify(a.true) ===
-					JSON.stringify({ fn: "show", row_id: "sheet-1" }),
-			),
-		).toBe(true);
+		expect(actions.tap?.some((a) => a.true === "{show(sheet-1)}")).toBe(
+			true,
+		);
 	});
 
 	it("does not duplicate an existing show action", () => {
 		const showAction: UI_RowAction = {
 			condition: "",
-			true: { fn: "show", row_id: "sheet-1" },
+			true: "{show(sheet-1)}",
 			false: "",
 		};
 		const row = makeRow("r1", { actions: { tap: [showAction] } });
@@ -631,18 +627,14 @@ describe("ensureShowAction", () => {
 			tap?: UI_RowAction[];
 		};
 		expect(
-			actions.tap?.filter(
-				(a) =>
-					JSON.stringify(a.true) ===
-					JSON.stringify({ fn: "show", row_id: "sheet-1" }),
-			).length,
+			actions.tap?.filter((a) => a.true === "{show(sheet-1)}").length,
 		).toBe(1);
 	});
 
 	it("updates unconditional show when sheet is replaced", () => {
 		const showAction: UI_RowAction = {
 			condition: "",
-			true: { fn: "show", row_id: "old-sheet" },
+			true: "{show(old-sheet)}",
 			false: "",
 		};
 		const row = makeRow("r1", { actions: { tap: [showAction] } });
@@ -651,20 +643,12 @@ describe("ensureShowAction", () => {
 		const actions = next.rowsById.r1?.data.actions as {
 			tap?: { condition: string; true: unknown; false: unknown }[];
 		};
-		expect(
-			actions.tap?.some(
-				(a) =>
-					JSON.stringify(a.true) ===
-					JSON.stringify({ fn: "show", row_id: "new-sheet" }),
-			),
-		).toBe(true);
-		expect(
-			actions.tap?.some(
-				(a) =>
-					JSON.stringify(a.true) ===
-					JSON.stringify({ fn: "show", row_id: "old-sheet" }),
-			),
-		).toBe(false);
+		expect(actions.tap?.some((a) => a.true === "{show(new-sheet)}")).toBe(
+			true,
+		);
+		expect(actions.tap?.some((a) => a.true === "{show(old-sheet)}")).toBe(
+			false,
+		);
 	});
 });
 

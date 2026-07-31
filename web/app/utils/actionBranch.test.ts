@@ -307,23 +307,21 @@ describe("action branch helpers", () => {
 });
 
 describe("structured branch storage", () => {
-	it("stores a convertible branch structurally", () => {
-		expect(branchForStorage("{close()}")).toEqual({ fn: "close" });
+	it("stores a valid expression string", () => {
+		expect(branchForStorage("{close()}")).toBe("{close()}");
 	});
 
-	it("stores the submit keyword as a typed mode", () => {
-		expect(branchForStorage("{create(marketplace.items,submit)}")).toEqual({
-			fn: "create",
-			resource: "marketplace.items",
-			mode: "submit",
-		});
+	it("stores the submit keyword in the expression", () => {
+		expect(branchForStorage("{create(marketplace.items,submit)}")).toBe(
+			"{create(marketplace.items,submit)}",
+		);
 	});
 
 	it("keeps an empty branch empty", () => {
 		expect(branchForStorage("")).toBe("");
 	});
 
-	it("refuses to store an unconvertible branch", () => {
+	it("refuses to store an invalid expression", () => {
 		expect(() => branchForStorage("{teleport(x)}")).toThrow(
 			"Cannot store action branch",
 		);
@@ -332,21 +330,17 @@ describe("structured branch storage", () => {
 		);
 	});
 
-	it("renders a structured branch back to a string for editing", () => {
-		expect(branchToEditableString({ fn: "show", row_id: "row-1" })).toBe(
-			"{show(row-1)}",
-		);
+	it("returns the stored string for editing", () => {
+		expect(branchToEditableString("{show(row-1)}")).toBe("{show(row-1)}");
 	});
 
-	it("round-trips a structured branch through the editor model", () => {
-		const stored = { fn: "show", row_id: "row-1" } as const;
-		expect(branchForStorage(branchToEditableString(stored))).toEqual(
-			stored,
-		);
+	it("round-trips a branch through the editor model", () => {
+		const stored = "{show(row-1)}";
+		expect(branchForStorage(branchToEditableString(stored))).toBe(stored);
 	});
 
-	it("parses a structured branch into the editor model", () => {
-		expect(parseBranch({ fn: "show", row_id: "row-1" })).toEqual({
+	it("parses a stored branch into the editor model", () => {
+		expect(parseBranch("{show(row-1)}")).toEqual({
 			functionName: "show",
 			args: ["row-1"],
 		});

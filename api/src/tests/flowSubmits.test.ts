@@ -44,11 +44,7 @@ function makeSubmitRow(id = "row-1"): DATA_EVY_Row {
 					{
 						condition: "",
 						false: "",
-						true: {
-							fn: "create",
-							resource: RESOURCE,
-							mode: "submit",
-						},
+						true: `{create(${RESOURCE},submit)}`,
 					},
 				],
 			},

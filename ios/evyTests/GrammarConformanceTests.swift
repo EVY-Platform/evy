@@ -19,6 +19,7 @@ final class GrammarConformanceTests: XCTestCase {
     let platforms: [String]
     let input: String
     let data: [String: EVYJson]?
+    let datum: EVYJson?
     let expect: [String: EVYJson]
     let notes: String?
   }
@@ -105,7 +106,9 @@ final class GrammarConformanceTests: XCTestCase {
   }
 
   func testEveryIosVectorIsCoveredByThisRunner() throws {
-    let handled = ["split-args", "comparison", "expression", "display"]
+    let handled = [
+      "split-args", "comparison", "expression", "display", "action-parse", "value-resolution",
+    ]
     let uncovered = try loadVectors()
       .filter { $0.platforms.contains("ios") && !handled.contains($0.category) }
       .map(\.id)
@@ -171,6 +174,59 @@ final class GrammarConformanceTests: XCTestCase {
         return XCTFail("vector \(vector.id) has no text expectation")
       }
       let actual = EVY.displayText(fromSource: vector.input, destination: nil)
+      XCTAssertEqual(actual, expected, "vector \(vector.id): \(vector.notes ?? "")")
+    }
+  }
+
+  func testActionParseVectors() throws {
+    for vector in try iosVectors(category: "action-parse") {
+      if case .string(let reason) = vector.expect["error"] ?? .null {
+        do {
+          _ = try EVYActionParser.parse(vector.input)
+          XCTFail("vector \(vector.id) should throw")
+        } catch let EVYActionParseError.reason(message) {
+          XCTAssertEqual(message, reason, "vector \(vector.id)")
+        } catch {
+          XCTFail("vector \(vector.id) threw unexpected error: \(error)")
+        }
+        continue
+      }
+
+      let invocation = try EVYActionParser.parse(vector.input)
+      guard case .dictionary(let expectedAst) = vector.expect["ast"] ?? .null else {
+        return XCTFail("vector \(vector.id) has no ast expectation")
+      }
+      let actualAst = EVYActionParser.conformanceAst(from: invocation)
+      XCTAssertEqual(actualAst, .dictionary(expectedAst), "vector \(vector.id)")
+    }
+  }
+
+  func testValueResolutionVectors() throws {
+    for vector in try iosVectors(category: "value-resolution") {
+      try seed(vector.data)
+      defer { clearSeeded() }
+
+      if case .bool(true) = vector.expect["omit"] ?? .null {
+        XCTAssertTrue(
+          EVYPlainTextResolution.resolveValues(
+            ["key": vector.input],
+            datum: vector.datum,
+            omitUnresolvedDatumKeys: true
+          ).isEmpty,
+          "vector \(vector.id)")
+        continue
+      }
+
+      let actual = EVYPlainTextResolution.resolveValue(vector.input, datum: vector.datum)
+
+      if case .string(let expected) = vector.expect["text"] ?? .null {
+        XCTAssertEqual(actual.toString(), expected, "vector \(vector.id): \(vector.notes ?? "")")
+        continue
+      }
+
+      guard let expected = vector.expect["json"] else {
+        return XCTFail("vector \(vector.id) has no json/text expectation")
+      }
       XCTAssertEqual(actual, expected, "vector \(vector.id): \(vector.notes ?? "")")
     }
   }
