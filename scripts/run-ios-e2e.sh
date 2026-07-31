@@ -224,6 +224,17 @@ ios_resolve_simulators() {
 	return 0
 }
 
+ios_locate_xctestrun() {
+	local found
+	found="$(ls "$REPO_ROOT/ios/DerivedData-e2e/Build/Products/"evy_*.xctestrun 2>/dev/null | head -n 1)"
+	if [ -z "$found" ] || [ ! -f "$found" ]; then
+		echo -e "${RED}Unable to locate evy_*.xctestrun under ios/DerivedData-e2e/Build/Products${NC}"
+		return 1
+	fi
+	# Absolute path: background builds set vars in a subshell that the parent never sees.
+	IOS_XCTESTRUN="$(cd "$(dirname "$found")" && pwd)/$(basename "$found")"
+}
+
 ios_build_for_testing() {
 	echo "Building iOS e2e tests (build-for-testing)..."
 	cd "$REPO_ROOT/ios"
@@ -236,14 +247,8 @@ ios_build_for_testing() {
 		cd "$REPO_ROOT"
 		return 1
 	fi
-
-	IOS_XCTESTRUN="$(ls DerivedData-e2e/Build/Products/evy_*.xctestrun 2>/dev/null | head -n 1)"
-	if [ -z "$IOS_XCTESTRUN" ]; then
-		echo -e "${RED}Unable to locate evy_*.xctestrun under ios/DerivedData-e2e/Build/Products${NC}"
-		cd "$REPO_ROOT"
-		return 1
-	fi
 	cd "$REPO_ROOT"
+	ios_locate_xctestrun
 }
 
 ios_start_stack_b_service() {
@@ -269,20 +274,6 @@ ios_wait_for_stack_b_readiness() {
 		ios_stack_b_env
 		cd \"$REPO_ROOT/api\" && bun run health
 	"
-}
-
-ios_start_stack_b() {
-	if [ "$CI_MODE" != true ]; then
-		return 0
-	fi
-
-	echo "Starting stack B (API :${STACK_B_API_PORT}, marketplace WS :${STACK_B_MARKETPLACE_WS_PORT})..."
-	ios_create_stack_b_databases
-	ios_start_stack_b_service services/marketplace
-	MARKETPLACE_B_PID=$!
-	ios_start_stack_b_service api
-	API_B_PID=$!
-	ios_wait_for_stack_b_readiness
 }
 
 ios_seed_stack_b() {
@@ -314,8 +305,17 @@ ios_start_stack_b_background() {
 	if [ "$CI_MODE" != true ]; then
 		return 0
 	fi
+
+	# Start services in this shell so MARKETPLACE_B_PID / API_B_PID survive for cleanup.
+	# Only readiness + seeding run in the background subshell.
+	echo "Starting stack B (API :${STACK_B_API_PORT}, marketplace WS :${STACK_B_MARKETPLACE_WS_PORT})..."
+	ios_create_stack_b_databases
+	ios_start_stack_b_service services/marketplace
+	MARKETPLACE_B_PID=$!
+	ios_start_stack_b_service api
+	API_B_PID=$!
 	(
-		ios_start_stack_b && ios_seed_stack_b
+		ios_wait_for_stack_b_readiness && ios_seed_stack_b
 	) &
 	IOS_STACK_B_READY_PID=$!
 }
@@ -447,11 +447,20 @@ ios_run_e2e() {
 			[ -f "$REPO_ROOT/ios-e2e-build.log" ] && cat "$REPO_ROOT/ios-e2e-build.log"
 			return 1
 		fi
+		# Background build ran in a subshell; locate the xctestrun in this shell.
+		if ! ios_locate_xctestrun; then
+			return 1
+		fi
 	elif ! ios_build_for_testing; then
 		return 1
 	fi
 
 	if [ "$CI_MODE" = true ]; then
+		if [ -z "$IOS_XCTESTRUN" ] || [ ! -f "$IOS_XCTESTRUN" ]; then
+			echo -e "${RED}iOS xctestrun path is missing or invalid: '${IOS_XCTESTRUN}'${NC}"
+			return 1
+		fi
+		echo "Using xctestrun: $IOS_XCTESTRUN"
 		if ! ios_wait_for_stack_b_background; then
 			return 1
 		fi
