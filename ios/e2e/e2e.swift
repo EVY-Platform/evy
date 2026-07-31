@@ -4488,14 +4488,24 @@ final class E2EHomeInboxTests: E2ETestBase {
 
   private static let seededShippingRequestId = "5f66d7ae-3cb5-44bb-a8f3-337d4e543c72"
 
+  private static let seededPickupAddressId = "c81e85dd-f7fb-4310-8fc6-7c018aeaf82a"
+
   override var homeFlowId: String? { E2EFlowIds.defaultHomeFlow }
 
+  /// Accepting a pickup request reads the seller's own pickup address out of `evy.addresses`
+  /// to embed it in the accept. Private addresses only sync to the device that owns them, so
+  /// the recipient of these requests owns the item and the address behind it - as the seller
+  /// who created both would.
   override var ownedResources: [OwnedResourceDeclaration] {
     [
       (
         resource: MARKETPLACE_ITEMS_RESOURCE_ID,
         ids: [Self.seededMessageItemId]
-      )
+      ),
+      (
+        resource: EVYCoreResource.addresses.ref,
+        ids: [Self.seededPickupAddressId]
+      ),
     ]
   }
 
