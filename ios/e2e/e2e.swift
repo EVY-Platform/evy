@@ -1879,14 +1879,16 @@ class E2ETestBase: XCTestCase {
     ]
   }
 
-  static func sheetTitleReactivityFlowData(flowId: String, pageId: String) -> [String: Any] {
+  static func sheetPresentationAndReactivityFlowData(flowId: String, pageId: String) -> [String:
+    Any]
+  {
     [
       "id": flowId,
-      "name": "E2E Sheet Title Reactivity",
+      "name": "E2E Sheet Presentation And Reactivity",
       "pages": [
         [
           "id": pageId,
-          "title": "Sheet title test",
+          "title": "Sheet tests",
           "rows": [
             Self.buttonRow(
               id: "f8e7d6c5-b4a3-4f2e-9d1c-0b9a8f7e6d5c",
@@ -1909,30 +1911,12 @@ class E2ETestBase: XCTestCase {
                 ],
                 "name": "Sheet title reactivity sheet",
               ]
-            )
-          ],
-        ]
-      ],
-    ]
-  }
-
-  private static let crossPageSheetHostPageId = "10000000-0000-4000-8000-00000000000a"
-  private static let crossPageSheetRowId = "10000000-0000-4000-8000-00000000000b"
-
-  static func crossPageSheetFlowData(flowId: String, pageId: String) -> [String: Any] {
-    [
-      "id": flowId,
-      "name": "E2E Cross Page Sheet",
-      "pages": [
-        [
-          "id": pageId,
-          "title": "{\(MARKETPLACE_ITEMS_RESOURCE_ID).title}",
-          "rows": [
+            ),
             Self.buttonRow(
               id: "10000000-0000-4000-8000-00000000000c",
               label: "Open cross-page sheet",
               action: "{show(\(crossPageSheetRowId))}"
-            )
+            ),
           ],
         ],
         [
@@ -1965,6 +1949,9 @@ class E2ETestBase: XCTestCase {
       ],
     ]
   }
+
+  private static let crossPageSheetHostPageId = "10000000-0000-4000-8000-00000000000a"
+  private static let crossPageSheetRowId = "10000000-0000-4000-8000-00000000000b"
 
   static func viewItemFlowData(flowId: String, pageId: String) -> [String: Any] {
     return [
@@ -2088,9 +2075,13 @@ class E2ETestBase: XCTestCase {
   }
 }
 
-// MARK: - Navigation and visibility only
+// MARK: - Core UI (navigation, swipe-left, segments)
 
-final class E2EFlowTests: E2ETestBase {
+final class E2ECoreUITests: E2ETestBase {
+  private static let swipeLeftDestPageId = "c7d6e5f4-a3b2-4c1d-8e0f-1a2b3c4d5e6f"
+  private static let swipeLeftRowId = "d6e5f4a3-b2c1-4d0e-9f8a-7b6c5d4e3f2a"
+  private static let coreHomePageId = "55e427ac-263c-441f-9673-f60627b1baea"
+
   override var homeFlowId: String? { E2EFlowIds.navigationHomeFlow }
 
   override func setUpWithError() throws {
@@ -2099,13 +2090,15 @@ final class E2EFlowTests: E2ETestBase {
       [
         (
           flowId: E2EFlowIds.navigationHomeFlow,
-          flowData: Self.homeFlowData(
+          flowData: Self.coreUITestsHomeFlowData(
             flowId: E2EFlowIds.navigationHomeFlow,
+            homePageId: Self.coreHomePageId,
+            destPageId: Self.swipeLeftDestPageId,
+            swipeRowId: Self.swipeLeftRowId,
             viewFlowId: E2EFlowIds.navigationViewFlow,
             viewPageId: E2EFlowIds.navigationViewPage,
             createFlowId: E2EFlowIds.webSocketCreateFlow,
-            createPageId: E2EFlowIds.webSocketCreatePage,
-            buttonLabel: "View"
+            createPageId: E2EFlowIds.webSocketCreatePage
           )
         ),
         (
@@ -2124,46 +2117,186 @@ final class E2EFlowTests: E2ETestBase {
     try launchApp()
   }
 
-  func testNavigationAndVisibility() throws {
-    XCTAssertTrue(app.exists, "App should launch successfully")
-
-    let loadingIndicator = app.progressIndicators["loadingIndicator"]
-    let homePage = app.scrollViews["page_55e427ac-263c-441f-9673-f60627b1baea"]
-    let initialUIAppeared =
-      loadingIndicator.waitForExistence(timeout: 5) || homePage.waitForExistence(timeout: 5)
+  func testCoreUIBehaviors() throws {
+    let homePage = app.scrollViews["page_\(Self.coreHomePageId)"]
     XCTAssertTrue(
-      initialUIAppeared || app.buttons.count > 0 || app.staticTexts.count > 0,
-      "App should display initial UI after launch")
+      homePage.waitForExistence(timeout: 20),
+      "Core UI home page should load - verify API is running and seeded")
 
-    let viewItemButton = app.buttons["View"]
-    let createItemButton = app.buttons["Create"]
-    XCTAssertTrue(
-      viewItemButton.waitForExistence(timeout: 20),
-      "Home screen not loaded - verify API is running and database is seeded")
-    XCTAssertTrue(createItemButton.exists, "Create button should be visible")
+    try XCTContext.runActivity(named: "Navigation and visibility") { _ in
+      let loadingIndicator = app.progressIndicators["loadingIndicator"]
+      let initialUIAppeared =
+        loadingIndicator.waitForExistence(timeout: 5) || homePage.waitForExistence(timeout: 5)
+      XCTAssertTrue(
+        initialUIAppeared || app.buttons.count > 0 || app.staticTexts.count > 0,
+        "App should display initial UI after launch")
 
-    viewItemButton.tap()
-    let scrollView = app.scrollViews.firstMatch
-    XCTAssertTrue(scrollView.waitForExistence(timeout: 10), "Page should appear after tapping View")
-    XCTAssertFalse(viewItemButton.exists, "Home buttons should not be visible after navigation")
+      let viewItemButton = app.buttons["View"]
+      let createItemButton = app.buttons["Create"]
+      XCTAssertTrue(viewItemButton.exists, "View button should be visible")
+      XCTAssertTrue(createItemButton.exists, "Create button should be visible")
 
-    let goHomeButton = app.buttons["Go home"]
-    XCTAssertTrue(
-      goHomeButton.waitForExistence(timeout: 5), "Footer 'Go home' button should be visible")
+      viewItemButton.tap()
+      let scrollView = app.scrollViews.firstMatch
+      XCTAssertTrue(
+        scrollView.waitForExistence(timeout: 10), "Page should appear after tapping View")
+      XCTAssertFalse(viewItemButton.exists, "Home buttons should not be visible after navigation")
 
-    let backButton = app.navigationBars.buttons.firstMatch
-    XCTAssertTrue(backButton.waitForExistence(timeout: 5), "Back button should exist")
-    backButton.tap()
-    XCTAssertTrue(viewItemButton.waitForExistence(timeout: 5), "Should return to home screen")
+      let goHomeButton = app.buttons["Go home"]
+      XCTAssertTrue(
+        goHomeButton.waitForExistence(timeout: 5), "Footer 'Go home' button should be visible")
 
-    createItemButton.tap()
-    XCTAssertTrue(scrollView.waitForExistence(timeout: 10), "Page should appear after navigation")
-    XCTAssertFalse(createItemButton.exists, "Home buttons should not be visible after navigation")
+      let backButton = app.navigationBars.buttons.firstMatch
+      XCTAssertTrue(backButton.waitForExistence(timeout: 5), "Back button should exist")
+      backButton.tap()
+      XCTAssertTrue(viewItemButton.waitForExistence(timeout: 5), "Should return to home screen")
 
-    XCTAssertTrue(backButton.waitForExistence(timeout: 5), "Back button should exist")
-    backButton.tap()
-    XCTAssertTrue(
-      viewItemButton.waitForExistence(timeout: 5), "Should return to home screen after create flow")
+      createItemButton.tap()
+      XCTAssertTrue(scrollView.waitForExistence(timeout: 10), "Page should appear after navigation")
+      XCTAssertFalse(createItemButton.exists, "Home buttons should not be visible after navigation")
+
+      XCTAssertTrue(backButton.waitForExistence(timeout: 5), "Back button should exist")
+      backButton.tap()
+      XCTAssertTrue(
+        viewItemButton.waitForExistence(timeout: 5),
+        "Should return to home screen after create flow")
+    }
+
+    try XCTContext.runActivity(named: "Swipe-left navigates to destination") { _ in
+      let rowTitle = app.staticTexts["Swipe me"]
+      XCTAssertTrue(
+        rowTitle.waitForExistence(timeout: 10),
+        "Swipeable text row should be visible")
+
+      rowTitle.swipeLeft(velocity: .slow)
+
+      let swipeButton = app.buttons["swipeLeft_\(Self.swipeLeftRowId)"]
+      XCTAssertTrue(
+        swipeButton.waitForExistence(timeout: 3),
+        "Swipe-left action button should be revealed after swipe")
+      XCTAssertEqual(swipeButton.label, "Open")
+      swipeButton.tap()
+
+      let destinationPage = app.scrollViews["page_\(Self.swipeLeftDestPageId)"]
+      XCTAssertTrue(
+        destinationPage.waitForExistence(timeout: 5),
+        "Swipe-left action should navigate to the destination page")
+
+      let backButton = app.navigationBars.buttons.firstMatch
+      XCTAssertTrue(backButton.waitForExistence(timeout: 5), "Back button should exist")
+      backButton.tap()
+      XCTAssertTrue(homePage.waitForExistence(timeout: 5), "Should return to home screen")
+    }
+
+    try XCTContext.runActivity(named: "Segment switching swaps child content") { _ in
+      let pickupContent = app.staticTexts["Pickup segment content"]
+      let deliveryContent = app.staticTexts["Delivery segment content"]
+
+      XCTAssertTrue(
+        pickupContent.waitForExistence(timeout: 10),
+        "First segment content should be visible on launch")
+      XCTAssertFalse(
+        deliveryContent.exists,
+        "Second segment content should be hidden until its tab is selected")
+
+      let deliveryTab = app.segmentedControls.buttons["Delivery"]
+      XCTAssertTrue(deliveryTab.waitForExistence(timeout: 5), "Delivery segment should exist")
+      deliveryTab.tap()
+
+      XCTAssertTrue(
+        deliveryContent.waitForExistence(timeout: 5),
+        "Switching to the Delivery tab must swap in the second segment's content")
+      XCTAssertFalse(
+        pickupContent.exists,
+        "First segment content should no longer be visible after switching tabs")
+    }
+  }
+
+  private static func coreUITestsHomeFlowData(
+    flowId: String,
+    homePageId: String,
+    destPageId: String,
+    swipeRowId: String,
+    viewFlowId: String,
+    viewPageId: String,
+    createFlowId: String,
+    createPageId: String
+  ) -> [String: Any] {
+    return [
+      "id": flowId,
+      "name": "E2E Core UI",
+      "pages": [
+        [
+          "id": homePageId,
+          "title": "Home",
+          "rows": [
+            [
+              "id": "a74bc80e-ffda-4e19-b8f3-cd882405958b",
+              "type": "vertical_container",
+              "actions": [:],
+              "visible": "true",
+              "title": "",
+              "children": [
+                Self.buttonRow(
+                  id: "441c1433-446b-4682-854d-5d795ef52709",
+                  label: "View",
+                  action: "{navigate(\(viewFlowId),\(viewPageId))}"
+                ),
+                Self.buttonRow(
+                  id: "c1ad8812-a824-4ca2-bb27-5bc840ae7e08",
+                  label: "Create",
+                  action: "{navigate(\(createFlowId),\(createPageId))}"
+                ),
+              ],
+            ],
+            [
+              "id": swipeRowId,
+              "type": "text",
+              "visible": "true",
+              "title": "Swipe me",
+              "subtitle": "",
+              "swipe_label": "Open",
+              "name": "Swipeable text",
+              "actions": Self.actionsObject(
+                swipeLeft: [
+                  Self.rowAction(true: "{navigate(\(flowId),\(destPageId))}")
+                ]
+              ),
+            ],
+            [
+              "id": "6a5b4c3d-2e1f-4a0b-8c9d-1e2f3a4b5c6d",
+              "type": "tab_container",
+              "actions": Self.actionsObject(
+                tap: [Self.rowAction(true: "{select($datum)}")]
+              ),
+              "visible": "true",
+              "title": "",
+              "segments": ["Pickup", "Delivery"],
+              "children": [
+                Self.textRow(
+                  id: "1a2b3c4d-5e6f-4a7b-8c9d-0e1f2a3b4c01",
+                  title: "Pickup segment content"
+                ),
+                Self.textRow(
+                  id: "1a2b3c4d-5e6f-4a7b-8c9d-0e1f2a3b4c02",
+                  title: "Delivery segment content"
+                ),
+              ],
+            ],
+          ],
+        ],
+        [
+          "id": destPageId,
+          "title": "Destination",
+          "rows": [
+            Self.textRow(
+              id: "e5f4a3b2-c1d0-4e9f-8a7b-6c5d4e3f2a1b",
+              title: "Arrived"
+            )
+          ],
+        ],
+      ],
+    ]
   }
 }
 
@@ -2201,235 +2334,150 @@ final class WebSocketE2ETests: E2ETestBase {
   }
 
   @MainActor
-  func testWebSocketRowUpdatePreservesUnrelatedRowState() async throws {
-    let viewItemButton = app.buttons["View"]
-    XCTAssertTrue(
-      viewItemButton.waitForExistence(timeout: 20),
-      "Home screen not loaded - verify API is running and database is seeded")
-
-    guard let inputContainer = findElement(identifier: "textField_e2e.unrelated_input") else {
-      XCTFail("Unrelated input row should be visible on the home screen")
-      return
-    }
-    guard let inputField = tapAndGetEditableField(container: inputContainer) else {
-      XCTFail("Failed to get editable unrelated input field")
-      return
-    }
-
-    let typedText = "keep me \(Int(Date().timeIntervalSince1970))"
-    inputField.typeText(typedText)
-    XCTAssertTrue(
-      (inputField.value as? String)?.contains(typedText) == true,
-      "Unrelated input should hold typed text, got: '\(inputField.value as? String ?? "nil")'")
-
-    let updatedLabel = "Updated View \(Int(Date().timeIntervalSince1970))"
-    let emitter = WSEmitter()
-    do {
-      try await emitter.connect(host: apiHost)
-      try await emitter.login(token: "e2e-test", os: "ios")
-      try await emitter.updateSDUI(
-        flowData: createHomeFlowData(buttonLabel: updatedLabel),
-        flowId: E2EFlowIds.webSocketHomeFlow
-      )
-    } catch {
-      XCTFail("Failed to emit update: \(error.localizedDescription)")
-      return
-    }
-
-    let updatedButton = app.buttons[updatedLabel]
-    XCTAssertTrue(
-      updatedButton.waitForExistence(timeout: 10),
-      "Button should update to '\(updatedLabel)' after notification")
-    XCTAssertTrue(
-      (inputField.value as? String)?.contains(typedText) == true,
-      "Unrelated input should retain typed text after a row-only SDUI update, got: '\(inputField.value as? String ?? "nil")'"
-    )
-
-    await emitter.disconnect()
-  }
-
-  @MainActor
-  func testConditionalActionEvaluatesLogicalExpression() async throws {
+  func testLiveSDUIUpdatesOnHomeFlow() throws {
     let viewItemButton = app.buttons["View"]
     XCTAssertTrue(
       viewItemButton.waitForExistence(timeout: 20),
       "Home screen not loaded - verify API is running and database is seeded")
 
     let emitter = WSEmitter()
-    let conditionalLabel = "Conditional \(Int(Date().timeIntervalSince1970))"
-
-    do {
-      try await emitter.connect(host: apiHost)
+    let host = apiHost
+    try awaitResult("emitter setup") {
+      try await emitter.connect(host: host)
       try await emitter.login(token: "e2e-test", os: "ios")
-      try await emitter.updateSDUI(
-        flowData: createConditionalFlowData(buttonLabel: conditionalLabel),
-        flowId: E2EFlowIds.webSocketHomeFlow
+    }
+
+    try XCTContext.runActivity(named: "Row update preserves unrelated input state") { _ in
+      guard let inputContainer = findElement(identifier: "textField_e2e.unrelated_input") else {
+        XCTFail("Unrelated input row should be visible on the home screen")
+        return
+      }
+      guard let inputField = tapAndGetEditableField(container: inputContainer) else {
+        XCTFail("Failed to get editable unrelated input field")
+        return
+      }
+
+      let typedText = "keep me \(Int(Date().timeIntervalSince1970))"
+      inputField.typeText(typedText)
+      XCTAssertTrue(
+        (inputField.value as? String)?.contains(typedText) == true,
+        "Unrelated input should hold typed text, got: '\(inputField.value as? String ?? "nil")'")
+
+      let updatedLabel = "Updated View \(Int(Date().timeIntervalSince1970))"
+      try awaitResult("push relabel SDUI") {
+        try await emitter.updateSDUI(
+          flowData: self.createHomeFlowData(buttonLabel: updatedLabel),
+          flowId: E2EFlowIds.webSocketHomeFlow
+        )
+      }
+
+      let updatedButton = app.buttons[updatedLabel]
+      XCTAssertTrue(
+        updatedButton.waitForExistence(timeout: 10),
+        "Button should update to '\(updatedLabel)' after notification")
+      XCTAssertTrue(
+        (inputField.value as? String)?.contains(typedText) == true,
+        "Unrelated input should retain typed text after a row-only SDUI update, got: '\(inputField.value as? String ?? "nil")'"
       )
-    } catch {
-      XCTFail("Failed to publish conditional flow: \(error.localizedDescription)")
-      return
     }
 
-    let conditionalButton = app.buttons[conditionalLabel]
-    XCTAssertTrue(
-      conditionalButton.waitForExistence(timeout: 10),
-      "Conditional button should exist after SDUI update")
+    try XCTContext.runActivity(named: "Conditional action evaluates logical expression") { _ in
+      let conditionalLabel = "Conditional \(Int(Date().timeIntervalSince1970))"
+      try awaitResult("push conditional flow") {
+        try await emitter.updateSDUI(
+          flowData: self.createConditionalFlowData(buttonLabel: conditionalLabel),
+          flowId: E2EFlowIds.webSocketHomeFlow
+        )
+      }
 
-    conditionalButton.tap()
+      let conditionalButton = app.buttons[conditionalLabel]
+      XCTAssertTrue(
+        conditionalButton.waitForExistence(timeout: 10),
+        "Conditional button should exist after SDUI update")
 
-    let goHomeButton = app.buttons["Go home"]
-    XCTAssertTrue(
-      goHomeButton.waitForExistence(timeout: 10),
-      "Tapping the conditional button should navigate when the logical expression is true")
+      conditionalButton.tap()
 
-    await emitter.disconnect()
+      let goHomeButton = app.buttons["Go home"]
+      XCTAssertTrue(
+        goHomeButton.waitForExistence(timeout: 10),
+        "Tapping the conditional button should navigate when the logical expression is true")
+    }
+
+    try awaitResult("disconnect") {
+      await emitter.disconnect()
+    }
   }
 
   @MainActor
-  func testViewItemFlowLoadsItemFromNavigateQuery() async throws {
+  func testSheetPresentationAndReactivity() throws {
     let emitter = WSEmitter()
-    try await emitter.connect(host: apiHost)
-    try await emitter.login(token: "e2e-test", os: "ios")
-
-    let (selectedItemId, selectedItemTitle) = try await createMarketplaceItem(
-      emitter: emitter,
-      titlePrefix: "Filtered Item"
-    )
-
-    let viewButtonLabel = "View filtered \(Int(Date().timeIntervalSince1970))"
-    try await emitter.updateSDUI(
-      flowData: createHomeFlowData(
-        buttonLabel: viewButtonLabel,
-        viewItemId: selectedItemId
-      ),
-      flowId: E2EFlowIds.webSocketHomeFlow
-    )
-    await emitter.disconnect()
-
-    app.terminate()
-    try launchApp()
-
-    let queryButton = app.buttons[viewButtonLabel]
-    XCTAssertTrue(
-      queryButton.waitForExistence(timeout: 20),
-      "Home view button should load with query-aware label after relaunch")
-
-    queryButton.tap()
-
-    let scrollView = app.scrollViews.firstMatch
-    XCTAssertTrue(scrollView.waitForExistence(timeout: 10), "View item page should appear")
-
-    XCTAssertTrue(
-      app.staticTexts["My item is called"].waitForExistence(timeout: 5),
-      "View item page should show the static text row title")
-    XCTAssertTrue(
-      app.staticTexts[selectedItemTitle].waitForExistence(timeout: 10),
-      "View item page should resolve {\(MARKETPLACE_ITEMS_RESOURCE_ID).title} from the item id passed in navigate query"
-    )
-    XCTAssertTrue(
-      app.navigationBars.staticTexts[selectedItemTitle].waitForExistence(timeout: 10),
-      "View item page title should resolve {\(MARKETPLACE_ITEMS_RESOURCE_ID).title} from the item id passed in navigate query"
-    )
-
-    let titleInputId = "textField_{\(MARKETPLACE_ITEMS_RESOURCE_ID).title}"
-    guard let titleInput = findElement(identifier: titleInputId) else {
-      XCTFail("View item page should show an input bound to the item title")
-      return
-    }
-    guard let titleField = tapAndGetEditableField(container: titleInput) else {
-      XCTFail("Failed to get editable title input on the view item page")
-      return
-    }
-    XCTAssertEqual(
-      titleField.value as? String,
-      selectedItemTitle,
-      "Input bound to {\(MARKETPLACE_ITEMS_RESOURCE_ID).title} must show the existing item data, not an empty bootstrapped draft"
-    )
-
-    let editedTitle = "Edited \(Int(Date().timeIntervalSince1970))"
-    clearAndType(field: titleField, text: editedTitle, placeholder: "Enter a title")
-    XCTAssertTrue(
-      app.navigationBars.staticTexts[editedTitle].waitForExistence(timeout: 10),
-      "Page nav title should update when {\(MARKETPLACE_ITEMS_RESOURCE_ID).title} is edited"
-    )
-  }
-
-  @MainActor
-  func testSheetTitleUpdatesWhenWatchedDataChanges() async throws {
-    let emitter = WSEmitter()
-    try await emitter.connect(host: apiHost)
-    try await emitter.login(token: "e2e-test", os: "ios")
-
-    let (selectedItemId, selectedItemTitle) = try await createMarketplaceItem(
-      emitter: emitter,
-      titlePrefix: "Sheet Title Item"
-    )
-
-    let viewLabel = try await openViewItemPage(
-      emitter: emitter,
-      labelPrefix: "View sheet title",
-      itemId: selectedItemId,
-      viewFlowDataBuilder: Self.sheetTitleReactivityFlowData
-    )
-    _ = viewLabel
-
-    let openSheetButton = app.buttons["Open sheet"]
-    XCTAssertTrue(
-      openSheetButton.waitForExistence(timeout: 10),
-      "Sheet title test page should show the Open sheet button")
-    openSheetButton.tap()
-
-    XCTAssertTrue(
-      app.navigationBars.staticTexts[selectedItemTitle].waitForExistence(timeout: 10),
-      "Sheet nav title should resolve {\(MARKETPLACE_ITEMS_RESOURCE_ID).title} on open"
-    )
-
-    let titleInputId = "textField_{\(MARKETPLACE_ITEMS_RESOURCE_ID).title}"
-    guard let titleInput = findElement(identifier: titleInputId) else {
-      XCTFail("Sheet should show an input bound to the item title")
-      return
-    }
-    guard let titleField = tapAndGetEditableField(container: titleInput) else {
-      XCTFail("Failed to get editable title input inside the sheet")
-      return
+    let host = apiHost
+    try awaitResult("emitter setup") {
+      try await emitter.connect(host: host)
+      try await emitter.login(token: "e2e-test", os: "ios")
     }
 
-    let editedTitle = "Sheet Edited \(Int(Date().timeIntervalSince1970))"
-    clearAndType(field: titleField, text: editedTitle, placeholder: "Enter a title")
-    XCTAssertTrue(
-      app.navigationBars.staticTexts[editedTitle].waitForExistence(timeout: 10),
-      "Sheet nav title should update when {\(MARKETPLACE_ITEMS_RESOURCE_ID).title} is edited without dismissing the sheet"
-    )
-  }
+    let (selectedItemId, selectedItemTitle) = try awaitResult("create marketplace item") {
+      try await self.createMarketplaceItem(
+        emitter: emitter,
+        titlePrefix: "Sheet presentation item"
+      )
+    }
 
-  @MainActor
-  func testShowPresentsSheetRowFromAnotherPage() async throws {
-    let emitter = WSEmitter()
-    try await emitter.connect(host: apiHost)
-    try await emitter.login(token: "e2e-test", os: "ios")
+    _ = try awaitResult("open view item page") {
+      try await self.openViewItemPage(
+        emitter: emitter,
+        labelPrefix: "View sheet presentation",
+        itemId: selectedItemId,
+        viewFlowDataBuilder: Self.sheetPresentationAndReactivityFlowData
+      )
+    }
 
-    let (selectedItemId, _) = try await createMarketplaceItem(
-      emitter: emitter,
-      titlePrefix: "Cross Page Sheet Item"
-    )
+    try XCTContext.runActivity(named: "Cross-page sheet from another page") { _ in
+      let openCrossPageSheetButton = app.buttons["Open cross-page sheet"]
+      XCTAssertTrue(
+        openCrossPageSheetButton.waitForExistence(timeout: 10),
+        "Cross-page sheet test page should show the Open cross-page sheet button")
+      openCrossPageSheetButton.tap()
 
-    _ = try await openViewItemPage(
-      emitter: emitter,
-      labelPrefix: "View cross page sheet",
-      itemId: selectedItemId,
-      viewFlowDataBuilder: Self.crossPageSheetFlowData
-    )
+      XCTAssertTrue(
+        app.staticTexts["Opened sheet row from another page"].waitForExistence(timeout: 10),
+        "Show should present a sheet row that belongs to another page in the same flow")
+      app.buttons["Done"].tap()
+    }
 
-    let openSheetButton = app.buttons["Open cross-page sheet"]
-    XCTAssertTrue(
-      openSheetButton.waitForExistence(timeout: 10),
-      "Cross-page sheet test page should show the Open cross-page sheet button")
-    openSheetButton.tap()
+    try XCTContext.runActivity(named: "Sheet title updates when watched data changes") { _ in
+      let openSheetButton = app.buttons["Open sheet"]
+      XCTAssertTrue(
+        openSheetButton.waitForExistence(timeout: 10),
+        "Sheet title test page should show the Open sheet button")
+      openSheetButton.tap()
 
-    XCTAssertTrue(
-      app.staticTexts["Opened sheet row from another page"].waitForExistence(timeout: 10),
-      "Show should present a sheet row that belongs to another page in the same flow"
-    )
+      XCTAssertTrue(
+        app.navigationBars.staticTexts[selectedItemTitle].waitForExistence(timeout: 10),
+        "Sheet nav title should resolve {\(MARKETPLACE_ITEMS_RESOURCE_ID).title} on open")
+
+      let titleInputId = "textField_{\(MARKETPLACE_ITEMS_RESOURCE_ID).title}"
+      guard let titleInput = findElement(identifier: titleInputId) else {
+        XCTFail("Sheet should show an input bound to the item title")
+        return
+      }
+      guard let titleField = tapAndGetEditableField(container: titleInput) else {
+        XCTFail("Failed to get editable title input inside the sheet")
+        return
+      }
+
+      let editedTitle = "Sheet Edited \(Int(Date().timeIntervalSince1970))"
+      clearAndType(field: titleField, text: editedTitle, placeholder: "Enter a title")
+      XCTAssertTrue(
+        app.navigationBars.staticTexts[editedTitle].waitForExistence(timeout: 10),
+        "Sheet nav title should update when {\(MARKETPLACE_ITEMS_RESOURCE_ID).title} is edited without dismissing the sheet"
+      )
+    }
+
+    try awaitResult("disconnect") {
+      await emitter.disconnect()
+    }
   }
 
   @MainActor
@@ -2476,169 +2524,223 @@ final class WebSocketE2ETests: E2ETestBase {
   }
 
   @MainActor
-  func testTimeslotPickerCreatesPickupRequest() async throws {
+  func testItemPageRequestsAndValidation() throws {
     let emitter = WSEmitter()
-    try await emitter.connect(host: apiHost)
-    try await emitter.login(token: "e2e-test", os: "ios")
+    let host = apiHost
     let selectedTimeslot = "2026-06-03T09:00:00"
-    let (selectedItemId, selectedItemTitle) = try await createMarketplaceItem(
-      emitter: emitter,
-      titlePrefix: "Pickup request item",
-      pickupSelection: [selectedTimeslot]
-    )
+    try awaitResult("emitter setup") {
+      try await emitter.connect(host: host)
+      try await emitter.login(token: "e2e-test", os: "ios")
+    }
+    let (selectedItemId, selectedItemTitle) = try awaitResult("create marketplace item") {
+      try await self.createMarketplaceItem(
+        emitter: emitter,
+        titlePrefix: "Item page requests item",
+        pickupSelection: [selectedTimeslot, "2026-06-03T10:00:00"],
+        shippingFee: "5"
+      )
+    }
 
-    _ = try await openViewItemPage(
-      emitter: emitter,
-      labelPrefix: "Request pickup",
-      itemId: selectedItemId,
-      buttonExistenceMessage: "Request view button should load"
-    )
-    try await emitter.subscribe(event: "data_changed")
+    _ = try awaitResult("open view item page") {
+      try await self.openViewItemPage(
+        emitter: emitter,
+        labelPrefix: "Item page requests",
+        itemId: selectedItemId,
+        buttonExistenceMessage: "Request view button should load"
+      )
+    }
+    try awaitResult("subscribe data_changed") {
+      try await emitter.subscribe(event: "data_changed")
+    }
 
-    let timeslot = app.staticTexts["09:00"].firstMatch
-    XCTAssertTrue(timeslot.waitForExistence(timeout: 10), "Pickup timeslot should be visible")
-    timeslot.tap()
+    let heldPaymentCopy =
+      "Your payment will be held on EVY until shipping has been confirmed (within 48 hours)."
+    let noSurchargeCopy =
+      "Shipping should be confirmed within 48 hours by the seller."
 
-    XCTAssertTrue(
-      waitForConfirmationSheet(timeout: 5),
-      "Pickup confirmation sheet should appear after selecting a timeslot")
-    XCTAssertTrue(
-      app.staticTexts.containing(
-        NSPredicate(format: "label CONTAINS %@", selectedItemTitle)
-      ).firstMatch.waitForExistence(timeout: 5),
-      "Confirmation sheet should mention the item title")
+    try XCTContext.runActivity(named: "Earlier-timeslot warning on later slot") { _ in
+      let laterTimeslot = app.staticTexts["10:00"].firstMatch
+      XCTAssertTrue(
+        laterTimeslot.waitForExistence(timeout: 10), "Later pickup timeslot should be visible")
+      laterTimeslot.tap()
 
-    tapConfirmationSheetRequestButton()
-    XCTAssertFalse(
-      app.alerts.firstMatch.waitForExistence(timeout: 2),
-      "Pickup request should not show a native confirmation alert")
+      let earlierTimeslotWarning = app.staticTexts.containing(
+        NSPredicate(format: "label CONTAINS %@", "earlier than your selected timeslot")
+      ).firstMatch
+      XCTAssertTrue(
+        earlierTimeslotWarning.waitForExistence(timeout: 5),
+        "Later timeslot confirmation should show the earlier-timeslot warning")
 
-    let pickupRequestCreated = try await waitForMessage(
-      emitter: emitter,
-      type: "pickup",
-      itemId: selectedItemId,
-      valueKey: "time",
-      value: selectedTimeslot
-    )
-    XCTAssertTrue(
-      pickupRequestCreated,
-      "Tapping a pickup timeslot should create a matching marketplace message"
-    )
-    await emitter.disconnect()
+      dismissConfirmationSheet()
+      XCTAssertTrue(
+        waitForConfirmationSheetDismissed(timeout: 5),
+        "Confirmation sheet should dismiss")
+
+      let earlierTimeslot = app.staticTexts["09:00"].firstMatch
+      XCTAssertTrue(
+        earlierTimeslot.waitForExistence(timeout: 10), "Earlier pickup timeslot should be visible")
+      earlierTimeslot.tap()
+
+      XCTAssertTrue(
+        waitForConfirmationSheet(timeout: 5),
+        "Confirmation sheet should reopen for the earlier timeslot")
+      XCTAssertTrue(
+        app.staticTexts.containing(
+          NSPredicate(format: "label CONTAINS %@", selectedItemTitle)
+        ).firstMatch.waitForExistence(timeout: 5),
+        "Confirmation sheet should mention the item title")
+      XCTAssertFalse(
+        earlierTimeslotWarning.waitForExistence(timeout: 2),
+        "Earliest timeslot confirmation should not show the earlier-timeslot warning")
+      dismissConfirmationSheet()
+    }
+
+    try XCTContext.runActivity(named: "Sheet dismiss writes no pickup message") { _ in
+      let messagesAfterDismiss = try awaitResult("get messages after dismiss") {
+        try await emitter.getResource(
+          resource: EVYCoreResource.messages.ref
+        )
+      }
+      XCTAssertFalse(
+        Self.messagesContain(
+          messagesAfterDismiss,
+          type: "pickup",
+          itemId: selectedItemId
+        ),
+        "Cancelling confirmation should not create a pickup request"
+      )
+    }
+
+    try XCTContext.runActivity(named: "Empty postcode validation") { _ in
+      let askToBuyButton = app.buttons["Ask to buy"]
+      XCTAssertTrue(
+        askToBuyButton.waitForExistence(timeout: 10), "Ask to buy button should be visible")
+      askToBuyButton.tap()
+
+      let missingInformationAlert = app.alerts["Missing information"]
+      XCTAssertTrue(
+        missingInformationAlert.waitForExistence(timeout: 5),
+        "An empty shipping postcode should show the missing-information alert")
+      let messagesAfterEmptyPostcode = try awaitResult("get messages after empty postcode") {
+        try await emitter.getResource(
+          resource: EVYCoreResource.messages.ref
+        )
+      }
+      XCTAssertFalse(
+        Self.messagesContain(
+          messagesAfterEmptyPostcode,
+          type: "shipping",
+          itemId: selectedItemId
+        ),
+        "An empty postcode must not create a shipping request"
+      )
+      let dismissAlertButton = missingInformationAlert.buttons.firstMatch
+      XCTAssertTrue(dismissAlertButton.exists, "Missing-information alert should be dismissible")
+      dismissAlertButton.tap()
+    }
+
+    try XCTContext.runActivity(named: "Surcharge copy when fee > 0") { _ in
+      try fillShippingPostcodeAndAskToBuy()
+
+      XCTAssertTrue(
+        waitForConfirmationSheet(timeout: 5),
+        "Shipping confirmation sheet should appear after Ask to buy with a postcode")
+      XCTAssertTrue(
+        app.staticTexts.containing(
+          NSPredicate(format: "label CONTAINS %@", heldPaymentCopy)
+        ).firstMatch.waitForExistence(timeout: 5),
+        "Surcharge item confirmation should show the held-payment notice")
+      XCTAssertFalse(
+        app.staticTexts.containing(
+          NSPredicate(format: "label CONTAINS %@", noSurchargeCopy)
+        ).firstMatch.waitForExistence(timeout: 2),
+        "Surcharge item confirmation should not show the no-surcharge notice")
+      dismissConfirmationSheet()
+      XCTAssertTrue(
+        waitForConfirmationSheetDismissed(timeout: 5),
+        "Shipping confirmation sheet should dismiss without confirming")
+    }
+
+    try XCTContext.runActivity(named: "Pickup and shipping requests write messages") { _ in
+      try fillShippingPostcodeAndAskToBuy()
+      XCTAssertTrue(
+        waitForConfirmationSheet(timeout: 5),
+        "Shipping confirmation sheet should appear after Ask to buy with a postcode")
+      tapConfirmationSheetRequestButton()
+
+      let shippingRequestCreated = try awaitResult("wait for shipping message") {
+        try await self.waitForMessage(
+          emitter: emitter,
+          type: "shipping",
+          itemId: selectedItemId,
+          valueKey: "postalcode",
+          value: "2018"
+        )
+      }
+      XCTAssertTrue(
+        shippingRequestCreated,
+        "Ask to buy should create a shipping request with the entered postcode")
+
+      let earlierTimeslot = app.staticTexts["09:00"].firstMatch
+      XCTAssertTrue(
+        earlierTimeslot.waitForExistence(timeout: 10), "Pickup timeslot should be visible")
+      earlierTimeslot.tap()
+      XCTAssertTrue(
+        waitForConfirmationSheet(timeout: 5),
+        "Pickup confirmation sheet should appear after selecting a timeslot")
+      tapConfirmationSheetRequestButton()
+      XCTAssertFalse(
+        app.alerts.firstMatch.waitForExistence(timeout: 2),
+        "Pickup request should not show a native confirmation alert")
+
+      let pickupRequestCreated = try awaitResult("wait for pickup message") {
+        try await self.waitForMessage(
+          emitter: emitter,
+          type: "pickup",
+          itemId: selectedItemId,
+          valueKey: "time",
+          value: selectedTimeslot
+        )
+      }
+      XCTAssertTrue(
+        pickupRequestCreated,
+        "Tapping a pickup timeslot should create a matching marketplace message")
+    }
+
+    try awaitResult("disconnect") {
+      await emitter.disconnect()
+    }
   }
 
   @MainActor
-  func testTimeslotConfirmationCancelDoesNotCreateRequest() async throws {
+  func testPickupRequestLifecycle() throws {
     let emitter = WSEmitter()
-    try await emitter.connect(host: apiHost)
-    try await emitter.login(token: "e2e-test", os: "ios")
+    let host = apiHost
     let selectedTimeslot = "2026-06-03T09:00:00"
-    let (selectedItemId, _) = try await createMarketplaceItem(
-      emitter: emitter,
-      titlePrefix: "Cancel pickup item",
-      pickupSelection: [selectedTimeslot]
-    )
+    try awaitResult("emitter setup") {
+      try await emitter.connect(host: host)
+      try await emitter.login(token: "e2e-test", os: "ios")
+    }
+    let (selectedItemId, _) = try awaitResult("create marketplace item") {
+      try await self.createMarketplaceItem(
+        emitter: emitter,
+        titlePrefix: "Pickup lifecycle item",
+        pickupSelection: [selectedTimeslot]
+      )
+    }
 
-    _ = try await openViewItemPage(
-      emitter: emitter,
-      labelPrefix: "Cancel pickup",
-      itemId: selectedItemId,
-      buttonExistenceMessage: "Request view button should load"
-    )
-
-    let timeslot = app.staticTexts["09:00"].firstMatch
-    XCTAssertTrue(timeslot.waitForExistence(timeout: 10), "Pickup timeslot should be visible")
-    timeslot.tap()
-
-    XCTAssertTrue(
-      waitForConfirmationSheet(timeout: 5),
-      "Pickup confirmation sheet should appear after selecting a timeslot")
-    dismissConfirmationSheet()
-
-    let messagesAfterCancel = try await emitter.getResource(
-      resource: EVYCoreResource.messages.ref
-    )
-    XCTAssertFalse(
-      Self.messagesContain(
-        messagesAfterCancel,
-        type: "pickup",
-        itemId: selectedItemId
-      ),
-      "Cancelling confirmation should not create a pickup request"
-    )
-    XCTAssertTrue(timeslot.exists, "Pickup timeslot should remain visible after cancel")
-    await emitter.disconnect()
-  }
-
-  @MainActor
-  func testPickupConfirmationSheetShowsEarlierTimeslotWarning() async throws {
-    let emitter = WSEmitter()
-    try await emitter.connect(host: apiHost)
-    try await emitter.login(token: "e2e-test", os: "ios")
-    let (selectedItemId, _) = try await createMarketplaceItem(
-      emitter: emitter,
-      titlePrefix: "Later pickup item",
-      pickupSelection: ["2026-06-03T09:00:00", "2026-06-03T10:00:00"]
-    )
-
-    _ = try await openViewItemPage(
-      emitter: emitter,
-      labelPrefix: "Later pickup",
-      itemId: selectedItemId,
-      buttonExistenceMessage: "Request view button should load"
-    )
-
-    let laterTimeslot = app.staticTexts["10:00"].firstMatch
-    XCTAssertTrue(
-      laterTimeslot.waitForExistence(timeout: 10), "Later pickup timeslot should be visible")
-    laterTimeslot.tap()
-
-    let earlierTimeslotWarning = app.staticTexts.containing(
-      NSPredicate(format: "label CONTAINS %@", "earlier than your selected timeslot")
-    ).firstMatch
-    XCTAssertTrue(
-      earlierTimeslotWarning.waitForExistence(timeout: 5),
-      "Later timeslot confirmation should show the earlier-timeslot warning")
-
-    dismissConfirmationSheet()
-    XCTAssertTrue(
-      waitForConfirmationSheetDismissed(timeout: 5),
-      "Confirmation sheet should dismiss")
-
-    let earlierTimeslot = app.staticTexts["09:00"].firstMatch
-    XCTAssertTrue(
-      earlierTimeslot.waitForExistence(timeout: 10), "Earlier pickup timeslot should be visible")
-    earlierTimeslot.tap()
-
-    XCTAssertTrue(
-      waitForConfirmationSheet(timeout: 5),
-      "Confirmation sheet should reopen for the earlier timeslot")
-    XCTAssertFalse(
-      earlierTimeslotWarning.waitForExistence(timeout: 2),
-      "Earliest timeslot confirmation should not show the earlier-timeslot warning")
-    await emitter.disconnect()
-  }
-
-  @MainActor
-  func testCancelRequestTogglesPickerAndShippingButton() async throws {
-    let emitter = WSEmitter()
-    try await emitter.connect(host: apiHost)
-    try await emitter.login(token: "e2e-test", os: "ios")
-    let selectedTimeslot = "2026-06-03T09:00:00"
-    let (selectedItemId, _) = try await createMarketplaceItem(
-      emitter: emitter,
-      titlePrefix: "Cancel request item",
-      pickupSelection: [selectedTimeslot]
-    )
-
-    _ = try await openViewItemPage(
-      emitter: emitter,
-      labelPrefix: "Cancel request",
-      itemId: selectedItemId,
-      viewFlowDataBuilder: Self.viewItemCancelRequestFlowData,
-      buttonExistenceMessage: "Request view button should load"
-    )
-    try await emitter.subscribe(event: "data_changed")
+    _ = try awaitResult("open view item page") {
+      try await self.openViewItemPage(
+        emitter: emitter,
+        labelPrefix: "Pickup lifecycle",
+        itemId: selectedItemId,
+        viewFlowDataBuilder: Self.viewItemCancelRequestFlowData,
+        buttonExistenceMessage: "Request view button should load"
+      )
+    }
+    try awaitResult("subscribe data_changed") {
+      try await emitter.subscribe(event: "data_changed")
+    }
 
     let timeslot = app.staticTexts["09:00"].firstMatch
     XCTAssertTrue(timeslot.waitForExistence(timeout: 10), "Pickup timeslot should be visible")
@@ -2646,155 +2748,197 @@ final class WebSocketE2ETests: E2ETestBase {
       app.buttons["Cancel pickup request"].exists,
       "Cancel pickup request should be hidden before a request exists")
 
-    timeslot.tap()
-    XCTAssertTrue(
-      waitForConfirmationSheet(timeout: 5),
-      "Pickup confirmation sheet should appear after selecting a timeslot")
-    tapConfirmationSheetRequestButton()
+    try XCTContext.runActivity(named: "UI cancel restores picker") { _ in
+      timeslot.tap()
+      XCTAssertTrue(
+        waitForConfirmationSheet(timeout: 5),
+        "Pickup confirmation sheet should appear after selecting a timeslot")
+      tapConfirmationSheetRequestButton()
 
-    let pickupRequestCreated = try await waitForMessage(
-      emitter: emitter,
-      type: "pickup",
-      itemId: selectedItemId,
-      valueKey: "time",
-      value: selectedTimeslot
-    )
-    XCTAssertTrue(pickupRequestCreated, "Tapping a pickup timeslot should create a message")
-
-    let cancelButton = app.buttons["Cancel pickup request"].firstMatch
-    XCTAssertTrue(
-      cancelButton.waitForExistence(timeout: 10),
-      "Cancel pickup request should replace the transfer tabs and pickup timeslot")
-    XCTAssertFalse(timeslot.exists, "Pickup timeslot should be hidden after creating a request")
-    XCTAssertFalse(
-      app.segmentedControls.buttons["Shipping"].waitForExistence(timeout: 2),
-      "Transfer tabs collapse while an arrangement is in flight, leaving just that request")
-
-    cancelButton.tap()
-    XCTAssertTrue(
-      waitForConfirmationSheet(timeout: 5),
-      "Cancel pickup confirmation sheet should appear")
-    // The row button and the sheet's confirm button share the "Cancel request" label; tap the
-    // hittable one (the confirm button on top of the sheet) so the write actually fires.
-    let confirmCancelButton = try XCTUnwrap(
-      waitForHittableButton(labeled: "Cancel request"),
-      "Confirm cancel button should be tappable in the sheet")
-    confirmCancelButton.tap()
-
-    let requestWithdrawn = try await waitForMessage(
-      emitter: emitter,
-      itemId: selectedItemId,
-      valueKey: "value",
-      value: "cancel"
-    )
-    XCTAssertTrue(
-      requestWithdrawn, "Cancel request should append a cancel message, not rewrite the request")
-    XCTAssertTrue(
-      timeslot.waitForExistence(timeout: 10),
-      "Pickup timeslot should return after cancelling the request")
-
-    timeslot.tap()
-    XCTAssertTrue(
-      waitForConfirmationSheet(timeout: 5),
-      "Pickup confirmation sheet should reopen after cancelling the request")
-    tapConfirmationSheetRequestButton()
-    XCTAssertTrue(
-      app.buttons["Cancel pickup request"].firstMatch.waitForExistence(timeout: 10),
-      "Cancel pickup request should reappear after creating another request")
-    await emitter.disconnect()
-  }
-
-  /// The case the latest-message model exists for: a rejection is terminal but leaves nothing
-  /// in flight, so the buyer is back to picking a timeslot and can ask again. The old
-  /// predicates could not express this - the request was still there, unanswered as far as any
-  /// flat lookup could tell.
-  @MainActor
-  func testRejectedRequestReturnsTheTimeslots() async throws {
-    let emitter = WSEmitter()
-    try await emitter.connect(host: apiHost)
-    try await emitter.login(token: "e2e-test", os: "ios")
-    let selectedTimeslot = "2026-06-03T09:00:00"
-    let (selectedItemId, _) = try await createMarketplaceItem(
-      emitter: emitter,
-      titlePrefix: "Rejected request item",
-      pickupSelection: [selectedTimeslot]
-    )
-
-    _ = try await openViewItemPage(
-      emitter: emitter,
-      labelPrefix: "Rejected request",
-      itemId: selectedItemId,
-      viewFlowDataBuilder: Self.viewItemCancelRequestFlowData,
-      buttonExistenceMessage: "Request view button should load"
-    )
-    try await emitter.subscribe(event: "data_changed")
-
-    let timeslot = app.staticTexts["09:00"].firstMatch
-    XCTAssertTrue(timeslot.waitForExistence(timeout: 10), "Pickup timeslot should be visible")
-    timeslot.tap()
-    XCTAssertTrue(
-      waitForConfirmationSheet(timeout: 5),
-      "Pickup confirmation sheet should appear after selecting a timeslot")
-    tapConfirmationSheetRequestButton()
-
-    XCTAssertTrue(
-      waitForCancelRequestVisible(timeout: 10),
-      "Cancel pickup request should be visible while the request is open")
-
-    let requestId = try await waitForMessageId(
-      emitter: emitter,
-      itemId: selectedItemId,
-      type: "pickup",
-      value: "pending",
-      failureMessage: "An open pickup request should exist for the item"
-    )
-
-    // The owner rejects. Like every other settling message it names the request and carries
-    // its payload forward.
-    _ = try await emitter.createResource(
-      resource: EVYCoreResource.messages.ref,
-      data: [
-        "fk": selectedItemId,
-        "resource": MARKETPLACE_ITEMS_RESOURCE_ID,
-        "visibility": "private",
-        "parent_message_id": requestId,
-        "data": Self.settlingMessageData(
-          value: "reject",
+      let pickupRequestCreated = try awaitResult("wait for pickup message") {
+        try await self.waitForMessage(
+          emitter: emitter,
           type: "pickup",
-          time: selectedTimeslot
-        ),
-      ]
-    )
-    let rejectedOnServer = try await waitForMessageResponse(
-      emitter: emitter,
-      messageId: requestId,
-      value: "reject"
-    )
-    XCTAssertTrue(rejectedOnServer, "The API should hold the message rejecting the request")
+          itemId: selectedItemId,
+          valueKey: "time",
+          value: selectedTimeslot
+        )
+      }
+      XCTAssertTrue(pickupRequestCreated, "Tapping a pickup timeslot should create a message")
 
-    XCTAssertTrue(
-      waitForCancelRequestHidden(timeout: 10),
-      "Cancel pickup request should go once the request has been answered")
-    XCTAssertTrue(
-      timeslot.waitForExistence(timeout: 10),
-      "Pickup timeslots should return after a rejection")
-    XCTAssertFalse(
-      app.staticTexts.matching(
-        NSPredicate(format: "label BEGINSWITH %@", "Pickup confirmed for")
-      ).firstMatch.exists,
-      "A rejection is not a confirmation")
+      let cancelButton = app.buttons["Cancel pickup request"].firstMatch
+      XCTAssertTrue(
+        cancelButton.waitForExistence(timeout: 10),
+        "Cancel pickup request should replace the transfer tabs and pickup timeslot")
+      XCTAssertFalse(timeslot.exists, "Pickup timeslot should be hidden after creating a request")
+      XCTAssertFalse(
+        app.segmentedControls.buttons["Shipping"].waitForExistence(timeout: 2),
+        "Transfer tabs collapse while an arrangement is in flight, leaving just that request")
 
-    // And the buyer can ask again, which is the whole point.
-    timeslot.tap()
-    XCTAssertTrue(
-      waitForConfirmationSheet(timeout: 5),
-      "Pickup confirmation sheet should reopen after a rejection")
-    tapConfirmationSheetRequestButton()
-    XCTAssertTrue(
-      waitForCancelRequestVisible(timeout: 10),
-      "A fresh request after a rejection is open again")
+      cancelButton.tap()
+      XCTAssertTrue(
+        waitForConfirmationSheet(timeout: 5),
+        "Cancel pickup confirmation sheet should appear")
+      let confirmCancelButton = try XCTUnwrap(
+        waitForHittableButton(labeled: "Cancel request"),
+        "Confirm cancel button should be tappable in the sheet")
+      confirmCancelButton.tap()
 
-    await emitter.disconnect()
+      let requestWithdrawn = try awaitResult("wait for cancel message") {
+        try await self.waitForMessage(
+          emitter: emitter,
+          itemId: selectedItemId,
+          valueKey: "value",
+          value: "cancel"
+        )
+      }
+      XCTAssertTrue(
+        requestWithdrawn, "Cancel request should append a cancel message, not rewrite the request")
+      XCTAssertTrue(
+        timeslot.waitForExistence(timeout: 10),
+        "Pickup timeslot should return after cancelling the request")
+    }
+
+    try XCTContext.runActivity(named: "Server reject restores picker") { _ in
+      timeslot.tap()
+      XCTAssertTrue(
+        waitForConfirmationSheet(timeout: 5),
+        "Pickup confirmation sheet should appear after selecting a timeslot")
+      tapConfirmationSheetRequestButton()
+
+      XCTAssertTrue(
+        waitForCancelRequestVisible(timeout: 10),
+        "Cancel pickup request should be visible while the request is open")
+
+      let requestId = try awaitResult("wait for pickup request id") {
+        try await self.waitForMessageId(
+          emitter: emitter,
+          itemId: selectedItemId,
+          type: "pickup",
+          value: "pending",
+          failureMessage: "An open pickup request should exist for the item"
+        )
+      }
+
+      _ = try awaitResult("reject pickup request") {
+        try await emitter.createResource(
+          resource: EVYCoreResource.messages.ref,
+          data: [
+            "fk": selectedItemId,
+            "resource": MARKETPLACE_ITEMS_RESOURCE_ID,
+            "visibility": "private",
+            "parent_message_id": requestId,
+            "data": Self.settlingMessageData(
+              value: "reject",
+              type: "pickup",
+              time: selectedTimeslot
+            ),
+          ]
+        )
+      }
+      _ = try awaitResult("wait for reject response") {
+        try await self.waitForMessageResponse(
+          emitter: emitter,
+          messageId: requestId,
+          value: "reject"
+        )
+      }
+
+      XCTAssertTrue(
+        waitForCancelRequestHidden(timeout: 10),
+        "Cancel pickup request should go once the request has been answered")
+      XCTAssertTrue(
+        timeslot.waitForExistence(timeout: 10),
+        "Pickup timeslots should return after a rejection")
+      XCTAssertFalse(
+        app.staticTexts.matching(
+          NSPredicate(format: "label BEGINSWITH %@", "Pickup confirmed for")
+        ).firstMatch.exists,
+        "A rejection is not a confirmation")
+    }
+
+    try XCTContext.runActivity(named: "Server accept shows confirmation") { _ in
+      timeslot.tap()
+      XCTAssertTrue(
+        waitForConfirmationSheet(timeout: 5),
+        "Pickup confirmation sheet should appear after selecting a timeslot")
+      tapConfirmationSheetRequestButton()
+
+      let pickupRequestCreated = try awaitResult("wait for pickup message") {
+        try await self.waitForMessage(
+          emitter: emitter,
+          type: "pickup",
+          itemId: selectedItemId,
+          valueKey: "time",
+          value: selectedTimeslot
+        )
+      }
+      XCTAssertTrue(pickupRequestCreated, "Tapping a pickup timeslot should create a message")
+      XCTAssertTrue(
+        waitForCancelRequestVisible(timeout: 10),
+        "Cancel pickup request should be visible for a pending request")
+
+      let messageId = try awaitResult("wait for pickup message id") {
+        try await self.waitForMessageId(
+          emitter: emitter,
+          itemId: selectedItemId,
+          type: "pickup",
+          value: "pending",
+          failureMessage: "Created pickup message should be readable from the API"
+        )
+      }
+
+      _ = try awaitResult("accept pickup request") {
+        try await emitter.createResource(
+          resource: EVYCoreResource.messages.ref,
+          data: [
+            "fk": selectedItemId,
+            "resource": MARKETPLACE_ITEMS_RESOURCE_ID,
+            "visibility": "private",
+            "parent_message_id": messageId,
+            "data": Self.settlingMessageData(
+              value: "accept",
+              type: "pickup",
+              time: selectedTimeslot,
+              pickupAddress: Self.amazingFridgePickupAddressRow
+            ),
+          ]
+        )
+      }
+      _ = try awaitResult("wait for accept response") {
+        try await self.waitForMessageResponse(
+          emitter: emitter,
+          messageId: messageId,
+          value: "accept"
+        )
+      }
+
+      XCTAssertTrue(
+        waitForCancelRequestHidden(timeout: 10),
+        "Cancel pickup request should hide once the request is answered")
+      XCTAssertTrue(
+        app.staticTexts.matching(
+          NSPredicate(format: "label BEGINSWITH %@", "Pickup confirmed for")
+        ).firstMatch.waitForExistence(timeout: 10),
+        "Pickup segment should show the accepted confirmation row")
+      XCTAssertTrue(
+        app.staticTexts["C509 28 Rothschild Avenue, 2018 Rosebery NSW"].waitForExistence(
+          timeout: 10),
+        "Accepted pickup should show the full address carried by the accept message")
+      XCTAssertFalse(
+        app.segmentedControls.buttons["Shipping"].waitForExistence(timeout: 2),
+        "Transfer tabs stay collapsed once an arrangement is agreed")
+      let shippingConfirmation = app.staticTexts.matching(
+        NSPredicate(format: "label BEGINSWITH %@", "Shipping confirmed")
+      ).firstMatch
+      XCTAssertFalse(
+        shippingConfirmation.waitForExistence(timeout: 2),
+        "Shipping confirmation should stay hidden for an accepted pickup request")
+    }
+
+    try awaitResult("disconnect") {
+      await emitter.disconnect()
+    }
   }
 
   /// The id of a message for an item, as the server holds it.
@@ -2812,8 +2956,10 @@ final class WebSocketE2ETests: E2ETestBase {
       let payload = try await emitter.getResource(
         resource: EVYCoreResource.messages.ref
       )
-      if let rows = Self.responseDataArray(from: payload),
-        let match = rows.compactMap({ $0 as? [String: Any] }).first(where: { row in
+      if let rows = Self.responseDataArray(from: payload) {
+        // Prefer the newest match: lifecycle merges reuse one item across cancel/reject
+        // cycles, so older pending rows can still exist alongside a fresh request.
+        let matches = rows.compactMap { $0 as? [String: Any] }.filter { row in
           let data = row["data"] as? [String: Any]
           guard row["fk"] as? String == itemId,
             data?["type"] as? String == type
@@ -2822,129 +2968,19 @@ final class WebSocketE2ETests: E2ETestBase {
             return data?["value"] as? String == value
           }
           return true
+        }
+        if let match = matches.max(by: { lhs, rhs in
+          (lhs["created_at"] as? String ?? "") < (rhs["created_at"] as? String ?? "")
         }),
-        let id = match["id"] as? String
-      {
-        return id
+          let id = match["id"] as? String
+        {
+          return id
+        }
       }
     } while try await emitter.nextDataChanged(
       resource: EVYCoreResource.messages.ref, deadline: deadline)
     XCTFail(failureMessage)
     return ""
-  }
-
-  @MainActor
-  func testAcceptedRequestHidesCancelAndShowsConfirmation() async throws {
-    let emitter = WSEmitter()
-    try await emitter.connect(host: apiHost)
-    try await emitter.login(token: "e2e-test", os: "ios")
-    let selectedTimeslot = "2026-06-03T09:00:00"
-    let (selectedItemId, _) = try await createMarketplaceItem(
-      emitter: emitter,
-      titlePrefix: "Accepted request item",
-      pickupSelection: [selectedTimeslot]
-    )
-
-    _ = try await openViewItemPage(
-      emitter: emitter,
-      labelPrefix: "Accepted request",
-      itemId: selectedItemId,
-      viewFlowDataBuilder: Self.viewItemCancelRequestFlowData,
-      buttonExistenceMessage: "Request view button should load"
-    )
-    try await emitter.subscribe(event: "data_changed")
-
-    let timeslot = app.staticTexts["09:00"].firstMatch
-    XCTAssertTrue(timeslot.waitForExistence(timeout: 10), "Pickup timeslot should be visible")
-    timeslot.tap()
-    XCTAssertTrue(
-      waitForConfirmationSheet(timeout: 5),
-      "Pickup confirmation sheet should appear after selecting a timeslot")
-    tapConfirmationSheetRequestButton()
-
-    let pickupRequestCreated = try await waitForMessage(
-      emitter: emitter,
-      type: "pickup",
-      itemId: selectedItemId,
-      valueKey: "time",
-      value: selectedTimeslot
-    )
-    XCTAssertTrue(pickupRequestCreated, "Tapping a pickup timeslot should create a message")
-    XCTAssertTrue(
-      waitForCancelRequestVisible(timeout: 10),
-      "Cancel pickup request should be visible for a pending request")
-
-    let messagesPayload = try await emitter.getResource(
-      resource: EVYCoreResource.messages.ref
-    )
-    let messageRows = try XCTUnwrap(
-      Self.responseDataArray(from: messagesPayload),
-      "Messages payload should be an array"
-    )
-    let request = try XCTUnwrap(
-      messageRows.compactMap { $0 as? [String: Any] }.first {
-        $0["id"] as? String != nil
-          && ($0["data"] as? [String: Any])?["type"] as? String == "pickup"
-          && $0["fk"] as? String == selectedItemId
-      },
-      "Created pickup message should be readable from the API"
-    )
-    let messageId = try XCTUnwrap(
-      request["id"] as? String,
-      "Created pickup message should include an id"
-    )
-
-    // Accepting is a new message naming the request, not an edit to it - and it carries
-    // the request's payload forward. `findFirst` predicates cannot nest, so the row that
-    // says "Pickup confirmed for …" reads the time off the message that says "accepted".
-    _ = try await emitter.createResource(
-      resource: EVYCoreResource.messages.ref,
-      data: [
-        "fk": selectedItemId,
-        "resource": MARKETPLACE_ITEMS_RESOURCE_ID,
-        "visibility": "private",
-        "parent_message_id": messageId,
-        "data": Self.settlingMessageData(
-          value: "accept",
-          type: "pickup",
-          time: selectedTimeslot,
-          pickupAddress: Self.amazingFridgePickupAddressRow
-        ),
-      ]
-    )
-    let acceptedOnServer = try await waitForMessageResponse(
-      emitter: emitter,
-      messageId: messageId,
-      value: "accept"
-    )
-    XCTAssertTrue(
-      acceptedOnServer,
-      "The API should persist the message that accepts the pickup request")
-
-    XCTAssertTrue(
-      waitForCancelRequestHidden(timeout: 10),
-      "Cancel pickup request should hide once the request is answered")
-    XCTAssertTrue(
-      app.staticTexts.matching(
-        NSPredicate(format: "label BEGINSWITH %@", "Pickup confirmed for")
-      ).firstMatch.waitForExistence(timeout: 10),
-      "Pickup segment should show the accepted confirmation row")
-    // The postcode map gives way to the seller's full address, which only exists on the accept.
-    XCTAssertTrue(
-      app.staticTexts["C509 28 Rothschild Avenue, 2018 Rosebery NSW"].waitForExistence(
-        timeout: 10),
-      "Accepted pickup should show the full address carried by the accept message")
-    XCTAssertFalse(
-      app.segmentedControls.buttons["Shipping"].waitForExistence(timeout: 2),
-      "Transfer tabs stay collapsed once an arrangement is agreed")
-    let shippingConfirmation = app.staticTexts.matching(
-      NSPredicate(format: "label BEGINSWITH %@", "Shipping confirmed")
-    ).firstMatch
-    XCTAssertFalse(
-      shippingConfirmation.waitForExistence(timeout: 2),
-      "Shipping confirmation should stay hidden for an accepted pickup request")
-
-    await emitter.disconnect()
   }
 
   @MainActor
@@ -3069,67 +3105,25 @@ final class WebSocketE2ETests: E2ETestBase {
   }
 
   @MainActor
-  func testAskToBuyCreatesShippingRequestAndValidatesEmptyPostcode() async throws {
+  func testShippingZeroFeeConfirmationCopy() async throws {
     let emitter = WSEmitter()
     try await emitter.connect(host: apiHost)
     try await emitter.login(token: "e2e-test", os: "ios")
-    let (selectedItemId, _) = try await createMarketplaceItem(
+
+    let heldPaymentCopy =
+      "Your payment will be held on EVY until shipping has been confirmed (within 48 hours)."
+    let noSurchargeCopy =
+      "Shipping should be confirmed within 48 hours by the seller."
+
+    try await assertShippingConfirmationCopy(
       emitter: emitter,
-      titlePrefix: "Shipping request item",
-      pickupSelection: ["2026-06-03T09:00:00"],
-      shippingFee: "0"
-    )
-
-    _ = try await openViewItemPage(
-      emitter: emitter,
-      labelPrefix: "Request shipping",
-      itemId: selectedItemId,
-      buttonExistenceMessage: "Request view button should load"
-    )
-    try await emitter.subscribe(event: "data_changed")
-
-    let askToBuyButton = app.buttons["Ask to buy"]
-    XCTAssertTrue(
-      askToBuyButton.waitForExistence(timeout: 10), "Ask to buy button should be visible")
-    askToBuyButton.tap()
-
-    let missingInformationAlert = app.alerts["Missing information"]
-    XCTAssertTrue(
-      missingInformationAlert.waitForExistence(timeout: 5),
-      "An empty shipping postcode should show the missing-information alert"
-    )
-    let messagesAfterEmptyPostcode = try await emitter.getResource(
-      resource: EVYCoreResource.messages.ref
-    )
-    XCTAssertFalse(
-      Self.messagesContain(
-        messagesAfterEmptyPostcode,
-        type: "shipping",
-        itemId: selectedItemId
-      ),
-      "An empty postcode must not create a shipping request"
-    )
-    let dismissAlertButton = missingInformationAlert.buttons.firstMatch
-    XCTAssertTrue(dismissAlertButton.exists, "Missing-information alert should be dismissible")
-    dismissAlertButton.tap()
-
-    try fillShippingPostcodeAndAskToBuy()
-
-    XCTAssertTrue(
-      waitForConfirmationSheet(timeout: 5),
-      "Shipping confirmation sheet should appear after Ask to buy with a postcode")
-    tapConfirmationSheetRequestButton()
-
-    let shippingRequestCreated = try await waitForMessage(
-      emitter: emitter,
-      type: "shipping",
-      itemId: selectedItemId,
-      valueKey: "postalcode",
-      value: "2018"
-    )
-    XCTAssertTrue(
-      shippingRequestCreated,
-      "Ask to buy should create a shipping request with the entered postcode"
+      titlePrefix: "Free shipping item",
+      shippingFee: "0",
+      viewLabelPrefix: "Free shipping",
+      expectedCopy: noSurchargeCopy,
+      expectedMessage: "No-surcharge item confirmation should show the 48-hour notice",
+      absentCopy: heldPaymentCopy,
+      absentMessage: "No-surcharge item confirmation should not show the held-payment notice"
     )
     await emitter.disconnect()
   }
@@ -3179,86 +3173,54 @@ final class WebSocketE2ETests: E2ETestBase {
   }
 
   @MainActor
-  func testShippingConfirmationSheetShowsSurchargeAwareCopy() async throws {
+  func testViewItemPageRendersNavigateQueryItem() async throws {
     let emitter = WSEmitter()
     try await emitter.connect(host: apiHost)
     try await emitter.login(token: "e2e-test", os: "ios")
 
-    let heldPaymentCopy =
-      "Your payment will be held on EVY until shipping has been confirmed (within 48 hours)."
-    let noSurchargeCopy =
-      "Shipping should be confirmed within 48 hours by the seller."
-
-    try await assertShippingConfirmationCopy(
+    let (selectedItemId, selectedItemTitle) = try await createMarketplaceItem(
       emitter: emitter,
-      titlePrefix: "Surcharge shipping item",
-      shippingFee: "5",
-      viewLabelPrefix: "Surcharge shipping",
-      expectedCopy: heldPaymentCopy,
-      expectedMessage: "Surcharge item confirmation should show the held-payment notice",
-      absentCopy: noSurchargeCopy,
-      absentMessage: "Surcharge item confirmation should not show the no-surcharge notice"
-    )
-
-    dismissConfirmationSheet()
-    XCTAssertTrue(
-      waitForConfirmationSheetDismissed(timeout: 5),
-      "Shipping confirmation sheet should dismiss")
-
-    try await assertShippingConfirmationCopy(
-      emitter: emitter,
-      titlePrefix: "Free shipping item",
-      shippingFee: "0",
-      viewLabelPrefix: "Free shipping",
-      expectedCopy: noSurchargeCopy,
-      expectedMessage: "No-surcharge item confirmation should show the 48-hour notice",
-      absentCopy: heldPaymentCopy,
-      absentMessage: "No-surcharge item confirmation should not show the held-payment notice"
-    )
-    await emitter.disconnect()
-  }
-
-  @MainActor
-  func testViewItemPaymentRowsRespectVisiblePredicate() async throws {
-    let emitter = WSEmitter()
-    try await emitter.connect(host: apiHost)
-    try await emitter.login(token: "e2e-test", os: "ios")
-
-    let (selectedItemId, _) = try await createMarketplaceItem(
-      emitter: emitter,
-      titlePrefix: "Payment Item",
+      titlePrefix: "Navigate query item",
       paymentMethods: ["cash": true, "app": false]
     )
 
-    let viewButtonLabel = "View payment \(Int(Date().timeIntervalSince1970))"
-    try await emitter.updateSDUI(
-      flowData: createHomeFlowData(
-        buttonLabel: viewButtonLabel,
-        viewItemId: selectedItemId
-      ),
-      flowId: E2EFlowIds.webSocketHomeFlow
+    _ = try await openViewItemPage(
+      emitter: emitter,
+      labelPrefix: "View navigate query",
+      itemId: selectedItemId,
+      viewFlowDataBuilder: Self.viewItemFlowData,
+      buttonExistenceMessage: "Home view button should load with query-aware label after relaunch"
     )
-    try await emitter.updateSDUI(
-      flowData: Self.viewItemFlowData(
-        flowId: E2EFlowIds.webSocketViewFlow,
-        pageId: E2EFlowIds.webSocketViewPage
-      ),
-      flowId: E2EFlowIds.webSocketViewFlow
-    )
-    await emitter.disconnect()
-
-    app.terminate()
-    try launchApp()
-
-    let queryButton = app.buttons[viewButtonLabel]
-    XCTAssertTrue(
-      queryButton.waitForExistence(timeout: 20),
-      "Home view button should load with query-aware label after relaunch")
-
-    queryButton.tap()
 
     let scrollView = app.scrollViews.firstMatch
     XCTAssertTrue(scrollView.waitForExistence(timeout: 10), "View item page should appear")
+
+    XCTAssertTrue(
+      app.staticTexts["My item is called"].waitForExistence(timeout: 5),
+      "View item page should show the static text row title")
+    XCTAssertTrue(
+      app.staticTexts[selectedItemTitle].waitForExistence(timeout: 10),
+      "View item page should resolve {\(MARKETPLACE_ITEMS_RESOURCE_ID).title} from the item id passed in navigate query"
+    )
+    XCTAssertTrue(
+      app.navigationBars.staticTexts[selectedItemTitle].waitForExistence(timeout: 10),
+      "View item page title should resolve {\(MARKETPLACE_ITEMS_RESOURCE_ID).title} from the item id passed in navigate query"
+    )
+
+    let titleInputId = "textField_{\(MARKETPLACE_ITEMS_RESOURCE_ID).title}"
+    guard let titleInput = findElement(identifier: titleInputId) else {
+      XCTFail("View item page should show an input bound to the item title")
+      return
+    }
+    guard let titleField = tapAndGetEditableField(container: titleInput) else {
+      XCTFail("Failed to get editable title input on the view item page")
+      return
+    }
+    XCTAssertEqual(
+      titleField.value as? String,
+      selectedItemTitle,
+      "Input bound to {\(MARKETPLACE_ITEMS_RESOURCE_ID).title} must show the existing item data, not an empty bootstrapped draft"
+    )
 
     XCTAssertTrue(
       app.staticTexts["Cash accepted"].waitForExistence(timeout: 10),
@@ -3268,6 +3230,15 @@ final class WebSocketE2ETests: E2ETestBase {
       app.staticTexts["App payments accepted"].waitForExistence(timeout: 2),
       "App payment row should be hidden when \(MARKETPLACE_ITEMS_RESOURCE_ID).payment_methods.app is false"
     )
+
+    let editedTitle = "Edited \(Int(Date().timeIntervalSince1970))"
+    clearAndType(field: titleField, text: editedTitle, placeholder: "Enter a title")
+    XCTAssertTrue(
+      app.navigationBars.staticTexts[editedTitle].waitForExistence(timeout: 10),
+      "Page nav title should update when {\(MARKETPLACE_ITEMS_RESOURCE_ID).title} is edited"
+    )
+
+    await emitter.disconnect()
   }
 
   // Synchronous on purpose (async bridged via `awaitResult`): heavy async UI tests hit an
@@ -3496,28 +3467,16 @@ final class WebSocketE2ETests: E2ETestBase {
       return
     }
 
-    let addressFound = try awaitResult("wait for core address row") {
-      let deadline = Date().addingTimeInterval(20)
-      while Date() < deadline {
-        let addressesPayload = try await emitter.getResource(
-          resource: EVYCoreResource.addresses.ref,
-          filter: ["id": addressId]
-        )
-        if Self.coreAddressesContainId(addressId, addresses: addressesPayload) {
-          return true
-        }
-        try await Task.sleep(for: .milliseconds(400))
-      }
-      return false
-    }
-    if !addressFound {
-      let addressesPayload = try awaitResult("fetch core addresses for failure") {
-        try await emitter.getResource(resource: EVYCoreResource.addresses.ref)
-      }
-      XCTFail(
-        "Core addresses should contain the linked pickup address id \(addressId). Payload: \(String(describing: addressesPayload).prefix(400))"
+    let addressesPayload = try awaitResult("fetch core address row") {
+      try await emitter.getResource(
+        resource: EVYCoreResource.addresses.ref,
+        filter: ["id": addressId]
       )
     }
+    XCTAssertTrue(
+      Self.coreAddressesContainId(addressId, addresses: addressesPayload),
+      "Core addresses should contain the linked pickup address id \(addressId)"
+    )
 
     try awaitResult("emitter disconnect") { await emitter.disconnect() }
   }
@@ -3840,191 +3799,6 @@ final class WebSocketE2ETests: E2ETestBase {
   }
 }
 
-// MARK: - Swipe-left trigger
-
-final class E2ESwipeLeftTests: E2ETestBase {
-  private static let swipeLeftHomeFlowId = "a9b8c7d6-e5f4-4a3b-9c2d-1e0f9a8b7c6d"
-  private static let swipeLeftHomePageId = "b8c7d6e5-f4a3-4b2c-9d1e-0f8a7b6c5d4e"
-  private static let swipeLeftDestPageId = "c7d6e5f4-a3b2-4c1d-8e0f-1a2b3c4d5e6f"
-  private static let swipeLeftRowId = "d6e5f4a3-b2c1-4d0e-9f8a-7b6c5d4e3f2a"
-
-  override var homeFlowId: String? { Self.swipeLeftHomeFlowId }
-
-  override func setUpWithError() throws {
-    continueAfterFailure = false
-    try seedFlows(
-      [
-        (
-          flowId: Self.swipeLeftHomeFlowId,
-          flowData: Self.swipeLeftFlowData(
-            flowId: Self.swipeLeftHomeFlowId,
-            homePageId: Self.swipeLeftHomePageId,
-            destPageId: Self.swipeLeftDestPageId,
-            swipeRowId: Self.swipeLeftRowId
-          )
-        )
-      ]
-    )
-    try launchApp()
-  }
-
-  func testSwipeLeftButtonNavigatesToDestinationPage() throws {
-    let homePage = app.scrollViews["page_\(Self.swipeLeftHomePageId)"]
-    XCTAssertTrue(
-      homePage.waitForExistence(timeout: 20),
-      "Swipe-left home page should load - verify API is running and seeded")
-
-    let rowTitle = app.staticTexts["Swipe me"]
-    XCTAssertTrue(
-      rowTitle.waitForExistence(timeout: 10),
-      "Swipeable text row should be visible")
-
-    rowTitle.swipeLeft(velocity: .slow)
-
-    let swipeButton = app.buttons["swipeLeft_\(Self.swipeLeftRowId)"]
-    XCTAssertTrue(
-      swipeButton.waitForExistence(timeout: 3),
-      "Swipe-left action button should be revealed after swipe")
-    XCTAssertEqual(swipeButton.label, "Open")
-    swipeButton.tap()
-
-    let destinationPage = app.scrollViews["page_\(Self.swipeLeftDestPageId)"]
-    XCTAssertTrue(
-      destinationPage.waitForExistence(timeout: 5),
-      "Swipe-left action should navigate to the destination page")
-  }
-
-  private static func swipeLeftFlowData(
-    flowId: String,
-    homePageId: String,
-    destPageId: String,
-    swipeRowId: String
-  ) -> [String: Any] {
-    return [
-      "id": flowId,
-      "name": "E2E Swipe Left",
-      "pages": [
-        [
-          "id": homePageId,
-          "title": "Swipe home",
-          "rows": [
-            [
-              "id": swipeRowId,
-              "type": "text",
-              "visible": "true",
-              "title": "Swipe me",
-              "subtitle": "",
-              "swipe_label": "Open",
-              "name": "Swipeable text",
-              "actions": Self.actionsObject(
-                swipeLeft: [
-                  Self.rowAction(true: "{navigate(\(flowId),\(destPageId))}")
-                ]
-              ),
-            ]
-          ],
-        ],
-        [
-          "id": destPageId,
-          "title": "Destination",
-          "rows": [
-            Self.textRow(
-              id: "e5f4a3b2-c1d0-4e9f-8a7b-6c5d4e3f2a1b",
-              title: "Arrived"
-            )
-          ],
-        ],
-      ],
-    ]
-  }
-}
-
-// MARK: - Segment container tab switching
-
-final class E2ESegmentContainerTests: E2ETestBase {
-  private static let segmentHomeFlowId = "8f1c2d3e-4a5b-4c6d-8e9f-0a1b2c3d4e5f"
-  private static let segmentPageId = "7e6d5c4b-3a2b-4c1d-8e0f-1a2b3c4d5e6f"
-
-  override var homeFlowId: String? { Self.segmentHomeFlowId }
-
-  override func setUpWithError() throws {
-    continueAfterFailure = false
-    try seedFlows(
-      [
-        (
-          flowId: Self.segmentHomeFlowId,
-          flowData: Self.segmentFlowData(
-            flowId: Self.segmentHomeFlowId,
-            pageId: Self.segmentPageId
-          )
-        )
-      ]
-    )
-    try launchApp()
-  }
-
-  // Regression guard: switching segments must swap in the selected child's content.
-  // A stale `@State` in the shared child position previously kept the first tab's
-  // content on screen (e.g. the pickup calendar never updating to delivery).
-  func testSwitchingSegmentSwapsChildContent() throws {
-    let pickupContent = app.staticTexts["Pickup segment content"]
-    let deliveryContent = app.staticTexts["Delivery segment content"]
-
-    XCTAssertTrue(
-      pickupContent.waitForExistence(timeout: 20),
-      "First segment content should be visible on launch - verify API is running and seeded")
-    XCTAssertFalse(
-      deliveryContent.exists,
-      "Second segment content should be hidden until its tab is selected")
-
-    let deliveryTab = app.segmentedControls.buttons["Delivery"]
-    XCTAssertTrue(deliveryTab.waitForExistence(timeout: 5), "Delivery segment should exist")
-    deliveryTab.tap()
-
-    XCTAssertTrue(
-      deliveryContent.waitForExistence(timeout: 5),
-      "Switching to the Delivery tab must swap in the second segment's content")
-    XCTAssertFalse(
-      pickupContent.exists,
-      "First segment content should no longer be visible after switching tabs")
-  }
-
-  private static func segmentFlowData(flowId: String, pageId: String) -> [String: Any] {
-    return [
-      "id": flowId,
-      "name": "E2E Segment Container",
-      "pages": [
-        [
-          "id": pageId,
-          "title": "Segments",
-          "rows": [
-            [
-              "id": "6a5b4c3d-2e1f-4a0b-8c9d-1e2f3a4b5c6d",
-              "type": "tab_container",
-              "actions": Self.actionsObject(
-                tap: [Self.rowAction(true: "{select($datum)}")]
-              ),
-              "visible": "true",
-              "title": "",
-              "segments": ["Pickup", "Delivery"],
-              "children": [
-                Self.textRow(
-                  id: "1a2b3c4d-5e6f-4a7b-8c9d-0e1f2a3b4c01",
-                  title: "Pickup segment content"
-                ),
-                Self.textRow(
-                  id: "1a2b3c4d-5e6f-4a7b-8c9d-0e1f2a3b4c02",
-                  title: "Delivery segment content"
-                ),
-              ],
-            ]
-          ],
-        ]
-      ],
-    ]
-  }
-}
-
 // MARK: - Error / unreachable API
 
 final class E2EErrorStateTests: XCTestCase {
@@ -4056,166 +3830,6 @@ final class E2EErrorStateTests: XCTestCase {
       retryMessage.exists,
       "User-visible copy should explain how to recover from a failed flow load"
     )
-  }
-}
-
-// MARK: - Place search address sheet
-
-final class E2EPlaceSearchTests: E2ETestBase {
-  private static let placeSearchHomeFlowId = "d1e2f3a4-b5c6-4d7e-8f9a-0b1c2d3e4f5a"
-  private static let placeSearchPageId = "e2f3a4b5-c6d7-4e8f-9a0b-1c2d3e4f5a6b"
-  private static let placeSearchQuery = "Sydney"
-
-  override var homeFlowId: String? { Self.placeSearchHomeFlowId }
-
-  override func setUpWithError() throws {
-    continueAfterFailure = false
-    try seedFlows([
-      (
-        flowId: Self.placeSearchHomeFlowId,
-        flowData: Self.placeSearchFlowData()
-      )
-    ])
-    try launchApp()
-  }
-
-  func testSingleWordPlaceSearchSelectsAddressAndDismissesSheet() throws {
-    let whereLabel = app.staticTexts["Where"]
-    XCTAssertTrue(
-      whereLabel.waitForExistence(timeout: 20),
-      "Pickup address row should be visible - verify API is running and flow is seeded")
-
-    whereLabel.tap()
-
-    let searchField = app.textFields.firstMatch
-    XCTAssertTrue(searchField.waitForExistence(timeout: 5), "Search field should appear in sheet")
-    clearAndType(field: searchField, text: Self.placeSearchQuery)
-
-    let result = app.staticTexts.matching(
-      NSPredicate(
-        format: "label CONTAINS[c] %@ AND label != %@",
-        Self.placeSearchQuery,
-        "Where"
-      )
-    ).firstMatch
-    XCTAssertTrue(
-      result.waitForExistence(timeout: 20),
-      "Place search should return results for a single word without trailing space")
-    result.tap()
-
-    let sheetStillOpen = searchField.waitForExistence(timeout: 2)
-    XCTAssertFalse(sheetStillOpen, "Search sheet should dismiss after selecting a result")
-
-    // This flow's row renders `formatAddress(pickup_address)` - the picker's own
-    // draft, on the screen of the person choosing the address. Showing the street
-    // here is correct; it is the *public item page* that reads only the postcode
-    // copied onto the item.
-    let formattedAddress = app.staticTexts.matching(
-      NSPredicate(format: "label CONTAINS[c] 'NSW' OR label CONTAINS[c] 'Australia'")
-    ).firstMatch
-    XCTAssertTrue(
-      formattedAddress.waitForExistence(timeout: 10),
-      "Pickup subtitle should reflect the selected address after realtime save")
-  }
-
-  private static func placeSearchFlowData() -> [String: Any] {
-    let destination = "{pickup_address}"
-    let subtitle = "{formatAddress(pickup_address)}"
-    let saveCreate =
-      "{create(\(EVYCoreResource.addresses.ref), pickup_address, {pickup_address.id})}"
-    let saveUpdate =
-      "{update(\(EVYCoreResource.addresses.ref), {id: pickup_address.id}, pickup_address)}"
-    return [
-      "id": placeSearchHomeFlowId,
-      "name": "E2E Place Search",
-      "pages": [
-        [
-          "id": placeSearchPageId,
-          "title": "Pickup",
-          "rows": [
-            textActionRow(
-              id: "a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d",
-              title: "Where",
-              subtitle: subtitle,
-              sheet: searchRow(
-                id: "b2c3d4e5-f6a7-4b8c-9d0e-1f2a3b4c5d6f",
-                source: "{$api:place_search}",
-                destination: destination,
-                placeholder: "Search address",
-                child: [
-                  "id": "c3d4e5f6-a7b8-4c9d-0e1f-2a3b4c5d6e7f",
-                  "type": "text",
-                  "title": "{$datum.street}",
-                  "subtitle": "{$datum.city}",
-                  "actions": [:],
-                  "visible": "true",
-                ],
-                tapActions: [
-                  rowAction(
-                    true: saveCreate,
-                    condition: "{length(pickup_address.id) == 0}",
-                    false: saveUpdate
-                  )
-                ]
-              )
-            )
-          ],
-        ]
-      ],
-    ]
-  }
-
-  private static func textActionRow(
-    id: String,
-    title: String,
-    subtitle: String,
-    action: String = "Change",
-    sheet: [String: Any],
-    visible: String = "true"
-  ) -> [String: Any] {
-    let sheetId = (sheet["id"] as? String) ?? UUID().uuidString
-    return [
-      "id": id,
-      "type": "text_action",
-      "visible": visible,
-      "title": title,
-      "subtitle": subtitle,
-      "action": action,
-      "actions": Self.actionsObject(
-        tap: [
-          [
-            "condition": "",
-            "false": "",
-            "true": "{show(\(sheetId))}",
-          ]
-        ]
-      ),
-      "sheet": sheet,
-    ]
-  }
-
-  private static func searchRow(
-    id: String,
-    source: String,
-    destination: String,
-    placeholder: String,
-    child: [String: Any],
-    visible: String = "true",
-    tapActions: [[String: Any]] = []
-  ) -> [String: Any] {
-    let actions: [String: Any] =
-      tapActions.isEmpty ? [:] : Self.actionsObject(tap: tapActions)
-    return [
-      "id": id,
-      "type": "search",
-      "visible": visible,
-      "title": "",
-      "placeholder": placeholder,
-      "source": source,
-      "destination": destination,
-      "actions": actions,
-      "child": child,
-    ]
   }
 }
 
@@ -4306,86 +3920,27 @@ final class E2EHomeInboxTests: E2ETestBase {
   }
 
   @MainActor
-  func testRecipientAcceptsRequestAndItMovesToScheduled() throws {
+  func testForYouRowRendersDestinationAddresses() throws {
     let homePage = app.scrollViews["page_\(Self.homePageId)"]
     XCTAssertTrue(
       homePage.waitForExistence(timeout: 20),
       "Home screen not loaded - verify API is running and database is seeded")
 
-    let (requestId, _) = try seedOwnRequest()
-    let row = ownRequestRow(requestId: requestId)
+    let seededRow = ownRequestRow(requestId: Self.seededShippingRequestId)
     XCTAssertTrue(
-      row.waitForExistence(timeout: 15),
-      "A request for the owned item should appear under For you")
+      seededRow.waitForExistence(timeout: 15),
+      "The seeded shipping request should appear under For you")
     XCTAssertTrue(
-      row.staticTexts["Amazing Fridge"].waitForExistence(timeout: 5),
-      "The request row should show the addressed item title")
-    XCTAssertTrue(
-      row.staticTexts["pending"].waitForExistence(timeout: 5),
-      "The request row should show its pending state")
+      seededRow.staticTexts["C509 28 Rothschild Avenue, 2018 Rosebery NSW"].waitForExistence(
+        timeout: 5),
+      "The seeded shipping row should show the buyer's destination address")
 
-    row.swipeLeft(velocity: .slow)
-    let swipeButtonId =
-      "swipeLeft_\(E2ETestBase.homeInboxForYouChildRowId)_\(requestId)"
-    let swipeButton = app.buttons[swipeButtonId]
-    XCTAssertTrue(
-      swipeButton.waitForExistence(timeout: 3),
-      "The recipient should be offered Accept")
-    XCTAssertEqual(swipeButton.label, "Accept")
-    XCTAssertEqual(
-      app.buttons.matching(identifier: swipeButtonId).count,
-      1,
-      "The For you row should reveal exactly one declarative action")
-
-    swipeButton.tap()
-    let responseId = try assertResponsePersisted(requestId: requestId, value: "accept")
-    let pickupStreet = try awaitResult("read pickup_address from accept message") {
-      let emitter = WSEmitter()
+    let emitter = WSEmitter()
+    try awaitResult("connect emitter for delivery request") {
       try await emitter.connect(host: self.apiHost)
       try await emitter.login(token: "e2e-test", os: "ios")
-      let payload = try await emitter.getResource(
-        resource: EVYCoreResource.messages.ref
-      )
-      await emitter.disconnect()
-      guard let rows = Self.responseDataArray(from: payload),
-        let message = rows.first(where: {
-          ($0 as? [String: Any])?["id"] as? String == responseId
-        }) as? [String: Any],
-        let data = message["data"] as? [String: Any],
-        let pickupAddress = data["pickup_address"] as? [String: Any],
-        let street = pickupAddress["street"] as? String
-      else {
-        struct MissingPickupAddress: Error {}
-        throw MissingPickupAddress()
-      }
-      return street
     }
-    XCTAssertEqual(pickupStreet, "28 Rothschild Avenue")
-
-    XCTAssertTrue(
-      row.waitForNonExistence(timeout: 10),
-      "An accepted request should leave For you")
-    XCTAssertFalse(
-      swipeButton.exists,
-      "An answered request should no longer offer an action")
-
-    app.segmentedControls.buttons["Scheduled"].tap()
-    XCTAssertTrue(
-      app.staticTexts["Amazing Fridge"].waitForExistence(timeout: 10),
-      "The accepted request should appear under Scheduled")
-    XCTAssertTrue(
-      app.staticTexts["accept"].exists,
-      "The Scheduled row should show the accepted state")
-  }
-
-  @MainActor
-  func testForYouRowShowsDestinationAddressForDeliveryRequest() throws {
-    let homePage = app.scrollViews["page_\(Self.homePageId)"]
-    XCTAssertTrue(
-      homePage.waitForExistence(timeout: 20),
-      "Home screen not loaded - verify API is running and database is seeded")
-
-    let requestId = try seedOwnDeliveryRequest()
+    let requestId = try seedOwnDeliveryRequest(emitter: emitter)
     let row = ownRequestRow(requestId: requestId)
     XCTAssertTrue(
       row.waitForExistence(timeout: 15),
@@ -4394,94 +3949,139 @@ final class E2EHomeInboxTests: E2ETestBase {
       row.staticTexts["C509 28 Rothschild Avenue, 2018 Rosebery NSW"].waitForExistence(
         timeout: 5),
       "The request row should show the buyer's destination address")
+    try awaitResult("disconnect emitter") { await emitter.disconnect() }
   }
 
   @MainActor
-  func testForYouRowShowsSeededShippingDestinationAddress() throws {
+  func testRecipientRespondsToRequests() throws {
     let homePage = app.scrollViews["page_\(Self.homePageId)"]
     XCTAssertTrue(
       homePage.waitForExistence(timeout: 20),
       "Home screen not loaded - verify API is running and database is seeded")
 
-    let row = ownRequestRow(requestId: Self.seededShippingRequestId)
-    XCTAssertTrue(
-      row.waitForExistence(timeout: 15),
-      "The seeded shipping request should appear under For you")
-    XCTAssertTrue(
-      row.staticTexts["C509 28 Rothschild Avenue, 2018 Rosebery NSW"].waitForExistence(
-        timeout: 5),
-      "The seeded shipping row should show the buyer's destination address")
-  }
-
-  @MainActor
-  func testRecipientCanRejectFromRequestSheet() throws {
-    let homePage = app.scrollViews["page_\(Self.homePageId)"]
-    XCTAssertTrue(
-      homePage.waitForExistence(timeout: 20),
-      "Home screen not loaded - verify API is running and database is seeded")
-
-    let (requestId, _) = try seedOwnRequest()
-    let row = ownRequestRow(requestId: requestId)
-    XCTAssertTrue(
-      row.waitForExistence(timeout: 15),
-      "A request for the owned item should appear under For you")
-    XCTAssertTrue(scrollUntilHittable(row), "The request row should be reachable")
-    row.tap()
-
-    let sheetCopy = app.staticTexts["Accept this request, or reject it?"]
-    XCTAssertTrue(
-      sheetCopy.waitForExistence(timeout: 5),
-      "Tapping the request should open its response sheet")
-    let rejectButton = try XCTUnwrap(
-      waitForHittableButton(labeled: "Reject"),
-      "The response sheet should offer Reject"
-    )
-    rejectButton.tap()
-
-    _ = try assertResponsePersisted(requestId: requestId, value: "reject")
-    XCTAssertTrue(
-      sheetCopy.waitForNonExistence(timeout: 5),
-      "Reject should dismiss the response sheet")
-    XCTAssertTrue(
-      row.waitForNonExistence(timeout: 10),
-      "A rejected request should leave For you")
-  }
-
-  @MainActor
-  func testAnsweredRequestOffersNothing() throws {
-    let homePage = app.scrollViews["page_\(Self.homePageId)"]
-    XCTAssertTrue(
-      homePage.waitForExistence(timeout: 20),
-      "Home screen not loaded - verify API is running and database is seeded")
-
-    let (requestId, _) = try seedOwnRequest(responseValue: "accept")
-
-    app.segmentedControls.buttons["Scheduled"].tap()
-    XCTAssertTrue(
-      app.staticTexts["Amazing Fridge"].waitForExistence(timeout: 15),
-      "The pre-answered request should reach Scheduled")
-    XCTAssertTrue(app.staticTexts["accept"].exists)
-
-    app.segmentedControls.buttons["For you"].tap()
-    let requestRow = ownRequestRow(requestId: requestId)
-    XCTAssertFalse(
-      requestRow.waitForExistence(timeout: 3),
-      "An answered request should not remain under For you")
-    XCTAssertFalse(
-      app.buttons[
-        "swipeLeft_\(E2ETestBase.homeInboxForYouChildRowId)_\(requestId)"
-      ].exists,
-      "An answered request should offer no swipe action")
-  }
-
-  @MainActor
-  private func seedOwnDeliveryRequest() throws -> String {
-    let requestId = UUID().uuidString.lowercased()
-    let host = apiHost
-    return try awaitResult("seed owned delivery request") {
-      let emitter = WSEmitter()
-      try await emitter.connect(host: host)
+    let emitter = WSEmitter()
+    try awaitResult("connect emitter") {
+      try await emitter.connect(host: self.apiHost)
       try await emitter.login(token: "e2e-test", os: "ios")
+      try await emitter.subscribe(event: "data_changed")
+    }
+
+    try XCTContext.runActivity(named: "Reject via tap and sheet") { _ in
+      let (requestId, _) = try seedOwnRequest(emitter: emitter)
+      let row = ownRequestRow(requestId: requestId)
+      XCTAssertTrue(
+        row.waitForExistence(timeout: 15),
+        "A request for the owned item should appear under For you")
+      XCTAssertTrue(scrollUntilHittable(row), "The request row should be reachable")
+      row.tap()
+
+      let sheetCopy = app.staticTexts["Accept this request, or reject it?"]
+      XCTAssertTrue(
+        sheetCopy.waitForExistence(timeout: 5),
+        "Tapping the request should open its response sheet")
+      let rejectButton = try XCTUnwrap(
+        waitForHittableButton(labeled: "Reject"),
+        "The response sheet should offer Reject"
+      )
+      rejectButton.tap()
+
+      _ = try assertResponsePersisted(
+        emitter: emitter,
+        requestId: requestId,
+        value: "reject",
+        verifyRequestStillPending: true
+      )
+      XCTAssertTrue(
+        sheetCopy.waitForNonExistence(timeout: 5),
+        "Reject should dismiss the response sheet")
+      XCTAssertTrue(
+        row.waitForNonExistence(timeout: 10),
+        "A rejected request should leave For you")
+    }
+
+    try XCTContext.runActivity(named: "Accept via swipe action") { _ in
+      let (requestId, _) = try seedOwnRequest(emitter: emitter)
+      let row = ownRequestRow(requestId: requestId)
+      XCTAssertTrue(
+        row.waitForExistence(timeout: 15),
+        "A request for the owned item should appear under For you")
+      XCTAssertTrue(
+        row.staticTexts["Amazing Fridge"].waitForExistence(timeout: 5),
+        "The request row should show the addressed item title")
+      XCTAssertTrue(
+        row.staticTexts["pending"].waitForExistence(timeout: 5),
+        "The request row should show its pending state")
+
+      row.swipeLeft(velocity: .slow)
+      let swipeButtonId =
+        "swipeLeft_\(E2ETestBase.homeInboxForYouChildRowId)_\(requestId)"
+      let swipeButton = app.buttons[swipeButtonId]
+      XCTAssertTrue(
+        swipeButton.waitForExistence(timeout: 3),
+        "The recipient should be offered Accept")
+      XCTAssertEqual(swipeButton.label, "Accept")
+      XCTAssertEqual(
+        app.buttons.matching(identifier: swipeButtonId).count,
+        1,
+        "The For you row should reveal exactly one declarative action")
+
+      swipeButton.tap()
+      let responseId = try assertResponsePersisted(
+        emitter: emitter,
+        requestId: requestId,
+        value: "accept",
+        verifyRequestStillPending: false
+      )
+      let pickupStreet = try readPickupStreetFromMessage(
+        emitter: emitter,
+        messageId: responseId
+      )
+      XCTAssertEqual(pickupStreet, "28 Rothschild Avenue")
+
+      XCTAssertTrue(
+        row.waitForNonExistence(timeout: 10),
+        "An accepted request should leave For you")
+      XCTAssertFalse(
+        swipeButton.exists,
+        "An answered request should no longer offer an action")
+
+      app.segmentedControls.buttons["Scheduled"].tap()
+      XCTAssertTrue(
+        app.staticTexts["Amazing Fridge"].waitForExistence(timeout: 10),
+        "The accepted request should appear under Scheduled")
+      XCTAssertTrue(
+        app.staticTexts["accept"].exists,
+        "The Scheduled row should show the accepted state")
+    }
+
+    try XCTContext.runActivity(named: "Pre-answered request offers nothing in For you") { _ in
+      let (requestId, _) = try seedOwnRequest(emitter: emitter, responseValue: "accept")
+
+      app.segmentedControls.buttons["Scheduled"].tap()
+      XCTAssertTrue(
+        app.staticTexts["Amazing Fridge"].waitForExistence(timeout: 15),
+        "The pre-answered request should reach Scheduled")
+      XCTAssertTrue(app.staticTexts["accept"].exists)
+
+      app.segmentedControls.buttons["For you"].tap()
+      let requestRow = ownRequestRow(requestId: requestId)
+      XCTAssertFalse(
+        requestRow.waitForExistence(timeout: 3),
+        "An answered request should not remain under For you")
+      XCTAssertFalse(
+        app.buttons[
+          "swipeLeft_\(E2ETestBase.homeInboxForYouChildRowId)_\(requestId)"
+        ].exists,
+        "An answered request should offer no swipe action")
+    }
+
+    try awaitResult("disconnect emitter") { await emitter.disconnect() }
+  }
+
+  @MainActor
+  private func seedOwnDeliveryRequest(emitter: WSEmitter) throws -> String {
+    let requestId = UUID().uuidString.lowercased()
+    return try awaitResult("seed owned delivery request") {
       _ = try await emitter.createResource(
         resource: EVYCoreResource.messages.ref,
         filter: ["id": requestId],
@@ -4498,22 +4098,18 @@ final class E2EHomeInboxTests: E2ETestBase {
           ],
         ]
       )
-      await emitter.disconnect()
       return requestId
     }
   }
 
   @MainActor
-  private func seedOwnRequest(responseValue: String? = nil) throws -> (
-    requestId: String, responseId: String?
-  ) {
+  private func seedOwnRequest(
+    emitter: WSEmitter,
+    responseValue: String? = nil
+  ) throws -> (requestId: String, responseId: String?) {
     let requestId = UUID().uuidString.lowercased()
     let responseId = responseValue == nil ? nil : UUID().uuidString.lowercased()
-    let host = apiHost
     return try awaitResult("seed owned item request") {
-      let emitter = WSEmitter()
-      try await emitter.connect(host: host)
-      try await emitter.login(token: "e2e-test", os: "ios")
       _ = try await emitter.createResource(
         resource: EVYCoreResource.messages.ref,
         filter: ["id": requestId],
@@ -4550,24 +4146,20 @@ final class E2EHomeInboxTests: E2ETestBase {
           ]
         )
       }
-      await emitter.disconnect()
       return (requestId, responseId)
     }
   }
 
   @MainActor
   private func assertResponsePersisted(
+    emitter: WSEmitter,
     requestId: String,
     value: String,
+    verifyRequestStillPending: Bool = true,
     file: StaticString = #filePath,
     line: UInt = #line
   ) throws -> String {
-    let host = apiHost
     let (answered, payload) = try awaitResult("wait for \(value) response") {
-      let emitter = WSEmitter()
-      try await emitter.connect(host: host)
-      try await emitter.login(token: "e2e-test", os: "ios")
-      try await emitter.subscribe(event: "data_changed")
       let answered = try await self.waitForMessageResponse(
         emitter: emitter,
         messageId: requestId,
@@ -4576,7 +4168,6 @@ final class E2EHomeInboxTests: E2ETestBase {
       let payload = try await emitter.getResource(
         resource: EVYCoreResource.messages.ref
       )
-      await emitter.disconnect()
       return (answered, payload)
     }
 
@@ -4585,18 +4176,44 @@ final class E2EHomeInboxTests: E2ETestBase {
       "The API should hold a message answering the request with \(value)",
       file: file,
       line: line)
-    // Answering writes nothing to the request: it supersedes the ask by being newer.
-    XCTAssertTrue(
-      Self.messageHasValue(payload, messageId: requestId, value: "pending"),
-      "The request itself should still read as pending",
-      file: file,
-      line: line)
+    if verifyRequestStillPending {
+      // Answering writes nothing to the request: it supersedes the ask by being newer.
+      XCTAssertTrue(
+        Self.messageHasValue(payload, messageId: requestId, value: "pending"),
+        "The request itself should still read as pending",
+        file: file,
+        line: line)
+    }
     return try XCTUnwrap(
       Self.messageHasResponse(payload, messageId: requestId, value: value),
       "The response should include an id",
       file: file,
       line: line
     )
+  }
+
+  @MainActor
+  private func readPickupStreetFromMessage(
+    emitter: WSEmitter,
+    messageId: String
+  ) throws -> String {
+    try awaitResult("read pickup_address from accept message") {
+      let payload = try await emitter.getResource(
+        resource: EVYCoreResource.messages.ref
+      )
+      guard let rows = Self.responseDataArray(from: payload),
+        let message = rows.first(where: {
+          ($0 as? [String: Any])?["id"] as? String == messageId
+        }) as? [String: Any],
+        let data = message["data"] as? [String: Any],
+        let pickupAddress = data["pickup_address"] as? [String: Any],
+        let street = pickupAddress["street"] as? String
+      else {
+        struct MissingPickupAddress: Error {}
+        throw MissingPickupAddress()
+      }
+      return street
+    }
   }
 
   private static func messageHasValue(_ messages: Any, messageId: String, value: String) -> Bool {
