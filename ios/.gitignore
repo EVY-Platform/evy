@@ -1,5 +1,7 @@
 build/
+DerivedData-e2e/
 TestDiagnostics/
+TestResults-*.xcresult
 xcuserdata/
 
 # sourcekit-lsp BSP manifest (regenerated per machine, see README)

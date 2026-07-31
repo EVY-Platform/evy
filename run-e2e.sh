@@ -11,10 +11,11 @@ cd "$REPO_ROOT"
 
 # Parse arguments
 SKIP_IOS=false
+SKIP_IOS_REQUESTED=false
 CI_MODE=false
 for arg in "$@"; do
     case $arg in
-        --skip-ios) SKIP_IOS=true ;;
+        --skip-ios) SKIP_IOS=true; SKIP_IOS_REQUESTED=true ;;
         --ci) CI_MODE=true ;;
         *)
             echo -e "${RED}Unknown argument: $arg${NC}"
@@ -91,6 +92,9 @@ case "${API_URL}" in
 		;;
 esac
 
+# shellcheck source=scripts/run-ios-e2e.sh
+source "$REPO_ROOT/scripts/run-ios-e2e.sh"
+
 echo -e "${YELLOW}========================================${NC}"
 echo -e "${YELLOW}EVY End-to-End Test Runner${NC}"
 echo -e "${YELLOW}========================================${NC}"
@@ -114,11 +118,7 @@ retry_until_cmd() {
 
 cleanup() {
     echo -e "\n${YELLOW}Cleaning up...${NC}"
-    if [ -n "$IOS_SIM_UDID" ]; then
-        echo "Erasing iOS simulator $IOS_SIM_UDID"
-        xcrun simctl shutdown "$IOS_SIM_UDID" 2>/dev/null || true
-        xcrun simctl erase "$IOS_SIM_UDID" 2>/dev/null || true
-    fi
+    ios_cleanup
     if [ "$CI_MODE" = true ]; then
         local pid
         for pid in "$WEB_PID" "$MARKETPLACE_PID" "$API_PID"; do
@@ -163,97 +163,6 @@ start_bun_service() {
     ( cd "$REPO_ROOT/$service_dir" && exec bun run start ) &
 }
 
-extract_ios_simulator_destination() {
-    local destination_line="$1"
-    local destination_id="${destination_line#*id:}"
-    destination_id="${destination_id%%,*}"
-
-    if [ -z "$destination_id" ] || [[ "$destination_id" == dvtdevice-*placeholder* ]]; then
-        return 1
-    fi
-
-    # Including arch prevents xcodebuild from warning about multiple matching destinations
-    # when the same simulator ID appears for both arm64 and x86_64.
-    local arch
-    arch="$(extract_ios_simulator_field "$destination_line" "arch" || true)"
-    if [ -n "$arch" ]; then
-        printf 'platform=iOS Simulator,arch=%s,id=%s' "$arch" "$destination_id"
-    else
-        printf 'platform=iOS Simulator,id=%s' "$destination_id"
-    fi
-}
-
-extract_ios_simulator_field() {
-    local destination_line="$1"
-    local field_name="$2"
-    local field_value="${destination_line#*${field_name}:}"
-
-    if [ "$field_value" = "$destination_line" ]; then
-        return 1
-    fi
-
-    field_value="${field_value%%,*}"
-    field_value="${field_value% \}}"
-    printf '%s' "$field_value"
-}
-
-find_ios_simulator_destination() {
-    local destinations_output="$1"
-    local preferred_device_name="${2:-}"
-    local preferred_os_version="${3:-}"
-    local destination_line
-    local resolved_destination
-
-    while IFS= read -r destination_line; do
-        if [[ "$destination_line" != *"platform:iOS Simulator"* ]]; then
-            continue
-        fi
-
-        if [ -n "$preferred_device_name" ] &&
-            [ "$(extract_ios_simulator_field "$destination_line" "name" || true)" != "$preferred_device_name" ]; then
-            continue
-        fi
-
-        if [ -n "$preferred_os_version" ] &&
-            [ "$(extract_ios_simulator_field "$destination_line" "OS" || true)" != "$preferred_os_version" ]; then
-            continue
-        fi
-
-        resolved_destination="$(extract_ios_simulator_destination "$destination_line" || true)"
-        if [ -n "$resolved_destination" ]; then
-            printf '%s' "$resolved_destination"
-            return 0
-        fi
-    done <<< "$destinations_output"
-
-    return 1
-}
-
-resolve_ios_simulator_destination() {
-    if [ -n "${IOS_SIMULATOR_DESTINATION:-}" ]; then
-        printf '%s' "$IOS_SIMULATOR_DESTINATION"
-        return 0
-    fi
-
-    local preferred_device_name="${IOS_SIMULATOR_DEVICE_NAME:-iPhone 17}"
-    local preferred_os_version="${IOS_SIMULATOR_OS_VERSION:-26.5}"
-    local destinations_output
-    local resolved_destination
-    if ! destinations_output="$(xcodebuild -showdestinations -project evy.xcodeproj -scheme evy 2>/dev/null)"; then
-        return 1
-    fi
-
-    resolved_destination="$(find_ios_simulator_destination "$destinations_output" "$preferred_device_name" "$preferred_os_version" ||
-        find_ios_simulator_destination "$destinations_output" "$preferred_device_name" ||
-        find_ios_simulator_destination "$destinations_output" || true)"
-    if [ -n "$resolved_destination" ]; then
-        printf '%s' "$resolved_destination"
-        return 0
-    fi
-
-    return 1
-}
-
 seed_database() {
     if ! bun db:seed; then
         echo -e "${RED}Database seeding failed${NC}"
@@ -284,6 +193,22 @@ bun install --cwd api
 bun install --cwd web
 bun install --cwd services/marketplace
 
+if [ "$SKIP_IOS" = false ]; then
+    echo -e "\n${YELLOW}Resolving iOS simulators and starting build-for-testing in background...${NC}"
+    if ! ios_resolve_simulators; then
+        echo -e "${RED}Unable to resolve an available iOS simulator destination${NC}"
+        echo "Available destinations:"
+        (cd "$REPO_ROOT/ios" && xcodebuild -showdestinations -project evy.xcodeproj -scheme evy) || true
+        IOS_RESULT=1
+        SKIP_IOS=true
+    else
+        (
+            ios_build_for_testing
+        ) >"$REPO_ROOT/ios-e2e-build.log" 2>&1 &
+        IOS_BUILD_PID=$!
+    fi
+fi
+
 if [ "$CI_MODE" = true ]; then
     echo -e "\n${YELLOW}Starting services with Bun (CI mode)...${NC}"
     wait_for_postgres
@@ -295,6 +220,8 @@ if [ "$CI_MODE" = true ]; then
     start_bun_service api
     API_PID=$!
     wait_for_service_readiness api api "health" "API"
+
+    ios_start_stack_b_background
 
     start_bun_service web
     WEB_PID=$!
@@ -356,42 +283,22 @@ fi
 cd ..
 
 if [ "$SKIP_IOS" = true ]; then
-    echo -e "\n${YELLOW}Skipping iOS e2e tests (--skip-ios flag set)${NC}"
-    IOS_SKIPPED=true
+    if [ "$SKIP_IOS_REQUESTED" = true ]; then
+        echo -e "\n${YELLOW}Skipping iOS e2e tests (--skip-ios flag set)${NC}"
+        IOS_SKIPPED=true
+    else
+        echo -e "\n${RED}Skipping iOS e2e tests due to simulator resolution failure${NC}"
+    fi
 else
     echo -e "\n${YELLOW}Running iOS e2e tests...${NC}"
     echo -e "${GREEN}GOOGLE_PLACES_MOCK=true; place search uses API fixtures (no live Google calls)${NC}"
     seed_database
-    cd ios
-    IOS_DESTINATION="$(resolve_ios_simulator_destination)"
-    if [ -z "$IOS_DESTINATION" ]; then
-        echo -e "${RED}Unable to resolve an available iOS simulator destination${NC}"
-        echo "Available destinations:"
-        xcodebuild -showdestinations -project evy.xcodeproj -scheme evy || true
-        IOS_RESULT=1
+    if ios_run_e2e; then
+        echo -e "${GREEN}iOS e2e tests passed${NC}"
     else
-        echo "Using iOS simulator destination: $IOS_DESTINATION"
-        # Clean simulator to prevent stale data (e.g. SwiftData schema) from crashing the app
-        IOS_SIM_UDID="${IOS_DESTINATION#*id=}"
-        xcrun simctl shutdown "$IOS_SIM_UDID" 2>/dev/null || true
-        xcrun simctl erase "$IOS_SIM_UDID" 2>/dev/null || true
-        # Drop the harmless "IDELaunchParametersSnapshot ... no debugger version"
-        # noise xcodebuild emits on every app launch. sed (not grep -v) so an
-        # all-noise stream isn't a failure; pipefail keeps xcodebuild's status.
-        if (set -o pipefail; xcodebuild test \
-            -project evy.xcodeproj \
-            -scheme evy \
-            -destination "$IOS_DESTINATION" \
-            -only-testing:evyUITests \
-            -parallel-testing-enabled NO \
-            -quiet 2>&1 | sed '/IDELaunchParametersSnapshot/d'); then
-            echo -e "${GREEN}iOS e2e tests passed${NC}"
-        else
-            echo -e "${RED}iOS e2e tests failed${NC}"
-            IOS_RESULT=1
-        fi
+        echo -e "${RED}iOS e2e tests failed${NC}"
+        IOS_RESULT=1
     fi
-    cd ..
 fi
 
 echo -e "\n${YELLOW}========================================${NC}"

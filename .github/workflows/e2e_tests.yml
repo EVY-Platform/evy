@@ -36,6 +36,7 @@ jobs:
                         - 'types/**'
                         - 'services/**'
                         - 'run-e2e.sh'
+                        - 'scripts/run-ios-e2e.sh'
                         - '.github/workflows/e2e_tests.yml'
                         - '.github/actions/**'
                         - '!**/*.md'
@@ -110,4 +111,15 @@ jobs:
               with:
                   name: e2e-tests-playwright-report
                   path: web/playwright-report/
+                  retention-days: 1
+
+            - name: Upload iOS e2e results
+              uses: actions/upload-artifact@v7
+              if: always() && (github.event_name == 'workflow_dispatch' ||
+                  steps.paths.outputs.e2e == 'true')
+              with:
+                  name: ios-e2e-results
+                  path: |
+                      ios/TestResults-*.xcresult
+                      ios-e2e-*.log
                   retention-days: 1
