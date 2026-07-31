@@ -7,8 +7,8 @@ export default defineRow("SelectPhotoRow", {
 	config: {
 		type: "select_photo",
 		actions: defaultRowActions({
-			tap: { fn: "select_photo" },
-			delete: { fn: "delete_photo" },
+			tap: "{select_photo()}",
+			delete: "{delete_photo()}",
 		}),
 		visible: "true",
 		title: "Select photo row title",

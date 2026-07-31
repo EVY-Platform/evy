@@ -95,12 +95,10 @@ func _parseFunctionCall(_ input: String) -> (functionName: String, functionArgs:
   return nil
 }
 
-@MainActor
 func _splitFunctionArguments(_ args: String) -> [String] {
   splitTopLevel(args, separator: ",")
 }
 
-@MainActor
 func _stripOptionalSurroundingQuotes(_ s: String) -> String {
   let trimmed = s.trimmingCharacters(in: .whitespacesAndNewlines)
   guard trimmed.count >= 2, trimmed.first == "\"", trimmed.last == "\"" else {

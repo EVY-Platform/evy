@@ -15,7 +15,7 @@ import type {
 	UI_RowActions,
 } from "evy-types";
 import { EVY_CORE_RESOURCE_REF } from "evy-types/coreResources";
-import { branchForStorage, parseBranch } from "./actionBranch";
+import { branchForStorage, parseBranchText } from "./actionBranch";
 import { collectSubtreeRowIds, type FlowEntityMaps } from "./flowEntities";
 import { compactRowActions, normalizeStoredRowActions } from "./rowActions";
 import {
@@ -629,20 +629,29 @@ export function applyRemoteRecord(
 }
 
 /**
- * Set (or clear) the entity a flow declares it submits. Clients validate their
- * create(...,submit) actions against this instead of inferring the target.
+ * Rename a flow and set (or clear) the entity it declares it submits. Clients
+ * validate their create(...,submit) actions against this instead of inferring
+ * the target.
  */
-export function updateFlowSubmits(
+export function updateFlowSettings(
 	maps: FlowEntityMaps,
 	flowId: string,
-	submits: { resource: string } | undefined,
+	settings: {
+		name: string;
+		submits: { resource: string } | undefined;
+	},
 ): FlowEntityMaps {
 	const flow = maps.flowsById[flowId];
 	if (!flow) return maps;
+	const trimmedName = settings.name.trim();
 	const { submits: _dropped, ...withoutSubmits } = flow;
-	const nextFlow: DATA_EVY_Flow = submits
-		? { ...withoutSubmits, submits }
+	const withSubmits: DATA_EVY_Flow = settings.submits
+		? { ...withoutSubmits, submits: settings.submits }
 		: withoutSubmits;
+	const nextFlow: DATA_EVY_Flow =
+		trimmedName !== ""
+			? { ...withSubmits, name: trimmedName }
+			: withSubmits;
 	return {
 		...maps,
 		flowsById: {
@@ -770,8 +779,7 @@ export function ensureShowAction(
 	if (!row) return maps;
 	const existingActions =
 		normalizeStoredRowActions(row.data.actions).tap ?? [];
-	// New actions are written in the structured form; existing ones are only
-	// converted when the author saves them.
+	// Action branches are expression strings validated by parseActionExpression.
 	const showBranch = branchForStorage(`{show(${sheetRowId})}`);
 
 	let updatedExisting = false;
@@ -779,7 +787,7 @@ export function ensureShowAction(
 		if (action.condition?.trim()) {
 			return action;
 		}
-		const parsed = parseBranch(action.true);
+		const parsed = parseBranchText(action.true);
 		if (parsed?.functionName !== "show") {
 			return action;
 		}
@@ -793,7 +801,7 @@ export function ensureShowAction(
 
 	const hasMatchingShow = nextActions.some((action) => {
 		if (action.condition?.trim()) return false;
-		const parsed = parseBranch(action.true);
+		const parsed = parseBranchText(action.true);
 		return (
 			parsed?.functionName === "show" &&
 			parsed.args[0]?.trim() === sheetRowId

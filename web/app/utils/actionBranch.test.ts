@@ -4,11 +4,9 @@ import { EVY_CORE_RESOURCE_REF } from "evy-types/coreResources";
 import { TEST_RESOURCE_ID } from "../../testFixtures/resourceCatalog";
 import {
 	branchForStorage,
-	branchToEditableString,
 	createHasInlineDataArg,
 	finalizeCreateBranchForSave,
 	formatBranchDisplay,
-	parseBranch,
 	parseBranchText,
 	serializeBranch,
 	updateUsesDraftMarker,
@@ -227,6 +225,20 @@ describe("action branch helpers", () => {
 		expect(serializeBranch("select", ["$datum"])).toBe("{select($datum)}");
 	});
 
+	it("parses and serializes copy_to_clipboard", () => {
+		const branch =
+			"{copy_to_clipboard({formatAddress($datum.data.pickup_address)})}";
+		expect(parseBranchText(branch)).toEqual({
+			functionName: "copy_to_clipboard",
+			args: ["{formatAddress($datum.data.pickup_address)}"],
+		});
+		expect(
+			serializeBranch("copy_to_clipboard", [
+				"{formatAddress($datum.data.pickup_address)}",
+			]),
+		).toBe(branch);
+	});
+
 	it("parses and serializes zero-arg row actions", () => {
 		expect(parseBranchText("{select_photo()}")).toEqual({
 			functionName: "select_photo",
@@ -307,23 +319,21 @@ describe("action branch helpers", () => {
 });
 
 describe("structured branch storage", () => {
-	it("stores a convertible branch structurally", () => {
-		expect(branchForStorage("{close()}")).toEqual({ fn: "close" });
+	it("stores a valid expression string", () => {
+		expect(branchForStorage("{close()}")).toBe("{close()}");
 	});
 
-	it("stores the submit keyword as a typed mode", () => {
-		expect(branchForStorage("{create(marketplace.items,submit)}")).toEqual({
-			fn: "create",
-			resource: "marketplace.items",
-			mode: "submit",
-		});
+	it("stores the submit keyword in the expression", () => {
+		expect(branchForStorage("{create(marketplace.items,submit)}")).toBe(
+			"{create(marketplace.items,submit)}",
+		);
 	});
 
 	it("keeps an empty branch empty", () => {
 		expect(branchForStorage("")).toBe("");
 	});
 
-	it("refuses to store an unconvertible branch", () => {
+	it("refuses to store an invalid expression", () => {
 		expect(() => branchForStorage("{teleport(x)}")).toThrow(
 			"Cannot store action branch",
 		);
@@ -332,21 +342,13 @@ describe("structured branch storage", () => {
 		);
 	});
 
-	it("renders a structured branch back to a string for editing", () => {
-		expect(branchToEditableString({ fn: "show", row_id: "row-1" })).toBe(
-			"{show(row-1)}",
-		);
+	it("round-trips a branch through storage", () => {
+		const stored = "{show(row-1)}";
+		expect(branchForStorage(stored)).toBe(stored);
 	});
 
-	it("round-trips a structured branch through the editor model", () => {
-		const stored = { fn: "show", row_id: "row-1" } as const;
-		expect(branchForStorage(branchToEditableString(stored))).toEqual(
-			stored,
-		);
-	});
-
-	it("parses a structured branch into the editor model", () => {
-		expect(parseBranch({ fn: "show", row_id: "row-1" })).toEqual({
+	it("parses a stored branch into the editor model", () => {
+		expect(parseBranchText("{show(row-1)}")).toEqual({
 			functionName: "show",
 			args: ["row-1"],
 		});

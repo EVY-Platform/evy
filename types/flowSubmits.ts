@@ -1,3 +1,4 @@
+import { type ActionExpressionAst, parseActionExpression } from "./actionAst";
 import type {
 	DATA_EVY_Flow,
 	DATA_EVY_Page,
@@ -70,33 +71,47 @@ function forEachRowInFlow(
 	}
 }
 
-function submitCreateTarget(branch: unknown): string | null {
-	if (!branch || typeof branch !== "object") return null;
-	const invocation = branch as Record<string, unknown>;
-	if (invocation.fn !== "create" || invocation.mode !== "submit") return null;
-
-	const resource =
-		typeof invocation.resource === "string" ? invocation.resource : "";
-	if (!resource) return null;
-	return resource;
-}
-
-function addSubmitTargetsFromRow(row: DATA_EVY_Row, into: Set<string>): void {
-	const actions = row.data.actions;
+export function forEachActionBranch(
+	actions: unknown,
+	visit: (branch: unknown, path: string) => void,
+): void {
 	if (!actions || typeof actions !== "object" || Array.isArray(actions)) {
 		return;
 	}
-	for (const actionList of Object.values(actions)) {
-		if (!Array.isArray(actionList)) continue;
-		for (const action of actionList) {
+	for (const [trigger, list] of Object.entries(actions)) {
+		if (!Array.isArray(list)) continue;
+		for (let index = 0; index < list.length; index++) {
+			const action = list[index];
 			if (!action || typeof action !== "object") continue;
 			const record = action as Record<string, unknown>;
-			for (const branch of [record.true, record.false]) {
-				const target = submitCreateTarget(branch);
-				if (target) into.add(target);
-			}
+			visit(record.true, `${trigger}/${index}/true`);
+			visit(record.false, `${trigger}/${index}/false`);
 		}
 	}
+}
+
+export function submitCreateTargetFromAst(
+	ast: ActionExpressionAst,
+): string | null {
+	if (ast.fn !== "create" || ast.mode !== "submit") return null;
+	return ast.resource;
+}
+
+/** A submit-mode create -> resource ref, else null. */
+export function submitCreateTarget(branch: unknown): string | null {
+	if (typeof branch !== "string") return null;
+	const trimmed = branch.trim();
+	if (!trimmed) return null;
+	const parsed = parseActionExpression(trimmed);
+	if (!parsed.ok) return null;
+	return submitCreateTargetFromAst(parsed.ast);
+}
+
+function addSubmitTargetsFromRow(row: DATA_EVY_Row, into: Set<string>): void {
+	forEachActionBranch(row.data.actions, (branch) => {
+		const target = submitCreateTarget(branch);
+		if (target) into.add(target);
+	});
 }
 
 export function collectSubmitTargetsFromFlatFlow(

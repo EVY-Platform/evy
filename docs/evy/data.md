@@ -154,6 +154,10 @@ Persisted row record. Row-type-specific SDUI fields live in `data`. Nested row r
 | `child_row_id` | `child` | One result-row template (not a sheet), for example for search row |
 | `children_row_ids` | `children` | Container rows with static nested children |
 
+Action branches in `data.actions` are stored as expression strings (`""` or `{fn(…)}`), not
+structured objects — see [actions.md](./actions.md) and
+[`types/grammar/README.md`](../../types/grammar/README.md).
+
 A Search row may persist both `child_row_id` and `sheet_row_id`. Relationship kind is explicit in storage; do not infer it from row type alone beyond the Search-only rule for `child`.
 
 On the wire this is accessed with `resource: "evy.rows"`.
@@ -184,7 +188,7 @@ On the wire this is accessed with `resource: "evy.messages"`.
 
 `data.value` holds the whole vocabulary — `"pending"` on a request, and `"accept"`, `"reject"` or `"cancel"` on the message that settles one. A request says `"pending"` outright rather than leaving the key absent, so the predicates read as one state machine and a message kind that carries no state is never mistaken for something to answer.
 
-A settling message addresses whatever record the request addressed — same `fk` and `resource` — and **carries the request's whole `data` forward**, overriding `value` and setting `parent_message_id` on the row to name what it answers. That duplication is load-bearing rather than sloppy: `findFirst` cannot nest, so a lookup that finds the settling message cannot reach through it to the request. Anything the settled state displays — the agreed time, the shipping postcode — has to be on the message that says so, or the confirmation row renders empty.
+A settling message addresses whatever record the request addressed — same `fk` and `resource` — and **carries the request's whole `data` forward**, overriding `value` and setting `parent_message_id` on the row to name what it answers. That duplication is load-bearing rather than sloppy: `findFirst` cannot nest, so a lookup that finds the settling message cannot reach through it to the request. Anything the settled state displays — the agreed time, the address it is going to or being collected from — has to be on the message that says so, or the confirmation row renders empty.
 
 Accepting, rejecting and cancelling are therefore the same operation with a different `value`. They differ only in who says it: the record's owner answers, its asker withdraws.
 
@@ -211,6 +215,36 @@ Messages follow the same rule as every other private resource, with two addition
 - a message reaches whoever owns the message it **answers** — matched on `parent_message_id`. Without it a response would never reach the party who asked, since they own neither the response nor the record it addresses.
 
 Those two are the only entitlements in the system that are not plain ownership. Everyone else never receives it.
+
+#### Transfer address fields in `data`
+
+Two optional keys carry full address objects inside message `data`:
+
+| key | written by | when |
+| --- | --- | --- |
+| `pickup_address` | seller's device | on the **accept** of a `pickup` request only |
+| `destination_address` | buyer's device | on a `delivery` / `shipping` **request**; forwarded by accept/reject/cancel |
+
+A settling message carries the request's whole `data` forward, so accept/reject/cancel templates
+must forward `destination_address` when present. The seller's pickup lookup on accept must be
+guarded on `data.type == pickup`: the item only carries the public pickup location
+(`postcode`, `latitude`, `longitude`), and an unguarded `findFirst` over `evy.addresses` would
+disclose the seller's private street on every delivery accept.
+
+**An accepted request shows the full address, not the postcode.** Each active-request container on
+the item page carries its own address row gated on `data.value == "accept"`, so the postcode only
+ever stands in for an address that is not known yet:
+
+| method | pending / settled | accepted |
+| --- | --- | --- |
+| pickup | map over the item's public `transfer_options.pickup`, subtitled with its `postcode` | map over the accept's `data.pickup_address`, subtitled `formatAddress(…)` |
+| delivery | "Buyer will drop off" | "Delivering to" + `formatAddress(data.destination_address)` |
+| shipping | "Delivered to your door" | "Shipping to" + `formatAddress(data.destination_address)` |
+
+Pickup reads the address the **seller** wrote onto the accept, since that is the only message the
+buyer's device ever receives it on. Delivery and shipping read the address the **buyer** wrote onto
+the request, which the accept forwards — so both render off the one message `findFirst` lands on.
+`data.postalcode` is still forwarded on shipping messages but nothing displays it any more.
 
 > **A trap for anything reading `data` in SQL.** The `bun-sql` driver stores a jsonb column by JSON-stringifying its value, so a row written through the API holds a jsonb *string* containing the object rather than the object. Reads are symmetric, so JavaScript never notices — but `data ->> 'key'` is NULL on that shape and `jsonb_set` refuses it outright. Note that the pglite-backed unit tests store jsonb properly, so they will not catch a clause that only works on the normalised shape.
 

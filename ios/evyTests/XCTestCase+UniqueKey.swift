@@ -23,8 +23,7 @@ extension XCTestCase {
     return "evy_test_\(suffix)_\(randomId)"
   }
 
-  /// Builds an action from structured invocations, the only form that is
-  /// stored or executed.
+  /// Builds a row action from in-memory invocations (tests skip Codable).
   func rowAction(
     condition: String = "",
     true trueBranch: EVYActionInvocation?,

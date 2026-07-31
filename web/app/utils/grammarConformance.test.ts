@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
-import type { UI_ActionInvocation } from "evy-types";
+import type { ActionExpressionAst } from "evy-types/actionAst";
 
-import { parseActionStringToInvocation } from "evy-types/actionAst";
+import { parseActionExpression } from "evy-types/actionAst";
 import corpus from "../../../types/grammar/conformance.json";
 import {
 	type ConditionExpression,
@@ -21,6 +21,7 @@ type Vector = {
 	platforms: string[];
 	input: string;
 	data?: Record<string, unknown>;
+	datum?: Record<string, unknown>;
 	expect: Record<string, unknown>;
 	notes?: string;
 };
@@ -65,11 +66,9 @@ describe("grammar conformance corpus", () => {
 		const covered = new Set(
 			webVectors
 				.filter((vector) =>
-					[
-						"split-args",
-						"condition-parse",
-						"action-ast-convert",
-					].includes(vector.category),
+					["split-args", "condition-parse", "action-parse"].includes(
+						vector.category,
+					),
 				)
 				.map((vector) => vector.id),
 		);
@@ -101,21 +100,23 @@ describe("condition-parse", () => {
 	}
 });
 
-describe("action-ast-convert", () => {
+describe("action-parse", () => {
 	for (const vector of webVectors.filter(
-		(v) => v.category === "action-ast-convert",
+		(v) => v.category === "action-parse",
 	)) {
 		test(vector.id, () => {
-			const result = parseActionStringToInvocation(vector.input);
-			if (vector.expect.ast === null) {
+			const result = parseActionExpression(vector.input);
+			if ("error" in vector.expect) {
 				expect(result.ok).toBe(false);
+				if (!result.ok) {
+					expect(result.reason).toBe(vector.expect.error as string);
+				}
 				return;
 			}
 			expect(result.ok).toBe(true);
 			if (result.ok) {
-				// Corpus values arrive as JSON, like the `as Vector[]` above.
-				expect(result.invocation).toEqual(
-					vector.expect.ast as UI_ActionInvocation,
+				expect(result.ast).toEqual(
+					vector.expect.ast as ActionExpressionAst,
 				);
 			}
 		});

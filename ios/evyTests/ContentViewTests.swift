@@ -552,9 +552,7 @@ final class ContentViewTests: XCTestCase {
             [
               "condition": "",
               "false": "",
-              "true": [
-                "fn": "create", "resource": MarketplaceTestFixture.itemsRef, "mode": "submit",
-              ],
+              "true": "{create(\(MarketplaceTestFixture.itemsRef),submit)}",
             ]
           ]
         ],
@@ -595,9 +593,7 @@ final class ContentViewTests: XCTestCase {
             [
               "condition": "",
               "false": "",
-              "true": [
-                "fn": "create", "resource": submitResource, "mode": "submit",
-              ],
+              "true": "{create(\(submitResource),submit)}",
             ]
           ]
         ],

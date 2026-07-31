@@ -1,20 +1,22 @@
 import { describe, expect, test } from "bun:test";
 
+import {
+	type ActionExpressionAst,
+	parseActionExpression,
+} from "../types/actionAst";
 import { validateDataEvyRow } from "../types/validators";
-
-/**
- * Every action branch in the shipped fixtures satisfies the row schema.
- *
- * The schema admits only the empty string or a structured invocation, so this
- * also catches a fixture drifting to any other branch shape.
- */
 
 const FIXTURES = ["evy/evy_sdui.json", "services/service_sdui.json"] as const;
 
-type Branch = { source: string; branch: unknown };
+type FixtureBranch = {
+	source: string;
+	branch: string;
+	ast?: ActionExpressionAst;
+	parseError?: string;
+};
 
-async function loadFixtureBranches(): Promise<Branch[]> {
-	const branches: Branch[] = [];
+async function loadFixtureBranches(): Promise<FixtureBranch[]> {
+	const branches: FixtureBranch[] = [];
 	for (const relative of FIXTURES) {
 		const url = new URL(`./fixtures/${relative}`, import.meta.url);
 		walk(await Bun.file(url).json(), relative, branches);
@@ -22,7 +24,7 @@ async function loadFixtureBranches(): Promise<Branch[]> {
 	return branches;
 }
 
-function walk(node: unknown, source: string, out: Branch[]): void {
+function walk(node: unknown, source: string, out: FixtureBranch[]): void {
 	if (Array.isArray(node)) {
 		for (const item of node) walk(item, source, out);
 		return;
@@ -39,9 +41,15 @@ function walk(node: unknown, source: string, out: Branch[]): void {
 				if (!action || typeof action !== "object") continue;
 				for (const key of ["true", "false"] as const) {
 					const branch = (action as Record<string, unknown>)[key];
-					// An empty string is the canonical "do nothing" branch.
 					if (branch === "" || branch === undefined) continue;
-					out.push({ source, branch });
+					const branchText = branch as string;
+					const parsed = parseActionExpression(branchText.trim());
+					out.push({
+						source,
+						branch: branchText,
+						ast: parsed.ok ? parsed.ast : undefined,
+						parseError: parsed.ok ? undefined : parsed.reason,
+					});
 				}
 			}
 		}
@@ -52,7 +60,7 @@ function walk(node: unknown, source: string, out: Branch[]): void {
 
 const fixtureBranches = await loadFixtureBranches();
 
-function rowWithBranch(branch: unknown) {
+function rowWithBranch(branch: string) {
 	return {
 		id: "11111111-1111-4111-8111-111111111111",
 		name: "R",
@@ -67,9 +75,43 @@ function rowWithBranch(branch: unknown) {
 	};
 }
 
+function findUpdateChanges(
+	ast: ActionExpressionAst,
+): Record<string, string> | null {
+	if (ast.fn !== "update" || !("changes" in ast) || !ast.changes) return null;
+	return ast.changes;
+}
+
+function findCreateInlineData(
+	ast: ActionExpressionAst,
+): Record<string, string> | null {
+	if (ast.fn !== "create" || ast.mode !== "inline") return null;
+	return ast.data;
+}
+
 describe("shipped fixtures satisfy the row schema", () => {
 	test("the fixtures actually contain action branches", () => {
 		expect(fixtureBranches.length).toBeGreaterThan(20);
+	});
+
+	test("no structured fn objects remain in fixture branches", () => {
+		const structured: string[] = [];
+		for (const { source, branch } of fixtureBranches) {
+			if (typeof branch === "object" && branch !== null) {
+				structured.push(`${source}: ${JSON.stringify(branch)}`);
+			}
+		}
+		expect(structured).toEqual([]);
+	});
+
+	test("every branch parses as an action expression", () => {
+		const rejected: string[] = [];
+		for (const { source, branch, parseError } of fixtureBranches) {
+			if (parseError) {
+				rejected.push(`${source}: ${branch} -> ${parseError}`);
+			}
+		}
+		expect(rejected).toEqual([]);
 	});
 
 	test("every branch satisfies the row schema", () => {
@@ -81,19 +123,13 @@ describe("shipped fixtures satisfy the row schema", () => {
 				const detail =
 					error instanceof Error ? error.message : String(error);
 				rejected.push(
-					`${source}: ${JSON.stringify(branch)} -> ${detail.slice(0, 120)}`,
+					`${source}: ${branch} -> ${detail.slice(0, 120)}`,
 				);
 			}
 		}
 		expect(rejected).toEqual([]);
 	});
 
-	/**
-	 * A marketplace item is public and the address it links to is private, so the
-	 * public page reads the pickup location off the item. Linking an address
-	 * without copying those fields leaves a page that renders a blank map and no
-	 * location - which no other test notices, because nothing errors.
-	 */
 	test("linking a pickup address also copies the public location", () => {
 		const ADDRESS_ID = "transfer_options.pickup.address_id";
 		const REQUIRED = [
@@ -103,11 +139,11 @@ describe("shipped fixtures satisfy the row schema", () => {
 		];
 		const incomplete: string[] = [];
 
-		for (const { source, branch } of fixtureBranches) {
-			if (!branch || typeof branch !== "object") continue;
-			const changes = (branch as { changes?: unknown }).changes;
-			if (!changes || typeof changes !== "object") continue;
-			const keys = Object.keys(changes as Record<string, unknown>);
+		for (const { source, ast } of fixtureBranches) {
+			if (!ast) continue;
+			const changes = findUpdateChanges(ast);
+			if (!changes) continue;
+			const keys = Object.keys(changes);
 			if (!keys.includes(ADDRESS_ID)) continue;
 
 			const missing = REQUIRED.filter((field) => !keys.includes(field));
@@ -119,18 +155,81 @@ describe("shipped fixtures satisfy the row schema", () => {
 		expect(incomplete).toEqual([]);
 	});
 
+	test("pickup_address on accept is guarded on request type", () => {
+		const unguarded: string[] = [];
+
+		for (const { source, branch, ast } of fixtureBranches) {
+			if (!ast) continue;
+			const data = findCreateInlineData(ast);
+			if (!data) continue;
+			const pickupAddress = data.pickup_address;
+			if (!pickupAddress?.includes("findFirst(evy.addresses")) continue;
+			if (!pickupAddress.includes("data.type == pickup")) {
+				unguarded.push(`${source}: ${branch}`);
+			}
+		}
+
+		expect(unguarded).toEqual([]);
+	});
+
+	test("delivery and shipping request creates include destination_address", () => {
+		const missing: string[] = [];
+
+		for (const { source, branch, ast } of fixtureBranches) {
+			if (!ast) continue;
+			const data = findCreateInlineData(ast);
+			const inline = data?.data;
+			if (!inline?.includes("value: pending")) continue;
+
+			if (
+				inline.includes("type: delivery") &&
+				!inline.includes("destination_address")
+			) {
+				missing.push(`${source}: ${branch}`);
+			}
+			if (
+				inline.includes("type: shipping") &&
+				!inline.includes("destination_address")
+			) {
+				missing.push(`${source}: ${branch}`);
+			}
+		}
+
+		expect(missing).toEqual([]);
+	});
+
+	test("item-page cancel messages forward delivery and shipping addresses", () => {
+		const violations: string[] = [];
+
+		for (const { source, branch } of fixtureBranches) {
+			if (!branch.includes("value: cancel")) continue;
+
+			if (
+				branch.includes("data.type == delivery") &&
+				!branch.includes("destination_address")
+			) {
+				violations.push(`${source}: ${branch}`);
+			}
+			if (branch.includes("data.type == shipping")) {
+				if (!branch.includes("destination_address")) {
+					violations.push(`${source}: ${branch}`);
+				}
+				if (!branch.includes("postalcode")) {
+					violations.push(`${source}: ${branch}`);
+				}
+			}
+		}
+
+		expect(violations).toEqual([]);
+	});
+
 	test("covers the action functions the flows rely on", () => {
 		const functions = new Set(
 			fixtureBranches
-				.map(({ branch }) =>
-					branch && typeof branch === "object"
-						? (branch as { fn?: string }).fn
-						: undefined,
-				)
+				.map(({ ast }) => ast?.fn)
 				.filter((fn): fn is string => Boolean(fn)),
 		);
 
-		// Guards against the fixtures quietly losing coverage of a function.
 		for (const expected of [
 			"create",
 			"update",

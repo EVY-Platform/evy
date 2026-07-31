@@ -13,7 +13,7 @@ const OTHER_PAGE_ID = "page-other";
 const now = "2026-07-01T00:00:00.000Z";
 
 function navigateTo(page_id: string): UI_ActionBranch {
-	return { fn: "navigate", flow_id: FLOW_ID, page_id };
+	return `{navigate(${FLOW_ID},${page_id})}`;
 }
 
 function row(

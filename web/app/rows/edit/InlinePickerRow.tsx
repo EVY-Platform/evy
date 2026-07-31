@@ -7,7 +7,7 @@ export default defineRow("InlinePickerRow", {
 	config: {
 		type: "inline_picker",
 		actions: defaultRowActions({
-			tap: { fn: "select", value: "$datum" },
+			tap: "{select($datum)}",
 		}),
 		source: "{resourceId}",
 		visible: "true",

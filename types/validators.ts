@@ -10,7 +10,8 @@ import { posix } from "node:path";
 import type { ErrorObject, ValidateFunction } from "ajv";
 import Ajv2020 from "ajv/dist/2020";
 import addFormats from "ajv-formats";
-
+import { parseActionExpression } from "./actionAst";
+import { forEachActionBranch, submitCreateTargetFromAst } from "./flowSubmits";
 import type {
 	DATA_EVY_Address,
 	DATA_EVY_File,
@@ -590,28 +591,47 @@ function forEachFlowRow(
 	}
 }
 
-/** A submit-mode create -> resource ref, else null. */
-function submitCreateTarget(branch: unknown): string | null {
-	if (!branch || typeof branch !== "object") return null;
-	const invocation = branch as Record<string, unknown>;
-	if (invocation.fn !== "create" || invocation.mode !== "submit") return null;
-
-	const resource =
-		typeof invocation.resource === "string" ? invocation.resource : "";
-	if (!resource) return null;
-	return resource;
+function assertActionBranchAtPath(
+	branch: unknown,
+	path: string,
+	submitTargets?: Set<string>,
+): void {
+	if (branch === "" || branch === undefined) return;
+	if (typeof branch === "string") {
+		const trimmed = branch.trim();
+		if (!trimmed) return;
+		const parsed = parseActionExpression(trimmed);
+		if (!parsed.ok) {
+			throw new Error(`Row validation failed: ${path}: ${parsed.reason}`);
+		}
+		if (submitTargets) {
+			const target = submitCreateTargetFromAst(parsed.ast);
+			if (target) submitTargets.add(target);
+		}
+		return;
+	}
+	if (typeof branch === "object" && branch !== null) {
+		throw new Error(
+			`Row validation failed: ${path}: structured action invocations are no longer accepted`,
+		);
+	}
+	throw new Error(
+		`Row validation failed: ${path}: action branch must be a string`,
+	);
 }
 
-function addSubmitTargets(row: UI_Row, into: Set<string>): void {
-	for (const actionList of Object.values(row.actions ?? {})) {
-		if (!Array.isArray(actionList)) continue;
-		for (const action of actionList) {
-			for (const branch of [action.true, action.false]) {
-				const target = submitCreateTarget(branch);
-				if (target) into.add(target);
-			}
-		}
-	}
+function assertActionBranchesInActions(
+	actions: unknown,
+	pathPrefix: string,
+	submitTargets?: Set<string>,
+): void {
+	forEachActionBranch(actions, (branch, branchPath) => {
+		assertActionBranchAtPath(
+			branch,
+			`${pathPrefix}/${branchPath}`,
+			submitTargets,
+		);
+	});
 }
 
 /**
@@ -661,7 +681,11 @@ export function validateUiFlow(data: unknown): UI_Flow {
 	const submitTargets = new Set<string>();
 	forEachFlowRow(flow, (row, path) => {
 		assertUiFlowRowTriggerConstraints(row, path);
-		addSubmitTargets(row, submitTargets);
+		assertActionBranchesInActions(
+			row.actions,
+			`${path}/actions`,
+			submitTargets,
+		);
 	});
 	assertUiFlowSubmitsDeclaration(flow, submitTargets);
 	return flow;
@@ -686,10 +710,15 @@ export const validateDataEvyPage = makeValidator<DATA_EVY_Page>(
 	"Page",
 	getValidateDataEvyPage,
 );
-export const validateDataEvyRow = makeValidator<DATA_EVY_Row>(
-	"Row",
-	getValidateDataEvyRow,
-);
+export function validateDataEvyRow(data: unknown): DATA_EVY_Row {
+	assertValid("Row", getValidateDataEvyRow(), data);
+	const row = data as DATA_EVY_Row;
+	assertActionBranchesInActions(
+		(row.data as Record<string, unknown>).actions,
+		"data/actions",
+	);
+	return row;
+}
 export const validateDataEvyService = makeValidator<DATA_EVY_Service>(
 	"Service",
 	getValidateDataEvyService,

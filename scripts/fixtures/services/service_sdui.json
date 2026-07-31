@@ -15,9 +15,7 @@
 							"tap": [
 								{
 									"condition": "",
-									"true": {
-										"fn": "expand_photo"
-									},
+									"true": "{expand_photo()}",
 									"false": ""
 								}
 							]
@@ -58,10 +56,7 @@
 								{
 									"condition": "",
 									"false": "",
-									"true": {
-										"fn": "show",
-										"row_id": "7c8d9e0f-1a2b-4c3d-8e5f-6a7b8c9d0e1f"
-									}
+									"true": "{show(7c8d9e0f-1a2b-4c3d-8e5f-6a7b8c9d0e1f)}"
 								}
 							]
 						},
@@ -118,10 +113,7 @@
 							"tap": [
 								{
 									"condition": "",
-									"true": {
-										"fn": "select",
-										"value": "$datum"
-									},
+									"true": "{select($datum)}",
 									"false": ""
 								}
 							]
@@ -154,18 +146,12 @@
 											"tap": [
 												{
 													"condition": "",
-													"true": {
-														"fn": "select",
-														"value": "$datum"
-													},
+													"true": "{select($datum)}",
 													"false": ""
 												},
 												{
 													"condition": "",
-													"true": {
-														"fn": "show",
-														"row_id": "b8c7d6e5-f4a3-4b2c-9d1e-0f8a7b6c5d4e"
-													},
+													"true": "{show(b8c7d6e5-f4a3-4b2c-9d1e-0f8a7b6c5d4e)}",
 													"false": ""
 												}
 											]
@@ -212,23 +198,12 @@
 														"tap": [
 															{
 																"condition": "",
-																"true": {
-																	"fn": "create",
-																	"resource": "evy.messages",
-																	"mode": "inline",
-																	"data": {
-																		"fk": "marketplace.items.id",
-																		"resource": "marketplace.items",
-																		"data": "{type: pickup, value: pending, time: selected_pickup_timeslot}"
-																	}
-																},
+																"true": "{create(evy.messages,{fk: {marketplace.items.id}, resource: marketplace.items, data: {type: pickup, value: pending, time: {selected_pickup_timeslot}}})}",
 																"false": ""
 															},
 															{
 																"condition": "",
-																"true": {
-																	"fn": "close"
-																},
+																"true": "{close()}",
 																"false": ""
 															}
 														]
@@ -263,6 +238,45 @@
 										"actions": {}
 									},
 									{
+										"id": "a1c2e3f4-0b1d-4e2f-8a3b-4c5d6e7f8091",
+										"type": "text_action",
+										"title": "Deliver to",
+										"subtitle": "{formatAddress(delivery_address)}",
+										"action": "Change",
+										"visible": "true",
+										"name": "Delivery destination address",
+										"actions": {
+											"tap": [
+												{
+													"condition": "",
+													"true": "{show(b2d3f4a5-1c2e-4f3a-8b4c-5d6e7f809102)}",
+													"false": ""
+												}
+											]
+										},
+										"sheet": {
+											"id": "b2d3f4a5-1c2e-4f3a-8b4c-5d6e7f809102",
+											"type": "search",
+											"title": "",
+											"placeholder": "Search address",
+											"no_results": "No addresses found",
+											"source": "{$api:place_search}",
+											"destination": "{delivery_address}",
+											"visible": "true",
+											"name": "Find delivery address",
+											"actions": {},
+											"child": {
+												"id": "c3e4a5b6-2d3f-4a4b-8c5d-6e7f80910213",
+												"type": "text",
+												"title": "{formatAddressLine1($datum)}",
+												"subtitle": "{formatAddressLine2($datum)}",
+												"visible": "true",
+												"name": "Delivery address result",
+												"actions": {}
+											}
+										}
+									},
+									{
 										"id": "bd8fa85c-1b67-467a-983d-328e6dc49db7",
 										"type": "timeslot_picker",
 										"source": "{marketplace.items.delivery_selection}",
@@ -270,19 +284,13 @@
 											"tap": [
 												{
 													"condition": "",
-													"true": {
-														"fn": "select",
-														"value": "$datum"
-													},
+													"true": "{select($datum)}",
 													"false": ""
 												},
 												{
-													"condition": "",
-													"true": {
-														"fn": "show",
-														"row_id": "c4d5e6f7-a8b9-4c0d-1e2f-3a4b5c6d7e80"
-													},
-													"false": ""
+													"condition": "{length(delivery_address.street) > 0}",
+													"true": "{show(c4d5e6f7-a8b9-4c0d-1e2f-3a4b5c6d7e80)}",
+													"false": "{highlight_required(delivery_address)}"
 												}
 											]
 										},
@@ -319,23 +327,12 @@
 														"tap": [
 															{
 																"condition": "",
-																"true": {
-																	"fn": "create",
-																	"resource": "evy.messages",
-																	"mode": "inline",
-																	"data": {
-																		"fk": "marketplace.items.id",
-																		"resource": "marketplace.items",
-																		"data": "{type: delivery, value: pending, time: selected_delivery_timeslot}"
-																	}
-																},
+																"true": "{create(evy.messages,{fk: {marketplace.items.id}, resource: marketplace.items, data: {type: delivery, value: pending, time: {selected_delivery_timeslot}, destination_address: delivery_address}})}",
 																"false": ""
 															},
 															{
 																"condition": "",
-																"true": {
-																	"fn": "close"
-																},
+																"true": "{close()}",
 																"false": ""
 															}
 														]
@@ -370,20 +367,53 @@
 										"actions": {}
 									},
 									{
+										"id": "d4f5b6c7-3e4a-4b5c-8d6e-7f8091021324",
+										"type": "text_action",
+										"title": "Ship to",
+										"subtitle": "{formatAddress(shipping_address)}",
+										"action": "Change",
+										"visible": "true",
+										"name": "Shipping destination address",
+										"actions": {
+											"tap": [
+												{
+													"condition": "",
+													"true": "{show(e5a6c7d8-4f5b-4c6d-8e7f-809102132435)}",
+													"false": ""
+												}
+											]
+										},
+										"sheet": {
+											"id": "e5a6c7d8-4f5b-4c6d-8e7f-809102132435",
+											"type": "search",
+											"title": "",
+											"placeholder": "Search address",
+											"no_results": "No addresses found",
+											"source": "{$api:place_search}",
+											"destination": "{shipping_address}",
+											"visible": "true",
+											"name": "Find shipping address",
+											"actions": {},
+											"child": {
+												"id": "f6b7d8e9-5a6c-4d7e-8f80-910213243546",
+												"type": "text",
+												"title": "{formatAddressLine1($datum)}",
+												"subtitle": "{formatAddressLine2($datum)}",
+												"visible": "true",
+												"name": "Shipping address result",
+												"actions": {}
+											}
+										}
+									},
+									{
 										"id": "e47cc52b-c909-496d-bc9a-af7e8b9d7ed3",
 										"type": "button",
 										"actions": {
 											"tap": [
 												{
 													"condition": "{length(shipping_address.postcode) > 0}",
-													"true": {
-														"fn": "show",
-														"row_id": "f2a1b0c9-d8e7-4f6a-5b4c-3d2e1f0a9b8c"
-													},
-													"false": {
-														"fn": "highlight_required",
-														"field": "postcode"
-													}
+													"true": "{show(f2a1b0c9-d8e7-4f6a-5b4c-3d2e1f0a9b8c)}",
+													"false": "{highlight_required(postcode)}"
 												}
 											]
 										},
@@ -431,23 +461,12 @@
 														"tap": [
 															{
 																"condition": "",
-																"true": {
-																	"fn": "create",
-																	"resource": "evy.messages",
-																	"mode": "inline",
-																	"data": {
-																		"fk": "marketplace.items.id",
-																		"resource": "marketplace.items",
-																		"data": "{type: shipping, value: pending, postalcode: shipping_address.postcode}"
-																	}
-																},
+																"true": "{create(evy.messages,{fk: {marketplace.items.id}, resource: marketplace.items, data: {type: shipping, value: pending, postalcode: {shipping_address.postcode}, destination_address: shipping_address}})}",
 																"false": ""
 															},
 															{
 																"condition": "",
-																"true": {
-																	"fn": "close"
-																},
+																"true": "{close()}",
 																"false": ""
 															}
 														]
@@ -488,10 +507,20 @@
 								"id": "a2f59e42-ffea-41d1-b4dc-9a8fda4423c9",
 								"type": "map",
 								"source": "{marketplace.items.transfer_options.pickup}",
-								"visible": "true",
+								"visible": "{findFirst(sort(evy.messages, desc, created_at), fk == marketplace.items.id && data.type == pickup).data.value != \"accept\"}",
 								"title": "",
 								"subtitle": "{marketplace.items.transfer_options.pickup.postcode}",
 								"name": "Pickup location",
+								"actions": {}
+							},
+							{
+								"id": "c7d8e9fa-0b1c-4d2e-8f3a-4b5c6d7e8f90",
+								"type": "map",
+								"source": "{findFirst(sort(evy.messages, desc, created_at), fk == marketplace.items.id && data.type == pickup).data.pickup_address}",
+								"visible": "{findFirst(sort(evy.messages, desc, created_at), fk == marketplace.items.id && data.type == pickup).data.value == \"accept\"}",
+								"title": "Pickup address",
+								"subtitle": "{formatAddress(findFirst(sort(evy.messages, desc, created_at), fk == marketplace.items.id && data.type == pickup).data.pickup_address)}",
+								"name": "Pickup address",
 								"actions": {}
 							},
 							{
@@ -501,10 +530,7 @@
 									"tap": [
 										{
 											"condition": "",
-											"true": {
-												"fn": "show",
-												"row_id": "f1a2b3c4-d5e6-4f7a-8b9c-0d1e2f3a4b5d"
-											},
+											"true": "{show(f1a2b3c4-d5e6-4f7a-8b9c-0d1e2f3a4b5d)}",
 											"false": ""
 										}
 									]
@@ -536,24 +562,12 @@
 												"tap": [
 													{
 														"condition": "",
-														"true": {
-															"fn": "create",
-															"resource": "evy.messages",
-															"mode": "inline",
-															"data": {
-																"fk": "marketplace.items.id",
-																"resource": "marketplace.items",
-																"parent_message_id": "findFirst(sort(evy.messages, desc, created_at), fk == marketplace.items.id && data.type == pickup).id",
-																"data": "{value: cancel, type: pickup, time: findFirst(sort(evy.messages, desc, created_at), fk == marketplace.items.id && data.type == pickup).data.time}"
-															}
-														},
+														"true": "{create(evy.messages,{fk: {marketplace.items.id}, resource: marketplace.items, parent_message_id: {findFirst(sort(evy.messages, desc, created_at), fk == marketplace.items.id && data.type == pickup).id}, data: {value: cancel, type: pickup, time: {findFirst(sort(evy.messages, desc, created_at), fk == marketplace.items.id && data.type == pickup).data.time}}})}",
 														"false": ""
 													},
 													{
 														"condition": "",
-														"true": {
-															"fn": "close"
-														},
+														"true": "{close()}",
 														"false": ""
 													}
 												]
@@ -589,6 +603,15 @@
 								"actions": {}
 							},
 							{
+								"id": "d8e9fa0b-1c2d-4e3f-8a4b-5c6d7e8f9a01",
+								"type": "text",
+								"visible": "{findFirst(sort(evy.messages, desc, created_at), fk == marketplace.items.id && data.type == delivery).data.value == \"accept\"}",
+								"title": "Delivering to",
+								"subtitle": "{formatAddress(findFirst(sort(evy.messages, desc, created_at), fk == marketplace.items.id && data.type == delivery).data.destination_address)}",
+								"name": "Delivery address",
+								"actions": {}
+							},
+							{
 								"id": "be5f9dc0-22dc-4d09-8d1f-47297b1ccb07",
 								"type": "text",
 								"visible": "{findFirst(sort(evy.messages, desc, created_at), fk == marketplace.items.id && data.type == delivery).data.value != \"accept\"}",
@@ -604,10 +627,7 @@
 									"tap": [
 										{
 											"condition": "",
-											"true": {
-												"fn": "show",
-												"row_id": "f7a8b9c0-d1e2-4f3a-4b5c-6d7e8f9a0b1d"
-											},
+											"true": "{show(f7a8b9c0-d1e2-4f3a-4b5c-6d7e8f9a0b1d)}",
 											"false": ""
 										}
 									]
@@ -639,24 +659,12 @@
 												"tap": [
 													{
 														"condition": "",
-														"true": {
-															"fn": "create",
-															"resource": "evy.messages",
-															"mode": "inline",
-															"data": {
-																"fk": "marketplace.items.id",
-																"resource": "marketplace.items",
-																"parent_message_id": "findFirst(sort(evy.messages, desc, created_at), fk == marketplace.items.id && data.type == delivery).id",
-																"data": "{value: cancel, type: delivery, time: findFirst(sort(evy.messages, desc, created_at), fk == marketplace.items.id && data.type == delivery).data.time}"
-															}
-														},
+														"true": "{create(evy.messages,{fk: {marketplace.items.id}, resource: marketplace.items, parent_message_id: {findFirst(sort(evy.messages, desc, created_at), fk == marketplace.items.id && data.type == delivery).id}, data: {value: cancel, type: delivery, time: {findFirst(sort(evy.messages, desc, created_at), fk == marketplace.items.id && data.type == delivery).data.time}, destination_address: {findFirst(sort(evy.messages, desc, created_at), fk == marketplace.items.id && data.type == delivery).data.destination_address}}})}",
 														"false": ""
 													},
 													{
 														"condition": "",
-														"true": {
-															"fn": "close"
-														},
+														"true": "{close()}",
 														"false": ""
 													}
 												]
@@ -687,8 +695,17 @@
 								"type": "text",
 								"visible": "{findFirst(sort(evy.messages, desc, created_at), fk == marketplace.items.id && data.type == shipping).data.value == \"accept\"}",
 								"title": "",
-								"subtitle": "Shipping confirmed to postcode {findFirst(sort(evy.messages, desc, created_at), fk == marketplace.items.id && data.type == shipping).data.postalcode}",
+								"subtitle": "Shipping confirmed",
 								"name": "Shipping accepted confirmation",
+								"actions": {}
+							},
+							{
+								"id": "e9fa0b1c-2d3e-4f4a-8b5c-6d7e8f9a0b12",
+								"type": "text",
+								"visible": "{findFirst(sort(evy.messages, desc, created_at), fk == marketplace.items.id && data.type == shipping).data.value == \"accept\"}",
+								"title": "Shipping to",
+								"subtitle": "{formatAddress(findFirst(sort(evy.messages, desc, created_at), fk == marketplace.items.id && data.type == shipping).data.destination_address)}",
+								"name": "Shipping address",
 								"actions": {}
 							},
 							{
@@ -707,10 +724,7 @@
 									"tap": [
 										{
 											"condition": "",
-											"true": {
-												"fn": "show",
-												"row_id": "d1e2f3a4-b5c6-4d7e-8f9a-0b1c2d3e4f5b"
-											},
+											"true": "{show(d1e2f3a4-b5c6-4d7e-8f9a-0b1c2d3e4f5b)}",
 											"false": ""
 										}
 									]
@@ -742,24 +756,12 @@
 												"tap": [
 													{
 														"condition": "",
-														"true": {
-															"fn": "create",
-															"resource": "evy.messages",
-															"mode": "inline",
-															"data": {
-																"fk": "marketplace.items.id",
-																"resource": "marketplace.items",
-																"parent_message_id": "findFirst(sort(evy.messages, desc, created_at), fk == marketplace.items.id && data.type == shipping).id",
-																"data": "{value: cancel, type: shipping, time: findFirst(sort(evy.messages, desc, created_at), fk == marketplace.items.id && data.type == shipping).data.time}"
-															}
-														},
+														"true": "{create(evy.messages,{fk: {marketplace.items.id}, resource: marketplace.items, parent_message_id: {findFirst(sort(evy.messages, desc, created_at), fk == marketplace.items.id && data.type == shipping).id}, data: {value: cancel, type: shipping, postalcode: {findFirst(sort(evy.messages, desc, created_at), fk == marketplace.items.id && data.type == shipping).data.postalcode}, destination_address: {findFirst(sort(evy.messages, desc, created_at), fk == marketplace.items.id && data.type == shipping).data.destination_address}}})}",
 														"false": ""
 													},
 													{
 														"condition": "",
-														"true": {
-															"fn": "close"
-														},
+														"true": "{close()}",
 														"false": ""
 													}
 												]
@@ -803,9 +805,7 @@
 							"tap": [
 								{
 									"condition": "",
-									"true": {
-										"fn": "select_photo"
-									},
+									"true": "{select_photo()}",
 									"false": ""
 								}
 							],
@@ -813,9 +813,7 @@
 								{
 									"condition": "",
 									"false": "",
-									"true": {
-										"fn": "delete_photo"
-									}
+									"true": "{delete_photo()}"
 								}
 							]
 						},
@@ -866,10 +864,7 @@
 								{
 									"condition": "",
 									"false": "",
-									"true": {
-										"fn": "show",
-										"row_id": "e5f6a7b8-c9d0-4e1f-8a3b-4c5d6e7f8a9b"
-									}
+									"true": "{show(e5f6a7b8-c9d0-4e1f-8a3b-4c5d6e7f8a9b)}"
 								}
 							]
 						}
@@ -890,10 +885,7 @@
 								{
 									"condition": "",
 									"false": "",
-									"true": {
-										"fn": "show",
-										"row_id": "f6a7b8c9-d0e1-4f2a-8b4c-5d6e7f8a9b0c"
-									}
+									"true": "{show(f6a7b8c9-d0e1-4f2a-8b4c-5d6e7f8a9b0c)}"
 								}
 							]
 						}
@@ -953,68 +945,43 @@
 						"tap": [
 							{
 								"condition": "{length(marketplace.items.title) > 0}",
-								"false": {
-									"fn": "highlight_required",
-									"field": "marketplace.items.title"
-								},
+								"false": "{highlight_required(marketplace.items.title)}",
 								"true": ""
 							},
 							{
 								"condition": "{marketplace.items.price.value >= 1}",
-								"false": {
-									"fn": "highlight_required",
-									"field": "marketplace.items.price"
-								},
+								"false": "{highlight_required(marketplace.items.price)}",
 								"true": ""
 							},
 							{
 								"condition": "{length(marketplace.items.condition_id) > 0}",
-								"false": {
-									"fn": "highlight_required",
-									"field": "marketplace.items.condition_id"
-								},
+								"false": "{highlight_required(marketplace.items.condition_id)}",
 								"true": ""
 							},
 							{
 								"condition": "{length(marketplace.items.selling_reason_id) > 0}",
-								"false": {
-									"fn": "highlight_required",
-									"field": "marketplace.items.selling_reason_id"
-								},
+								"false": "{highlight_required(marketplace.items.selling_reason_id)}",
 								"true": ""
 							},
 							{
 								"condition": "{marketplace.items.dimensions.width > 0}",
-								"false": {
-									"fn": "highlight_required",
-									"field": "marketplace.items.dimensions.width"
-								},
+								"false": "{highlight_required(marketplace.items.dimensions.width)}",
 								"true": ""
 							},
 							{
 								"condition": "{marketplace.items.dimensions.height > 0}",
-								"false": {
-									"fn": "highlight_required",
-									"field": "marketplace.items.dimensions.height"
-								},
+								"false": "{highlight_required(marketplace.items.dimensions.height)}",
 								"true": ""
 							},
 							{
 								"condition": "{marketplace.items.dimensions.length >= 1}",
-								"false": {
-									"fn": "highlight_required",
-									"field": "marketplace.items.dimensions.length"
-								},
+								"false": "{highlight_required(marketplace.items.dimensions.length)}",
 								"true": ""
 							},
 							{
 								"condition": "",
 								"false": "",
-								"true": {
-									"fn": "navigate",
-									"flow_id": "ca47e6c5-da19-4491-8422-adb40d9e8a27",
-									"page_id": "06b21b52-0845-468a-ace1-170a3b05f3a2"
-								}
+								"true": "{navigate(ca47e6c5-da19-4491-8422-adb40d9e8a27,06b21b52-0845-468a-ace1-170a3b05f3a2)}"
 							}
 						]
 					},
@@ -1048,15 +1015,8 @@
 						"tap": [
 							{
 								"condition": "{length(marketplace.items.description) > 0}",
-								"false": {
-									"fn": "highlight_required",
-									"field": "marketplace.items.description"
-								},
-								"true": {
-									"fn": "navigate",
-									"flow_id": "ca47e6c5-da19-4491-8422-adb40d9e8a27",
-									"page_id": "26dae81a-4122-4b5c-8396-a72a319ccd8b"
-								}
+								"false": "{highlight_required(marketplace.items.description)}",
+								"true": "{navigate(ca47e6c5-da19-4491-8422-adb40d9e8a27,26dae81a-4122-4b5c-8396-a72a319ccd8b)}"
 							}
 						]
 					},
@@ -1077,10 +1037,7 @@
 							"tap": [
 								{
 									"condition": "",
-									"true": {
-										"fn": "select",
-										"value": "$datum"
-									},
+									"true": "{select($datum)}",
 									"false": ""
 								}
 							]
@@ -1108,10 +1065,7 @@
 										"actions": {
 											"tap": [
 												{
-													"true": {
-														"fn": "show",
-														"row_id": "3bb1bad9-a193-4eef-825e-da6f63a1a38e"
-													},
+													"true": "{show(3bb1bad9-a193-4eef-825e-da6f63a1a38e)}",
 													"false": "",
 													"condition": ""
 												}
@@ -1145,36 +1099,12 @@
 												"tap": [
 													{
 														"condition": "{length(marketplace.items.transfer_options.pickup.address_id) == 0}",
-														"true": {
-															"fn": "create",
-															"resource": "evy.addresses",
-															"mode": "from_path",
-															"data_path": "pickup_address",
-															"id_destination": "{pickup_address.id}"
-														},
-														"false": {
-															"fn": "update",
-															"resource": "evy.addresses",
-															"mode": "store",
-															"filter": {
-																"id": "marketplace.items.transfer_options.pickup.address_id"
-															},
-															"changes_path": "pickup_address"
-														}
+														"true": "{create(evy.addresses,pickup_address,{pickup_address.id})}",
+														"false": "{update(evy.addresses,{id: {marketplace.items.transfer_options.pickup.address_id}},pickup_address)}"
 													},
 													{
 														"condition": "",
-														"true": {
-															"fn": "update",
-															"resource": "marketplace.items",
-															"mode": "draft",
-															"changes": {
-																"transfer_options.pickup.address_id": "pickup_address.id",
-																"transfer_options.pickup.postcode": "pickup_address.postcode",
-																"transfer_options.pickup.latitude": "pickup_address.latitude",
-																"transfer_options.pickup.longitude": "pickup_address.longitude"
-															}
-														},
+														"true": "{update(marketplace.items,{},{transfer_options.pickup.address_id: {pickup_address.id}, transfer_options.pickup.postcode: {pickup_address.postcode}, transfer_options.pickup.latitude: {pickup_address.latitude}, transfer_options.pickup.longitude: {pickup_address.longitude}},draft)}",
 														"false": ""
 													}
 												]
@@ -1195,17 +1125,7 @@
 											"submit": [
 												{
 													"condition": "{length(marketplace.items.transfer_options.pickup.address_id) > 0}",
-													"true": {
-														"fn": "update",
-														"resource": "evy.addresses",
-														"mode": "store",
-														"filter": {
-															"id": "marketplace.items.transfer_options.pickup.address_id"
-														},
-														"changes": {
-															"instructions": "pickup_address.instructions"
-														}
-													},
+													"true": "{update(evy.addresses,{id: {marketplace.items.transfer_options.pickup.address_id}},{instructions: {pickup_address.instructions}})}",
 													"false": ""
 												}
 											]
@@ -1242,30 +1162,21 @@
 											"tap": [
 												{
 													"condition": "",
-													"true": {
-														"fn": "select",
-														"value": "$datum"
-													},
+													"true": "{select($datum)}",
 													"false": ""
 												}
 											],
 											"tap_row": [
 												{
 													"condition": "",
-													"true": {
-														"fn": "select",
-														"value": "$datum"
-													},
+													"true": "{select($datum)}",
 													"false": ""
 												}
 											],
 											"tap_column": [
 												{
 													"condition": "",
-													"true": {
-														"fn": "select",
-														"value": "$datum"
-													},
+													"true": "{select($datum)}",
 													"false": ""
 												}
 											]
@@ -1329,10 +1240,7 @@
 											"tap": [
 												{
 													"condition": "",
-													"true": {
-														"fn": "select",
-														"value": "$datum"
-													},
+													"true": "{select($datum)}",
 													"false": ""
 												}
 											]
@@ -1362,30 +1270,21 @@
 											"tap": [
 												{
 													"condition": "",
-													"true": {
-														"fn": "select",
-														"value": "$datum"
-													},
+													"true": "{select($datum)}",
 													"false": ""
 												}
 											],
 											"tap_row": [
 												{
 													"condition": "",
-													"true": {
-														"fn": "select",
-														"value": "$datum"
-													},
+													"true": "{select($datum)}",
 													"false": ""
 												}
 											],
 											"tap_column": [
 												{
 													"condition": "",
-													"true": {
-														"fn": "select",
-														"value": "$datum"
-													},
+													"true": "{select($datum)}",
 													"false": ""
 												}
 											]
@@ -1461,10 +1360,7 @@
 											"tap": [
 												{
 													"condition": "",
-													"true": {
-														"fn": "select",
-														"value": "$datum"
-													},
+													"true": "{select($datum)}",
 													"false": ""
 												}
 											]
@@ -1505,15 +1401,8 @@
 						"tap": [
 							{
 								"condition": "{count(marketplace.items.pickup_selection) > 0 || count(marketplace.items.delivery_selection) > 0 || count(marketplace.items.shipping_destination_areas) > 0}",
-								"false": {
-									"fn": "highlight_required",
-									"field": "marketplace.items.pickup_selection"
-								},
-								"true": {
-									"fn": "navigate",
-									"flow_id": "ca47e6c5-da19-4491-8422-adb40d9e8a27",
-									"page_id": "25a3269b-344c-477d-89c8-b2f5426a5d91"
-								}
+								"false": "{highlight_required(marketplace.items.pickup_selection)}",
+								"true": "{navigate(ca47e6c5-da19-4491-8422-adb40d9e8a27,25a3269b-344c-477d-89c8-b2f5426a5d91)}"
 							}
 						]
 					},
@@ -1549,10 +1438,7 @@
 									"tap": [
 										{
 											"condition": "",
-											"true": {
-												"fn": "select",
-												"value": "$datum"
-											},
+											"true": "{select($datum)}",
 											"false": ""
 										}
 									]
@@ -1571,10 +1457,7 @@
 									"tap": [
 										{
 											"condition": "",
-											"true": {
-												"fn": "select",
-												"value": "$datum"
-											},
+											"true": "{select($datum)}",
 											"false": ""
 										}
 									]
@@ -1599,14 +1482,8 @@
 						"tap": [
 							{
 								"condition": "{marketplace.items.payment_cash == true || marketplace.items.payment_app == true}",
-								"false": {
-									"fn": "highlight_required",
-									"field": "marketplace.items.payment_app"
-								},
-								"true": {
-									"fn": "show",
-									"row_id": "a4b5c6d7-e8f9-4a0b-1c2d-3e4f5a6b7c8d"
-								}
+								"false": "{highlight_required(marketplace.items.payment_app)}",
+								"true": "{show(a4b5c6d7-e8f9-4a0b-1c2d-3e4f5a6b7c8d)}"
 							}
 						]
 					},
@@ -1627,10 +1504,7 @@
 									"tap": [
 										{
 											"condition": "",
-											"true": {
-												"fn": "expand_text",
-												"row_id": "b5c6d7e8-f9a0-4b1c-2d3e-4f5a6b7c8d9e"
-											},
+											"true": "{expand_text(b5c6d7e8-f9a0-4b1c-2d3e-4f5a6b7c8d9e)}",
 											"false": ""
 										}
 									]
@@ -1648,26 +1522,16 @@
 										{
 											"condition": "",
 											"false": "",
-											"true": {
-												"fn": "create",
-												"resource": "marketplace.items",
-												"mode": "submit"
-											}
+											"true": "{create(marketplace.items,submit)}"
 										},
 										{
 											"condition": "",
 											"false": "",
-											"true": {
-												"fn": "close"
-											}
+											"true": "{close()}"
 										},
 										{
 											"condition": "",
-											"true": {
-												"fn": "navigate",
-												"flow_id": "f267c629-2594-4770-8cec-d5324ebb4058",
-												"page_id": "55e427ac-263c-441f-9673-f60627b1baea"
-											},
+											"true": "{navigate(f267c629-2594-4770-8cec-d5324ebb4058,55e427ac-263c-441f-9673-f60627b1baea)}",
 											"false": ""
 										}
 									]

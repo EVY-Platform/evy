@@ -15,7 +15,9 @@ enum EVYTestMessageFixtures {
     value: String? = nil,
     parent_message_id: String? = nil,
     time: String? = nil,
-    postalcode: String? = nil
+    postalcode: String? = nil,
+    destination_address: EVYJson? = nil,
+    pickup_address: EVYJson? = nil
   ) -> EVYJson {
     var data: [String: EVYJson] = [:]
     if let type {
@@ -29,6 +31,12 @@ enum EVYTestMessageFixtures {
     }
     if let postalcode {
       data["postalcode"] = .string(postalcode)
+    }
+    if let destination_address {
+      data["destination_address"] = destination_address
+    }
+    if let pickup_address {
+      data["pickup_address"] = pickup_address
     }
 
     var dict: [String: EVYJson] = [

@@ -16,7 +16,7 @@ import {
 	removePage,
 	removeRowFromPage,
 	setFooterRow,
-	updateFlowSubmits,
+	updateFlowSettings,
 	updatePageTitle,
 	updateRowActions,
 	updateRowField,
@@ -163,7 +163,7 @@ export const pageReducer = (state: AppState, action: RowAction): AppState => {
 	if (action.type === "CREATE_FLOW") {
 		const trimmedName = action.name.trim();
 		if (trimmedName === "") return state;
-		const { flow, page } = buildNewFlowRecords(trimmedName);
+		const { flow, page } = buildNewFlowRecords(trimmedName, action.submits);
 		const nextMaps = addFlowRecords(state, flow, [page], []);
 		return {
 			...state,
@@ -396,12 +396,11 @@ export const pageReducer = (state: AppState, action: RowAction): AppState => {
 			return nextMaps === state ? state : { ...state, ...nextMaps };
 		}
 
-		case "UPDATE_FLOW_SUBMITS": {
-			const nextMaps = updateFlowSubmits(
-				state,
-				action.flowId,
-				action.submits,
-			);
+		case "UPDATE_FLOW_SETTINGS": {
+			const nextMaps = updateFlowSettings(state, action.flowId, {
+				name: action.name,
+				submits: action.submits,
+			});
 			return { ...state, ...nextMaps };
 		}
 

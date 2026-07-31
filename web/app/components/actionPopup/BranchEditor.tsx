@@ -37,6 +37,7 @@ type BranchEditorProps = {
 	declaredSubmits?: string | null;
 	getAttributeCandidatesForQualifier: (qualifier: string) => IdCandidate[];
 	onChange: (value: string) => void;
+	onConfigureSubmits?: () => void;
 };
 
 type ArgDropdownSlot = { slotId: string; options: PopoverOption[] };
@@ -121,6 +122,7 @@ export function BranchEditor({
 	declaredSubmits = null,
 	getAttributeCandidatesForQualifier,
 	onChange,
+	onConfigureSubmits,
 }: BranchEditorProps) {
 	const parsed = useMemo(() => parseBranchText(value), [value]);
 	const selectedFunction = parsed?.functionName ?? "";
@@ -230,7 +232,7 @@ export function BranchEditor({
 					getAttributeCandidatesForQualifier={
 						getAttributeCandidatesForQualifier
 					}
-					placeholder="Optional query, e.g. {items: [$datum.id]}"
+					placeholder="Optional query, e.g. {id: {$datum.id}}"
 					multiline
 				/>
 			)}
@@ -238,9 +240,19 @@ export function BranchEditor({
 			{selectedFunction === "create" &&
 				args[0] &&
 				(showSubmitCreateHint ? (
-					<p className="evy-create-draft-hint">
-						Creates from row destinations and draft updates
-					</p>
+					onConfigureSubmits ? (
+						<button
+							type="button"
+							className="evy-create-draft-hint evy-create-draft-hint--button"
+							onClick={onConfigureSubmits}
+						>
+							Creates from row destinations and draft updates
+						</button>
+					) : (
+						<p className="evy-create-draft-hint">
+							Creates from row destinations and draft updates
+						</p>
+					)
 				) : (
 					<>
 						<AutocompleteSearch
@@ -251,7 +263,7 @@ export function BranchEditor({
 							getAttributeCandidatesForQualifier={
 								getAttributeCandidatesForQualifier
 							}
-							placeholder="Data path or inline object, e.g. pickup_address"
+							placeholder="From-path or inline map, e.g. pickup_address or {status: pending}"
 						/>
 						<AutocompleteSearch
 							ariaLabel={`${branchId}-create-id-destination`}
@@ -261,7 +273,7 @@ export function BranchEditor({
 							getAttributeCandidatesForQualifier={
 								getAttributeCandidatesForQualifier
 							}
-							placeholder="Optional id destination, e.g. {item.transfer_options.pickup.address_id}"
+							placeholder="Optional id destination, e.g. {pickup_address.id}"
 						/>
 					</>
 				))}
@@ -276,6 +288,19 @@ export function BranchEditor({
 						getAttributeCandidatesForQualifier
 					}
 					placeholder="Value, e.g. $datum"
+				/>
+			)}
+
+			{selectedFunction === "copy_to_clipboard" && (
+				<AutocompleteSearch
+					ariaLabel={`${branchId}-copy-value`}
+					value={args[0] ?? ""}
+					onChange={(v) => handleArgChange(0, v)}
+					candidates={idCandidates}
+					getAttributeCandidatesForQualifier={
+						getAttributeCandidatesForQualifier
+					}
+					placeholder="Text to copy, e.g. {formatAddress($datum.data.pickup_address)}"
 				/>
 			)}
 
@@ -317,7 +342,7 @@ export function BranchEditor({
 							getAttributeCandidatesForQualifier={
 								getAttributeCandidatesForQualifier
 							}
-							placeholder="Filter, e.g. {fk: $datum.id, closedAt: null}"
+							placeholder="Filter, e.g. {fk: {$datum.id}, closedAt: null}"
 							multiline
 						/>
 					)}
@@ -329,7 +354,7 @@ export function BranchEditor({
 						getAttributeCandidatesForQualifier={
 							getAttributeCandidatesForQualifier
 						}
-						placeholder="Changes, e.g. {closedAt: now()}"
+						placeholder="Changes, e.g. {closedAt: {now()}}"
 						multiline
 					/>
 				</>

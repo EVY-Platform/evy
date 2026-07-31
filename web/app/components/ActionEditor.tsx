@@ -10,11 +10,7 @@ import { useCallback, useMemo, useState } from "react";
 import { LUCIDE_STROKE_WIDTH } from "../icons/iconSyntax";
 import { TRIGGER_LABELS } from "../rows/rowTriggers";
 import { useFlowsContext } from "../state/contexts/FlowsContext";
-import {
-	branchToEditableString,
-	formatBranchDisplay,
-	parseBranch,
-} from "../utils/actionBranch";
+import { formatBranchDisplay, parseBranchText } from "../utils/actionBranch";
 import {
 	formatExpressionSummary,
 	parseCondition,
@@ -173,16 +169,19 @@ function ActionSummaryCard({
 		() => formatExpressionSummary(conditionExpr, serviceResources),
 		[conditionExpr, serviceResources],
 	);
-	const trueBranch = useMemo(() => parseBranch(action.true), [action.true]);
+	const trueBranch = useMemo(
+		() => parseBranchText(action.true),
+		[action.true],
+	);
 	const falseBranch = useMemo(
-		() => parseBranch(action.false),
+		() => parseBranchText(action.false),
 		[action.false],
 	);
 	const trueBranchDisplay = useMemo(
 		() =>
 			trueBranch
 				? formatBranchDisplay(
-						branchToEditableString(action.true),
+						action.true,
 						flowsById,
 						pagesById,
 						rowsById,
@@ -194,7 +193,7 @@ function ActionSummaryCard({
 		() =>
 			falseBranch
 				? formatBranchDisplay(
-						branchToEditableString(action.false),
+						action.false,
 						flowsById,
 						pagesById,
 						rowsById,

@@ -11,13 +11,22 @@ import XCTest
 final class EVYActionRunnerTests: XCTestCase {
   /// Binding keys seeded for the inline-payload cases, cleaned up per run.
   private var seededBindingKeys: [String] = []
+  private var defaultClipboardWrite: ((String) -> Void)?
+  private var capturedClipboardText: String?
 
   override func setUp() async throws {
     try await super.setUp()
+    defaultClipboardWrite = EVYClipboard.write
+    capturedClipboardText = nil
+    EVYClipboard.write = { [weak self] in self?.capturedClipboardText = $0 }
+    try evySeedStandardFormattersForTests()
     installHermeticMutationSync()
   }
 
   override func tearDown() async throws {
+    if let defaultClipboardWrite {
+      EVYClipboard.write = defaultClipboardWrite
+    }
     resetHermeticMutationSync()
     try await super.tearDown()
   }
@@ -49,8 +58,8 @@ final class EVYActionRunnerTests: XCTestCase {
     return (operations, shown, rowOps, errors)
   }
 
-  func testStructuredBranchWithUnsupportedShapeIsRejectedAtDecode() {
-    let json = Data(#"{"condition":"","false":"","true":{"fn":"teleport"}}"#.utf8)
+  func testUnsupportedExpressionBranchIsRejectedAtDecode() {
+    let json = Data(#"{"condition":"","false":"","true":"{teleport()}"}"#.utf8)
     XCTAssertThrowsError(try JSONDecoder().decode(UI_RowAction.self, from: json))
   }
 
@@ -399,13 +408,13 @@ final class EVYActionRunnerTests: XCTestCase {
       linkAction =
         .update(
           resource: itemsResource, mode: .store,
-          filter: ["id": "\(itemsResource).id"],
-          changes: .literal(["transfer_options.pickup.address_id": "pickup_address.id"]))
+          filter: ["id": "{\(itemsResource).id}"],
+          changes: .literal(["transfer_options.pickup.address_id": "{pickup_address.id}"]))
     case .draft:
       linkAction =
         .update(
           resource: itemsResource, mode: .draft, filter: [:],
-          changes: .literal(["transfer_options.pickup.address_id": "pickup_address.id"]))
+          changes: .literal(["transfer_options.pickup.address_id": "{pickup_address.id}"]))
     }
     return [
       rowAction(
@@ -417,7 +426,7 @@ final class EVYActionRunnerTests: XCTestCase {
         false:
           .update(
             resource: addressesRef, mode: .store,
-            filter: ["id": "\(itemsResource).transfer_options.pickup.address_id"],
+            filter: ["id": "{\(itemsResource).transfer_options.pickup.address_id}"],
             changes: .path("pickup_address"))
       ),
       rowAction(true: linkAction),
@@ -557,7 +566,7 @@ final class EVYActionRunnerTests: XCTestCase {
       true:
         .update(
           resource: itemsResource, mode: .draft, filter: [:],
-          changes: .literal(["transfer_options.pickup.address_id": "\"some-address-uuid\""]))
+          changes: .literal(["transfer_options.pickup.address_id": "some-address-uuid"]))
     )
     EVYActionRunner.run(actions: [linkAction]) { _ in }
 
@@ -605,7 +614,7 @@ final class EVYActionRunnerTests: XCTestCase {
         .update(
           resource: itemsResource, mode: .store,
           filter: ["id": "\(itemsResource).id"],
-          changes: .literal(["transfer_options.pickup.address_id": "\"some-address-uuid\""]))
+          changes: .literal(["transfer_options.pickup.address_id": "some-address-uuid"]))
     )
     EVYActionRunner.run(actions: [linkAction]) { _ in }
 
@@ -649,7 +658,7 @@ final class EVYActionRunnerTests: XCTestCase {
       true:
         .update(
           resource: itemsResource, mode: .draft, filter: [:],
-          changes: .literal(["title": "\"patched\""]))
+          changes: .literal(["title": "patched"]))
     )
     let errors = capturedErrors {
       EVYActionRunner.run(actions: [linkAction]) { _ in }
@@ -694,7 +703,7 @@ final class EVYActionRunnerTests: XCTestCase {
       true:
         .update(
           resource: itemsResource, mode: .store,
-          filter: ["id": "\"\(itemId)\""], changes: .literal(["title": "\"Archived title\""]))
+          filter: ["id": itemId], changes: .literal(["title": "Archived title"]))
     )
     EVYActionRunner.run(actions: [updateAction]) { _ in }
 
@@ -805,7 +814,7 @@ final class EVYActionRunnerTests: XCTestCase {
         .create(
           resource: resource,
           mode: .inline(data: [
-            "fk": "item-1", "service": "\"svc-1\"", "closedAt": "null", "verified": "true",
+            "fk": "item-1", "service": "svc-1", "closedAt": "null", "verified": "true",
             "data": "{type: pickup, time: 2026-06-03T09:00:00}",
           ]), id_destination: nil)
     )
@@ -845,7 +854,7 @@ final class EVYActionRunnerTests: XCTestCase {
       true:
         .create(
           resource: resource,
-          mode: .inline(data: ["fk": "item-1", "created_at": "\"2026-06-01T00:00:00Z\""]),
+          mode: .inline(data: ["fk": "item-1", "created_at": "2026-06-01T00:00:00Z"]),
           id_destination: nil)
     )
     EVYActionRunner.run(actions: [action]) { _ in }
@@ -858,7 +867,7 @@ final class EVYActionRunnerTests: XCTestCase {
     XCTAssertEqual(values["created_at"], .string("2026-06-01T00:00:00Z"))
   }
 
-  // MARK: - Bare ids in inline payload values
+  // MARK: - Braced bindings in inline payload values
 
   /// Seeds a record under `key` so `{key}` resolves to it, the way a resource id
   /// bound by a query param does. Cleaned up by `inlineCreatePayload`'s caller via
@@ -903,13 +912,8 @@ final class EVYActionRunnerTests: XCTestCase {
     return values
   }
 
-  /// A resource id is also a binding key, so resolving it would hand back that
-  /// resource's data. It cannot be scalarised to the resolved record's id either -
-  /// the record bound under a resource key is a record, whose id is a different
-  /// uuid - so the token itself is the only correct value.
-  func testInlineCreateKeepsBareResourceIdAsTheIdItself() throws {
-    // A resource id of this test's own, so a cache scope another test left behind
-    // cannot resolve the key out from under it.
+  /// Bare resource ids are literals in value position; braced paths still resolve.
+  func testInlineCreateKeepsBareResourceIdAsLiteralAndResolvesBracedPath() throws {
     let resourceId = UUID().uuidString.lowercased()
     let recordId = UUID().uuidString.lowercased()
     let previousScopeId = EVY.activeCacheScopeId
@@ -918,17 +922,15 @@ final class EVYActionRunnerTests: XCTestCase {
     try seedRecordBinding(key: resourceId, id: recordId, extra: ["title": .string("Fridge")])
 
     let values = try inlineCreatePayload([
-      "resource": resourceId, "fk": "\(resourceId).id",
+      "resource": resourceId, "fk": "{\(resourceId).id}",
     ])
 
     XCTAssertEqual(values["resource"], .string(resourceId))
-    // The property-path form still reads the bound record, and its id is a
-    // different uuid - which is exactly why the bare form must not be coerced.
     XCTAssertEqual(values["fk"], .string(recordId))
     XCTAssertNotEqual(values["resource"], values["fk"])
   }
 
-  func testInlineCreateKeepsBareUuidThatResolvesToNothing() throws {
+  func testInlineCreateKeepsBareUuidAsLiteral() throws {
     let unboundId = UUID().uuidString.lowercased()
 
     let values = try inlineCreatePayload(["service": unboundId])
@@ -936,23 +938,21 @@ final class EVYActionRunnerTests: XCTestCase {
     XCTAssertEqual(values["service"], .string(unboundId))
   }
 
-  func testInlineCreateStillResolvesNonUuidScalarBindings() throws {
+  func testInlineCreateResolvesBracedScalarBindings() throws {
     let scalarKey = uniqueKey("timeslot")
     try seedScalarBinding(key: scalarKey, value: .string("2026-06-03T09:00:00"))
 
-    let values = try inlineCreatePayload(["time": scalarKey])
+    let values = try inlineCreatePayload(["time": "{\(scalarKey)}"])
 
     XCTAssertEqual(values["time"], .string("2026-06-03T09:00:00"))
   }
 
-  /// The rule is scoped to uuid-shaped tokens so it cannot swallow a value that
-  /// deliberately embeds a resolved object.
-  func testInlineCreateStillEmbedsObjectsForNonUuidBindings() throws {
+  func testInlineCreateEmbedsObjectsForBracedBindings() throws {
     let objectKey = uniqueKey("price")
     let recordId = UUID().uuidString.lowercased()
     try seedRecordBinding(key: objectKey, id: recordId, extra: ["currency": .string("AUD")])
 
-    let values = try inlineCreatePayload(["price": objectKey])
+    let values = try inlineCreatePayload(["price": "{\(objectKey)}"])
 
     XCTAssertEqual(
       values["price"],
@@ -970,11 +970,11 @@ final class EVYActionRunnerTests: XCTestCase {
     )
     let resolved = EVYPlainTextResolution.resolveValues(
       [
-        "parent_message_id": "$datum.id",
+        "parent_message_id": "{$datum.id}",
         "value": "accept",
-        "type": "$datum.data.type",
-        "time": "$datum.data.time",
-        "postalcode": "$datum.data.postalcode",
+        "type": "{$datum.data.type}",
+        "time": "{$datum.data.time}",
+        "postalcode": "{$datum.data.postalcode}",
       ],
       datum: pickupDatum,
       omitUnresolvedDatumKeys: true
@@ -985,6 +985,156 @@ final class EVYActionRunnerTests: XCTestCase {
     XCTAssertEqual(resolved["type"], .string("pickup"))
     XCTAssertEqual(resolved["time"], .string("2026-06-03T09:00:00"))
     XCTAssertNil(resolved["postalcode"])
+  }
+
+  func testPickupAddressResolvesFromNestedDatumExpressionForPickupRequest() throws {
+    let addressId = UUID().uuidString
+    let itemId = UUID().uuidString
+    let street = "28 Rothschild Avenue"
+    let addressesRef = EVYCoreResource.addresses.ref
+    let itemsRef = MarketplaceTestFixture.itemsRef
+    try? EVY.publicStore.deleteAll(namespace: EVYNamespace.evy, resource: addressesRef)
+    try? EVY.publicStore.deleteAll(namespace: MarketplaceTestFixture.service, resource: itemsRef)
+    defer {
+      try? EVY.publicStore.deleteAll(namespace: EVYNamespace.evy, resource: addressesRef)
+      try? EVY.publicStore.deleteAll(namespace: MarketplaceTestFixture.service, resource: itemsRef)
+    }
+
+    try EVY.applySyncedValue(
+      namespace: EVYNamespace.evy,
+      resource: addressesRef,
+      value: .array([
+        .dictionary([
+          "id": .string(addressId),
+          "street": .string(street),
+          "city": .string("Rosebery"),
+          "postcode": .string("2018"),
+        ])
+      ])
+    )
+    try EVY.applySyncedValue(
+      namespace: MarketplaceTestFixture.service,
+      resource: itemsRef,
+      value: .array([
+        .dictionary([
+          "id": .string(itemId),
+          "transfer_options": .dictionary([
+            "pickup": .dictionary(["address_id": .string(addressId)])
+          ]),
+        ])
+      ])
+    )
+
+    let datum = EVYTestMessageFixtures.message(
+      id: UUID().uuidString,
+      fk: itemId,
+      type: "pickup",
+      value: "pending",
+      time: "2026-06-03T09:00:00"
+    )
+    let resolved = EVYPlainTextResolution.resolveValues(
+      [
+        "pickup_address":
+          "findFirst(evy.addresses, $datum.data.type == pickup && id == findFirst(marketplace.items, $datum.fk).transfer_options.pickup.address_id)"
+      ],
+      datum: datum
+    )
+
+    guard case .dictionary(let address) = resolved["pickup_address"] else {
+      return XCTFail("Expected pickup_address dictionary")
+    }
+    XCTAssertEqual(address["street"], .string(street))
+  }
+
+  func testPickupAddressIsEmptyForDeliveryRequest() throws {
+    let addressId = UUID().uuidString
+    let itemId = UUID().uuidString
+    let addressesRef = EVYCoreResource.addresses.ref
+    let itemsRef = MarketplaceTestFixture.itemsRef
+    try? EVY.publicStore.deleteAll(namespace: EVYNamespace.evy, resource: addressesRef)
+    try? EVY.publicStore.deleteAll(namespace: MarketplaceTestFixture.service, resource: itemsRef)
+    defer {
+      try? EVY.publicStore.deleteAll(namespace: EVYNamespace.evy, resource: addressesRef)
+      try? EVY.publicStore.deleteAll(namespace: MarketplaceTestFixture.service, resource: itemsRef)
+    }
+
+    try EVY.applySyncedValue(
+      namespace: EVYNamespace.evy,
+      resource: addressesRef,
+      value: .array([
+        .dictionary([
+          "id": .string(addressId),
+          "street": .string("28 Rothschild Avenue"),
+        ])
+      ])
+    )
+    try EVY.applySyncedValue(
+      namespace: MarketplaceTestFixture.service,
+      resource: itemsRef,
+      value: .array([
+        .dictionary([
+          "id": .string(itemId),
+          "transfer_options": .dictionary([
+            "pickup": .dictionary(["address_id": .string(addressId)])
+          ]),
+        ])
+      ])
+    )
+
+    let datum = EVYTestMessageFixtures.message(
+      id: UUID().uuidString,
+      fk: itemId,
+      type: "delivery",
+      value: "pending",
+      time: "2026-06-04T10:00:00"
+    )
+    let resolved = EVYPlainTextResolution.resolveValues(
+      [
+        "pickup_address":
+          "findFirst(evy.addresses, $datum.data.type == pickup && id == findFirst(marketplace.items, $datum.fk).transfer_options.pickup.address_id)"
+      ],
+      datum: datum
+    )
+
+    XCTAssertEqual(resolved["pickup_address"], .string(""))
+  }
+
+  func testCopyToClipboardWritesFormattedAddress() throws {
+    let datum = EVYJson.dictionary([
+      "data": .dictionary([
+        "pickup_address": .dictionary([
+          "unit": .string("C509"),
+          "street": .string("28 Rothschild Avenue"),
+          "city": .string("Rosebery"),
+          "postcode": .string("2018"),
+          "state": .string("NSW"),
+          "country": .string("Australia"),
+        ])
+      ])
+    ])
+    let action = rowAction(
+      true: .copyToClipboard(
+        value: "{formatAddress($datum.data.pickup_address)}"
+      )
+    )
+
+    EVYActionRunner.run(actions: [action], datum: datum) { _ in }
+
+    XCTAssertEqual(capturedClipboardText, "C509 28 Rothschild Avenue, 2018 Rosebery NSW")
+  }
+
+  func testCopyToClipboardNoOpWhenAddressMissing() throws {
+    let datum = EVYJson.dictionary(["data": .dictionary([:])])
+    let action = rowAction(
+      true: .copyToClipboard(
+        value:
+          "{if(length($datum.data.pickup_address.street) > 0, formatAddress($datum.data.pickup_address), \"\")}"
+      )
+    )
+
+    EVYActionRunner.run(actions: [action], datum: datum) { _ in }
+
+    XCTAssertNil(capturedClipboardText)
   }
 
   func testUpdateChangesOmitUnresolvedDatumKeys() throws {
@@ -1010,10 +1160,10 @@ final class EVYActionRunnerTests: XCTestCase {
     let action = rowAction(
       true: .update(
         resource: resource, mode: .store,
-        filter: ["id": "$datum.id"],
+        filter: ["id": "{$datum.id}"],
         changes: .literal([
-          "label": "$datum.label",
-          "missing": "$datum.doesNotExist",
+          "label": "{$datum.label}",
+          "missing": "{$datum.doesNotExist}",
         ]))
     )
     EVYActionRunner.run(actions: [action], datum: datum) { _ in }
@@ -1029,12 +1179,12 @@ final class EVYActionRunnerTests: XCTestCase {
 
   func testFilterMapKeepsUnresolvedDatumAsLiteral() throws {
     let resolved = EVYPlainTextResolution.resolveValues(
-      ["postalcode": "$datum.data.postalcode"],
+      ["postalcode": "{$datum.data.postalcode}"],
       datum: EVYTestMessageFixtures.message(
         id: UUID().uuidString, type: "pickup", value: "pending", time: "2026-06-03T09:00:00"),
       omitUnresolvedDatumKeys: false
     )
-    XCTAssertEqual(resolved["postalcode"], .string("$datum.data.postalcode"))
+    XCTAssertEqual(resolved["postalcode"], .string("{$datum.data.postalcode}"))
   }
 
   /// A store-mode update is scoped to the datum's own record, and a filter term that fails
@@ -1149,7 +1299,7 @@ final class EVYActionRunnerTests: XCTestCase {
         .create(
           resource: resource,
           mode: .inline(data: [
-            "fk": "$datum.id", "data": "{type: pickup, time: selected_pickup_timeslot}",
+            "fk": "{$datum.id}", "data": "{type: pickup, time: {selected_pickup_timeslot}}",
           ]), id_destination: nil)
     )
     var receivedNavigation: ActionOperation?
@@ -1248,7 +1398,7 @@ final class EVYActionRunnerTests: XCTestCase {
   func testSelectPassesQuotedLiteral() {
     var received: EVYRowActionOperation?
     EVYActionRunner.run(
-      actions: [rowAction(true: .select(value: "\"literal\""))],
+      actions: [rowAction(true: .select(value: "literal"))],
       rowOperation: { received = $0 }
     ) { _ in }
     assertSelectValue(received, equals: .string("literal"))
@@ -1485,8 +1635,9 @@ final class EVYActionRunnerTests: XCTestCase {
         .create(
           resource: messagesResourceId,
           mode: .inline(data: [
-            "fk": "\(itemRef).id",
-            "data": "{type: shipping, value: pending, postalcode: shipping_address.postcode}",
+            "fk": "{\(itemRef).id}",
+            "data":
+              "{type: shipping, value: pending, postalcode: {shipping_address.postcode}, destination_address: shipping_address}",
           ]), id_destination: nil),
       false: .highlightRequired(field: "postcode")
     )
@@ -1525,7 +1676,7 @@ final class EVYActionRunnerTests: XCTestCase {
         .create(
           resource: resource,
           mode: .inline(data: [
-            "fk": "\(itemRef).id",
+            "fk": "{\(itemRef).id}",
             "data": "{type: pickup, value: pending, time: 2026-06-03T09:00:00}",
           ]), id_destination: nil)
     )
@@ -1544,7 +1695,7 @@ final class EVYActionRunnerTests: XCTestCase {
       mode: .inline(data: [
         "fk": "$datum.fk",
         "parent_message_id": "$datum.id",
-        "data": "{value: cancel, type: $datum.data.type}",
+        "data": "{value: cancel, type: {$datum.data.type}}",
       ]),
       id_destination: nil)
     let row = try decodeRow(

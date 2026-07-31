@@ -112,9 +112,9 @@ export default defineRow("CalendarRow", {
 	config: {
 		type: "calendar",
 		actions: defaultRowActions({
-			tap: { fn: "select", value: "$datum" },
-			tap_row: { fn: "select", value: "$datum" },
-			tap_column: { fn: "select", value: "$datum" },
+			tap: "{select($datum)}",
+			tap_row: "{select($datum)}",
+			tap_column: "{select($datum)}",
 		}),
 		source: "{resourceId.pickup_selection}",
 		visible: "true",

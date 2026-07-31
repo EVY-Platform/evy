@@ -31,6 +31,7 @@ import {
 	useHoverToggle,
 } from "./components/CollapsibleSidePanel";
 import { ConfigurationPanel } from "./components/ConfigurationPanel";
+import { FlowSettingsButton } from "./components/FlowSettingsButton";
 import { NavigationBreadcrumb } from "./components/NavigationBreadcrumb";
 import { RowsPanel } from "./components/RowsPanel";
 import { SheetPage } from "./components/SheetPage";
@@ -330,6 +331,7 @@ function NavBar({ showBreadcrumb }: { showBreadcrumb: boolean }) {
 				<img className="evy-h-4" src="/logo.svg" alt="EVY" />
 			</a>
 			{showBreadcrumb && <NavigationBreadcrumb />}
+			{showBreadcrumb && <FlowSettingsButton />}
 		</div>
 	);
 }

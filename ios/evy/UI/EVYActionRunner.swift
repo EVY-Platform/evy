@@ -4,6 +4,13 @@
 //
 
 import Foundation
+import UIKit
+
+/// Isolates the one UIKit call so the runner stays testable. Overridden in tests.
+@MainActor
+enum EVYClipboard {
+  static var write: (String) -> Void = { UIPasteboard.general.string = $0 }
+}
 
 @MainActor
 enum EVYActionRunner {
@@ -111,6 +118,15 @@ enum EVYActionRunner {
     case .select(let value):
       try rowOperation(.select(EVYPlainTextResolution.resolveValue(value, datum: datum)))
 
+    case .copyToClipboard(let value):
+      let text: String =
+        if let datum, EVY.containsDatumReference(value) {
+          try EVY.formatData(json: datum, format: value)
+        } else {
+          try EVY.getValueFromText(value).value
+        }
+      if !text.isEmpty { EVYClipboard.write(text) }
+
     case .navigate(let flowId, let pageId, let query):
       let expanded = try expandQueryValues(query)
       action(
@@ -201,7 +217,12 @@ enum EVYActionRunner {
       return EVYPlainTextResolution.resolveValues(
         object, datum: datum, omitUnresolvedDatumKeys: true)
     case .path(let path):
-      let resolved = EVYPlainTextResolution.resolveValue(path, datum: datum)
+      let bindingExpression = path.trimmingCharacters(in: .whitespacesAndNewlines)
+      let resolved = try EVY.getDataFromText(
+        bindingExpression.hasPrefix("{") && bindingExpression.hasSuffix("}")
+          ? bindingExpression
+          : "{\(bindingExpression)}"
+      )
       guard case .dictionary(var dictionary) = resolved else {
         throw EVYError.invalidData(context: "data path must resolve to an object: \(path)")
       }

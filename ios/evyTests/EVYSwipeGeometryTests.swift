@@ -3,6 +3,7 @@
 //  evyTests
 //
 
+import SwiftUI
 import XCTest
 
 @testable import evy
@@ -191,5 +192,22 @@ final class EVYSwipeGeometryTests: XCTestCase {
     XCTAssertEqual(secondIdentity, "\(rowId)_\(secondId)")
     XCTAssertNotEqual(firstIdentity, secondIdentity)
     XCTAssertEqual(EVYSwipeRowIdentity.make(rowId: rowId, datum: nil), rowId)
+  }
+}
+
+final class ColorHexTests: XCTestCase {
+  func testParsesSixDigitHex() {
+    XCTAssertNotNil(Color(hex: "#34C759"))
+    XCTAssertNotNil(Color(hex: "#ff3b30"))
+    XCTAssertNotNil(Color(hex: "#000000"))
+  }
+
+  func testRejectsBlankAndMalformedHex() {
+    XCTAssertNil(Color(hex: ""))
+    XCTAssertNil(Color(hex: "   "))
+    XCTAssertNil(Color(hex: "blue"))
+    XCTAssertNil(Color(hex: "#FFF"))
+    XCTAssertNil(Color(hex: "#GGGGGG"))
+    XCTAssertNil(Color(hex: "34C759"))
   }
 }

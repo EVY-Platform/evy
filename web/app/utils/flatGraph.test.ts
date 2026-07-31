@@ -24,7 +24,7 @@ import {
 	removePage,
 	removeRowFromPage,
 	setFooterRow,
-	updateFlowSubmits,
+	updateFlowSettings,
 	updatePageTitle,
 	updateRowActions,
 	updateRowField,
@@ -462,7 +462,7 @@ describe("updateRowActions", () => {
 		const row = makeRow("r1");
 		const maps = makeMaps([], [], [row]);
 		const actions: UI_RowAction[] = [
-			{ condition: "", true: { fn: "close" }, false: "" },
+			{ condition: "", true: "{close()}", false: "" },
 		];
 		const next = updateRowActions(maps, "r1", { tap: actions });
 		expect(next.rowsById.r1?.data.actions).toEqual({ tap: actions });
@@ -602,26 +602,22 @@ describe("pageRootIds", () => {
 // ---------------------------------------------------------------------------
 
 describe("ensureShowAction", () => {
-	it("adds a structured show action when missing", () => {
+	it("adds a show action when missing", () => {
 		const row = makeRow("r1", { actions: {} });
 		const maps = makeMaps([], [], [row]);
 		const next = ensureShowAction(maps, "r1", "sheet-1");
 		const actions = next.rowsById.r1?.data.actions as {
 			tap?: { condition: string; true: unknown; false: unknown }[];
 		};
-		expect(
-			actions.tap?.some(
-				(a) =>
-					JSON.stringify(a.true) ===
-					JSON.stringify({ fn: "show", row_id: "sheet-1" }),
-			),
-		).toBe(true);
+		expect(actions.tap?.some((a) => a.true === "{show(sheet-1)}")).toBe(
+			true,
+		);
 	});
 
 	it("does not duplicate an existing show action", () => {
 		const showAction: UI_RowAction = {
 			condition: "",
-			true: { fn: "show", row_id: "sheet-1" },
+			true: "{show(sheet-1)}",
 			false: "",
 		};
 		const row = makeRow("r1", { actions: { tap: [showAction] } });
@@ -631,18 +627,14 @@ describe("ensureShowAction", () => {
 			tap?: UI_RowAction[];
 		};
 		expect(
-			actions.tap?.filter(
-				(a) =>
-					JSON.stringify(a.true) ===
-					JSON.stringify({ fn: "show", row_id: "sheet-1" }),
-			).length,
+			actions.tap?.filter((a) => a.true === "{show(sheet-1)}").length,
 		).toBe(1);
 	});
 
 	it("updates unconditional show when sheet is replaced", () => {
 		const showAction: UI_RowAction = {
 			condition: "",
-			true: { fn: "show", row_id: "old-sheet" },
+			true: "{show(old-sheet)}",
 			false: "",
 		};
 		const row = makeRow("r1", { actions: { tap: [showAction] } });
@@ -651,24 +643,16 @@ describe("ensureShowAction", () => {
 		const actions = next.rowsById.r1?.data.actions as {
 			tap?: { condition: string; true: unknown; false: unknown }[];
 		};
-		expect(
-			actions.tap?.some(
-				(a) =>
-					JSON.stringify(a.true) ===
-					JSON.stringify({ fn: "show", row_id: "new-sheet" }),
-			),
-		).toBe(true);
-		expect(
-			actions.tap?.some(
-				(a) =>
-					JSON.stringify(a.true) ===
-					JSON.stringify({ fn: "show", row_id: "old-sheet" }),
-			),
-		).toBe(false);
+		expect(actions.tap?.some((a) => a.true === "{show(new-sheet)}")).toBe(
+			true,
+		);
+		expect(actions.tap?.some((a) => a.true === "{show(old-sheet)}")).toBe(
+			false,
+		);
 	});
 });
 
-describe("updateFlowSubmits", () => {
+describe("updateFlowSettings", () => {
 	const submits = { resource: "test_service.records" };
 
 	function mapsWithFlow(): FlowEntityMaps {
@@ -680,19 +664,24 @@ describe("updateFlowSubmits", () => {
 	}
 
 	it("sets the declaration and stamps updated_at", () => {
-		const next = updateFlowSubmits(mapsWithFlow(), "f1", submits);
+		const next = updateFlowSettings(mapsWithFlow(), "f1", {
+			name: "Flow",
+			submits,
+		});
 
 		expect(next.flowsById.f1?.submits).toEqual(submits);
 		expect(next.flowsById.f1?.updated_at).not.toBe(NOW);
 	});
 
 	it("removes the key entirely when cleared", () => {
-		const withDeclaration = updateFlowSubmits(
-			mapsWithFlow(),
-			"f1",
+		const withDeclaration = updateFlowSettings(mapsWithFlow(), "f1", {
+			name: "Flow",
 			submits,
-		);
-		const cleared = updateFlowSubmits(withDeclaration, "f1", undefined);
+		});
+		const cleared = updateFlowSettings(withDeclaration, "f1", {
+			name: "Flow",
+			submits: undefined,
+		});
 
 		expect(cleared.flowsById.f1?.submits).toBeUndefined();
 		expect("submits" in (cleared.flowsById.f1 ?? {})).toBe(false);
@@ -700,7 +689,7 @@ describe("updateFlowSubmits", () => {
 
 	it("does not mutate the previous maps", () => {
 		const maps = mapsWithFlow();
-		const next = updateFlowSubmits(maps, "f1", submits);
+		const next = updateFlowSettings(maps, "f1", { name: "Flow", submits });
 
 		expect(maps.flowsById.f1?.submits).toBeUndefined();
 		expect(next).not.toBe(maps);
@@ -708,7 +697,29 @@ describe("updateFlowSubmits", () => {
 
 	it("is a no-op for an unknown flow", () => {
 		const maps = mapsWithFlow();
-		expect(updateFlowSubmits(maps, "missing", submits)).toBe(maps);
+		expect(
+			updateFlowSettings(maps, "missing", { name: "Flow", submits }),
+		).toBe(maps);
+	});
+
+	it("renames the flow", () => {
+		const next = updateFlowSettings(mapsWithFlow(), "f1", {
+			name: "Renamed",
+			submits: undefined,
+		});
+
+		expect(next.flowsById.f1?.name).toBe("Renamed");
+		expect(next.flowsById.f1?.updated_at).not.toBe(NOW);
+	});
+
+	it("ignores an empty name", () => {
+		const next = updateFlowSettings(mapsWithFlow(), "f1", {
+			name: "  ",
+			submits,
+		});
+
+		expect(next.flowsById.f1?.name).toBe("Flow");
+		expect(next.flowsById.f1?.submits).toEqual(submits);
 	});
 });
 

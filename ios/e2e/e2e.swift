@@ -8,123 +8,6 @@ import XCTest
 private let MARKETPLACE_ITEMS_RESOURCE_ID = MarketplaceE2EFixture.itemsRef
 private let MARKETPLACE_SERVICE = MarketplaceE2EFixture.service
 
-// MARK: - Action branch helpers
-
-/// Builds a structured action branch from the compact call syntax.
-///
-/// The stored format is a structured invocation and the API rejects legacy
-/// strings, but spelling every action out longhand would make these fixtures
-/// unreadable. This converts at the seam. It is deliberately small: it handles
-/// only the forms this harness uses.
-func e2eActionBranch(_ callSyntax: String) -> Any {
-  let trimmed = callSyntax.trimmingCharacters(in: .whitespacesAndNewlines)
-  guard trimmed.hasPrefix("{"), trimmed.hasSuffix("}") else { return "" }
-  let inner = String(trimmed.dropFirst().dropLast())
-  guard let parenIndex = inner.firstIndex(of: "("), inner.hasSuffix(")") else { return "" }
-
-  let name = String(inner[..<parenIndex]).trimmingCharacters(in: .whitespacesAndNewlines)
-  let argsText = String(inner[inner.index(after: parenIndex)..<inner.index(before: inner.endIndex)])
-  let args = e2eSplitTopLevel(argsText)
-
-  switch name {
-  case "close", "select_photo", "expand_photo", "delete_photo":
-    return ["fn": name]
-  case "show", "expand_text":
-    return ["fn": name, "row_id": args.first ?? ""]
-  case "highlight_required":
-    return ["fn": name, "field": args.first ?? ""]
-  case "select":
-    return ["fn": name, "value": args.first ?? ""]
-  case "navigate":
-    var out: [String: Any] = ["fn": "navigate", "flow_id": args[0], "page_id": args[1]]
-    if args.count > 2, let query = e2ePlainObject(args[2]), !query.isEmpty {
-      out["query"] = query
-    }
-    return out
-  case "create":
-    var out: [String: Any] = ["fn": "create", "resource": args[0]]
-    let third = args.count > 1 ? args[1] : ""
-    if third == "submit" {
-      out["mode"] = "submit"
-    } else if let data = e2ePlainObject(third) {
-      out["mode"] = "inline"
-      out["data"] = data
-    } else {
-      out["mode"] = "from_path"
-      out["data_path"] = third
-    }
-    if args.count > 2, !args[2].isEmpty { out["id_destination"] = args[2] }
-    return out
-  case "update":
-    let isDraft = args.count == 4 && args[3] == "draft"
-    var out: [String: Any] = [
-      "fn": "update", "resource": args[0],
-      "mode": isDraft ? "draft" : "store",
-    ]
-    if !isDraft, let filter = e2ePlainObject(args[1]) { out["filter"] = filter }
-    if let changes = e2ePlainObject(args[2]) {
-      out["changes"] = changes
-    } else {
-      out["changes_path"] = args[2]
-    }
-    return out
-  default:
-    return ""
-  }
-}
-
-/// `{a: b, c: d}` -> map, or nil when the text is not a brace-wrapped object.
-private func e2ePlainObject(_ text: String) -> [String: String]? {
-  let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
-  guard trimmed.hasPrefix("{"), trimmed.hasSuffix("}") else { return nil }
-  let inner = String(trimmed.dropFirst().dropLast()).trimmingCharacters(in: .whitespacesAndNewlines)
-  guard !inner.isEmpty else { return [:] }
-
-  var out: [String: String] = [:]
-  for pair in e2eSplitTopLevel(inner) {
-    guard let colon = pair.firstIndex(of: ":") else { continue }
-    let key = String(pair[..<colon]).trimmingCharacters(in: .whitespacesAndNewlines)
-    let value = String(pair[pair.index(after: colon)...])
-      .trimmingCharacters(in: .whitespacesAndNewlines)
-    if !key.isEmpty { out[key] = value }
-  }
-  return out
-}
-
-/// Splits on top-level commas, respecting nesting and quotes.
-private func e2eSplitTopLevel(_ input: String) -> [String] {
-  var parts: [String] = []
-  var current = ""
-  var depth = 0
-  var quote: Character?
-
-  for character in input {
-    if let openQuote = quote {
-      current.append(character)
-      if character == openQuote { quote = nil }
-      continue
-    }
-    switch character {
-    case "\"", "'":
-      quote = character
-      current.append(character)
-    case "(", "[", "{":
-      depth += 1
-      current.append(character)
-    case ")", "]", "}":
-      depth -= 1
-      current.append(character)
-    case "," where depth == 0:
-      parts.append(current.trimmingCharacters(in: .whitespacesAndNewlines))
-      current = ""
-    default: current.append(character)
-    }
-  }
-  let last = current.trimmingCharacters(in: .whitespacesAndNewlines)
-  if !last.isEmpty { parts.append(last) }
-  return parts
-}
-
 // MARK: - Minimal WebSocket Emitter for E2E Tests
 
 actor WSEmitter {
@@ -545,7 +428,7 @@ class E2ETestBase: XCTestCase {
                 [
                   "condition": "",
                   "false": "",
-                  "true": e2eActionBranch("{show(a4b5c6d7-e8f9-4a0b-1c2d-3e4f5a6b7c8d)}"),
+                  "true": "{show(a4b5c6d7-e8f9-4a0b-1c2d-3e4f5a6b7c8d)}",
                 ]
               ]
             ),
@@ -601,7 +484,7 @@ class E2ETestBase: XCTestCase {
                 [
                   "condition": "",
                   "false": "",
-                  "true": e2eActionBranch("{show(a4b5c6d7-e8f9-4a0b-1c2d-3e4f5a6b7c8d)}"),
+                  "true": "{show(a4b5c6d7-e8f9-4a0b-1c2d-3e4f5a6b7c8d)}",
                 ]
               ]
             ),
@@ -1126,8 +1009,8 @@ class E2ETestBase: XCTestCase {
   ) -> [String: Any] {
     [
       "condition": condition,
-      "false": falseAction.isEmpty ? "" : e2eActionBranch(falseAction),
-      "true": action.isEmpty ? "" : e2eActionBranch(action),
+      "false": falseAction,
+      "true": action,
     ]
   }
 
@@ -1166,7 +1049,7 @@ class E2ETestBase: XCTestCase {
   }
 
   static let messageCreateEnvelope =
-    "fk: \(MARKETPLACE_ITEMS_RESOURCE_ID).id, resource: \"\(MARKETPLACE_ITEMS_RESOURCE_ID)\""
+    "fk: {\(MARKETPLACE_ITEMS_RESOURCE_ID).id}, resource: \(MARKETPLACE_ITEMS_RESOURCE_ID)"
 
   static func requestCreateAction(type: String, payload: String) -> String {
     let messagesResourceId = EVYCoreResource.messages.ref
@@ -1237,8 +1120,42 @@ class E2ETestBase: XCTestCase {
   }
 
   static func shippingAcceptedConfirmationSubtitle() -> String {
-    let match = latestMessageExpression(type: "shipping")
-    return "Shipping confirmed to postcode {\(match).data.postalcode}"
+    "Shipping confirmed"
+  }
+
+  /// Once a request is answered the message carries the full address, so the accepted state
+  /// renders that instead of the public postcode. Pickup reads the seller's address off the
+  /// accept; delivery and shipping read the buyer's own destination off the request, which the
+  /// accept forwards.
+  static func acceptedAddressRow(
+    id: String,
+    type: String,
+    key: String,
+    title: String,
+    name: String
+  ) -> [String: Any] {
+    let match = latestMessageExpression(type: type)
+    return Self.textRow(
+      id: id,
+      title: title,
+      subtitle: "{formatAddress(\(match).data.\(key))}",
+      visible: Self.acceptedRequestVisibilityExpression(type: type),
+      name: name
+    )
+  }
+
+  static func acceptedPickupAddressMapRow(id: String) -> [String: Any] {
+    let match = latestMessageExpression(type: "pickup")
+    return [
+      "id": id,
+      "type": "map",
+      "actions": [:],
+      "source": "{\(match).data.pickup_address}",
+      "visible": Self.acceptedRequestVisibilityExpression(type: "pickup"),
+      "title": "Pickup address",
+      "subtitle": "{formatAddress(\(match).data.pickup_address)}",
+      "name": "Pickup address",
+    ]
   }
 
   static func viewItemCancelRequestFlowData(flowId: String, pageId: String) -> [String: Any] {
@@ -1250,15 +1167,18 @@ class E2ETestBase: XCTestCase {
     let deliveryVisibility = cancelRequestVisibilityExpressions(type: "delivery")
     let shippingVisibility = cancelRequestVisibilityExpressions(type: "shipping")
     let pickupCreateAction = requestCreateAction(
-      type: "pickup", payload: "time: selected_pickup_timeslot")
+      type: "pickup", payload: "time: {selected_pickup_timeslot}")
     let deliveryCreateAction = requestCreateAction(
-      type: "delivery", payload: "time: selected_delivery_timeslot")
+      type: "delivery",
+      payload: "time: {selected_delivery_timeslot}, destination_address: delivery_address")
     let shippingCreateAction = requestCreateAction(
-      type: "shipping", payload: "postalcode: shipping_address.postcode")
+      type: "shipping",
+      payload:
+        "postalcode: {shipping_address.postcode}, destination_address: shipping_address")
     func cancelAction(type: String) -> String {
       let latest = latestMessageExpression(type: type)
       return "{create(\(messagesResourceId),{\(messageCreateEnvelope),"
-        + " parent_message_id: \(latest).id, data: {value: cancel, type: \(type)}})}"
+        + " parent_message_id: {\(latest).id}, data: {value: cancel, type: \(type), time: {\(latest).data.time}, postalcode: {\(latest).data.postalcode}, destination_address: {\(latest).data.destination_address}})}"
     }
 
     return [
@@ -1376,6 +1296,9 @@ class E2ETestBase: XCTestCase {
                   visible: Self.acceptedRequestVisibilityExpression(type: "pickup"),
                   name: "Pickup accepted confirmation"
                 ),
+                Self.acceptedPickupAddressMapRow(
+                  id: "c7d8e9fa-0b1c-4d2e-8f3a-4b5c6d7e8f90"
+                ),
                 Self.buttonRow(
                   id: "c4d5e6f7-a8b9-4c0d-1e2f-3a4b5c6d7e8f",
                   label: Self.cancelRequestButtonLabel(type: "pickup"),
@@ -1402,6 +1325,13 @@ class E2ETestBase: XCTestCase {
                   subtitle: Self.timeAcceptedConfirmationSubtitle(type: "delivery"),
                   visible: Self.acceptedRequestVisibilityExpression(type: "delivery"),
                   name: "Delivery accepted confirmation"
+                ),
+                Self.acceptedAddressRow(
+                  id: "d8e9fa0b-1c2d-4e3f-8a4b-5c6d7e8f9a01",
+                  type: "delivery",
+                  key: "destination_address",
+                  title: "Delivering to",
+                  name: "Delivery address"
                 ),
                 Self.textRow(
                   id: "357d3351-93e6-47bd-91ab-3616fd70b8aa",
@@ -1436,6 +1366,13 @@ class E2ETestBase: XCTestCase {
                   subtitle: Self.shippingAcceptedConfirmationSubtitle(),
                   visible: Self.acceptedRequestVisibilityExpression(type: "shipping"),
                   name: "Shipping accepted confirmation"
+                ),
+                Self.acceptedAddressRow(
+                  id: "e9fa0b1c-2d3e-4f4a-8b5c-6d7e8f9a0b12",
+                  type: "shipping",
+                  key: "destination_address",
+                  title: "Shipping to",
+                  name: "Shipping address"
                 ),
                 Self.textRow(
                   id: "4aac26f8-7c51-4c09-a6ac-910e5636cbb5",
@@ -1754,9 +1691,11 @@ class E2ETestBase: XCTestCase {
 
   static func viewItemRequestFlowData(flowId: String, pageId: String) -> [String: Any] {
     let pickupCreateAction = requestCreateAction(
-      type: "pickup", payload: "time: selected_pickup_timeslot")
+      type: "pickup", payload: "time: {selected_pickup_timeslot}")
     let shippingCreateAction = requestCreateAction(
-      type: "shipping", payload: "postalcode: shipping_address.postcode")
+      type: "shipping",
+      payload:
+        "postalcode: {shipping_address.postcode}, destination_address: shipping_address")
 
     return [
       "id": flowId,
@@ -1803,21 +1742,15 @@ class E2ETestBase: XCTestCase {
   static let homeInboxScheduledChildRowId = "c52a5527-ee4a-46c8-8f5c-1e18f782bcc0"
 
   private static func homeInboxResponseAction(value: String) -> [String: Any] {
-    [
+    let pickupAddress =
+      value == "accept"
+      ? ", pickup_address: findFirst(evy.addresses, $datum.data.type == pickup && id == findFirst(\(MARKETPLACE_ITEMS_RESOURCE_ID), $datum.fk).transfer_options.pickup.address_id)"
+      : ""
+    return [
       "condition": "",
       "false": "",
-      "true": [
-        "fn": "create",
-        "resource": EVYCoreResource.messages.ref,
-        "mode": "inline",
-        "data": [
-          "fk": "$datum.fk",
-          "resource": "$datum.resource",
-          "parent_message_id": "$datum.id",
-          "data":
-            "{value: \(value), type: $datum.data.type, time: $datum.data.time, postalcode: $datum.data.postalcode}",
-        ],
-      ],
+      "true":
+        "{create(\(EVYCoreResource.messages.ref),{fk: {$datum.fk}, resource: {$datum.resource}, parent_message_id: {$datum.id}, data: {value: \(value), type: {$datum.data.type}, time: {$datum.data.time}, postalcode: {$datum.data.postalcode}, destination_address: {$datum.data.destination_address}\(pickupAddress)}})}",
     ]
   }
 
@@ -1895,9 +1828,11 @@ class E2ETestBase: XCTestCase {
         "name": "For you request row",
         "title":
           "{findFirst(\(MARKETPLACE_ITEMS_RESOURCE_ID), $datum.fk).title}",
-        "subtitle": "{$datum.data.value}",
+        "subtitle":
+          "{if(length($datum.data.destination_address.street) > 0, formatAddress($datum.data.destination_address), $datum.data.value)}",
         "visible": "true",
         "swipe_label": "Accept",
+        "swipe_color": "#34C759",
         "actions": actionsObject(
           tap: [rowAction(true: "{show(b70f6354-50cb-47cc-91bc-3387deb7277f)}")],
           swipeLeft: [homeInboxResponseAction(value: "accept")]
@@ -1927,6 +1862,7 @@ class E2ETestBase: XCTestCase {
         "subtitle": "{$datum.data.value}",
         "visible": "true",
         "swipe_label": "Cancel",
+        "swipe_color": "#FF3B30",
         "actions": actionsObject(
           swipeLeft: [homeInboxResponseAction(value: "cancel")]
         ),
@@ -1952,7 +1888,14 @@ class E2ETestBase: XCTestCase {
           "{findFirst(\(MARKETPLACE_ITEMS_RESOURCE_ID), $datum.fk).title}",
         "subtitle": "{$datum.data.value}",
         "visible": "true",
-        "actions": [:],
+        "actions": actionsObject(
+          tap: [
+            rowAction(
+              true:
+                "{copy_to_clipboard({if(length($datum.data.pickup_address.street) > 0, formatAddress($datum.data.pickup_address), \"\")})}"
+            )
+          ]
+        ),
       ],
     ]
 
@@ -1972,7 +1915,7 @@ class E2ETestBase: XCTestCase {
 
   static func senderViewFlowData(flowId: String, pageId: String) -> [String: Any] {
     let createAction = requestCreateAction(
-      type: "pickup", payload: "time: selected_pickup_timeslot")
+      type: "pickup", payload: "time: {selected_pickup_timeslot}")
 
     let picker = Self.timeslotPickerRow(
       id: "20000000-0000-4000-8000-000000000001",
@@ -2155,6 +2098,48 @@ class E2ETestBase: XCTestCase {
       data: data
     )
     return (selectedItemId, selectedItemTitle)
+  }
+
+  static let rothschildDestinationAddress: [String: Any] = [
+    "unit": "C509",
+    "street": "28 Rothschild Avenue",
+    "city": "Rosebery",
+    "postcode": "2018",
+    "state": "NSW",
+    "country": "Australia",
+    "latitude": -33.9172075,
+    "longitude": 151.1985883,
+  ]
+
+  static let amazingFridgePickupAddressRow: [String: Any] = rothschildDestinationAddress.merging(
+    [
+      "id": "c81e85dd-f7fb-4310-8fc6-7c018aeaf82a",
+      "instructions": "",
+      "visibility": "private",
+      "created_at": "2026-05-20T22:56:17.000Z",
+      "updated_at": "2026-05-20T22:56:17.000Z",
+    ]
+  ) { _, new in new }
+
+  static func settlingMessageData(
+    value: String,
+    type: String,
+    time: String,
+    destinationAddress: [String: Any]? = nil,
+    pickupAddress: [String: Any]? = nil
+  ) -> [String: Any] {
+    var data: [String: Any] = [
+      "value": value,
+      "type": type,
+      "time": time,
+    ]
+    if let destinationAddress {
+      data["destination_address"] = destinationAddress
+    }
+    if let pickupAddress {
+      data["pickup_address"] = pickupAddress
+    }
+    return data
   }
 
   override func tearDownWithError() throws {
@@ -2930,11 +2915,11 @@ final class WebSocketE2ETests: E2ETestBase {
         "resource": MARKETPLACE_ITEMS_RESOURCE_ID,
         "visibility": "private",
         "parent_message_id": requestId,
-        "data": [
-          "value": "reject",
-          "type": "pickup",
-          "time": selectedTimeslot,
-        ],
+        "data": Self.settlingMessageData(
+          value: "reject",
+          type: "pickup",
+          time: selectedTimeslot
+        ),
       ]
     )
     let rejectedOnServer = try await waitForMessageResponse(
@@ -3081,11 +3066,12 @@ final class WebSocketE2ETests: E2ETestBase {
         "resource": MARKETPLACE_ITEMS_RESOURCE_ID,
         "visibility": "private",
         "parent_message_id": messageId,
-        "data": [
-          "value": "accept",
-          "type": "pickup",
-          "time": selectedTimeslot,
-        ],
+        "data": Self.settlingMessageData(
+          value: "accept",
+          type: "pickup",
+          time: selectedTimeslot,
+          pickupAddress: Self.amazingFridgePickupAddressRow
+        ),
       ]
     )
     let acceptedOnServer = try await waitForMessageResponse(
@@ -3105,6 +3091,11 @@ final class WebSocketE2ETests: E2ETestBase {
         NSPredicate(format: "label BEGINSWITH %@", "Pickup confirmed for")
       ).firstMatch.waitForExistence(timeout: 10),
       "Pickup segment should show the accepted confirmation row")
+    // The postcode map gives way to the seller's full address, which only exists on the accept.
+    XCTAssertTrue(
+      app.staticTexts["C509 28 Rothschild Avenue, 2018 Rosebery NSW"].waitForExistence(
+        timeout: 10),
+      "Accepted pickup should show the full address carried by the accept message")
     XCTAssertFalse(
       app.segmentedControls.buttons["Shipping"].waitForExistence(timeout: 2),
       "Transfer tabs stay collapsed once an arrangement is agreed")
@@ -4456,7 +4447,7 @@ final class E2EPlaceSearchTests: E2ETestBase {
           [
             "condition": "",
             "false": "",
-            "true": e2eActionBranch("{show(\(sheetId))}"),
+            "true": "{show(\(sheetId))}",
           ]
         ]
       ),
@@ -4495,14 +4486,26 @@ final class E2EHomeInboxTests: E2ETestBase {
   private static let homePageId = E2EFlowIds.webSocketHomePage
   private static let seededMessageItemId = "12401f50-cf1a-45d7-a112-2e68a2070466"
 
+  private static let seededShippingRequestId = "5f66d7ae-3cb5-44bb-a8f3-337d4e543c72"
+
+  private static let seededPickupAddressId = "c81e85dd-f7fb-4310-8fc6-7c018aeaf82a"
+
   override var homeFlowId: String? { E2EFlowIds.defaultHomeFlow }
 
+  /// Accepting a pickup request reads the seller's own pickup address out of `evy.addresses`
+  /// to embed it in the accept. Private addresses only sync to the device that owns them, so
+  /// the recipient of these requests owns the item and the address behind it - as the seller
+  /// who created both would.
   override var ownedResources: [OwnedResourceDeclaration] {
     [
       (
         resource: MARKETPLACE_ITEMS_RESOURCE_ID,
         ids: [Self.seededMessageItemId]
-      )
+      ),
+      (
+        resource: EVYCoreResource.addresses.ref,
+        ids: [Self.seededPickupAddressId]
+      ),
     ]
   }
 
@@ -4596,7 +4599,29 @@ final class E2EHomeInboxTests: E2ETestBase {
       "The For you row should reveal exactly one declarative action")
 
     swipeButton.tap()
-    _ = try assertResponsePersisted(requestId: requestId, value: "accept")
+    let responseId = try assertResponsePersisted(requestId: requestId, value: "accept")
+    let pickupStreet = try awaitResult("read pickup_address from accept message") {
+      let emitter = WSEmitter()
+      try await emitter.connect(host: self.apiHost)
+      try await emitter.login(token: "e2e-test", os: "ios")
+      let payload = try await emitter.getResource(
+        resource: EVYCoreResource.messages.ref
+      )
+      await emitter.disconnect()
+      guard let rows = Self.responseDataArray(from: payload),
+        let message = rows.first(where: {
+          ($0 as? [String: Any])?["id"] as? String == responseId
+        }) as? [String: Any],
+        let data = message["data"] as? [String: Any],
+        let pickupAddress = data["pickup_address"] as? [String: Any],
+        let street = pickupAddress["street"] as? String
+      else {
+        struct MissingPickupAddress: Error {}
+        throw MissingPickupAddress()
+      }
+      return street
+    }
+    XCTAssertEqual(pickupStreet, "28 Rothschild Avenue")
 
     XCTAssertTrue(
       row.waitForNonExistence(timeout: 10),
@@ -4612,6 +4637,41 @@ final class E2EHomeInboxTests: E2ETestBase {
     XCTAssertTrue(
       app.staticTexts["accept"].exists,
       "The Scheduled row should show the accepted state")
+  }
+
+  @MainActor
+  func testForYouRowShowsDestinationAddressForDeliveryRequest() throws {
+    let homePage = app.scrollViews["page_\(Self.homePageId)"]
+    XCTAssertTrue(
+      homePage.waitForExistence(timeout: 20),
+      "Home screen not loaded - verify API is running and database is seeded")
+
+    let requestId = try seedOwnDeliveryRequest()
+    let row = ownRequestRow(requestId: requestId)
+    XCTAssertTrue(
+      row.waitForExistence(timeout: 15),
+      "A delivery request for the owned item should appear under For you")
+    XCTAssertTrue(
+      row.staticTexts["C509 28 Rothschild Avenue, 2018 Rosebery NSW"].waitForExistence(
+        timeout: 5),
+      "The request row should show the buyer's destination address")
+  }
+
+  @MainActor
+  func testForYouRowShowsSeededShippingDestinationAddress() throws {
+    let homePage = app.scrollViews["page_\(Self.homePageId)"]
+    XCTAssertTrue(
+      homePage.waitForExistence(timeout: 20),
+      "Home screen not loaded - verify API is running and database is seeded")
+
+    let row = ownRequestRow(requestId: Self.seededShippingRequestId)
+    XCTAssertTrue(
+      row.waitForExistence(timeout: 15),
+      "The seeded shipping request should appear under For you")
+    XCTAssertTrue(
+      row.staticTexts["C509 28 Rothschild Avenue, 2018 Rosebery NSW"].waitForExistence(
+        timeout: 5),
+      "The seeded shipping row should show the buyer's destination address")
   }
 
   @MainActor
@@ -4676,6 +4736,35 @@ final class E2EHomeInboxTests: E2ETestBase {
   }
 
   @MainActor
+  private func seedOwnDeliveryRequest() throws -> String {
+    let requestId = UUID().uuidString.lowercased()
+    let host = apiHost
+    return try awaitResult("seed owned delivery request") {
+      let emitter = WSEmitter()
+      try await emitter.connect(host: host)
+      try await emitter.login(token: "e2e-test", os: "ios")
+      _ = try await emitter.createResource(
+        resource: EVYCoreResource.messages.ref,
+        filter: ["id": requestId],
+        data: [
+          "id": requestId,
+          "fk": Self.seededMessageItemId,
+          "resource": MARKETPLACE_ITEMS_RESOURCE_ID,
+          "visibility": "private",
+          "data": [
+            "type": "delivery",
+            "value": "pending",
+            "time": "2026-06-04T10:00:00",
+            "destination_address": Self.rothschildDestinationAddress,
+          ],
+        ]
+      )
+      await emitter.disconnect()
+      return requestId
+    }
+  }
+
+  @MainActor
   private func seedOwnRequest(responseValue: String? = nil) throws -> (
     requestId: String, responseId: String?
   ) {
@@ -4711,11 +4800,14 @@ final class E2EHomeInboxTests: E2ETestBase {
             "resource": MARKETPLACE_ITEMS_RESOURCE_ID,
             "visibility": "private",
             "parent_message_id": requestId,
-            "data": [
-              "value": responseValue,
-              "type": "pickup",
-              "time": "2026-06-03T09:00:00",
-            ],
+            "data": Self.settlingMessageData(
+              value: responseValue,
+              type: "pickup",
+              time: "2026-06-03T09:00:00",
+              pickupAddress:
+                responseValue == "accept"
+                ? Self.amazingFridgePickupAddressRow : nil
+            ),
           ]
         )
       }

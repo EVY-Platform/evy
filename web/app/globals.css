@@ -652,7 +652,7 @@ label {
 	overflow: hidden;
 }
 
-.evy-modal-panel--create-flow {
+.evy-modal-panel--flow-settings {
 	width: min(400px, calc(100vw - var(--size-8)));
 	padding: var(--size-4);
 	display: flex;
@@ -670,6 +670,11 @@ label {
 
 .evy-modal-footer--center {
 	justify-content: center;
+}
+
+.evy-modal-footer--flow-settings {
+	border-top: none;
+	padding-top: 0;
 }
 
 .evy-modal-btn {
@@ -862,27 +867,70 @@ label {
 	line-height: 1.4;
 }
 
-/* ---- Create flow dialog ---- */
+/* ---- Flow settings dialog ---- */
 
-.evy-create-flow-title {
+.evy-flow-settings-title {
 	font-size: var(--text-md);
 	font-weight: var(--font-semibold);
 	margin: 0;
 }
 
-.evy-create-flow-field {
+.evy-flow-settings-field {
 	display: flex;
 	flex-direction: column;
 	gap: var(--size-1);
 }
 
-.evy-create-flow-input {
+.evy-modal-panel--flow-settings form {
+	display: flex;
+	flex-direction: column;
+	gap: var(--size-4);
+}
+
+.evy-flow-settings-input {
 	padding: 8px 10px;
 }
 
-.evy-create-flow-input:focus {
+.evy-flow-settings-input:focus {
 	outline: 2px solid var(--color-evy-blue);
 	outline-offset: 1px;
+}
+
+.evy-flow-settings-note {
+	margin: 0;
+	font-size: var(--text-xs);
+	color: var(--color-evy-gray-dark);
+}
+
+.evy-flow-settings-note--conflict {
+	color: var(--color-red);
+}
+
+.evy-nav-gear-button {
+	padding: var(--size-1);
+	color: var(--color-evy-gray);
+	background: transparent;
+	border: none;
+	cursor: pointer;
+	border-radius: var(--radius-sm);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
+.evy-nav-gear-button:hover {
+	color: var(--color-black);
+}
+
+.evy-create-draft-hint--button {
+	background: transparent;
+	border: none;
+	text-align: left;
+	cursor: pointer;
+	color: var(--color-evy-blue);
+	text-decoration: underline;
+	padding: 0;
+	font: inherit;
 }
 
 /* ---- Page-in-use dialog ---- */

@@ -477,6 +477,62 @@ describe("message resources", () => {
 		await clearAllTestTables(testDb);
 	});
 
+	it("persists destination_address and pickup_address in message data", async () => {
+		const destinationAddress = {
+			unit: "C509",
+			street: "28 Rothschild Avenue",
+			city: "Rosebery",
+			postcode: "2018",
+			state: "NSW",
+			country: "Australia",
+		};
+		const pickupAddress = {
+			id: crypto.randomUUID(),
+			street: "1 Martin Place",
+			city: "Sydney",
+			postcode: "2000",
+			state: "NSW",
+			country: "Australia",
+		};
+
+		const deliveryRequest = (await create(dataDb, {
+			resource: MESSAGE_RESOURCE,
+			data: {
+				fk: crypto.randomUUID(),
+				resource: "test_svc.items",
+				data: {
+					type: "delivery",
+					value: "pending",
+					time: "2026-06-04T10:00:00",
+					destination_address: destinationAddress,
+				},
+				visibility: "private" as const,
+			},
+		})) as DATA_EVY_Message;
+
+		expect(deliveryRequest.data.destination_address).toMatchObject(
+			destinationAddress,
+		);
+
+		const pickupAccept = (await create(dataDb, {
+			resource: MESSAGE_RESOURCE,
+			data: {
+				fk: crypto.randomUUID(),
+				resource: "test_svc.items",
+				parent_message_id: deliveryRequest.id,
+				data: {
+					value: "accept",
+					type: "pickup",
+					time: "2026-06-03T09:00:00",
+					pickup_address: pickupAddress,
+				},
+				visibility: "private" as const,
+			},
+		})) as DATA_EVY_Message;
+
+		expect(pickupAccept.data.pickup_address).toMatchObject(pickupAddress);
+	});
+
 	it("lists empty then creates, lists, updates, and deletes messages", async () => {
 		const empty = (await get(dataDb, {
 			resource: MESSAGE_RESOURCE,

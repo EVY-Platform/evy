@@ -19,8 +19,9 @@ extension EVY {
 
   @MainActor
   static func resolveDatumExpression(_ expression: String, in datum: EVYJson) -> String {
-    guard expression.hasPrefix(datumPrefix) else { return expression }
-    let fieldPath = String(expression.dropFirst(datumPrefix.count))
+    let expr = EVY.unwrapOptionalBraces(expression)
+    guard expr.hasPrefix(datumPrefix) else { return expression }
+    let fieldPath = String(expr.dropFirst(datumPrefix.count))
     guard !fieldPath.isEmpty else { return expression }
 
     let props = fieldPath.split(separator: ".").map(String.init)

@@ -10,11 +10,20 @@ extension EVY {
     _parseFunctionCall(input)
   }
 
-  static func splitFunctionArguments(_ args: String) -> [String] {
+  nonisolated static func splitFunctionArguments(_ args: String) -> [String] {
     _splitFunctionArguments(args)
   }
 
-  static func stripOptionalSurroundingQuotes(_ s: String) -> String {
+  nonisolated static func unwrapOptionalBraces(_ text: String) -> String {
+    let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
+    if trimmed.hasPrefix("{"), trimmed.hasSuffix("}") {
+      return String(trimmed.dropFirst().dropLast())
+        .trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+    return trimmed
+  }
+
+  nonisolated static func stripOptionalSurroundingQuotes(_ s: String) -> String {
     _stripOptionalSurroundingQuotes(s)
   }
 

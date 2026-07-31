@@ -251,10 +251,7 @@ test.describe("Sheet Page Rendering", () => {
 											tap: [
 												{
 													condition: "",
-													true: {
-														fn: "show",
-														row_id: "search-sheet-row",
-													},
+													true: "{show(search-sheet-row)}",
 													false: "",
 												},
 											],

@@ -33,7 +33,7 @@ describe("normalizeServerRow", () => {
 			type: "button",
 			label: "OK",
 			actions: {
-				tap: [{ condition: "", false: "", true: { fn: "close" } }],
+				tap: [{ condition: "", false: "", true: "{close()}" }],
 			},
 		});
 
@@ -147,7 +147,7 @@ describe("buildRowForNewPageFromBase", () => {
 			tap: [
 				{
 					condition: "",
-					true: { fn: "expand_text", row_id: newId },
+					true: `{expand_text(${newId})}`,
 					false: "",
 				},
 			],
@@ -161,7 +161,7 @@ describe("buildRowForNewPageFromBase", () => {
 			tap: [
 				{
 					condition: "",
-					true: { fn: "show", row_id: newId },
+					true: `{show(${newId})}`,
 					false: "",
 				},
 			],
@@ -179,7 +179,7 @@ describe("buildRowForNewPageFromBase", () => {
 		const row = buildRowForNewPageFromBase(CalendarRow, newId);
 		const selectDatum: UI_RowAction = {
 			condition: "",
-			true: { fn: "select", value: "$datum" },
+			true: "{select($datum)}",
 			false: "",
 		};
 		expect(row.config.actions).toEqual({

@@ -334,6 +334,7 @@ private struct EVYResolvedRow: View {
       EVYSwipeableRow(
         swipeIdentity: EVYSwipeRowIdentity.make(rowId: contentRow.id, datum: datum),
         label: contentRow.swipe_label,
+        color: contentRow.swipe_color,
         run: { runActions(trigger: .swipeLeft, contentRow: contentRow) }
       ) {
         tappedOrPlainRow(for: payload, contentRow: contentRow)

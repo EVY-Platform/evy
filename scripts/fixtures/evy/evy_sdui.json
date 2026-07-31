@@ -17,10 +17,7 @@
 							{
 								"condition": "",
 								"false": "",
-								"true": {
-									"fn": "select",
-									"value": "$datum"
-								}
+								"true": "{select($datum)}"
 							}
 						]
 					},
@@ -41,35 +38,23 @@
 								"type": "list_item",
 								"name": "For you request row",
 								"title": "{findFirst(marketplace.items, $datum.fk).title}",
-								"subtitle": "{$datum.data.value}",
+								"subtitle": "{if(length($datum.data.destination_address.street) > 0, formatAddress($datum.data.destination_address), $datum.data.value)}",
 								"visible": "true",
 								"swipe_label": "Accept",
+								"swipe_color": "#34C759",
 								"actions": {
 									"swipe_left": [
 										{
 											"condition": "",
 											"false": "",
-											"true": {
-												"fn": "create",
-												"resource": "evy.messages",
-												"mode": "inline",
-												"data": {
-													"fk": "$datum.fk",
-													"resource": "$datum.resource",
-													"parent_message_id": "$datum.id",
-													"data": "{value: accept, type: $datum.data.type, time: $datum.data.time, postalcode: $datum.data.postalcode}"
-												}
-											}
+											"true": "{create(evy.messages,{fk: {$datum.fk}, resource: {$datum.resource}, parent_message_id: {$datum.id}, data: {value: accept, type: {$datum.data.type}, time: {$datum.data.time}, postalcode: {$datum.data.postalcode}, destination_address: {$datum.data.destination_address}, pickup_address: findFirst(evy.addresses, $datum.data.type == pickup && id == findFirst(marketplace.items, $datum.fk).transfer_options.pickup.address_id)}})}"
 										}
 									],
 									"tap": [
 										{
 											"condition": "",
 											"false": "",
-											"true": {
-												"fn": "show",
-												"row_id": "b70f6354-50cb-47cc-91bc-3387deb7277f"
-											}
+											"true": "{show(b70f6354-50cb-47cc-91bc-3387deb7277f)}"
 										}
 									]
 								},
@@ -110,24 +95,12 @@
 															{
 																"condition": "",
 																"false": "",
-																"true": {
-																	"fn": "create",
-																	"resource": "evy.messages",
-																	"mode": "inline",
-																	"data": {
-																		"fk": "$datum.fk",
-																		"resource": "$datum.resource",
-																		"parent_message_id": "$datum.id",
-																		"data": "{value: accept, type: $datum.data.type, time: $datum.data.time, postalcode: $datum.data.postalcode}"
-																	}
-																}
+																"true": "{create(evy.messages,{fk: {$datum.fk}, resource: {$datum.resource}, parent_message_id: {$datum.id}, data: {value: accept, type: {$datum.data.type}, time: {$datum.data.time}, postalcode: {$datum.data.postalcode}, destination_address: {$datum.data.destination_address}, pickup_address: findFirst(evy.addresses, $datum.data.type == pickup && id == findFirst(marketplace.items, $datum.fk).transfer_options.pickup.address_id)}})}"
 															},
 															{
 																"condition": "",
 																"false": "",
-																"true": {
-																	"fn": "close"
-																}
+																"true": "{close()}"
 															}
 														]
 													}
@@ -145,24 +118,12 @@
 															{
 																"condition": "",
 																"false": "",
-																"true": {
-																	"fn": "create",
-																	"resource": "evy.messages",
-																	"mode": "inline",
-																	"data": {
-																		"fk": "$datum.fk",
-																		"resource": "$datum.resource",
-																		"parent_message_id": "$datum.id",
-																		"data": "{value: reject, type: $datum.data.type, time: $datum.data.time, postalcode: $datum.data.postalcode}"
-																	}
-																}
+																"true": "{create(evy.messages,{fk: {$datum.fk}, resource: {$datum.resource}, parent_message_id: {$datum.id}, data: {value: reject, type: {$datum.data.type}, time: {$datum.data.time}, postalcode: {$datum.data.postalcode}, destination_address: {$datum.data.destination_address}})}"
 															},
 															{
 																"condition": "",
 																"false": "",
-																"true": {
-																	"fn": "close"
-																}
+																"true": "{close()}"
 															}
 														]
 													}
@@ -192,22 +153,13 @@
 								"subtitle": "{$datum.data.value}",
 								"visible": "true",
 								"swipe_label": "Cancel",
+								"swipe_color": "#FF3B30",
 								"actions": {
 									"swipe_left": [
 										{
 											"condition": "",
 											"false": "",
-											"true": {
-												"fn": "create",
-												"resource": "evy.messages",
-												"mode": "inline",
-												"data": {
-													"fk": "$datum.fk",
-													"resource": "$datum.resource",
-													"parent_message_id": "$datum.id",
-													"data": "{value: cancel, type: $datum.data.type, time: $datum.data.time, postalcode: $datum.data.postalcode}"
-												}
-											}
+											"true": "{create(evy.messages,{fk: {$datum.fk}, resource: {$datum.resource}, parent_message_id: {$datum.id}, data: {value: cancel, type: {$datum.data.type}, time: {$datum.data.time}, postalcode: {$datum.data.postalcode}, destination_address: {$datum.data.destination_address}})}"
 										}
 									]
 								}
@@ -231,7 +183,15 @@
 								"title": "{findFirst(marketplace.items, $datum.fk).title}",
 								"subtitle": "{$datum.data.value}",
 								"visible": "true",
-								"actions": {}
+								"actions": {
+									"tap": [
+										{
+											"condition": "",
+											"true": "{copy_to_clipboard({if(length($datum.data.pickup_address.street) > 0, formatAddress($datum.data.pickup_address), \"\")})}",
+											"false": ""
+										}
+									]
+								}
 							}
 						}
 					]
@@ -248,14 +208,7 @@
 						"actions": {
 							"tap": [
 								{
-									"true": {
-										"fn": "navigate",
-										"flow_id": "74a49d4b-2176-4925-857a-e29e2991f1bd",
-										"page_id": "82cae120-c7b1-4c29-bd42-e1521320b109",
-										"query": {
-											"id": "$datum.id"
-										}
-									},
+									"true": "{navigate(74a49d4b-2176-4925-857a-e29e2991f1bd,82cae120-c7b1-4c29-bd42-e1521320b109,{id: {$datum.id}})}",
 									"false": "",
 									"condition": ""
 								}
@@ -283,11 +236,7 @@
 				"actions": {
 					"tap": [
 						{
-							"true": {
-								"fn": "navigate",
-								"flow_id": "ca47e6c5-da19-4491-8422-adb40d9e8a27",
-								"page_id": "306ed62c-c2af-4652-a873-26c7a388972d"
-							},
+							"true": "{navigate(ca47e6c5-da19-4491-8422-adb40d9e8a27,306ed62c-c2af-4652-a873-26c7a388972d)}",
 							"false": "",
 							"condition": ""
 						}

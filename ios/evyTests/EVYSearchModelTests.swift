@@ -11,6 +11,7 @@ import XCTest
 final class EVYSearchModelTests: XCTestCase {
   override func setUp() async throws {
     try await super.setUp()
+    try evySeedStandardFormattersForTests()
     installHermeticMutationSync()
   }
 
@@ -302,6 +303,72 @@ final class EVYSearchModelTests: XCTestCase {
       Set(results.map(\.id)),
       Set([openRequestId, settledRequestId, responseId]),
       "the loader no longer filters messages; source expressions do")
+  }
+
+  func testLoadLocalResultsFormatsDestinationAddressSubtitle() throws {
+    let resource = EVYCoreResource.messages.ref
+    let requestId = UUID().uuidString
+    try? EVY.publicStore.deleteAll(namespace: EVYNamespace.evy, resource: resource)
+    try? EVY.privateStore.deleteAll(namespace: EVYNamespace.evy, resource: resource)
+    let destination = EVYJson.dictionary([
+      "unit": .string("C509"),
+      "street": .string("28 Rothschild Avenue"),
+      "city": .string("Rosebery"),
+      "postcode": .string("2018"),
+      "state": .string("NSW"),
+      "country": .string("Australia"),
+    ])
+    let message = EVYTestMessageFixtures.message(
+      id: requestId,
+      type: "delivery",
+      value: "pending",
+      time: "2026-06-04T10:00:00",
+      destination_address: destination
+    )
+    try EVY.applySyncedValue(
+      namespace: EVYNamespace.evy,
+      resource: resource,
+      value: .array([message])
+    )
+    defer {
+      try? EVY.publicStore.deleteAll(namespace: EVYNamespace.evy, resource: resource)
+      try? EVY.privateStore.deleteAll(namespace: EVYNamespace.evy, resource: resource)
+    }
+
+    let template = Self.makeDestinationSubtitleTemplate()
+    let source = "{\(resource)}"
+    let state = EVYState(
+      textToWatch: source,
+      setter: {
+        EVYSearchResult.loadLocalResults(
+          source: source,
+          resultTemplate: template,
+          scopeId: nil
+        )
+      }
+    )
+
+    XCTAssertEqual(
+      state.value.first?.displayRow.subtitle,
+      "C509 28 Rothschild Avenue, 2018 Rosebery NSW")
+  }
+
+  private static func makeDestinationSubtitleTemplate() -> UI_Row? {
+    let resultTemplateJSON = """
+      {
+        "id": "message-destination-template",
+        "type": "text",
+        "actions": {},
+        "title": "{$datum.data.type} request",
+        "subtitle": "{if(length($datum.data.destination_address.street) > 0, formatAddress($datum.data.destination_address), $datum.data.value)}",
+        "visible": "true",
+        "name": "Message"
+      }
+      """
+    guard let resultTemplateData = resultTemplateJSON.data(using: .utf8) else {
+      return nil
+    }
+    return try? JSONDecoder().decode(UI_Row.self, from: resultTemplateData)
   }
 
   private static func makeMessageValueTemplate() -> UI_Row? {

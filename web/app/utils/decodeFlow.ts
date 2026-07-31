@@ -308,7 +308,7 @@ export function buildRowForNewPageFromBase(
 	if (row.config.type === "text_expand") {
 		actions = {
 			...actions,
-			tap: [rowAction({ fn: "expand_text", row_id: newRowId })],
+			tap: [rowAction(`{expand_text(${newRowId})}`)],
 		};
 	}
 
@@ -324,7 +324,7 @@ export function buildRowForNewPageFromBase(
 		}
 		nextActions = {
 			...nextActions,
-			[trigger]: [rowAction({ fn: "show", row_id: newRowId })],
+			[trigger]: [rowAction(`{show(${newRowId})}`)],
 		};
 	}
 	actions = nextActions;
