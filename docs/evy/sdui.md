@@ -186,9 +186,11 @@ For row types that handle their own interactive elements (`SelectPhoto`, `TextEx
 
 #### Swipe (`swipe-left`)
 
-On iOS, Heading, Input, ListItem, and Text rows with a non-empty `swipe-left` action list become swipeable (Mail-style trailing reveal). Dragging left reveals a single accent-colored button; releasing past the reveal threshold snaps open, and a fuller swipe executes immediately. Tapping the revealed button runs `actions.swipe-left` **in order with the row's datum** and closes the row. Only one row stays open at a time; tapping open content closes without firing `tap`. Empty or absent `swipe-left` means no swipe affordance.
+On iOS, Heading, Input, ListItem, and Text rows with a non-empty `swipe-left` action list become swipeable (Mail-style trailing reveal). Dragging left reveals a single button (blue by default); releasing past the reveal threshold snaps open, and a fuller swipe executes immediately. Tapping the revealed button runs `actions.swipe-left` **in order with the row's datum** and closes the row. Only one row stays open at a time; tapping open content closes without firing `tap`. Empty or absent `swipe-left` means no swipe affordance.
 
 Optional **`swipe_label`** (Heading, Input, ListItem, Text only) sets the revealed button content as EVY text (icons like `::check::`, interpolations, etc.). When omitted or blank, iOS shows a white ellipsis icon and uses the accessibility label “Swipe left”.
+
+Optional **`swipe_color`** (same row types) overrides the revealed button background with a `#RRGGBB` hex value. When omitted or blank, iOS uses blue.
 
 For destructive or important `create`/`update` actions, attach a `sheet` row to the triggering row and use a `show` action with that sheet row's id (often the nested `sheet.id`). Put confirmation copy on the sheet root's `title` and message rows inside the sheet, then run the actual `create`/`update` followed by `close` from a confirm button in the sheet. **`show` presents the sheet in the triggering row's datum context**, so sheet buttons can read `$datum` the same way the row's own actions do. Container children (`VerticalContainer`, `HorizontalContainer`, `TabContainer`) inherit their parent's datum.
 

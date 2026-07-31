@@ -100,6 +100,39 @@ final class SduiRowAttributeContractTests: XCTestCase {
     }
   }
 
+  func testSwipeColorPresentAndOptionalOnlyForSwipeLeftRows() throws {
+    let catalog = try loadCatalog()
+    let supportedSwipeColorRowTypes: Set<String> = [
+      "heading", "input", "list_item", "text",
+    ]
+
+    for (rowType, schemaDef) in catalog {
+      let schemaDefDict = try XCTUnwrap(
+        schemaDef as? [String: Any],
+        "\(rowType): schema definition must be a JSON object"
+      )
+      let expectedAttributes = Self.extractExpectedAttributes(from: schemaDefDict, rowType: rowType)
+      let hasSwipeColor = expectedAttributes["swipe_color"] != nil
+      let isOptional = expectedAttributes["swipe_color"] ?? false
+
+      if supportedSwipeColorRowTypes.contains(rowType) {
+        XCTAssertTrue(
+          hasSwipeColor,
+          "\(rowType): expected optional `swipe_color` attribute in schema"
+        )
+        XCTAssertTrue(
+          isOptional,
+          "\(rowType): `swipe_color` must be optional (not in required)"
+        )
+      } else {
+        XCTAssertFalse(
+          hasSwipeColor,
+          "\(rowType): must not declare `swipe_color` — only Heading, Input, ListItem, and Text support it"
+        )
+      }
+    }
+  }
+
   func testRowDecodesEmptyBranchAsDoNothing() throws {
     let rowData = try JSONSerialization.data(
       withJSONObject: [

@@ -1771,6 +1771,7 @@ class E2ETestBase: XCTestCase {
         "subtitle": "{$datum.data.value}",
         "visible": "true",
         "swipe_label": "Accept",
+        "swipe_color": "#34C759",
         "actions": actionsObject(
           tap: [rowAction(true: "{show(b70f6354-50cb-47cc-91bc-3387deb7277f)}")],
           swipeLeft: [homeInboxResponseAction(value: "accept")]
@@ -1800,6 +1801,7 @@ class E2ETestBase: XCTestCase {
         "subtitle": "{$datum.data.value}",
         "visible": "true",
         "swipe_label": "Cancel",
+        "swipe_color": "#FF3B30",
         "actions": actionsObject(
           swipeLeft: [homeInboxResponseAction(value: "cancel")]
         ),

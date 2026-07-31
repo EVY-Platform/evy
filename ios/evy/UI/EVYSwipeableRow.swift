@@ -114,19 +114,26 @@ enum EVYSwipeRowIdentity {
 struct EVYSwipeableRow<Content: View>: View {
   let swipeIdentity: String
   let label: String
+  let color: String
   let run: () -> Void
   private let content: () -> Content
 
   init(
     swipeIdentity: String,
     label: String,
+    color: String = "",
     run: @escaping () -> Void,
     @ViewBuilder content: @escaping () -> Content
   ) {
     self.swipeIdentity = swipeIdentity
     self.label = label
+    self.color = color
     self.run = run
     self.content = content
+  }
+
+  private var revealBackground: Color {
+    Color(hex: color) ?? Constants.actionColor
   }
 
   @ObservedObject private var coordinator = EVYSwipeCoordinator.shared
@@ -254,7 +261,7 @@ struct EVYSwipeableRow<Content: View>: View {
       .foregroundStyle(.white)
       .frame(maxWidth: .infinity)
       .frame(maxHeight: .infinity)
-      .background(Constants.actionColor)
+      .background(revealBackground)
     }
     .buttonStyle(.plain)
     .accessibilityLabel(trimmedLabel.isEmpty ? "Swipe left" : trimmedLabel)

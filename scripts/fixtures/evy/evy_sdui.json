@@ -41,6 +41,7 @@
 								"subtitle": "{$datum.data.value}",
 								"visible": "true",
 								"swipe_label": "Accept",
+								"swipe_color": "#34C759",
 								"actions": {
 									"swipe_left": [
 										{
@@ -152,6 +153,7 @@
 								"subtitle": "{$datum.data.value}",
 								"visible": "true",
 								"swipe_label": "Cancel",
+								"swipe_color": "#FF3B30",
 								"actions": {
 									"swipe_left": [
 										{

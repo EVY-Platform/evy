@@ -442,6 +442,44 @@ describe("validateFlowData", () => {
 		expect(out.pages[0]?.rows[0]?.type).toBe("text");
 	});
 
+	it("accepts ListItem with swipe_color hex override", () => {
+		const out = validateFlowData(
+			flowWithRow({
+				name: "Item",
+				type: "list_item",
+				actions: {
+					swipe_left: [
+						{
+							condition: "",
+							false: "",
+							true: "{close()}",
+						},
+					],
+				},
+				visible: "true",
+				title: "Hello",
+				swipe_label: "Accept",
+				swipe_color: "#34C759",
+			}),
+		);
+		expect(out.pages[0]?.rows[0]?.type).toBe("list_item");
+	});
+
+	it("rejects invalid swipe_color hex", () => {
+		expect(() =>
+			validateFlowData(
+				flowWithRow({
+					name: "Item",
+					type: "list_item",
+					actions: {},
+					visible: "true",
+					title: "Hello",
+					swipe_color: "blue",
+				}),
+			),
+		).toThrow();
+	});
+
 	it("rejects swipe-left on a Button", () => {
 		expect(() =>
 			validateFlowData(
