@@ -1120,8 +1120,42 @@ class E2ETestBase: XCTestCase {
   }
 
   static func shippingAcceptedConfirmationSubtitle() -> String {
-    let match = latestMessageExpression(type: "shipping")
-    return "Shipping confirmed to postcode {\(match).data.postalcode}"
+    "Shipping confirmed"
+  }
+
+  /// Once a request is answered the message carries the full address, so the accepted state
+  /// renders that instead of the public postcode. Pickup reads the seller's address off the
+  /// accept; delivery and shipping read the buyer's own destination off the request, which the
+  /// accept forwards.
+  static func acceptedAddressRow(
+    id: String,
+    type: String,
+    key: String,
+    title: String,
+    name: String
+  ) -> [String: Any] {
+    let match = latestMessageExpression(type: type)
+    return Self.textRow(
+      id: id,
+      title: title,
+      subtitle: "{formatAddress(\(match).data.\(key))}",
+      visible: Self.acceptedRequestVisibilityExpression(type: type),
+      name: name
+    )
+  }
+
+  static func acceptedPickupAddressMapRow(id: String) -> [String: Any] {
+    let match = latestMessageExpression(type: "pickup")
+    return [
+      "id": id,
+      "type": "map",
+      "actions": [:],
+      "source": "{\(match).data.pickup_address}",
+      "visible": Self.acceptedRequestVisibilityExpression(type: "pickup"),
+      "title": "Pickup address",
+      "subtitle": "{formatAddress(\(match).data.pickup_address)}",
+      "name": "Pickup address",
+    ]
   }
 
   static func viewItemCancelRequestFlowData(flowId: String, pageId: String) -> [String: Any] {
@@ -1262,6 +1296,9 @@ class E2ETestBase: XCTestCase {
                   visible: Self.acceptedRequestVisibilityExpression(type: "pickup"),
                   name: "Pickup accepted confirmation"
                 ),
+                Self.acceptedPickupAddressMapRow(
+                  id: "c7d8e9fa-0b1c-4d2e-8f3a-4b5c6d7e8f90"
+                ),
                 Self.buttonRow(
                   id: "c4d5e6f7-a8b9-4c0d-1e2f-3a4b5c6d7e8f",
                   label: Self.cancelRequestButtonLabel(type: "pickup"),
@@ -1288,6 +1325,13 @@ class E2ETestBase: XCTestCase {
                   subtitle: Self.timeAcceptedConfirmationSubtitle(type: "delivery"),
                   visible: Self.acceptedRequestVisibilityExpression(type: "delivery"),
                   name: "Delivery accepted confirmation"
+                ),
+                Self.acceptedAddressRow(
+                  id: "d8e9fa0b-1c2d-4e3f-8a4b-5c6d7e8f9a01",
+                  type: "delivery",
+                  key: "destination_address",
+                  title: "Delivering to",
+                  name: "Delivery address"
                 ),
                 Self.textRow(
                   id: "357d3351-93e6-47bd-91ab-3616fd70b8aa",
@@ -1322,6 +1366,13 @@ class E2ETestBase: XCTestCase {
                   subtitle: Self.shippingAcceptedConfirmationSubtitle(),
                   visible: Self.acceptedRequestVisibilityExpression(type: "shipping"),
                   name: "Shipping accepted confirmation"
+                ),
+                Self.acceptedAddressRow(
+                  id: "e9fa0b1c-2d3e-4f4a-8b5c-6d7e8f9a0b12",
+                  type: "shipping",
+                  key: "destination_address",
+                  title: "Shipping to",
+                  name: "Shipping address"
                 ),
                 Self.textRow(
                   id: "4aac26f8-7c51-4c09-a6ac-910e5636cbb5",
@@ -3046,6 +3097,11 @@ final class WebSocketE2ETests: E2ETestBase {
         NSPredicate(format: "label BEGINSWITH %@", "Pickup confirmed for")
       ).firstMatch.waitForExistence(timeout: 10),
       "Pickup segment should show the accepted confirmation row")
+    // The postcode map gives way to the seller's full address, which only exists on the accept.
+    XCTAssertTrue(
+      app.staticTexts["C509 28 Rothschild Avenue, 2018 Rosebery NSW"].waitForExistence(
+        timeout: 10),
+      "Accepted pickup should show the full address carried by the accept message")
     XCTAssertFalse(
       app.segmentedControls.buttons["Shipping"].waitForExistence(timeout: 2),
       "Transfer tabs stay collapsed once an arrangement is agreed")

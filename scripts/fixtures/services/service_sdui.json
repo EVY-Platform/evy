@@ -507,10 +507,20 @@
 								"id": "a2f59e42-ffea-41d1-b4dc-9a8fda4423c9",
 								"type": "map",
 								"source": "{marketplace.items.transfer_options.pickup}",
-								"visible": "true",
+								"visible": "{findFirst(sort(evy.messages, desc, created_at), fk == marketplace.items.id && data.type == pickup).data.value != \"accept\"}",
 								"title": "",
 								"subtitle": "{marketplace.items.transfer_options.pickup.postcode}",
 								"name": "Pickup location",
+								"actions": {}
+							},
+							{
+								"id": "c7d8e9fa-0b1c-4d2e-8f3a-4b5c6d7e8f90",
+								"type": "map",
+								"source": "{findFirst(sort(evy.messages, desc, created_at), fk == marketplace.items.id && data.type == pickup).data.pickup_address}",
+								"visible": "{findFirst(sort(evy.messages, desc, created_at), fk == marketplace.items.id && data.type == pickup).data.value == \"accept\"}",
+								"title": "Pickup address",
+								"subtitle": "{formatAddress(findFirst(sort(evy.messages, desc, created_at), fk == marketplace.items.id && data.type == pickup).data.pickup_address)}",
+								"name": "Pickup address",
 								"actions": {}
 							},
 							{
@@ -590,6 +600,15 @@
 								"title": "",
 								"subtitle": "Delivery confirmed for {formatDatetime(findFirst(sort(evy.messages, desc, created_at), fk == marketplace.items.id && data.type == delivery).data.time, \"EEE do\")} at {formatDatetime(findFirst(sort(evy.messages, desc, created_at), fk == marketplace.items.id && data.type == delivery).data.time, \"HH:mm\")}",
 								"name": "Delivery accepted confirmation",
+								"actions": {}
+							},
+							{
+								"id": "d8e9fa0b-1c2d-4e3f-8a4b-5c6d7e8f9a01",
+								"type": "text",
+								"visible": "{findFirst(sort(evy.messages, desc, created_at), fk == marketplace.items.id && data.type == delivery).data.value == \"accept\"}",
+								"title": "Delivering to",
+								"subtitle": "{formatAddress(findFirst(sort(evy.messages, desc, created_at), fk == marketplace.items.id && data.type == delivery).data.destination_address)}",
+								"name": "Delivery address",
 								"actions": {}
 							},
 							{
@@ -676,8 +695,17 @@
 								"type": "text",
 								"visible": "{findFirst(sort(evy.messages, desc, created_at), fk == marketplace.items.id && data.type == shipping).data.value == \"accept\"}",
 								"title": "",
-								"subtitle": "Shipping confirmed to postcode {findFirst(sort(evy.messages, desc, created_at), fk == marketplace.items.id && data.type == shipping).data.postalcode}",
+								"subtitle": "Shipping confirmed",
 								"name": "Shipping accepted confirmation",
+								"actions": {}
+							},
+							{
+								"id": "e9fa0b1c-2d3e-4f4a-8b5c-6d7e8f9a0b12",
+								"type": "text",
+								"visible": "{findFirst(sort(evy.messages, desc, created_at), fk == marketplace.items.id && data.type == shipping).data.value == \"accept\"}",
+								"title": "Shipping to",
+								"subtitle": "{formatAddress(findFirst(sort(evy.messages, desc, created_at), fk == marketplace.items.id && data.type == shipping).data.destination_address)}",
+								"name": "Shipping address",
 								"actions": {}
 							},
 							{

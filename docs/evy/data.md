@@ -188,7 +188,7 @@ On the wire this is accessed with `resource: "evy.messages"`.
 
 `data.value` holds the whole vocabulary — `"pending"` on a request, and `"accept"`, `"reject"` or `"cancel"` on the message that settles one. A request says `"pending"` outright rather than leaving the key absent, so the predicates read as one state machine and a message kind that carries no state is never mistaken for something to answer.
 
-A settling message addresses whatever record the request addressed — same `fk` and `resource` — and **carries the request's whole `data` forward**, overriding `value` and setting `parent_message_id` on the row to name what it answers. That duplication is load-bearing rather than sloppy: `findFirst` cannot nest, so a lookup that finds the settling message cannot reach through it to the request. Anything the settled state displays — the agreed time, the shipping postcode — has to be on the message that says so, or the confirmation row renders empty.
+A settling message addresses whatever record the request addressed — same `fk` and `resource` — and **carries the request's whole `data` forward**, overriding `value` and setting `parent_message_id` on the row to name what it answers. That duplication is load-bearing rather than sloppy: `findFirst` cannot nest, so a lookup that finds the settling message cannot reach through it to the request. Anything the settled state displays — the agreed time, the address it is going to or being collected from — has to be on the message that says so, or the confirmation row renders empty.
 
 Accepting, rejecting and cancelling are therefore the same operation with a different `value`. They differ only in who says it: the record's owner answers, its asker withdraws.
 
@@ -230,6 +230,21 @@ must forward `destination_address` when present. The seller's pickup lookup on a
 guarded on `data.type == pickup`: the item only carries the public pickup location
 (`postcode`, `latitude`, `longitude`), and an unguarded `findFirst` over `evy.addresses` would
 disclose the seller's private street on every delivery accept.
+
+**An accepted request shows the full address, not the postcode.** Each active-request container on
+the item page carries its own address row gated on `data.value == "accept"`, so the postcode only
+ever stands in for an address that is not known yet:
+
+| method | pending / settled | accepted |
+| --- | --- | --- |
+| pickup | map over the item's public `transfer_options.pickup`, subtitled with its `postcode` | map over the accept's `data.pickup_address`, subtitled `formatAddress(…)` |
+| delivery | "Buyer will drop off" | "Delivering to" + `formatAddress(data.destination_address)` |
+| shipping | "Delivered to your door" | "Shipping to" + `formatAddress(data.destination_address)` |
+
+Pickup reads the address the **seller** wrote onto the accept, since that is the only message the
+buyer's device ever receives it on. Delivery and shipping read the address the **buyer** wrote onto
+the request, which the accept forwards — so both render off the one message `findFirst` lands on.
+`data.postalcode` is still forwarded on shipping messages but nothing displays it any more.
 
 > **A trap for anything reading `data` in SQL.** The `bun-sql` driver stores a jsonb column by JSON-stringifying its value, so a row written through the API holds a jsonb *string* containing the object rather than the object. Reads are symmetric, so JavaScript never notices — but `data ->> 'key'` is NULL on that shape and `jsonb_set` refuses it outright. Note that the pglite-backed unit tests store jsonb properly, so they will not catch a clause that only works on the normalised shape.
 
