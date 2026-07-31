@@ -37,6 +37,7 @@ type BranchEditorProps = {
 	declaredSubmits?: string | null;
 	getAttributeCandidatesForQualifier: (qualifier: string) => IdCandidate[];
 	onChange: (value: string) => void;
+	onConfigureSubmits?: () => void;
 };
 
 type ArgDropdownSlot = { slotId: string; options: PopoverOption[] };
@@ -121,6 +122,7 @@ export function BranchEditor({
 	declaredSubmits = null,
 	getAttributeCandidatesForQualifier,
 	onChange,
+	onConfigureSubmits,
 }: BranchEditorProps) {
 	const parsed = useMemo(() => parseBranchText(value), [value]);
 	const selectedFunction = parsed?.functionName ?? "";
@@ -238,9 +240,19 @@ export function BranchEditor({
 			{selectedFunction === "create" &&
 				args[0] &&
 				(showSubmitCreateHint ? (
-					<p className="evy-create-draft-hint">
-						Creates from row destinations and draft updates
-					</p>
+					onConfigureSubmits ? (
+						<button
+							type="button"
+							className="evy-create-draft-hint evy-create-draft-hint--button"
+							onClick={onConfigureSubmits}
+						>
+							Creates from row destinations and draft updates
+						</button>
+					) : (
+						<p className="evy-create-draft-hint">
+							Creates from row destinations and draft updates
+						</p>
+					)
 				) : (
 					<>
 						<AutocompleteSearch

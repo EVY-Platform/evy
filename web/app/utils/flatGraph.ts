@@ -629,20 +629,29 @@ export function applyRemoteRecord(
 }
 
 /**
- * Set (or clear) the entity a flow declares it submits. Clients validate their
- * create(...,submit) actions against this instead of inferring the target.
+ * Rename a flow and set (or clear) the entity it declares it submits. Clients
+ * validate their create(...,submit) actions against this instead of inferring
+ * the target.
  */
-export function updateFlowSubmits(
+export function updateFlowSettings(
 	maps: FlowEntityMaps,
 	flowId: string,
-	submits: { resource: string } | undefined,
+	settings: {
+		name: string;
+		submits: { resource: string } | undefined;
+	},
 ): FlowEntityMaps {
 	const flow = maps.flowsById[flowId];
 	if (!flow) return maps;
+	const trimmedName = settings.name.trim();
 	const { submits: _dropped, ...withoutSubmits } = flow;
-	const nextFlow: DATA_EVY_Flow = submits
-		? { ...withoutSubmits, submits }
+	const withSubmits: DATA_EVY_Flow = settings.submits
+		? { ...withoutSubmits, submits: settings.submits }
 		: withoutSubmits;
+	const nextFlow: DATA_EVY_Flow =
+		trimmedName !== ""
+			? { ...withSubmits, name: trimmedName }
+			: withSubmits;
 	return {
 		...maps,
 		flowsById: {

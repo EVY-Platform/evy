@@ -24,7 +24,7 @@ import {
 	removePage,
 	removeRowFromPage,
 	setFooterRow,
-	updateFlowSubmits,
+	updateFlowSettings,
 	updatePageTitle,
 	updateRowActions,
 	updateRowField,
@@ -652,7 +652,7 @@ describe("ensureShowAction", () => {
 	});
 });
 
-describe("updateFlowSubmits", () => {
+describe("updateFlowSettings", () => {
 	const submits = { resource: "test_service.records" };
 
 	function mapsWithFlow(): FlowEntityMaps {
@@ -664,19 +664,24 @@ describe("updateFlowSubmits", () => {
 	}
 
 	it("sets the declaration and stamps updated_at", () => {
-		const next = updateFlowSubmits(mapsWithFlow(), "f1", submits);
+		const next = updateFlowSettings(mapsWithFlow(), "f1", {
+			name: "Flow",
+			submits,
+		});
 
 		expect(next.flowsById.f1?.submits).toEqual(submits);
 		expect(next.flowsById.f1?.updated_at).not.toBe(NOW);
 	});
 
 	it("removes the key entirely when cleared", () => {
-		const withDeclaration = updateFlowSubmits(
-			mapsWithFlow(),
-			"f1",
+		const withDeclaration = updateFlowSettings(mapsWithFlow(), "f1", {
+			name: "Flow",
 			submits,
-		);
-		const cleared = updateFlowSubmits(withDeclaration, "f1", undefined);
+		});
+		const cleared = updateFlowSettings(withDeclaration, "f1", {
+			name: "Flow",
+			submits: undefined,
+		});
 
 		expect(cleared.flowsById.f1?.submits).toBeUndefined();
 		expect("submits" in (cleared.flowsById.f1 ?? {})).toBe(false);
@@ -684,7 +689,7 @@ describe("updateFlowSubmits", () => {
 
 	it("does not mutate the previous maps", () => {
 		const maps = mapsWithFlow();
-		const next = updateFlowSubmits(maps, "f1", submits);
+		const next = updateFlowSettings(maps, "f1", { name: "Flow", submits });
 
 		expect(maps.flowsById.f1?.submits).toBeUndefined();
 		expect(next).not.toBe(maps);
@@ -692,7 +697,29 @@ describe("updateFlowSubmits", () => {
 
 	it("is a no-op for an unknown flow", () => {
 		const maps = mapsWithFlow();
-		expect(updateFlowSubmits(maps, "missing", submits)).toBe(maps);
+		expect(
+			updateFlowSettings(maps, "missing", { name: "Flow", submits }),
+		).toBe(maps);
+	});
+
+	it("renames the flow", () => {
+		const next = updateFlowSettings(mapsWithFlow(), "f1", {
+			name: "Renamed",
+			submits: undefined,
+		});
+
+		expect(next.flowsById.f1?.name).toBe("Renamed");
+		expect(next.flowsById.f1?.updated_at).not.toBe(NOW);
+	});
+
+	it("ignores an empty name", () => {
+		const next = updateFlowSettings(mapsWithFlow(), "f1", {
+			name: "  ",
+			submits,
+		});
+
+		expect(next.flowsById.f1?.name).toBe("Flow");
+		expect(next.flowsById.f1?.submits).toEqual(submits);
 	});
 });
 

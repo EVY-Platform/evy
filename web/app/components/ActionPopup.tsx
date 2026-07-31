@@ -23,6 +23,7 @@ import {
 } from "../utils/idCandidates";
 import { BranchEditor } from "./actionPopup/BranchEditor";
 import { ConditionGroupEditor } from "./actionPopup/ConditionGroupEditor";
+import { FlowSettingsModal } from "./flowSettings/FlowSettingsModal";
 import { Modal } from "./Modal";
 
 type ActionPopupProps = {
@@ -58,6 +59,7 @@ export function ActionPopup({
 	const [falseBranch, setFalseBranch] = useState(() =>
 		branchToEditableString(action.false),
 	);
+	const [flowSettingsOpen, setFlowSettingsOpen] = useState(false);
 
 	const draftSignals = useMemo(
 		() => collectDraftSignals(flowsById, pagesById, rowsById, activeFlowId),
@@ -120,6 +122,7 @@ export function ActionPopup({
 			onClose={onCancel}
 			panelClassName="evy-modal-panel--action"
 			label={`Edit action ${actionIndex + 1}`}
+			escapeEnabled={!flowSettingsOpen}
 		>
 			<div className="evy-popup-header">
 				<span className="evy-text-lg evy-font-semibold">
@@ -163,6 +166,7 @@ export function ActionPopup({
 								getAttributeCandidatesForQualifier
 							}
 							onChange={setTrueBranch}
+							onConfigureSubmits={() => setFlowSettingsOpen(true)}
 						/>
 					</div>
 
@@ -186,6 +190,7 @@ export function ActionPopup({
 								getAttributeCandidatesForQualifier
 							}
 							onChange={setFalseBranch}
+							onConfigureSubmits={() => setFlowSettingsOpen(true)}
 						/>
 					</div>
 				</div>
@@ -208,6 +213,12 @@ export function ActionPopup({
 					Save
 				</button>
 			</div>
+			{flowSettingsOpen && (
+				<FlowSettingsModal
+					mode="edit"
+					onClose={() => setFlowSettingsOpen(false)}
+				/>
+			)}
 		</Modal>
 	);
 }

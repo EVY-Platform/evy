@@ -202,48 +202,6 @@ test.describe("Row configuration", () => {
 		await expect(formatInput).toHaveValue("{$datum.label}");
 	});
 
-	// The declaration is one value, not two: the schema requires a non-empty
-	// resource, so picking a service on its own is not a state a flow can be
-	// saved in.
-	test("flow submits declaration can be set and cleared as one target", async ({
-		page,
-	}) => {
-		await openAppWithTestFlows(
-			page,
-			[
-				{
-					id: "step_1",
-					title: "Test Page",
-					rows: [
-						{
-							type: "text",
-							title: "Hello",
-							visible: "true",
-						},
-					],
-				},
-			],
-			TEST_SERVICE_RESOURCES,
-		);
-
-		await page.getByText("Hello", { exact: true }).first().click();
-
-		const configPanel = getConfigPanel(page);
-		const targetSelect = configPanel.getByLabel("Flow submits target");
-
-		await expect(targetSelect).toBeVisible();
-		await expect(targetSelect).toHaveAttribute("data-value", "");
-
-		await popoverSelect(page, targetSelect, "Item");
-		await expect(targetSelect).toHaveAttribute(
-			"data-value",
-			TEST_RESOURCE_ID.RECORDS,
-		);
-
-		await popoverSelect(page, targetSelect, "None");
-		await expect(targetSelect).toHaveAttribute("data-value", "");
-	});
-
 	test("action popup traps focus and is announced as a modal dialog", async ({
 		page,
 	}) => {
@@ -905,7 +863,9 @@ test.describe("Row configuration", () => {
 		const popup = page.getByRole("dialog", { name: "Edit action 1" });
 		await expect(popup).toBeVisible();
 		await expect(
-			popup.getByText("Creates from row destinations and draft updates"),
+			popup.getByRole("button", {
+				name: "Creates from row destinations and draft updates",
+			}),
 		).toBeVisible();
 		await expect(popup.getByLabel("true-0-create-data")).not.toBeVisible();
 

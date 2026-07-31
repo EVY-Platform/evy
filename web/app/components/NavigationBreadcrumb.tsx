@@ -9,7 +9,7 @@ import {
 	breadcrumbLabelForRow,
 } from "../utils/navLabels";
 import { capturePageFramePosition } from "../utils/preActivationCapture";
-import { CreateFlowDialog } from "./CreateFlowDialog";
+import { FlowSettingsModal } from "./flowSettings/FlowSettingsModal";
 import { PopoverSelect } from "./PopoverSelect";
 
 function Separator() {
@@ -98,13 +98,12 @@ export function NavigationBreadcrumb() {
 
 	return (
 		<>
-			<CreateFlowDialog
-				open={createFlowOpen}
-				onClose={() => setCreateFlowOpen(false)}
-				onCreate={(name) => {
-					dispatchRow({ type: "CREATE_FLOW", name });
-				}}
-			/>
+			{createFlowOpen && (
+				<FlowSettingsModal
+					mode="create"
+					onClose={() => setCreateFlowOpen(false)}
+				/>
+			)}
 			<div
 				ref={scrollContainerRef}
 				className="evy-nav-breadcrumb-scroll evy-flex-1 evy-min-w-0 evy-flex evy-justify-center"

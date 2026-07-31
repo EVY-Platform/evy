@@ -15,7 +15,10 @@ export function buildNewPageRecord(): DATA_EVY_Page {
 	};
 }
 
-export function buildNewFlowRecords(name: string): {
+export function buildNewFlowRecords(
+	name: string,
+	submits?: { resource: string },
+): {
 	flow: DATA_EVY_Flow;
 	page: DATA_EVY_Page;
 } {
@@ -28,6 +31,7 @@ export function buildNewFlowRecords(name: string): {
 		created_at: ts,
 		updated_at: ts,
 		visibility: "public",
+		...(submits !== undefined ? { submits } : {}),
 	};
 	return { flow, page };
 }

@@ -65,6 +65,7 @@ export type RowAction =
 	| {
 			type: "CREATE_FLOW";
 			name: string;
+			submits?: { resource: string };
 	  }
 	| { type: "ADD_PAGE" }
 	| { type: "REMOVE_PAGE"; pageId: string }
@@ -93,8 +94,9 @@ export type RowAction =
 			operation: "create" | "update" | "delete";
 	  }
 	| {
-			type: "UPDATE_FLOW_SUBMITS";
+			type: "UPDATE_FLOW_SETTINGS";
 			flowId: string;
+			name: string;
 			submits: { resource: string } | undefined;
 	  }
 	| {

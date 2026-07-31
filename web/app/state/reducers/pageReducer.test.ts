@@ -191,6 +191,51 @@ describe("pageReducer", () => {
 		expect(next.configStack).toEqual([]);
 	});
 
+	it("CREATE_FLOW stores the submits declaration", () => {
+		const state = initialState();
+		const next = pageReducer(state, {
+			type: "CREATE_FLOW",
+			name: "Submit Flow",
+			submits: { resource: "test_service.records" },
+		});
+		const newFlowId = next.activeFlowId;
+		const newFlow = newFlowId ? next.flowsById[newFlowId] : undefined;
+		expect(newFlow?.submits).toEqual({
+			resource: "test_service.records",
+		});
+	});
+
+	it("UPDATE_FLOW_SETTINGS renames and sets submits", () => {
+		const state = initialState();
+		const next = pageReducer(state, {
+			type: "UPDATE_FLOW_SETTINGS",
+			flowId: "flow-1",
+			name: "Renamed Flow",
+			submits: { resource: "test_service.records" },
+		});
+		expect(next.flowsById["flow-1"]?.name).toBe("Renamed Flow");
+		expect(next.flowsById["flow-1"]?.submits).toEqual({
+			resource: "test_service.records",
+		});
+	});
+
+	it("UPDATE_FLOW_SETTINGS clears submits", () => {
+		const state = pageReducer(initialState(), {
+			type: "UPDATE_FLOW_SETTINGS",
+			flowId: "flow-1",
+			name: "Flow 1",
+			submits: { resource: "test_service.records" },
+		});
+		const next = pageReducer(state, {
+			type: "UPDATE_FLOW_SETTINGS",
+			flowId: "flow-1",
+			name: "Flow 1",
+			submits: undefined,
+		});
+		expect(next.flowsById["flow-1"]?.submits).toBeUndefined();
+		expect("submits" in (next.flowsById["flow-1"] ?? {})).toBe(false);
+	});
+
 	it("ADD_PAGE appends page to active flow", () => {
 		const state = initialState();
 		const next = pageReducer(state, { type: "ADD_PAGE" });

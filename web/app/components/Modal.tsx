@@ -32,6 +32,7 @@ type ModalProps = {
 	backdropTestId?: string;
 	/** Focused when the dialog opens; defaults to the first focusable element. */
 	initialFocusRef?: RefObject<HTMLElement | null>;
+	escapeEnabled?: boolean;
 };
 
 /**
@@ -47,10 +48,11 @@ export function Modal({
 	panelTestId,
 	backdropTestId,
 	initialFocusRef,
+	escapeEnabled = true,
 }: ModalProps) {
 	const panelRef = useRef<HTMLDivElement>(null);
 
-	useEscapeKey(onClose);
+	useEscapeKey(onClose, escapeEnabled);
 
 	// Restore focus to whatever opened the dialog once it closes.
 	useEffect(() => {
