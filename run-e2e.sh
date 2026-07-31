@@ -375,13 +375,16 @@ else
         IOS_SIM_UDID="${IOS_DESTINATION#*id=}"
         xcrun simctl shutdown "$IOS_SIM_UDID" 2>/dev/null || true
         xcrun simctl erase "$IOS_SIM_UDID" 2>/dev/null || true
-        if xcodebuild test \
+        # Drop the harmless "IDELaunchParametersSnapshot ... no debugger version"
+        # noise xcodebuild emits on every app launch. sed (not grep -v) so an
+        # all-noise stream isn't a failure; pipefail keeps xcodebuild's status.
+        if (set -o pipefail; xcodebuild test \
             -project evy.xcodeproj \
             -scheme evy \
             -destination "$IOS_DESTINATION" \
             -only-testing:evyUITests \
             -parallel-testing-enabled NO \
-            -quiet; then
+            -quiet 2>&1 | sed '/IDELaunchParametersSnapshot/d'); then
             echo -e "${GREEN}iOS e2e tests passed${NC}"
         else
             echo -e "${RED}iOS e2e tests failed${NC}"
