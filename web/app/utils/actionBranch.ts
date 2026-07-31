@@ -1,29 +1,15 @@
-import type {
-	DATA_EVY_Flow,
-	DATA_EVY_Page,
-	DATA_EVY_Row,
-	UI_ActionBranch,
-} from "evy-types";
-import { parseActionExpression } from "evy-types/actionAst";
+import type { DATA_EVY_Flow, DATA_EVY_Page, DATA_EVY_Row } from "evy-types";
+import {
+	ACTION_FUNCTION_NAMES,
+	type ActionFunctionName,
+	parseActionExpression,
+} from "evy-types/actionAst";
 import { splitFunctionArguments } from "./functionArgs";
 import { forEachRowInFlows, rowLocationLabel } from "./rowTraversal";
 import { unwrapOptionalBraces } from "./unwrapBraces";
 
-export const ACTION_FUNCTIONS = [
-	"close",
-	"create",
-	"update",
-	"navigate",
-	"show",
-	"highlight_required",
-	"select",
-	"copy_to_clipboard",
-	"select_photo",
-	"expand_photo",
-	"expand_text",
-	"delete_photo",
-] as const;
-export type ActionFunction = (typeof ACTION_FUNCTIONS)[number];
+export const ACTION_FUNCTIONS = ACTION_FUNCTION_NAMES;
+export type ActionFunction = ActionFunctionName;
 
 export const FUNCTION_LABELS: Record<ActionFunction, string> = {
 	close: "Close",
@@ -61,13 +47,8 @@ function isActionFunction(name: string): name is ActionFunction {
 	return ACTION_FUNCTIONS.includes(name as ActionFunction);
 }
 
-/** Storage is the expression string; return it for the argument-slot editor. */
-export function branchToEditableString(branch: UI_ActionBranch): string {
-	return branch;
-}
-
 /** Validates and returns the expression string for persistence. */
-export function branchForStorage(branchString: string): UI_ActionBranch {
+export function branchForStorage(branchString: string): string {
 	const trimmed = branchString.trim();
 	if (!trimmed) return "";
 	const parsed = parseActionExpression(trimmed);
@@ -77,10 +58,6 @@ export function branchForStorage(branchString: string): UI_ActionBranch {
 		);
 	}
 	return trimmed;
-}
-
-export function parseBranch(branch: UI_ActionBranch): ParsedBranch | null {
-	return parseBranchText(branch);
 }
 
 /** Parses the editor's text form. */

@@ -14,6 +14,15 @@ extension EVY {
     _splitFunctionArguments(args)
   }
 
+  nonisolated static func unwrapOptionalBraces(_ text: String) -> String {
+    let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
+    if trimmed.hasPrefix("{"), trimmed.hasSuffix("}") {
+      return String(trimmed.dropFirst().dropLast())
+        .trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+    return trimmed
+  }
+
   nonisolated static func stripOptionalSurroundingQuotes(_ s: String) -> String {
     _stripOptionalSurroundingQuotes(s)
   }
@@ -43,13 +52,6 @@ extension EVY {
 
   static func evaluateFromText(_ input: String) throws -> Bool {
     try _evaluateFromText(input)
-  }
-
-  @MainActor
-  static func evaluate<T>(
-    _ text: String, boundTo datum: EVYJson, _ body: (String) throws -> T
-  ) rethrows -> T {
-    try evyEvaluate(text, boundTo: datum, body)
   }
 
   static func formatData(json: EVYJson, format: String) throws -> String {

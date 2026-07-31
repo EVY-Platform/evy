@@ -13,7 +13,24 @@
 import { splitFunctionArguments } from "./functionArgs";
 import { isValidResourceRef } from "./resourceRef";
 
-export type ActionExpressionMap = Record<string, string>;
+type ActionExpressionMap = Record<string, string>;
+
+export const ACTION_FUNCTION_NAMES = [
+	"close",
+	"select_photo",
+	"expand_photo",
+	"delete_photo",
+	"show",
+	"expand_text",
+	"highlight_required",
+	"select",
+	"copy_to_clipboard",
+	"navigate",
+	"create",
+	"update",
+] as const;
+
+export type ActionFunctionName = (typeof ACTION_FUNCTION_NAMES)[number];
 
 export type ActionExpressionAst =
 	| { fn: "close" | "select_photo" | "expand_photo" | "delete_photo" }
@@ -348,67 +365,5 @@ export function parseActionExpression(branch: string): ActionParseResult {
 			return convertUpdate(args);
 		default:
 			return fail(`unknown action function \`${call.name}\``);
-	}
-}
-
-function serializeExpressionMap(map: ActionExpressionMap): string {
-	const pairs = Object.entries(map).map(([key, value]) => `${key}: ${value}`);
-	return `{${pairs.join(", ")}}`;
-}
-
-export function serializeActionExpression(ast: ActionExpressionAst): string {
-	const call = (args: string[]) => `{${ast.fn}(${args.join(",")})}`;
-
-	switch (ast.fn) {
-		case "close":
-		case "select_photo":
-		case "expand_photo":
-		case "delete_photo":
-			return `{${ast.fn}()}`;
-		case "show":
-		case "expand_text":
-			return call([ast.row_id]);
-		case "highlight_required":
-			return call([ast.field]);
-		case "select":
-			return call([ast.value]);
-		case "copy_to_clipboard":
-			return call([ast.value]);
-		case "navigate":
-			return call([
-				ast.flow_id,
-				ast.page_id,
-				...(ast.query ? [serializeExpressionMap(ast.query)] : []),
-			]);
-		case "create": {
-			if (ast.mode === "submit") {
-				return call([ast.resource, "submit"]);
-			}
-			const dataArg =
-				ast.mode === "inline"
-					? serializeExpressionMap(ast.data)
-					: ast.data_path;
-			return call([
-				ast.resource,
-				dataArg,
-				...(ast.id_destination ? [ast.id_destination] : []),
-			]);
-		}
-		case "update": {
-			const filterArg =
-				"filter" in ast && ast.filter
-					? serializeExpressionMap(ast.filter)
-					: "{}";
-			const changesArg =
-				"changes" in ast && ast.changes
-					? serializeExpressionMap(ast.changes)
-					: (ast as { changes_path: string }).changes_path;
-			return call([
-				ast.resource,
-				filterArg,
-				changesArg,
-				...(ast.mode === "draft" ? ["draft"] : []),
-			]);
-		}
 	}
 }

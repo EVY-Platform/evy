@@ -2,10 +2,7 @@ import type { UI_RowAction } from "evy-types";
 import { useCallback, useMemo, useState } from "react";
 
 import { useFlowsContext } from "../state/contexts/FlowsContext";
-import {
-	branchForStorage,
-	branchToEditableString,
-} from "../utils/actionBranch";
+import { branchForStorage } from "../utils/actionBranch";
 import {
 	type ConditionExpression,
 	parseCondition,
@@ -53,12 +50,8 @@ export function ActionPopup({
 	const [expression, setExpression] = useState<ConditionExpression | null>(
 		() => parseCondition(action.condition),
 	);
-	const [trueBranch, setTrueBranch] = useState(() =>
-		branchToEditableString(action.true),
-	);
-	const [falseBranch, setFalseBranch] = useState(() =>
-		branchToEditableString(action.false),
-	);
+	const [trueBranch, setTrueBranch] = useState(() => action.true);
+	const [falseBranch, setFalseBranch] = useState(() => action.false);
 	const [flowSettingsOpen, setFlowSettingsOpen] = useState(false);
 
 	const draftSignals = useMemo(

@@ -7,12 +7,6 @@ import Foundation
 
 enum EVYActionParseError: Error, Equatable {
   case reason(String)
-
-  var localizedDescription: String {
-    switch self {
-    case .reason(let message): return message
-    }
-  }
 }
 
 enum EVYActionParser {
@@ -140,74 +134,6 @@ enum EVYActionParser {
     }
   }
 
-  static func conformanceAst(from invocation: EVYActionInvocation) -> EVYJson {
-    switch invocation {
-    case .close:
-      return .dictionary(["fn": .string("close")])
-    case .selectPhoto:
-      return .dictionary(["fn": .string("select_photo")])
-    case .expandPhoto:
-      return .dictionary(["fn": .string("expand_photo")])
-    case .deletePhoto:
-      return .dictionary(["fn": .string("delete_photo")])
-    case .show(let rowId):
-      return .dictionary(["fn": .string("show"), "row_id": .string(rowId)])
-    case .expandText(let rowId):
-      return .dictionary(["fn": .string("expand_text"), "row_id": .string(rowId)])
-    case .highlightRequired(let field):
-      return .dictionary(["fn": .string("highlight_required"), "field": .string(field)])
-    case .select(let value):
-      return .dictionary(["fn": .string("select"), "value": .string(value)])
-    case .copyToClipboard(let value):
-      return .dictionary(["fn": .string("copy_to_clipboard"), "value": .string(value)])
-    case .navigate(let flowId, let pageId, let query):
-      var dict: [String: EVYJson] = [
-        "fn": .string("navigate"),
-        "flow_id": .string(flowId),
-        "page_id": .string(pageId),
-      ]
-      if !query.isEmpty {
-        dict["query"] = .dictionary(query.mapValues { .string($0) })
-      }
-      return .dictionary(dict)
-    case .create(let resource, let mode, let id_destination):
-      var dict: [String: EVYJson] = [
-        "fn": .string("create"),
-        "resource": .string(resource),
-      ]
-      switch mode {
-      case .submit:
-        dict["mode"] = .string("submit")
-      case .inline(let data):
-        dict["mode"] = .string("inline")
-        dict["data"] = .dictionary(data.mapValues { .string($0) })
-      case .fromPath(let data_path):
-        dict["mode"] = .string("from_path")
-        dict["data_path"] = .string(data_path)
-      }
-      if let id_destination {
-        dict["id_destination"] = .string(id_destination)
-      }
-      return .dictionary(dict)
-    case .update(let resource, let mode, let filter, let changes):
-      var dict: [String: EVYJson] = [
-        "fn": .string("update"),
-        "resource": .string(resource),
-        "mode": .string(mode.rawValue),
-      ]
-      if mode == .store {
-        dict["filter"] = .dictionary(filter.mapValues { .string($0) })
-      }
-      switch changes {
-      case .literal(let map):
-        dict["changes"] = .dictionary(map.mapValues { .string($0) })
-      case .path(let path):
-        dict["changes_path"] = .string(path)
-      }
-      return .dictionary(dict)
-    }
-  }
-
   private static func call(_ name: String, _ args: [String]) -> String {
     "{\(name)(\(args.joined(separator: ",")))}"
   }
@@ -218,10 +144,9 @@ enum EVYActionParser {
   }
 
   private static func parseFunctionCall(_ rawBranch: String) -> (name: String, args: String)? {
-    var branch = rawBranch.trimmingCharacters(in: .whitespacesAndNewlines)
-    guard branch.hasPrefix("{"), branch.hasSuffix("}") else { return nil }
-    branch = String(branch.dropFirst().dropLast()).trimmingCharacters(in: .whitespacesAndNewlines)
-
+    let trimmed = rawBranch.trimmingCharacters(in: .whitespacesAndNewlines)
+    guard trimmed.hasPrefix("{"), trimmed.hasSuffix("}") else { return nil }
+    let branch = EVY.unwrapOptionalBraces(trimmed)
     guard let parenIndex = branch.firstIndex(of: "("),
       branch.hasSuffix(")")
     else { return nil }
@@ -245,18 +170,8 @@ enum EVYActionParser {
 
     let inner = String(trimmed.dropFirst().dropLast())
       .trimmingCharacters(in: .whitespacesAndNewlines)
-    guard !inner.isEmpty else { return [:] }
-
-    var object: [String: String] = [:]
-    for pair in EVY.splitFunctionArguments(inner) {
-      guard let colonIndex = pair.firstIndex(of: ":") else { return nil }
-      let key = pair[..<colonIndex].trimmingCharacters(in: .whitespacesAndNewlines)
-      let value = pair[pair.index(after: colonIndex)...]
-        .trimmingCharacters(in: .whitespacesAndNewlines)
-      guard !key.isEmpty, allowEmptyValues || !value.isEmpty else { return nil }
-      object[key] = EVY.stripOptionalSurroundingQuotes(value)
-    }
-    return object
+    return EVYObjectLiteral.parseKeyValuePairs(
+      inner: inner, stripQuotes: true, allowEmptyValues: allowEmptyValues)
   }
 
   private enum ParsedObjectArgument {

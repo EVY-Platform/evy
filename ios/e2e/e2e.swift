@@ -2111,21 +2111,15 @@ class E2ETestBase: XCTestCase {
     "longitude": 151.1985883,
   ]
 
-  static let amazingFridgePickupAddressRow: [String: Any] = [
-    "id": "c81e85dd-f7fb-4310-8fc6-7c018aeaf82a",
-    "unit": "C509",
-    "street": "28 Rothschild Avenue",
-    "city": "Rosebery",
-    "postcode": "2018",
-    "state": "NSW",
-    "country": "Australia",
-    "latitude": -33.9172075,
-    "longitude": 151.1985883,
-    "instructions": "",
-    "visibility": "private",
-    "created_at": "2026-05-20T22:56:17.000Z",
-    "updated_at": "2026-05-20T22:56:17.000Z",
-  ]
+  static let amazingFridgePickupAddressRow: [String: Any] = rothschildDestinationAddress.merging(
+    [
+      "id": "c81e85dd-f7fb-4310-8fc6-7c018aeaf82a",
+      "instructions": "",
+      "visibility": "private",
+      "created_at": "2026-05-20T22:56:17.000Z",
+      "updated_at": "2026-05-20T22:56:17.000Z",
+    ]
+  ) { _, new in new }
 
   static func settlingMessageData(
     value: String,

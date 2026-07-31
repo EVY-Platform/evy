@@ -12,10 +12,13 @@ final class EVYActionRunnerTests: XCTestCase {
   /// Binding keys seeded for the inline-payload cases, cleaned up per run.
   private var seededBindingKeys: [String] = []
   private var defaultClipboardWrite: ((String) -> Void)?
+  private var capturedClipboardText: String?
 
   override func setUp() async throws {
     try await super.setUp()
     defaultClipboardWrite = EVYClipboard.write
+    capturedClipboardText = nil
+    EVYClipboard.write = { [weak self] in self?.capturedClipboardText = $0 }
     try evySeedStandardFormattersForTests()
     installHermeticMutationSync()
   }
@@ -1109,11 +1112,6 @@ final class EVYActionRunnerTests: XCTestCase {
         ])
       ])
     ])
-    let previousWrite = EVYClipboard.write
-    var written: String?
-    EVYClipboard.write = { written = $0 }
-    defer { EVYClipboard.write = previousWrite }
-
     let action = rowAction(
       true: .copyToClipboard(
         value: "{formatAddress($datum.data.pickup_address)}"
@@ -1122,15 +1120,10 @@ final class EVYActionRunnerTests: XCTestCase {
 
     EVYActionRunner.run(actions: [action], datum: datum) { _ in }
 
-    XCTAssertEqual(written, "C509 28 Rothschild Avenue, 2018 Rosebery NSW")
+    XCTAssertEqual(capturedClipboardText, "C509 28 Rothschild Avenue, 2018 Rosebery NSW")
   }
 
   func testCopyToClipboardNoOpWhenAddressMissing() throws {
-    let previousWrite = EVYClipboard.write
-    var written: String?
-    EVYClipboard.write = { written = $0 }
-    defer { EVYClipboard.write = previousWrite }
-
     let datum = EVYJson.dictionary(["data": .dictionary([:])])
     let action = rowAction(
       true: .copyToClipboard(
@@ -1141,7 +1134,7 @@ final class EVYActionRunnerTests: XCTestCase {
 
     EVYActionRunner.run(actions: [action], datum: datum) { _ in }
 
-    XCTAssertNil(written)
+    XCTAssertNil(capturedClipboardText)
   }
 
   func testUpdateChangesOmitUnresolvedDatumKeys() throws {

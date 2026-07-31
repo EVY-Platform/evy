@@ -73,8 +73,6 @@ export function FlowSettingsModal({
 		if (submitTargets.size === 1) {
 			const [pinnedTarget] = [...submitTargets];
 			if (draftSubmitsRef === pinnedTarget) return null;
-			const label = targetLabel(pinnedTarget, serviceResources);
-			return `An action in this flow creates ${label} on submit. Change that action before changing what this flow submits.`;
 		}
 		const labels = [...submitTargets]
 			.sort()

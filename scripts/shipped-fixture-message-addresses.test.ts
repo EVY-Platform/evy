@@ -32,9 +32,9 @@ describe("seeded messages carry transfer addresses", () => {
 		);
 		expect(deliveryRequests.length).toBeGreaterThan(0);
 		for (const message of deliveryRequests) {
-			expect(message.data?.destination_address).toMatchObject({
-				street: MESSAGE_DESTINATION_ADDRESS.street,
-			});
+			expect(message.data?.destination_address).toEqual(
+				MESSAGE_DESTINATION_ADDRESS,
+			);
 		}
 	});
 
@@ -46,9 +46,9 @@ describe("seeded messages carry transfer addresses", () => {
 		);
 		expect(shippingRequests.length).toBeGreaterThan(0);
 		for (const message of shippingRequests) {
-			expect(message.data?.destination_address).toMatchObject({
-				street: MESSAGE_DESTINATION_ADDRESS.street,
-			});
+			expect(message.data?.destination_address).toEqual(
+				MESSAGE_DESTINATION_ADDRESS,
+			);
 		}
 	});
 
@@ -59,15 +59,11 @@ describe("seeded messages carry transfer addresses", () => {
 				message.data?.value === "accept",
 		);
 		expect(pickupAccepts.length).toBeGreaterThan(0);
-		const expectedStreets = new Set([
-			SEEDED_AMAZING_FRIDGE_PICKUP_ADDRESS_ROW.street,
-			SEEDED_MARTIN_PLACE_PICKUP_ADDRESS_ROW.street,
-		]);
 		for (const message of pickupAccepts) {
-			const street = (
-				message.data?.pickup_address as { street?: string } | undefined
-			)?.street;
-			expect(expectedStreets.has(street ?? "")).toBe(true);
+			expect([
+				SEEDED_AMAZING_FRIDGE_PICKUP_ADDRESS_ROW,
+				SEEDED_MARTIN_PLACE_PICKUP_ADDRESS_ROW,
+			]).toContainEqual(message.data?.pickup_address);
 		}
 	});
 

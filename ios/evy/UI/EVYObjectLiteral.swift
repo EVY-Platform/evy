@@ -16,6 +16,28 @@ public enum EVYObjectArgument: Equatable {
 /// values, e.g. the nested object in `data: {type: pickup, time: {selected}}`.
 @MainActor
 enum EVYObjectLiteral {
+  nonisolated static func parseKeyValuePairs(
+    inner: String,
+    stripQuotes: Bool,
+    allowEmptyValues: Bool
+  ) -> [String: String]? {
+    let trimmedInner = inner.trimmingCharacters(in: .whitespacesAndNewlines)
+    guard !trimmedInner.isEmpty else { return [:] }
+
+    var object: [String: String] = [:]
+    for pair in EVY.splitFunctionArguments(trimmedInner) {
+      guard let colonIndex = pair.firstIndex(of: ":") else { return nil }
+
+      let key = pair[..<colonIndex].trimmingCharacters(in: .whitespacesAndNewlines)
+      let value = pair[pair.index(after: colonIndex)...]
+        .trimmingCharacters(in: .whitespacesAndNewlines)
+      guard !key.isEmpty, allowEmptyValues || !value.isEmpty else { return nil }
+      object[key] = stripQuotes ? EVY.stripOptionalSurroundingQuotes(value) : value
+    }
+
+    return object
+  }
+
   static func parse(from text: String, context: String) throws -> [String: String] {
     let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
     guard trimmed.hasPrefix("{"), trimmed.hasSuffix("}") else {
@@ -24,23 +46,13 @@ enum EVYObjectLiteral {
 
     let inner = String(trimmed.dropFirst().dropLast())
       .trimmingCharacters(in: .whitespacesAndNewlines)
-    guard !inner.isEmpty else { return [:] }
-
-    var object: [String: String] = [:]
-    for pair in EVY.splitFunctionArguments(inner) {
-      guard let colonIndex = pair.firstIndex(of: ":") else {
-        throw EVYError.invalidData(context: "\(context) must be key:value pairs")
-      }
-
-      let key = pair[..<colonIndex].trimmingCharacters(in: .whitespacesAndNewlines)
-      let value = pair[pair.index(after: colonIndex)...]
-        .trimmingCharacters(in: .whitespacesAndNewlines)
-      guard !key.isEmpty, !value.isEmpty else {
-        throw EVYError.invalidData(context: "\(context) must be key:value pairs")
-      }
-      object[key] = value
+    guard
+      let object = parseKeyValuePairs(
+        inner: inner, stripQuotes: false, allowEmptyValues: false
+      )
+    else {
+      throw EVYError.invalidData(context: "\(context) must be key:value pairs")
     }
-
     return object
   }
 
@@ -65,6 +77,12 @@ enum EVYObjectLiteral {
 
 @MainActor
 enum EVYPlainTextResolution {
+  private enum DatumResolution {
+    case notADatumPath
+    case unresolved
+    case resolved(EVYJson)
+  }
+
   static func resolveValues(
     _ data: [String: String],
     datum: EVYJson?,
@@ -72,20 +90,21 @@ enum EVYPlainTextResolution {
   ) -> [String: EVYJson] {
     var resolved: [String: EVYJson] = [:]
     for (key, value) in data {
-      if omitUnresolvedDatumKeys, shouldOmitUnresolvedDatumKey(value, datum: datum) {
-        continue
+      let trimmed = value.trimmingCharacters(in: .whitespacesAndNewlines)
+      switch resolveDatum(trimmed, datum: datum) {
+      case .notADatumPath:
+        resolved[key] = resolveValue(
+          value, datum: datum, omitUnresolvedDatumKeys: omitUnresolvedDatumKeys)
+      case .unresolved:
+        if !omitUnresolvedDatumKeys {
+          resolved[key] = resolveValue(
+            value, datum: datum, omitUnresolvedDatumKeys: omitUnresolvedDatumKeys)
+        }
+      case .resolved(let json):
+        resolved[key] = json
       }
-      resolved[key] = resolveValue(
-        value, datum: datum, omitUnresolvedDatumKeys: omitUnresolvedDatumKeys)
     }
     return resolved
-  }
-
-  private static func shouldOmitUnresolvedDatumKey(_ value: String, datum: EVYJson?) -> Bool {
-    guard let datumPath = datumPath(from: value) else { return false }
-    guard let datum else { return true }
-    let props = datumPath.split(separator: ".").map(String.init)
-    return datum.parsePropStrict(props: props) == nil
   }
 
   static func resolveValue(
@@ -99,8 +118,11 @@ enum EVYPlainTextResolution {
       return datum
     }
 
-    if let resolvedDatum = resolveDatumProperty(trimmedValue, datum: datum) {
-      return resolvedDatum
+    switch resolveDatum(trimmedValue, datum: datum) {
+    case .resolved(let json):
+      return json
+    case .notADatumPath, .unresolved:
+      break
     }
 
     if trimmedValue.hasPrefix("{"), trimmedValue.hasSuffix("}") {
@@ -112,10 +134,9 @@ enum EVYPlainTextResolution {
             nestedObject, datum: datum, omitUnresolvedDatumKeys: omitUnresolvedDatumKeys))
       }
 
-      if let resolved = resolveBoundExpression(
-        String(trimmedValue.dropFirst().dropLast()).trimmingCharacters(in: .whitespacesAndNewlines),
-        datum: datum
-      ) {
+      let inner = String(trimmedValue.dropFirst().dropLast())
+        .trimmingCharacters(in: .whitespacesAndNewlines)
+      if let resolved = resolveBoundExpression(inner, datum: datum) {
         return resolved
       }
       if let resolved = try? EVY.getDataFromText(trimmedValue) {
@@ -160,6 +181,20 @@ enum EVYPlainTextResolution {
     return .string(value)
   }
 
+  private static func resolveDatum(_ trimmedValue: String, datum: EVYJson?) -> DatumResolution {
+    let normalized = EVY.unwrapOptionalBraces(trimmedValue)
+    guard let path = datumPath(from: normalized) else { return .notADatumPath }
+    guard let datum else { return .unresolved }
+    let props = path.split(separator: ".").map(String.init)
+    guard let value = datum.parsePropStrict(props: props) else { return .unresolved }
+    return .resolved(value)
+  }
+
+  private static func datumPath(from normalized: String) -> String? {
+    guard normalized.hasPrefix(EVY.datumPrefix) else { return nil }
+    return String(normalized.dropFirst(EVY.datumPrefix.count))
+  }
+
   private static func isBareNumericScalar(_ value: String) -> Bool {
     guard !value.isEmpty else { return false }
     var index = value.startIndex
@@ -172,25 +207,6 @@ enum EVYPlainTextResolution {
     return digitsAndDot.contains(where: \.isNumber)
   }
 
-  private static func datumPath(from value: String) -> String? {
-    var path = value.trimmingCharacters(in: .whitespacesAndNewlines)
-    if path.hasPrefix("{"), path.hasSuffix("}") {
-      path = String(path.dropFirst().dropLast()).trimmingCharacters(in: .whitespacesAndNewlines)
-    }
-    guard path.hasPrefix(EVY.datumPrefix) else { return nil }
-    return String(path.dropFirst(EVY.datumPrefix.count))
-  }
-
-  private static func resolveDatumProperty(_ value: String, datum: EVYJson?) -> EVYJson? {
-    var path = value.trimmingCharacters(in: .whitespacesAndNewlines)
-    if path.hasPrefix("{"), path.hasSuffix("}") {
-      path = String(path.dropFirst().dropLast()).trimmingCharacters(in: .whitespacesAndNewlines)
-    }
-    guard path.hasPrefix(EVY.datumPrefix), let datum else { return nil }
-    let props = String(path.dropFirst(EVY.datumPrefix.count)).split(separator: ".").map(String.init)
-    return datum.parsePropStrict(props: props)
-  }
-
   /// A value expression may nest `$datum` inside a function call, e.g.
   /// `findFirst(marketplace.items, $datum.fk).title`. Whole-`$datum` values are handled
   /// above; this binds the datum for everything else, at execution time — the row formatter
@@ -200,17 +216,15 @@ enum EVYPlainTextResolution {
     guard let datum, EVY.containsDatumReference(value) else {
       return try? EVY.getDataFromText("{\(value)}")
     }
-    return try? EVY.evaluate(value, boundTo: datum) { substituted in
+    return try? evyEvaluate(value, boundTo: datum) { substituted in
       try EVY.getDataFromText("{\(substituted)}")
     }
   }
 
   private static func shouldBindDatumForExpression(_ value: String) -> Bool {
-    var path = value.trimmingCharacters(in: .whitespacesAndNewlines)
-    if path.hasPrefix("{"), path.hasSuffix("}") {
-      path = String(path.dropFirst().dropLast()).trimmingCharacters(in: .whitespacesAndNewlines)
-    }
-    if path == EVY.datumToken || path.hasPrefix(EVY.datumPrefix) {
+    let normalized = EVY.unwrapOptionalBraces(
+      value.trimmingCharacters(in: .whitespacesAndNewlines))
+    if normalized == EVY.datumToken || normalized.hasPrefix(EVY.datumPrefix) {
       return false
     }
     return EVY.containsDatumReference(value) || value.contains("(")

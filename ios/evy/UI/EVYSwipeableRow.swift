@@ -117,6 +117,7 @@ struct EVYSwipeableRow<Content: View>: View {
   let color: String
   let run: () -> Void
   private let content: () -> Content
+  private let revealBackground: Color
 
   init(
     swipeIdentity: String,
@@ -130,10 +131,7 @@ struct EVYSwipeableRow<Content: View>: View {
     self.color = color
     self.run = run
     self.content = content
-  }
-
-  private var revealBackground: Color {
-    Color(hex: color) ?? Constants.actionColor
+    self.revealBackground = Color(hex: color) ?? Constants.actionColor
   }
 
   @ObservedObject private var coordinator = EVYSwipeCoordinator.shared

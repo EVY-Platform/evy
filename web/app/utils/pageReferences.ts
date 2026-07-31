@@ -4,7 +4,7 @@ import type {
 	DATA_EVY_Row,
 	UI_ActionBranch,
 } from "evy-types";
-import { parseBranch } from "./actionBranch";
+import { parseBranchText } from "./actionBranch";
 import { breadcrumbLabelForPage } from "./navLabels";
 import { allRowActions, normalizeStoredRowActions } from "./rowActions";
 import { pageRootIds, walkRows } from "./rowTraversal";
@@ -21,7 +21,7 @@ function branchReferencesPage(
 	flowId: string,
 	targetPageId: string,
 ): boolean {
-	const parsed = parseBranch(branch);
+	const parsed = parseBranchText(branch);
 	if (parsed?.functionName !== "navigate") return false;
 	if (parsed.args.length < 2) return false;
 	const [navFlowId, navPageId] = parsed.args;

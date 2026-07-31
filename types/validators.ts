@@ -11,6 +11,7 @@ import type { ErrorObject, ValidateFunction } from "ajv";
 import Ajv2020 from "ajv/dist/2020";
 import addFormats from "ajv-formats";
 import { parseActionExpression } from "./actionAst";
+import { forEachActionBranch, submitCreateTargetFromAst } from "./flowSubmits";
 import type {
 	DATA_EVY_Address,
 	DATA_EVY_File,
@@ -590,21 +591,11 @@ function forEachFlowRow(
 	}
 }
 
-/** A submit-mode create -> resource ref, else null. */
-function submitCreateTarget(branch: unknown): string | null {
-	if (typeof branch !== "string" || !branch.trim()) return null;
-	const parsed = parseActionExpression(branch.trim());
-	if (
-		!parsed.ok ||
-		parsed.ast.fn !== "create" ||
-		parsed.ast.mode !== "submit"
-	) {
-		return null;
-	}
-	return parsed.ast.resource;
-}
-
-function assertActionBranch(branch: unknown, path: string): void {
+function assertActionBranchAtPath(
+	branch: unknown,
+	path: string,
+	submitTargets?: Set<string>,
+): void {
 	if (branch === "" || branch === undefined) return;
 	if (typeof branch === "string") {
 		const trimmed = branch.trim();
@@ -612,6 +603,10 @@ function assertActionBranch(branch: unknown, path: string): void {
 		const parsed = parseActionExpression(trimmed);
 		if (!parsed.ok) {
 			throw new Error(`Row validation failed: ${path}: ${parsed.reason}`);
+		}
+		if (submitTargets) {
+			const target = submitCreateTargetFromAst(parsed.ast);
+			if (target) submitTargets.add(target);
 		}
 		return;
 	}
@@ -628,49 +623,15 @@ function assertActionBranch(branch: unknown, path: string): void {
 function assertActionBranchesInActions(
 	actions: unknown,
 	pathPrefix: string,
+	submitTargets?: Set<string>,
 ): void {
-	if (!actions || typeof actions !== "object" || Array.isArray(actions)) {
-		return;
-	}
-	for (const [trigger, list] of Object.entries(actions)) {
-		if (!Array.isArray(list)) continue;
-		for (let index = 0; index < list.length; index++) {
-			const action = list[index];
-			if (!action || typeof action !== "object") continue;
-			const record = action as Record<string, unknown>;
-			assertActionBranch(
-				record.true,
-				`${pathPrefix}/${trigger}/${index}/true`,
-			);
-			assertActionBranch(
-				record.false,
-				`${pathPrefix}/${trigger}/${index}/false`,
-			);
-		}
-	}
-}
-
-function assertUiRowActionBranches(row: UI_Row, path: string): void {
-	assertActionBranchesInActions(row.actions, `${path}/actions`);
-}
-
-function assertDataEvyRowActionBranches(
-	data: Record<string, unknown>,
-	path = "data",
-): void {
-	assertActionBranchesInActions(data.actions, `${path}/actions`);
-}
-
-function addSubmitTargets(row: UI_Row, into: Set<string>): void {
-	for (const actionList of Object.values(row.actions ?? {})) {
-		if (!Array.isArray(actionList)) continue;
-		for (const action of actionList) {
-			for (const branch of [action.true, action.false]) {
-				const target = submitCreateTarget(branch);
-				if (target) into.add(target);
-			}
-		}
-	}
+	forEachActionBranch(actions, (branch, branchPath) => {
+		assertActionBranchAtPath(
+			branch,
+			`${pathPrefix}/${branchPath}`,
+			submitTargets,
+		);
+	});
 }
 
 /**
@@ -720,8 +681,11 @@ export function validateUiFlow(data: unknown): UI_Flow {
 	const submitTargets = new Set<string>();
 	forEachFlowRow(flow, (row, path) => {
 		assertUiFlowRowTriggerConstraints(row, path);
-		assertUiRowActionBranches(row, path);
-		addSubmitTargets(row, submitTargets);
+		assertActionBranchesInActions(
+			row.actions,
+			`${path}/actions`,
+			submitTargets,
+		);
 	});
 	assertUiFlowSubmitsDeclaration(flow, submitTargets);
 	return flow;
@@ -749,7 +713,10 @@ export const validateDataEvyPage = makeValidator<DATA_EVY_Page>(
 export function validateDataEvyRow(data: unknown): DATA_EVY_Row {
 	assertValid("Row", getValidateDataEvyRow(), data);
 	const row = data as DATA_EVY_Row;
-	assertDataEvyRowActionBranches(row.data as Record<string, unknown>);
+	assertActionBranchesInActions(
+		(row.data as Record<string, unknown>).actions,
+		"data/actions",
+	);
 	return row;
 }
 export const validateDataEvyService = makeValidator<DATA_EVY_Service>(

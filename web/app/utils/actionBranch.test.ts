@@ -4,11 +4,9 @@ import { EVY_CORE_RESOURCE_REF } from "evy-types/coreResources";
 import { TEST_RESOURCE_ID } from "../../testFixtures/resourceCatalog";
 import {
 	branchForStorage,
-	branchToEditableString,
 	createHasInlineDataArg,
 	finalizeCreateBranchForSave,
 	formatBranchDisplay,
-	parseBranch,
 	parseBranchText,
 	serializeBranch,
 	updateUsesDraftMarker,
@@ -344,17 +342,13 @@ describe("structured branch storage", () => {
 		);
 	});
 
-	it("returns the stored string for editing", () => {
-		expect(branchToEditableString("{show(row-1)}")).toBe("{show(row-1)}");
-	});
-
-	it("round-trips a branch through the editor model", () => {
+	it("round-trips a branch through storage", () => {
 		const stored = "{show(row-1)}";
-		expect(branchForStorage(branchToEditableString(stored))).toBe(stored);
+		expect(branchForStorage(stored)).toBe(stored);
 	});
 
 	it("parses a stored branch into the editor model", () => {
-		expect(parseBranch("{show(row-1)}")).toEqual({
+		expect(parseBranchText("{show(row-1)}")).toEqual({
 			functionName: "show",
 			args: ["row-1"],
 		});

@@ -15,7 +15,7 @@ import type {
 	UI_RowActions,
 } from "evy-types";
 import { EVY_CORE_RESOURCE_REF } from "evy-types/coreResources";
-import { branchForStorage, parseBranch } from "./actionBranch";
+import { branchForStorage, parseBranchText } from "./actionBranch";
 import { collectSubtreeRowIds, type FlowEntityMaps } from "./flowEntities";
 import { compactRowActions, normalizeStoredRowActions } from "./rowActions";
 import {
@@ -787,7 +787,7 @@ export function ensureShowAction(
 		if (action.condition?.trim()) {
 			return action;
 		}
-		const parsed = parseBranch(action.true);
+		const parsed = parseBranchText(action.true);
 		if (parsed?.functionName !== "show") {
 			return action;
 		}
@@ -801,7 +801,7 @@ export function ensureShowAction(
 
 	const hasMatchingShow = nextActions.some((action) => {
 		if (action.condition?.trim()) return false;
-		const parsed = parseBranch(action.true);
+		const parsed = parseBranchText(action.true);
 		return (
 			parsed?.functionName === "show" &&
 			parsed.args[0]?.trim() === sheetRowId

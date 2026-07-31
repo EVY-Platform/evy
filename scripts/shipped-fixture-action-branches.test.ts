@@ -8,10 +8,15 @@ import { validateDataEvyRow } from "../types/validators";
 
 const FIXTURES = ["evy/evy_sdui.json", "services/service_sdui.json"] as const;
 
-type Branch = { source: string; branch: string };
+type FixtureBranch = {
+	source: string;
+	branch: string;
+	ast?: ActionExpressionAst;
+	parseError?: string;
+};
 
-async function loadFixtureBranches(): Promise<Branch[]> {
-	const branches: Branch[] = [];
+async function loadFixtureBranches(): Promise<FixtureBranch[]> {
+	const branches: FixtureBranch[] = [];
 	for (const relative of FIXTURES) {
 		const url = new URL(`./fixtures/${relative}`, import.meta.url);
 		walk(await Bun.file(url).json(), relative, branches);
@@ -19,7 +24,7 @@ async function loadFixtureBranches(): Promise<Branch[]> {
 	return branches;
 }
 
-function walk(node: unknown, source: string, out: Branch[]): void {
+function walk(node: unknown, source: string, out: FixtureBranch[]): void {
 	if (Array.isArray(node)) {
 		for (const item of node) walk(item, source, out);
 		return;
@@ -37,7 +42,14 @@ function walk(node: unknown, source: string, out: Branch[]): void {
 				for (const key of ["true", "false"] as const) {
 					const branch = (action as Record<string, unknown>)[key];
 					if (branch === "" || branch === undefined) continue;
-					out.push({ source, branch: branch as string });
+					const branchText = branch as string;
+					const parsed = parseActionExpression(branchText.trim());
+					out.push({
+						source,
+						branch: branchText,
+						ast: parsed.ok ? parsed.ast : undefined,
+						parseError: parsed.ok ? undefined : parsed.reason,
+					});
 				}
 			}
 		}
@@ -94,10 +106,9 @@ describe("shipped fixtures satisfy the row schema", () => {
 
 	test("every branch parses as an action expression", () => {
 		const rejected: string[] = [];
-		for (const { source, branch } of fixtureBranches) {
-			const parsed = parseActionExpression(branch.trim());
-			if (!parsed.ok) {
-				rejected.push(`${source}: ${branch} -> ${parsed.reason}`);
+		for (const { source, branch, parseError } of fixtureBranches) {
+			if (parseError) {
+				rejected.push(`${source}: ${branch} -> ${parseError}`);
 			}
 		}
 		expect(rejected).toEqual([]);
@@ -128,10 +139,9 @@ describe("shipped fixtures satisfy the row schema", () => {
 		];
 		const incomplete: string[] = [];
 
-		for (const { source, branch } of fixtureBranches) {
-			const parsed = parseActionExpression(branch.trim());
-			if (!parsed.ok) continue;
-			const changes = findUpdateChanges(parsed.ast);
+		for (const { source, ast } of fixtureBranches) {
+			if (!ast) continue;
+			const changes = findUpdateChanges(ast);
 			if (!changes) continue;
 			const keys = Object.keys(changes);
 			if (!keys.includes(ADDRESS_ID)) continue;
@@ -148,10 +158,9 @@ describe("shipped fixtures satisfy the row schema", () => {
 	test("pickup_address on accept is guarded on request type", () => {
 		const unguarded: string[] = [];
 
-		for (const { source, branch } of fixtureBranches) {
-			const parsed = parseActionExpression(branch.trim());
-			if (!parsed.ok) continue;
-			const data = findCreateInlineData(parsed.ast);
+		for (const { source, branch, ast } of fixtureBranches) {
+			if (!ast) continue;
+			const data = findCreateInlineData(ast);
 			if (!data) continue;
 			const pickupAddress = data.pickup_address;
 			if (!pickupAddress?.includes("findFirst(evy.addresses")) continue;
@@ -166,10 +175,9 @@ describe("shipped fixtures satisfy the row schema", () => {
 	test("delivery and shipping request creates include destination_address", () => {
 		const missing: string[] = [];
 
-		for (const { source, branch } of fixtureBranches) {
-			const parsed = parseActionExpression(branch.trim());
-			if (!parsed.ok) continue;
-			const data = findCreateInlineData(parsed.ast);
+		for (const { source, branch, ast } of fixtureBranches) {
+			if (!ast) continue;
+			const data = findCreateInlineData(ast);
 			const inline = data?.data;
 			if (!inline?.includes("value: pending")) continue;
 
@@ -218,11 +226,7 @@ describe("shipped fixtures satisfy the row schema", () => {
 	test("covers the action functions the flows rely on", () => {
 		const functions = new Set(
 			fixtureBranches
-				.map(({ branch }) => {
-					if (!branch.trim()) return undefined;
-					const parsed = parseActionExpression(branch.trim());
-					return parsed.ok ? parsed.ast.fn : undefined;
-				})
+				.map(({ ast }) => ast?.fn)
 				.filter((fn): fn is string => Boolean(fn)),
 		);
 

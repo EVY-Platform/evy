@@ -2,6 +2,7 @@ import { isValidResourceRef, serviceOfRef } from "evy-types/resourceRef";
 import type { PopoverOption } from "../components/PopoverSelect";
 import type { ServiceResource } from "../types/resources";
 import { displayLabel } from "./labelFormatting";
+import { toResourceOptions } from "./serviceResourceOptions";
 
 export function serviceOptionsFor(
 	serviceResources: ServiceResource[],
@@ -26,17 +27,13 @@ export function resourceOptionsForService(
 	serviceId: string,
 ): PopoverOption[] {
 	if (serviceId === "") return [];
-	return serviceResources
-		.filter(
+	return toResourceOptions(
+		serviceResources.filter(
 			(resource) =>
 				isValidResourceRef(resource.id) &&
 				serviceOfRef(resource.id) === serviceId,
-		)
-		.map((resource) => ({
-			value: resource.id,
-			label: displayLabel(resource.name),
-		}))
-		.sort((a, b) => a.label.localeCompare(b.label));
+		),
+	);
 }
 
 export function serviceOfSubmitsRef(ref: string): string {

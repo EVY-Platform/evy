@@ -22,13 +22,6 @@
 				},
 				"label": {
 					"type": "string"
-				},
-				"swipe_label": {
-					"type": "string"
-				},
-				"swipe_color": {
-					"type": "string",
-					"pattern": "^$|^#[0-9A-Fa-f]{6}$"
 				}
 			}
 		}

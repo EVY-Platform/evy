@@ -109,6 +109,13 @@
 					"type": "string",
 					"minLength": 1
 				},
+				"swipe_label": {
+					"type": "string"
+				},
+				"swipe_color": {
+					"type": "string",
+					"pattern": "^$|^#[0-9A-Fa-f]{6}$"
+				},
 				"sheet": {
 					"$ref": "#/$defs/UI_Row"
 				}

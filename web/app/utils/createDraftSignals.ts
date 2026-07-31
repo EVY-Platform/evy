@@ -1,6 +1,5 @@
 import type { DATA_EVY_Flow, DATA_EVY_Page, DATA_EVY_Row } from "evy-types";
 import {
-	branchToEditableString,
 	finalizeCreateBranchForSave,
 	parseBranchText,
 	updateUsesDraftMarker,
@@ -61,7 +60,7 @@ export function collectDraftSignals(
 		const actions = normalizeStoredRowActions(row.data.actions);
 		for (const action of allRowActions(actions)) {
 			for (const branch of [action.true, action.false]) {
-				const trimmed = branchToEditableString(branch).trim();
+				const trimmed = branch.trim();
 				if (!trimmed) continue;
 				const parsed = parseBranchText(trimmed);
 				if (parsed?.functionName !== "update") continue;
