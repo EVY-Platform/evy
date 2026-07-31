@@ -20,6 +20,7 @@ export type ActionExpressionAst =
 	| { fn: "show" | "expand_text"; row_id: string }
 	| { fn: "highlight_required"; field: string }
 	| { fn: "select"; value: string }
+	| { fn: "copy_to_clipboard"; value: string }
 	| {
 			fn: "navigate";
 			flow_id: string;
@@ -331,6 +332,14 @@ export function parseActionExpression(branch: string): ActionParseResult {
 			if (!value) return fail("select value must not be empty");
 			return { ok: true, ast: { fn: "select", value } };
 		}
+		case "copy_to_clipboard": {
+			if (args.length !== 1)
+				return fail("copy_to_clipboard takes one value");
+			const value = args[0].trim();
+			if (!value)
+				return fail("copy_to_clipboard value must not be empty");
+			return { ok: true, ast: { fn: "copy_to_clipboard", value } };
+		}
 		case "navigate":
 			return convertNavigate(args);
 		case "create":
@@ -362,6 +371,8 @@ export function serializeActionExpression(ast: ActionExpressionAst): string {
 		case "highlight_required":
 			return call([ast.field]);
 		case "select":
+			return call([ast.value]);
+		case "copy_to_clipboard":
 			return call([ast.value]);
 		case "navigate":
 			return call([

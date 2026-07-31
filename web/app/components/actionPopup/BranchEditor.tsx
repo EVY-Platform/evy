@@ -279,6 +279,19 @@ export function BranchEditor({
 				/>
 			)}
 
+			{selectedFunction === "copy_to_clipboard" && (
+				<AutocompleteSearch
+					ariaLabel={`${branchId}-copy-value`}
+					value={args[0] ?? ""}
+					onChange={(v) => handleArgChange(0, v)}
+					candidates={idCandidates}
+					getAttributeCandidatesForQualifier={
+						getAttributeCandidatesForQualifier
+					}
+					placeholder="Text to copy, e.g. {formatAddress($datum.data.pickup_address)}"
+				/>
+			)}
+
 			{selectedFunction === "update" && args[0] && (
 				<>
 					<PopoverSelect

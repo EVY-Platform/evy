@@ -38,7 +38,7 @@
 								"type": "list_item",
 								"name": "For you request row",
 								"title": "{findFirst(marketplace.items, $datum.fk).title}",
-								"subtitle": "{$datum.data.value}",
+								"subtitle": "{if(length($datum.data.destination_address.street) > 0, formatAddress($datum.data.destination_address), $datum.data.value)}",
 								"visible": "true",
 								"swipe_label": "Accept",
 								"swipe_color": "#34C759",
@@ -47,7 +47,7 @@
 										{
 											"condition": "",
 											"false": "",
-											"true": "{create(evy.messages,{fk: {$datum.fk}, resource: {$datum.resource}, parent_message_id: {$datum.id}, data: {value: accept, type: {$datum.data.type}, time: {$datum.data.time}, postalcode: {$datum.data.postalcode}}})}"
+											"true": "{create(evy.messages,{fk: {$datum.fk}, resource: {$datum.resource}, parent_message_id: {$datum.id}, data: {value: accept, type: {$datum.data.type}, time: {$datum.data.time}, postalcode: {$datum.data.postalcode}, destination_address: {$datum.data.destination_address}, pickup_address: findFirst(evy.addresses, $datum.data.type == pickup && id == findFirst(marketplace.items, $datum.fk).transfer_options.pickup.address_id)}})}"
 										}
 									],
 									"tap": [
@@ -95,7 +95,7 @@
 															{
 																"condition": "",
 																"false": "",
-																"true": "{create(evy.messages,{fk: {$datum.fk}, resource: {$datum.resource}, parent_message_id: {$datum.id}, data: {value: accept, type: {$datum.data.type}, time: {$datum.data.time}, postalcode: {$datum.data.postalcode}}})}"
+																"true": "{create(evy.messages,{fk: {$datum.fk}, resource: {$datum.resource}, parent_message_id: {$datum.id}, data: {value: accept, type: {$datum.data.type}, time: {$datum.data.time}, postalcode: {$datum.data.postalcode}, destination_address: {$datum.data.destination_address}, pickup_address: findFirst(evy.addresses, $datum.data.type == pickup && id == findFirst(marketplace.items, $datum.fk).transfer_options.pickup.address_id)}})}"
 															},
 															{
 																"condition": "",
@@ -118,7 +118,7 @@
 															{
 																"condition": "",
 																"false": "",
-																"true": "{create(evy.messages,{fk: {$datum.fk}, resource: {$datum.resource}, parent_message_id: {$datum.id}, data: {value: reject, type: {$datum.data.type}, time: {$datum.data.time}, postalcode: {$datum.data.postalcode}}})}"
+																"true": "{create(evy.messages,{fk: {$datum.fk}, resource: {$datum.resource}, parent_message_id: {$datum.id}, data: {value: reject, type: {$datum.data.type}, time: {$datum.data.time}, postalcode: {$datum.data.postalcode}, destination_address: {$datum.data.destination_address}})}"
 															},
 															{
 																"condition": "",
@@ -159,7 +159,7 @@
 										{
 											"condition": "",
 											"false": "",
-											"true": "{create(evy.messages,{fk: {$datum.fk}, resource: {$datum.resource}, parent_message_id: {$datum.id}, data: {value: cancel, type: {$datum.data.type}, time: {$datum.data.time}, postalcode: {$datum.data.postalcode}}})}"
+											"true": "{create(evy.messages,{fk: {$datum.fk}, resource: {$datum.resource}, parent_message_id: {$datum.id}, data: {value: cancel, type: {$datum.data.type}, time: {$datum.data.time}, postalcode: {$datum.data.postalcode}, destination_address: {$datum.data.destination_address}})}"
 										}
 									]
 								}
@@ -183,7 +183,15 @@
 								"title": "{findFirst(marketplace.items, $datum.fk).title}",
 								"subtitle": "{$datum.data.value}",
 								"visible": "true",
-								"actions": {}
+								"actions": {
+									"tap": [
+										{
+											"condition": "",
+											"true": "{copy_to_clipboard({if(length($datum.data.pickup_address.street) > 0, formatAddress($datum.data.pickup_address), \"\")})}",
+											"false": ""
+										}
+									]
+								}
 							}
 						}
 					]

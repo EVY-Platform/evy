@@ -23,6 +23,7 @@ mocks.
 | `show(rowId)`, `expand_text(rowId)` | one row id |
 | `highlight_required(field)` | one field path (label derivation only) |
 | `select(value)` | one value-position arg; `$datum` allowed bare |
+| `copy_to_clipboard(value)` | one display-text template; formatters allowed |
 | `navigate(flowId, pageId, {k: v, …}?)` | ids verbatim; query map values are value-position; `[a, b]` array values kept |
 | `create(resource, submit)` | resource ref verbatim |
 | `create(resource, {map}, idDestination?)` | map values value-position; `idDestination` is a write path, verbatim |
@@ -45,6 +46,7 @@ Object-literal arguments nest braces. A message-create call might look like:
 | `show` | Present that row in a sheet overlay. The target may be on any synced page. Requires exactly one non-empty id; unresolved ids are errors. |
 | `highlight_required` | Mark a field as required / show validation. |
 | `select` | Ask the triggering row to select `value`, usually `$datum`. Each row type defines what select means (toggle, write scalar, switch segment); unsupported on rows without a select handler. When the resolved value is an **array**, Calendar treats it as a batch toggle-all (see below). |
+| `copy_to_clipboard` | Copy resolved text to the device clipboard. |
 | `navigate` | Go to a page within a flow. Optional third argument is a query map whose values are value-position expressions. |
 | `create` | Create a domain entity. **Never changes routes** — follow with `close` to dismiss. See **create** below. |
 | `update` | Update matching domain entities. See **update** below. |
@@ -64,6 +66,8 @@ follow **value-position** rules (distinct from comparison operands inside `{…}
 | `true` / `false` / `null` / `42` (bare, whole value) | coerced JSON scalar |
 | `{$datum.id}` | datum property; a whole-value `{$datum.…}` that does not resolve is **omitted** from create `data` / update `changes` maps |
 
+`$datum` may also appear **nested inside** a function call in `data`, `changes`, `filter`, or `query` values (e.g. `findFirst(marketplace.items, $datum.fk)`). Those expressions are resolved against the triggering datum at execution time.
+
 Bare strings are always literals — no resolve-with-literal-fallback, no escaped quoting, and no
 bare-UUID special case. Wrap a binding in braces when you want it resolved:
 `fk: {marketplace.items.id}` with `resource: marketplace.items` as a literal ref string.
@@ -80,6 +84,16 @@ treats it as a batch toggle-all: if every item is already in the destination sel
 them all; otherwise add every missing item (one destination write). Axis taps (`tap-row` /
 `tap-column`) pass `$datum` as the array of ISO datetime strings for that row or column, e.g.
 `{select($datum)}` on `tap-column` selects or clears an entire day.
+
+## copy_to_clipboard
+
+```
+{copy_to_clipboard({formatAddress($datum.data.pickup_address)})}
+```
+
+`value` is a **display-text template**, not a data path — formatters such as `formatAddress`
+are allowed. When the template resolves to an empty string, the action is a deliberate no-op
+(the same shared row template can run for request types that carry no address).
 
 ## create
 

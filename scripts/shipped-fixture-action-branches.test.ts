@@ -70,6 +70,13 @@ function findUpdateChanges(
 	return ast.changes;
 }
 
+function findCreateInlineData(
+	ast: ActionExpressionAst,
+): Record<string, string> | null {
+	if (ast.fn !== "create" || ast.mode !== "inline") return null;
+	return ast.data;
+}
+
 describe("shipped fixtures satisfy the row schema", () => {
 	test("the fixtures actually contain action branches", () => {
 		expect(fixtureBranches.length).toBeGreaterThan(20);
@@ -136,6 +143,76 @@ describe("shipped fixtures satisfy the row schema", () => {
 		}
 
 		expect(incomplete).toEqual([]);
+	});
+
+	test("pickup_address on accept is guarded on request type", () => {
+		const unguarded: string[] = [];
+
+		for (const { source, branch } of fixtureBranches) {
+			const parsed = parseActionExpression(branch.trim());
+			if (!parsed.ok) continue;
+			const data = findCreateInlineData(parsed.ast);
+			if (!data) continue;
+			const pickupAddress = data.pickup_address;
+			if (!pickupAddress?.includes("findFirst(evy.addresses")) continue;
+			if (!pickupAddress.includes("data.type == pickup")) {
+				unguarded.push(`${source}: ${branch}`);
+			}
+		}
+
+		expect(unguarded).toEqual([]);
+	});
+
+	test("delivery and shipping request creates include destination_address", () => {
+		const missing: string[] = [];
+
+		for (const { source, branch } of fixtureBranches) {
+			const parsed = parseActionExpression(branch.trim());
+			if (!parsed.ok) continue;
+			const data = findCreateInlineData(parsed.ast);
+			const inline = data?.data;
+			if (!inline?.includes("value: pending")) continue;
+
+			if (
+				inline.includes("type: delivery") &&
+				!inline.includes("destination_address")
+			) {
+				missing.push(`${source}: ${branch}`);
+			}
+			if (
+				inline.includes("type: shipping") &&
+				!inline.includes("destination_address")
+			) {
+				missing.push(`${source}: ${branch}`);
+			}
+		}
+
+		expect(missing).toEqual([]);
+	});
+
+	test("item-page cancel messages forward delivery and shipping addresses", () => {
+		const violations: string[] = [];
+
+		for (const { source, branch } of fixtureBranches) {
+			if (!branch.includes("value: cancel")) continue;
+
+			if (
+				branch.includes("data.type == delivery") &&
+				!branch.includes("destination_address")
+			) {
+				violations.push(`${source}: ${branch}`);
+			}
+			if (branch.includes("data.type == shipping")) {
+				if (!branch.includes("destination_address")) {
+					violations.push(`${source}: ${branch}`);
+				}
+				if (!branch.includes("postalcode")) {
+					violations.push(`${source}: ${branch}`);
+				}
+			}
+		}
+
+		expect(violations).toEqual([]);
 	});
 
 	test("covers the action functions the flows rely on", () => {

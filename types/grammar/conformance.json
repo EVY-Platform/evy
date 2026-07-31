@@ -858,7 +858,7 @@
 			"id": "action-parse-create-nested-inline",
 			"category": "action-parse",
 			"platforms": ["ios", "web"],
-			"input": "{create(evy.messages,{fk: {marketplace.items.id}, resource: marketplace.items, data: {type: delivery, value: pending, time: {selected_delivery_timeslot}}})}",
+			"input": "{create(evy.messages,{fk: {marketplace.items.id}, resource: marketplace.items, data: {type: delivery, value: pending, time: {selected_delivery_timeslot}, destination_address: delivery_address}})}",
 			"expect": {
 				"ast": {
 					"fn": "create",
@@ -867,7 +867,7 @@
 					"data": {
 						"fk": "{marketplace.items.id}",
 						"resource": "marketplace.items",
-						"data": "{type: delivery, value: pending, time: {selected_delivery_timeslot}}"
+						"data": "{type: delivery, value: pending, time: {selected_delivery_timeslot}, destination_address: delivery_address}"
 					}
 				}
 			},
@@ -967,6 +967,18 @@
 			"input": "{close(x)}",
 			"expect": {
 				"error": "close takes no arguments"
+			}
+		},
+		{
+			"id": "action-parse-copy-to-clipboard",
+			"category": "action-parse",
+			"platforms": ["ios", "web"],
+			"input": "{copy_to_clipboard({formatAddress($datum.data.pickup_address)})}",
+			"expect": {
+				"ast": {
+					"fn": "copy_to_clipboard",
+					"value": "{formatAddress($datum.data.pickup_address)}"
+				}
 			}
 		},
 		{

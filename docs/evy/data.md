@@ -216,6 +216,21 @@ Messages follow the same rule as every other private resource, with two addition
 
 Those two are the only entitlements in the system that are not plain ownership. Everyone else never receives it.
 
+#### Transfer address fields in `data`
+
+Two optional keys carry full address objects inside message `data`:
+
+| key | written by | when |
+| --- | --- | --- |
+| `pickup_address` | seller's device | on the **accept** of a `pickup` request only |
+| `destination_address` | buyer's device | on a `delivery` / `shipping` **request**; forwarded by accept/reject/cancel |
+
+A settling message carries the request's whole `data` forward, so accept/reject/cancel templates
+must forward `destination_address` when present. The seller's pickup lookup on accept must be
+guarded on `data.type == pickup`: the item only carries the public pickup location
+(`postcode`, `latitude`, `longitude`), and an unguarded `findFirst` over `evy.addresses` would
+disclose the seller's private street on every delivery accept.
+
 > **A trap for anything reading `data` in SQL.** The `bun-sql` driver stores a jsonb column by JSON-stringifying its value, so a row written through the API holds a jsonb *string* containing the object rather than the object. Reads are symmetric, so JavaScript never notices — but `data ->> 'key'` is NULL on that shape and `jsonb_set` refuses it outright. Note that the pglite-backed unit tests store jsonb properly, so they will not catch a clause that only works on the normalised shape.
 
 Messages are `private`, so a received one lands in the receiving device's private store and stays owned from then on — it keeps receiving anything that follows without needing to own the record it addresses. A device that is reinstalled, or that never created the record a seeded message addresses, still has no claim on those messages until it declares the ownership explicitly; that resolves when auth lands and ownership can be derived from an account.

@@ -1135,13 +1135,16 @@ class E2ETestBase: XCTestCase {
     let pickupCreateAction = requestCreateAction(
       type: "pickup", payload: "time: {selected_pickup_timeslot}")
     let deliveryCreateAction = requestCreateAction(
-      type: "delivery", payload: "time: {selected_delivery_timeslot}")
+      type: "delivery",
+      payload: "time: {selected_delivery_timeslot}, destination_address: delivery_address")
     let shippingCreateAction = requestCreateAction(
-      type: "shipping", payload: "postalcode: {shipping_address.postcode}")
+      type: "shipping",
+      payload:
+        "postalcode: {shipping_address.postcode}, destination_address: shipping_address")
     func cancelAction(type: String) -> String {
       let latest = latestMessageExpression(type: type)
       return "{create(\(messagesResourceId),{\(messageCreateEnvelope),"
-        + " parent_message_id: {\(latest).id}, data: {value: cancel, type: \(type)}})}"
+        + " parent_message_id: {\(latest).id}, data: {value: cancel, type: \(type), time: {\(latest).data.time}, postalcode: {\(latest).data.postalcode}, destination_address: {\(latest).data.destination_address}})}"
     }
 
     return [
@@ -1639,7 +1642,9 @@ class E2ETestBase: XCTestCase {
     let pickupCreateAction = requestCreateAction(
       type: "pickup", payload: "time: {selected_pickup_timeslot}")
     let shippingCreateAction = requestCreateAction(
-      type: "shipping", payload: "postalcode: {shipping_address.postcode}")
+      type: "shipping",
+      payload:
+        "postalcode: {shipping_address.postcode}, destination_address: shipping_address")
 
     return [
       "id": flowId,
@@ -1686,11 +1691,15 @@ class E2ETestBase: XCTestCase {
   static let homeInboxScheduledChildRowId = "c52a5527-ee4a-46c8-8f5c-1e18f782bcc0"
 
   private static func homeInboxResponseAction(value: String) -> [String: Any] {
-    [
+    let pickupAddress =
+      value == "accept"
+      ? ", pickup_address: findFirst(evy.addresses, $datum.data.type == pickup && id == findFirst(\(MARKETPLACE_ITEMS_RESOURCE_ID), $datum.fk).transfer_options.pickup.address_id)"
+      : ""
+    return [
       "condition": "",
       "false": "",
       "true":
-        "{create(\(EVYCoreResource.messages.ref),{fk: {$datum.fk}, resource: {$datum.resource}, parent_message_id: {$datum.id}, data: {value: \(value), type: {$datum.data.type}, time: {$datum.data.time}, postalcode: {$datum.data.postalcode}}})}",
+        "{create(\(EVYCoreResource.messages.ref),{fk: {$datum.fk}, resource: {$datum.resource}, parent_message_id: {$datum.id}, data: {value: \(value), type: {$datum.data.type}, time: {$datum.data.time}, postalcode: {$datum.data.postalcode}, destination_address: {$datum.data.destination_address}\(pickupAddress)}})}",
     ]
   }
 
@@ -1768,7 +1777,8 @@ class E2ETestBase: XCTestCase {
         "name": "For you request row",
         "title":
           "{findFirst(\(MARKETPLACE_ITEMS_RESOURCE_ID), $datum.fk).title}",
-        "subtitle": "{$datum.data.value}",
+        "subtitle":
+          "{if(length($datum.data.destination_address.street) > 0, formatAddress($datum.data.destination_address), $datum.data.value)}",
         "visible": "true",
         "swipe_label": "Accept",
         "swipe_color": "#34C759",
@@ -1827,7 +1837,14 @@ class E2ETestBase: XCTestCase {
           "{findFirst(\(MARKETPLACE_ITEMS_RESOURCE_ID), $datum.fk).title}",
         "subtitle": "{$datum.data.value}",
         "visible": "true",
-        "actions": [:],
+        "actions": actionsObject(
+          tap: [
+            rowAction(
+              true:
+                "{copy_to_clipboard({if(length($datum.data.pickup_address.street) > 0, formatAddress($datum.data.pickup_address), \"\")})}"
+            )
+          ]
+        ),
       ],
     ]
 
@@ -2030,6 +2047,54 @@ class E2ETestBase: XCTestCase {
       data: data
     )
     return (selectedItemId, selectedItemTitle)
+  }
+
+  static let rothschildDestinationAddress: [String: Any] = [
+    "unit": "C509",
+    "street": "28 Rothschild Avenue",
+    "city": "Rosebery",
+    "postcode": "2018",
+    "state": "NSW",
+    "country": "Australia",
+    "latitude": -33.9172075,
+    "longitude": 151.1985883,
+  ]
+
+  static let amazingFridgePickupAddressRow: [String: Any] = [
+    "id": "c81e85dd-f7fb-4310-8fc6-7c018aeaf82a",
+    "unit": "C509",
+    "street": "28 Rothschild Avenue",
+    "city": "Rosebery",
+    "postcode": "2018",
+    "state": "NSW",
+    "country": "Australia",
+    "latitude": -33.9172075,
+    "longitude": 151.1985883,
+    "instructions": "",
+    "visibility": "private",
+    "created_at": "2026-05-20T22:56:17.000Z",
+    "updated_at": "2026-05-20T22:56:17.000Z",
+  ]
+
+  static func settlingMessageData(
+    value: String,
+    type: String,
+    time: String,
+    destinationAddress: [String: Any]? = nil,
+    pickupAddress: [String: Any]? = nil
+  ) -> [String: Any] {
+    var data: [String: Any] = [
+      "value": value,
+      "type": type,
+      "time": time,
+    ]
+    if let destinationAddress {
+      data["destination_address"] = destinationAddress
+    }
+    if let pickupAddress {
+      data["pickup_address"] = pickupAddress
+    }
+    return data
   }
 
   override func tearDownWithError() throws {
@@ -2805,11 +2870,11 @@ final class WebSocketE2ETests: E2ETestBase {
         "resource": MARKETPLACE_ITEMS_RESOURCE_ID,
         "visibility": "private",
         "parent_message_id": requestId,
-        "data": [
-          "value": "reject",
-          "type": "pickup",
-          "time": selectedTimeslot,
-        ],
+        "data": Self.settlingMessageData(
+          value: "reject",
+          type: "pickup",
+          time: selectedTimeslot
+        ),
       ]
     )
     let rejectedOnServer = try await waitForMessageResponse(
@@ -2956,11 +3021,12 @@ final class WebSocketE2ETests: E2ETestBase {
         "resource": MARKETPLACE_ITEMS_RESOURCE_ID,
         "visibility": "private",
         "parent_message_id": messageId,
-        "data": [
-          "value": "accept",
-          "type": "pickup",
-          "time": selectedTimeslot,
-        ],
+        "data": Self.settlingMessageData(
+          value: "accept",
+          type: "pickup",
+          time: selectedTimeslot,
+          pickupAddress: Self.amazingFridgePickupAddressRow
+        ),
       ]
     )
     let acceptedOnServer = try await waitForMessageResponse(
@@ -4370,6 +4436,8 @@ final class E2EHomeInboxTests: E2ETestBase {
   private static let homePageId = E2EFlowIds.webSocketHomePage
   private static let seededMessageItemId = "12401f50-cf1a-45d7-a112-2e68a2070466"
 
+  private static let seededShippingRequestId = "5f66d7ae-3cb5-44bb-a8f3-337d4e543c72"
+
   override var homeFlowId: String? { E2EFlowIds.defaultHomeFlow }
 
   override var ownedResources: [OwnedResourceDeclaration] {
@@ -4471,7 +4539,29 @@ final class E2EHomeInboxTests: E2ETestBase {
       "The For you row should reveal exactly one declarative action")
 
     swipeButton.tap()
-    _ = try assertResponsePersisted(requestId: requestId, value: "accept")
+    let responseId = try assertResponsePersisted(requestId: requestId, value: "accept")
+    let pickupStreet = try awaitResult("read pickup_address from accept message") {
+      let emitter = WSEmitter()
+      try await emitter.connect(host: self.apiHost)
+      try await emitter.login(token: "e2e-test", os: "ios")
+      let payload = try await emitter.getResource(
+        resource: EVYCoreResource.messages.ref
+      )
+      await emitter.disconnect()
+      guard let rows = Self.responseDataArray(from: payload),
+        let message = rows.first(where: {
+          ($0 as? [String: Any])?["id"] as? String == responseId
+        }) as? [String: Any],
+        let data = message["data"] as? [String: Any],
+        let pickupAddress = data["pickup_address"] as? [String: Any],
+        let street = pickupAddress["street"] as? String
+      else {
+        struct MissingPickupAddress: Error {}
+        throw MissingPickupAddress()
+      }
+      return street
+    }
+    XCTAssertEqual(pickupStreet, "28 Rothschild Avenue")
 
     XCTAssertTrue(
       row.waitForNonExistence(timeout: 10),
@@ -4487,6 +4577,41 @@ final class E2EHomeInboxTests: E2ETestBase {
     XCTAssertTrue(
       app.staticTexts["accept"].exists,
       "The Scheduled row should show the accepted state")
+  }
+
+  @MainActor
+  func testForYouRowShowsDestinationAddressForDeliveryRequest() throws {
+    let homePage = app.scrollViews["page_\(Self.homePageId)"]
+    XCTAssertTrue(
+      homePage.waitForExistence(timeout: 20),
+      "Home screen not loaded - verify API is running and database is seeded")
+
+    let requestId = try seedOwnDeliveryRequest()
+    let row = ownRequestRow(requestId: requestId)
+    XCTAssertTrue(
+      row.waitForExistence(timeout: 15),
+      "A delivery request for the owned item should appear under For you")
+    XCTAssertTrue(
+      row.staticTexts["C509 28 Rothschild Avenue, 2018 Rosebery NSW"].waitForExistence(
+        timeout: 5),
+      "The request row should show the buyer's destination address")
+  }
+
+  @MainActor
+  func testForYouRowShowsSeededShippingDestinationAddress() throws {
+    let homePage = app.scrollViews["page_\(Self.homePageId)"]
+    XCTAssertTrue(
+      homePage.waitForExistence(timeout: 20),
+      "Home screen not loaded - verify API is running and database is seeded")
+
+    let row = ownRequestRow(requestId: Self.seededShippingRequestId)
+    XCTAssertTrue(
+      row.waitForExistence(timeout: 15),
+      "The seeded shipping request should appear under For you")
+    XCTAssertTrue(
+      row.staticTexts["C509 28 Rothschild Avenue, 2018 Rosebery NSW"].waitForExistence(
+        timeout: 5),
+      "The seeded shipping row should show the buyer's destination address")
   }
 
   @MainActor
@@ -4551,6 +4676,35 @@ final class E2EHomeInboxTests: E2ETestBase {
   }
 
   @MainActor
+  private func seedOwnDeliveryRequest() throws -> String {
+    let requestId = UUID().uuidString.lowercased()
+    let host = apiHost
+    return try awaitResult("seed owned delivery request") {
+      let emitter = WSEmitter()
+      try await emitter.connect(host: host)
+      try await emitter.login(token: "e2e-test", os: "ios")
+      _ = try await emitter.createResource(
+        resource: EVYCoreResource.messages.ref,
+        filter: ["id": requestId],
+        data: [
+          "id": requestId,
+          "fk": Self.seededMessageItemId,
+          "resource": MARKETPLACE_ITEMS_RESOURCE_ID,
+          "visibility": "private",
+          "data": [
+            "type": "delivery",
+            "value": "pending",
+            "time": "2026-06-04T10:00:00",
+            "destination_address": Self.rothschildDestinationAddress,
+          ],
+        ]
+      )
+      await emitter.disconnect()
+      return requestId
+    }
+  }
+
+  @MainActor
   private func seedOwnRequest(responseValue: String? = nil) throws -> (
     requestId: String, responseId: String?
   ) {
@@ -4586,11 +4740,14 @@ final class E2EHomeInboxTests: E2ETestBase {
             "resource": MARKETPLACE_ITEMS_RESOURCE_ID,
             "visibility": "private",
             "parent_message_id": requestId,
-            "data": [
-              "value": responseValue,
-              "type": "pickup",
-              "time": "2026-06-03T09:00:00",
-            ],
+            "data": Self.settlingMessageData(
+              value: responseValue,
+              type: "pickup",
+              time: "2026-06-03T09:00:00",
+              pickupAddress:
+                responseValue == "accept"
+                ? Self.amazingFridgePickupAddressRow : nil
+            ),
           ]
         )
       }

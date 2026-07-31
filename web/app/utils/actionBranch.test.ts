@@ -227,6 +227,20 @@ describe("action branch helpers", () => {
 		expect(serializeBranch("select", ["$datum"])).toBe("{select($datum)}");
 	});
 
+	it("parses and serializes copy_to_clipboard", () => {
+		const branch =
+			"{copy_to_clipboard({formatAddress($datum.data.pickup_address)})}";
+		expect(parseBranchText(branch)).toEqual({
+			functionName: "copy_to_clipboard",
+			args: ["{formatAddress($datum.data.pickup_address)}"],
+		});
+		expect(
+			serializeBranch("copy_to_clipboard", [
+				"{formatAddress($datum.data.pickup_address)}",
+			]),
+		).toBe(branch);
+	});
+
 	it("parses and serializes zero-arg row actions", () => {
 		expect(parseBranchText("{select_photo()}")).toEqual({
 			functionName: "select_photo",

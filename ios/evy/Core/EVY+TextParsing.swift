@@ -45,6 +45,13 @@ extension EVY {
     try _evaluateFromText(input)
   }
 
+  @MainActor
+  static func evaluate<T>(
+    _ text: String, boundTo datum: EVYJson, _ body: (String) throws -> T
+  ) rethrows -> T {
+    try evyEvaluate(text, boundTo: datum, body)
+  }
+
   static func formatData(json: EVYJson, format: String) throws -> String {
     try _formatData(json: json, format: format)
   }

@@ -112,6 +112,12 @@ enum EVYPlainTextResolution {
             nestedObject, datum: datum, omitUnresolvedDatumKeys: omitUnresolvedDatumKeys))
       }
 
+      if let resolved = resolveBoundExpression(
+        String(trimmedValue.dropFirst().dropLast()).trimmingCharacters(in: .whitespacesAndNewlines),
+        datum: datum
+      ) {
+        return resolved
+      }
       if let resolved = try? EVY.getDataFromText(trimmedValue) {
         return resolved
       }
@@ -122,6 +128,10 @@ enum EVYPlainTextResolution {
       if let interpolated = try? EVY.getValueFromText(value) {
         return .string(interpolated.toString())
       }
+    }
+
+    if let resolved = resolveBoundExpression(trimmedValue, datum: datum) {
+      return resolved
     }
 
     if trimmedValue == "true" {
@@ -179,5 +189,30 @@ enum EVYPlainTextResolution {
     guard path.hasPrefix(EVY.datumPrefix), let datum else { return nil }
     let props = String(path.dropFirst(EVY.datumPrefix.count)).split(separator: ".").map(String.init)
     return datum.parsePropStrict(props: props)
+  }
+
+  /// A value expression may nest `$datum` inside a function call, e.g.
+  /// `findFirst(marketplace.items, $datum.fk).title`. Whole-`$datum` values are handled
+  /// above; this binds the datum for everything else, at execution time — the row formatter
+  /// deliberately leaves `actions` unsubstituted for exactly this reason.
+  private static func resolveBoundExpression(_ value: String, datum: EVYJson?) -> EVYJson? {
+    guard shouldBindDatumForExpression(value) else { return nil }
+    guard let datum, EVY.containsDatumReference(value) else {
+      return try? EVY.getDataFromText("{\(value)}")
+    }
+    return try? EVY.evaluate(value, boundTo: datum) { substituted in
+      try EVY.getDataFromText("{\(substituted)}")
+    }
+  }
+
+  private static func shouldBindDatumForExpression(_ value: String) -> Bool {
+    var path = value.trimmingCharacters(in: .whitespacesAndNewlines)
+    if path.hasPrefix("{"), path.hasSuffix("}") {
+      path = String(path.dropFirst().dropLast()).trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+    if path == EVY.datumToken || path.hasPrefix(EVY.datumPrefix) {
+      return false
+    }
+    return EVY.containsDatumReference(value) || value.contains("(")
   }
 }

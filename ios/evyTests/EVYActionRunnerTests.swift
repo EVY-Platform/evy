@@ -11,13 +11,19 @@ import XCTest
 final class EVYActionRunnerTests: XCTestCase {
   /// Binding keys seeded for the inline-payload cases, cleaned up per run.
   private var seededBindingKeys: [String] = []
+  private var defaultClipboardWrite: ((String) -> Void)?
 
   override func setUp() async throws {
     try await super.setUp()
+    defaultClipboardWrite = EVYClipboard.write
+    try evySeedStandardFormattersForTests()
     installHermeticMutationSync()
   }
 
   override func tearDown() async throws {
+    if let defaultClipboardWrite {
+      EVYClipboard.write = defaultClipboardWrite
+    }
     resetHermeticMutationSync()
     try await super.tearDown()
   }
@@ -978,6 +984,166 @@ final class EVYActionRunnerTests: XCTestCase {
     XCTAssertNil(resolved["postalcode"])
   }
 
+  func testPickupAddressResolvesFromNestedDatumExpressionForPickupRequest() throws {
+    let addressId = UUID().uuidString
+    let itemId = UUID().uuidString
+    let street = "28 Rothschild Avenue"
+    let addressesRef = EVYCoreResource.addresses.ref
+    let itemsRef = MarketplaceTestFixture.itemsRef
+    try? EVY.publicStore.deleteAll(namespace: EVYNamespace.evy, resource: addressesRef)
+    try? EVY.publicStore.deleteAll(namespace: MarketplaceTestFixture.service, resource: itemsRef)
+    defer {
+      try? EVY.publicStore.deleteAll(namespace: EVYNamespace.evy, resource: addressesRef)
+      try? EVY.publicStore.deleteAll(namespace: MarketplaceTestFixture.service, resource: itemsRef)
+    }
+
+    try EVY.applySyncedValue(
+      namespace: EVYNamespace.evy,
+      resource: addressesRef,
+      value: .array([
+        .dictionary([
+          "id": .string(addressId),
+          "street": .string(street),
+          "city": .string("Rosebery"),
+          "postcode": .string("2018"),
+        ])
+      ])
+    )
+    try EVY.applySyncedValue(
+      namespace: MarketplaceTestFixture.service,
+      resource: itemsRef,
+      value: .array([
+        .dictionary([
+          "id": .string(itemId),
+          "transfer_options": .dictionary([
+            "pickup": .dictionary(["address_id": .string(addressId)])
+          ]),
+        ])
+      ])
+    )
+
+    let datum = EVYTestMessageFixtures.message(
+      id: UUID().uuidString,
+      fk: itemId,
+      type: "pickup",
+      value: "pending",
+      time: "2026-06-03T09:00:00"
+    )
+    let resolved = EVYPlainTextResolution.resolveValues(
+      [
+        "pickup_address":
+          "findFirst(evy.addresses, $datum.data.type == pickup && id == findFirst(marketplace.items, $datum.fk).transfer_options.pickup.address_id)"
+      ],
+      datum: datum
+    )
+
+    guard case .dictionary(let address) = resolved["pickup_address"] else {
+      return XCTFail("Expected pickup_address dictionary")
+    }
+    XCTAssertEqual(address["street"], .string(street))
+  }
+
+  func testPickupAddressIsEmptyForDeliveryRequest() throws {
+    let addressId = UUID().uuidString
+    let itemId = UUID().uuidString
+    let addressesRef = EVYCoreResource.addresses.ref
+    let itemsRef = MarketplaceTestFixture.itemsRef
+    try? EVY.publicStore.deleteAll(namespace: EVYNamespace.evy, resource: addressesRef)
+    try? EVY.publicStore.deleteAll(namespace: MarketplaceTestFixture.service, resource: itemsRef)
+    defer {
+      try? EVY.publicStore.deleteAll(namespace: EVYNamespace.evy, resource: addressesRef)
+      try? EVY.publicStore.deleteAll(namespace: MarketplaceTestFixture.service, resource: itemsRef)
+    }
+
+    try EVY.applySyncedValue(
+      namespace: EVYNamespace.evy,
+      resource: addressesRef,
+      value: .array([
+        .dictionary([
+          "id": .string(addressId),
+          "street": .string("28 Rothschild Avenue"),
+        ])
+      ])
+    )
+    try EVY.applySyncedValue(
+      namespace: MarketplaceTestFixture.service,
+      resource: itemsRef,
+      value: .array([
+        .dictionary([
+          "id": .string(itemId),
+          "transfer_options": .dictionary([
+            "pickup": .dictionary(["address_id": .string(addressId)])
+          ]),
+        ])
+      ])
+    )
+
+    let datum = EVYTestMessageFixtures.message(
+      id: UUID().uuidString,
+      fk: itemId,
+      type: "delivery",
+      value: "pending",
+      time: "2026-06-04T10:00:00"
+    )
+    let resolved = EVYPlainTextResolution.resolveValues(
+      [
+        "pickup_address":
+          "findFirst(evy.addresses, $datum.data.type == pickup && id == findFirst(marketplace.items, $datum.fk).transfer_options.pickup.address_id)"
+      ],
+      datum: datum
+    )
+
+    XCTAssertEqual(resolved["pickup_address"], .string(""))
+  }
+
+  func testCopyToClipboardWritesFormattedAddress() throws {
+    let datum = EVYJson.dictionary([
+      "data": .dictionary([
+        "pickup_address": .dictionary([
+          "unit": .string("C509"),
+          "street": .string("28 Rothschild Avenue"),
+          "city": .string("Rosebery"),
+          "postcode": .string("2018"),
+          "state": .string("NSW"),
+          "country": .string("Australia"),
+        ])
+      ])
+    ])
+    let previousWrite = EVYClipboard.write
+    var written: String?
+    EVYClipboard.write = { written = $0 }
+    defer { EVYClipboard.write = previousWrite }
+
+    let action = rowAction(
+      true: .copyToClipboard(
+        value: "{formatAddress($datum.data.pickup_address)}"
+      )
+    )
+
+    EVYActionRunner.run(actions: [action], datum: datum) { _ in }
+
+    XCTAssertEqual(written, "C509 28 Rothschild Avenue, 2018 Rosebery NSW")
+  }
+
+  func testCopyToClipboardNoOpWhenAddressMissing() throws {
+    let previousWrite = EVYClipboard.write
+    var written: String?
+    EVYClipboard.write = { written = $0 }
+    defer { EVYClipboard.write = previousWrite }
+
+    let datum = EVYJson.dictionary(["data": .dictionary([:])])
+    let action = rowAction(
+      true: .copyToClipboard(
+        value:
+          "{if(length($datum.data.pickup_address.street) > 0, formatAddress($datum.data.pickup_address), \"\")}"
+      )
+    )
+
+    EVYActionRunner.run(actions: [action], datum: datum) { _ in }
+
+    XCTAssertNil(written)
+  }
+
   func testUpdateChangesOmitUnresolvedDatumKeys() throws {
     let namespace = "test"
     let resource = "\(MarketplaceTestFixture.service).omit-datum-changes"
@@ -1477,7 +1643,8 @@ final class EVYActionRunnerTests: XCTestCase {
           resource: messagesResourceId,
           mode: .inline(data: [
             "fk": "{\(itemRef).id}",
-            "data": "{type: shipping, value: pending, postalcode: {shipping_address.postcode}}",
+            "data":
+              "{type: shipping, value: pending, postalcode: {shipping_address.postcode}, destination_address: shipping_address}",
           ]), id_destination: nil),
       false: .highlightRequired(field: "postcode")
     )

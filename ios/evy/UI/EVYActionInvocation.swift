@@ -19,6 +19,7 @@ public enum EVYActionInvocation: Equatable {
   case expandText(rowId: String)
   case highlightRequired(field: String)
   case select(value: String)
+  case copyToClipboard(value: String)
   case navigate(flowId: String, pageId: String, query: [String: String])
   case create(
     resource: String,

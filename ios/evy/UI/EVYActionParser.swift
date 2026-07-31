@@ -73,6 +73,16 @@ enum EVYActionParser {
       }
       return .select(value: value)
 
+    case "copy_to_clipboard":
+      guard args.count == 1 else {
+        throw EVYActionParseError.reason("copy_to_clipboard takes one value")
+      }
+      let value = args[0].trimmingCharacters(in: .whitespacesAndNewlines)
+      guard !value.isEmpty else {
+        throw EVYActionParseError.reason("copy_to_clipboard value must not be empty")
+      }
+      return .copyToClipboard(value: value)
+
     case "navigate":
       return try convertNavigate(args)
 
@@ -97,6 +107,7 @@ enum EVYActionParser {
     case .expandText(let rowId): return call("expand_text", [rowId])
     case .highlightRequired(let field): return call("highlight_required", [field])
     case .select(let value): return call("select", [value])
+    case .copyToClipboard(let value): return call("copy_to_clipboard", [value])
     case .navigate(let flowId, let pageId, let query):
       var args = [flowId, pageId]
       if !query.isEmpty {
@@ -147,6 +158,8 @@ enum EVYActionParser {
       return .dictionary(["fn": .string("highlight_required"), "field": .string(field)])
     case .select(let value):
       return .dictionary(["fn": .string("select"), "value": .string(value)])
+    case .copyToClipboard(let value):
+      return .dictionary(["fn": .string("copy_to_clipboard"), "value": .string(value)])
     case .navigate(let flowId, let pageId, let query):
       var dict: [String: EVYJson] = [
         "fn": .string("navigate"),

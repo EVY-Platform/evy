@@ -238,6 +238,45 @@
 										"actions": {}
 									},
 									{
+										"id": "a1c2e3f4-0b1d-4e2f-8a3b-4c5d6e7f8091",
+										"type": "text_action",
+										"title": "Deliver to",
+										"subtitle": "{formatAddress(delivery_address)}",
+										"action": "Change",
+										"visible": "true",
+										"name": "Delivery destination address",
+										"actions": {
+											"tap": [
+												{
+													"condition": "",
+													"true": "{show(b2d3f4a5-1c2e-4f3a-8b4c-5d6e7f809102)}",
+													"false": ""
+												}
+											]
+										},
+										"sheet": {
+											"id": "b2d3f4a5-1c2e-4f3a-8b4c-5d6e7f809102",
+											"type": "search",
+											"title": "",
+											"placeholder": "Search address",
+											"no_results": "No addresses found",
+											"source": "{$api:place_search}",
+											"destination": "{delivery_address}",
+											"visible": "true",
+											"name": "Find delivery address",
+											"actions": {},
+											"child": {
+												"id": "c3e4a5b6-2d3f-4a4b-8c5d-6e7f80910213",
+												"type": "text",
+												"title": "{formatAddressLine1($datum)}",
+												"subtitle": "{formatAddressLine2($datum)}",
+												"visible": "true",
+												"name": "Delivery address result",
+												"actions": {}
+											}
+										}
+									},
+									{
 										"id": "bd8fa85c-1b67-467a-983d-328e6dc49db7",
 										"type": "timeslot_picker",
 										"source": "{marketplace.items.delivery_selection}",
@@ -249,9 +288,9 @@
 													"false": ""
 												},
 												{
-													"condition": "",
+													"condition": "{length(delivery_address.street) > 0}",
 													"true": "{show(c4d5e6f7-a8b9-4c0d-1e2f-3a4b5c6d7e80)}",
-													"false": ""
+													"false": "{highlight_required(delivery_address)}"
 												}
 											]
 										},
@@ -288,7 +327,7 @@
 														"tap": [
 															{
 																"condition": "",
-																"true": "{create(evy.messages,{fk: {marketplace.items.id}, resource: marketplace.items, data: {type: delivery, value: pending, time: {selected_delivery_timeslot}}})}",
+																"true": "{create(evy.messages,{fk: {marketplace.items.id}, resource: marketplace.items, data: {type: delivery, value: pending, time: {selected_delivery_timeslot}, destination_address: delivery_address}})}",
 																"false": ""
 															},
 															{
@@ -326,6 +365,45 @@
 										"subtitle": "Delivered to your door",
 										"name": "Shipping note",
 										"actions": {}
+									},
+									{
+										"id": "d4f5b6c7-3e4a-4b5c-8d6e-7f8091021324",
+										"type": "text_action",
+										"title": "Ship to",
+										"subtitle": "{formatAddress(shipping_address)}",
+										"action": "Change",
+										"visible": "true",
+										"name": "Shipping destination address",
+										"actions": {
+											"tap": [
+												{
+													"condition": "",
+													"true": "{show(e5a6c7d8-4f5b-4c6d-8e7f-809102132435)}",
+													"false": ""
+												}
+											]
+										},
+										"sheet": {
+											"id": "e5a6c7d8-4f5b-4c6d-8e7f-809102132435",
+											"type": "search",
+											"title": "",
+											"placeholder": "Search address",
+											"no_results": "No addresses found",
+											"source": "{$api:place_search}",
+											"destination": "{shipping_address}",
+											"visible": "true",
+											"name": "Find shipping address",
+											"actions": {},
+											"child": {
+												"id": "f6b7d8e9-5a6c-4d7e-8f80-910213243546",
+												"type": "text",
+												"title": "{formatAddressLine1($datum)}",
+												"subtitle": "{formatAddressLine2($datum)}",
+												"visible": "true",
+												"name": "Shipping address result",
+												"actions": {}
+											}
+										}
 									},
 									{
 										"id": "e47cc52b-c909-496d-bc9a-af7e8b9d7ed3",
@@ -383,7 +461,7 @@
 														"tap": [
 															{
 																"condition": "",
-																"true": "{create(evy.messages,{fk: {marketplace.items.id}, resource: marketplace.items, data: {type: shipping, value: pending, postalcode: {shipping_address.postcode}}})}",
+																"true": "{create(evy.messages,{fk: {marketplace.items.id}, resource: marketplace.items, data: {type: shipping, value: pending, postalcode: {shipping_address.postcode}, destination_address: shipping_address}})}",
 																"false": ""
 															},
 															{
@@ -562,7 +640,7 @@
 												"tap": [
 													{
 														"condition": "",
-														"true": "{create(evy.messages,{fk: {marketplace.items.id}, resource: marketplace.items, parent_message_id: {findFirst(sort(evy.messages, desc, created_at), fk == marketplace.items.id && data.type == delivery).id}, data: {value: cancel, type: delivery, time: {findFirst(sort(evy.messages, desc, created_at), fk == marketplace.items.id && data.type == delivery).data.time}}})}",
+														"true": "{create(evy.messages,{fk: {marketplace.items.id}, resource: marketplace.items, parent_message_id: {findFirst(sort(evy.messages, desc, created_at), fk == marketplace.items.id && data.type == delivery).id}, data: {value: cancel, type: delivery, time: {findFirst(sort(evy.messages, desc, created_at), fk == marketplace.items.id && data.type == delivery).data.time}, destination_address: {findFirst(sort(evy.messages, desc, created_at), fk == marketplace.items.id && data.type == delivery).data.destination_address}}})}",
 														"false": ""
 													},
 													{
@@ -650,7 +728,7 @@
 												"tap": [
 													{
 														"condition": "",
-														"true": "{create(evy.messages,{fk: {marketplace.items.id}, resource: marketplace.items, parent_message_id: {findFirst(sort(evy.messages, desc, created_at), fk == marketplace.items.id && data.type == shipping).id}, data: {value: cancel, type: shipping, time: {findFirst(sort(evy.messages, desc, created_at), fk == marketplace.items.id && data.type == shipping).data.time}}})}",
+														"true": "{create(evy.messages,{fk: {marketplace.items.id}, resource: marketplace.items, parent_message_id: {findFirst(sort(evy.messages, desc, created_at), fk == marketplace.items.id && data.type == shipping).id}, data: {value: cancel, type: shipping, postalcode: {findFirst(sort(evy.messages, desc, created_at), fk == marketplace.items.id && data.type == shipping).data.postalcode}, destination_address: {findFirst(sort(evy.messages, desc, created_at), fk == marketplace.items.id && data.type == shipping).data.destination_address}}})}",
 														"false": ""
 													},
 													{
