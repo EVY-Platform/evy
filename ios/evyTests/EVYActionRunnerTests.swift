@@ -815,7 +815,8 @@ final class EVYActionRunnerTests: XCTestCase {
           resource: resource,
           mode: .inline(data: [
             "fk": "item-1", "service": "svc-1", "closedAt": "null", "verified": "true",
-            "data": "{type: pickup, time: 2026-06-03T09:00:00}",
+            "type": "pickup",
+            "data": "{time: 2026-06-03T09:00:00}",
           ]), id_destination: nil)
     )
     var received: ActionOperation?
@@ -831,11 +832,11 @@ final class EVYActionRunnerTests: XCTestCase {
     XCTAssertEqual(values["service"], .string("svc-1"))
     XCTAssertEqual(values["closedAt"], .null)
     XCTAssertEqual(values["verified"], .bool(true))
+    XCTAssertEqual(values["type"], .string("pickup"))
     XCTAssertEqual(
       values["data"],
       .dictionary([
-        "type": .string("pickup"),
-        "time": .string("2026-06-03T09:00:00"),
+        "time": .string("2026-06-03T09:00:00")
       ]))
     // Millisecond precision: `created_at` orders records against each other, and `sort`
     // compares it as a string, so two writes in the same second must not tie.
@@ -972,7 +973,7 @@ final class EVYActionRunnerTests: XCTestCase {
       [
         "parent_message_id": "{$datum.id}",
         "value": "accept",
-        "type": "{$datum.data.type}",
+        "type": "{$datum.type}",
         "time": "{$datum.data.time}",
         "postalcode": "{$datum.data.postalcode}",
       ],
@@ -1035,7 +1036,7 @@ final class EVYActionRunnerTests: XCTestCase {
     let resolved = EVYPlainTextResolution.resolveValues(
       [
         "pickup_address":
-          "findFirst(evy.addresses, $datum.data.type == pickup && id == findFirst(marketplace.items, $datum.fk).transfer_options.pickup.address_id)"
+          "findFirst(evy.addresses, $datum.type == pickup && id == findFirst(marketplace.items, $datum.fk).transfer_options.pickup.address_id)"
       ],
       datum: datum
     )
@@ -1091,7 +1092,7 @@ final class EVYActionRunnerTests: XCTestCase {
     let resolved = EVYPlainTextResolution.resolveValues(
       [
         "pickup_address":
-          "findFirst(evy.addresses, $datum.data.type == pickup && id == findFirst(marketplace.items, $datum.fk).transfer_options.pickup.address_id)"
+          "findFirst(evy.addresses, $datum.type == pickup && id == findFirst(marketplace.items, $datum.fk).transfer_options.pickup.address_id)"
       ],
       datum: datum
     )
@@ -1299,7 +1300,7 @@ final class EVYActionRunnerTests: XCTestCase {
         .create(
           resource: resource,
           mode: .inline(data: [
-            "fk": "{$datum.id}", "data": "{type: pickup, time: {selected_pickup_timeslot}}",
+            "fk": "{$datum.id}", "type": "pickup", "data": "{time: {selected_pickup_timeslot}}",
           ]), id_destination: nil)
     )
     var receivedNavigation: ActionOperation?
@@ -1313,11 +1314,11 @@ final class EVYActionRunnerTests: XCTestCase {
       return XCTFail("Expected inline create payload dictionary")
     }
     XCTAssertEqual(values["fk"], .string("item-id"))
+    XCTAssertEqual(values["type"], .string("pickup"))
     XCTAssertEqual(
       values["data"],
       .dictionary([
-        "type": .string("pickup"),
-        "time": .string(selectedTimeslot),
+        "time": .string(selectedTimeslot)
       ]),
       "Nested data values should resolve drafts like top-level values")
     XCTAssertEqual(values["id"]?.toString(), createdRows.first?.id)
@@ -1636,8 +1637,10 @@ final class EVYActionRunnerTests: XCTestCase {
           resource: messagesResourceId,
           mode: .inline(data: [
             "fk": "{\(itemRef).id}",
+            "type": "shipping",
+            "value": "pending",
             "data":
-              "{type: shipping, value: pending, postalcode: {shipping_address.postcode}, destination_address: shipping_address}",
+              "{postalcode: {shipping_address.postcode}, destination_address: shipping_address}",
           ]), id_destination: nil),
       false: .highlightRequired(field: "postcode")
     )
@@ -1677,7 +1680,9 @@ final class EVYActionRunnerTests: XCTestCase {
           resource: resource,
           mode: .inline(data: [
             "fk": "{\(itemRef).id}",
-            "data": "{type: pickup, value: pending, time: 2026-06-03T09:00:00}",
+            "type": "pickup",
+            "value": "pending",
+            "data": "{time: 2026-06-03T09:00:00}",
           ]), id_destination: nil)
     )
     EVYActionRunner.run(actions: [action]) { received = $0 }
@@ -1695,14 +1700,15 @@ final class EVYActionRunnerTests: XCTestCase {
       mode: .inline(data: [
         "fk": "$datum.fk",
         "parent_message_id": "$datum.id",
-        "data": "{value: cancel, type: {$datum.data.type}}",
+        "value": "cancel",
+        "type": "{$datum.type}",
       ]),
       id_destination: nil)
     let row = try decodeRow(
       content: """
         {
           "title": "{$datum.title}",
-          "subtitle": "{$datum.data.value}"
+          "subtitle": "{$datum.value}"
         }
         """,
       actions: UI_RowActions(
@@ -1714,7 +1720,7 @@ final class EVYActionRunnerTests: XCTestCase {
     let datum = EVYJson.dictionary([
       "id": .string("resolved-uuid"),
       "title": .string("Resolved Title"),
-      "data": .dictionary(["value": .string("pending")]),
+      "value": .string("pending"),
     ])
 
     let formattedRow = try formatter.formattedResult(datum: datum).row

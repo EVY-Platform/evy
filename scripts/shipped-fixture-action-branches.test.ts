@@ -164,7 +164,7 @@ describe("shipped fixtures satisfy the row schema", () => {
 			if (!data) continue;
 			const pickupAddress = data.pickup_address;
 			if (!pickupAddress?.includes("findFirst(evy.addresses")) continue;
-			if (!pickupAddress.includes("data.type == pickup")) {
+			if (!pickupAddress.includes("type == pickup")) {
 				unguarded.push(`${source}: ${branch}`);
 			}
 		}
@@ -178,18 +178,18 @@ describe("shipped fixtures satisfy the row schema", () => {
 		for (const { source, branch, ast } of fixtureBranches) {
 			if (!ast) continue;
 			const data = findCreateInlineData(ast);
-			const inline = data?.data;
-			if (!inline?.includes("value: pending")) continue;
+			if (!data) continue;
+			if (!data.value?.includes("pending")) continue;
 
 			if (
-				inline.includes("type: delivery") &&
-				!inline.includes("destination_address")
+				data.type?.includes("delivery") &&
+				!data.data?.includes("destination_address")
 			) {
 				missing.push(`${source}: ${branch}`);
 			}
 			if (
-				inline.includes("type: shipping") &&
-				!inline.includes("destination_address")
+				data.type?.includes("shipping") &&
+				!data.data?.includes("destination_address")
 			) {
 				missing.push(`${source}: ${branch}`);
 			}
@@ -205,12 +205,12 @@ describe("shipped fixtures satisfy the row schema", () => {
 			if (!branch.includes("value: cancel")) continue;
 
 			if (
-				branch.includes("data.type == delivery") &&
+				branch.includes("type == delivery") &&
 				!branch.includes("destination_address")
 			) {
 				violations.push(`${source}: ${branch}`);
 			}
-			if (branch.includes("data.type == shipping")) {
+			if (branch.includes("type == shipping")) {
 				if (!branch.includes("destination_address")) {
 					violations.push(`${source}: ${branch}`);
 				}

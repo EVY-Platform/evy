@@ -149,6 +149,8 @@
 				"id",
 				"fk",
 				"resource",
+				"type",
+				"value",
 				"created_at",
 				"updated_at",
 				"data",
@@ -165,6 +167,12 @@
 				},
 				"resource": {
 					"$ref": "../common/rpc.schema.json#/$defs/ResourceRef"
+				},
+				"type": {
+					"type": "string"
+				},
+				"value": {
+					"type": "string"
 				},
 				"created_at": {
 					"type": "string",

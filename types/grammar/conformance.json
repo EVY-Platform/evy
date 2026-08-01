@@ -858,7 +858,7 @@
 			"id": "action-parse-create-nested-inline",
 			"category": "action-parse",
 			"platforms": ["ios", "web"],
-			"input": "{create(evy.messages,{fk: {marketplace.items.id}, resource: marketplace.items, data: {type: delivery, value: pending, time: {selected_delivery_timeslot}, destination_address: delivery_address}})}",
+			"input": "{create(evy.messages,{fk: {marketplace.items.id}, resource: marketplace.items, type: delivery, value: pending, data: {time: {selected_delivery_timeslot}, destination_address: delivery_address}})}",
 			"expect": {
 				"ast": {
 					"fn": "create",
@@ -867,7 +867,9 @@
 					"data": {
 						"fk": "{marketplace.items.id}",
 						"resource": "marketplace.items",
-						"data": "{type: delivery, value: pending, time: {selected_delivery_timeslot}, destination_address: delivery_address}"
+						"type": "delivery",
+						"value": "pending",
+						"data": "{time: {selected_delivery_timeslot}, destination_address: delivery_address}"
 					}
 				}
 			},
@@ -1269,11 +1271,11 @@
 			"id": "split-args-filter-nested-find-first-sort",
 			"category": "split-args",
 			"platforms": ["ios", "web"],
-			"input": "evy.messages, $datum.data.value == \"pending\" && findFirst(sort(evy.messages, desc, created_at), fk == $datum.fk && data.type == $datum.data.type).id == $datum.id",
+			"input": "evy.messages, $datum.value == \"pending\" && findFirst(sort(evy.messages, desc, created_at), fk == $datum.fk && type == $datum.type).id == $datum.id",
 			"expect": {
 				"args": [
 					"evy.messages",
-					"$datum.data.value == \"pending\" && findFirst(sort(evy.messages, desc, created_at), fk == $datum.fk && data.type == $datum.data.type).id == $datum.id"
+					"$datum.value == \"pending\" && findFirst(sort(evy.messages, desc, created_at), fk == $datum.fk && type == $datum.type).id == $datum.id"
 				]
 			},
 			"notes": "filter's nested findFirst(sort(…)) argument must stay one arg — commas inside the nested calls are not separators."
@@ -1338,30 +1340,33 @@
 			"id": "expression-filter-latest-message-self-id-idiom",
 			"category": "expression",
 			"platforms": ["ios"],
-			"input": "{filter(messages_holder, $datum.data.value == \"pending\" && findFirst(sort(messages_holder, desc, created_at), fk == $datum.fk && data.type == $datum.data.type).id == $datum.id).0.id}",
+			"input": "{filter(messages_holder, $datum.value == \"pending\" && findFirst(sort(messages_holder, desc, created_at), fk == $datum.fk && type == $datum.type).id == $datum.id).0.id}",
 			"data": {
 				"messages_holder": [
 					{
 						"id": "dfc53233-6152-4878-bf4f-b11a47c636ac",
 						"fk": "12401f50-cf1a-45d7-a112-2e68a2070466",
 						"created_at": "2026-06-01T00:00:00.000Z",
-						"data": { "type": "pickup", "value": "pending" }
+						"type": "pickup",
+						"value": "pending",
+						"data": {}
 					},
 					{
 						"id": "b0897a47-c45c-4e9c-8021-8ec3bdcac59c",
 						"fk": "12401f50-cf1a-45d7-a112-2e68a2070466",
 						"created_at": "2026-06-01T00:01:00.000Z",
 						"parent_message_id": "dfc53233-6152-4878-bf4f-b11a47c636ac",
-						"data": {
-							"type": "pickup",
-							"value": "accept"
-						}
+						"type": "pickup",
+						"value": "accept",
+						"data": {}
 					},
 					{
 						"id": "a1b2c3d4-e5f6-4789-a012-3456789abcde",
 						"fk": "12401f50-cf1a-45d7-a112-2e68a2070466",
 						"created_at": "2026-06-01T00:02:00.000Z",
-						"data": { "type": "delivery", "value": "pending" }
+						"type": "delivery",
+						"value": "pending",
+						"data": {}
 					}
 				]
 			},

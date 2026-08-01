@@ -28,7 +28,7 @@
 							"name": "For you requests",
 							"title": "",
 							"placeholder": "",
-							"source": "{filter(evy.messages, $datum.data.value == \"pending\" && owns($datum.resource, $datum.fk) == true && findFirst(sort(evy.messages, desc, created_at), fk == $datum.fk && data.type == $datum.data.type).id == $datum.id)}",
+							"source": "{filter(evy.messages, $datum.value == \"pending\" && owns($datum.resource, $datum.fk) == true && findFirst(sort(evy.messages, desc, created_at), fk == $datum.fk && type == $datum.type).id == $datum.id)}",
 							"no_results": "No requests",
 							"destination": "",
 							"visible": "true",
@@ -38,7 +38,7 @@
 								"type": "list_item",
 								"name": "For you request row",
 								"title": "{findFirst(marketplace.items, $datum.fk).title}",
-								"subtitle": "{if(length($datum.data.destination_address.street) > 0, formatAddress($datum.data.destination_address), $datum.data.value)}",
+								"subtitle": "{if(length($datum.data.destination_address.street) > 0, formatAddress($datum.data.destination_address), $datum.value)}",
 								"visible": "true",
 								"swipe_label": "Accept",
 								"swipe_color": "#34C759",
@@ -47,7 +47,7 @@
 										{
 											"condition": "",
 											"false": "",
-											"true": "{create(evy.messages,{fk: {$datum.fk}, resource: {$datum.resource}, parent_message_id: {$datum.id}, data: {value: accept, type: {$datum.data.type}, time: {$datum.data.time}, postalcode: {$datum.data.postalcode}, destination_address: {$datum.data.destination_address}, pickup_address: findFirst(evy.addresses, $datum.data.type == pickup && id == findFirst(marketplace.items, $datum.fk).transfer_options.pickup.address_id)}})}"
+											"true": "{create(evy.messages,{fk: {$datum.fk}, resource: {$datum.resource}, parent_message_id: {$datum.id}, type: {$datum.type}, value: accept, data: { time: {$datum.data.time}, postalcode: {$datum.data.postalcode}, destination_address: {$datum.data.destination_address}, pickup_address: findFirst(evy.addresses, $datum.type == pickup && id == findFirst(marketplace.items, $datum.fk).transfer_options.pickup.address_id)}})}"
 										}
 									],
 									"tap": [
@@ -95,7 +95,7 @@
 															{
 																"condition": "",
 																"false": "",
-																"true": "{create(evy.messages,{fk: {$datum.fk}, resource: {$datum.resource}, parent_message_id: {$datum.id}, data: {value: accept, type: {$datum.data.type}, time: {$datum.data.time}, postalcode: {$datum.data.postalcode}, destination_address: {$datum.data.destination_address}, pickup_address: findFirst(evy.addresses, $datum.data.type == pickup && id == findFirst(marketplace.items, $datum.fk).transfer_options.pickup.address_id)}})}"
+																"true": "{create(evy.messages,{fk: {$datum.fk}, resource: {$datum.resource}, parent_message_id: {$datum.id}, type: {$datum.type}, value: accept, data: { time: {$datum.data.time}, postalcode: {$datum.data.postalcode}, destination_address: {$datum.data.destination_address}, pickup_address: findFirst(evy.addresses, $datum.type == pickup && id == findFirst(marketplace.items, $datum.fk).transfer_options.pickup.address_id)}})}"
 															},
 															{
 																"condition": "",
@@ -118,7 +118,7 @@
 															{
 																"condition": "",
 																"false": "",
-																"true": "{create(evy.messages,{fk: {$datum.fk}, resource: {$datum.resource}, parent_message_id: {$datum.id}, data: {value: reject, type: {$datum.data.type}, time: {$datum.data.time}, postalcode: {$datum.data.postalcode}, destination_address: {$datum.data.destination_address}})}"
+																"true": "{create(evy.messages,{fk: {$datum.fk}, resource: {$datum.resource}, parent_message_id: {$datum.id}, type: {$datum.type}, value: reject, data: { time: {$datum.data.time}, postalcode: {$datum.data.postalcode}, destination_address: {$datum.data.destination_address}})}"
 															},
 															{
 																"condition": "",
@@ -140,7 +140,7 @@
 							"name": "From you requests",
 							"title": "",
 							"placeholder": "",
-							"source": "{filter(evy.messages, $datum.data.value == \"pending\" && owns($datum.resource, $datum.fk) == false && findFirst(sort(evy.messages, desc, created_at), fk == $datum.fk && data.type == $datum.data.type).id == $datum.id)}",
+							"source": "{filter(evy.messages, $datum.value == \"pending\" && owns($datum.resource, $datum.fk) == false && findFirst(sort(evy.messages, desc, created_at), fk == $datum.fk && type == $datum.type).id == $datum.id)}",
 							"no_results": "No requests",
 							"destination": "",
 							"visible": "true",
@@ -150,7 +150,7 @@
 								"type": "list_item",
 								"name": "From you request row",
 								"title": "{findFirst(marketplace.items, $datum.fk).title}",
-								"subtitle": "{$datum.data.value}",
+								"subtitle": "{$datum.value}",
 								"visible": "true",
 								"swipe_label": "Cancel",
 								"swipe_color": "#FF3B30",
@@ -159,7 +159,7 @@
 										{
 											"condition": "",
 											"false": "",
-											"true": "{create(evy.messages,{fk: {$datum.fk}, resource: {$datum.resource}, parent_message_id: {$datum.id}, data: {value: cancel, type: {$datum.data.type}, time: {$datum.data.time}, postalcode: {$datum.data.postalcode}, destination_address: {$datum.data.destination_address}})}"
+											"true": "{create(evy.messages,{fk: {$datum.fk}, resource: {$datum.resource}, parent_message_id: {$datum.id}, type: {$datum.type}, value: cancel, data: { time: {$datum.data.time}, postalcode: {$datum.data.postalcode}, destination_address: {$datum.data.destination_address}})}"
 										}
 									]
 								}
@@ -171,7 +171,7 @@
 							"name": "Scheduled requests",
 							"title": "",
 							"placeholder": "",
-							"source": "{filter(evy.messages, $datum.data.value == \"accept\")}",
+							"source": "{filter(evy.messages, $datum.value == \"accept\")}",
 							"no_results": "No requests",
 							"destination": "",
 							"visible": "true",
@@ -181,7 +181,7 @@
 								"type": "list_item",
 								"name": "Scheduled row",
 								"title": "{findFirst(marketplace.items, $datum.fk).title}",
-								"subtitle": "{$datum.data.value}",
+								"subtitle": "{$datum.value}",
 								"visible": "true",
 								"actions": {
 									"tap": [

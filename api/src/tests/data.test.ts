@@ -500,9 +500,9 @@ describe("message resources", () => {
 			data: {
 				fk: crypto.randomUUID(),
 				resource: "test_svc.items",
+				type: "delivery",
+				value: "pending",
 				data: {
-					type: "delivery",
-					value: "pending",
 					time: "2026-06-04T10:00:00",
 					destination_address: destinationAddress,
 				},
@@ -520,9 +520,9 @@ describe("message resources", () => {
 				fk: crypto.randomUUID(),
 				resource: "test_svc.items",
 				parent_message_id: deliveryRequest.id,
+				type: "pickup",
+				value: "accept",
 				data: {
-					value: "accept",
-					type: "pickup",
 					time: "2026-06-03T09:00:00",
 					pickup_address: pickupAddress,
 				},
@@ -542,9 +542,9 @@ describe("message resources", () => {
 		const payload = {
 			fk: crypto.randomUUID(),
 			resource: "test_svc.items",
+			type: "pickup",
+			value: "pending",
 			data: {
-				type: "pickup",
-				value: "pending",
 				time: "2026-06-03T09:00:00",
 			},
 			visibility: "private" as const,
@@ -555,7 +555,7 @@ describe("message resources", () => {
 		})) as DATA_EVY_Message;
 		expect(created.id).toBeDefined();
 		expect(created.updated_at).toBeDefined();
-		expect(created.data.value).toBe("pending");
+		expect(created.value).toBe("pending");
 		expect(created.visibility).toBe("private");
 
 		const listed = (await get(dataDb, {
@@ -604,7 +604,9 @@ describe("message resources", () => {
 					fk: crypto.randomUUID(),
 					resource: "test_svc.items",
 					[removed]: removed === "status" ? "pending" : null,
-					data: { type: "pickup", value: "pending" },
+					type: "pickup",
+					value: "pending",
+					data: {},
 					visibility: "private",
 				},
 			}),
@@ -623,7 +625,9 @@ describe("getSyncRows", () => {
 			data: {
 				fk,
 				resource: targetResourceRef,
-				data: { type: "pickup", value: "pending" },
+				type: "pickup",
+				value: "pending",
+				data: {},
 				visibility: "private" as const,
 			},
 		})) as DATA_EVY_Message;
@@ -638,7 +642,9 @@ describe("getSyncRows", () => {
 				fk: otherFk,
 				resource: targetResourceRef,
 				parent_message_id: requestId,
-				data: { value: "accept", type: "pickup" },
+				type: "pickup",
+				value: "accept",
+				data: {},
 				visibility: "private" as const,
 			},
 		})) as DATA_EVY_Message;

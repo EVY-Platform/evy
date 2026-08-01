@@ -300,6 +300,8 @@ type SeedMessageRow = {
 	id: string;
 	fk: string;
 	resource: string;
+	type: string;
+	value: string;
 	created_at: string;
 	updated_at: string;
 	data: Record<string, unknown>;
@@ -328,24 +330,29 @@ function buildMessageRows(
 				`Seed message "${item.id}" has invalid resource ref "${item.resource}"`,
 			);
 		}
+		if (typeof item.type !== "string") {
+			throw new Error(
+				`Seed message "${item.id}" must have a string "type" field`,
+			);
+		}
+		if (typeof item.value !== "string") {
+			throw new Error(
+				`Seed message "${item.id}" must have a string "value" field`,
+			);
+		}
 		const data =
 			item.data !== null &&
 			typeof item.data === "object" &&
 			!Array.isArray(item.data)
 				? (item.data as Record<string, unknown>)
 				: {};
-		// A message's state lives in `data.value`: "pending" on a request, "accept" or
-		// "reject" on the response that answers one. Not every message is a request, so
-		// an absent value is fine - a misspelled one is not, and would otherwise only
-		// show up as a row the item page silently never matches.
 		if (
-			data.value !== undefined &&
 			!EVY_MESSAGE_DATA_VALUES.includes(
-				data.value as (typeof EVY_MESSAGE_DATA_VALUES)[number],
+				item.value as (typeof EVY_MESSAGE_DATA_VALUES)[number],
 			)
 		) {
 			throw new Error(
-				`Seed message "${item.id}" has data.value "${String(data.value)}"; expected one of ${EVY_MESSAGE_DATA_VALUES.join(", ")}`,
+				`Seed message "${item.id}" has value "${item.value}"; expected one of ${EVY_MESSAGE_DATA_VALUES.join(", ")}`,
 			);
 		}
 		if (
@@ -369,6 +376,8 @@ function buildMessageRows(
 			id: item.id,
 			fk: item.fk,
 			resource: item.resource,
+			type: item.type,
+			value: item.value,
 			created_at,
 			updated_at,
 			data,

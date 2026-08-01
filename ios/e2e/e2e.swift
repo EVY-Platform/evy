@@ -516,8 +516,7 @@ class E2ETestBase: XCTestCase {
     for message in messageRows {
       guard let messageData = message as? [String: Any],
         messageData["parent_message_id"] as? String == messageId,
-        let data = messageData["data"] as? [String: Any],
-        data["value"] as? String == value,
+        messageData["value"] as? String == value,
         let id = messageData["id"] as? String
       else { continue }
       return id
@@ -975,18 +974,18 @@ class E2ETestBase: XCTestCase {
   static func noArrangementLiveVisibilityExpression() -> String {
     let terms = ["pickup", "delivery", "shipping"].flatMap { type -> [String] in
       let latest = latestMessageExpression(type: type)
-      return ["\(latest).data.value != \"pending\"", "\(latest).data.value != \"accept\""]
+      return ["\(latest).value != \"pending\"", "\(latest).value != \"accept\""]
     }
     return "{\(terms.joined(separator: " && "))}"
   }
 
   /// The latest message about one transfer method for the item. Everything the item page
-  /// shows is a read of `data.value` off this - see `docs/evy/data.md`.
+  /// shows is a read of `value` off this - see `docs/evy/data.md`.
   static func latestMessageExpression(type: String) -> String {
     let messagesRef = EVYCoreResource.messages.ref
     let itemRef = MARKETPLACE_ITEMS_RESOURCE_ID
     return
-      "findFirst(sort(\(messagesRef), desc, created_at), fk == \(itemRef).id && data.type == \(type))"
+      "findFirst(sort(\(messagesRef), desc, created_at), fk == \(itemRef).id && type == \(type))"
   }
 
   static let messageCreateEnvelope =
@@ -995,7 +994,7 @@ class E2ETestBase: XCTestCase {
   static func requestCreateAction(type: String, payload: String) -> String {
     let messagesResourceId = EVYCoreResource.messages.ref
     return
-      "{create(\(messagesResourceId),{\(messageCreateEnvelope), data: {type: \(type), value: pending, \(payload)}})}"
+      "{create(\(messagesResourceId),{\(messageCreateEnvelope), type: \(type), value: pending, data: {\(payload)}})}"
   }
 
   /// Cancel is offered while the request is open, and each transfer method is independent, so
@@ -1004,32 +1003,32 @@ class E2ETestBase: XCTestCase {
     hasActive: String, noActive: String
   ) {
     let latest = latestMessageExpression(type: type)
-    let hasActive = "{\(latest).data.value == \"pending\"}"
+    let hasActive = "{\(latest).value == \"pending\"}"
     // Nothing in flight for this method: `reject`, `cancel` and "nothing yet" all land here.
     let noActive =
-      "{\(latest).data.value != \"pending\" && \(latest).data.value != \"accept\"}"
+      "{\(latest).value != \"pending\" && \(latest).value != \"accept\"}"
     return (hasActive, noActive)
   }
 
   /// A separate message says a request was accepted, and it carries the request's payload
   /// forward - which is what the confirmation row reads the agreed time from.
   static func acceptedRequestVisibilityExpression(type: String) -> String {
-    "{\(latestMessageExpression(type: type)).data.value == \"accept\"}"
+    "{\(latestMessageExpression(type: type)).value == \"accept\"}"
   }
 
   static func hideSegmentInfoWhenAcceptedVisibilityExpression(type: String) -> String {
-    "{\(latestMessageExpression(type: type)).data.value != \"accept\"}"
+    "{\(latestMessageExpression(type: type)).value != \"accept\"}"
   }
 
   /// The request container stays up while the request is open and once it has been accepted -
   /// the confirmation row lives inside it. Exact complement of the picker's gate.
   static func activeRequestVisibilityExpression(type: String) -> String {
     let latest = latestMessageExpression(type: type)
-    return "{\(latest).data.value == \"pending\" || \(latest).data.value == \"accept\"}"
+    return "{\(latest).value == \"pending\" || \(latest).value == \"accept\"}"
   }
 
   static func pendingRequestVisibilityExpression(type: String) -> String {
-    "{\(latestMessageExpression(type: type)).data.value == \"pending\"}"
+    "{\(latestMessageExpression(type: type)).value == \"pending\"}"
   }
 
   static func cancelRequestButtonLabel(type: String) -> String {
@@ -1119,7 +1118,7 @@ class E2ETestBase: XCTestCase {
     func cancelAction(type: String) -> String {
       let latest = latestMessageExpression(type: type)
       return "{create(\(messagesResourceId),{\(messageCreateEnvelope),"
-        + " parent_message_id: {\(latest).id}, data: {value: cancel, type: \(type), time: {\(latest).data.time}, postalcode: {\(latest).data.postalcode}, destination_address: {\(latest).data.destination_address}})}"
+        + " parent_message_id: {\(latest).id}, value: cancel, type: \(type), data: {time: {\(latest).data.time}, postalcode: {\(latest).data.postalcode}, destination_address: {\(latest).data.destination_address}})}"
     }
 
     return [
@@ -1685,13 +1684,13 @@ class E2ETestBase: XCTestCase {
   private static func homeInboxResponseAction(value: String) -> [String: Any] {
     let pickupAddress =
       value == "accept"
-      ? ", pickup_address: findFirst(evy.addresses, $datum.data.type == pickup && id == findFirst(\(MARKETPLACE_ITEMS_RESOURCE_ID), $datum.fk).transfer_options.pickup.address_id)"
+      ? ", pickup_address: findFirst(evy.addresses, $datum.type == pickup && id == findFirst(\(MARKETPLACE_ITEMS_RESOURCE_ID), $datum.fk).transfer_options.pickup.address_id)"
       : ""
     return [
       "condition": "",
       "false": "",
       "true":
-        "{create(\(EVYCoreResource.messages.ref),{fk: {$datum.fk}, resource: {$datum.resource}, parent_message_id: {$datum.id}, data: {value: \(value), type: {$datum.data.type}, time: {$datum.data.time}, postalcode: {$datum.data.postalcode}, destination_address: {$datum.data.destination_address}\(pickupAddress)}})}",
+        "{create(\(EVYCoreResource.messages.ref),{fk: {$datum.fk}, resource: {$datum.resource}, parent_message_id: {$datum.id}, value: \(value), type: {$datum.type}, data: {time: {$datum.data.time}, postalcode: {$datum.data.postalcode}, destination_address: {$datum.data.destination_address}\(pickupAddress)}})}",
     ]
   }
 
@@ -1758,7 +1757,7 @@ class E2ETestBase: XCTestCase {
       "title": "",
       "placeholder": "",
       "source":
-        "{filter(\(messagesRef), $datum.data.value == \"pending\" && owns($datum.resource, $datum.fk) == true && findFirst(sort(\(messagesRef), desc, created_at), fk == $datum.fk && data.type == $datum.data.type).id == $datum.id)}",
+        "{filter(\(messagesRef), $datum.value == \"pending\" && owns($datum.resource, $datum.fk) == true && findFirst(sort(\(messagesRef), desc, created_at), fk == $datum.fk && type == $datum.type).id == $datum.id)}",
       "no_results": "No requests",
       "destination": "",
       "visible": "true",
@@ -1770,7 +1769,7 @@ class E2ETestBase: XCTestCase {
         "title":
           "{findFirst(\(MARKETPLACE_ITEMS_RESOURCE_ID), $datum.fk).title}",
         "subtitle":
-          "{if(length($datum.data.destination_address.street) > 0, formatAddress($datum.data.destination_address), $datum.data.value)}",
+          "{if(length($datum.data.destination_address.street) > 0, formatAddress($datum.data.destination_address), $datum.value)}",
         "visible": "true",
         "swipe_label": "Accept",
         "swipe_color": "#34C759",
@@ -1789,7 +1788,7 @@ class E2ETestBase: XCTestCase {
       "title": "",
       "placeholder": "",
       "source":
-        "{filter(\(messagesRef), $datum.data.value == \"pending\" && owns($datum.resource, $datum.fk) == false && findFirst(sort(\(messagesRef), desc, created_at), fk == $datum.fk && data.type == $datum.data.type).id == $datum.id)}",
+        "{filter(\(messagesRef), $datum.value == \"pending\" && owns($datum.resource, $datum.fk) == false && findFirst(sort(\(messagesRef), desc, created_at), fk == $datum.fk && type == $datum.type).id == $datum.id)}",
       "no_results": "No requests",
       "destination": "",
       "visible": "true",
@@ -1800,7 +1799,7 @@ class E2ETestBase: XCTestCase {
         "name": "From you request row",
         "title":
           "{findFirst(\(MARKETPLACE_ITEMS_RESOURCE_ID), $datum.fk).title}",
-        "subtitle": "{$datum.data.value}",
+        "subtitle": "{$datum.value}",
         "visible": "true",
         "swipe_label": "Cancel",
         "swipe_color": "#FF3B30",
@@ -1816,7 +1815,7 @@ class E2ETestBase: XCTestCase {
       "name": "Scheduled requests",
       "title": "",
       "placeholder": "",
-      "source": "{filter(\(messagesRef), $datum.data.value == \"accept\")}",
+      "source": "{filter(\(messagesRef), $datum.value == \"accept\")}",
       "no_results": "No requests",
       "destination": "",
       "visible": "true",
@@ -1827,7 +1826,7 @@ class E2ETestBase: XCTestCase {
         "name": "Scheduled row",
         "title":
           "{findFirst(\(MARKETPLACE_ITEMS_RESOURCE_ID), $datum.fk).title}",
-        "subtitle": "{$datum.data.value}",
+        "subtitle": "{$datum.value}",
         "visible": "true",
         "actions": actionsObject(
           tap: [
@@ -2050,16 +2049,12 @@ class E2ETestBase: XCTestCase {
   ) { _, new in new }
 
   static func settlingMessageData(
-    value: String,
-    type: String,
     time: String,
     destinationAddress: [String: Any]? = nil,
     pickupAddress: [String: Any]? = nil
   ) -> [String: Any] {
     var data: [String: Any] = [
-      "value": value,
-      "type": type,
-      "time": time,
+      "time": time
     ]
     if let destinationAddress {
       data["destination_address"] = destinationAddress
@@ -2828,9 +2823,9 @@ final class WebSocketE2ETests: E2ETestBase {
             "resource": MARKETPLACE_ITEMS_RESOURCE_ID,
             "visibility": "private",
             "parent_message_id": requestId,
+            "type": "pickup",
+            "value": "reject",
             "data": Self.settlingMessageData(
-              value: "reject",
-              type: "pickup",
               time: selectedTimeslot
             ),
           ]
@@ -2896,9 +2891,9 @@ final class WebSocketE2ETests: E2ETestBase {
             "resource": MARKETPLACE_ITEMS_RESOURCE_ID,
             "visibility": "private",
             "parent_message_id": messageId,
+            "type": "pickup",
+            "value": "accept",
             "data": Self.settlingMessageData(
-              value: "accept",
-              type: "pickup",
               time: selectedTimeslot,
               pickupAddress: Self.amazingFridgePickupAddressRow
             ),
@@ -2960,12 +2955,11 @@ final class WebSocketE2ETests: E2ETestBase {
         // Prefer the newest match: lifecycle merges reuse one item across cancel/reject
         // cycles, so older pending rows can still exist alongside a fresh request.
         let matches = rows.compactMap { $0 as? [String: Any] }.filter { row in
-          let data = row["data"] as? [String: Any]
           guard row["fk"] as? String == itemId,
-            data?["type"] as? String == type
+            row["type"] as? String == type
           else { return false }
           if let value {
-            return data?["value"] as? String == value
+            return row["value"] as? String == value
           }
           return true
         }
@@ -3545,16 +3539,19 @@ final class WebSocketE2ETests: E2ETestBase {
     guard let messageRows = responseDataArray(from: messages) else { return false }
     return messageRows.contains { message in
       guard let messageData = message as? [String: Any],
-        messageData["fk"] as? String == itemId,
-        let messageDetails = messageData["data"] as? [String: Any]
+        messageData["fk"] as? String == itemId
       else {
         return false
       }
-      if let type, messageDetails["type"] as? String != type {
+      if let type, messageData["type"] as? String != type {
         return false
       }
       guard let valueKey, let value else { return true }
-      return messageDetails[valueKey] as? String == value
+      if valueKey == "type" || valueKey == "value" {
+        return messageData[valueKey] as? String == value
+      }
+      let messageDetails = messageData["data"] as? [String: Any]
+      return messageDetails?[valueKey] as? String == value
     }
   }
 
@@ -4090,9 +4087,9 @@ final class E2EHomeInboxTests: E2ETestBase {
           "fk": Self.seededMessageItemId,
           "resource": MARKETPLACE_ITEMS_RESOURCE_ID,
           "visibility": "private",
+          "type": "delivery",
+          "value": "pending",
           "data": [
-            "type": "delivery",
-            "value": "pending",
             "time": "2026-06-04T10:00:00",
             "destination_address": Self.rothschildDestinationAddress,
           ],
@@ -4118,10 +4115,10 @@ final class E2EHomeInboxTests: E2ETestBase {
           "fk": Self.seededMessageItemId,
           "resource": MARKETPLACE_ITEMS_RESOURCE_ID,
           "visibility": "private",
+          "type": "pickup",
+          "value": "pending",
           "data": [
-            "type": "pickup",
-            "value": "pending",
-            "time": "2026-06-03T09:00:00",
+            "time": "2026-06-03T09:00:00"
           ],
         ]
       )
@@ -4135,9 +4132,9 @@ final class E2EHomeInboxTests: E2ETestBase {
             "resource": MARKETPLACE_ITEMS_RESOURCE_ID,
             "visibility": "private",
             "parent_message_id": requestId,
+            "type": "pickup",
+            "value": responseValue,
             "data": Self.settlingMessageData(
-              value: responseValue,
-              type: "pickup",
               time: "2026-06-03T09:00:00",
               pickupAddress:
                 responseValue == "accept"
@@ -4220,10 +4217,9 @@ final class E2EHomeInboxTests: E2ETestBase {
     guard let messageRows = responseDataArray(from: messages) else { return false }
     return messageRows.contains { message in
       guard let messageData = message as? [String: Any],
-        messageData["id"] as? String == messageId,
-        let data = messageData["data"] as? [String: Any]
+        messageData["id"] as? String == messageId
       else { return false }
-      return data["value"] as? String == value
+      return messageData["value"] as? String == value
     }
   }
 

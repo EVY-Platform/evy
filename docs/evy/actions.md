@@ -33,7 +33,7 @@ mocks.
 Object-literal arguments nest braces. A message-create call might look like:
 
 ```
-{create(evy.messages, {fk: {marketplace.items.id}, resource: marketplace.items, data: {type: delivery, value: pending, time: {selected_delivery_timeslot}}})}
+{create(evy.messages, {fk: {marketplace.items.id}, resource: marketplace.items, type: delivery, value: pending, data: {time: {selected_delivery_timeslot}}})}
 ```
 
 | Function | Meaning |

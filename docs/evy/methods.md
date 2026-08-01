@@ -100,7 +100,7 @@ Id match: `{findFirst(marketplace.conditions, item.condition_id).value}` → `"E
 Expression match (a request of this type exists for an item — self-comparison idiom):
 
 ```
-{findFirst(evy.messages, fk == item.id && data.value == pending).fk == item.id}
+{findFirst(evy.messages, fk == item.id && value == pending).fk == item.id}
 ```
 
 **The latest matching record.** The collection argument is function-aware, so it takes a `sort`
@@ -108,7 +108,7 @@ rather than only a binding key — which is how you ask for the most recent matc
 first stored one. This is what the item page uses to read a transfer method's current state:
 
 ```
-{findFirst(sort(evy.messages, desc, created_at), fk == item.id && data.type == pickup).data.value}
+{findFirst(sort(evy.messages, desc, created_at), fk == item.id && type == pickup).value}
 ```
 
 Two things to know before relying on it. `sort` breaks equal keys by **original order regardless
@@ -137,7 +137,7 @@ filter({_collection_}, {_predicate_})
 Open requests this device owns (the homepage "For you" tab source):
 
 ```
-{filter(evy.messages, $datum.data.value == "pending" && owns($datum.resource, $datum.fk) == true && findFirst(sort(evy.messages, desc, created_at), fk == $datum.fk && data.type == $datum.data.type).id == $datum.id)}
+{filter(evy.messages, $datum.value == "pending" && owns($datum.resource, $datum.fk) == true && findFirst(sort(evy.messages, desc, created_at), fk == $datum.fk && type == $datum.type).id == $datum.id)}
 ```
 
 A non-collection first argument is an error. An empty match set is an empty array (not an empty

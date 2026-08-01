@@ -178,7 +178,7 @@ On iOS the private store is also part of what a device declares as owned on sync
 
 ### DATA_EVY_Message
 
-Core message record in [`data.schema.json`](../../../types/schema/data/data.schema.json) (`$defs.DATA_EVY_Message`, Postgres table `Message`). A message always relates to one record of another resource: `fk` is that record's id, and `resource` is the dotted ref of the resource the `fk` belongs to (e.g. `marketplace.items`). Use-case-specific fields (e.g. `type`, `time`, `postalcode`) live in the free-form `data` object.
+Core message record in [`data.schema.json`](../../../types/schema/data/data.schema.json) (`$defs.DATA_EVY_Message`, Postgres table `Message`). A message always relates to one record of another resource: `fk` is that record's id, and `resource` is the dotted ref of the resource the `fk` belongs to (e.g. `marketplace.items`). `type` and `value` are required root attributes; other use-case-specific fields (e.g. `time`, `postalcode`, address objects) live in the free-form `data` object.
 
 On the wire this is accessed with `resource: "evy.messages"`.
 
@@ -186,7 +186,7 @@ On the wire this is accessed with `resource: "evy.messages"`.
 
 **Nothing in the system updates a message.** A request's whole life is the sequence of messages naming it, ordered by `created_at`: asked, then accepted, rejected or withdrawn. There is no `status` column and no `archivedAt` column; each held part of this before the lifecycle became append-only.
 
-`data.value` holds the whole vocabulary — `"pending"` on a request, and `"accept"`, `"reject"` or `"cancel"` on the message that settles one. A request says `"pending"` outright rather than leaving the key absent, so the predicates read as one state machine and a message kind that carries no state is never mistaken for something to answer.
+`value` holds the whole vocabulary — `"pending"` on a request, and `"accept"`, `"reject"` or `"cancel"` on the message that settles one. A request says `"pending"` outright rather than leaving the key absent, so the predicates read as one state machine and a message kind that carries no state is never mistaken for something to answer.
 
 A settling message addresses whatever record the request addressed — same `fk` and `resource` — and **carries the request's whole `data` forward**, overriding `value` and setting `parent_message_id` on the row to name what it answers. That duplication is load-bearing rather than sloppy: `findFirst` cannot nest, so a lookup that finds the settling message cannot reach through it to the request. Anything the settled state displays — the agreed time, the address it is going to or being collected from — has to be on the message that says so, or the confirmation row renders empty.
 
@@ -194,15 +194,15 @@ Accepting, rejecting and cancelling are therefore the same operation with a diff
 
 #### The state of a transfer method is its latest message
 
-The item page reads one thing per transfer method: the **latest** message for that `(fk, data.type)` pair.
+The item page reads one thing per transfer method: the **latest** message for that `(fk, type)` pair.
 
 ```
-findFirst(sort(evy.messages, desc, created_at), fk == <item>.id && data.type == pickup)
+findFirst(sort(evy.messages, desc, created_at), fk == <item>.id && type == pickup)
 ```
 
 `pending` means a request is open (offer to cancel it); `accept` means it is agreed (show the time). `reject`, `cancel` and "no message at all" are the same branch — nothing is in flight, so offer to request again.
 
-Each `(fk, data.type)` pair is **tracked independently** — a rejected pickup says nothing about delivery — but only one arrangement is live at a time in the UI. The tab container holding the three request controls is gated on *nothing* being live, so while one method is pending or agreed the page shows that one arrangement alone. Requesting another means settling the current one first.
+Each `(fk, type)` pair is **tracked independently** — a rejected pickup says nothing about delivery — but only one arrangement is live at a time in the UI. The tab container holding the three request controls is gated on *nothing* being live, so while one method is pending or agreed the page shows that one arrangement alone. Requesting another means settling the current one first.
 
 Two things follow that are easy to trip over:
 
@@ -227,12 +227,12 @@ Two optional keys carry full address objects inside message `data`:
 
 A settling message carries the request's whole `data` forward, so accept/reject/cancel templates
 must forward `destination_address` when present. The seller's pickup lookup on accept must be
-guarded on `data.type == pickup`: the item only carries the public pickup location
+guarded on `type == pickup`: the item only carries the public pickup location
 (`postcode`, `latitude`, `longitude`), and an unguarded `findFirst` over `evy.addresses` would
 disclose the seller's private street on every delivery accept.
 
 **An accepted request shows the full address, not the postcode.** Each active-request container on
-the item page carries its own address row gated on `data.value == "accept"`, so the postcode only
+the item page carries its own address row gated on `value == "accept"`, so the postcode only
 ever stands in for an address that is not known yet:
 
 | method | pending / settled | accepted |

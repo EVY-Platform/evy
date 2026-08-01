@@ -237,7 +237,9 @@ describe("API E2E Tests", () => {
 					fk: itemId,
 					resource: itemResourceRef,
 					visibility: "private",
-					data: { type: "pickup", value: "pending" },
+					type: "pickup",
+					value: "pending",
+					data: {},
 				},
 			});
 
@@ -248,7 +250,9 @@ describe("API E2E Tests", () => {
 					resource: itemResourceRef,
 					parent_message_id: request.id,
 					visibility: "private",
-					data: { value: "accept", type: "pickup" },
+					type: "pickup",
+					value: "accept",
+					data: {},
 				},
 			});
 
@@ -275,7 +279,7 @@ describe("API E2E Tests", () => {
 				(message: { id: string }) => message.id === response.id,
 			);
 			expect(delivered.parent_message_id).toBe(request.id);
-			expect(delivered.data).toMatchObject({
+			expect(delivered).toMatchObject({
 				value: "accept",
 				type: "pickup",
 			});

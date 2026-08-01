@@ -6,7 +6,7 @@ Marketplace owns its own payload schemas and validates every `create` and `updat
 
 Shared value objects (`location`, `price`, `address`, `area`, `photo`, `timeslot`, `transfer_options`, `duration`) are documented in [EVY data models](../../evy/data.md).
 
-Item requests and seller/buyer messages are core [`DATA_EVY_Message`](../../evy/data.md#data_evy_message) rows (`evy.messages`), not marketplace blobs.
+Item requests and seller/buyer messages are core [`DATA_EVY_Message`](../../evy/data.md#data_evy_message) rows (`evy.messages`), not marketplace blobs — `type` and `value` live on the row root; carried fields such as `time` and addresses live in `data`.
 
 ## Simple lookup resources
 

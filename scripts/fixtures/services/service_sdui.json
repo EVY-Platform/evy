@@ -118,7 +118,7 @@
 								}
 							]
 						},
-						"visible": "{findFirst(sort(evy.messages, desc, created_at), fk == marketplace.items.id && data.type == pickup).data.value != \"pending\" && findFirst(sort(evy.messages, desc, created_at), fk == marketplace.items.id && data.type == pickup).data.value != \"accept\" && findFirst(sort(evy.messages, desc, created_at), fk == marketplace.items.id && data.type == delivery).data.value != \"pending\" && findFirst(sort(evy.messages, desc, created_at), fk == marketplace.items.id && data.type == delivery).data.value != \"accept\" && findFirst(sort(evy.messages, desc, created_at), fk == marketplace.items.id && data.type == shipping).data.value != \"pending\" && findFirst(sort(evy.messages, desc, created_at), fk == marketplace.items.id && data.type == shipping).data.value != \"accept\"}",
+						"visible": "{findFirst(sort(evy.messages, desc, created_at), fk == marketplace.items.id && type == pickup).value != \"pending\" && findFirst(sort(evy.messages, desc, created_at), fk == marketplace.items.id && type == pickup).value != \"accept\" && findFirst(sort(evy.messages, desc, created_at), fk == marketplace.items.id && type == delivery).value != \"pending\" && findFirst(sort(evy.messages, desc, created_at), fk == marketplace.items.id && type == delivery).value != \"accept\" && findFirst(sort(evy.messages, desc, created_at), fk == marketplace.items.id && type == shipping).value != \"pending\" && findFirst(sort(evy.messages, desc, created_at), fk == marketplace.items.id && type == shipping).value != \"accept\"}",
 						"title": "",
 						"segments": ["Pickup", "Delivery", "Shipping"],
 						"children": [
@@ -156,7 +156,7 @@
 												}
 											]
 										},
-										"visible": "{findFirst(sort(evy.messages, desc, created_at), fk == marketplace.items.id && data.type == pickup).data.value != \"pending\" && findFirst(sort(evy.messages, desc, created_at), fk == marketplace.items.id && data.type == pickup).data.value != \"accept\"}",
+										"visible": "{findFirst(sort(evy.messages, desc, created_at), fk == marketplace.items.id && type == pickup).value != \"pending\" && findFirst(sort(evy.messages, desc, created_at), fk == marketplace.items.id && type == pickup).value != \"accept\"}",
 										"title": "",
 										"start_time": "07:00",
 										"end_time": "19:00",
@@ -198,7 +198,7 @@
 														"tap": [
 															{
 																"condition": "",
-																"true": "{create(evy.messages,{fk: {marketplace.items.id}, resource: marketplace.items, data: {type: pickup, value: pending, time: {selected_pickup_timeslot}}})}",
+																"true": "{create(evy.messages,{fk: {marketplace.items.id}, resource: marketplace.items, type: pickup, value: pending, data: {time: {selected_pickup_timeslot}}})}",
 																"false": ""
 															},
 															{
@@ -294,7 +294,7 @@
 												}
 											]
 										},
-										"visible": "{findFirst(sort(evy.messages, desc, created_at), fk == marketplace.items.id && data.type == delivery).data.value != \"pending\" && findFirst(sort(evy.messages, desc, created_at), fk == marketplace.items.id && data.type == delivery).data.value != \"accept\"}",
+										"visible": "{findFirst(sort(evy.messages, desc, created_at), fk == marketplace.items.id && type == delivery).value != \"pending\" && findFirst(sort(evy.messages, desc, created_at), fk == marketplace.items.id && type == delivery).value != \"accept\"}",
 										"title": "",
 										"start_time": "07:00",
 										"end_time": "19:00",
@@ -327,7 +327,7 @@
 														"tap": [
 															{
 																"condition": "",
-																"true": "{create(evy.messages,{fk: {marketplace.items.id}, resource: marketplace.items, data: {type: delivery, value: pending, time: {selected_delivery_timeslot}, destination_address: delivery_address}})}",
+																"true": "{create(evy.messages,{fk: {marketplace.items.id}, resource: marketplace.items, type: delivery, value: pending, data: {time: {selected_delivery_timeslot}, destination_address: delivery_address}})}",
 																"false": ""
 															},
 															{
@@ -417,7 +417,7 @@
 												}
 											]
 										},
-										"visible": "{findFirst(sort(evy.messages, desc, created_at), fk == marketplace.items.id && data.type == shipping).data.value != \"pending\" && findFirst(sort(evy.messages, desc, created_at), fk == marketplace.items.id && data.type == shipping).data.value != \"accept\"}",
+										"visible": "{findFirst(sort(evy.messages, desc, created_at), fk == marketplace.items.id && type == shipping).value != \"pending\" && findFirst(sort(evy.messages, desc, created_at), fk == marketplace.items.id && type == shipping).value != \"accept\"}",
 										"title": "",
 										"label": "Ask to buy",
 										"name": "Ask to buy",
@@ -461,7 +461,7 @@
 														"tap": [
 															{
 																"condition": "",
-																"true": "{create(evy.messages,{fk: {marketplace.items.id}, resource: marketplace.items, data: {type: shipping, value: pending, postalcode: {shipping_address.postcode}, destination_address: shipping_address}})}",
+																"true": "{create(evy.messages,{fk: {marketplace.items.id}, resource: marketplace.items, type: shipping, value: pending, data: {postalcode: {shipping_address.postcode}, destination_address: shipping_address}})}",
 																"false": ""
 															},
 															{
@@ -491,15 +491,15 @@
 					{
 						"id": "f9a8b7c6-d5e4-4f3a-9b8c-7d6e5f4a3b2c",
 						"type": "vertical_container",
-						"visible": "{findFirst(sort(evy.messages, desc, created_at), fk == marketplace.items.id && data.type == pickup).data.value == \"pending\" || findFirst(sort(evy.messages, desc, created_at), fk == marketplace.items.id && data.type == pickup).data.value == \"accept\"}",
+						"visible": "{findFirst(sort(evy.messages, desc, created_at), fk == marketplace.items.id && type == pickup).value == \"pending\" || findFirst(sort(evy.messages, desc, created_at), fk == marketplace.items.id && type == pickup).value == \"accept\"}",
 						"title": "",
 						"children": [
 							{
 								"id": "1a713180-a4a4-4f23-98cf-f3e79140c832",
 								"type": "text",
-								"visible": "{findFirst(sort(evy.messages, desc, created_at), fk == marketplace.items.id && data.type == pickup).data.value == \"accept\"}",
+								"visible": "{findFirst(sort(evy.messages, desc, created_at), fk == marketplace.items.id && type == pickup).value == \"accept\"}",
 								"title": "",
-								"subtitle": "Pickup confirmed for {formatDatetime(findFirst(sort(evy.messages, desc, created_at), fk == marketplace.items.id && data.type == pickup).data.time, \"EEE do\")} at {formatDatetime(findFirst(sort(evy.messages, desc, created_at), fk == marketplace.items.id && data.type == pickup).data.time, \"HH:mm\")}",
+								"subtitle": "Pickup confirmed for {formatDatetime(findFirst(sort(evy.messages, desc, created_at), fk == marketplace.items.id && type == pickup).data.time, \"EEE do\")} at {formatDatetime(findFirst(sort(evy.messages, desc, created_at), fk == marketplace.items.id && type == pickup).data.time, \"HH:mm\")}",
 								"name": "Pickup accepted confirmation",
 								"actions": {}
 							},
@@ -507,7 +507,7 @@
 								"id": "a2f59e42-ffea-41d1-b4dc-9a8fda4423c9",
 								"type": "map",
 								"source": "{marketplace.items.transfer_options.pickup}",
-								"visible": "{findFirst(sort(evy.messages, desc, created_at), fk == marketplace.items.id && data.type == pickup).data.value != \"accept\"}",
+								"visible": "{findFirst(sort(evy.messages, desc, created_at), fk == marketplace.items.id && type == pickup).value != \"accept\"}",
 								"title": "",
 								"subtitle": "{marketplace.items.transfer_options.pickup.postcode}",
 								"name": "Pickup location",
@@ -516,10 +516,10 @@
 							{
 								"id": "c7d8e9fa-0b1c-4d2e-8f3a-4b5c6d7e8f90",
 								"type": "map",
-								"source": "{findFirst(sort(evy.messages, desc, created_at), fk == marketplace.items.id && data.type == pickup).data.pickup_address}",
-								"visible": "{findFirst(sort(evy.messages, desc, created_at), fk == marketplace.items.id && data.type == pickup).data.value == \"accept\"}",
+								"source": "{findFirst(sort(evy.messages, desc, created_at), fk == marketplace.items.id && type == pickup).data.pickup_address}",
+								"visible": "{findFirst(sort(evy.messages, desc, created_at), fk == marketplace.items.id && type == pickup).value == \"accept\"}",
 								"title": "Pickup address",
-								"subtitle": "{formatAddress(findFirst(sort(evy.messages, desc, created_at), fk == marketplace.items.id && data.type == pickup).data.pickup_address)}",
+								"subtitle": "{formatAddress(findFirst(sort(evy.messages, desc, created_at), fk == marketplace.items.id && type == pickup).data.pickup_address)}",
 								"name": "Pickup address",
 								"actions": {}
 							},
@@ -535,7 +535,7 @@
 										}
 									]
 								},
-								"visible": "{findFirst(sort(evy.messages, desc, created_at), fk == marketplace.items.id && data.type == pickup).data.value == \"pending\"}",
+								"visible": "{findFirst(sort(evy.messages, desc, created_at), fk == marketplace.items.id && type == pickup).value == \"pending\"}",
 								"title": "",
 								"label": "Cancel pickup request",
 								"style": "danger",
@@ -562,7 +562,7 @@
 												"tap": [
 													{
 														"condition": "",
-														"true": "{create(evy.messages,{fk: {marketplace.items.id}, resource: marketplace.items, parent_message_id: {findFirst(sort(evy.messages, desc, created_at), fk == marketplace.items.id && data.type == pickup).id}, data: {value: cancel, type: pickup, time: {findFirst(sort(evy.messages, desc, created_at), fk == marketplace.items.id && data.type == pickup).data.time}}})}",
+														"true": "{create(evy.messages,{fk: {marketplace.items.id}, resource: marketplace.items, parent_message_id: {findFirst(sort(evy.messages, desc, created_at), fk == marketplace.items.id && type == pickup).id}, type: pickup, value: cancel, data: {time: {findFirst(sort(evy.messages, desc, created_at), fk == marketplace.items.id && type == pickup).data.time}}})}",
 														"false": ""
 													},
 													{
@@ -590,31 +590,31 @@
 					{
 						"id": "e8a7b6c5-d4e3-4f2a-8b9c-6d5e4f3a2b1c",
 						"type": "vertical_container",
-						"visible": "{findFirst(sort(evy.messages, desc, created_at), fk == marketplace.items.id && data.type == delivery).data.value == \"pending\" || findFirst(sort(evy.messages, desc, created_at), fk == marketplace.items.id && data.type == delivery).data.value == \"accept\"}",
+						"visible": "{findFirst(sort(evy.messages, desc, created_at), fk == marketplace.items.id && type == delivery).value == \"pending\" || findFirst(sort(evy.messages, desc, created_at), fk == marketplace.items.id && type == delivery).value == \"accept\"}",
 						"title": "",
 						"children": [
 							{
 								"id": "0fa0adba-aab4-4a0e-a8a4-fa1236f7dd9c",
 								"type": "text",
-								"visible": "{findFirst(sort(evy.messages, desc, created_at), fk == marketplace.items.id && data.type == delivery).data.value == \"accept\"}",
+								"visible": "{findFirst(sort(evy.messages, desc, created_at), fk == marketplace.items.id && type == delivery).value == \"accept\"}",
 								"title": "",
-								"subtitle": "Delivery confirmed for {formatDatetime(findFirst(sort(evy.messages, desc, created_at), fk == marketplace.items.id && data.type == delivery).data.time, \"EEE do\")} at {formatDatetime(findFirst(sort(evy.messages, desc, created_at), fk == marketplace.items.id && data.type == delivery).data.time, \"HH:mm\")}",
+								"subtitle": "Delivery confirmed for {formatDatetime(findFirst(sort(evy.messages, desc, created_at), fk == marketplace.items.id && type == delivery).data.time, \"EEE do\")} at {formatDatetime(findFirst(sort(evy.messages, desc, created_at), fk == marketplace.items.id && type == delivery).data.time, \"HH:mm\")}",
 								"name": "Delivery accepted confirmation",
 								"actions": {}
 							},
 							{
 								"id": "d8e9fa0b-1c2d-4e3f-8a4b-5c6d7e8f9a01",
 								"type": "text",
-								"visible": "{findFirst(sort(evy.messages, desc, created_at), fk == marketplace.items.id && data.type == delivery).data.value == \"accept\"}",
+								"visible": "{findFirst(sort(evy.messages, desc, created_at), fk == marketplace.items.id && type == delivery).value == \"accept\"}",
 								"title": "Delivering to",
-								"subtitle": "{formatAddress(findFirst(sort(evy.messages, desc, created_at), fk == marketplace.items.id && data.type == delivery).data.destination_address)}",
+								"subtitle": "{formatAddress(findFirst(sort(evy.messages, desc, created_at), fk == marketplace.items.id && type == delivery).data.destination_address)}",
 								"name": "Delivery address",
 								"actions": {}
 							},
 							{
 								"id": "be5f9dc0-22dc-4d09-8d1f-47297b1ccb07",
 								"type": "text",
-								"visible": "{findFirst(sort(evy.messages, desc, created_at), fk == marketplace.items.id && data.type == delivery).data.value != \"accept\"}",
+								"visible": "{findFirst(sort(evy.messages, desc, created_at), fk == marketplace.items.id && type == delivery).value != \"accept\"}",
 								"title": "",
 								"subtitle": "Buyer will drop off",
 								"name": "Drop-off note",
@@ -632,7 +632,7 @@
 										}
 									]
 								},
-								"visible": "{findFirst(sort(evy.messages, desc, created_at), fk == marketplace.items.id && data.type == delivery).data.value == \"pending\"}",
+								"visible": "{findFirst(sort(evy.messages, desc, created_at), fk == marketplace.items.id && type == delivery).value == \"pending\"}",
 								"title": "",
 								"label": "Cancel delivery request",
 								"style": "danger",
@@ -659,7 +659,7 @@
 												"tap": [
 													{
 														"condition": "",
-														"true": "{create(evy.messages,{fk: {marketplace.items.id}, resource: marketplace.items, parent_message_id: {findFirst(sort(evy.messages, desc, created_at), fk == marketplace.items.id && data.type == delivery).id}, data: {value: cancel, type: delivery, time: {findFirst(sort(evy.messages, desc, created_at), fk == marketplace.items.id && data.type == delivery).data.time}, destination_address: {findFirst(sort(evy.messages, desc, created_at), fk == marketplace.items.id && data.type == delivery).data.destination_address}}})}",
+														"true": "{create(evy.messages,{fk: {marketplace.items.id}, resource: marketplace.items, parent_message_id: {findFirst(sort(evy.messages, desc, created_at), fk == marketplace.items.id && type == delivery).id}, type: delivery, value: cancel, data: {time: {findFirst(sort(evy.messages, desc, created_at), fk == marketplace.items.id && type == delivery).data.time}, destination_address: {findFirst(sort(evy.messages, desc, created_at), fk == marketplace.items.id && type == delivery).data.destination_address}}})}",
 														"false": ""
 													},
 													{
@@ -687,13 +687,13 @@
 					{
 						"id": "d7b6a5c4-e3f2-4a1b-9c8d-5e4f3a2b1c0d",
 						"type": "vertical_container",
-						"visible": "{findFirst(sort(evy.messages, desc, created_at), fk == marketplace.items.id && data.type == shipping).data.value == \"pending\" || findFirst(sort(evy.messages, desc, created_at), fk == marketplace.items.id && data.type == shipping).data.value == \"accept\"}",
+						"visible": "{findFirst(sort(evy.messages, desc, created_at), fk == marketplace.items.id && type == shipping).value == \"pending\" || findFirst(sort(evy.messages, desc, created_at), fk == marketplace.items.id && type == shipping).value == \"accept\"}",
 						"title": "",
 						"children": [
 							{
 								"id": "ba000cfa-6a3b-4817-8296-0c14f77bc199",
 								"type": "text",
-								"visible": "{findFirst(sort(evy.messages, desc, created_at), fk == marketplace.items.id && data.type == shipping).data.value == \"accept\"}",
+								"visible": "{findFirst(sort(evy.messages, desc, created_at), fk == marketplace.items.id && type == shipping).value == \"accept\"}",
 								"title": "",
 								"subtitle": "Shipping confirmed",
 								"name": "Shipping accepted confirmation",
@@ -702,16 +702,16 @@
 							{
 								"id": "e9fa0b1c-2d3e-4f4a-8b5c-6d7e8f9a0b12",
 								"type": "text",
-								"visible": "{findFirst(sort(evy.messages, desc, created_at), fk == marketplace.items.id && data.type == shipping).data.value == \"accept\"}",
+								"visible": "{findFirst(sort(evy.messages, desc, created_at), fk == marketplace.items.id && type == shipping).value == \"accept\"}",
 								"title": "Shipping to",
-								"subtitle": "{formatAddress(findFirst(sort(evy.messages, desc, created_at), fk == marketplace.items.id && data.type == shipping).data.destination_address)}",
+								"subtitle": "{formatAddress(findFirst(sort(evy.messages, desc, created_at), fk == marketplace.items.id && type == shipping).data.destination_address)}",
 								"name": "Shipping address",
 								"actions": {}
 							},
 							{
 								"id": "e0c7eb86-9e21-4aba-9248-22e97f56c604",
 								"type": "text",
-								"visible": "{findFirst(sort(evy.messages, desc, created_at), fk == marketplace.items.id && data.type == shipping).data.value != \"accept\"}",
+								"visible": "{findFirst(sort(evy.messages, desc, created_at), fk == marketplace.items.id && type == shipping).value != \"accept\"}",
 								"title": "",
 								"subtitle": "Delivered to your door",
 								"name": "Shipping note",
@@ -729,7 +729,7 @@
 										}
 									]
 								},
-								"visible": "{findFirst(sort(evy.messages, desc, created_at), fk == marketplace.items.id && data.type == shipping).data.value == \"pending\"}",
+								"visible": "{findFirst(sort(evy.messages, desc, created_at), fk == marketplace.items.id && type == shipping).value == \"pending\"}",
 								"title": "",
 								"label": "Cancel shipping request",
 								"style": "danger",
@@ -756,7 +756,7 @@
 												"tap": [
 													{
 														"condition": "",
-														"true": "{create(evy.messages,{fk: {marketplace.items.id}, resource: marketplace.items, parent_message_id: {findFirst(sort(evy.messages, desc, created_at), fk == marketplace.items.id && data.type == shipping).id}, data: {value: cancel, type: shipping, postalcode: {findFirst(sort(evy.messages, desc, created_at), fk == marketplace.items.id && data.type == shipping).data.postalcode}, destination_address: {findFirst(sort(evy.messages, desc, created_at), fk == marketplace.items.id && data.type == shipping).data.destination_address}}})}",
+														"true": "{create(evy.messages,{fk: {marketplace.items.id}, resource: marketplace.items, parent_message_id: {findFirst(sort(evy.messages, desc, created_at), fk == marketplace.items.id && type == shipping).id}, type: shipping, value: cancel, data: {postalcode: {findFirst(sort(evy.messages, desc, created_at), fk == marketplace.items.id && type == shipping).data.postalcode}, destination_address: {findFirst(sort(evy.messages, desc, created_at), fk == marketplace.items.id && type == shipping).data.destination_address}}})}",
 														"false": ""
 													},
 													{
