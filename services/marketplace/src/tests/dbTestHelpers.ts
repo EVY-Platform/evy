@@ -15,6 +15,8 @@ export function createPgliteTestDatabase() {
 export function registerMarketplaceTestDb(testDb: PgliteTestDb): void {
 	mock.module("../db", () => ({
 		data: schema.data,
+		item_status: schema.item_status,
+		item_status_history: schema.item_status_history,
 		db: testDb,
 		schema,
 	}));
