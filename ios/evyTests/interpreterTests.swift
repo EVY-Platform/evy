@@ -1060,6 +1060,57 @@ final class InterpreterTests: XCTestCase {
     XCTAssertTrue(items.isEmpty)
   }
 
+  /// D4 sold-filter: a `findFirst` miss on status history must make `!= "sold"` true so items
+  /// with no status rows still appear in search.
+  func testFilterFindFirstMissNotEqualSoldIncludesItemWithoutStatusHistory() throws {
+    let itemsRef = MarketplaceTestFixture.itemsRef
+    let statusesRef = "marketplace.item_statuses"
+    let availableItemId = UUID().uuidString
+    let soldItemId = UUID().uuidString
+    let pendingItemId = UUID().uuidString
+
+    try store(
+      .array([
+        .dictionary(["id": .string(availableItemId), "title": .string("No status yet")]),
+        .dictionary(["id": .string(soldItemId), "title": .string("Sold item")]),
+        .dictionary(["id": .string(pendingItemId), "title": .string("Pickup pending")]),
+      ]),
+      at: itemsRef
+    )
+    try store(
+      .array([
+        .dictionary([
+          "id": .string(UUID().uuidString),
+          "item_id": .string(soldItemId),
+          "status": .string("sold"),
+          "created_at": .string("2026-06-01T00:00:00.000Z"),
+        ]),
+        .dictionary([
+          "id": .string(UUID().uuidString),
+          "item_id": .string(pendingItemId),
+          "status": .string("pickup_pending"),
+          "created_at": .string("2026-06-01T00:00:00.000Z"),
+        ]),
+      ]),
+      at: statusesRef
+    )
+
+    let filtered = try EVY.getDataFromText(
+      """
+      {filter(\(itemsRef), findFirst(sort(\(statusesRef), desc, created_at), item_id == $datum.id).status != "sold")}
+      """
+    )
+    guard case .array(let items) = filtered else {
+      return XCTFail("filter should return an array")
+    }
+
+    XCTAssertEqual(
+      Set(items.compactMap { $0.identifierValue() }),
+      Set([availableItemId, pendingItemId]),
+      "absent status history and non-sold statuses should pass the sold filter"
+    )
+  }
+
   func testFilterRejectsNonCollectionInput() throws {
     let key = uniqueKey("scalar")
     try store(.string("not-a-collection"), at: key)

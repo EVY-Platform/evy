@@ -200,7 +200,9 @@ On the wire this is accessed with `resource: "evy.messages"`.
 
 **Nothing in the system updates a message.** A request's whole life is the sequence of messages naming it, ordered by `created_at`: asked, then accepted, rejected or withdrawn. There is no `status` column and no `archivedAt` column; each held part of this before the lifecycle became append-only.
 
-`value` holds the whole vocabulary — `"pending"` on a request, and `"accept"`, `"reject"` or `"cancel"` on the message that settles one. A request says `"pending"` outright rather than leaving the key absent, so the predicates read as one state machine and a message kind that carries no state is never mistaken for something to answer.
+`value` holds the whole vocabulary — `"pending"` on a request, and `"accept"`, `"reject"` or `"cancel"` on the message that settles one. Purchase flows extend this with handshake values (`transaction`, `given`, `sent`, …), fulfillment failures (`given_failed`, `reception_failed`, `failed`, …), and payment lifecycle values (`charge_initiated`, `transfer_initiated`, …) reserved for the future payment system. The canonical list lives in [`core.resources.json`](../../../types/schema/resources/core.resources.json) under `messages.dataValues`.
+
+**Client rule:** `reject`, `cancel`, `failed`, and every `*_failed` / `*_rejected` value is *negative* — the step named by its `parent_message_id` did not take effect and the chain is back to the state before it. Every SDUI "latest" check must be value-scoped with this rule; `…_initiated` and `…_completed` are equivalent for gating.
 
 A settling message addresses whatever record the request addressed — same `fk` and `resource` — and **carries the request's whole `data` forward**, overriding `value` and setting `parent_message_id` on the row to name what it answers. That duplication is load-bearing rather than sloppy: `findFirst` cannot nest, so a lookup that finds the settling message cannot reach through it to the request. Anything the settled state displays — the agreed time, the address it is going to or being collected from — has to be on the message that says so, or the confirmation row renders empty.
 

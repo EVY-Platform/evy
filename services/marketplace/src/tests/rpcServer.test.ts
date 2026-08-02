@@ -6,21 +6,14 @@ import {
 	expect,
 	it,
 } from "bun:test";
-import { migrate } from "drizzle-orm/pglite/migrator";
 import type { HookRequest, ResourcesResponse } from "evy-types";
 import { EVY_CORE_RESOURCE_REF } from "evy-types/coreResources";
 import { getFreePort } from "evy-types/wsTestHelpers";
 import { Client } from "rpc-websockets";
-import { schema } from "../db";
+import { db, schema } from "../db";
+import { drainPurchaseQueues } from "../purchase";
 import { MARKETPLACE_RESOURCE } from "../resources";
-import {
-	createPgliteTestDatabase,
-	registerMarketplaceTestDb,
-} from "./dbTestHelpers";
-
-const { pgliteClient, testDb } = createPgliteTestDatabase();
-
-registerMarketplaceTestDb(testDb);
+import { ensureMarketplaceTestSchema } from "./sharedTestDb";
 
 const { startMarketplaceRpcServer, stopMarketplaceRpcServer } = await import(
 	"../rpc"
@@ -29,18 +22,19 @@ const { startMarketplaceRpcServer, stopMarketplaceRpcServer } = await import(
 let wsPort: number;
 
 beforeAll(async () => {
-	await migrate(testDb, { migrationsFolder: "./drizzle" });
+	await ensureMarketplaceTestSchema();
 	wsPort = await getFreePort();
 	await startMarketplaceRpcServer({ host: "127.0.0.1", port: wsPort });
 });
 
 afterAll(async () => {
 	stopMarketplaceRpcServer();
-	await pgliteClient.close();
 });
 
 beforeEach(async () => {
-	await testDb.delete(schema.data);
+	await drainPurchaseQueues();
+	await db.delete(schema.data);
+	await db.delete(schema.item_status_history);
 });
 
 function createClient(): InstanceType<typeof Client> {
@@ -151,6 +145,40 @@ describe("marketplace JSON-RPC server", () => {
 		expect(response).toEqual({ ok: true });
 
 		await expect(client.call("hook", { hook: "nope" })).rejects.toThrow();
+
+		client.close();
+	});
+
+	it("vetoes before_create when item status blocks the message", async () => {
+		const client = createClient();
+		await waitForOpen(client);
+		const itemId = crypto.randomUUID();
+
+		await db.insert(schema.item_status_history).values({
+			item_id: itemId,
+			status: "sold",
+			created_at: new Date().toISOString(),
+		});
+
+		const hookRequest: HookRequest = {
+			hook: "before_create",
+			resource: EVY_CORE_RESOURCE_REF.MESSAGES,
+			operation: "create",
+			data: {
+				fk: itemId,
+				resource: MARKETPLACE_RESOURCE.ITEMS,
+				type: "pickup",
+				value: "pending",
+				data: { time: "2026-06-03T09:00:00" },
+				visibility: "private",
+			},
+		};
+
+		const response = await client.call("hook", hookRequest);
+		expect(response).toEqual({
+			ok: false,
+			reason: 'Cannot send "pending" while item status is "sold"',
+		});
 
 		client.close();
 	});

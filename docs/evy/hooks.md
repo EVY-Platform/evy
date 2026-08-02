@@ -61,3 +61,11 @@ Register `hook` on your JSON-RPC server, validate params with
 `validateStrictHookRequest`, and return a `HookResponse`. See
 [`services/marketplace/src/hooks.ts`](../../services/marketplace/src/hooks.ts)
 and [`services/marketplace/src/rpc.ts`](../../services/marketplace/src/rpc.ts).
+
+## Marketplace (first consumer)
+
+Marketplace validates purchase messages in `before_create` against
+`item_status_history` and appends status rows in `after_create`. Implementation:
+[`services/marketplace/src/purchase.ts`](../../services/marketplace/src/purchase.ts),
+[`services/marketplace/src/status.ts`](../../services/marketplace/src/status.ts).
+Status machine tables and message vocabulary: [marketplace data models](../services/marketplace/data.md#purchase-status-machine).

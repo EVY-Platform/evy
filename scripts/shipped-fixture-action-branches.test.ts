@@ -240,4 +240,65 @@ describe("shipped fixtures satisfy the row schema", () => {
 			expect([...functions]).toContain(expected);
 		}
 	});
+
+	test("purchase confirmation creates cover the new message values", () => {
+		const expectedValues = [
+			"transaction",
+			"received",
+			"reception_failed",
+			"failed",
+			"given",
+			"given_failed",
+			"sent",
+			"sent_failed",
+			"transaction_completed",
+			"transaction_rejected",
+		];
+		const found = new Set<string>();
+
+		for (const { ast } of fixtureBranches) {
+			if (ast?.fn !== "create" || ast.mode !== "inline") continue;
+			const data = ast.data;
+			if (!data?.value) continue;
+			for (const value of expectedValues) {
+				if (data.value.includes(value)) {
+					found.add(value);
+				}
+			}
+		}
+
+		for (const expected of expectedValues) {
+			expect([...found]).toContain(expected);
+		}
+	});
+
+	test("purchase confirmation creates include parent_message_id and data", () => {
+		const purchaseValues = [
+			"transaction",
+			"received",
+			"reception_failed",
+			"failed",
+			"given",
+			"given_failed",
+			"sent",
+			"sent_failed",
+			"transaction_completed",
+			"transaction_rejected",
+		];
+		const missing: string[] = [];
+
+		for (const { source, branch, ast } of fixtureBranches) {
+			if (ast?.fn !== "create" || ast.mode !== "inline") continue;
+			const data = ast.data;
+			if (!data?.value) continue;
+			if (!purchaseValues.some((value) => data.value?.includes(value))) {
+				continue;
+			}
+			if (!data.parent_message_id || !data.data) {
+				missing.push(`${source}: ${branch}`);
+			}
+		}
+
+		expect(missing).toEqual([]);
+	});
 });

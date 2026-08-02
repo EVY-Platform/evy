@@ -7,7 +7,10 @@ import { SQL } from "bun";
 import { drizzle } from "drizzle-orm/bun-sql";
 import { migrate as migratePg } from "drizzle-orm/bun-sql/migrator";
 import { MARKETPLACE_SERVICE_DESCRIPTOR } from "../services/marketplace/src/resources";
-import { data as marketplaceDataTable } from "../services/marketplace/src/schema";
+import {
+	data as marketplaceDataTable,
+	item_status_history as marketplaceItemStatusHistoryTable,
+} from "../services/marketplace/src/schema";
 import { getPostgresConnectionUrl, requireEnv } from "../types/env";
 import type {
 	DATA_EVY_Flow,
@@ -89,7 +92,10 @@ const coreSchema = {
 	formatter: formatterTable,
 	message: messageTable,
 };
-const marketplaceSchema = { data: marketplaceDataTable };
+const marketplaceSchema = {
+	data: marketplaceDataTable,
+	item_status_history: marketplaceItemStatusHistoryTable,
+};
 
 const coreSqlClient = new SQL(getPostgresConnectionUrl("DB_EVY_DATABASE"));
 const marketplaceSqlClient = new SQL(
@@ -720,6 +726,7 @@ async function seedDatabase({
 	const marketplaceRows = buildDataRows(marketplaceDataJson, now);
 
 	await marketplaceDb.transaction(async (tx) => {
+		await tx.delete(marketplaceSchema.item_status_history);
 		await tx.delete(marketplaceSchema.data);
 		if (marketplaceRows.length > 0) {
 			await tx.insert(marketplaceSchema.data).values(marketplaceRows);

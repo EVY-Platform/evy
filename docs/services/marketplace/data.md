@@ -45,3 +45,47 @@ created_at: date-time  # ISO string in a text column
 ```
 
 Source of truth for the wire shape: [`services/marketplace/src/schema/item_status.schema.json`](../../../services/marketplace/src/schema/item_status.schema.json). Storage: [`services/marketplace/src/schema.ts`](../../../services/marketplace/src/schema.ts). `item_id` is a soft reference (no Postgres FK), matching how core rows point at marketplace items. Incremental `get` maps `filter.updated_after` to `created_at` because rows are append-only.
+
+**Current status** is the latest row for an `item_id`; no rows means `available`. Marketplace hooks append rows on message creates — see [Purchase status machine](#purchase-status-machine) below. Devices filter sold items out of home search via `marketplace.item_statuses`; `*_pending` items remain visible.
+
+## Purchase status machine
+
+Marketplace is the first real hook consumer: every `evy.messages` create targeting `marketplace.items` runs `before_create` validation against current status and `after_create` reactions that append status rows. The marketplace has no core API client — hook payloads and its own DB are its only inputs.
+
+### Status values
+
+| Status | Meaning |
+| --- | --- |
+| `available` | No active flow (implicit when history is empty) |
+| `pickup_pending` | Seller accepted a pickup request |
+| `delivery_pending` | Seller accepted a delivery request |
+| `shipping_pending` | Seller accepted a shipping request |
+| `sold` | Payment charge initiated (`charge_initiated` message) |
+
+### `before_create` validation
+
+| Incoming `(type, value)` | Valid when current status is |
+| --- | --- |
+| `pending` | `available` |
+| `accept` | `available` |
+| `transaction`, `transaction_completed`, `transaction_rejected`, `transaction_failed` | `pickup_pending` |
+| `given`, `given_failed`, `sent`, `sent_failed`, `received`, `reception_failed`, `failed` | `sold` |
+| `reject`, `cancel` | any |
+| `charge_*`, `transfer_*` | not vetoed (payment system authors these later) |
+
+Veto = RPC create error; nothing stored. Type/value pairs are sanity-checked (`given` only on `delivery`, `sent` only on `shipping`, etc.).
+
+### `after_create` reactions
+
+| Message `value` | Reaction |
+| --- | --- |
+| `accept` | append `<type>_pending` |
+| `charge_initiated` | append `sold` |
+| `transaction_rejected`, `transaction_failed`, `given_failed`, `sent_failed`, `reception_failed`, `failed`, `charge_failed`, `transfer_failed`, or `cancel` (while pending/sold) | append `available` |
+| everything else | nothing |
+
+Reactions run on an in-process per-`fk` queue; `after_create` acknowledges immediately.
+
+### What the payment system will add later
+
+Transaction rows (`evy.transactions`), real payment messages, and charge/transfer orchestration live outside marketplace. Marketplace only learns outcomes from `charge_*` / `transfer_*` messages flowing through the same hooks.

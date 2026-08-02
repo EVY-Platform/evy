@@ -1,36 +1,17 @@
-import {
-	afterAll,
-	beforeAll,
-	beforeEach,
-	describe,
-	expect,
-	it,
-} from "bun:test";
-import { migrate } from "drizzle-orm/pglite/migrator";
-import { schema } from "../db";
+import { beforeAll, beforeEach, describe, expect, it } from "bun:test";
+import { db, schema } from "../db";
 import { MARKETPLACE_RESOURCE } from "../resources";
-import {
-	createPgliteTestDatabase,
-	registerMarketplaceTestDb,
-} from "./dbTestHelpers";
-
-const { pgliteClient, testDb } = createPgliteTestDatabase();
-
-registerMarketplaceTestDb(testDb);
+import { ensureMarketplaceTestSchema } from "./sharedTestDb";
 
 const { create, deleteResource, get, update } = await import("../data");
 
 beforeAll(async () => {
-	await migrate(testDb, { migrationsFolder: "./drizzle" });
-});
-
-afterAll(async () => {
-	await pgliteClient.close();
+	await ensureMarketplaceTestSchema();
 });
 
 beforeEach(async () => {
-	await testDb.delete(schema.data);
-	await testDb.delete(schema.item_status_history);
+	await db.delete(schema.data);
+	await db.delete(schema.item_status_history);
 });
 
 describe("marketplace get/create/update", () => {
@@ -70,7 +51,7 @@ describe("marketplace get/create/update", () => {
 		const olderRow = { id: crypto.randomUUID(), value: "older" };
 		const newerRow = { id: crypto.randomUUID(), value: "newer" };
 
-		await testDb.insert(schema.data).values([
+		await db.insert(schema.data).values([
 			{
 				id: olderRow.id,
 				resource: MARKETPLACE_RESOURCE.CONDITIONS,
@@ -98,7 +79,7 @@ describe("marketplace get/create/update", () => {
 		const oldRow = { id: crypto.randomUUID(), value: "old" };
 		const newRow = { id: crypto.randomUUID(), value: "new" };
 
-		await testDb.insert(schema.data).values([
+		await db.insert(schema.data).values([
 			{
 				resource: MARKETPLACE_RESOURCE.CONDITIONS,
 				data: oldRow,
@@ -127,7 +108,7 @@ describe("marketplace get/create/update", () => {
 		const secondId = crypto.randomUUID();
 		const firstRow = { id: firstId, title: "First" };
 		const secondRow = { id: secondId, title: "Second" };
-		await testDb.insert(schema.data).values([
+		await db.insert(schema.data).values([
 			{
 				id: firstId,
 				resource: MARKETPLACE_RESOURCE.ITEMS,
@@ -515,7 +496,7 @@ describe("marketplace item_statuses", () => {
 	};
 
 	it("returns item_status_history rows via get", async () => {
-		await testDb.insert(schema.item_status_history).values(statusRow);
+		await db.insert(schema.item_status_history).values(statusRow);
 
 		const result = await get({
 			resource: MARKETPLACE_RESOURCE.ITEM_STATUSES,
@@ -535,7 +516,7 @@ describe("marketplace item_statuses", () => {
 			id: crypto.randomUUID(),
 			created_at: "2024-01-02T00:00:00.000Z",
 		};
-		await testDb
+		await db
 			.insert(schema.item_status_history)
 			.values([olderRow, newerRow]);
 

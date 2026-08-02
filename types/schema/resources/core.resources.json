@@ -44,7 +44,29 @@
 		"messages": {
 			"singular": "message",
 			"visibility": "private",
-			"dataValues": ["pending", "accept", "reject", "cancel"]
+			"dataValues": [
+				"pending",
+				"accept",
+				"reject",
+				"cancel",
+				"transaction",
+				"transaction_completed",
+				"transaction_rejected",
+				"transaction_failed",
+				"given",
+				"given_failed",
+				"sent",
+				"sent_failed",
+				"received",
+				"reception_failed",
+				"failed",
+				"charge_initiated",
+				"charge_failed",
+				"charge_completed",
+				"transfer_initiated",
+				"transfer_failed",
+				"transfer_completed"
+			]
 		},
 		"transactions": {
 			"singular": "transaction",
