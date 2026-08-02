@@ -30,6 +30,8 @@ import type {
 	FileWithBinary,
 } from "./generated/ts/files/file";
 import type { ApiRequest } from "./generated/ts/rpc/api.request";
+import type { ChargeRequest } from "./generated/ts/rpc/charge.request";
+import type { ChargeResponse } from "./generated/ts/rpc/charge.response";
 import type { CreateRequest } from "./generated/ts/rpc/create.request";
 import type { CreateResponse } from "./generated/ts/rpc/create.response";
 import type { DeleteRequest } from "./generated/ts/rpc/delete.request";
@@ -68,6 +70,12 @@ import fileSchemaRaw from "./schema/files/file.schema.json" with {
 	type: "json",
 };
 import apiRequestRaw from "./schema/rpc/api.request.schema.json" with {
+	type: "json",
+};
+import chargeRequestRaw from "./schema/rpc/charge.request.schema.json" with {
+	type: "json",
+};
+import chargeResponseRaw from "./schema/rpc/charge.response.schema.json" with {
 	type: "json",
 };
 import createRequestRaw from "./schema/rpc/create.request.schema.json" with {
@@ -151,6 +159,14 @@ const RAW_SCHEMAS: Record<string, Record<string, unknown>> = {
 	...SDUI_DEFINITION_SCHEMAS,
 	"sdui/evy.schema.json": evySduiRaw as Record<string, unknown>,
 	"files/file.schema.json": fileSchemaRaw as Record<string, unknown>,
+	"rpc/charge.request.schema.json": chargeRequestRaw as Record<
+		string,
+		unknown
+	>,
+	"rpc/charge.response.schema.json": chargeResponseRaw as Record<
+		string,
+		unknown
+	>,
 	"rpc/place_search.request.schema.json": placeSearchRequestRaw as Record<
 		string,
 		unknown
@@ -316,6 +332,7 @@ const REQUEST_SCHEMA_FILES = [
 	"rpc/update.request.schema.json",
 	"rpc/delete.request.schema.json",
 	"rpc/sync.request.schema.json",
+	"rpc/charge.request.schema.json",
 	"rpc/place_search.request.schema.json",
 	"rpc/hook.request.schema.json",
 ] as const;
@@ -336,6 +353,7 @@ const ENTITY_SCHEMA_FILES = [
 	"rpc/delete.response.schema.json",
 	"rpc/sync.response.schema.json",
 	"rpc/resources.response.schema.json",
+	"rpc/charge.response.schema.json",
 	"rpc/place_search.response.schema.json",
 	"rpc/hook.response.schema.json",
 ];
@@ -489,6 +507,14 @@ const getValidateSyncResponse = lazyValidator<SyncResponse>(
 const getValidateResourcesResponse = lazyValidator<ResourcesResponse>(
 	getEntityAjv,
 	fileId("rpc/resources.response.schema.json"),
+);
+const getValidateChargeRequest = lazyValidator<ChargeRequest>(
+	getRequestAjv,
+	fileId("rpc/charge.request.schema.json"),
+);
+const getValidateChargeResponse = lazyValidator<ChargeResponse>(
+	getEntityAjv,
+	fileId("rpc/charge.response.schema.json"),
 );
 const getValidatePlaceSearchRequest = lazyValidator<PlaceSearchRequest>(
 	getRequestAjv,
@@ -800,6 +826,14 @@ export const validateSyncResponse = makeValidator<SyncResponse>(
 export const validateResourcesResponse = makeValidator<ResourcesResponse>(
 	"ResourcesResponse",
 	getValidateResourcesResponse,
+);
+export const validateChargeRequest = makeValidator<ChargeRequest>(
+	"ChargeRequest",
+	getValidateChargeRequest,
+);
+export const validateChargeResponse = makeValidator<ChargeResponse>(
+	"ChargeResponse",
+	getValidateChargeResponse,
 );
 export const validatePlaceSearchRequest = makeValidator<PlaceSearchRequest>(
 	"PlaceSearchRequest",

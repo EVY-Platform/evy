@@ -1,6 +1,10 @@
 {
 	"$comment": "Registry of RPC procedures reachable via api{method}. The owning service decides whether the gateway handles a call itself or forwards it; the response schema is the wire contract clients bind to. Adding a procedure here is what makes it callable - api/src/procedures/coreApi.ts asserts its handlers match this file exactly.",
 	"procedures": {
+		"charge": {
+			"service": "evy",
+			"response": "rpc/charge.response.schema.json"
+		},
 		"place_search": {
 			"service": "evy",
 			"response": "rpc/place_search.response.schema.json"

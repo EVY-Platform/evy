@@ -128,6 +128,7 @@ describe("api JSON-RPC handler", () => {
 describe("core procedure registry", () => {
 	it("declares every procedure the gateway handles", () => {
 		expect(proceduresForService(EVY_CORE_SERVICE).sort()).toEqual([
+			"charge",
 			"place_search",
 		]);
 	});
@@ -150,5 +151,9 @@ describe("core procedure registry", () => {
 
 	it("carries the result attributes for place_search", () => {
 		expect(PROCEDURES.place_search.resultAttributes).toContain("street");
+	});
+
+	it("marks charge as not a bindable list source", () => {
+		expect(PROCEDURES.charge.resultAttributes).toEqual([]);
 	});
 });

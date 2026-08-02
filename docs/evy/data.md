@@ -166,6 +166,8 @@ On the wire this is accessed with `resource: "evy.rows"`.
 
 Record of money movement for a marketplace item (`fk` + `resource`). `type` is one of `charge`, `transfer`, or `withdraw`. Fees, payment provider, and signature are fixed placeholder values in v1. `authorization_message_id` points at the buyer's original request message. Full CRUD with tombstone delete.
 
+To charge a customer, call the core `charge` procedure (`api{service:evy, method:charge}`). The request supplies `fk`, `resource`, `amount`, `currency`, and `authorization_message_id`; the handler writes a `type: "charge"` transaction with v1 placeholders (`payment_provider: "stripe"`, fees `0`, `signature: "signed"`, a generated `payment_provider_transaction_id`, `visibility: "public"`) and returns the row. A real payment provider will be wired into this procedure later without changing the request shape.
+
 #### Visibility
 
 Every `DATA_EVY_*` row carries a required `visibility` attribute: `"public"` or `"private"`. **Every create states it, and nothing fills one in** — not the resource module, not the schema, not the database column. A payload without a visibility is rejected, because a record whose visibility nobody chose is a bug rather than something to guess at.

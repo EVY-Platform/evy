@@ -2,12 +2,15 @@ import type { ApiRequest, SyncResponse } from "evy-types";
 import { EVY_CORE_SERVICE } from "evy-types/coreResources";
 import { proceduresForService } from "evy-types/procedures";
 import {
+	validateChargeRequest,
+	validateChargeResponse,
 	validatePlaceSearchRequest,
 	validatePlaceSearchResponse,
 	validateSyncRequest,
 	validateSyncResponse,
 } from "evy-types/validators";
 import type { EvyDb } from "../database/db";
+import * as chargeProcedure from "./charge";
 import * as placeSearchProcedure from "./placeSearch";
 import * as syncProcedure from "./sync";
 
@@ -27,6 +30,10 @@ async function runSync(params: unknown, db: EvyDb): Promise<SyncResponse> {
 }
 
 const coreProcedures: Record<string, CoreProcedure> = {
+	charge: async (data, db) =>
+		validateChargeResponse(
+			await chargeProcedure.charge(validateChargeRequest(data), db),
+		),
 	place_search: async (data) =>
 		validatePlaceSearchResponse(
 			await placeSearchProcedure.placeSearch(

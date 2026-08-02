@@ -1,0 +1,7 @@
+{
+	"$schema": "https://json-schema.org/draft/2020-12/schema",
+	"$id": "charge-response",
+	"title": "ChargeResponse",
+	"description": "The charge Transaction row written by the charge procedure.",
+	"$ref": "../data/data.schema.json#/$defs/DATA_EVY_Transaction"
+}
