@@ -2,15 +2,19 @@ import type { ApiRequest, SyncResponse } from "evy-types";
 import { EVY_CORE_SERVICE } from "evy-types/coreResources";
 import { proceduresForService } from "evy-types/procedures";
 import {
-	validateChargeRequest,
-	validateChargeResponse,
+	validatePaymentCaptureRequest,
+	validatePaymentCaptureResponse,
+	validatePaymentIntentRequest,
+	validatePaymentIntentResponse,
+	validatePaymentTransferRequest,
+	validatePaymentTransferResponse,
 	validatePlaceSearchRequest,
 	validatePlaceSearchResponse,
 	validateSyncRequest,
 	validateSyncResponse,
 } from "evy-types/validators";
 import type { EvyDb } from "../database/db";
-import * as chargeProcedure from "./charge";
+import * as paymentsProcedure from "./payments";
 import * as placeSearchProcedure from "./placeSearch";
 import * as syncProcedure from "./sync";
 
@@ -30,9 +34,26 @@ async function runSync(params: unknown, db: EvyDb): Promise<SyncResponse> {
 }
 
 const coreProcedures: Record<string, CoreProcedure> = {
-	charge: async (data, db) =>
-		validateChargeResponse(
-			await chargeProcedure.charge(validateChargeRequest(data), db),
+	payment_intent: async (data, db) =>
+		validatePaymentIntentResponse(
+			await paymentsProcedure.paymentIntent(
+				validatePaymentIntentRequest(data),
+				db,
+			),
+		),
+	payment_capture: async (data, db) =>
+		validatePaymentCaptureResponse(
+			await paymentsProcedure.paymentCapture(
+				validatePaymentCaptureRequest(data),
+				db,
+			),
+		),
+	payment_transfer: async (data, db) =>
+		validatePaymentTransferResponse(
+			await paymentsProcedure.paymentTransfer(
+				validatePaymentTransferRequest(data),
+				db,
+			),
 		),
 	place_search: async (data) =>
 		validatePlaceSearchResponse(

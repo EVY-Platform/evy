@@ -164,9 +164,13 @@ On the wire this is accessed with `resource: "evy.rows"`.
 
 ### DATA_EVY_Transaction
 
-Record of money movement for a marketplace item (`fk` + `resource`). `type` is one of `charge`, `transfer`, or `withdraw`. Fees, payment provider, and signature are fixed placeholder values in v1. `authorization_message_id` points at the buyer's original request message. Full CRUD with tombstone delete.
+Record of money movement for a marketplace item (`fk` + `resource`). `type` is one of `intent`, `capture`, `transfer`, or `withdraw`. Fees, payment provider, and signature are fixed placeholder values in v1. `authorization_message_id` points at the buyer's original request message. Full CRUD with tombstone delete.
 
-To charge a customer, call the core `charge` procedure (`api{service:evy, method:charge}`). The request supplies `fk`, `resource`, `amount`, `currency`, and `authorization_message_id`; the handler writes a `type: "charge"` transaction with v1 placeholders (`payment_provider: "stripe"`, fees `0`, `signature: "signed"`, a generated `payment_provider_transaction_id`, `visibility: "public"`) and returns the row. A real payment provider will be wired into this procedure later without changing the request shape.
+Payment flows use three core procedures that mirror Stripe's PaymentIntent model (no Stripe integration yet):
+
+1. **`payment_intent`** (`api{service:evy, method:payment_intent}`) — buyer's device calls this before creating a pickup/delivery/shipping request message. Request: `fk`, `resource`, `amount`, `currency`, `authorization_message_id`. Writes a `type: "intent"` row. The client carries `payment_provider_transaction_id` as the intent id in message data (a generated uuid now, Stripe's `pi_…` later). Server-side constants: `confirm: true`, `capture_method: "manual"`, `payment_provider: "stripe"`, fees `0`, `signature: "signed"`.
+2. **`payment_capture`** (`api{service:evy, method:payment_capture}`) — seller's device calls this before accepting a request. Request: `{ payment_intent_id }` (the intent row's `payment_provider_transaction_id`). Copies amount/currency/fk/resource/authorization_message_id from the intent; reuses the same `payment_provider_transaction_id`. Writes a `type: "capture"` row. Rejects unknown intents and double-capture.
+3. **`payment_transfer`** (`api{service:evy, method:payment_transfer}`) — moves funds to the seller after capture. Request: `{ payment_intent_id }`. Writes a `type: "transfer"` row reusing the intent's `payment_provider_transaction_id`. Requires intent and capture rows to exist; rejects duplicate transfers.
 
 #### Visibility
 

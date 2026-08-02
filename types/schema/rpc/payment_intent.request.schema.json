@@ -1,8 +1,8 @@
 {
 	"$schema": "https://json-schema.org/draft/2020-12/schema",
-	"$id": "charge-request",
-	"title": "ChargeRequest",
-	"description": "JSON-RPC params for charging a customer. V1 records the charge as an evy.transactions row; a real payment provider will be called later.",
+	"$id": "payment-intent-request",
+	"title": "PaymentIntentRequest",
+	"description": "JSON-RPC params for creating a payment intent. V1 records the intent as an evy.transactions row with type \"intent\"; a real Stripe PaymentIntent will be created later. Server-side constants (not request params): confirm=true, capture_method=\"manual\" (authorized at creation, captured later by the seller), payment_provider=\"stripe\", fees 0, signature=\"signed\".",
 	"type": "object",
 	"additionalProperties": false,
 	"required": [
@@ -16,7 +16,7 @@
 		"fk": {
 			"type": "string",
 			"format": "uuid",
-			"description": "The marketplace item this charge moves money for."
+			"description": "The marketplace item this payment intent covers (→ Stripe metadata later)."
 		},
 		"resource": {
 			"$ref": "../common/rpc.schema.json#/$defs/ResourceRef",
@@ -25,7 +25,7 @@
 		"amount": {
 			"type": "number",
 			"minimum": 0,
-			"description": "Money to charge; 0 allowed."
+			"description": "Money to authorize; 0 allowed."
 		},
 		"currency": {
 			"type": "string",
@@ -35,7 +35,7 @@
 		"authorization_message_id": {
 			"type": "string",
 			"format": "uuid",
-			"description": "The buyer's original request (the message stating the price)."
+			"description": "The buyer's original request message (the message stating the price)."
 		}
 	}
 }

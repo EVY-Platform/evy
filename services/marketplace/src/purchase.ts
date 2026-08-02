@@ -155,7 +155,9 @@ export async function validatePurchaseMessage(
 	return { ok: true };
 }
 
-async function reactToMessage(message: MessagePayload): Promise<void> {
+export async function reactToPurchaseMessage(
+	message: MessagePayload,
+): Promise<void> {
 	const { fk: itemId, type, value } = message;
 	const status = await currentStatus(itemId);
 
@@ -215,30 +217,44 @@ const itemQueues = new Map<string, Promise<void>>();
 function enqueueItemReaction(
 	itemId: string,
 	work: () => Promise<void>,
+	swallowErrors: boolean,
 ): Promise<void> {
 	const previous = itemQueues.get(itemId) ?? Promise.resolve();
-	const next = previous.then(work).catch((error: unknown) => {
-		console.error(
-			`[marketplace] purchase reaction failed for item ${itemId}:`,
-			error,
-		);
-	});
+	let next = previous.catch(() => {}).then(work);
+	if (swallowErrors) {
+		next = next.catch((error: unknown) => {
+			console.error(
+				`[marketplace] purchase reaction failed for item ${itemId}:`,
+				error,
+			);
+		});
+	}
 	itemQueues.set(itemId, next);
 	return next;
 }
 
 export function enqueuePurchaseReaction(message: MessagePayload): void {
-	void enqueueItemReaction(message.fk, () => reactToMessage(message));
+	void enqueueItemReaction(
+		message.fk,
+		() => reactToPurchaseMessage(message),
+		true,
+	);
 }
 
-/** Awaits the reaction — for tests and other callers that need a settled status. */
+/** Awaits the reaction — for callers that need a settled status after enqueue. */
 export function awaitPurchaseReaction(message: MessagePayload): Promise<void> {
-	return enqueueItemReaction(message.fk, () => reactToMessage(message));
+	return enqueueItemReaction(
+		message.fk,
+		() => reactToPurchaseMessage(message),
+		false,
+	);
 }
 
 /** Visible for tests — drains every per-item queue. */
 export async function drainPurchaseQueues(): Promise<void> {
-	const pending = [...itemQueues.values()];
-	itemQueues.clear();
-	await Promise.all(pending);
+	while (itemQueues.size > 0) {
+		const pending = [...itemQueues.values()];
+		itemQueues.clear();
+		await Promise.all(pending);
+	}
 }

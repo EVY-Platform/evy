@@ -1,0 +1,7 @@
+{
+	"$schema": "https://json-schema.org/draft/2020-12/schema",
+	"$id": "payment-transfer-response",
+	"title": "PaymentTransferResponse",
+	"description": "The transfer Transaction row written by the payment_transfer procedure.",
+	"$ref": "../data/data.schema.json#/$defs/DATA_EVY_Transaction"
+}

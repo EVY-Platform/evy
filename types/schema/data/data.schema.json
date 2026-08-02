@@ -688,7 +688,7 @@
 				},
 				"type": {
 					"type": "string",
-					"enum": ["charge", "transfer", "withdraw"]
+					"enum": ["intent", "capture", "transfer", "withdraw"]
 				},
 				"amount": {
 					"type": "number",

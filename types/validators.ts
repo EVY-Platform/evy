@@ -30,8 +30,6 @@ import type {
 	FileWithBinary,
 } from "./generated/ts/files/file";
 import type { ApiRequest } from "./generated/ts/rpc/api.request";
-import type { ChargeRequest } from "./generated/ts/rpc/charge.request";
-import type { ChargeResponse } from "./generated/ts/rpc/charge.response";
 import type { CreateRequest } from "./generated/ts/rpc/create.request";
 import type { CreateResponse } from "./generated/ts/rpc/create.response";
 import type { DeleteRequest } from "./generated/ts/rpc/delete.request";
@@ -40,6 +38,12 @@ import type { GetRequest } from "./generated/ts/rpc/get.request";
 import type { GetResponse } from "./generated/ts/rpc/get.response";
 import type { HookRequest } from "./generated/ts/rpc/hook.request";
 import type { HookResponse } from "./generated/ts/rpc/hook.response";
+import type { PaymentCaptureRequest } from "./generated/ts/rpc/payment_capture.request";
+import type { PaymentCaptureResponse } from "./generated/ts/rpc/payment_capture.response";
+import type { PaymentIntentRequest } from "./generated/ts/rpc/payment_intent.request";
+import type { PaymentIntentResponse } from "./generated/ts/rpc/payment_intent.response";
+import type { PaymentTransferRequest } from "./generated/ts/rpc/payment_transfer.request";
+import type { PaymentTransferResponse } from "./generated/ts/rpc/payment_transfer.response";
 import type { PlaceSearchRequest } from "./generated/ts/rpc/place_search.request";
 import type { PlaceSearchResponse } from "./generated/ts/rpc/place_search.response";
 import type { ResourcesResponse } from "./generated/ts/rpc/resources.response";
@@ -72,12 +76,6 @@ import fileSchemaRaw from "./schema/files/file.schema.json" with {
 import apiRequestRaw from "./schema/rpc/api.request.schema.json" with {
 	type: "json",
 };
-import chargeRequestRaw from "./schema/rpc/charge.request.schema.json" with {
-	type: "json",
-};
-import chargeResponseRaw from "./schema/rpc/charge.response.schema.json" with {
-	type: "json",
-};
 import createRequestRaw from "./schema/rpc/create.request.schema.json" with {
 	type: "json",
 };
@@ -100,6 +98,24 @@ import hookRequestRaw from "./schema/rpc/hook.request.schema.json" with {
 	type: "json",
 };
 import hookResponseRaw from "./schema/rpc/hook.response.schema.json" with {
+	type: "json",
+};
+import paymentCaptureRequestRaw from "./schema/rpc/payment_capture.request.schema.json" with {
+	type: "json",
+};
+import paymentCaptureResponseRaw from "./schema/rpc/payment_capture.response.schema.json" with {
+	type: "json",
+};
+import paymentIntentRequestRaw from "./schema/rpc/payment_intent.request.schema.json" with {
+	type: "json",
+};
+import paymentIntentResponseRaw from "./schema/rpc/payment_intent.response.schema.json" with {
+	type: "json",
+};
+import paymentTransferRequestRaw from "./schema/rpc/payment_transfer.request.schema.json" with {
+	type: "json",
+};
+import paymentTransferResponseRaw from "./schema/rpc/payment_transfer.response.schema.json" with {
 	type: "json",
 };
 import placeSearchRequestRaw from "./schema/rpc/place_search.request.schema.json" with {
@@ -159,14 +175,20 @@ const RAW_SCHEMAS: Record<string, Record<string, unknown>> = {
 	...SDUI_DEFINITION_SCHEMAS,
 	"sdui/evy.schema.json": evySduiRaw as Record<string, unknown>,
 	"files/file.schema.json": fileSchemaRaw as Record<string, unknown>,
-	"rpc/charge.request.schema.json": chargeRequestRaw as Record<
+	"rpc/payment_intent.request.schema.json": paymentIntentRequestRaw as Record<
 		string,
 		unknown
 	>,
-	"rpc/charge.response.schema.json": chargeResponseRaw as Record<
-		string,
-		unknown
-	>,
+	"rpc/payment_intent.response.schema.json":
+		paymentIntentResponseRaw as Record<string, unknown>,
+	"rpc/payment_capture.request.schema.json":
+		paymentCaptureRequestRaw as Record<string, unknown>,
+	"rpc/payment_capture.response.schema.json":
+		paymentCaptureResponseRaw as Record<string, unknown>,
+	"rpc/payment_transfer.request.schema.json":
+		paymentTransferRequestRaw as Record<string, unknown>,
+	"rpc/payment_transfer.response.schema.json":
+		paymentTransferResponseRaw as Record<string, unknown>,
 	"rpc/place_search.request.schema.json": placeSearchRequestRaw as Record<
 		string,
 		unknown
@@ -332,7 +354,9 @@ const REQUEST_SCHEMA_FILES = [
 	"rpc/update.request.schema.json",
 	"rpc/delete.request.schema.json",
 	"rpc/sync.request.schema.json",
-	"rpc/charge.request.schema.json",
+	"rpc/payment_intent.request.schema.json",
+	"rpc/payment_capture.request.schema.json",
+	"rpc/payment_transfer.request.schema.json",
 	"rpc/place_search.request.schema.json",
 	"rpc/hook.request.schema.json",
 ] as const;
@@ -353,7 +377,9 @@ const ENTITY_SCHEMA_FILES = [
 	"rpc/delete.response.schema.json",
 	"rpc/sync.response.schema.json",
 	"rpc/resources.response.schema.json",
-	"rpc/charge.response.schema.json",
+	"rpc/payment_intent.response.schema.json",
+	"rpc/payment_capture.response.schema.json",
+	"rpc/payment_transfer.response.schema.json",
 	"rpc/place_search.response.schema.json",
 	"rpc/hook.response.schema.json",
 ];
@@ -508,14 +534,31 @@ const getValidateResourcesResponse = lazyValidator<ResourcesResponse>(
 	getEntityAjv,
 	fileId("rpc/resources.response.schema.json"),
 );
-const getValidateChargeRequest = lazyValidator<ChargeRequest>(
+const getValidatePaymentIntentRequest = lazyValidator<PaymentIntentRequest>(
 	getRequestAjv,
-	fileId("rpc/charge.request.schema.json"),
+	fileId("rpc/payment_intent.request.schema.json"),
 );
-const getValidateChargeResponse = lazyValidator<ChargeResponse>(
+const getValidatePaymentIntentResponse = lazyValidator<PaymentIntentResponse>(
 	getEntityAjv,
-	fileId("rpc/charge.response.schema.json"),
+	fileId("rpc/payment_intent.response.schema.json"),
 );
+const getValidatePaymentCaptureRequest = lazyValidator<PaymentCaptureRequest>(
+	getRequestAjv,
+	fileId("rpc/payment_capture.request.schema.json"),
+);
+const getValidatePaymentCaptureResponse = lazyValidator<PaymentCaptureResponse>(
+	getEntityAjv,
+	fileId("rpc/payment_capture.response.schema.json"),
+);
+const getValidatePaymentTransferRequest = lazyValidator<PaymentTransferRequest>(
+	getRequestAjv,
+	fileId("rpc/payment_transfer.request.schema.json"),
+);
+const getValidatePaymentTransferResponse =
+	lazyValidator<PaymentTransferResponse>(
+		getEntityAjv,
+		fileId("rpc/payment_transfer.response.schema.json"),
+	);
 const getValidatePlaceSearchRequest = lazyValidator<PlaceSearchRequest>(
 	getRequestAjv,
 	fileId("rpc/place_search.request.schema.json"),
@@ -827,14 +870,35 @@ export const validateResourcesResponse = makeValidator<ResourcesResponse>(
 	"ResourcesResponse",
 	getValidateResourcesResponse,
 );
-export const validateChargeRequest = makeValidator<ChargeRequest>(
-	"ChargeRequest",
-	getValidateChargeRequest,
+export const validatePaymentIntentRequest = makeValidator<PaymentIntentRequest>(
+	"PaymentIntentRequest",
+	getValidatePaymentIntentRequest,
 );
-export const validateChargeResponse = makeValidator<ChargeResponse>(
-	"ChargeResponse",
-	getValidateChargeResponse,
-);
+export const validatePaymentIntentResponse =
+	makeValidator<PaymentIntentResponse>(
+		"PaymentIntentResponse",
+		getValidatePaymentIntentResponse,
+	);
+export const validatePaymentCaptureRequest =
+	makeValidator<PaymentCaptureRequest>(
+		"PaymentCaptureRequest",
+		getValidatePaymentCaptureRequest,
+	);
+export const validatePaymentCaptureResponse =
+	makeValidator<PaymentCaptureResponse>(
+		"PaymentCaptureResponse",
+		getValidatePaymentCaptureResponse,
+	);
+export const validatePaymentTransferRequest =
+	makeValidator<PaymentTransferRequest>(
+		"PaymentTransferRequest",
+		getValidatePaymentTransferRequest,
+	);
+export const validatePaymentTransferResponse =
+	makeValidator<PaymentTransferResponse>(
+		"PaymentTransferResponse",
+		getValidatePaymentTransferResponse,
+	);
 export const validatePlaceSearchRequest = makeValidator<PlaceSearchRequest>(
 	"PlaceSearchRequest",
 	getValidatePlaceSearchRequest,

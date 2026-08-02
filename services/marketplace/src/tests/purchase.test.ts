@@ -3,8 +3,8 @@ import { eq } from "drizzle-orm";
 
 import { db, schema } from "../db";
 import {
-	awaitPurchaseReaction,
 	drainPurchaseQueues,
+	reactToPurchaseMessage,
 	validatePurchaseMessage,
 } from "../purchase";
 import { appendStatus, currentStatus } from "../status";
@@ -154,41 +154,64 @@ describe.serial("purchase flow", () => {
 	describe("purchase reactions", () => {
 		it("appends type_pending on accept", async () => {
 			const payload = message({ type: "delivery", value: "accept" });
-			await awaitPurchaseReaction(payload);
+			await reactToPurchaseMessage(payload);
 
 			expect(await currentStatus(payload.fk)).toBe("delivery_pending");
 		});
 
 		it("appends sold on charge_initiated", async () => {
-			const payload = message({ value: "charge_initiated" });
-			await appendStatus(payload.fk, "delivery_pending");
-			await awaitPurchaseReaction(payload);
+			const payload = message({
+				type: "delivery",
+				value: "accept",
+			});
+			await reactToPurchaseMessage(payload);
+			expect(await currentStatus(payload.fk)).toBe("delivery_pending");
+
+			await reactToPurchaseMessage({
+				...payload,
+				value: "charge_initiated",
+			});
 
 			expect(await currentStatus(payload.fk)).toBe("sold");
 		});
 
 		it("appends available for negative pickup_pending values", async () => {
-			const payload = message({ value: "transaction_rejected" });
-			await appendStatus(payload.fk, "pickup_pending");
-			await awaitPurchaseReaction(payload);
+			const payload = message({ type: "pickup", value: "accept" });
+			await reactToPurchaseMessage(payload);
+			expect(await currentStatus(payload.fk)).toBe("pickup_pending");
+
+			await reactToPurchaseMessage({
+				...payload,
+				value: "transaction_rejected",
+			});
 			expect(await currentStatus(payload.fk)).toBe("available");
 		});
 
 		it("appends available for negative sold values", async () => {
 			const payload = message({
 				type: "delivery",
+				value: "accept",
+			});
+			await reactToPurchaseMessage(payload);
+			await reactToPurchaseMessage({
+				...payload,
+				value: "charge_initiated",
+			});
+			expect(await currentStatus(payload.fk)).toBe("sold");
+
+			await reactToPurchaseMessage({
+				...payload,
+				type: "delivery",
 				value: "given_failed",
 			});
-			await appendStatus(payload.fk, "sold");
-			await awaitPurchaseReaction(payload);
 			expect(await currentStatus(payload.fk)).toBe("available");
 		});
 
 		it("does not append for non-trigger values", async () => {
 			const pending = message({ value: "pending" });
-			await awaitPurchaseReaction(pending);
-			await awaitPurchaseReaction(message({ value: "reject" }));
-			await awaitPurchaseReaction(
+			await reactToPurchaseMessage(pending);
+			await reactToPurchaseMessage(message({ value: "reject" }));
+			await reactToPurchaseMessage(
 				message({ type: "pickup", value: "transaction" }),
 			);
 
@@ -198,7 +221,7 @@ describe.serial("purchase flow", () => {
 		it("no-ops when the status already moved", async () => {
 			const payload = message({ value: "accept" });
 			await appendStatus(payload.fk, "pickup_pending");
-			await awaitPurchaseReaction(payload);
+			await reactToPurchaseMessage(payload);
 
 			const rows = await db
 				.select()
