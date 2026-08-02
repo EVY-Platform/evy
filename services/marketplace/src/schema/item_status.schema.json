@@ -1,0 +1,33 @@
+{
+	"$schema": "https://json-schema.org/draft/2020-12/schema",
+	"$id": "marketplace/item_status",
+	"title": "DATA_MARKETPLACE_ItemStatus",
+	"description": "Append-only status row for a marketplace item. Written by marketplace internals; clients read via get and sync only.",
+	"type": "object",
+	"additionalProperties": false,
+	"required": ["id", "item_id", "status", "created_at"],
+	"properties": {
+		"id": {
+			"type": "string",
+			"format": "uuid"
+		},
+		"item_id": {
+			"type": "string",
+			"format": "uuid"
+		},
+		"status": {
+			"type": "string",
+			"enum": [
+				"available",
+				"pickup_pending",
+				"delivery_pending",
+				"shipping_pending",
+				"sold"
+			]
+		},
+		"created_at": {
+			"type": "string",
+			"format": "date-time"
+		}
+	}
+}

@@ -24,16 +24,19 @@ const TEST_RESOURCE_CATALOG: ResourcesResponse = {
 				{
 					id: TEST_RESOURCE_ID.SELLING_REASONS,
 					name: TEST_RESOURCE_NAMES.SELLING_REASONS,
+					visibility: "public",
 					attributes: ["id", "value"],
 				},
 				{
 					id: TEST_RESOURCE_ID.CONDITIONS,
 					name: TEST_RESOURCE_NAMES.CONDITIONS,
+					visibility: "public",
 					attributes: ["id", "value"],
 				},
 				{
 					id: TEST_RESOURCE_ID.RECORDS,
 					name: TEST_RESOURCE_NAMES.RECORDS,
+					visibility: "public",
 					attributes: [
 						"id",
 						"price.currency",

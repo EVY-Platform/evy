@@ -1,8 +1,8 @@
 # Marketplace data models
 
-Clients talk to marketplace through the EVY api using dotted resource refs: `marketplace.items`, `marketplace.selling_reasons`, `marketplace.conditions`, `marketplace.durations`, and `marketplace.areas`.
+Clients talk to marketplace through the EVY api using dotted resource refs: `marketplace.items`, `marketplace.selling_reasons`, `marketplace.conditions`, `marketplace.durations`, `marketplace.areas`, and `marketplace.item_statuses`.
 
-Marketplace owns its own payload schemas and validates every `create` and `update` against them: the EVY api forwards these payloads without inspecting them, so anything this service does not check is unchecked everywhere. The schemas live in [`services/marketplace/src/schema/`](../../../services/marketplace/src/schema) and are compiled by [`src/validation.ts`](../../../services/marketplace/src/validation.ts); nothing marketplace-shaped belongs in the shared `types/` package. Resource refs are declared in [`services/marketplace/src/resources.ts`](../../../services/marketplace/src/resources.ts) and exposed through the service's `resources` JSON-RPC method, along with each resource's bindable `attributes` — derived from these same schemas, so what the builder offers and what the service accepts cannot drift apart.
+Marketplace owns its own payload schemas and validates every `create` and `update` against them: the EVY api forwards these payloads without inspecting them, so anything this service does not check is unchecked everywhere. The schemas live in [`services/marketplace/src/schema/`](../../../services/marketplace/src/schema) and are compiled by [`src/validation.ts`](../../../services/marketplace/src/validation.ts); nothing marketplace-shaped belongs in the shared `types/` package. Resource refs are declared in [`services/marketplace/src/resources.ts`](../../../services/marketplace/src/resources.ts) and exposed through the service's `resources` JSON-RPC method, along with each resource's bindable `attributes` — derived from these same schemas, so what the builder offers and what the service accepts cannot drift apart. Every resource declares catalog `visibility`: lookups and items are `public`; `item_statuses` is `internal` (get and sync only).
 
 Shared value objects (`location`, `price`, `address`, `area`, `photo`, `timeslot`, `transfer_options`, `duration`) are documented in [EVY data models](../../evy/data.md).
 
@@ -35,7 +35,7 @@ Field-level detail lives in the schema rather than here; a copy of it went stale
 
 ## item_status_history
 
-Append-only log of listing status changes. Not exposed as a syncable resource yet — written and read only by marketplace internals when callers are wired up.
+Append-only log of listing status changes. Exposed to clients as the read-only resource `marketplace.item_statuses` (catalog visibility `internal` — get and sync only; marketplace internals write the table directly).
 
 ```
 id: uuid
@@ -44,4 +44,4 @@ status: item_status    # available | pickup_pending | delivery_pending | shippin
 created_at: date-time  # ISO string in a text column
 ```
 
-Source of truth: [`services/marketplace/src/schema.ts`](../../../services/marketplace/src/schema.ts). `item_id` is a soft reference (no Postgres FK), matching how core rows point at marketplace items.
+Source of truth for the wire shape: [`services/marketplace/src/schema/item_status.schema.json`](../../../services/marketplace/src/schema/item_status.schema.json). Storage: [`services/marketplace/src/schema.ts`](../../../services/marketplace/src/schema.ts). `item_id` is a soft reference (no Postgres FK), matching how core rows point at marketplace items. Incremental `get` maps `filter.updated_after` to `created_at` because rows are append-only.

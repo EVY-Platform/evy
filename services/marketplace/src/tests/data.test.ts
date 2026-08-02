@@ -30,6 +30,7 @@ afterAll(async () => {
 
 beforeEach(async () => {
 	await testDb.delete(schema.data);
+	await testDb.delete(schema.item_status_history);
 });
 
 describe("marketplace get/create/update", () => {
@@ -501,5 +502,75 @@ describe("marketplace tombstones", () => {
 		});
 
 		expect("deleted_at" in (created as object)).toBe(false);
+	});
+});
+
+describe("marketplace item_statuses", () => {
+	const itemId = crypto.randomUUID();
+	const statusRow = {
+		id: crypto.randomUUID(),
+		item_id: itemId,
+		status: "available" as const,
+		created_at: "2024-01-01T00:00:00.000Z",
+	};
+
+	it("returns item_status_history rows via get", async () => {
+		await testDb.insert(schema.item_status_history).values(statusRow);
+
+		const result = await get({
+			resource: MARKETPLACE_RESOURCE.ITEM_STATUSES,
+		});
+
+		expect(result).toEqual([statusRow]);
+	});
+
+	it("filters item_statuses by updated_after on created_at", async () => {
+		const olderRow = {
+			...statusRow,
+			id: crypto.randomUUID(),
+			created_at: "2024-01-01T00:00:00.000Z",
+		};
+		const newerRow = {
+			...statusRow,
+			id: crypto.randomUUID(),
+			created_at: "2024-01-02T00:00:00.000Z",
+		};
+		await testDb
+			.insert(schema.item_status_history)
+			.values([olderRow, newerRow]);
+
+		const result = await get({
+			resource: MARKETPLACE_RESOURCE.ITEM_STATUSES,
+			filter: { updated_after: "2024-01-01T12:00:00.000Z" },
+		});
+
+		expect(result).toEqual([newerRow]);
+	});
+
+	it("rejects create, update, and delete on internal item_statuses", async () => {
+		const mutationError =
+			'Resource "marketplace.item_statuses" is internal and cannot be created, updated, or deleted via the data API';
+
+		await expect(
+			create({
+				resource: MARKETPLACE_RESOURCE.ITEM_STATUSES,
+				data: statusRow,
+			}),
+		).rejects.toThrow(mutationError);
+
+		await expect(
+			update({
+				resource: MARKETPLACE_RESOURCE.ITEM_STATUSES,
+				filter: { id: statusRow.id },
+				data: statusRow,
+			}),
+		).rejects.toThrow(mutationError);
+
+		await expect(
+			deleteResource({
+				resource: MARKETPLACE_RESOURCE.ITEM_STATUSES,
+				filter: { id: statusRow.id },
+			}),
+		).rejects.toThrow(mutationError);
 	});
 });

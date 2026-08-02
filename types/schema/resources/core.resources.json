@@ -30,7 +30,8 @@
 			"visibility": "public"
 		},
 		"resources": {
-			"singular": "resource"
+			"singular": "resource",
+			"visibility": "public"
 		},
 		"files": {
 			"singular": "file",
@@ -50,7 +51,8 @@
 			"visibility": "public"
 		},
 		"formatters": {
-			"singular": "formatter"
+			"singular": "formatter",
+			"visibility": "public"
 		}
 	}
 }

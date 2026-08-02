@@ -120,6 +120,12 @@ describe("marketplace JSON-RPC server", () => {
 			"transfer_options.pickup.address_id",
 		);
 		expect(conditions?.attributes).toEqual(["id", "value"]);
+		const itemStatuses = resources.find(
+			(entry) => entry.id === MARKETPLACE_RESOURCE.ITEM_STATUSES,
+		);
+		expect(itemStatuses?.visibility).toBe("internal");
+		expect(items?.visibility).toBe("public");
+		expect(conditions?.visibility).toBe("public");
 		client.close();
 	});
 

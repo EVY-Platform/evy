@@ -35,15 +35,40 @@ const OUT_TS_PATH = join(OUT_TS, "coreResources.ts");
 const OUT_SWIFT_PATH = join(OUT_SWIFT, "CoreResources.generated.swift");
 const CORE_RESOURCES_SCHEMA_PATH = "types/schema/resources/core.resources.json";
 
+type ResourceCatalogVisibility = "public" | "private" | "internal";
+type RowVisibility = "public" | "private";
+
+// Core resources with no row-level visibility column in Postgres.
+const RESOURCES_WITHOUT_ROW_VISIBILITY = new Set(["formatters", "resources"]);
+
 interface ResourceMeta {
 	singular: string;
-	visibility?: "public" | "private";
+	visibility: ResourceCatalogVisibility;
 	dataValues?: string[];
 }
 
 interface CoreResourcesSchema {
 	service: string;
 	resources: Record<string, ResourceMeta>;
+}
+
+function isResourceCatalogVisibility(
+	value: unknown,
+): value is ResourceCatalogVisibility {
+	return value === "public" || value === "private" || value === "internal";
+}
+
+function rowVisibilityDefault(
+	meta: ResourceMeta,
+	plural: string,
+): RowVisibility | undefined {
+	if (RESOURCES_WITHOUT_ROW_VISIBILITY.has(plural)) {
+		return undefined;
+	}
+	if (meta.visibility === "internal") {
+		return undefined;
+	}
+	return meta.visibility;
 }
 
 function validateSchema(value: unknown): asserts value is CoreResourcesSchema {
@@ -77,13 +102,9 @@ function validateSchema(value: unknown): asserts value is CoreResourcesSchema {
 				`core.resources.json: resources.${name}.singular must be a non-empty string`,
 			);
 		}
-		if (
-			m.visibility !== undefined &&
-			m.visibility !== "public" &&
-			m.visibility !== "private"
-		) {
+		if (!isResourceCatalogVisibility(m.visibility)) {
 			throw new Error(
-				`core.resources.json: resources.${name}.visibility must be "public" or "private" when set`,
+				`core.resources.json: resources.${name}.visibility must be "public", "private", or "internal"`,
 			);
 		}
 		if (m.dataValues !== undefined) {
@@ -109,6 +130,10 @@ function generateTypeScript(schema: CoreResourcesSchema): string {
 
 	lines.push(...generatedFileHeader(CORE_RESOURCES_SCHEMA_PATH));
 	lines.push(
+		'export type ResourceCatalogVisibility = "public" | "private" | "internal";',
+	);
+	lines.push("");
+	lines.push(
 		`export const EVY_CORE_SERVICE = ${JSON.stringify(service)} as const;`,
 	);
 	lines.push("");
@@ -126,24 +151,35 @@ function generateTypeScript(schema: CoreResourcesSchema): string {
 	lines.push("export const EVY_CORE_RESOURCES = [");
 	for (const [plural, meta] of Object.entries(resources)) {
 		lines.push(
-			`\t{ id: ${JSON.stringify(formatResourceRef(service, plural))}, name: ${JSON.stringify(meta.singular)} },`,
+			`\t{ id: ${JSON.stringify(formatResourceRef(service, plural))}, name: ${JSON.stringify(meta.singular)}, visibility: ${JSON.stringify(meta.visibility)} },`,
 		);
 	}
 	lines.push("] as const;");
 	lines.push("");
 
-	// Visibility every record of a resource is created with. Resources with no
-	// visibility field of their own are absent.
+	// Row visibility every record of a resource is created with. Catalog
+	// "internal" and resources with no row column are absent.
 	lines.push("export const EVY_CORE_RESOURCE_VISIBILITY: Readonly<");
 	lines.push('\tRecord<string, "public" | "private">');
 	lines.push("> = {");
 	for (const [plural, meta] of Object.entries(resources)) {
-		if (!meta.visibility) continue;
+		const rowDefault = rowVisibilityDefault(meta, plural);
+		if (!rowDefault) continue;
 		lines.push(
-			`\t${JSON.stringify(plural)}: ${JSON.stringify(meta.visibility)},`,
+			`\t${JSON.stringify(plural)}: ${JSON.stringify(rowDefault)},`,
 		);
 	}
 	lines.push("};");
+	lines.push("");
+
+	lines.push(
+		"export function coreResourceCatalogVisibility(",
+		"\tresourceRef: string,",
+		"): ResourceCatalogVisibility | undefined {",
+		"\treturn EVY_CORE_RESOURCES.find((entry) => entry.id === resourceRef)",
+		"\t\t?.visibility;",
+		"}",
+	);
 	lines.push("");
 
 	const messageDataValues = resources.messages?.dataValues ?? [];
@@ -188,18 +224,32 @@ function generateSwift(schema: CoreResourcesSchema): string {
 	lines.push("\t}");
 	lines.push("");
 
-	// Visibility lookup
+	// Catalog visibility
+	lines.push("\tpublic var catalogVisibility: String {");
+	lines.push("\t\tswitch self {");
+	for (const [plural, meta] of Object.entries(resources)) {
+		const caseName = snakeToCamel(plural);
+		lines.push(
+			`\t\tcase .${caseName}: return ${JSON.stringify(meta.visibility)}`,
+		);
+	}
+	lines.push("\t\t}");
+	lines.push("\t}");
+	lines.push("");
+
+	// Row visibility lookup
 	lines.push(
-		"\t/// The visibility every record of this resource is created with.",
+		"\t/// The row visibility every record of this resource is created with.",
 	);
 	lines.push(
-		"\t/// Nil for resources with no visibility field of their own.",
+		"\t/// Nil for resources with no row visibility column or catalog internal.",
 	);
 	lines.push("\tpublic var visibility: String? {");
 	lines.push("\t\tswitch self {");
 	for (const [plural, meta] of Object.entries(resources)) {
 		const caseName = snakeToCamel(plural);
-		const value = meta.visibility ? JSON.stringify(meta.visibility) : "nil";
+		const rowDefault = rowVisibilityDefault(meta, plural);
+		const value = rowDefault ? JSON.stringify(rowDefault) : "nil";
 		lines.push(`\t\tcase .${caseName}: return ${value}`);
 	}
 	lines.push("\t\t}");

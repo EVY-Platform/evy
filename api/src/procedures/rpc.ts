@@ -14,6 +14,7 @@ import {
 	validateStrictGetRequest,
 	validateStrictUpdateRequest,
 } from "evy-types/rpcRequestHelpers";
+import { assertCoreResourceMutable } from "../data/catalogVisibility";
 import {
 	create as createCore,
 	deleteResource as deleteCore,
@@ -66,6 +67,7 @@ export async function create(
 	validateStrictCreateRequest(params);
 	const service = serviceOfRef(params.resource);
 	if (service === EVY_CORE_SERVICE) {
+		assertCoreResourceMutable(params.resource);
 		await runBeforeCreateHook(params.resource, params.data);
 		const response = await createCore(db, params);
 		await runAfterCreateHook(params.resource, response);
@@ -81,6 +83,7 @@ export async function update(
 	validateStrictUpdateRequest(params);
 	const service = serviceOfRef(params.resource);
 	if (service === EVY_CORE_SERVICE) {
+		assertCoreResourceMutable(params.resource);
 		return updateCore(db, params);
 	}
 	return forwardUpdate(service, params);
@@ -93,6 +96,7 @@ export async function deleteResource(
 	validateStrictDeleteRequest(params);
 	const service = serviceOfRef(params.resource);
 	if (service === EVY_CORE_SERVICE) {
+		assertCoreResourceMutable(params.resource);
 		return deleteCore(db, params);
 	}
 	return forwardDelete(service, params);
