@@ -22,6 +22,7 @@ import {
 } from "../data/data";
 import type { EvyDb } from "../database/db";
 import { coreApi } from "./coreApi";
+import { runAfterCreateHook, runBeforeCreateHook } from "./hooks";
 import {
 	forwardApi,
 	forwardCreate,
@@ -65,7 +66,10 @@ export async function create(
 	validateStrictCreateRequest(params);
 	const service = serviceOfRef(params.resource);
 	if (service === EVY_CORE_SERVICE) {
-		return createCore(db, params);
+		await runBeforeCreateHook(params.resource, params.data);
+		const response = await createCore(db, params);
+		await runAfterCreateHook(params.resource, response);
+		return response;
 	}
 	return forwardCreate(service, params);
 }

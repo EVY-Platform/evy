@@ -45,6 +45,10 @@
 			"visibility": "private",
 			"dataValues": ["pending", "accept", "reject", "cancel"]
 		},
+		"transactions": {
+			"singular": "transaction",
+			"visibility": "public"
+		},
 		"formatters": {
 			"singular": "formatter"
 		}

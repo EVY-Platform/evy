@@ -16,6 +16,7 @@ import type {
 	DATA_EVY_Page,
 	DATA_EVY_Row,
 	DATA_EVY_Service,
+	DATA_EVY_Transaction,
 	DeleteRequest,
 	GetRequest,
 	UpdateRequest,
@@ -50,6 +51,7 @@ const PAGE_RESOURCE = EVY_CORE_RESOURCE_REF.PAGES;
 const ROW_RESOURCE = EVY_CORE_RESOURCE_REF.ROWS;
 const ADDRESS_RESOURCE = EVY_CORE_RESOURCE_REF.ADDRESSES;
 const MESSAGE_RESOURCE = EVY_CORE_RESOURCE_REF.MESSAGES;
+const TRANSACTION_RESOURCE = EVY_CORE_RESOURCE_REF.TRANSACTIONS;
 const FORMATTER_RESOURCE = EVY_CORE_RESOURCE_REF.FORMATTERS;
 
 function nowIso(): string {
@@ -611,6 +613,110 @@ describe("message resources", () => {
 				},
 			}),
 		).rejects.toThrow("Message validation failed");
+	});
+});
+
+function validTransactionPayload(): Omit<
+	DATA_EVY_Transaction,
+	"id" | "created_at" | "updated_at" | "deleted_at"
+> {
+	return {
+		fk: crypto.randomUUID(),
+		resource: "test_svc.items",
+		type: "charge",
+		amount: 250,
+		currency: "AUD",
+		payment_provider_fee: 0,
+		service_fee: 0,
+		payment_provider: "stripe",
+		payment_provider_transaction_id: crypto.randomUUID(),
+		signature: "signed",
+		authorization_message_id: crypto.randomUUID(),
+		visibility: "public" as const,
+	};
+}
+
+describe("transaction rows", () => {
+	it("lists empty then creates, lists, updates, and deletes transactions", async () => {
+		const empty = (await get(dataDb, {
+			resource: TRANSACTION_RESOURCE,
+		})) as DATA_EVY_Transaction[];
+		expect(empty).toEqual([]);
+
+		const created = (await create(dataDb, {
+			resource: TRANSACTION_RESOURCE,
+			data: validTransactionPayload(),
+		})) as DATA_EVY_Transaction;
+		expect(created.id).toBeDefined();
+		expect(created.created_at).toBeDefined();
+		expect(created.updated_at).toBeDefined();
+		expect(created.amount).toBe(250);
+		expect(created.currency).toBe("AUD");
+		expect(created.visibility).toBe("public");
+
+		const listed = (await get(dataDb, {
+			resource: TRANSACTION_RESOURCE,
+		})) as DATA_EVY_Transaction[];
+		expect(listed).toHaveLength(1);
+
+		const updated = (await update(dataDb, {
+			resource: TRANSACTION_RESOURCE,
+			filter: { id: created.id },
+			data: { ...created, amount: 300 },
+		})) as DATA_EVY_Transaction;
+		expect(updated.amount).toBe(300);
+
+		const deleted = (await deleteCore(dataDb, {
+			resource: TRANSACTION_RESOURCE,
+			filter: { id: created.id },
+		})) as DATA_EVY_Transaction;
+		expect(deleted.id).toBe(created.id);
+		const [tombstone] = await testDb.select().from(schema.transaction);
+		expect(tombstone?.deleted_at).toBeTruthy();
+		expect(
+			await get(dataDb, {
+				resource: TRANSACTION_RESOURCE,
+			}),
+		).toEqual([]);
+	});
+
+	it("accepts zero amount", async () => {
+		const created = (await create(dataDb, {
+			resource: TRANSACTION_RESOURCE,
+			data: { ...validTransactionPayload(), amount: 0 },
+		})) as DATA_EVY_Transaction;
+		expect(created.amount).toBe(0);
+	});
+
+	it("rejects a bad type", async () => {
+		await expect(
+			create(dataDb, {
+				resource: TRANSACTION_RESOURCE,
+				data: {
+					...validTransactionPayload(),
+					type: "refund",
+				},
+			}),
+		).rejects.toThrow("Transaction validation failed");
+	});
+
+	it("rejects a missing required field", async () => {
+		const { currency: _currency, ...payload } = validTransactionPayload();
+		await expect(
+			create(dataDb, {
+				resource: TRANSACTION_RESOURCE,
+				data: payload,
+			}),
+		).rejects.toThrow("Transaction validation failed");
+	});
+
+	it("rejects negative amount", async () => {
+		await expect(
+			create(dataDb, {
+				resource: TRANSACTION_RESOURCE,
+				data: { ...validTransactionPayload(), amount: -1 },
+			}),
+		).rejects.toThrow("Transaction validation failed");
 	});
 });
 

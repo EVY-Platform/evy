@@ -6,6 +6,8 @@ import type {
 	DeleteResponse,
 	GetRequest,
 	GetResponse,
+	HookRequest,
+	HookResponse,
 	ResourcesResponse,
 	UpdateRequest,
 	UpdateResponse,
@@ -14,6 +16,7 @@ import {
 	validateCreateResponse,
 	validateDeleteResponse,
 	validateGetResponse,
+	validateHookResponse,
 	validateResourcesResponse,
 	validateUpdateResponse,
 } from "evy-types/validators";
@@ -31,6 +34,7 @@ type ServiceAdapter = {
 	update(params: UpdateRequest): Promise<UpdateResponse>;
 	delete(params: DeleteRequest): Promise<DeleteResponse>;
 	resources(): Promise<ResourcesResponse>;
+	hook(params: HookRequest): Promise<HookResponse | null>;
 	onEvent(listener: (eventName: string, payload: unknown) => void): void;
 	dispose(): void;
 };
@@ -154,6 +158,17 @@ function makeWsAdapter(wsUrl: string): ServiceAdapter {
 			callMethod("resources", {}, (parsed) =>
 				validateResourcesResponse(parsed),
 			),
+		hook: async (params) => {
+			try {
+				const result = await callMethod("hook", params, (parsed) =>
+					validateHookResponse(parsed),
+				);
+				return result;
+			} catch (error) {
+				if ((error as { code?: number })?.code === -32601) return null;
+				throw error;
+			}
+		},
 		onEvent(listener) {
 			eventListener = listener;
 		},
@@ -416,4 +431,18 @@ export async function forwardResources(
 	serviceId: string,
 ): Promise<ResourcesResponse> {
 	return forwardTo(serviceId, "resources", (adapter) => adapter.resources());
+}
+
+export async function forwardHook(
+	serviceId: string,
+	params: HookRequest,
+): Promise<HookResponse | null> {
+	try {
+		await getServiceAdapter(serviceId);
+	} catch {
+		return null;
+	}
+	return forwardTo(serviceId, `hook:${params.hook}`, (adapter) =>
+		adapter.hook(params),
+	);
 }

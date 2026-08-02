@@ -137,9 +137,9 @@ describe("Marketplace E2E (via API WebSocket)", () => {
 		const message = {
 			fk: crypto.randomUUID(),
 			resource: MARKETPLACE_RESOURCE.ITEMS,
+			type: "pickup",
+			value: "pending",
 			data: {
-				type: "pickup",
-				value: "pending",
 				time: "2026-06-03T10:00:00",
 			},
 			visibility: "private",
@@ -154,7 +154,9 @@ describe("Marketplace E2E (via API WebSocket)", () => {
 		expect(isRecord(created)).toBe(true);
 		expect(created).toMatchObject({
 			id: messageId,
-			data: { type: "pickup", value: "pending" },
+			type: "pickup",
+			value: "pending",
+			data: { time: "2026-06-03T10:00:00" },
 			visibility: "private",
 		});
 		expect(created.updated_at).toBeDefined();
@@ -166,7 +168,8 @@ describe("Marketplace E2E (via API WebSocket)", () => {
 		expect(rows).toHaveLength(1);
 		expect(rows[0]).toMatchObject({
 			id: messageId,
-			data: { type: "pickup", value: "pending" },
+			type: "pickup",
+			value: "pending",
 		});
 	});
 

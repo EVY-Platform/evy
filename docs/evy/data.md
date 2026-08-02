@@ -162,6 +162,10 @@ A Search row may persist both `child_row_id` and `sheet_row_id`. Relationship ki
 
 On the wire this is accessed with `resource: "evy.rows"`.
 
+### DATA_EVY_Transaction
+
+Record of money movement for a marketplace item (`fk` + `resource`). `type` is one of `charge`, `transfer`, or `withdraw`. Fees, payment provider, and signature are fixed placeholder values in v1. `authorization_message_id` points at the buyer's original request message. Full CRUD with tombstone delete.
+
 #### Visibility
 
 Every `DATA_EVY_*` row carries a required `visibility` attribute: `"public"` or `"private"`. **Every create states it, and nothing fills one in** — not the resource module, not the schema, not the database column. A payload without a visibility is rejected, because a record whose visibility nobody chose is a bug rather than something to guess at.

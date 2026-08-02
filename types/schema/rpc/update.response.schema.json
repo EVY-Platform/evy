@@ -14,6 +14,9 @@
 			"$ref": "../data/data.schema.json#/$defs/DATA_EVY_Row"
 		},
 		{
+			"$ref": "../data/data.schema.json#/$defs/DATA_EVY_Transaction"
+		},
+		{
 			"$ref": "../data/data.schema.json#/$defs/DATA_EVY_Service"
 		},
 		{

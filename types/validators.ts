@@ -23,6 +23,7 @@ import type {
 	DATA_EVY_Row,
 	DATA_EVY_Service,
 	DATA_EVY_ServiceProvider,
+	DATA_EVY_Transaction,
 } from "./generated/ts/data/data";
 import type {
 	FileUploadChunkMetadata,
@@ -35,6 +36,8 @@ import type { DeleteRequest } from "./generated/ts/rpc/delete.request";
 import type { DeleteResponse } from "./generated/ts/rpc/delete.response";
 import type { GetRequest } from "./generated/ts/rpc/get.request";
 import type { GetResponse } from "./generated/ts/rpc/get.response";
+import type { HookRequest } from "./generated/ts/rpc/hook.request";
+import type { HookResponse } from "./generated/ts/rpc/hook.response";
 import type { PlaceSearchRequest } from "./generated/ts/rpc/place_search.request";
 import type { PlaceSearchResponse } from "./generated/ts/rpc/place_search.response";
 import type { ResourcesResponse } from "./generated/ts/rpc/resources.response";
@@ -83,6 +86,12 @@ import getRequestRaw from "./schema/rpc/get.request.schema.json" with {
 	type: "json",
 };
 import getResponseRaw from "./schema/rpc/get.response.schema.json" with {
+	type: "json",
+};
+import hookRequestRaw from "./schema/rpc/hook.request.schema.json" with {
+	type: "json",
+};
+import hookResponseRaw from "./schema/rpc/hook.response.schema.json" with {
 	type: "json",
 };
 import placeSearchRequestRaw from "./schema/rpc/place_search.request.schema.json" with {
@@ -152,6 +161,8 @@ const RAW_SCHEMAS: Record<string, Record<string, unknown>> = {
 	>,
 	"rpc/api.request.schema.json": apiRequestRaw as Record<string, unknown>,
 	"rpc/get.request.schema.json": getRequestRaw as Record<string, unknown>,
+	"rpc/hook.request.schema.json": hookRequestRaw as Record<string, unknown>,
+	"rpc/hook.response.schema.json": hookResponseRaw as Record<string, unknown>,
 	"rpc/create.request.schema.json": createRequestRaw as Record<
 		string,
 		unknown
@@ -306,6 +317,7 @@ const REQUEST_SCHEMA_FILES = [
 	"rpc/delete.request.schema.json",
 	"rpc/sync.request.schema.json",
 	"rpc/place_search.request.schema.json",
+	"rpc/hook.request.schema.json",
 ] as const;
 
 /** data.schema references SDUI for DATA_EVY_Flow; register both in one instance */
@@ -325,6 +337,7 @@ const ENTITY_SCHEMA_FILES = [
 	"rpc/sync.response.schema.json",
 	"rpc/resources.response.schema.json",
 	"rpc/place_search.response.schema.json",
+	"rpc/hook.response.schema.json",
 ];
 
 let requestAjv: InstanceType<typeof Ajv2020> | null = null;
@@ -392,6 +405,14 @@ const getValidateGetRequest = lazyValidator<GetRequest>(
 	getRequestAjv,
 	fileId("rpc/get.request.schema.json"),
 );
+const getValidateHookRequest = lazyValidator<HookRequest>(
+	getRequestAjv,
+	fileId("rpc/hook.request.schema.json"),
+);
+const getValidateHookResponse = lazyValidator<HookResponse>(
+	getEntityAjv,
+	fileId("rpc/hook.response.schema.json"),
+);
 const getValidateUiFlow = lazyValidator<UI_Flow>(
 	getEntityAjv,
 	fileId("sdui/evy.schema.json"),
@@ -403,6 +424,10 @@ const getValidateDataEvyAddress = lazyValidator<DATA_EVY_Address>(
 const getValidateDataEvyMessage = lazyValidator<DATA_EVY_Message>(
 	getEntityAjv,
 	`${fileId("data/data.schema.json")}#/$defs/DATA_EVY_Message`,
+);
+const getValidateDataEvyTransaction = lazyValidator<DATA_EVY_Transaction>(
+	getEntityAjv,
+	`${fileId("data/data.schema.json")}#/$defs/DATA_EVY_Transaction`,
 );
 const getValidateDataEvyFormatter = lazyValidator<DATA_EVY_Formatter>(
 	getEntityAjv,
@@ -520,6 +545,14 @@ export const validateUpdateDataPayload = makeValidator<UpdateRequest["data"]>(
 export const validateGetRequest = makeValidator<GetRequest>(
 	"GetRequest",
 	getValidateGetRequest,
+);
+export const validateHookRequest = makeValidator<HookRequest>(
+	"HookRequest",
+	getValidateHookRequest,
+);
+export const validateHookResponse = makeValidator<HookResponse>(
+	"HookResponse",
+	getValidateHookResponse,
 );
 
 function assertUiFlowRowTriggerConstraints(row: UI_Row, path: string): void {
@@ -697,6 +730,10 @@ export const validateDataEvyAddress = makeValidator<DATA_EVY_Address>(
 export const validateDataEvyMessage = makeValidator<DATA_EVY_Message>(
 	"Message",
 	getValidateDataEvyMessage,
+);
+export const validateDataEvyTransaction = makeValidator<DATA_EVY_Transaction>(
+	"Transaction",
+	getValidateDataEvyTransaction,
 );
 export const validateDataEvyFormatter = makeValidator<DATA_EVY_Formatter>(
 	"Formatter",

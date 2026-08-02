@@ -2,6 +2,7 @@ import {
 	validateStrictCreateRequest,
 	validateStrictDeleteRequest,
 	validateStrictGetRequest,
+	validateStrictHookRequest,
 	validateStrictUpdateRequest,
 } from "evy-types/rpcRequestHelpers";
 import {
@@ -12,6 +13,7 @@ import {
 } from "evy-types/wsServer";
 import { create, deleteResource, get, update } from "./data";
 import { DATA_CHANGED_EVENT, onServiceEvent } from "./events";
+import { handleHook } from "./hooks";
 import { getMarketplaceResourcesResponse } from "./resources";
 
 let serverInstance: WSServer | null = null;
@@ -48,6 +50,10 @@ export async function startMarketplaceRpcServer(
 		return deleteResource(params);
 	});
 	server.register("resources", () => getMarketplaceResourcesResponse());
+	server.register("hook", (params: unknown) => {
+		validateStrictHookRequest(params);
+		return handleHook(params);
+	});
 
 	onServiceEvent((eventName, payload) => {
 		emitJsonRpc(server, eventName, payload);

@@ -7,7 +7,8 @@ import {
 	it,
 } from "bun:test";
 import { migrate } from "drizzle-orm/pglite/migrator";
-import type { ResourcesResponse } from "evy-types";
+import type { HookRequest, ResourcesResponse } from "evy-types";
+import { EVY_CORE_RESOURCE_REF } from "evy-types/coreResources";
 import { getFreePort } from "evy-types/wsTestHelpers";
 import { Client } from "rpc-websockets";
 import { schema } from "../db";
@@ -119,6 +120,32 @@ describe("marketplace JSON-RPC server", () => {
 			"transfer_options.pickup.address_id",
 		);
 		expect(conditions?.attributes).toEqual(["id", "value"]);
+		client.close();
+	});
+
+	it("accepts a valid hook request and rejects garbage", async () => {
+		const client = createClient();
+		await waitForOpen(client);
+
+		const hookRequest: HookRequest = {
+			hook: "before_create",
+			resource: EVY_CORE_RESOURCE_REF.MESSAGES,
+			operation: "create",
+			data: {
+				fk: crypto.randomUUID(),
+				resource: MARKETPLACE_RESOURCE.ITEMS,
+				type: "pickup",
+				value: "pending",
+				data: { time: "2026-06-03T09:00:00" },
+				visibility: "private",
+			},
+		};
+
+		const response = await client.call("hook", hookRequest);
+		expect(response).toEqual({ ok: true });
+
+		await expect(client.call("hook", { hook: "nope" })).rejects.toThrow();
+
 		client.close();
 	});
 });
