@@ -104,6 +104,22 @@ describe("shipped fixtures satisfy the row schema", () => {
 		expect(structured).toEqual([]);
 	});
 
+	// The TS parser recovers from a missing brace; iOS folds every later key into
+	// the unclosed one and posts a payload with the required fields gone.
+	test("every branch has balanced braces", () => {
+		const unbalanced: string[] = [];
+		for (const { source, branch } of fixtureBranches) {
+			const opens = branch.split("{").length - 1;
+			const closes = branch.split("}").length - 1;
+			if (opens !== closes) {
+				unbalanced.push(
+					`${source}: ${opens} { vs ${closes} } in ${branch}`,
+				);
+			}
+		}
+		expect(unbalanced).toEqual([]);
+	});
+
 	test("every branch parses as an action expression", () => {
 		const rejected: string[] = [];
 		for (const { source, branch, parseError } of fixtureBranches) {

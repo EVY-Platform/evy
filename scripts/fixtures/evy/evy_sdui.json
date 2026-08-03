@@ -126,7 +126,7 @@
 																	{
 																		"condition": "",
 																		"false": "",
-																		"true": "{create(evy.messages,{fk: {$datum.fk}, resource: {$datum.resource}, parent_message_id: {$datum.id}, type: {$datum.type}, value: reject, data: { time: {$datum.data.time}, postalcode: {$datum.data.postalcode}, destination_address: {$datum.data.destination_address}})}"
+																		"true": "{create(evy.messages,{fk: {$datum.fk}, resource: {$datum.resource}, parent_message_id: {$datum.id}, type: {$datum.type}, value: reject, data: { time: {$datum.data.time}, postalcode: {$datum.data.postalcode}, destination_address: {$datum.data.destination_address}}})}"
 																	},
 																	{
 																		"condition": "",
@@ -274,7 +274,7 @@
 										{
 											"condition": "",
 											"false": "",
-											"true": "{create(evy.messages,{fk: {$datum.fk}, resource: {$datum.resource}, parent_message_id: {$datum.id}, type: {$datum.type}, value: cancel, data: { time: {$datum.data.time}, postalcode: {$datum.data.postalcode}, destination_address: {$datum.data.destination_address}})}"
+											"true": "{create(evy.messages,{fk: {$datum.fk}, resource: {$datum.resource}, parent_message_id: {$datum.id}, type: {$datum.type}, value: cancel, data: { time: {$datum.data.time}, postalcode: {$datum.data.postalcode}, destination_address: {$datum.data.destination_address}}})}"
 										}
 									]
 								}
@@ -504,7 +504,7 @@
 									"name": "Scheduled buyer shipping",
 									"title": "",
 									"placeholder": "",
-									"source": "{filter(evy.messages, ($datum.value == \"transfer_initiated\" || $datum.value == \"transfer_completed\" || $datum.value == \"sent\") && owns($datum.resource, $datum.fk) == false && $datum.type == shipping && findFirst(sort(evy.messages, desc, created_at), fk == $datum.fk && type == $datum.type).id == $datum.id)}",
+									"source": "{filter(evy.messages, $datum.value == \"sent\" && owns($datum.resource, $datum.fk) == false && $datum.type == shipping && findFirst(sort(evy.messages, desc, created_at), fk == $datum.fk && type == $datum.type).id == $datum.id)}",
 									"no_results": "",
 									"destination": "",
 									"visible": "true",
@@ -609,7 +609,7 @@
 									"name": "Scheduled seller delivery",
 									"title": "",
 									"placeholder": "",
-									"source": "{filter(evy.messages, ($datum.value == \"charge_initiated\" || $datum.value == \"charge_completed\") && owns($datum.resource, $datum.fk) == true && $datum.type == delivery && findFirst(sort(evy.messages, desc, created_at), fk == $datum.fk && type == $datum.type).id == $datum.id)}",
+									"source": "{filter(evy.messages, $datum.value == \"accept\" && owns($datum.resource, $datum.fk) == true && $datum.type == delivery && findFirst(sort(evy.messages, desc, created_at), fk == $datum.fk && type == $datum.type).id == $datum.id && findFirst(sort(marketplace.item_statuses, desc, created_at), item_id == $datum.fk).status == \"sold\")}",
 									"no_results": "",
 									"destination": "",
 									"visible": "true",
@@ -714,7 +714,7 @@
 									"name": "Scheduled seller shipping",
 									"title": "",
 									"placeholder": "",
-									"source": "{filter(evy.messages, ($datum.value == \"charge_initiated\" || $datum.value == \"charge_completed\") && owns($datum.resource, $datum.fk) == true && $datum.type == shipping && findFirst(sort(evy.messages, desc, created_at), fk == $datum.fk && type == $datum.type).id == $datum.id)}",
+									"source": "{filter(evy.messages, $datum.value == \"accept\" && owns($datum.resource, $datum.fk) == true && $datum.type == shipping && findFirst(sort(evy.messages, desc, created_at), fk == $datum.fk && type == $datum.type).id == $datum.id && findFirst(sort(marketplace.item_statuses, desc, created_at), item_id == $datum.fk).status == \"sold\")}",
 									"no_results": "",
 									"destination": "",
 									"visible": "true",
@@ -819,7 +819,7 @@
 									"name": "Scheduled informative accepts",
 									"title": "",
 									"placeholder": "",
-									"source": "{filter(evy.messages, $datum.value == \"accept\" && findFirst(sort(evy.messages, desc, created_at), fk == $datum.fk && type == $datum.type).id == $datum.id && ($datum.type != pickup || owns($datum.resource, $datum.fk) == true))}",
+									"source": "{filter(evy.messages, $datum.value == \"accept\" && findFirst(sort(evy.messages, desc, created_at), fk == $datum.fk && type == $datum.type).id == $datum.id && ($datum.type != pickup || owns($datum.resource, $datum.fk) == true) && ($datum.type == pickup || owns($datum.resource, $datum.fk) == false || findFirst(sort(marketplace.item_statuses, desc, created_at), item_id == $datum.fk).status != \"sold\"))}",
 									"no_results": "No requests",
 									"destination": "",
 									"visible": "true",

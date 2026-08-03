@@ -793,7 +793,7 @@
 								}
 							]
 						},
-						"visible": "{(findFirst(sort(evy.messages, desc, created_at), fk == marketplace.items.id && type == pickup).value == \"accept\" && owns(marketplace.items, marketplace.items.id) == false) || (findFirst(sort(evy.messages, desc, created_at), fk == marketplace.items.id && type == delivery).value == \"given\" && owns(marketplace.items, marketplace.items.id) == false) || ((findFirst(sort(evy.messages, desc, created_at), fk == marketplace.items.id && type == shipping).value == \"transfer_initiated\" || findFirst(sort(evy.messages, desc, created_at), fk == marketplace.items.id && type == shipping).value == \"transfer_completed\" || findFirst(sort(evy.messages, desc, created_at), fk == marketplace.items.id && type == shipping).value == \"sent\") && owns(marketplace.items, marketplace.items.id) == false)}",
+						"visible": "{(findFirst(sort(evy.messages, desc, created_at), fk == marketplace.items.id && type == pickup).value == \"accept\" && owns(marketplace.items, marketplace.items.id) == false) || (findFirst(sort(evy.messages, desc, created_at), fk == marketplace.items.id && type == delivery).value == \"given\" && owns(marketplace.items, marketplace.items.id) == false) || (findFirst(sort(evy.messages, desc, created_at), fk == marketplace.items.id && type == shipping).value == \"sent\" && owns(marketplace.items, marketplace.items.id) == false)}",
 						"title": "",
 						"label": "Item received",
 						"name": "Item received",
@@ -836,7 +836,7 @@
 														"false": ""
 													},
 													{
-														"condition": "{findFirst(sort(evy.messages, desc, created_at), fk == marketplace.items.id && type == shipping).value == \"transfer_initiated\" || findFirst(sort(evy.messages, desc, created_at), fk == marketplace.items.id && type == shipping).value == \"transfer_completed\" || findFirst(sort(evy.messages, desc, created_at), fk == marketplace.items.id && type == shipping).value == \"sent\"}",
+														"condition": "{findFirst(sort(evy.messages, desc, created_at), fk == marketplace.items.id && type == shipping).value == \"sent\"}",
 														"true": "{create(evy.messages,{fk: {marketplace.items.id}, resource: marketplace.items, parent_message_id: {findFirst(sort(evy.messages, desc, created_at), fk == marketplace.items.id && type == shipping).id}, type: shipping, value: received, data: {time: {findFirst(sort(evy.messages, desc, created_at), fk == marketplace.items.id && type == shipping).data.time}, postalcode: {findFirst(sort(evy.messages, desc, created_at), fk == marketplace.items.id && type == shipping).data.postalcode}, destination_address: {findFirst(sort(evy.messages, desc, created_at), fk == marketplace.items.id && type == shipping).data.destination_address}}})}",
 														"false": ""
 													},
@@ -863,7 +863,7 @@
 														"false": ""
 													},
 													{
-														"condition": "{findFirst(sort(evy.messages, desc, created_at), fk == marketplace.items.id && type == shipping).value == \"transfer_initiated\" || findFirst(sort(evy.messages, desc, created_at), fk == marketplace.items.id && type == shipping).value == \"transfer_completed\" || findFirst(sort(evy.messages, desc, created_at), fk == marketplace.items.id && type == shipping).value == \"sent\"}",
+														"condition": "{findFirst(sort(evy.messages, desc, created_at), fk == marketplace.items.id && type == shipping).value == \"sent\"}",
 														"true": "{create(evy.messages,{fk: {marketplace.items.id}, resource: marketplace.items, parent_message_id: {findFirst(sort(evy.messages, desc, created_at), fk == marketplace.items.id && type == shipping).id}, type: shipping, value: failed, data: {time: {findFirst(sort(evy.messages, desc, created_at), fk == marketplace.items.id && type == shipping).data.time}, postalcode: {findFirst(sort(evy.messages, desc, created_at), fk == marketplace.items.id && type == shipping).data.postalcode}, destination_address: {findFirst(sort(evy.messages, desc, created_at), fk == marketplace.items.id && type == shipping).data.destination_address}}})}",
 														"false": ""
 													},

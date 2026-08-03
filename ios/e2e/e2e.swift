@@ -1126,7 +1126,7 @@ class E2ETestBase: XCTestCase {
     func cancelAction(type: String) -> String {
       let latest = latestMessageExpression(type: type)
       return "{create(\(messagesResourceId),{\(messageCreateEnvelope),"
-        + " parent_message_id: {\(latest).id}, value: cancel, type: \(type), data: {time: {\(latest).data.time}, postalcode: {\(latest).data.postalcode}, destination_address: {\(latest).data.destination_address}})}"
+        + " parent_message_id: {\(latest).id}, value: cancel, type: \(type), data: {time: {\(latest).data.time}, postalcode: {\(latest).data.postalcode}, destination_address: {\(latest).data.destination_address}}})}"
     }
 
     return [
@@ -1972,7 +1972,7 @@ final class E2ECoreUITests: E2ETestBase {
       homePage.waitForExistence(timeout: 20),
       "Core UI home page should load - verify API is running and seeded")
 
-    try XCTContext.runActivity(named: "Navigation and visibility") { _ in
+    XCTContext.runActivity(named: "Navigation and visibility") { _ in
       let loadingIndicator = app.progressIndicators["loadingIndicator"]
       let initialUIAppeared =
         loadingIndicator.waitForExistence(timeout: 5) || homePage.waitForExistence(timeout: 5)
@@ -2011,7 +2011,7 @@ final class E2ECoreUITests: E2ETestBase {
         "Should return to home screen after create flow")
     }
 
-    try XCTContext.runActivity(named: "Swipe-left navigates to destination") { _ in
+    XCTContext.runActivity(named: "Swipe-left navigates to destination") { _ in
       let rowTitle = app.staticTexts["Swipe me"]
       XCTAssertTrue(
         rowTitle.waitForExistence(timeout: 10),
@@ -2037,7 +2037,7 @@ final class E2ECoreUITests: E2ETestBase {
       XCTAssertTrue(homePage.waitForExistence(timeout: 5), "Should return to home screen")
     }
 
-    try XCTContext.runActivity(named: "Segment switching swaps child content") { _ in
+    XCTContext.runActivity(named: "Segment switching swaps child content") { _ in
       let pickupContent = app.staticTexts["Pickup segment content"]
       let deliveryContent = app.staticTexts["Delivery segment content"]
 
@@ -2282,7 +2282,7 @@ final class WebSocketE2ETests: E2ETestBase {
       )
     }
 
-    try XCTContext.runActivity(named: "Cross-page sheet from another page") { _ in
+    XCTContext.runActivity(named: "Cross-page sheet from another page") { _ in
       let openCrossPageSheetButton = app.buttons["Open cross-page sheet"]
       XCTAssertTrue(
         openCrossPageSheetButton.waitForExistence(timeout: 10),
@@ -2295,7 +2295,7 @@ final class WebSocketE2ETests: E2ETestBase {
       app.buttons["Done"].tap()
     }
 
-    try XCTContext.runActivity(named: "Sheet title updates when watched data changes") { _ in
+    XCTContext.runActivity(named: "Sheet title updates when watched data changes") { _ in
       let openSheetButton = app.buttons["Open sheet"]
       XCTAssertTrue(
         openSheetButton.waitForExistence(timeout: 10),
@@ -2407,7 +2407,7 @@ final class WebSocketE2ETests: E2ETestBase {
     let noSurchargeCopy =
       "Shipping should be confirmed within 48 hours by the seller."
 
-    try XCTContext.runActivity(named: "Earlier-timeslot warning on later slot") { _ in
+    XCTContext.runActivity(named: "Earlier-timeslot warning on later slot") { _ in
       let laterTimeslot = app.staticTexts["10:00"].firstMatch
       XCTAssertTrue(
         laterTimeslot.waitForExistence(timeout: 10), "Later pickup timeslot should be visible")
@@ -3938,7 +3938,7 @@ final class E2EHomeInboxTests: E2ETestBase {
     }
 
     try XCTContext.runActivity(named: "Buyer receives delivery after given") { _ in
-      let (pendingId, acceptId) = try seedAcceptedRequest(
+      let (pendingId, _) = try seedAcceptedRequest(
         emitter: emitter,
         itemId: Self.seededBuyerItemId,
         type: "delivery",
