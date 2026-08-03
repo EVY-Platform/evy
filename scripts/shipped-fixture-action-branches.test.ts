@@ -36,6 +36,8 @@ type FixtureBranch = {
 	parseError?: string;
 };
 
+const malformedActions: string[] = [];
+
 async function loadFixtureBranches(): Promise<FixtureBranch[]> {
 	const branches: FixtureBranch[] = [];
 	for (const relative of FIXTURES) {
@@ -54,12 +56,19 @@ function walk(node: unknown, source: string, out: FixtureBranch[]): void {
 
 	const record = node as Record<string, unknown>;
 	if (record.actions && typeof record.actions === "object") {
-		for (const list of Object.values(
+		for (const [trigger, list] of Object.entries(
 			record.actions as Record<string, unknown>,
 		)) {
 			if (!Array.isArray(list)) continue;
 			for (const action of list) {
-				if (!action || typeof action !== "object") continue;
+				// A raw string here is the pre-migration array shape. Skipping it
+				// would hide the branch from every check below, so record it.
+				if (!action || typeof action !== "object") {
+					malformedActions.push(
+						`${source}: ${record.id}/${trigger} entry is ${typeof action}, expected a {condition,true,false} object`,
+					);
+					continue;
+				}
 				for (const key of ["true", "false"] as const) {
 					const branch = (action as Record<string, unknown>)[key];
 					if (branch === "" || branch === undefined) continue;
@@ -113,6 +122,10 @@ function findCreateInlineData(
 describe("shipped fixtures satisfy the row schema", () => {
 	test("the fixtures actually contain action branches", () => {
 		expect(fixtureBranches.length).toBeGreaterThan(20);
+	});
+
+	test("every action entry is a branch object", () => {
+		expect(malformedActions).toEqual([]);
 	});
 
 	test("no structured fn objects remain in fixture branches", () => {

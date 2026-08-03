@@ -5,29 +5,8 @@
 		{
 			"idx": 0,
 			"version": "7",
-			"when": 1785373888035,
+			"when": 1785732674436,
 			"tag": "0000_baseline",
-			"breakpoints": true
-		},
-		{
-			"idx": 1,
-			"version": "7",
-			"when": 1785587601046,
-			"tag": "0001_same_slayback",
-			"breakpoints": true
-		},
-		{
-			"idx": 2,
-			"version": "7",
-			"when": 1785674448637,
-			"tag": "0002_warm_yellowjacket",
-			"breakpoints": true
-		},
-		{
-			"idx": 3,
-			"version": "7",
-			"when": 1785711808082,
-			"tag": "0003_fine_dark_beast",
 			"breakpoints": true
 		}
 	]

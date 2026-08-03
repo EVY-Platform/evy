@@ -1,1 +1,0 @@
-ALTER TABLE "transaction" ADD COLUMN "status" text NOT NULL;

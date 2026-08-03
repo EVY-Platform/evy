@@ -351,8 +351,16 @@
 															"visible": "true",
 															"actions": {
 																"tap": [
-																	"{create(evy.messages,{fk: {$datum.fk}, resource: marketplace.items, parent_message_id: {$datum.id}, type: {$datum.type}, value: transaction, data: {time: {$datum.data.time}, postalcode: {$datum.data.postalcode}, destination_address: {$datum.data.destination_address}}})}",
-																	"{close()}"
+																	{
+																		"condition": "",
+																		"true": "{create(evy.messages,{fk: {$datum.fk}, resource: marketplace.items, parent_message_id: {$datum.id}, type: {$datum.type}, value: transaction, data: {time: {$datum.data.time}, postalcode: {$datum.data.postalcode}, destination_address: {$datum.data.destination_address}}})}",
+																		"false": ""
+																	},
+																	{
+																		"condition": "",
+																		"true": "{close()}",
+																		"false": ""
+																	}
 																]
 															}
 														}
