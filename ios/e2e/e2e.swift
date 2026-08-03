@@ -1694,6 +1694,11 @@ class E2ETestBase: XCTestCase {
     "065e4b7a-9584-4763-0425-a190817065e4"
   static let homeInboxScheduledBuyerPickupChildRowId =
     "7065e4b7-a695-4875-1536-b2a190817065"
+  // Seller-side pickup accepts have no swipe action of their own (the pickup
+  // handshake row drives that), so they surface here instead of the
+  // buyer-pickup row above, which only matches `owns(...) == false`.
+  static let homeInboxScheduledInformativeChildRowId =
+    "0bbcb9ae-e148-4e8f-8e5a-a56969a4d4d2"
 
   static func homeInboxTabRow() throws -> [String: Any] {
     let flowData = try productionHomeFlowData()
@@ -3866,29 +3871,26 @@ final class E2EHomeInboxTests: E2ETestBase {
         "An answered request should no longer offer an action")
 
       app.segmentedControls.buttons["Scheduled"].tap()
-      let scheduledRow = app.otherElements[
-        "swipeRow_\(E2ETestBase.homeInboxScheduledBuyerPickupChildRowId)_\(responseId)"
-      ]
+      let scheduledRowTexts = scheduledInformativeRowTexts(responseId: responseId)
       XCTAssertTrue(
-        scheduledRow.waitForExistence(timeout: 10),
+        scheduledRowTexts.firstMatch.waitForExistence(timeout: 10),
         "The accepted request should appear under Scheduled")
       XCTAssertTrue(
-        scheduledRow.staticTexts["accept"].exists,
+        scheduledRowTexts.matching(NSPredicate(format: "label == 'accept'")).firstMatch.exists,
         "The Scheduled row should show the accepted state")
     }
 
     try XCTContext.runActivity(named: "Pre-answered request offers nothing in For you") { _ in
-      let (requestId, _) = try seedOwnRequest(
+      let (requestId, responseId) = try seedOwnRequest(
         emitter: emitter, itemId: ownedRequestItemIds[2], responseValue: "accept")
 
       app.segmentedControls.buttons["Scheduled"].tap()
-      let scheduledRow = app.otherElements[
-        "swipeRow_\(E2ETestBase.homeInboxScheduledBuyerPickupChildRowId)_\(requestId)"
-      ]
+      let scheduledRowTexts = scheduledInformativeRowTexts(responseId: responseId!)
       XCTAssertTrue(
-        scheduledRow.waitForExistence(timeout: 15),
+        scheduledRowTexts.firstMatch.waitForExistence(timeout: 15),
         "The pre-answered request should reach Scheduled")
-      XCTAssertTrue(scheduledRow.staticTexts["accept"].exists)
+      XCTAssertTrue(
+        scheduledRowTexts.matching(NSPredicate(format: "label == 'accept'")).firstMatch.exists)
 
       app.segmentedControls.buttons["For you"].tap()
       let requestRow = ownRequestRow(requestId: requestId)
@@ -4384,5 +4386,16 @@ final class E2EHomeInboxTests: E2ETestBase {
     app.otherElements[
       "swipeRow_\(E2ETestBase.homeInboxForYouChildRowId)_\(requestId)"
     ]
+  }
+
+  // The informative row has no swipe action, so it isn't wrapped in the
+  // identified `Other` container `EVYSwipeableRow` gives swipeable rows —
+  // its title/subtitle text elements carry the identifier directly instead.
+  @MainActor
+  private func scheduledInformativeRowTexts(responseId: String) -> XCUIElementQuery {
+    app.staticTexts.matching(
+      identifier:
+        "row_\(E2ETestBase.homeInboxScheduledInformativeChildRowId)_\(responseId)"
+    )
   }
 }
