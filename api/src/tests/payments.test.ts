@@ -13,16 +13,15 @@ import {
 } from "evy-types/coreResources";
 import * as schema from "evy-types/db/schema.generated";
 import {
+	MOCK_CAPTURE_FAILURE_AMOUNT,
+	MOCK_TRANSFER_FAILURE_AMOUNT,
+} from "evy-types/paymentMocks";
+import {
 	paymentCapture,
 	paymentIntent,
 	paymentTransfer,
 } from "../procedures/payments";
-import {
-	findRowsByIntentId,
-	hasRow,
-	MOCK_CAPTURE_FAILURE_AMOUNT,
-	MOCK_TRANSFER_FAILURE_AMOUNT,
-} from "../procedures/paymentsShared";
+import { findRowsByIntentId, hasRow } from "../procedures/paymentsShared";
 import {
 	asEvyDb,
 	clearAllTestTables,

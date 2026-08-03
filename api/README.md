@@ -24,10 +24,11 @@ sequenceDiagram
     rpc->>rpc: validateStrict*Request
 
     alt serviceOfRef(resource) == EVY_CORE_SERVICE
-        rpc->>data: core dispatch
+        rpc->>data: assertCoreResourceMutable + hookedCreate / update / delete
         data->>resource: resource-specific handler
         resource-->>data: row JSON
         data-->>rpc: row JSON
+        Note over rpc,data: hookedCreate may forward before_create / after_create hooks to the target service
     else other service slug
         rpc->>services: forwardGet/Create/Update/Api
         services->>marketplace: JSON-RPC get/create/update/api
@@ -47,6 +48,8 @@ sequenceDiagram
 - `procedures/rpc.ts` forwards a procedure declared for another service to that service's `api` method. A method the registry does not pair with the target service is rejected by name.
 
 See [docs/evy/data.md](../docs/evy/data.md#procedures) for the manifest fields and how to add one.
+
+Core payment procedures (`payment_intent`, `payment_capture`, `payment_transfer`, `payment_webhook`) append `evy.transactions` rows through the same `hookedCreate` path as client creates. See [docs/evy/data.md](../docs/evy/data.md#data_evy_transaction) and [docs/evy/hooks.md](../docs/evy/hooks.md).
 
 ### Concurrent writers
 

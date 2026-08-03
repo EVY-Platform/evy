@@ -29,6 +29,7 @@ import {
 	asEvyDb,
 	clearAllTestTables,
 	createPgliteTestDatabase,
+	validTransactionPayload,
 } from "./wsTestHelpers";
 
 const { pgliteClient, testDb } = createPgliteTestDatabase();
@@ -615,27 +616,6 @@ describe("message resources", () => {
 		).rejects.toThrow("Message validation failed");
 	});
 });
-
-function validTransactionPayload(): Omit<
-	DATA_EVY_Transaction,
-	"id" | "created_at" | "updated_at" | "deleted_at"
-> {
-	return {
-		fk: crypto.randomUUID(),
-		resource: "test_svc.items",
-		type: "charge",
-		status: "intent",
-		amount: 250,
-		currency: "AUD",
-		payment_provider_fee: 0,
-		service_fee: 0,
-		payment_provider: "stripe",
-		payment_provider_transaction_id: crypto.randomUUID(),
-		signature: "signed",
-		authorization_message_id: crypto.randomUUID(),
-		visibility: "public" as const,
-	};
-}
 
 describe("transaction rows", () => {
 	it("lists empty then creates, lists, updates, and deletes transactions", async () => {

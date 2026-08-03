@@ -1,4 +1,8 @@
-import type { CreateRequest, CreateResponse } from "evy-types";
+import type {
+	CreateRequest,
+	CreateResponse,
+	DATA_EVY_Message,
+} from "evy-types";
 import {
 	EVY_CORE_RESOURCE_REF,
 	EVY_CORE_SERVICE,
@@ -6,6 +10,7 @@ import {
 import { serviceOfRef } from "evy-types/resourceRef";
 import { create as createCore } from "../data/data";
 import type { EvyDb } from "../database/db";
+import { derivedMessageData } from "./paymentsShared";
 import { forwardHook } from "./services";
 
 class HookVetoError extends Error {
@@ -18,13 +23,16 @@ class HookVetoError extends Error {
 	}
 }
 
-const HOOKED_CORE_RESOURCE_REFS = new Set([
+const HOOKED_CORE_RESOURCE_REFS = new Set<string>([
 	EVY_CORE_RESOURCE_REF.MESSAGES,
 	EVY_CORE_RESOURCE_REF.TRANSACTIONS,
 ]);
 
-function serviceOfDataResource(data: Record<string, unknown>): string | null {
-	const ref = data.resource;
+function resolveHookTarget(resource: string, data: unknown): string | null {
+	if (!HOOKED_CORE_RESOURCE_REFS.has(resource)) return null;
+	if (data === null || typeof data !== "object") return null;
+	const record = data as Record<string, unknown>;
+	const ref = record.resource;
 	if (typeof ref !== "string") return null;
 	try {
 		const target = serviceOfRef(ref);
@@ -33,12 +41,6 @@ function serviceOfDataResource(data: Record<string, unknown>): string | null {
 	} catch {
 		return null;
 	}
-}
-
-function resolveHookTarget(resource: string, data: unknown): string | null {
-	if (!HOOKED_CORE_RESOURCE_REFS.has(resource)) return null;
-	if (data === null || typeof data !== "object") return null;
-	return serviceOfDataResource(data as Record<string, unknown>);
 }
 
 async function runBeforeCreateHook(
@@ -109,20 +111,14 @@ async function authorRequestFailedOnVeto(
 				: "create vetoed";
 
 	try {
-		const requestFailedData: Record<string, unknown> = {
-			fk: messageData.fk,
-			resource: messageData.resource,
-			type: messageData.type,
-			value: "request_failed",
-			data: { reason },
-			visibility: messageData.visibility,
-		};
-		if (typeof messageData.parent_message_id === "string") {
-			requestFailedData.parent_message_id = messageData.parent_message_id;
-		}
+		const message = messageData as DATA_EVY_Message;
 		await createCore(db, {
 			resource: EVY_CORE_RESOURCE_REF.MESSAGES,
-			data: requestFailedData,
+			data: derivedMessageData(message, {
+				value: "request_failed",
+				data: { reason },
+				visibility: message.visibility,
+			}),
 		});
 	} catch (authorError) {
 		console.error("Failed to author request_failed message:", authorError);

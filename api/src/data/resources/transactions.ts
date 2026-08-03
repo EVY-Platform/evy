@@ -6,10 +6,10 @@ import { makeCoreResource } from "./coreResource";
 export const transactionsResource = makeCoreResource<DATA_EVY_Transaction>({
 	table: transaction,
 	validate: validateDataEvyTransaction,
+	// type/status transitions are append-only (new rows), not in-place updates
 	toUpdateSet: (v) => ({
 		fk: v.fk,
 		resource: v.resource,
-		type: v.type,
 		amount: v.amount,
 		currency: v.currency,
 		payment_provider_fee: v.payment_provider_fee,

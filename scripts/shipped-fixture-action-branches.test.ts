@@ -8,6 +8,27 @@ import { validateDataEvyRow } from "../types/validators";
 
 const FIXTURES = ["evy/evy_sdui.json", "services/service_sdui.json"] as const;
 
+const PURCHASE_CONFIRMATION_VALUES = [
+	"transaction",
+	"received",
+	"failed",
+	"given",
+	"sent",
+	"transaction_completed",
+	"transaction_rejected",
+] as const;
+
+function purchaseConfirmationCreates(branches: FixtureBranch[]) {
+	return branches.filter(({ ast }) => {
+		if (ast?.fn !== "create" || ast.mode !== "inline") return false;
+		const value = ast.data?.value;
+		return (
+			typeof value === "string" &&
+			(PURCHASE_CONFIRMATION_VALUES as readonly string[]).includes(value)
+		);
+	});
+}
+
 type FixtureBranch = {
 	source: string;
 	branch: string;
@@ -258,50 +279,26 @@ describe("shipped fixtures satisfy the row schema", () => {
 	});
 
 	test("purchase confirmation creates cover the new message values", () => {
-		const purchaseConfirmationValues = [
-			"transaction",
-			"received",
-			"failed",
-			"given",
-			"sent",
-			"transaction_completed",
-			"transaction_rejected",
-		];
 		const found = new Set<string>();
 
-		for (const { ast } of fixtureBranches) {
-			if (ast?.fn !== "create" || ast.mode !== "inline") continue;
-			const data = ast.data;
-			const value = data?.value;
-			if (!value) continue;
-			if (purchaseConfirmationValues.includes(value)) {
-				found.add(value);
-			}
+		for (const { ast } of purchaseConfirmationCreates(fixtureBranches)) {
+			const value = ast?.data?.value;
+			if (value) found.add(value);
 		}
 
-		expect([...found].sort()).toEqual(purchaseConfirmationValues.sort());
+		expect([...found].sort()).toEqual(
+			[...PURCHASE_CONFIRMATION_VALUES].sort(),
+		);
 	});
 
 	test("purchase confirmation creates include parent_message_id and data", () => {
-		const purchaseConfirmationValues = [
-			"transaction",
-			"received",
-			"failed",
-			"given",
-			"sent",
-			"transaction_completed",
-			"transaction_rejected",
-		];
 		const missing: string[] = [];
 
-		for (const { source, branch, ast } of fixtureBranches) {
-			if (ast?.fn !== "create" || ast.mode !== "inline") continue;
-			const data = ast.data;
-			const value = data?.value;
-			if (!value || !purchaseConfirmationValues.includes(value)) {
-				continue;
-			}
-			if (!data.parent_message_id || !data.data) {
+		for (const { source, branch, ast } of purchaseConfirmationCreates(
+			fixtureBranches,
+		)) {
+			const data = ast?.data;
+			if (!data?.parent_message_id || !data.data) {
 				missing.push(`${source}: ${branch}`);
 			}
 		}

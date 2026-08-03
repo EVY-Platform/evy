@@ -3,9 +3,12 @@ import { EVY_MESSAGE_DATA_VALUES } from "evy-types/coreResources";
 
 import { appendStatus, currentStatus, type ItemStatus } from "./status";
 
-type MessagePayload = Pick<DATA_EVY_Message, "fk" | "type" | "value">;
+export type MessagePayload = Pick<DATA_EVY_Message, "fk" | "type" | "value">;
 
-type TransactionPayload = Pick<DATA_EVY_Transaction, "fk" | "type" | "status">;
+export type TransactionPayload = Pick<
+	DATA_EVY_Transaction,
+	"fk" | "type" | "status"
+>;
 
 type ValidationResult = { ok: true } | { ok: false; reason: string };
 
@@ -17,14 +20,6 @@ const PICKUP_HANDSHAKE_VALUES = new Set([
 
 const FULFILLMENT_VALUES = new Set(["given", "sent", "received", "failed"]);
 
-const ROLLBACK_VALUES = new Set([
-	"transaction_rejected",
-	"failed",
-	"charge_failed",
-	"transfer_failed",
-	"cancel",
-]);
-
 const KNOWN_VALUES = new Set<string>(EVY_MESSAGE_DATA_VALUES);
 
 const PENDING_STATUSES = new Set<ItemStatus>([
@@ -32,12 +27,6 @@ const PENDING_STATUSES = new Set<ItemStatus>([
 	"delivery_pending",
 	"shipping_pending",
 ]);
-
-const VALUE_ALLOWED_STATUSES: Record<string, (status: ItemStatus) => boolean> =
-	{
-		pending: (status) => status === "available",
-		accept: (status) => status === "available" || status === "sold",
-	};
 
 function pendingStatusForType(type: string): ItemStatus | null {
 	switch (type) {
@@ -89,12 +78,18 @@ function rejectWrongStatus(
 function validateAllowedStatus(
 	value: string,
 	status: ItemStatus,
-): ValidationResult | null {
-	const predicate = VALUE_ALLOWED_STATUSES[value];
-	if (predicate) {
-		return predicate(status)
-			? { ok: true }
-			: rejectWrongStatus(value, status);
+): ValidationResult {
+	switch (value) {
+		case "pending":
+			return status === "available"
+				? { ok: true }
+				: rejectWrongStatus(value, status);
+		case "accept":
+			return status === "available" || status === "sold"
+				? { ok: true }
+				: rejectWrongStatus(value, status);
+		default:
+			break;
 	}
 	if (PICKUP_HANDSHAKE_VALUES.has(value)) {
 		return status === "pickup_pending" || status === "sold"
@@ -106,7 +101,7 @@ function validateAllowedStatus(
 			? { ok: true }
 			: rejectWrongStatus(value, status);
 	}
-	return null;
+	return { ok: true };
 }
 
 function shouldRollback(value: string, status: ItemStatus): boolean {
@@ -124,7 +119,7 @@ function shouldRollback(value: string, status: ItemStatus): boolean {
 		case "transfer_failed":
 			return status === "sold";
 		default:
-			return true;
+			return false;
 	}
 }
 
@@ -143,12 +138,7 @@ export async function validatePurchaseMessage(
 	}
 
 	const status = await currentStatus(itemId);
-	const allowed = validateAllowedStatus(value, status);
-	if (allowed) {
-		return allowed;
-	}
-
-	return { ok: true };
+	return validateAllowedStatus(value, status);
 }
 
 export async function reactToPurchaseMessage(
@@ -165,7 +155,7 @@ export async function reactToPurchaseMessage(
 		return;
 	}
 
-	if (ROLLBACK_VALUES.has(value) && shouldRollback(value, status)) {
+	if (shouldRollback(value, status)) {
 		await appendStatus(itemId, "available");
 	}
 }

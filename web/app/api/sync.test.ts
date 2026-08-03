@@ -10,18 +10,14 @@ const SERVICE_ID = "test_service";
 const DECLARED_RESOURCE = "test_service.records";
 const UNDECLARED_RESOURCE = "test_service.legacy";
 
+type CatalogResource =
+	ResourcesResponse["services"][number]["resources"][number];
+
 function catalogResource(
-	overrides: Partial<
-		ResourcesResponse["services"][number]["resources"][number]
-	> &
-		Pick<
-			ResourcesResponse["services"][number]["resources"][number],
-			"id" | "name"
-		>,
-): ResourcesResponse["services"][number]["resources"][number] {
+	overrides: Partial<CatalogResource> & Pick<CatalogResource, "id" | "name">,
+): CatalogResource {
 	return {
 		visibility: "public",
-		attributes: ["id"],
 		...overrides,
 	};
 }
@@ -155,12 +151,11 @@ describe("extractResourceAttributeMetadata", () => {
 					id: EVY_CORE_SERVICE,
 					name: "evy",
 					resources: [
-						{
+						catalogResource({
 							id: EVY_CORE_RESOURCE_REF.FLOWS,
 							name: "flow",
-							visibility: "public",
 							attributes: ["id", "name"],
-						},
+						}),
 					],
 				},
 			],

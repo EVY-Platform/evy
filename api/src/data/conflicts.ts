@@ -49,10 +49,4 @@ export function assertNotModified(
  * millisecond keeps the value a timestamp while making it strictly increase
  * per row, which is what the precondition relies on.
  */
-export function monotonicUpdatedAt(
-	nowIso: string,
-	currentUpdatedAt: string,
-): string {
-	if (nowIso > currentUpdatedAt) return nowIso;
-	return new Date(new Date(currentUpdatedAt).getTime() + 1).toISOString();
-}
+export { monotonicIso as monotonicUpdatedAt } from "evy-types/monotonic";

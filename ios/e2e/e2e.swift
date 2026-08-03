@@ -1692,6 +1692,8 @@ class E2ETestBase: XCTestCase {
     "73625140-3928-4103-1e5f-4e4b7a958473"
   static let homeInboxScheduledBuyerDeliveryChildRowId =
     "065e4b7a-9584-4763-0425-a190817065e4"
+  static let homeInboxScheduledBuyerPickupChildRowId =
+    "7065e4b7-a695-4875-1536-b2a190817065"
 
   static func homeInboxTabRow() throws -> [String: Any] {
     let flowData = try productionHomeFlowData()
@@ -3690,7 +3692,6 @@ final class E2EErrorStateTests: XCTestCase {
 
 final class E2EHomeInboxTests: E2ETestBase {
   private static let homePageId = E2EFlowIds.webSocketHomePage
-  private static let seededMessageItemId = "12401f50-cf1a-45d7-a112-2e68a2070466"
   private static let seededBuyerItemId = "760eac03-8783-4916-846e-6c316d0af5a1"
   private static let seededPickupAddressId = "c81e85dd-f7fb-4310-8fc6-7c018aeaf82a"
 
@@ -3703,7 +3704,6 @@ final class E2EHomeInboxTests: E2ETestBase {
   private let ownedRequestItemIds = (0..<3).map { _ in UUID().uuidString.lowercased() }
   private static let deliveryTimeslot = "2026-06-03T15:00:00"
   private static let pickupTimeslot = "2026-06-03T09:00:00"
-  private static let shippingPostcode = "2018"
 
   override var homeFlowId: String? { E2EFlowIds.defaultHomeFlow }
 
@@ -3711,8 +3711,7 @@ final class E2EHomeInboxTests: E2ETestBase {
     [
       (
         resource: MARKETPLACE_ITEMS_RESOURCE_ID,
-        ids: [Self.seededMessageItemId, shippingOwnedItemId, pickupOwnedItemId]
-          + ownedRequestItemIds
+        ids: [shippingOwnedItemId, pickupOwnedItemId] + ownedRequestItemIds
       ),
       (
         resource: EVYCoreResource.addresses.ref,
@@ -3766,7 +3765,7 @@ final class E2EHomeInboxTests: E2ETestBase {
   }
 
   @MainActor
-  func testRecipientRespondsToRequests() throws {
+  private func connectedInboxEmitter() throws -> WSEmitter {
     let homePage = app.scrollViews["page_\(Self.homePageId)"]
     XCTAssertTrue(
       homePage.waitForExistence(timeout: 20),
@@ -3778,6 +3777,12 @@ final class E2EHomeInboxTests: E2ETestBase {
       try await emitter.login(token: "e2e-test", os: "ios")
       try await emitter.subscribe(event: "data_changed")
     }
+    return emitter
+  }
+
+  @MainActor
+  func testRecipientRespondsToRequests() throws {
+    let emitter = try connectedInboxEmitter()
 
     try XCTContext.runActivity(named: "Reject via tap and sheet") { _ in
       let (requestId, _) = try seedOwnRequest(
@@ -3861,11 +3866,14 @@ final class E2EHomeInboxTests: E2ETestBase {
         "An answered request should no longer offer an action")
 
       app.segmentedControls.buttons["Scheduled"].tap()
+      let scheduledRow = app.otherElements[
+        "swipeRow_\(E2ETestBase.homeInboxScheduledBuyerPickupChildRowId)_\(responseId)"
+      ]
       XCTAssertTrue(
-        app.staticTexts["Amazing Fridge"].waitForExistence(timeout: 10),
+        scheduledRow.waitForExistence(timeout: 10),
         "The accepted request should appear under Scheduled")
       XCTAssertTrue(
-        app.staticTexts["accept"].exists,
+        scheduledRow.staticTexts["accept"].exists,
         "The Scheduled row should show the accepted state")
     }
 
@@ -3874,10 +3882,13 @@ final class E2EHomeInboxTests: E2ETestBase {
         emitter: emitter, itemId: ownedRequestItemIds[2], responseValue: "accept")
 
       app.segmentedControls.buttons["Scheduled"].tap()
+      let scheduledRow = app.otherElements[
+        "swipeRow_\(E2ETestBase.homeInboxScheduledBuyerPickupChildRowId)_\(requestId)"
+      ]
       XCTAssertTrue(
-        app.staticTexts["Amazing Fridge"].waitForExistence(timeout: 15),
+        scheduledRow.waitForExistence(timeout: 15),
         "The pre-answered request should reach Scheduled")
-      XCTAssertTrue(app.staticTexts["accept"].exists)
+      XCTAssertTrue(scheduledRow.staticTexts["accept"].exists)
 
       app.segmentedControls.buttons["For you"].tap()
       let requestRow = ownRequestRow(requestId: requestId)
@@ -3896,17 +3907,7 @@ final class E2EHomeInboxTests: E2ETestBase {
 
   @MainActor
   func testPurchaseConfirmationFlows() throws {
-    let homePage = app.scrollViews["page_\(Self.homePageId)"]
-    XCTAssertTrue(
-      homePage.waitForExistence(timeout: 20),
-      "Home screen not loaded - verify API is running and database is seeded")
-
-    let emitter = WSEmitter()
-    try awaitResult("connect emitter") {
-      try await emitter.connect(host: self.apiHost)
-      try await emitter.login(token: "e2e-test", os: "ios")
-      try await emitter.subscribe(event: "data_changed")
-    }
+    let emitter = try connectedInboxEmitter()
 
     var deliveryPendingId = ""
 
@@ -3932,7 +3933,6 @@ final class E2EHomeInboxTests: E2ETestBase {
         swipeLabel: "Shipped",
         sheetTitle: "Confirm you shipped the item?",
         emitter: emitter,
-        requestId: acceptId,
         responseValue: "sent"
       )
     }
@@ -3961,14 +3961,13 @@ final class E2EHomeInboxTests: E2ETestBase {
         parentMessageId: pendingId,
         data: Self.settlingMessageData(time: Self.deliveryTimeslot)
       )
-      _ = try confirmViaSwipe(
+      try confirmViaSwipe(
         tab: "Scheduled",
         childRowId: E2ETestBase.homeInboxScheduledBuyerDeliveryChildRowId,
         messageId: givenId,
         swipeLabel: "Received",
         sheetTitle: "Confirm you received the item?",
         emitter: emitter,
-        requestId: givenId,
         responseValue: "received"
       )
     }
@@ -3989,14 +3988,13 @@ final class E2EHomeInboxTests: E2ETestBase {
         parentMessageId: pendingId,
         data: Self.settlingMessageData(time: Self.pickupTimeslot)
       )
-      _ = try confirmViaSwipe(
+      try confirmViaSwipe(
         tab: "For you",
         childRowId: E2ETestBase.homeInboxPickupHandshakeChildRowId,
         messageId: transactionId,
         swipeLabel: "Confirm exchange?",
         sheetTitle: "Confirm the item was given, or reject?",
         emitter: emitter,
-        requestId: transactionId,
         responseValue: "transaction_completed"
       )
     }
@@ -4081,7 +4079,7 @@ final class E2EHomeInboxTests: E2ETestBase {
           "type": "pickup",
           "value": "pending",
           "data": [
-            "time": "2026-06-03T09:00:00"
+            "time": Self.pickupTimeslot
           ],
         ]
       )
@@ -4098,7 +4096,7 @@ final class E2EHomeInboxTests: E2ETestBase {
             "type": "pickup",
             "value": responseValue,
             "data": Self.settlingMessageData(
-              time: "2026-06-03T09:00:00",
+              time: Self.pickupTimeslot,
               pickupAddress:
                 responseValue == "accept"
                 ? Self.amazingFridgePickupAddressRow : nil
@@ -4218,13 +4216,7 @@ final class E2EHomeInboxTests: E2ETestBase {
         pickupAddress: pickupAddress
       )
     )
-    let expectedPendingStatus =
-      switch type {
-      case "pickup": "pickup_pending"
-      case "delivery": "delivery_pending"
-      case "shipping": "shipping_pending"
-      default: type + "_pending"
-      }
+    let expectedPendingStatus = "\(type)_pending"
     try pollItemStatus(
       emitter: emitter, itemId: itemId, expectedStatus: expectedPendingStatus)
     return (pendingId, acceptId)
@@ -4274,9 +4266,8 @@ final class E2EHomeInboxTests: E2ETestBase {
     swipeLabel: String,
     sheetTitle: String,
     emitter: WSEmitter,
-    requestId: String,
     responseValue: String
-  ) throws -> String {
+  ) throws {
     app.segmentedControls.buttons[tab].tap()
     try swipeInboxRow(
       childRowId: childRowId,
@@ -4286,10 +4277,13 @@ final class E2EHomeInboxTests: E2ETestBase {
     XCTAssertTrue(
       app.staticTexts[sheetTitle].waitForExistence(timeout: 5),
       "The confirmation sheet should open")
-    try tapSheetConfirmButton()
-    return try assertResponsePersisted(
+    let confirmButton = try XCTUnwrap(
+      waitForHittableButton(labeled: "Confirm"),
+      "Confirmation sheet should offer Confirm")
+    confirmButton.tap()
+    _ = try assertResponsePersisted(
       emitter: emitter,
-      requestId: requestId,
+      requestId: messageId,
       value: responseValue,
       verifyRequestStillPending: false
     )
@@ -4378,14 +4372,6 @@ final class E2EHomeInboxTests: E2ETestBase {
     XCTAssertTrue(swipeButton.waitForExistence(timeout: 3), "Swipe action should appear")
     XCTAssertEqual(swipeButton.label, swipeLabel)
     swipeButton.tap()
-  }
-
-  @MainActor
-  private func tapSheetConfirmButton() throws {
-    let confirmButton = try XCTUnwrap(
-      waitForHittableButton(labeled: "Confirm"),
-      "Confirmation sheet should offer Confirm")
-    confirmButton.tap()
   }
 
   @MainActor

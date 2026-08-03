@@ -46,7 +46,7 @@ created_at: date-time  # ISO string in a text column
 
 Source of truth for the wire shape: [`services/marketplace/src/schema/item_status.schema.json`](../../../services/marketplace/src/schema/item_status.schema.json). Storage: [`services/marketplace/src/schema.ts`](../../../services/marketplace/src/schema.ts). `item_id` is a soft reference (no Postgres FK), matching how core rows point at marketplace items. Incremental `get` maps `filter.updated_after` to `created_at` because rows are append-only.
 
-**Current status** is the latest row for an `item_id`; no rows means `available`. Marketplace hooks append rows on message creates — see [Purchase status machine](#purchase-status-machine) below. Devices filter sold items out of home search via `marketplace.item_statuses`; `*_pending` items remain visible.
+**Current status** is the latest row for an `item_id`; no rows means `available`. Seeds never insert status rows, so a seeded item that shows an accepted message in fixtures is still `available` in the database and can accept a new `pending`. Marketplace hooks append rows on message creates — see [Purchase status machine](#purchase-status-machine) below. Devices filter sold items out of home search via `marketplace.item_statuses`; `*_pending` items remain visible.
 
 ## Purchase status machine
 
@@ -81,7 +81,10 @@ Veto = RPC create error; nothing stored. Type/value pairs are sanity-checked (`g
 | --- | --- |
 | message `accept` (when status is `available`) | append `<type>_pending` |
 | transaction `{charge, succeeded}` | append `sold` (idempotent when already sold) |
-| `transaction_rejected`, `failed`, `charge_failed`, `transfer_failed`, or `cancel` (while pending/sold) | append `available` |
+| `transaction_rejected` (from `pickup_pending` or `sold`) | append `available` |
+| `failed`, `transfer_failed` (from `sold` only) | append `available` |
+| `charge_failed` (from any pending status or `sold`) | append `available` |
+| `cancel` (from any pending status, not from `sold`) | append `available` |
 | everything else | nothing |
 
 Reactions run on an in-process per-`fk` queue; `after_create` acknowledges immediately.

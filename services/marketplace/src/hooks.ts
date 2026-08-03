@@ -4,50 +4,32 @@ import { EVY_CORE_RESOURCE_REF } from "evy-types/coreResources";
 import {
 	enqueuePurchaseReaction,
 	enqueueTransactionReaction,
+	type MessagePayload,
+	type TransactionPayload,
 	validatePurchaseMessage,
 } from "./purchase";
 import { MARKETPLACE_RESOURCE } from "./resources";
 
-type MessageHookData = HookRequest["data"] & {
-	fk: string;
-	type: string;
-	value: string;
-};
-
-type TransactionHookData = HookRequest["data"] & {
-	fk: string;
-	resource: string;
-	type: string;
-	status: string;
-};
-
-function isMarketplaceMessageHook(params: HookRequest): boolean {
+function isMarketplaceHook(params: HookRequest, coreRef: string): boolean {
 	return (
-		params.resource === EVY_CORE_RESOURCE_REF.MESSAGES &&
-		params.data.resource === MARKETPLACE_RESOURCE.ITEMS
-	);
-}
-
-function isMarketplaceTransactionHook(params: HookRequest): boolean {
-	return (
-		params.resource === EVY_CORE_RESOURCE_REF.TRANSACTIONS &&
+		params.resource === coreRef &&
 		params.data.resource === MARKETPLACE_RESOURCE.ITEMS
 	);
 }
 
 export async function handleHook(params: HookRequest): Promise<HookResponse> {
-	if (isMarketplaceTransactionHook(params)) {
+	if (isMarketplaceHook(params, EVY_CORE_RESOURCE_REF.TRANSACTIONS)) {
 		if (params.hook === "after_create") {
-			enqueueTransactionReaction(params.data as TransactionHookData);
+			enqueueTransactionReaction(params.data as TransactionPayload);
 		}
 		return { ok: true };
 	}
 
-	if (!isMarketplaceMessageHook(params)) {
+	if (!isMarketplaceHook(params, EVY_CORE_RESOURCE_REF.MESSAGES)) {
 		return { ok: true };
 	}
 
-	const message = params.data as MessageHookData;
+	const message = params.data as MessagePayload;
 
 	switch (params.hook) {
 		case "before_create": {

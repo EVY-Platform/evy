@@ -2,9 +2,9 @@ import {
 	validateStrictCreateRequest,
 	validateStrictDeleteRequest,
 	validateStrictGetRequest,
-	validateStrictHookRequest,
 	validateStrictUpdateRequest,
 } from "evy-types/rpcRequestHelpers";
+import { validateHookRequest } from "evy-types/validators";
 import {
 	emitJsonRpc,
 	requirePortEnv,
@@ -51,7 +51,7 @@ export async function startMarketplaceRpcServer(
 	});
 	server.register("resources", () => getMarketplaceResourcesResponse());
 	server.register("hook", (params: unknown) => {
-		validateStrictHookRequest(params);
+		validateHookRequest(params);
 		return handleHook(params);
 	});
 

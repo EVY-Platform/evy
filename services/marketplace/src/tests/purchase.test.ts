@@ -17,32 +17,21 @@ beforeAll(async () => {
 
 const itemId = () => crypto.randomUUID();
 
-function message(
-	overrides: Partial<{
-		fk: string;
-		type: string;
-		value: string;
-	}> = {},
-) {
+function message(overrides: Record<string, string> = {}) {
 	return {
-		fk: overrides.fk ?? itemId(),
-		type: overrides.type ?? "pickup",
-		value: overrides.value ?? "pending",
+		fk: itemId(),
+		type: "pickup",
+		value: "pending",
+		...overrides,
 	};
 }
 
-function transaction(
-	overrides: Partial<{
-		fk: string;
-		type: string;
-		status: string;
-	}> = {},
-) {
+function transaction(overrides: Record<string, string> = {}) {
 	return {
-		fk: overrides.fk ?? itemId(),
-		resource: "marketplace.items",
-		type: overrides.type ?? "charge",
-		status: overrides.status ?? "succeeded",
+		fk: itemId(),
+		type: "charge",
+		status: "succeeded",
+		...overrides,
 	};
 }
 

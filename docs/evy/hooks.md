@@ -4,9 +4,11 @@ When the API gateway handles a `create` for an enrolled core resource, it can
 synchronously call hooks on the **target service** — the service named in the
 row's `resource` field (for messages, `data.resource` like `marketplace.items`).
 
-Hooks run only on real JSON-RPC creates through `api/src/procedures/rpc.ts`.
-Direct data-layer writes (seeds, unit tests calling `createCore`) do not
-trigger them.
+Hooks run on any core create that goes through `hookedCreate` in
+[`api/src/procedures/hooks.ts`](../../api/src/procedures/hooks.ts): JSON-RPC
+`create` calls, payment procedures appending transaction rows, and payment
+webhooks authoring failure messages. Direct data-layer writes that bypass
+`hookedCreate` (seeds, unit tests calling `createCore`) do not trigger them.
 
 ## Wire contract
 
@@ -41,23 +43,26 @@ Hooks are skipped (create proceeds as today) when:
 - The target service has no row / adapter in the gateway (unregistered service).
 - The service is registered but does not implement `hook` (JSON-RPC `-32601`).
 
+When the target service is not registered, `forwardHook` returns `null` and the
+create proceeds (fail-open beside the fail-closed `before_create` veto path).
+
 ## Failure semantics
 
 | Hook | Behaviour |
 |------|-----------|
-| **`before_create`** | Fail closed. `ok: false` rejects the create with the service's reason. Transport errors and timeouts also reject the create. |
+| **`before_create`** | Fail closed. `ok: false` rejects the create with the service's reason. Transport errors and timeouts also reject the create. When a **message** create is vetoed, evy core authors a `request_failed` message on the same chain (unless the payload was already `request_failed`, which never recurses). |
 | **`after_create`** | Best effort. The row is already durable; failures are logged with `console.error` and the create response is returned normally. |
 
 ## Enrolling a core resource
 
-Add one entry to `HOOKED_CORE_RESOURCES` in
-[`api/src/procedures/hooks.ts`](../../api/src/procedures/hooks.ts). The value is
-a resolver from the create payload to a service slug (or `null` to skip).
+Add the core resource ref to `HOOKED_CORE_RESOURCE_REFS` in
+[`api/src/procedures/hooks.ts`](../../api/src/procedures/hooks.ts). The gateway
+resolves the target service from `data.resource` via `serviceOfRef`.
 
 ## Opting in as a service
 
 Register `hook` on your JSON-RPC server, validate params with
-`validateStrictHookRequest`, and return a `HookResponse`. See
+`validateHookRequest`, and return a `HookResponse`. See
 [`services/marketplace/src/hooks.ts`](../../services/marketplace/src/hooks.ts)
 and [`services/marketplace/src/rpc.ts`](../../services/marketplace/src/rpc.ts).
 

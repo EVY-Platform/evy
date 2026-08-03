@@ -7,6 +7,7 @@ import { handleHook } from "../hooks";
 import { drainPurchaseQueues } from "../purchase";
 import { MARKETPLACE_RESOURCE } from "../resources";
 import { appendStatus, currentStatus } from "../status";
+import { makeHookRequest } from "./hookTestHelpers";
 import { ensureMarketplaceTestSchema } from "./sharedTestDb";
 
 beforeAll(async () => {
@@ -14,19 +15,7 @@ beforeAll(async () => {
 });
 
 const itemId = "00000000-0000-4000-8000-000000000001";
-
-const baseMessageRequest: HookRequest = {
-	hook: "before_create",
-	resource: EVY_CORE_RESOURCE_REF.MESSAGES,
-	data: {
-		fk: itemId,
-		resource: MARKETPLACE_RESOURCE.ITEMS,
-		type: "pickup",
-		value: "pending",
-		data: { time: "2026-06-03T09:00:00" },
-		visibility: "private",
-	},
-};
+const baseMessageRequest = makeHookRequest(itemId);
 
 const baseTransactionRequest: HookRequest = {
 	hook: "before_create",

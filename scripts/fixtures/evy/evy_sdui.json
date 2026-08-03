@@ -351,39 +351,8 @@
 															"visible": "true",
 															"actions": {
 																"tap": [
-																	{
-																		"condition": "{$datum.type == \"pickup\"}",
-																		"true": "{create(evy.messages,{fk: {$datum.fk}, resource: marketplace.items, parent_message_id: {$datum.id}, type: {$datum.type}, value: transaction, data: {time: {$datum.data.time}, postalcode: {$datum.data.postalcode}, destination_address: {$datum.data.destination_address}}})}",
-																		"false": "{create(evy.messages,{fk: {$datum.fk}, resource: marketplace.items, parent_message_id: {$datum.id}, type: {$datum.type}, value: received, data: {time: {$datum.data.time}, postalcode: {$datum.data.postalcode}, destination_address: {$datum.data.destination_address}}})}"
-																	},
-																	{
-																		"condition": "",
-																		"true": "{close()}",
-																		"false": ""
-																	}
-																]
-															}
-														},
-														{
-															"id": "62f92640-a6f8-44da-88d3-523f2d5a6b85",
-															"type": "button",
-															"name": "Not received",
-															"label": "Not received",
-															"style": "danger",
-															"title": "",
-															"visible": "{$datum.type == \"delivery\" || $datum.type == \"shipping\"}",
-															"actions": {
-																"tap": [
-																	{
-																		"condition": "{$datum.type == \"delivery\"}",
-																		"true": "{create(evy.messages,{fk: {$datum.fk}, resource: marketplace.items, parent_message_id: {$datum.id}, type: {$datum.type}, value: failed, data: {time: {$datum.data.time}, postalcode: {$datum.data.postalcode}, destination_address: {$datum.data.destination_address}}})}",
-																		"false": "{create(evy.messages,{fk: {$datum.fk}, resource: marketplace.items, parent_message_id: {$datum.id}, type: {$datum.type}, value: failed, data: {time: {$datum.data.time}, postalcode: {$datum.data.postalcode}, destination_address: {$datum.data.destination_address}}})}"
-																	},
-																	{
-																		"condition": "",
-																		"true": "{close()}",
-																		"false": ""
-																	}
+																	"{create(evy.messages,{fk: {$datum.fk}, resource: marketplace.items, parent_message_id: {$datum.id}, type: {$datum.type}, value: transaction, data: {time: {$datum.data.time}, postalcode: {$datum.data.postalcode}, destination_address: {$datum.data.destination_address}}})}",
+																	"{close()}"
 																]
 															}
 														}

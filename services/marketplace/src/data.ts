@@ -11,6 +11,7 @@ import type {
 	UpdateResponse,
 } from "evy-types";
 import { hasDatabaseErrorCode, PG_UNIQUE_VIOLATION } from "evy-types/dbErrors";
+import { assertResourceMutable } from "evy-types/resourceMutable";
 import {
 	assertIsoDateTimeJsonFields,
 	validateCreateDataPayload,
@@ -74,11 +75,10 @@ function assertMarketplaceRules(
 }
 
 function assertMarketplaceResourceMutable(resource: string): void {
-	if (marketplaceResourceCatalogVisibility(resource) === "internal") {
-		throw new Error(
-			`Resource "${resource}" is internal and cannot be created, updated, or deleted via the data API`,
-		);
-	}
+	assertResourceMutable(
+		resource,
+		marketplaceResourceCatalogVisibility(resource),
+	);
 }
 
 async function getItemStatuses(params: GetRequest): Promise<GetResponse> {

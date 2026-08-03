@@ -1,11 +1,26 @@
+import { afterAll, mock } from "bun:test";
 import { migrate } from "drizzle-orm/pglite/migrator";
+import { createPgliteTestDatabase as createPgliteTestDatabaseWithSchema } from "evy-types/wsTestHelpers";
 
-import {
-	createPgliteTestDatabase,
-	registerMarketplaceTestDb,
-} from "./dbTestHelpers";
+import { schema } from "../db";
+
+function createPgliteTestDatabase() {
+	return createPgliteTestDatabaseWithSchema(schema);
+}
 
 const database = createPgliteTestDatabase();
+
+function registerMarketplaceTestDb(
+	testDb: ReturnType<typeof createPgliteTestDatabase>["testDb"],
+): void {
+	mock.module("../db", () => ({
+		data: schema.data,
+		item_status: schema.item_status,
+		item_status_history: schema.item_status_history,
+		db: testDb,
+		schema,
+	}));
+}
 
 registerMarketplaceTestDb(database.testDb);
 
@@ -16,3 +31,7 @@ export async function ensureMarketplaceTestSchema(): Promise<void> {
 	await migrate(database.testDb, { migrationsFolder: "./drizzle" });
 	migrated = true;
 }
+
+afterAll(async () => {
+	await database.pgliteClient.close();
+});

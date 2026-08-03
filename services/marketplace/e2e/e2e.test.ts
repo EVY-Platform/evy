@@ -3,9 +3,9 @@ import {
 	EVY_CORE_RESOURCE_REF,
 	EVY_CORE_SERVICE,
 } from "evy-types/coreResources";
+import { MOCK_CAPTURE_FAILURE_AMOUNT } from "evy-types/paymentMocks";
 import { waitForClientOpen } from "evy-types/wsTestHelpers";
 import { Client } from "rpc-websockets";
-import { MOCK_CAPTURE_FAILURE_AMOUNT } from "../../../api/src/procedures/paymentsShared";
 import { MARKETPLACE_RESOURCE, MARKETPLACE_SERVICE } from "../src/resources";
 
 type WSClient = InstanceType<typeof Client>;
@@ -57,25 +57,6 @@ function latestItemStatus(rows: ItemStatusRow[]): string {
 			a.id.localeCompare(b.id),
 	);
 	return sorted.at(-1)?.status ?? "available";
-}
-
-async function pollUntil<T>(
-	fn: () => Promise<T>,
-	predicate: (value: T) => boolean,
-	options?: { timeoutMs?: number; intervalMs?: number },
-): Promise<T> {
-	const timeoutMs = options?.timeoutMs ?? 10_000;
-	const intervalMs = options?.intervalMs ?? 100;
-	const deadline = Date.now() + timeoutMs;
-	let lastValue: T | undefined;
-	while (Date.now() < deadline) {
-		lastValue = await fn();
-		if (predicate(lastValue)) return lastValue;
-		await Bun.sleep(intervalMs);
-	}
-	throw new Error(
-		`pollUntil timed out after ${timeoutMs}ms (last: ${JSON.stringify(lastValue)})`,
-	);
 }
 
 describe("Marketplace E2E (via API WebSocket)", () => {
@@ -270,17 +251,18 @@ describe("Marketplace E2E (via API WebSocket)", () => {
 	});
 
 	describe("purchase status machine", () => {
-		async function createMarketplaceItem(itemId = crypto.randomUUID()) {
+		async function createMarketplaceItem() {
+			const itemId = crypto.randomUUID();
 			const payload = {
 				id: itemId,
 				title: `e2e-purchase-${itemId.slice(0, 8)}`,
 			};
-			const created = await client.call("create", {
+			await client.call("create", {
 				resource: MARKETPLACE_RESOURCE.ITEMS,
 				filter: { id: itemId },
 				data: payload,
 			});
-			return { id: itemId, payload, created };
+			return { id: itemId, payload };
 		}
 
 		async function getMarketplaceItem(itemId: string) {
@@ -305,9 +287,19 @@ describe("Marketplace E2E (via API WebSocket)", () => {
 			itemId: string,
 			expectedStatus: string,
 		): Promise<ItemStatusRow[]> {
-			return pollUntil(
-				() => getItemStatusRows(itemId),
-				(rows) => latestItemStatus(rows) === expectedStatus,
+			const timeoutMs = 10_000;
+			const intervalMs = 100;
+			const deadline = Date.now() + timeoutMs;
+			let lastValue: ItemStatusRow[] | undefined;
+			while (Date.now() < deadline) {
+				lastValue = await getItemStatusRows(itemId);
+				if (latestItemStatus(lastValue) === expectedStatus) {
+					return lastValue;
+				}
+				await Bun.sleep(intervalMs);
+			}
+			throw new Error(
+				`pollItemStatus timed out after ${timeoutMs}ms (last: ${JSON.stringify(lastValue)})`,
 			);
 		}
 

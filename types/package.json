@@ -18,7 +18,10 @@
 		"./wsServer": "./wsServer.ts",
 		"./dbErrors": "./dbErrors.ts",
 		"./readiness": "./readiness.ts",
-		"./wsTestHelpers": "./wsTestHelpers.ts"
+		"./wsTestHelpers": "./wsTestHelpers.ts",
+		"./monotonic": "./monotonic.ts",
+		"./resourceMutable": "./resourceMutable.ts",
+		"./paymentMocks": "./paymentMocks.ts"
 	},
 	"//": "This package is consumed via file: deps and never bun-installed directly; every dep it imports (ajv, ajv-formats, rpc-websockets, and wsTestHelpers' dev-only @electric-sql/pglite + drizzle-orm) must also live in the root package.json devDependencies, because module resolution walks up from types/ to the repo root.",
 	"dependencies": {

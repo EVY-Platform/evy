@@ -7,15 +7,12 @@ import type {
 	PaymentTransferResponse,
 	PaymentWebhookRequest,
 } from "evy-types";
-import type { EvyDb } from "../database/db";
 import {
-	appendTransactionRow,
-	findIntentRow,
-	findRowsByIntentId,
-	hasRow,
 	MOCK_CAPTURE_FAILURE_AMOUNT,
 	MOCK_TRANSFER_FAILURE_AMOUNT,
-} from "./paymentsShared";
+} from "evy-types/paymentMocks";
+import type { EvyDb } from "../database/db";
+import { appendTransactionRow, hasRow, requireIntent } from "./paymentsShared";
 import { handlePaymentWebhook } from "./paymentWebhook";
 
 async function autoCallPaymentWebhook(
@@ -61,13 +58,7 @@ export async function paymentCapture(
 	params: PaymentCaptureRequest,
 	db: EvyDb,
 ): Promise<PaymentCaptureResponse> {
-	const rows = await findRowsByIntentId(db, params.payment_intent_id);
-	const intent = findIntentRow(rows);
-	if (!intent) {
-		throw new Error(
-			`payment intent not found: ${params.payment_intent_id}`,
-		);
-	}
+	const { rows, intent } = await requireIntent(db, params.payment_intent_id);
 	if (hasRow(rows, "charge", "initiated")) {
 		throw new Error(
 			`payment intent already captured: ${params.payment_intent_id}`,
@@ -85,11 +76,7 @@ export async function paymentCapture(
 		intent.amount === MOCK_CAPTURE_FAILURE_AMOUNT
 			? ["payment_intent.capture_failed"]
 			: ["payment_intent.capture_succeeded", "charge.completed"];
-	await autoCallPaymentWebhook(
-		db,
-		intent.payment_provider_transaction_id,
-		captureEvents,
-	);
+	await autoCallPaymentWebhook(db, params.payment_intent_id, captureEvents);
 
 	return created;
 }
@@ -98,13 +85,7 @@ export async function paymentTransfer(
 	params: PaymentTransferRequest,
 	db: EvyDb,
 ): Promise<PaymentTransferResponse> {
-	const rows = await findRowsByIntentId(db, params.payment_intent_id);
-	const intent = findIntentRow(rows);
-	if (!intent) {
-		throw new Error(
-			`payment intent not found: ${params.payment_intent_id}`,
-		);
-	}
+	const { rows, intent } = await requireIntent(db, params.payment_intent_id);
 	if (!hasRow(rows, "charge", "succeeded")) {
 		throw new Error(
 			`payment charge not succeeded: ${params.payment_intent_id}`,
@@ -127,11 +108,7 @@ export async function paymentTransfer(
 		intent.amount === MOCK_TRANSFER_FAILURE_AMOUNT
 			? ["transfer.failed"]
 			: ["transfer.succeeded", "transfer.completed"];
-	await autoCallPaymentWebhook(
-		db,
-		intent.payment_provider_transaction_id,
-		transferEvents,
-	);
+	await autoCallPaymentWebhook(db, params.payment_intent_id, transferEvents);
 
 	return created;
 }

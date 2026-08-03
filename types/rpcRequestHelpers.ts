@@ -2,7 +2,6 @@ import type { ApiRequest } from "./generated/ts/rpc/api.request";
 import type { CreateRequest } from "./generated/ts/rpc/create.request";
 import type { DeleteRequest } from "./generated/ts/rpc/delete.request";
 import type { GetRequest } from "./generated/ts/rpc/get.request";
-import type { HookRequest } from "./generated/ts/rpc/hook.request";
 import type { UpdateRequest } from "./generated/ts/rpc/update.request";
 import { isValidResourceRef, isValidServiceSlug } from "./resourceRef";
 import {
@@ -148,11 +147,4 @@ export function validateStrictDeleteRequest(
 	assertRpcParamsCommon(params);
 	assertFilterId(params, "delete");
 	validateDeleteRequest(params);
-}
-
-export function validateStrictHookRequest(
-	params: unknown,
-): asserts params is HookRequest {
-	assertRpcParamsObject(params);
-	validateHookRequest(params);
 }

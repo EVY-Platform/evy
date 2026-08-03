@@ -1,4 +1,4 @@
-import type { PaymentIntentRequest } from "evy-types";
+import type { DATA_EVY_Transaction, PaymentIntentRequest } from "evy-types";
 import * as schema from "evy-types/db/schema.generated";
 import {
 	createPgliteTestDatabase as createPgliteTestDatabaseWithSchema,
@@ -68,6 +68,58 @@ export async function clearAllTestTables(testDb: PgliteTestDb): Promise<void> {
 	await testDb.delete(schema.message);
 	await testDb.delete(schema.transaction);
 	await testDb.delete(schema.formatter);
+}
+
+export function stashEnv(
+	values: Record<string, string | undefined>,
+): () => void {
+	const originals = new Map<string, string | undefined>();
+	for (const [key, value] of Object.entries(values)) {
+		originals.set(key, process.env[key]);
+		if (value === undefined) {
+			delete process.env[key];
+		} else {
+			process.env[key] = value;
+		}
+	}
+	return () => {
+		for (const [key, original] of originals) {
+			if (original === undefined) {
+				delete process.env[key];
+			} else {
+				process.env[key] = original;
+			}
+		}
+	};
+}
+
+export function validTransactionPayload(
+	overrides: Partial<
+		Omit<
+			DATA_EVY_Transaction,
+			"id" | "created_at" | "updated_at" | "deleted_at"
+		>
+	> = {},
+): Omit<
+	DATA_EVY_Transaction,
+	"id" | "created_at" | "updated_at" | "deleted_at"
+> {
+	return {
+		fk: crypto.randomUUID(),
+		resource: "test_svc.items",
+		type: "charge",
+		status: "intent",
+		amount: 250,
+		currency: "AUD",
+		payment_provider_fee: 0,
+		service_fee: 0,
+		payment_provider: "stripe",
+		payment_provider_transaction_id: crypto.randomUUID(),
+		signature: "signed",
+		authorization_message_id: crypto.randomUUID(),
+		visibility: "public",
+		...overrides,
+	};
 }
 
 export function validPaymentIntentRequest(

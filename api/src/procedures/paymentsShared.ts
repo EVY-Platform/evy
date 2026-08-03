@@ -1,5 +1,5 @@
 import { and, eq, isNull } from "drizzle-orm";
-import type { DATA_EVY_Transaction } from "evy-types";
+import type { DATA_EVY_Message, DATA_EVY_Transaction } from "evy-types";
 import {
 	EVY_CORE_RESOURCE_REF,
 	EVY_CORE_RESOURCE_VISIBILITY,
@@ -8,10 +8,12 @@ import { transaction } from "evy-types/db/schema.generated";
 import type { EvyDb } from "../database/db";
 import { hookedCreate } from "./hooks";
 
-export const MOCK_CAPTURE_FAILURE_AMOUNT = 6.66;
-export const MOCK_TRANSFER_FAILURE_AMOUNT = 7.77;
+export {
+	MOCK_CAPTURE_FAILURE_AMOUNT,
+	MOCK_TRANSFER_FAILURE_AMOUNT,
+} from "evy-types/paymentMocks";
 
-export type TransactionRowSource = Pick<
+type TransactionRowSource = Pick<
 	DATA_EVY_Transaction,
 	| "fk"
 	| "resource"
@@ -48,10 +50,47 @@ export function hasRow(
 	return rows.some((row) => row.type === type && row.status === status);
 }
 
-export function findIntentRow(
+function findIntentRow(
 	rows: DATA_EVY_Transaction[],
 ): DATA_EVY_Transaction | undefined {
 	return rows.find((row) => row.type === "charge" && row.status === "intent");
+}
+
+export async function requireIntent(
+	db: EvyDb,
+	paymentIntentId: string,
+): Promise<{ rows: DATA_EVY_Transaction[]; intent: DATA_EVY_Transaction }> {
+	const rows = await findRowsByIntentId(db, paymentIntentId);
+	const intent = findIntentRow(rows);
+	if (!intent) {
+		throw new Error(`payment intent not found: ${paymentIntentId}`);
+	}
+	return { rows, intent };
+}
+
+export function derivedMessageData(
+	source: Pick<
+		DATA_EVY_Message,
+		"fk" | "resource" | "type" | "data" | "visibility" | "parent_message_id"
+	>,
+	overrides: {
+		value: string;
+		data: Record<string, unknown>;
+		visibility: DATA_EVY_Message["visibility"];
+	},
+): Record<string, unknown> {
+	const messageData: Record<string, unknown> = {
+		fk: source.fk,
+		resource: source.resource,
+		type: source.type,
+		value: overrides.value,
+		data: overrides.data,
+		visibility: overrides.visibility,
+	};
+	if (typeof source.parent_message_id === "string") {
+		messageData.parent_message_id = source.parent_message_id;
+	}
+	return messageData;
 }
 
 export async function appendTransactionRow(

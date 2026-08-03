@@ -389,6 +389,14 @@ async function getServiceAdapter(serviceId: string): Promise<ServiceAdapter> {
 	return adapter;
 }
 
+function hasServiceAdapter(serviceId: string): boolean {
+	try {
+		return requireAdapters().has(serviceId);
+	} catch {
+		return false;
+	}
+}
+
 export async function forwardApi(
 	serviceId: string,
 	params: ApiRequest,
@@ -436,9 +444,7 @@ export async function forwardHook(
 	serviceId: string,
 	params: HookRequest,
 ): Promise<HookResponse | null> {
-	try {
-		await getServiceAdapter(serviceId);
-	} catch {
+	if (!hasServiceAdapter(serviceId)) {
 		return null;
 	}
 	return forwardTo(serviceId, `hook:${params.hook}`, (adapter) =>
