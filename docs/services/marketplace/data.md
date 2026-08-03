@@ -50,7 +50,7 @@ Source of truth for the wire shape: [`services/marketplace/src/schema/item_statu
 
 ## Purchase status machine
 
-Marketplace is the first real hook consumer: every `evy.messages` create targeting `marketplace.items` runs `before_create` validation against current status and `after_create` reactions that append status rows. The marketplace has no core API client — hook payloads and its own DB are its only inputs.
+Marketplace is the first real hook consumer: every `evy.messages` create targeting `marketplace.items` runs `before_create` validation against current status and `after_create` reactions that append status rows. Transaction creates for marketplace items also run hooks: `before_create` is a no-op; `after_create` reacts to `{type: charge, status: succeeded}` by appending `sold`. The marketplace has no core API client — hook payloads and its own DB are its only inputs.
 
 ### Status values
 
@@ -60,32 +60,30 @@ Marketplace is the first real hook consumer: every `evy.messages` create targeti
 | `pickup_pending` | Seller accepted a pickup request |
 | `delivery_pending` | Seller accepted a delivery request |
 | `shipping_pending` | Seller accepted a shipping request |
-| `sold` | Payment charge initiated (`charge_initiated` message) |
+| `sold` | Payment charge succeeded (`{charge, succeeded}` transaction row via hook) |
 
 ### `before_create` validation
 
 | Incoming `(type, value)` | Valid when current status is |
 | --- | --- |
 | `pending` | `available` |
-| `accept` | `available` |
-| `transaction`, `transaction_completed`, `transaction_rejected`, `transaction_failed` | `pickup_pending` |
-| `given`, `given_failed`, `sent`, `sent_failed`, `received`, `reception_failed`, `failed` | `sold` |
-| `reject`, `cancel` | any |
-| `charge_*`, `transfer_*` | not vetoed (payment system authors these later) |
+| `accept` | `available` or `sold` |
+| `transaction`, `transaction_completed`, `transaction_rejected` | `pickup_pending` or `sold` |
+| `given`, `sent`, `received`, `failed` | `sold` |
+| `reject`, `cancel`, `request_failed` | any |
+| `charge_failed`, `transfer_failed` | not vetoed (webhook-authored) |
 
 Veto = RPC create error; nothing stored. Type/value pairs are sanity-checked (`given` only on `delivery`, `sent` only on `shipping`, etc.).
 
 ### `after_create` reactions
 
-| Message `value` | Reaction |
+| Trigger | Reaction |
 | --- | --- |
-| `accept` | append `<type>_pending` |
-| `charge_initiated` | append `sold` |
-| `transaction_rejected`, `transaction_failed`, `given_failed`, `sent_failed`, `reception_failed`, `failed`, `charge_failed`, `transfer_failed`, or `cancel` (while pending/sold) | append `available` |
+| message `accept` (when status is `available`) | append `<type>_pending` |
+| transaction `{charge, succeeded}` | append `sold` (idempotent when already sold) |
+| `transaction_rejected`, `failed`, `charge_failed`, `transfer_failed`, or `cancel` (while pending/sold) | append `available` |
 | everything else | nothing |
 
 Reactions run on an in-process per-`fk` queue; `after_create` acknowledges immediately.
 
-### What the payment system will add later
-
-Transaction rows (`evy.transactions`), real payment messages, and charge/transfer orchestration live outside marketplace. Marketplace only learns outcomes from `charge_*` / `transfer_*` messages flowing through the same hooks.
+Payment lifecycle state lives in `evy.transactions` rows; marketplace learns charge success from the transaction hook and rollbacks from webhook-authored `charge_failed` / `transfer_failed` messages.

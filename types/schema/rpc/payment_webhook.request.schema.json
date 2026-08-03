@@ -1,0 +1,29 @@
+{
+	"$schema": "https://json-schema.org/draft/2020-12/schema",
+	"$id": "payment-webhook-request",
+	"title": "PaymentWebhookRequest",
+	"description": "JSON-RPC params for the mock payment webhook. V1 procedures auto-call the handler in-process; tests and a future Stripe HTTP adapter call it explicitly. Event names mirror Stripe stages with unambiguous mock names (e.g. payment_intent.capture_succeeded vs Stripe's payment_intent.succeeded after manual capture). Payload uses payment_intent_id as the correlation key for every transaction row of a payment.",
+	"type": "object",
+	"additionalProperties": false,
+	"required": ["type", "payment_intent_id"],
+	"properties": {
+		"type": {
+			"type": "string",
+			"enum": [
+				"payment_intent.succeeded",
+				"payment_intent.payment_failed",
+				"payment_intent.capture_succeeded",
+				"payment_intent.capture_failed",
+				"charge.completed",
+				"transfer.succeeded",
+				"transfer.failed",
+				"transfer.completed"
+			]
+		},
+		"payment_intent_id": {
+			"type": "string",
+			"minLength": 1,
+			"description": "The payment_provider_transaction_id from the intent row; ties every lifecycle row together."
+		}
+	}
+}

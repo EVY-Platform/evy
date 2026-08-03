@@ -1,0 +1,15 @@
+{
+	"$schema": "https://json-schema.org/draft/2020-12/schema",
+	"$id": "payment-webhook-response",
+	"title": "PaymentWebhookResponse",
+	"description": "Acknowledgement for payment_webhook, mirroring Stripe's 2xx webhook response.",
+	"type": "object",
+	"additionalProperties": false,
+	"required": ["received"],
+	"properties": {
+		"received": {
+			"type": "boolean",
+			"const": true
+		}
+	}
+}

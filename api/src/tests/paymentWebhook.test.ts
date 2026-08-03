@@ -1,0 +1,336 @@
+import {
+	afterAll,
+	beforeAll,
+	beforeEach,
+	describe,
+	expect,
+	it,
+} from "bun:test";
+import { migrate } from "drizzle-orm/pglite/migrator";
+import type { PaymentIntentRequest } from "evy-types";
+import {
+	EVY_CORE_RESOURCE_REF,
+	EVY_CORE_RESOURCE_VISIBILITY,
+	EVY_CORE_SERVICE,
+} from "evy-types/coreResources";
+import * as schema from "evy-types/db/schema.generated";
+import { hookedCreate } from "../procedures/hooks";
+import { paymentIntent } from "../procedures/payments";
+import { findRowsByIntentId, hasRow } from "../procedures/paymentsShared";
+import { handlePaymentWebhook } from "../procedures/paymentWebhook";
+import {
+	asEvyDb,
+	clearAllTestTables,
+	createPgliteTestDatabase,
+} from "./wsTestHelpers";
+
+const { pgliteClient, testDb } = createPgliteTestDatabase();
+const dataDb = asEvyDb(testDb);
+
+const { api } = await import("../procedures/rpc");
+
+beforeAll(async () => {
+	await migrate(testDb, { migrationsFolder: "./drizzle" });
+});
+
+afterAll(async () => {
+	await pgliteClient.close();
+});
+
+beforeEach(async () => {
+	await clearAllTestTables(testDb);
+});
+
+function validPaymentIntentRequest(
+	overrides: Partial<PaymentIntentRequest> = {},
+): PaymentIntentRequest {
+	return {
+		fk: crypto.randomUUID(),
+		resource: "marketplace.items",
+		amount: 250,
+		currency: "AUD",
+		authorization_message_id: crypto.randomUUID(),
+		...overrides,
+	};
+}
+
+async function seedAuthorizationMessage(
+	request: PaymentIntentRequest,
+): Promise<void> {
+	const nowIso = new Date().toISOString();
+	await testDb.insert(schema.message).values({
+		id: request.authorization_message_id,
+		fk: request.fk,
+		resource: request.resource,
+		type: "pickup",
+		value: "pending",
+		data: {},
+		visibility: "private",
+		created_at: nowIso,
+		updated_at: nowIso,
+	});
+}
+
+async function createIntentWithInitiatedRow() {
+	const request = validPaymentIntentRequest();
+	await seedAuthorizationMessage(request);
+	const intent = await paymentIntent(request, dataDb);
+	await appendChargeInitiated(dataDb, intent);
+	return { request, intent };
+}
+
+async function appendChargeInitiated(
+	db: typeof dataDb,
+	intent: Awaited<ReturnType<typeof paymentIntent>>,
+) {
+	const visibility = EVY_CORE_RESOURCE_VISIBILITY.transactions;
+	if (!visibility) {
+		throw new Error("evy.transactions has no declared visibility");
+	}
+	await hookedCreate(db, {
+		resource: EVY_CORE_RESOURCE_REF.TRANSACTIONS,
+		data: {
+			fk: intent.fk,
+			resource: intent.resource,
+			type: "charge",
+			status: "initiated",
+			amount: intent.amount,
+			currency: intent.currency,
+			payment_provider_fee: 0,
+			service_fee: 0,
+			payment_provider: "stripe",
+			payment_provider_transaction_id:
+				intent.payment_provider_transaction_id,
+			signature: "signed",
+			authorization_message_id: intent.authorization_message_id,
+			visibility,
+		},
+	});
+}
+
+describe("payment_webhook handler", () => {
+	it("acks payment_intent.succeeded without writing a row", async () => {
+		const request = validPaymentIntentRequest();
+		const intent = await paymentIntent(request, dataDb);
+		const before = await testDb.select().from(schema.transaction);
+
+		const response = await handlePaymentWebhook(
+			{
+				type: "payment_intent.succeeded",
+				payment_intent_id: intent.payment_provider_transaction_id,
+			},
+			dataDb,
+		);
+
+		expect(response).toEqual({ received: true });
+		expect(await testDb.select().from(schema.transaction)).toHaveLength(
+			before.length,
+		);
+	});
+
+	it("writes charge succeeded and completed rows for capture events", async () => {
+		const { intent } = await createIntentWithInitiatedRow();
+		const intentId = intent.payment_provider_transaction_id;
+
+		await handlePaymentWebhook(
+			{
+				type: "payment_intent.capture_succeeded",
+				payment_intent_id: intentId,
+			},
+			dataDb,
+		);
+		await handlePaymentWebhook(
+			{ type: "charge.completed", payment_intent_id: intentId },
+			dataDb,
+		);
+
+		const rows = await findRowsByIntentId(dataDb, intentId);
+		expect(hasRow(rows, "charge", "succeeded")).toBe(true);
+		expect(hasRow(rows, "charge", "completed")).toBe(true);
+	});
+
+	it("writes transfer succeeded and completed rows", async () => {
+		const { intent } = await createIntentWithInitiatedRow();
+		const intentId = intent.payment_provider_transaction_id;
+		await handlePaymentWebhook(
+			{
+				type: "payment_intent.capture_succeeded",
+				payment_intent_id: intentId,
+			},
+			dataDb,
+		);
+		await appendTransferInitiated(dataDb, intent);
+		await handlePaymentWebhook(
+			{ type: "transfer.succeeded", payment_intent_id: intentId },
+			dataDb,
+		);
+		await handlePaymentWebhook(
+			{ type: "transfer.completed", payment_intent_id: intentId },
+			dataDb,
+		);
+
+		const rows = await findRowsByIntentId(dataDb, intentId);
+		expect(hasRow(rows, "transfer", "succeeded")).toBe(true);
+		expect(hasRow(rows, "transfer", "completed")).toBe(true);
+	});
+
+	it("is idempotent when the target row already exists", async () => {
+		const { intent } = await createIntentWithInitiatedRow();
+		const intentId = intent.payment_provider_transaction_id;
+		await handlePaymentWebhook(
+			{
+				type: "payment_intent.capture_succeeded",
+				payment_intent_id: intentId,
+			},
+			dataDb,
+		);
+		const before = await testDb.select().from(schema.transaction);
+
+		const response = await handlePaymentWebhook(
+			{
+				type: "payment_intent.capture_succeeded",
+				payment_intent_id: intentId,
+			},
+			dataDb,
+		);
+
+		expect(response).toEqual({ received: true });
+		expect(await testDb.select().from(schema.transaction)).toHaveLength(
+			before.length,
+		);
+	});
+
+	it("rejects unknown payment_intent_id", async () => {
+		await expect(
+			handlePaymentWebhook(
+				{
+					type: "payment_intent.succeeded",
+					payment_intent_id: crypto.randomUUID(),
+				},
+				dataDb,
+			),
+		).rejects.toThrow("payment intent not found");
+	});
+
+	it("rejects out-of-order capture_succeeded without initiated row", async () => {
+		const request = validPaymentIntentRequest();
+		const intent = await paymentIntent(request, dataDb);
+		await expect(
+			handlePaymentWebhook(
+				{
+					type: "payment_intent.capture_succeeded",
+					payment_intent_id: intent.payment_provider_transaction_id,
+				},
+				dataDb,
+			),
+		).rejects.toThrow("capture not initiated");
+	});
+
+	it("rejects charge.completed without succeeded row", async () => {
+		const { intent } = await createIntentWithInitiatedRow();
+		await expect(
+			handlePaymentWebhook(
+				{
+					type: "charge.completed",
+					payment_intent_id: intent.payment_provider_transaction_id,
+				},
+				dataDb,
+			),
+		).rejects.toThrow("charge not succeeded");
+	});
+
+	it("rejects transfer events without initiated transfer row", async () => {
+		const { intent } = await createIntentWithInitiatedRow();
+		const intentId = intent.payment_provider_transaction_id;
+		await handlePaymentWebhook(
+			{
+				type: "payment_intent.capture_succeeded",
+				payment_intent_id: intentId,
+			},
+			dataDb,
+		);
+		await expect(
+			handlePaymentWebhook(
+				{ type: "transfer.succeeded", payment_intent_id: intentId },
+				dataDb,
+			),
+		).rejects.toThrow("transfer not initiated");
+	});
+
+	it("authors charge_failed on capture_failed", async () => {
+		const { intent } = await createIntentWithInitiatedRow();
+		await handlePaymentWebhook(
+			{
+				type: "payment_intent.capture_failed",
+				payment_intent_id: intent.payment_provider_transaction_id,
+			},
+			dataDb,
+		);
+		const messages = await testDb.select().from(schema.message);
+		expect(messages.some((row) => row.value === "charge_failed")).toBe(
+			true,
+		);
+	});
+
+	it("is reachable via api{service:evy, method:payment_webhook}", async () => {
+		const request = validPaymentIntentRequest();
+		const intent = await paymentIntent(request, dataDb);
+		const response = await api(
+			{
+				service: EVY_CORE_SERVICE,
+				method: "payment_webhook",
+				data: {
+					type: "payment_intent.succeeded",
+					payment_intent_id: intent.payment_provider_transaction_id,
+				},
+			},
+			dataDb,
+		);
+		expect(response).toEqual({ received: true });
+	});
+
+	it("rejects unknown event type via request validation", async () => {
+		await expect(
+			api(
+				{
+					service: EVY_CORE_SERVICE,
+					method: "payment_webhook",
+					data: {
+						type: "unknown.event",
+						payment_intent_id: crypto.randomUUID(),
+					},
+				},
+				dataDb,
+			),
+		).rejects.toThrow("PaymentWebhookRequest validation failed");
+	});
+});
+
+async function appendTransferInitiated(
+	db: typeof dataDb,
+	intent: Awaited<ReturnType<typeof paymentIntent>>,
+) {
+	const visibility = EVY_CORE_RESOURCE_VISIBILITY.transactions;
+	if (!visibility) {
+		throw new Error("evy.transactions has no declared visibility");
+	}
+	await hookedCreate(db, {
+		resource: EVY_CORE_RESOURCE_REF.TRANSACTIONS,
+		data: {
+			fk: intent.fk,
+			resource: intent.resource,
+			type: "transfer",
+			status: "initiated",
+			amount: intent.amount,
+			currency: intent.currency,
+			payment_provider_fee: 0,
+			service_fee: 0,
+			payment_provider: "stripe",
+			payment_provider_transaction_id:
+				intent.payment_provider_transaction_id,
+			signature: "signed",
+			authorization_message_id: intent.authorization_message_id,
+			visibility,
+		},
+	});
+}

@@ -859,7 +859,7 @@
 												"tap": [
 													{
 														"condition": "{findFirst(sort(evy.messages, desc, created_at), fk == marketplace.items.id && type == delivery).value == \"given\"}",
-														"true": "{create(evy.messages,{fk: {marketplace.items.id}, resource: marketplace.items, parent_message_id: {findFirst(sort(evy.messages, desc, created_at), fk == marketplace.items.id && type == delivery).id}, type: delivery, value: reception_failed, data: {time: {findFirst(sort(evy.messages, desc, created_at), fk == marketplace.items.id && type == delivery).data.time}, postalcode: {findFirst(sort(evy.messages, desc, created_at), fk == marketplace.items.id && type == delivery).data.postalcode}, destination_address: {findFirst(sort(evy.messages, desc, created_at), fk == marketplace.items.id && type == delivery).data.destination_address}}})}",
+														"true": "{create(evy.messages,{fk: {marketplace.items.id}, resource: marketplace.items, parent_message_id: {findFirst(sort(evy.messages, desc, created_at), fk == marketplace.items.id && type == delivery).id}, type: delivery, value: failed, data: {time: {findFirst(sort(evy.messages, desc, created_at), fk == marketplace.items.id && type == delivery).data.time}, postalcode: {findFirst(sort(evy.messages, desc, created_at), fk == marketplace.items.id && type == delivery).data.postalcode}, destination_address: {findFirst(sort(evy.messages, desc, created_at), fk == marketplace.items.id && type == delivery).data.destination_address}}})}",
 														"false": ""
 													},
 													{

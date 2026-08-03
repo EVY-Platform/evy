@@ -1,57 +1,51 @@
-import { and, eq, isNull } from "drizzle-orm";
 import type {
-	DATA_EVY_Transaction,
 	PaymentCaptureRequest,
 	PaymentCaptureResponse,
 	PaymentIntentRequest,
 	PaymentIntentResponse,
 	PaymentTransferRequest,
 	PaymentTransferResponse,
+	PaymentWebhookRequest,
 } from "evy-types";
 import {
 	EVY_CORE_RESOURCE_REF,
 	EVY_CORE_RESOURCE_VISIBILITY,
 } from "evy-types/coreResources";
-import { transaction } from "evy-types/db/schema.generated";
 import {
 	validatePaymentCaptureResponse,
 	validatePaymentIntentResponse,
 	validatePaymentTransferResponse,
 } from "evy-types/validators";
-import { create } from "../data/data";
 import type { EvyDb } from "../database/db";
+import { hookedCreate } from "./hooks";
+import {
+	appendTransactionRow,
+	findIntentRow,
+	findRowsByIntentId,
+	hasRow,
+	MOCK_CAPTURE_FAILURE_AMOUNT,
+	MOCK_TRANSFER_FAILURE_AMOUNT,
+} from "./paymentsShared";
+import { handlePaymentWebhook } from "./paymentWebhook";
 
-async function findRowsByIntentId(
+async function autoCallPaymentWebhook(
 	db: EvyDb,
 	paymentIntentId: string,
-): Promise<DATA_EVY_Transaction[]> {
-	const rows = await db
-		.select()
-		.from(transaction)
-		.where(
-			and(
-				eq(
-					transaction.payment_provider_transaction_id,
-					paymentIntentId,
-				),
-				isNull(transaction.deleted_at),
-			),
-		);
-	return rows as DATA_EVY_Transaction[];
-}
-
-function findIntentRow(
-	rows: DATA_EVY_Transaction[],
-): DATA_EVY_Transaction | undefined {
-	return rows.find((row) => row.type === "intent");
-}
-
-function hasCaptureRow(rows: DATA_EVY_Transaction[]): boolean {
-	return rows.some((row) => row.type === "capture");
-}
-
-function hasTransferRow(rows: DATA_EVY_Transaction[]): boolean {
-	return rows.some((row) => row.type === "transfer");
+	events: PaymentWebhookRequest["type"][],
+): Promise<void> {
+	for (const type of events) {
+		try {
+			await handlePaymentWebhook(
+				{ type, payment_intent_id: paymentIntentId },
+				db,
+			);
+		} catch (error) {
+			console.error(
+				`payment webhook auto-call failed for ${type}:`,
+				error,
+			);
+		}
+	}
 }
 
 export async function paymentIntent(
@@ -63,25 +57,30 @@ export async function paymentIntent(
 		throw new Error("evy.transactions has no declared visibility");
 	}
 
-	return validatePaymentIntentResponse(
-		await create(db, {
-			resource: EVY_CORE_RESOURCE_REF.TRANSACTIONS,
-			data: {
-				fk: params.fk,
-				resource: params.resource,
-				type: "intent",
-				amount: params.amount,
-				currency: params.currency,
-				payment_provider_fee: 0,
-				service_fee: 0,
-				payment_provider: "stripe",
-				payment_provider_transaction_id: crypto.randomUUID(),
-				signature: "signed",
-				authorization_message_id: params.authorization_message_id,
-				visibility,
-			},
-		}),
-	);
+	const created = (await hookedCreate(db, {
+		resource: EVY_CORE_RESOURCE_REF.TRANSACTIONS,
+		data: {
+			fk: params.fk,
+			resource: params.resource,
+			type: "charge",
+			status: "intent",
+			amount: params.amount,
+			currency: params.currency,
+			payment_provider_fee: 0,
+			service_fee: 0,
+			payment_provider: "stripe",
+			payment_provider_transaction_id: crypto.randomUUID(),
+			signature: "signed",
+			authorization_message_id: params.authorization_message_id,
+			visibility,
+		},
+	})) as PaymentIntentResponse;
+
+	await autoCallPaymentWebhook(db, created.payment_provider_transaction_id, [
+		"payment_intent.succeeded",
+	]);
+
+	return validatePaymentIntentResponse(created);
 }
 
 export async function paymentCapture(
@@ -100,32 +99,47 @@ export async function paymentCapture(
 			`payment intent not found: ${params.payment_intent_id}`,
 		);
 	}
-	if (hasCaptureRow(rows)) {
+	if (hasRow(rows, "charge", "initiated")) {
 		throw new Error(
 			`payment intent already captured: ${params.payment_intent_id}`,
 		);
 	}
 
-	return validatePaymentCaptureResponse(
-		await create(db, {
-			resource: EVY_CORE_RESOURCE_REF.TRANSACTIONS,
-			data: {
-				fk: intent.fk,
-				resource: intent.resource,
-				type: "capture",
-				amount: intent.amount,
-				currency: intent.currency,
-				payment_provider_fee: 0,
-				service_fee: 0,
-				payment_provider: "stripe",
-				payment_provider_transaction_id:
-					intent.payment_provider_transaction_id,
-				signature: "signed",
-				authorization_message_id: intent.authorization_message_id,
-				visibility,
-			},
-		}),
-	);
+	const created = (await hookedCreate(db, {
+		resource: EVY_CORE_RESOURCE_REF.TRANSACTIONS,
+		data: {
+			fk: intent.fk,
+			resource: intent.resource,
+			type: "charge",
+			status: "initiated",
+			amount: intent.amount,
+			currency: intent.currency,
+			payment_provider_fee: 0,
+			service_fee: 0,
+			payment_provider: "stripe",
+			payment_provider_transaction_id:
+				intent.payment_provider_transaction_id,
+			signature: "signed",
+			authorization_message_id: intent.authorization_message_id,
+			visibility,
+		},
+	})) as PaymentCaptureResponse;
+
+	if (intent.amount === MOCK_CAPTURE_FAILURE_AMOUNT) {
+		await autoCallPaymentWebhook(
+			db,
+			intent.payment_provider_transaction_id,
+			["payment_intent.capture_failed"],
+		);
+	} else {
+		await autoCallPaymentWebhook(
+			db,
+			intent.payment_provider_transaction_id,
+			["payment_intent.capture_succeeded", "charge.completed"],
+		);
+	}
+
+	return validatePaymentCaptureResponse(created);
 }
 
 export async function paymentTransfer(
@@ -144,35 +158,50 @@ export async function paymentTransfer(
 			`payment intent not found: ${params.payment_intent_id}`,
 		);
 	}
-	if (!hasCaptureRow(rows)) {
+	if (!hasRow(rows, "charge", "succeeded")) {
 		throw new Error(
-			`payment intent not captured: ${params.payment_intent_id}`,
+			`payment charge not succeeded: ${params.payment_intent_id}`,
 		);
 	}
-	if (hasTransferRow(rows)) {
+	if (hasRow(rows, "transfer", "initiated")) {
 		throw new Error(
 			`payment intent already transferred: ${params.payment_intent_id}`,
 		);
 	}
 
-	return validatePaymentTransferResponse(
-		await create(db, {
-			resource: EVY_CORE_RESOURCE_REF.TRANSACTIONS,
-			data: {
-				fk: intent.fk,
-				resource: intent.resource,
-				type: "transfer",
-				amount: intent.amount,
-				currency: intent.currency,
-				payment_provider_fee: 0,
-				service_fee: 0,
-				payment_provider: "stripe",
-				payment_provider_transaction_id:
-					intent.payment_provider_transaction_id,
-				signature: "signed",
-				authorization_message_id: intent.authorization_message_id,
-				visibility,
-			},
-		}),
-	);
+	const created = (await hookedCreate(db, {
+		resource: EVY_CORE_RESOURCE_REF.TRANSACTIONS,
+		data: {
+			fk: intent.fk,
+			resource: intent.resource,
+			type: "transfer",
+			status: "initiated",
+			amount: intent.amount,
+			currency: intent.currency,
+			payment_provider_fee: 0,
+			service_fee: 0,
+			payment_provider: "stripe",
+			payment_provider_transaction_id:
+				intent.payment_provider_transaction_id,
+			signature: "signed",
+			authorization_message_id: intent.authorization_message_id,
+			visibility,
+		},
+	})) as PaymentTransferResponse;
+
+	if (intent.amount === MOCK_TRANSFER_FAILURE_AMOUNT) {
+		await autoCallPaymentWebhook(
+			db,
+			intent.payment_provider_transaction_id,
+			["transfer.failed"],
+		);
+	} else {
+		await autoCallPaymentWebhook(
+			db,
+			intent.payment_provider_transaction_id,
+			["transfer.succeeded", "transfer.completed"],
+		);
+	}
+
+	return validatePaymentTransferResponse(created);
 }

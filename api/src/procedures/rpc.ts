@@ -16,14 +16,13 @@ import {
 } from "evy-types/rpcRequestHelpers";
 import { assertCoreResourceMutable } from "../data/catalogVisibility";
 import {
-	create as createCore,
 	deleteResource as deleteCore,
 	get as getCore,
 	update as updateCore,
 } from "../data/data";
 import type { EvyDb } from "../database/db";
 import { coreApi } from "./coreApi";
-import { runAfterCreateHook, runBeforeCreateHook } from "./hooks";
+import { hookedCreate } from "./hooks";
 import {
 	forwardApi,
 	forwardCreate,
@@ -68,10 +67,7 @@ export async function create(
 	const service = serviceOfRef(params.resource);
 	if (service === EVY_CORE_SERVICE) {
 		assertCoreResourceMutable(params.resource);
-		await runBeforeCreateHook(params.resource, params.data);
-		const response = await createCore(db, params);
-		await runAfterCreateHook(params.resource, response);
-		return response;
+		return hookedCreate(db, params);
 	}
 	return forwardCreate(service, params);
 }

@@ -376,7 +376,7 @@
 																"tap": [
 																	{
 																		"condition": "{$datum.type == \"delivery\"}",
-																		"true": "{create(evy.messages,{fk: {$datum.fk}, resource: marketplace.items, parent_message_id: {$datum.id}, type: {$datum.type}, value: reception_failed, data: {time: {$datum.data.time}, postalcode: {$datum.data.postalcode}, destination_address: {$datum.data.destination_address}}})}",
+																		"true": "{create(evy.messages,{fk: {$datum.fk}, resource: marketplace.items, parent_message_id: {$datum.id}, type: {$datum.type}, value: failed, data: {time: {$datum.data.time}, postalcode: {$datum.data.postalcode}, destination_address: {$datum.data.destination_address}}})}",
 																		"false": "{create(evy.messages,{fk: {$datum.fk}, resource: marketplace.items, parent_message_id: {$datum.id}, type: {$datum.type}, value: failed, data: {time: {$datum.data.time}, postalcode: {$datum.data.postalcode}, destination_address: {$datum.data.destination_address}}})}"
 																	},
 																	{
@@ -481,7 +481,7 @@
 																"tap": [
 																	{
 																		"condition": "",
-																		"true": "{create(evy.messages,{fk: {$datum.fk}, resource: marketplace.items, parent_message_id: {$datum.id}, type: {$datum.type}, value: reception_failed, data: {time: {$datum.data.time}, postalcode: {$datum.data.postalcode}, destination_address: {$datum.data.destination_address}}})}",
+																		"true": "{create(evy.messages,{fk: {$datum.fk}, resource: marketplace.items, parent_message_id: {$datum.id}, type: {$datum.type}, value: failed, data: {time: {$datum.data.time}, postalcode: {$datum.data.postalcode}, destination_address: {$datum.data.destination_address}}})}",
 																		"false": ""
 																	},
 																	{
@@ -691,7 +691,7 @@
 																"tap": [
 																	{
 																		"condition": "",
-																		"true": "{create(evy.messages,{fk: {$datum.fk}, resource: marketplace.items, parent_message_id: {$datum.id}, type: {$datum.type}, value: given_failed, data: {time: {$datum.data.time}, postalcode: {$datum.data.postalcode}, destination_address: {$datum.data.destination_address}}})}",
+																		"true": "{create(evy.messages,{fk: {$datum.fk}, resource: marketplace.items, parent_message_id: {$datum.id}, type: {$datum.type}, value: failed, data: {time: {$datum.data.time}, postalcode: {$datum.data.postalcode}, destination_address: {$datum.data.destination_address}}})}",
 																		"false": ""
 																	},
 																	{
@@ -796,7 +796,7 @@
 																"tap": [
 																	{
 																		"condition": "",
-																		"true": "{create(evy.messages,{fk: {$datum.fk}, resource: marketplace.items, parent_message_id: {$datum.id}, type: {$datum.type}, value: sent_failed, data: {time: {$datum.data.time}, postalcode: {$datum.data.postalcode}, destination_address: {$datum.data.destination_address}}})}",
+																		"true": "{create(evy.messages,{fk: {$datum.fk}, resource: marketplace.items, parent_message_id: {$datum.id}, type: {$datum.type}, value: failed, data: {time: {$datum.data.time}, postalcode: {$datum.data.postalcode}, destination_address: {$datum.data.destination_address}}})}",
 																		"false": ""
 																	},
 																	{

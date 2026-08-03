@@ -173,12 +173,13 @@ describe("message create hooks", () => {
 
 	it("rejects a create when before_create vetoes it", async () => {
 		beforeCreateResponse = { ok: false, reason: "item is locked" };
+		const payload = messagePayload(EXTERNAL_TEST_RESOURCE.CONDITIONS);
 
 		await expect(
 			create(
 				{
 					resource: EVY_CORE_RESOURCE_REF.MESSAGES,
-					data: messagePayload(EXTERNAL_TEST_RESOURCE.CONDITIONS),
+					data: payload,
 				},
 				dataDb,
 			),
@@ -186,6 +187,35 @@ describe("message create hooks", () => {
 
 		expect(hookCalls).toHaveLength(1);
 		expect(hookCalls[0]?.hook).toBe("before_create");
+
+		const rows = await testDb.select().from(schema.message);
+		expect(rows).toHaveLength(1);
+		expect(rows[0]).toMatchObject({
+			value: "request_failed",
+			fk: payload.fk,
+			resource: payload.resource,
+			type: payload.type,
+			data: { reason: "item is locked" },
+		});
+	});
+
+	it("does not recurse when request_failed itself is vetoed", async () => {
+		beforeCreateResponse = { ok: false, reason: "blocked" };
+		const payload = {
+			...messagePayload(EXTERNAL_TEST_RESOURCE.CONDITIONS),
+			value: "request_failed",
+		};
+
+		await expect(
+			create(
+				{
+					resource: EVY_CORE_RESOURCE_REF.MESSAGES,
+					data: payload,
+				},
+				dataDb,
+			),
+		).rejects.toThrow("blocked");
+
 		expect(await testDb.select().from(schema.message)).toHaveLength(0);
 	});
 
@@ -234,6 +264,39 @@ describe("message create hooks", () => {
 		);
 
 		expect(hookCalls).toHaveLength(0);
+	});
+
+	it("forwards transaction create hooks to the owning service", async () => {
+		const payload = {
+			fk: crypto.randomUUID(),
+			resource: EXTERNAL_TEST_RESOURCE.CONDITIONS,
+			type: "charge",
+			status: "succeeded",
+			amount: 100,
+			currency: "AUD",
+			payment_provider_fee: 0,
+			service_fee: 0,
+			payment_provider: "stripe" as const,
+			payment_provider_transaction_id: crypto.randomUUID(),
+			signature: "signed",
+			authorization_message_id: crypto.randomUUID(),
+			visibility: "public" as const,
+		};
+
+		const response = await create(
+			{
+				resource: EVY_CORE_RESOURCE_REF.TRANSACTIONS,
+				data: payload,
+			},
+			dataDb,
+		);
+
+		expect(hookCalls.map((call) => call.hook)).toEqual([
+			"before_create",
+			"after_create",
+		]);
+		expect(hookCalls[0]?.resource).toBe(EVY_CORE_RESOURCE_REF.TRANSACTIONS);
+		expect(hookCalls[1]?.data).toMatchObject({ id: response.id });
 	});
 });
 

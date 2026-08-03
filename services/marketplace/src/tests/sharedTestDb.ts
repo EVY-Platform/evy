@@ -1,4 +1,3 @@
-import { afterAll } from "bun:test";
 import { migrate } from "drizzle-orm/pglite/migrator";
 
 import {
@@ -20,7 +19,3 @@ export async function ensureMarketplaceTestSchema(): Promise<void> {
 
 export const marketplaceTestPglite = database.pgliteClient;
 export const marketplaceTestDb = database.testDb;
-
-afterAll(async () => {
-	await marketplaceTestPglite.close();
-});

@@ -623,7 +623,8 @@ function validTransactionPayload(): Omit<
 	return {
 		fk: crypto.randomUUID(),
 		resource: "test_svc.items",
-		type: "intent",
+		type: "charge",
+		status: "intent",
 		amount: 250,
 		currency: "AUD",
 		payment_provider_fee: 0,

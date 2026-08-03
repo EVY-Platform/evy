@@ -15,7 +15,7 @@ beforeAll(async () => {
 
 const itemId = "00000000-0000-4000-8000-000000000001";
 
-const baseRequest: HookRequest = {
+const baseMessageRequest: HookRequest = {
 	hook: "before_create",
 	resource: EVY_CORE_RESOURCE_REF.MESSAGES,
 	operation: "create",
@@ -29,6 +29,20 @@ const baseRequest: HookRequest = {
 	},
 };
 
+const baseTransactionRequest: HookRequest = {
+	hook: "before_create",
+	resource: EVY_CORE_RESOURCE_REF.TRANSACTIONS,
+	operation: "create",
+	data: {
+		fk: itemId,
+		resource: MARKETPLACE_RESOURCE.ITEMS,
+		type: "charge",
+		status: "succeeded",
+		amount: 100,
+		currency: "AUD",
+	},
+};
+
 beforeEach(async () => {
 	await drainPurchaseQueues();
 	await db.delete(schema.item_status_history);
@@ -36,13 +50,13 @@ beforeEach(async () => {
 
 describe("handleHook", () => {
 	it("returns ok for before_create hooks on available items", async () => {
-		expect(await handleHook(baseRequest)).toEqual({ ok: true });
+		expect(await handleHook(baseMessageRequest)).toEqual({ ok: true });
 	});
 
 	it("vetoes before_create when the item is sold", async () => {
 		await appendStatus(itemId, "sold");
 
-		const response = await handleHook(baseRequest);
+		const response = await handleHook(baseMessageRequest);
 
 		expect(response).toEqual({
 			ok: false,
@@ -52,9 +66,9 @@ describe("handleHook", () => {
 
 	it("enqueues after_create reactions", async () => {
 		const request: HookRequest = {
-			...baseRequest,
+			...baseMessageRequest,
 			hook: "after_create",
-			data: { ...baseRequest.data, value: "accept" },
+			data: { ...baseMessageRequest.data, value: "accept" },
 		};
 
 		expect(await handleHook(request)).toEqual({ ok: true });
@@ -63,10 +77,25 @@ describe("handleHook", () => {
 		expect(await currentStatus(itemId)).toBe("pickup_pending");
 	});
 
+	it("returns ok for transaction before_create hooks", async () => {
+		expect(await handleHook(baseTransactionRequest)).toEqual({ ok: true });
+	});
+
+	it("enqueues sold on transaction after_create for charge succeeded", async () => {
+		const request: HookRequest = {
+			...baseTransactionRequest,
+			hook: "after_create",
+		};
+
+		expect(await handleHook(request)).toEqual({ ok: true });
+		await drainPurchaseQueues();
+		expect(await currentStatus(itemId)).toBe("sold");
+	});
+
 	it("ignores hooks for non-marketplace messages", async () => {
 		const request: HookRequest = {
-			...baseRequest,
-			data: { ...baseRequest.data, resource: "other_svc.items" },
+			...baseMessageRequest,
+			data: { ...baseMessageRequest.data, resource: "other_svc.items" },
 		};
 
 		expect(await handleHook(request)).toEqual({ ok: true });

@@ -661,6 +661,7 @@
 				"fk",
 				"resource",
 				"type",
+				"status",
 				"amount",
 				"currency",
 				"payment_provider_fee",
@@ -688,7 +689,18 @@
 				},
 				"type": {
 					"type": "string",
-					"enum": ["intent", "capture", "transfer", "withdraw"]
+					"enum": ["charge", "transfer", "withdraw"]
+				},
+				"status": {
+					"type": "string",
+					"enum": [
+						"intent",
+						"initiated",
+						"succeeded",
+						"failed",
+						"completed"
+					],
+					"description": "Append-only lifecycle state for this type. Each transition is a new row; rows sharing payment_provider_transaction_id form one payment's ledger."
 				},
 				"amount": {
 					"type": "number",

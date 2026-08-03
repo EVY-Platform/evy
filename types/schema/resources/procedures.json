@@ -13,6 +13,10 @@
 			"service": "evy",
 			"response": "rpc/payment_transfer.response.schema.json"
 		},
+		"payment_webhook": {
+			"service": "evy",
+			"response": "rpc/payment_webhook.response.schema.json"
+		},
 		"place_search": {
 			"service": "evy",
 			"response": "rpc/place_search.response.schema.json"

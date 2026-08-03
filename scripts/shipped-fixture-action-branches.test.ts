@@ -245,12 +245,9 @@ describe("shipped fixtures satisfy the row schema", () => {
 		const expectedValues = [
 			"transaction",
 			"received",
-			"reception_failed",
 			"failed",
 			"given",
-			"given_failed",
 			"sent",
-			"sent_failed",
 			"transaction_completed",
 			"transaction_rejected",
 		];
@@ -276,12 +273,9 @@ describe("shipped fixtures satisfy the row schema", () => {
 		const purchaseValues = [
 			"transaction",
 			"received",
-			"reception_failed",
 			"failed",
 			"given",
-			"given_failed",
 			"sent",
-			"sent_failed",
 			"transaction_completed",
 			"transaction_rejected",
 		];

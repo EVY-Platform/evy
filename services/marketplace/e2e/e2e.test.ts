@@ -1,5 +1,8 @@
 import { afterAll, beforeAll, describe, expect, it } from "bun:test";
-import { EVY_CORE_RESOURCE_REF } from "evy-types/coreResources";
+import {
+	EVY_CORE_RESOURCE_REF,
+	EVY_CORE_SERVICE,
+} from "evy-types/coreResources";
 import { waitForClientOpen } from "evy-types/wsTestHelpers";
 import { Client } from "rpc-websockets";
 import { MARKETPLACE_RESOURCE, MARKETPLACE_SERVICE } from "../src/resources";
@@ -322,6 +325,44 @@ describe("Marketplace E2E (via API WebSocket)", () => {
 			});
 		}
 
+		async function runPaymentCapture(
+			itemId: string,
+			authorizationMessageId: string,
+			amount = 250,
+		) {
+			const intent = await client.call("api", {
+				service: EVY_CORE_SERVICE,
+				method: "payment_intent",
+				data: {
+					fk: itemId,
+					resource: MARKETPLACE_RESOURCE.ITEMS,
+					amount,
+					currency: "AUD",
+					authorization_message_id: authorizationMessageId,
+				},
+			});
+			await client.call("api", {
+				service: EVY_CORE_SERVICE,
+				method: "payment_capture",
+				data: {
+					payment_intent_id: intent.payment_provider_transaction_id,
+				},
+			});
+			return intent;
+		}
+
+		async function runPaymentTransfer(intent: {
+			payment_provider_transaction_id: string;
+		}) {
+			await client.call("api", {
+				service: EVY_CORE_SERVICE,
+				method: "payment_transfer",
+				data: {
+					payment_intent_id: intent.payment_provider_transaction_id,
+				},
+			});
+		}
+
 		async function driveDeliveryToSold(itemId: string) {
 			const pending = await createPurchaseMessage({
 				fk: itemId,
@@ -335,12 +376,7 @@ describe("Marketplace E2E (via API WebSocket)", () => {
 				parent_message_id: pending.id,
 			});
 			await pollItemStatus(itemId, "delivery_pending");
-			await createPurchaseMessage({
-				fk: itemId,
-				type: "delivery",
-				value: "charge_initiated",
-				parent_message_id: pending.id,
-			});
+			await runPaymentCapture(itemId, pending.id);
 			await pollItemStatus(itemId, "sold");
 			return pending;
 		}
@@ -391,19 +427,9 @@ describe("Marketplace E2E (via API WebSocket)", () => {
 				value: "transaction_completed",
 				parent_message_id: transaction.id,
 			});
-			await createPurchaseMessage({
-				fk: itemId,
-				type: "pickup",
-				value: "charge_initiated",
-				parent_message_id: pending.id,
-			});
+			const paymentIntent = await runPaymentCapture(itemId, pending.id);
 			await pollItemStatus(itemId, "sold");
-			await createPurchaseMessage({
-				fk: itemId,
-				type: "pickup",
-				value: "transfer_initiated",
-				parent_message_id: pending.id,
-			});
+			await runPaymentTransfer(paymentIntent);
 
 			expect(accept.parent_message_id).toBe(pending.id);
 			expect(transaction.parent_message_id).toBe(pending.id);
@@ -429,12 +455,7 @@ describe("Marketplace E2E (via API WebSocket)", () => {
 			});
 			await pollItemStatus(itemId, "delivery_pending");
 
-			await createPurchaseMessage({
-				fk: itemId,
-				type: "delivery",
-				value: "charge_initiated",
-				parent_message_id: pending.id,
-			});
+			const paymentIntent = await runPaymentCapture(itemId, pending.id);
 			await pollItemStatus(itemId, "sold");
 
 			const given = await createPurchaseMessage({
@@ -449,12 +470,7 @@ describe("Marketplace E2E (via API WebSocket)", () => {
 				value: "received",
 				parent_message_id: pending.id,
 			});
-			await createPurchaseMessage({
-				fk: itemId,
-				type: "delivery",
-				value: "transfer_initiated",
-				parent_message_id: pending.id,
-			});
+			await runPaymentTransfer(paymentIntent);
 
 			expect(accept.parent_message_id).toBe(pending.id);
 			expect(given.parent_message_id).toBe(pending.id);
@@ -480,12 +496,7 @@ describe("Marketplace E2E (via API WebSocket)", () => {
 			});
 			await pollItemStatus(itemId, "shipping_pending");
 
-			await createPurchaseMessage({
-				fk: itemId,
-				type: "shipping",
-				value: "charge_initiated",
-				parent_message_id: pending.id,
-			});
+			const paymentIntent = await runPaymentCapture(itemId, pending.id);
 			await pollItemStatus(itemId, "sold");
 
 			const sent = await createPurchaseMessage({
@@ -494,12 +505,7 @@ describe("Marketplace E2E (via API WebSocket)", () => {
 				value: "sent",
 				parent_message_id: pending.id,
 			});
-			await createPurchaseMessage({
-				fk: itemId,
-				type: "shipping",
-				value: "transfer_initiated",
-				parent_message_id: pending.id,
-			});
+			await runPaymentTransfer(paymentIntent);
 			const received = await createPurchaseMessage({
 				fk: itemId,
 				type: "shipping",
@@ -546,16 +552,34 @@ describe("Marketplace E2E (via API WebSocket)", () => {
 			expect(rows).toHaveLength(0);
 		});
 
-		it("rolls back to available on given_failed after sold", async () => {
+		it("rolls back to available on failed after sold", async () => {
 			const { id: itemId } = await createMarketplaceItem();
 			const pending = await driveDeliveryToSold(itemId);
 
 			await createPurchaseMessage({
 				fk: itemId,
 				type: "delivery",
-				value: "given_failed",
+				value: "failed",
 				parent_message_id: pending.id,
 			});
+			await pollItemStatus(itemId, "available");
+		});
+
+		it("rolls back to available on capture failure via payment webhook", async () => {
+			const { id: itemId } = await createMarketplaceItem();
+			const pending = await createPurchaseMessage({
+				fk: itemId,
+				type: "delivery",
+				value: "pending",
+			});
+			await createPurchaseMessage({
+				fk: itemId,
+				type: "delivery",
+				value: "accept",
+				parent_message_id: pending.id,
+			});
+			await pollItemStatus(itemId, "delivery_pending");
+			await runPaymentCapture(itemId, pending.id, 6.66);
 			await pollItemStatus(itemId, "available");
 		});
 

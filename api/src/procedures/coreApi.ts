@@ -8,6 +8,8 @@ import {
 	validatePaymentIntentResponse,
 	validatePaymentTransferRequest,
 	validatePaymentTransferResponse,
+	validatePaymentWebhookRequest,
+	validatePaymentWebhookResponse,
 	validatePlaceSearchRequest,
 	validatePlaceSearchResponse,
 	validateSyncRequest,
@@ -15,6 +17,7 @@ import {
 } from "evy-types/validators";
 import type { EvyDb } from "../database/db";
 import * as paymentsProcedure from "./payments";
+import * as paymentWebhookProcedure from "./paymentWebhook";
 import * as placeSearchProcedure from "./placeSearch";
 import * as syncProcedure from "./sync";
 
@@ -52,6 +55,13 @@ const coreProcedures: Record<string, CoreProcedure> = {
 		validatePaymentTransferResponse(
 			await paymentsProcedure.paymentTransfer(
 				validatePaymentTransferRequest(data),
+				db,
+			),
+		),
+	payment_webhook: async (data, db) =>
+		validatePaymentWebhookResponse(
+			await paymentWebhookProcedure.handlePaymentWebhook(
+				validatePaymentWebhookRequest(data),
 				db,
 			),
 		),

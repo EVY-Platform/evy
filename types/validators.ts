@@ -44,6 +44,8 @@ import type { PaymentIntentRequest } from "./generated/ts/rpc/payment_intent.req
 import type { PaymentIntentResponse } from "./generated/ts/rpc/payment_intent.response";
 import type { PaymentTransferRequest } from "./generated/ts/rpc/payment_transfer.request";
 import type { PaymentTransferResponse } from "./generated/ts/rpc/payment_transfer.response";
+import type { PaymentWebhookRequest } from "./generated/ts/rpc/payment_webhook.request";
+import type { PaymentWebhookResponse } from "./generated/ts/rpc/payment_webhook.response";
 import type { PlaceSearchRequest } from "./generated/ts/rpc/place_search.request";
 import type { PlaceSearchResponse } from "./generated/ts/rpc/place_search.response";
 import type { ResourcesResponse } from "./generated/ts/rpc/resources.response";
@@ -118,6 +120,12 @@ import paymentTransferRequestRaw from "./schema/rpc/payment_transfer.request.sch
 import paymentTransferResponseRaw from "./schema/rpc/payment_transfer.response.schema.json" with {
 	type: "json",
 };
+import paymentWebhookRequestRaw from "./schema/rpc/payment_webhook.request.schema.json" with {
+	type: "json",
+};
+import paymentWebhookResponseRaw from "./schema/rpc/payment_webhook.response.schema.json" with {
+	type: "json",
+};
 import placeSearchRequestRaw from "./schema/rpc/place_search.request.schema.json" with {
 	type: "json",
 };
@@ -189,6 +197,10 @@ const RAW_SCHEMAS: Record<string, Record<string, unknown>> = {
 		paymentTransferRequestRaw as Record<string, unknown>,
 	"rpc/payment_transfer.response.schema.json":
 		paymentTransferResponseRaw as Record<string, unknown>,
+	"rpc/payment_webhook.request.schema.json":
+		paymentWebhookRequestRaw as Record<string, unknown>,
+	"rpc/payment_webhook.response.schema.json":
+		paymentWebhookResponseRaw as Record<string, unknown>,
 	"rpc/place_search.request.schema.json": placeSearchRequestRaw as Record<
 		string,
 		unknown
@@ -357,6 +369,7 @@ const REQUEST_SCHEMA_FILES = [
 	"rpc/payment_intent.request.schema.json",
 	"rpc/payment_capture.request.schema.json",
 	"rpc/payment_transfer.request.schema.json",
+	"rpc/payment_webhook.request.schema.json",
 	"rpc/place_search.request.schema.json",
 	"rpc/hook.request.schema.json",
 ] as const;
@@ -380,6 +393,7 @@ const ENTITY_SCHEMA_FILES = [
 	"rpc/payment_intent.response.schema.json",
 	"rpc/payment_capture.response.schema.json",
 	"rpc/payment_transfer.response.schema.json",
+	"rpc/payment_webhook.response.schema.json",
 	"rpc/place_search.response.schema.json",
 	"rpc/hook.response.schema.json",
 ];
@@ -559,6 +573,14 @@ const getValidatePaymentTransferResponse =
 		getEntityAjv,
 		fileId("rpc/payment_transfer.response.schema.json"),
 	);
+const getValidatePaymentWebhookRequest = lazyValidator<PaymentWebhookRequest>(
+	getRequestAjv,
+	fileId("rpc/payment_webhook.request.schema.json"),
+);
+const getValidatePaymentWebhookResponse = lazyValidator<PaymentWebhookResponse>(
+	getEntityAjv,
+	fileId("rpc/payment_webhook.response.schema.json"),
+);
 const getValidatePlaceSearchRequest = lazyValidator<PlaceSearchRequest>(
 	getRequestAjv,
 	fileId("rpc/place_search.request.schema.json"),
@@ -898,6 +920,16 @@ export const validatePaymentTransferResponse =
 	makeValidator<PaymentTransferResponse>(
 		"PaymentTransferResponse",
 		getValidatePaymentTransferResponse,
+	);
+export const validatePaymentWebhookRequest =
+	makeValidator<PaymentWebhookRequest>(
+		"PaymentWebhookRequest",
+		getValidatePaymentWebhookRequest,
+	);
+export const validatePaymentWebhookResponse =
+	makeValidator<PaymentWebhookResponse>(
+		"PaymentWebhookResponse",
+		getValidatePaymentWebhookResponse,
 	);
 export const validatePlaceSearchRequest = makeValidator<PlaceSearchRequest>(
 	"PlaceSearchRequest",

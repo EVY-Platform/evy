@@ -5,6 +5,7 @@ import { db, schema } from "../db";
 import {
 	drainPurchaseQueues,
 	reactToPurchaseMessage,
+	reactToTransaction,
 	validatePurchaseMessage,
 } from "../purchase";
 import { appendStatus, currentStatus } from "../status";
@@ -31,6 +32,32 @@ function message(
 	};
 }
 
+function transaction(
+	overrides: Partial<{
+		fk: string;
+		type: string;
+		status: string;
+	}> = {},
+) {
+	return {
+		fk: overrides.fk ?? itemId(),
+		resource: "marketplace.items",
+		type: overrides.type ?? "charge",
+		status: overrides.status ?? "succeeded",
+	};
+}
+
+const REMOVED_VALUES = [
+	"transaction_failed",
+	"given_failed",
+	"sent_failed",
+	"reception_failed",
+	"charge_initiated",
+	"charge_completed",
+	"transfer_initiated",
+	"transfer_completed",
+];
+
 beforeEach(async () => {
 	await drainPurchaseQueues();
 	await db.delete(schema.item_status_history);
@@ -38,6 +65,83 @@ beforeEach(async () => {
 
 describe.serial("purchase flow", () => {
 	describe("validatePurchaseMessage", () => {
+		it("rejects removed message values as unknown", async () => {
+			for (const value of REMOVED_VALUES) {
+				const verdict = await validatePurchaseMessage(
+					message({ value }),
+				);
+				expect(verdict).toEqual({
+					ok: false,
+					reason: `Unknown message value "${value}"`,
+				});
+			}
+		});
+
+		it("accepts request_failed at any status with no reaction", async () => {
+			const fk = itemId();
+			await appendStatus(fk, "sold");
+			expect(
+				await validatePurchaseMessage(
+					message({ fk, value: "request_failed" }),
+				),
+			).toEqual({ ok: true });
+			await reactToPurchaseMessage(
+				message({ fk, value: "request_failed" }),
+			);
+			expect(await currentStatus(fk)).toBe("sold");
+		});
+
+		it("accepts failed on delivery and shipping at sold", async () => {
+			const deliveryItem = itemId();
+			const shippingItem = itemId();
+			await appendStatus(deliveryItem, "sold");
+			await appendStatus(shippingItem, "sold");
+
+			expect(
+				await validatePurchaseMessage(
+					message({
+						fk: deliveryItem,
+						type: "delivery",
+						value: "failed",
+					}),
+				),
+			).toEqual({ ok: true });
+			expect(
+				await validatePurchaseMessage(
+					message({
+						fk: shippingItem,
+						type: "shipping",
+						value: "failed",
+					}),
+				),
+			).toEqual({ ok: true });
+		});
+
+		it("accepts accept at sold without regressing status", async () => {
+			const fk = itemId();
+			await appendStatus(fk, "sold");
+			expect(
+				await validatePurchaseMessage(
+					message({ fk, type: "delivery", value: "accept" }),
+				),
+			).toEqual({ ok: true });
+		});
+
+		it("accepts transaction_completed and transaction_rejected at sold", async () => {
+			const fk = itemId();
+			await appendStatus(fk, "sold");
+			expect(
+				await validatePurchaseMessage(
+					message({ fk, value: "transaction_completed" }),
+				),
+			).toEqual({ ok: true });
+			expect(
+				await validatePurchaseMessage(
+					message({ fk, value: "transaction_rejected" }),
+				),
+			).toEqual({ ok: true });
+		});
+
 		it("rejects pending on sold items", async () => {
 			const fk = itemId();
 			await appendStatus(fk, "sold");
@@ -72,7 +176,7 @@ describe.serial("purchase flow", () => {
 			});
 		});
 
-		it("rejects handshake values outside pickup_pending", async () => {
+		it("rejects handshake values outside pickup_pending or sold", async () => {
 			expect(
 				await validatePurchaseMessage(
 					message({ value: "transaction" }),
@@ -118,18 +222,9 @@ describe.serial("purchase flow", () => {
 				ok: false,
 				reason: '"sent" is only valid on shipping chains',
 			});
-
-			expect(
-				await validatePurchaseMessage(
-					message({ fk, type: "pickup", value: "unknown_value" }),
-				),
-			).toEqual({
-				ok: false,
-				reason: 'Unknown message value "unknown_value"',
-			});
 		});
 
-		it("allows reject, cancel, and payment values", async () => {
+		it("allows reject and cancel", async () => {
 			const fk = itemId();
 			await appendStatus(fk, "sold");
 
@@ -143,11 +238,6 @@ describe.serial("purchase flow", () => {
 			).toEqual({
 				ok: true,
 			});
-			expect(
-				await validatePurchaseMessage(
-					message({ fk, value: "charge_initiated" }),
-				),
-			).toEqual({ ok: true });
 		});
 	});
 
@@ -159,19 +249,10 @@ describe.serial("purchase flow", () => {
 			expect(await currentStatus(payload.fk)).toBe("delivery_pending");
 		});
 
-		it("appends sold on charge_initiated", async () => {
-			const payload = message({
-				type: "delivery",
-				value: "accept",
-			});
+		it("does not regress sold when accept arrives after sold", async () => {
+			const payload = message({ type: "delivery", value: "accept" });
+			await appendStatus(payload.fk, "sold");
 			await reactToPurchaseMessage(payload);
-			expect(await currentStatus(payload.fk)).toBe("delivery_pending");
-
-			await reactToPurchaseMessage({
-				...payload,
-				value: "charge_initiated",
-			});
-
 			expect(await currentStatus(payload.fk)).toBe("sold");
 		});
 
@@ -187,22 +268,18 @@ describe.serial("purchase flow", () => {
 			expect(await currentStatus(payload.fk)).toBe("available");
 		});
 
-		it("appends available for negative sold values", async () => {
+		it("appends available for failed after sold", async () => {
 			const payload = message({
 				type: "delivery",
 				value: "accept",
 			});
 			await reactToPurchaseMessage(payload);
-			await reactToPurchaseMessage({
-				...payload,
-				value: "charge_initiated",
-			});
-			expect(await currentStatus(payload.fk)).toBe("sold");
+			await appendStatus(payload.fk, "sold");
 
 			await reactToPurchaseMessage({
 				...payload,
 				type: "delivery",
-				value: "given_failed",
+				value: "failed",
 			});
 			expect(await currentStatus(payload.fk)).toBe("available");
 		});
@@ -228,6 +305,27 @@ describe.serial("purchase flow", () => {
 				.from(schema.item_status_history)
 				.where(eq(schema.item_status_history.item_id, payload.fk));
 			expect(rows).toHaveLength(1);
+		});
+	});
+
+	describe("transaction reactions", () => {
+		it("appends sold on charge succeeded once", async () => {
+			const payload = transaction();
+			await reactToTransaction(payload);
+			expect(await currentStatus(payload.fk)).toBe("sold");
+
+			await reactToTransaction(payload);
+			const rows = await db
+				.select()
+				.from(schema.item_status_history)
+				.where(eq(schema.item_status_history.item_id, payload.fk));
+			expect(rows).toHaveLength(1);
+		});
+
+		it("ignores other transaction type/status combinations", async () => {
+			const payload = transaction({ status: "initiated" });
+			await reactToTransaction(payload);
+			expect(await currentStatus(payload.fk)).toBe("available");
 		});
 	});
 });

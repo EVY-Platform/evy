@@ -131,6 +131,7 @@ describe("core procedure registry", () => {
 			"payment_capture",
 			"payment_intent",
 			"payment_transfer",
+			"payment_webhook",
 			"place_search",
 		]);
 	});
