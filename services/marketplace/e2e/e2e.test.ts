@@ -5,6 +5,7 @@ import {
 } from "evy-types/coreResources";
 import { waitForClientOpen } from "evy-types/wsTestHelpers";
 import { Client } from "rpc-websockets";
+import { MOCK_CAPTURE_FAILURE_AMOUNT } from "../../../api/src/procedures/paymentsShared";
 import { MARKETPLACE_RESOURCE, MARKETPLACE_SERVICE } from "../src/resources";
 
 type WSClient = InstanceType<typeof Client>;
@@ -579,7 +580,11 @@ describe("Marketplace E2E (via API WebSocket)", () => {
 				parent_message_id: pending.id,
 			});
 			await pollItemStatus(itemId, "delivery_pending");
-			await runPaymentCapture(itemId, pending.id, 6.66);
+			await runPaymentCapture(
+				itemId,
+				pending.id,
+				MOCK_CAPTURE_FAILURE_AMOUNT,
+			);
 			await pollItemStatus(itemId, "available");
 		});
 

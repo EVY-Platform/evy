@@ -14,20 +14,6 @@ export interface DATA_MARKETPLACE_Lookup {
 	value: string;
 }
 
-export type DATA_MARKETPLACE_ItemStatusStatus =
-	| "available"
-	| "pickup_pending"
-	| "delivery_pending"
-	| "shipping_pending"
-	| "sold";
-
-export interface DATA_MARKETPLACE_ItemStatus {
-	id: string;
-	item_id: string;
-	status: DATA_MARKETPLACE_ItemStatusStatus;
-	created_at: string;
-}
-
 /**
  * A TextSelect writes its state as text, so this is the string "true" or "false" rather than a boolean. SDUI compares it with an unquoted literal (`{x.payment_cash == true}`), which matches the string.
  */

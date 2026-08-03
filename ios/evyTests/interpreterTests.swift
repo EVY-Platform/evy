@@ -1064,7 +1064,7 @@ final class InterpreterTests: XCTestCase {
   /// with no status rows still appear in search.
   func testFilterFindFirstMissNotEqualSoldIncludesItemWithoutStatusHistory() throws {
     let itemsRef = MarketplaceTestFixture.itemsRef
-    let statusesRef = "marketplace.item_statuses"
+    let statusesRef = MarketplaceTestFixture.statusesRef
     let availableItemId = UUID().uuidString
     let soldItemId = UUID().uuidString
     let pendingItemId = UUID().uuidString

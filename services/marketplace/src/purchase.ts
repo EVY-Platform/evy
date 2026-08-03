@@ -1,16 +1,11 @@
 import type { DATA_EVY_Message, DATA_EVY_Transaction } from "evy-types";
+import { EVY_MESSAGE_DATA_VALUES } from "evy-types/coreResources";
 
 import { appendStatus, currentStatus, type ItemStatus } from "./status";
 
-type MessagePayload = Pick<
-	DATA_EVY_Message,
-	"fk" | "type" | "value" | "parent_message_id"
->;
+type MessagePayload = Pick<DATA_EVY_Message, "fk" | "type" | "value">;
 
-type TransactionPayload = Pick<
-	DATA_EVY_Transaction,
-	"fk" | "resource" | "type" | "status"
->;
+type TransactionPayload = Pick<DATA_EVY_Transaction, "fk" | "type" | "status">;
 
 type ValidationResult = { ok: true } | { ok: false; reason: string };
 
@@ -30,23 +25,19 @@ const ROLLBACK_VALUES = new Set([
 	"cancel",
 ]);
 
-const KNOWN_VALUES = new Set([
-	"pending",
-	"accept",
-	"reject",
-	"cancel",
-	"request_failed",
-	...PICKUP_HANDSHAKE_VALUES,
-	...FULFILLMENT_VALUES,
-	"charge_failed",
-	"transfer_failed",
-]);
+const KNOWN_VALUES = new Set<string>(EVY_MESSAGE_DATA_VALUES);
 
 const PENDING_STATUSES = new Set<ItemStatus>([
 	"pickup_pending",
 	"delivery_pending",
 	"shipping_pending",
 ]);
+
+const VALUE_ALLOWED_STATUSES: Record<string, (status: ItemStatus) => boolean> =
+	{
+		pending: (status) => status === "available",
+		accept: (status) => status === "available" || status === "sold",
+	};
 
 function pendingStatusForType(type: string): ItemStatus | null {
 	switch (type) {
@@ -85,6 +76,58 @@ function validateTypeValuePair(type: string, value: string): string | null {
 	return null;
 }
 
+function rejectWrongStatus(
+	value: string,
+	status: ItemStatus,
+): ValidationResult {
+	return {
+		ok: false,
+		reason: `Cannot send "${value}" while item status is "${status}"`,
+	};
+}
+
+function validateAllowedStatus(
+	value: string,
+	status: ItemStatus,
+): ValidationResult | null {
+	const predicate = VALUE_ALLOWED_STATUSES[value];
+	if (predicate) {
+		return predicate(status)
+			? { ok: true }
+			: rejectWrongStatus(value, status);
+	}
+	if (PICKUP_HANDSHAKE_VALUES.has(value)) {
+		return status === "pickup_pending" || status === "sold"
+			? { ok: true }
+			: rejectWrongStatus(value, status);
+	}
+	if (FULFILLMENT_VALUES.has(value)) {
+		return status === "sold"
+			? { ok: true }
+			: rejectWrongStatus(value, status);
+	}
+	return null;
+}
+
+function shouldRollback(value: string, status: ItemStatus): boolean {
+	if (status === "available") {
+		return false;
+	}
+	switch (value) {
+		case "cancel":
+			return status !== "sold";
+		case "transaction_rejected":
+			return status === "pickup_pending" || status === "sold";
+		case "charge_failed":
+			return PENDING_STATUSES.has(status) || status === "sold";
+		case "failed":
+		case "transfer_failed":
+			return status === "sold";
+		default:
+			return true;
+	}
+}
+
 export async function validatePurchaseMessage(
 	message: MessagePayload,
 ): Promise<ValidationResult> {
@@ -100,45 +143,9 @@ export async function validatePurchaseMessage(
 	}
 
 	const status = await currentStatus(itemId);
-
-	if (value === "pending") {
-		if (status !== "available") {
-			return {
-				ok: false,
-				reason: `Cannot send "${value}" while item status is "${status}"`,
-			};
-		}
-		return { ok: true };
-	}
-
-	if (value === "accept") {
-		if (status !== "available" && status !== "sold") {
-			return {
-				ok: false,
-				reason: `Cannot send "${value}" while item status is "${status}"`,
-			};
-		}
-		return { ok: true };
-	}
-
-	if (PICKUP_HANDSHAKE_VALUES.has(value)) {
-		if (status !== "pickup_pending" && status !== "sold") {
-			return {
-				ok: false,
-				reason: `Cannot send "${value}" while item status is "${status}"`,
-			};
-		}
-		return { ok: true };
-	}
-
-	if (FULFILLMENT_VALUES.has(value)) {
-		if (status !== "sold") {
-			return {
-				ok: false,
-				reason: `Cannot send "${value}" while item status is "${status}"`,
-			};
-		}
-		return { ok: true };
+	const allowed = validateAllowedStatus(value, status);
+	if (allowed) {
+		return allowed;
 	}
 
 	return { ok: true };
@@ -158,36 +165,8 @@ export async function reactToPurchaseMessage(
 		return;
 	}
 
-	if (ROLLBACK_VALUES.has(value)) {
-		if (status === "available") {
-			return;
-		}
-		if (value === "cancel" && status === "sold") {
-			return;
-		}
-		if (
-			value === "transaction_rejected" &&
-			status !== "pickup_pending" &&
-			status !== "sold"
-		) {
-			return;
-		}
-		if (
-			(value === "charge_failed" || value === "cancel") &&
-			!PENDING_STATUSES.has(status) &&
-			status !== "sold"
-		) {
-			return;
-		}
-		if (
-			(value === "failed" || value === "transfer_failed") &&
-			status !== "sold"
-		) {
-			return;
-		}
-		if (status !== "available") {
-			await appendStatus(itemId, "available");
-		}
+	if (ROLLBACK_VALUES.has(value) && shouldRollback(value, status)) {
+		await appendStatus(itemId, "available");
 	}
 }
 
@@ -207,56 +186,30 @@ const itemQueues = new Map<string, Promise<void>>();
 function enqueueItemReaction(
 	itemId: string,
 	work: () => Promise<void>,
-	swallowErrors: boolean,
 ): Promise<void> {
 	const previous = itemQueues.get(itemId) ?? Promise.resolve();
-	let next = previous.catch(() => {}).then(work);
-	if (swallowErrors) {
-		next = next.catch((error: unknown) => {
+	const next = previous
+		.catch(() => {})
+		.then(work)
+		.catch((error: unknown) => {
 			console.error(
 				`[marketplace] purchase reaction failed for item ${itemId}:`,
 				error,
 			);
 		});
-	}
 	itemQueues.set(itemId, next);
 	return next;
 }
 
 export function enqueuePurchaseReaction(message: MessagePayload): void {
-	void enqueueItemReaction(
-		message.fk,
-		() => reactToPurchaseMessage(message),
-		true,
-	);
+	void enqueueItemReaction(message.fk, () => reactToPurchaseMessage(message));
 }
 
 export function enqueueTransactionReaction(
 	transaction: TransactionPayload,
 ): void {
-	void enqueueItemReaction(
-		transaction.fk,
-		() => reactToTransaction(transaction),
-		true,
-	);
-}
-
-/** Awaits the reaction — for callers that need a settled status after enqueue. */
-export function awaitPurchaseReaction(message: MessagePayload): Promise<void> {
-	return enqueueItemReaction(
-		message.fk,
-		() => reactToPurchaseMessage(message),
-		false,
-	);
-}
-
-export function awaitTransactionReaction(
-	transaction: TransactionPayload,
-): Promise<void> {
-	return enqueueItemReaction(
-		transaction.fk,
-		() => reactToTransaction(transaction),
-		false,
+	void enqueueItemReaction(transaction.fk, () =>
+		reactToTransaction(transaction),
 	);
 }
 

@@ -7,21 +7,21 @@ import {
 	it,
 } from "bun:test";
 import { migrate } from "drizzle-orm/pglite/migrator";
-import type { PaymentIntentRequest } from "evy-types";
-import {
-	EVY_CORE_RESOURCE_REF,
-	EVY_CORE_RESOURCE_VISIBILITY,
-	EVY_CORE_SERVICE,
-} from "evy-types/coreResources";
+import { EVY_CORE_SERVICE } from "evy-types/coreResources";
 import * as schema from "evy-types/db/schema.generated";
-import { hookedCreate } from "../procedures/hooks";
 import { paymentIntent } from "../procedures/payments";
-import { findRowsByIntentId, hasRow } from "../procedures/paymentsShared";
+import {
+	appendTransactionRow,
+	findRowsByIntentId,
+	hasRow,
+} from "../procedures/paymentsShared";
 import { handlePaymentWebhook } from "../procedures/paymentWebhook";
 import {
 	asEvyDb,
 	clearAllTestTables,
 	createPgliteTestDatabase,
+	seedAuthorizationMessage,
+	validPaymentIntentRequest,
 } from "./wsTestHelpers";
 
 const { pgliteClient, testDb } = createPgliteTestDatabase();
@@ -41,71 +41,12 @@ beforeEach(async () => {
 	await clearAllTestTables(testDb);
 });
 
-function validPaymentIntentRequest(
-	overrides: Partial<PaymentIntentRequest> = {},
-): PaymentIntentRequest {
-	return {
-		fk: crypto.randomUUID(),
-		resource: "marketplace.items",
-		amount: 250,
-		currency: "AUD",
-		authorization_message_id: crypto.randomUUID(),
-		...overrides,
-	};
-}
-
-async function seedAuthorizationMessage(
-	request: PaymentIntentRequest,
-): Promise<void> {
-	const nowIso = new Date().toISOString();
-	await testDb.insert(schema.message).values({
-		id: request.authorization_message_id,
-		fk: request.fk,
-		resource: request.resource,
-		type: "pickup",
-		value: "pending",
-		data: {},
-		visibility: "private",
-		created_at: nowIso,
-		updated_at: nowIso,
-	});
-}
-
 async function createIntentWithInitiatedRow() {
 	const request = validPaymentIntentRequest();
-	await seedAuthorizationMessage(request);
+	await seedAuthorizationMessage(testDb, request);
 	const intent = await paymentIntent(request, dataDb);
-	await appendChargeInitiated(dataDb, intent);
+	await appendTransactionRow(dataDb, intent, "charge", "initiated");
 	return { request, intent };
-}
-
-async function appendChargeInitiated(
-	db: typeof dataDb,
-	intent: Awaited<ReturnType<typeof paymentIntent>>,
-) {
-	const visibility = EVY_CORE_RESOURCE_VISIBILITY.transactions;
-	if (!visibility) {
-		throw new Error("evy.transactions has no declared visibility");
-	}
-	await hookedCreate(db, {
-		resource: EVY_CORE_RESOURCE_REF.TRANSACTIONS,
-		data: {
-			fk: intent.fk,
-			resource: intent.resource,
-			type: "charge",
-			status: "initiated",
-			amount: intent.amount,
-			currency: intent.currency,
-			payment_provider_fee: 0,
-			service_fee: 0,
-			payment_provider: "stripe",
-			payment_provider_transaction_id:
-				intent.payment_provider_transaction_id,
-			signature: "signed",
-			authorization_message_id: intent.authorization_message_id,
-			visibility,
-		},
-	});
 }
 
 describe("payment_webhook handler", () => {
@@ -159,7 +100,7 @@ describe("payment_webhook handler", () => {
 			},
 			dataDb,
 		);
-		await appendTransferInitiated(dataDb, intent);
+		await appendTransactionRow(dataDb, intent, "transfer", "initiated");
 		await handlePaymentWebhook(
 			{ type: "transfer.succeeded", payment_intent_id: intentId },
 			dataDb,
@@ -305,32 +246,3 @@ describe("payment_webhook handler", () => {
 		).rejects.toThrow("PaymentWebhookRequest validation failed");
 	});
 });
-
-async function appendTransferInitiated(
-	db: typeof dataDb,
-	intent: Awaited<ReturnType<typeof paymentIntent>>,
-) {
-	const visibility = EVY_CORE_RESOURCE_VISIBILITY.transactions;
-	if (!visibility) {
-		throw new Error("evy.transactions has no declared visibility");
-	}
-	await hookedCreate(db, {
-		resource: EVY_CORE_RESOURCE_REF.TRANSACTIONS,
-		data: {
-			fk: intent.fk,
-			resource: intent.resource,
-			type: "transfer",
-			status: "initiated",
-			amount: intent.amount,
-			currency: intent.currency,
-			payment_provider_fee: 0,
-			service_fee: 0,
-			payment_provider: "stripe",
-			payment_provider_transaction_id:
-				intent.payment_provider_transaction_id,
-			signature: "signed",
-			authorization_message_id: intent.authorization_message_id,
-			visibility,
-		},
-	});
-}

@@ -35,30 +35,19 @@ function isMarketplaceTransactionHook(params: HookRequest): boolean {
 	);
 }
 
-function asMessageData(data: HookRequest["data"]): MessageHookData {
-	return data as MessageHookData;
-}
-
-function asTransactionData(data: HookRequest["data"]): TransactionHookData {
-	return data as TransactionHookData;
-}
-
 export async function handleHook(params: HookRequest): Promise<HookResponse> {
 	if (isMarketplaceTransactionHook(params)) {
-		switch (params.hook) {
-			case "before_create":
-				return { ok: true };
-			case "after_create":
-				enqueueTransactionReaction(asTransactionData(params.data));
-				return { ok: true };
+		if (params.hook === "after_create") {
+			enqueueTransactionReaction(params.data as TransactionHookData);
 		}
+		return { ok: true };
 	}
 
 	if (!isMarketplaceMessageHook(params)) {
 		return { ok: true };
 	}
 
-	const message = asMessageData(params.data);
+	const message = params.data as MessageHookData;
 
 	switch (params.hook) {
 		case "before_create": {

@@ -242,7 +242,7 @@ describe("shipped fixtures satisfy the row schema", () => {
 	});
 
 	test("purchase confirmation creates cover the new message values", () => {
-		const expectedValues = [
+		const purchaseConfirmationValues = [
 			"transaction",
 			"received",
 			"failed",
@@ -256,21 +256,18 @@ describe("shipped fixtures satisfy the row schema", () => {
 		for (const { ast } of fixtureBranches) {
 			if (ast?.fn !== "create" || ast.mode !== "inline") continue;
 			const data = ast.data;
-			if (!data?.value) continue;
-			for (const value of expectedValues) {
-				if (data.value.includes(value)) {
-					found.add(value);
-				}
+			const value = data?.value;
+			if (!value) continue;
+			if (purchaseConfirmationValues.includes(value)) {
+				found.add(value);
 			}
 		}
 
-		for (const expected of expectedValues) {
-			expect([...found]).toContain(expected);
-		}
+		expect([...found].sort()).toEqual(purchaseConfirmationValues.sort());
 	});
 
 	test("purchase confirmation creates include parent_message_id and data", () => {
-		const purchaseValues = [
+		const purchaseConfirmationValues = [
 			"transaction",
 			"received",
 			"failed",
@@ -284,8 +281,8 @@ describe("shipped fixtures satisfy the row schema", () => {
 		for (const { source, branch, ast } of fixtureBranches) {
 			if (ast?.fn !== "create" || ast.mode !== "inline") continue;
 			const data = ast.data;
-			if (!data?.value) continue;
-			if (!purchaseValues.some((value) => data.value?.includes(value))) {
+			const value = data?.value;
+			if (!value || !purchaseConfirmationValues.includes(value)) {
 				continue;
 			}
 			if (!data.parent_message_id || !data.data) {

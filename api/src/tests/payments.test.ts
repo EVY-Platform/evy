@@ -7,7 +7,6 @@ import {
 	it,
 } from "bun:test";
 import { migrate } from "drizzle-orm/pglite/migrator";
-import type { PaymentIntentRequest } from "evy-types";
 import {
 	EVY_CORE_RESOURCE_REF,
 	EVY_CORE_SERVICE,
@@ -28,6 +27,8 @@ import {
 	asEvyDb,
 	clearAllTestTables,
 	createPgliteTestDatabase,
+	seedAuthorizationMessage,
+	validPaymentIntentRequest,
 } from "./wsTestHelpers";
 
 const { pgliteClient, testDb } = createPgliteTestDatabase();
@@ -46,36 +47,6 @@ afterAll(async () => {
 beforeEach(async () => {
 	await clearAllTestTables(testDb);
 });
-
-function validPaymentIntentRequest(
-	overrides: Partial<PaymentIntentRequest> = {},
-): PaymentIntentRequest {
-	return {
-		fk: crypto.randomUUID(),
-		resource: "marketplace.items",
-		amount: 250,
-		currency: "AUD",
-		authorization_message_id: crypto.randomUUID(),
-		...overrides,
-	};
-}
-
-async function seedAuthorizationMessage(
-	request: PaymentIntentRequest,
-): Promise<void> {
-	const nowIso = new Date().toISOString();
-	await testDb.insert(schema.message).values({
-		id: request.authorization_message_id,
-		fk: request.fk,
-		resource: request.resource,
-		type: "pickup",
-		value: "pending",
-		data: {},
-		visibility: "private",
-		created_at: nowIso,
-		updated_at: nowIso,
-	});
-}
 
 describe("payment_intent procedure", () => {
 	it("creates a charge intent transaction and returns it", async () => {
@@ -159,7 +130,7 @@ describe("payment_intent procedure", () => {
 describe("payment_capture procedure", () => {
 	it("returns initiated row and auto-webhook appends succeeded and completed rows", async () => {
 		const request = validPaymentIntentRequest();
-		await seedAuthorizationMessage(request);
+		await seedAuthorizationMessage(testDb, request);
 		const intent = await paymentIntent(request, dataDb);
 		const captured = await paymentCapture(
 			{ payment_intent_id: intent.payment_provider_transaction_id },
@@ -189,7 +160,7 @@ describe("payment_capture procedure", () => {
 
 	it("rejects a second capture of the same intent", async () => {
 		const request = validPaymentIntentRequest();
-		await seedAuthorizationMessage(request);
+		await seedAuthorizationMessage(testDb, request);
 		const intent = await paymentIntent(request, dataDb);
 		await paymentCapture(
 			{ payment_intent_id: intent.payment_provider_transaction_id },
@@ -207,7 +178,7 @@ describe("payment_capture procedure", () => {
 		const request = validPaymentIntentRequest({
 			amount: MOCK_CAPTURE_FAILURE_AMOUNT,
 		});
-		await seedAuthorizationMessage(request);
+		await seedAuthorizationMessage(testDb, request);
 		const intent = await paymentIntent(request, dataDb);
 		await paymentCapture(
 			{ payment_intent_id: intent.payment_provider_transaction_id },
@@ -235,7 +206,7 @@ describe("payment_capture procedure", () => {
 
 	it("is reachable via api{service:evy, method:payment_capture}", async () => {
 		const request = validPaymentIntentRequest();
-		await seedAuthorizationMessage(request);
+		await seedAuthorizationMessage(testDb, request);
 		const intent = await paymentIntent(request, dataDb);
 		const captured = await api(
 			{
@@ -273,7 +244,7 @@ describe("payment_capture procedure", () => {
 describe("payment_transfer procedure", () => {
 	async function intentAndCapture() {
 		const request = validPaymentIntentRequest();
-		await seedAuthorizationMessage(request);
+		await seedAuthorizationMessage(testDb, request);
 		const intent = await paymentIntent(request, dataDb);
 		const captured = await paymentCapture(
 			{ payment_intent_id: intent.payment_provider_transaction_id },
@@ -303,7 +274,7 @@ describe("payment_transfer procedure", () => {
 
 	it("rejects when charge has not succeeded", async () => {
 		const request = validPaymentIntentRequest();
-		await seedAuthorizationMessage(request);
+		await seedAuthorizationMessage(testDb, request);
 		const intent = await paymentIntent(request, dataDb);
 		await expect(
 			paymentTransfer(
@@ -331,7 +302,7 @@ describe("payment_transfer procedure", () => {
 		const request = validPaymentIntentRequest({
 			amount: MOCK_TRANSFER_FAILURE_AMOUNT,
 		});
-		await seedAuthorizationMessage(request);
+		await seedAuthorizationMessage(testDb, request);
 		const intent = await paymentIntent(request, dataDb);
 		await paymentCapture(
 			{ payment_intent_id: intent.payment_provider_transaction_id },

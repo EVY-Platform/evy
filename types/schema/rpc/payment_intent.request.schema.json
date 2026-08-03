@@ -2,7 +2,7 @@
 	"$schema": "https://json-schema.org/draft/2020-12/schema",
 	"$id": "payment-intent-request",
 	"title": "PaymentIntentRequest",
-	"description": "JSON-RPC params for creating a payment intent. V1 records the intent as an evy.transactions row with type \"intent\"; a real Stripe PaymentIntent will be created later. Server-side constants (not request params): confirm=true, capture_method=\"manual\" (authorized at creation, captured later by the seller), payment_provider=\"stripe\", fees 0, signature=\"signed\".",
+	"description": "JSON-RPC params for creating a payment intent. V1 records the intent as an evy.transactions row with status \"intent\"; a real Stripe PaymentIntent will be created later. Server-side constants (not request params): confirm=true, capture_method=\"manual\" (authorized at creation, captured later by the seller), payment_provider=\"stripe\", fees 0, signature=\"signed\".",
 	"type": "object",
 	"additionalProperties": false,
 	"required": [

@@ -28,7 +28,6 @@ function message(
 		fk: overrides.fk ?? itemId(),
 		type: overrides.type ?? "pickup",
 		value: overrides.value ?? "pending",
-		parent_message_id: undefined,
 	};
 }
 

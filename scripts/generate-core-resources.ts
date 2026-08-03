@@ -31,6 +31,7 @@ const RESOURCES_SCHEMA_PATH = join(
 	"resources",
 	"core.resources.json",
 );
+const DATA_SCHEMA_PATH = join(SCHEMA_DIR, "data", "data.schema.json");
 const OUT_TS_PATH = join(OUT_TS, "coreResources.ts");
 const OUT_SWIFT_PATH = join(OUT_SWIFT, "CoreResources.generated.swift");
 const CORE_RESOURCES_SCHEMA_PATH = "types/schema/resources/core.resources.json";
@@ -38,8 +39,26 @@ const CORE_RESOURCES_SCHEMA_PATH = "types/schema/resources/core.resources.json";
 type ResourceCatalogVisibility = "public" | "private" | "internal";
 type RowVisibility = "public" | "private";
 
-// Core resources with no row-level visibility column in Postgres.
-const RESOURCES_WITHOUT_ROW_VISIBILITY = new Set(["formatters", "resources"]);
+// Core resources whose DATA_EVY_* schema def has no visibility field.
+type DataSchemaDef = { required?: string[] };
+
+function dataDefName(singular: string): string {
+	return `DATA_EVY_${singular.charAt(0).toUpperCase() + singular.slice(1)}`;
+}
+
+function resourcesWithoutRowVisibility(
+	resources: Record<string, ResourceMeta>,
+	dataDefs: Record<string, DataSchemaDef>,
+): Set<string> {
+	const without = new Set<string>();
+	for (const [plural, meta] of Object.entries(resources)) {
+		const def = dataDefs[dataDefName(meta.singular)];
+		if (!def?.required?.includes("visibility")) {
+			without.add(plural);
+		}
+	}
+	return without;
+}
 
 interface ResourceMeta {
 	singular: string;
@@ -61,8 +80,9 @@ function isResourceCatalogVisibility(
 function rowVisibilityDefault(
 	meta: ResourceMeta,
 	plural: string,
+	withoutRowVisibility: Set<string>,
 ): RowVisibility | undefined {
-	if (RESOURCES_WITHOUT_ROW_VISIBILITY.has(plural)) {
+	if (withoutRowVisibility.has(plural)) {
 		return undefined;
 	}
 	if (meta.visibility === "internal") {
@@ -124,7 +144,10 @@ function validateSchema(value: unknown): asserts value is CoreResourcesSchema {
 	}
 }
 
-function generateTypeScript(schema: CoreResourcesSchema): string {
+function generateTypeScript(
+	schema: CoreResourcesSchema,
+	withoutRowVisibility: Set<string>,
+): string {
 	const { service, resources } = schema;
 	const lines: string[] = [];
 
@@ -163,7 +186,11 @@ function generateTypeScript(schema: CoreResourcesSchema): string {
 	lines.push('\tRecord<string, "public" | "private">');
 	lines.push("> = {");
 	for (const [plural, meta] of Object.entries(resources)) {
-		const rowDefault = rowVisibilityDefault(meta, plural);
+		const rowDefault = rowVisibilityDefault(
+			meta,
+			plural,
+			withoutRowVisibility,
+		);
 		if (!rowDefault) continue;
 		lines.push(
 			`\t${JSON.stringify(plural)}: ${JSON.stringify(rowDefault)},`,
@@ -192,7 +219,10 @@ function generateTypeScript(schema: CoreResourcesSchema): string {
 	return lines.join("\n");
 }
 
-function generateSwift(schema: CoreResourcesSchema): string {
+function generateSwift(
+	schema: CoreResourcesSchema,
+	withoutRowVisibility: Set<string>,
+): string {
 	const { service, resources } = schema;
 	const resourceNames = Object.keys(resources);
 	const lines: string[] = [];
@@ -224,19 +254,6 @@ function generateSwift(schema: CoreResourcesSchema): string {
 	lines.push("\t}");
 	lines.push("");
 
-	// Catalog visibility
-	lines.push("\tpublic var catalogVisibility: String {");
-	lines.push("\t\tswitch self {");
-	for (const [plural, meta] of Object.entries(resources)) {
-		const caseName = snakeToCamel(plural);
-		lines.push(
-			`\t\tcase .${caseName}: return ${JSON.stringify(meta.visibility)}`,
-		);
-	}
-	lines.push("\t\t}");
-	lines.push("\t}");
-	lines.push("");
-
 	// Row visibility lookup
 	lines.push(
 		"\t/// The row visibility every record of this resource is created with.",
@@ -248,7 +265,11 @@ function generateSwift(schema: CoreResourcesSchema): string {
 	lines.push("\t\tswitch self {");
 	for (const [plural, meta] of Object.entries(resources)) {
 		const caseName = snakeToCamel(plural);
-		const rowDefault = rowVisibilityDefault(meta, plural);
+		const rowDefault = rowVisibilityDefault(
+			meta,
+			plural,
+			withoutRowVisibility,
+		);
 		const value = rowDefault ? JSON.stringify(rowDefault) : "nil";
 		lines.push(`\t\tcase .${caseName}: return ${value}`);
 	}
@@ -274,13 +295,20 @@ function generateSwift(schema: CoreResourcesSchema): string {
 
 async function main(): Promise<void> {
 	const schema = await loadJson<CoreResourcesSchema>(RESOURCES_SCHEMA_PATH);
+	const dataSchema = await loadJson<{
+		$defs?: Record<string, DataSchemaDef>;
+	}>(DATA_SCHEMA_PATH);
 	validateSchema(schema);
+	const withoutRowVisibility = resourcesWithoutRowVisibility(
+		schema.resources,
+		dataSchema.$defs ?? {},
+	);
 
 	await writeGeneratedOutputs({
 		tsPath: OUT_TS_PATH,
-		tsContent: generateTypeScript(schema),
+		tsContent: generateTypeScript(schema, withoutRowVisibility),
 		swiftPath: OUT_SWIFT_PATH,
-		swiftContent: generateSwift(schema),
+		swiftContent: generateSwift(schema, withoutRowVisibility),
 	});
 }
 

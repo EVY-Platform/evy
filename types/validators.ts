@@ -356,6 +356,14 @@ function lazyValidator<T>(
 	};
 }
 
+function schemaValidator<T>(
+	label: string,
+	ajvGetter: () => InstanceType<typeof Ajv2020>,
+	uri: string,
+): (data: unknown) => T {
+	return makeValidator(label, lazyValidator<T>(ajvGetter, uri));
+}
+
 const REQUEST_SCHEMA_FILES = [
 	"common/json.schema.json",
 	"common/rpc.schema.json",
@@ -552,34 +560,13 @@ const getValidatePaymentIntentRequest = lazyValidator<PaymentIntentRequest>(
 	getRequestAjv,
 	fileId("rpc/payment_intent.request.schema.json"),
 );
-const getValidatePaymentIntentResponse = lazyValidator<PaymentIntentResponse>(
-	getEntityAjv,
-	fileId("rpc/payment_intent.response.schema.json"),
-);
 const getValidatePaymentCaptureRequest = lazyValidator<PaymentCaptureRequest>(
 	getRequestAjv,
 	fileId("rpc/payment_capture.request.schema.json"),
 );
-const getValidatePaymentCaptureResponse = lazyValidator<PaymentCaptureResponse>(
-	getEntityAjv,
-	fileId("rpc/payment_capture.response.schema.json"),
-);
 const getValidatePaymentTransferRequest = lazyValidator<PaymentTransferRequest>(
 	getRequestAjv,
 	fileId("rpc/payment_transfer.request.schema.json"),
-);
-const getValidatePaymentTransferResponse =
-	lazyValidator<PaymentTransferResponse>(
-		getEntityAjv,
-		fileId("rpc/payment_transfer.response.schema.json"),
-	);
-const getValidatePaymentWebhookRequest = lazyValidator<PaymentWebhookRequest>(
-	getRequestAjv,
-	fileId("rpc/payment_webhook.request.schema.json"),
-);
-const getValidatePaymentWebhookResponse = lazyValidator<PaymentWebhookResponse>(
-	getEntityAjv,
-	fileId("rpc/payment_webhook.response.schema.json"),
 );
 const getValidatePlaceSearchRequest = lazyValidator<PlaceSearchRequest>(
 	getRequestAjv,
@@ -899,7 +886,7 @@ export const validatePaymentIntentRequest = makeValidator<PaymentIntentRequest>(
 export const validatePaymentIntentResponse =
 	makeValidator<PaymentIntentResponse>(
 		"PaymentIntentResponse",
-		getValidatePaymentIntentResponse,
+		getValidateDataEvyTransaction,
 	);
 export const validatePaymentCaptureRequest =
 	makeValidator<PaymentCaptureRequest>(
@@ -909,7 +896,7 @@ export const validatePaymentCaptureRequest =
 export const validatePaymentCaptureResponse =
 	makeValidator<PaymentCaptureResponse>(
 		"PaymentCaptureResponse",
-		getValidatePaymentCaptureResponse,
+		getValidateDataEvyTransaction,
 	);
 export const validatePaymentTransferRequest =
 	makeValidator<PaymentTransferRequest>(
@@ -919,17 +906,19 @@ export const validatePaymentTransferRequest =
 export const validatePaymentTransferResponse =
 	makeValidator<PaymentTransferResponse>(
 		"PaymentTransferResponse",
-		getValidatePaymentTransferResponse,
+		getValidateDataEvyTransaction,
 	);
 export const validatePaymentWebhookRequest =
-	makeValidator<PaymentWebhookRequest>(
+	schemaValidator<PaymentWebhookRequest>(
 		"PaymentWebhookRequest",
-		getValidatePaymentWebhookRequest,
+		getRequestAjv,
+		fileId("rpc/payment_webhook.request.schema.json"),
 	);
 export const validatePaymentWebhookResponse =
-	makeValidator<PaymentWebhookResponse>(
+	schemaValidator<PaymentWebhookResponse>(
 		"PaymentWebhookResponse",
-		getValidatePaymentWebhookResponse,
+		getEntityAjv,
+		fileId("rpc/payment_webhook.response.schema.json"),
 	);
 export const validatePlaceSearchRequest = makeValidator<PlaceSearchRequest>(
 	"PlaceSearchRequest",

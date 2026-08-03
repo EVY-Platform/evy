@@ -1,3 +1,4 @@
+import type { PaymentIntentRequest } from "evy-types";
 import * as schema from "evy-types/db/schema.generated";
 import {
 	createPgliteTestDatabase as createPgliteTestDatabaseWithSchema,
@@ -67,4 +68,35 @@ export async function clearAllTestTables(testDb: PgliteTestDb): Promise<void> {
 	await testDb.delete(schema.message);
 	await testDb.delete(schema.transaction);
 	await testDb.delete(schema.formatter);
+}
+
+export function validPaymentIntentRequest(
+	overrides: Partial<PaymentIntentRequest> = {},
+): PaymentIntentRequest {
+	return {
+		fk: crypto.randomUUID(),
+		resource: "marketplace.items",
+		amount: 250,
+		currency: "AUD",
+		authorization_message_id: crypto.randomUUID(),
+		...overrides,
+	};
+}
+
+export async function seedAuthorizationMessage(
+	testDb: PgliteTestDb,
+	request: PaymentIntentRequest,
+): Promise<void> {
+	const nowIso = new Date().toISOString();
+	await testDb.insert(schema.message).values({
+		id: request.authorization_message_id,
+		fk: request.fk,
+		resource: request.resource,
+		type: "pickup",
+		value: "pending",
+		data: {},
+		visibility: "private",
+		created_at: nowIso,
+		updated_at: nowIso,
+	});
 }

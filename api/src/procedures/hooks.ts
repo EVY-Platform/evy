@@ -8,7 +8,7 @@ import { create as createCore } from "../data/data";
 import type { EvyDb } from "../database/db";
 import { forwardHook } from "./services";
 
-export class HookVetoError extends Error {
+class HookVetoError extends Error {
 	readonly vetoReason: string;
 
 	constructor(target: string, resource: string, reason: string) {
@@ -18,42 +18,30 @@ export class HookVetoError extends Error {
 	}
 }
 
-const HOOKED_CORE_RESOURCES: Record<
-	string,
-	(data: Record<string, unknown>) => string | null
-> = {
-	[EVY_CORE_RESOURCE_REF.MESSAGES]: (data) => {
-		const ref = data.resource;
-		if (typeof ref !== "string") return null;
-		try {
-			const target = serviceOfRef(ref);
-			if (target === EVY_CORE_SERVICE) return null;
-			return target;
-		} catch {
-			return null;
-		}
-	},
-	[EVY_CORE_RESOURCE_REF.TRANSACTIONS]: (data) => {
-		const ref = data.resource;
-		if (typeof ref !== "string") return null;
-		try {
-			const target = serviceOfRef(ref);
-			if (target === EVY_CORE_SERVICE) return null;
-			return target;
-		} catch {
-			return null;
-		}
-	},
-};
+const HOOKED_CORE_RESOURCE_REFS = new Set([
+	EVY_CORE_RESOURCE_REF.MESSAGES,
+	EVY_CORE_RESOURCE_REF.TRANSACTIONS,
+]);
 
-function resolveHookTarget(resource: string, data: unknown): string | null {
-	const resolver = HOOKED_CORE_RESOURCES[resource];
-	if (!resolver) return null;
-	if (data === null || typeof data !== "object") return null;
-	return resolver(data as Record<string, unknown>);
+function serviceOfDataResource(data: Record<string, unknown>): string | null {
+	const ref = data.resource;
+	if (typeof ref !== "string") return null;
+	try {
+		const target = serviceOfRef(ref);
+		if (target === EVY_CORE_SERVICE) return null;
+		return target;
+	} catch {
+		return null;
+	}
 }
 
-export async function runBeforeCreateHook(
+function resolveHookTarget(resource: string, data: unknown): string | null {
+	if (!HOOKED_CORE_RESOURCE_REFS.has(resource)) return null;
+	if (data === null || typeof data !== "object") return null;
+	return serviceOfDataResource(data as Record<string, unknown>);
+}
+
+async function runBeforeCreateHook(
 	resource: string,
 	data: unknown,
 ): Promise<void> {
@@ -63,7 +51,6 @@ export async function runBeforeCreateHook(
 	const response = await forwardHook(target, {
 		hook: "before_create",
 		resource,
-		operation: "create",
 		data: data as CreateRequest["data"],
 	});
 	if (!response) return;
@@ -76,7 +63,7 @@ export async function runBeforeCreateHook(
 	}
 }
 
-export async function runAfterCreateHook(
+async function runAfterCreateHook(
 	resource: string,
 	row: unknown,
 ): Promise<void> {
@@ -87,7 +74,6 @@ export async function runAfterCreateHook(
 		await forwardHook(target, {
 			hook: "after_create",
 			resource,
-			operation: "create",
 			data: row as CreateRequest["data"],
 		});
 	} catch (error) {

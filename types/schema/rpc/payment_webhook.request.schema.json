@@ -11,7 +11,6 @@
 			"type": "string",
 			"enum": [
 				"payment_intent.succeeded",
-				"payment_intent.payment_failed",
 				"payment_intent.capture_succeeded",
 				"payment_intent.capture_failed",
 				"charge.completed",

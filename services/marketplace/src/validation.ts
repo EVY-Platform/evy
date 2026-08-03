@@ -14,17 +14,13 @@ import {
 } from "ajv/dist/2020";
 import addFormats from "ajv-formats";
 import itemSchema from "./schema/item.schema.json" with { type: "json" };
-import itemStatusSchema from "./schema/item_status.schema.json" with {
-	type: "json",
-};
 import lookupSchema from "./schema/lookup.schema.json" with { type: "json" };
 import type {
 	DATA_MARKETPLACE_Item,
-	DATA_MARKETPLACE_ItemStatus,
 	DATA_MARKETPLACE_Lookup,
 } from "./schema/types";
 
-export { itemSchema, itemStatusSchema, lookupSchema };
+export { itemSchema, lookupSchema };
 
 let ajvInstance: InstanceType<typeof Ajv2020> | null = null;
 
@@ -81,9 +77,3 @@ export const validateDataMarketplaceItem = makeValidator<DATA_MARKETPLACE_Item>(
 
 export const validateDataMarketplaceLookup =
 	makeValidator<DATA_MARKETPLACE_Lookup>("MarketplaceLookup", lookupSchema);
-
-export const validateDataMarketplaceItemStatus =
-	makeValidator<DATA_MARKETPLACE_ItemStatus>(
-		"MarketplaceItemStatus",
-		itemStatusSchema,
-	);

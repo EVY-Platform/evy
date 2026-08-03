@@ -18,7 +18,6 @@ const itemId = "00000000-0000-4000-8000-000000000001";
 const baseMessageRequest: HookRequest = {
 	hook: "before_create",
 	resource: EVY_CORE_RESOURCE_REF.MESSAGES,
-	operation: "create",
 	data: {
 		fk: itemId,
 		resource: MARKETPLACE_RESOURCE.ITEMS,
@@ -32,7 +31,6 @@ const baseMessageRequest: HookRequest = {
 const baseTransactionRequest: HookRequest = {
 	hook: "before_create",
 	resource: EVY_CORE_RESOURCE_REF.TRANSACTIONS,
-	operation: "create",
 	data: {
 		fk: itemId,
 		resource: MARKETPLACE_RESOURCE.ITEMS,

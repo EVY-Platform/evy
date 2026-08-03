@@ -11,6 +11,16 @@ import { hookedCreate } from "./hooks";
 export const MOCK_CAPTURE_FAILURE_AMOUNT = 6.66;
 export const MOCK_TRANSFER_FAILURE_AMOUNT = 7.77;
 
+export type TransactionRowSource = Pick<
+	DATA_EVY_Transaction,
+	| "fk"
+	| "resource"
+	| "amount"
+	| "currency"
+	| "payment_provider_transaction_id"
+	| "authorization_message_id"
+>;
+
 export async function findRowsByIntentId(
 	db: EvyDb,
 	paymentIntentId: string,
@@ -46,32 +56,27 @@ export function findIntentRow(
 
 export async function appendTransactionRow(
 	db: EvyDb,
-	intent: DATA_EVY_Transaction,
+	source: TransactionRowSource,
 	type: DATA_EVY_Transaction["type"],
 	status: DATA_EVY_Transaction["status"],
 ): Promise<DATA_EVY_Transaction> {
-	const visibility = EVY_CORE_RESOURCE_VISIBILITY.transactions;
-	if (!visibility) {
-		throw new Error("evy.transactions has no declared visibility");
-	}
-
 	return (await hookedCreate(db, {
 		resource: EVY_CORE_RESOURCE_REF.TRANSACTIONS,
 		data: {
-			fk: intent.fk,
-			resource: intent.resource,
+			fk: source.fk,
+			resource: source.resource,
 			type,
 			status,
-			amount: intent.amount,
-			currency: intent.currency,
+			amount: source.amount,
+			currency: source.currency,
 			payment_provider_fee: 0,
 			service_fee: 0,
 			payment_provider: "stripe",
 			payment_provider_transaction_id:
-				intent.payment_provider_transaction_id,
+				source.payment_provider_transaction_id,
 			signature: "signed",
-			authorization_message_id: intent.authorization_message_id,
-			visibility,
+			authorization_message_id: source.authorization_message_id,
+			visibility: EVY_CORE_RESOURCE_VISIBILITY.transactions,
 		},
 	})) as DATA_EVY_Transaction;
 }

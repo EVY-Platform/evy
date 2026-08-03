@@ -1,4 +1,4 @@
-import { eq } from "drizzle-orm";
+import { and, eq, isNull } from "drizzle-orm";
 import type {
 	DATA_EVY_Message,
 	DATA_EVY_Transaction,
@@ -10,7 +10,6 @@ import {
 	EVY_CORE_RESOURCE_VISIBILITY,
 } from "evy-types/coreResources";
 import { message } from "evy-types/db/schema.generated";
-import { validatePaymentWebhookResponse } from "evy-types/validators";
 import type { EvyDb } from "../database/db";
 import { hookedCreate } from "./hooks";
 import {
@@ -22,6 +21,82 @@ import {
 
 type FailureMessageValue = "charge_failed" | "transfer_failed";
 
+type WebhookHandler = {
+	requires?: (rows: DATA_EVY_Transaction[], paymentIntentId: string) => void;
+	append?: {
+		type: DATA_EVY_Transaction["type"];
+		status: DATA_EVY_Transaction["status"];
+	};
+	failure?: FailureMessageValue;
+};
+
+const WEBHOOK_HANDLERS: Record<PaymentWebhookRequest["type"], WebhookHandler> =
+	{
+		"payment_intent.succeeded": {},
+		"payment_intent.capture_succeeded": {
+			requires: (rows, paymentIntentId) => {
+				if (!hasRow(rows, "charge", "initiated")) {
+					throw new Error(
+						`capture not initiated for payment intent: ${paymentIntentId}`,
+					);
+				}
+			},
+			append: { type: "charge", status: "succeeded" },
+		},
+		"payment_intent.capture_failed": {
+			requires: (rows, paymentIntentId) => {
+				if (!hasRow(rows, "charge", "initiated")) {
+					throw new Error(
+						`capture not initiated for payment intent: ${paymentIntentId}`,
+					);
+				}
+			},
+			append: { type: "charge", status: "failed" },
+			failure: "charge_failed",
+		},
+		"charge.completed": {
+			requires: (rows, paymentIntentId) => {
+				if (!hasRow(rows, "charge", "succeeded")) {
+					throw new Error(
+						`charge not succeeded for payment intent: ${paymentIntentId}`,
+					);
+				}
+			},
+			append: { type: "charge", status: "completed" },
+		},
+		"transfer.succeeded": {
+			requires: (rows, paymentIntentId) => {
+				if (!hasRow(rows, "transfer", "initiated")) {
+					throw new Error(
+						`transfer not initiated for payment intent: ${paymentIntentId}`,
+					);
+				}
+			},
+			append: { type: "transfer", status: "succeeded" },
+		},
+		"transfer.failed": {
+			requires: (rows, paymentIntentId) => {
+				if (!hasRow(rows, "transfer", "initiated")) {
+					throw new Error(
+						`transfer not initiated for payment intent: ${paymentIntentId}`,
+					);
+				}
+			},
+			append: { type: "transfer", status: "failed" },
+			failure: "transfer_failed",
+		},
+		"transfer.completed": {
+			requires: (rows, paymentIntentId) => {
+				if (!hasRow(rows, "transfer", "succeeded")) {
+					throw new Error(
+						`transfer not succeeded for payment intent: ${paymentIntentId}`,
+					);
+				}
+			},
+			append: { type: "transfer", status: "completed" },
+		},
+	};
+
 async function loadAuthorizationMessage(
 	db: EvyDb,
 	authorizationMessageId: string,
@@ -29,9 +104,13 @@ async function loadAuthorizationMessage(
 	const rows = await db
 		.select()
 		.from(message)
-		.where(eq(message.id, authorizationMessageId));
-	const row = rows.find((candidate) => candidate.deleted_at === null);
-	return row as DATA_EVY_Message | undefined;
+		.where(
+			and(
+				eq(message.id, authorizationMessageId),
+				isNull(message.deleted_at),
+			),
+		);
+	return rows[0] as DATA_EVY_Message | undefined;
 }
 
 async function authorFailureMessage(
@@ -49,18 +128,13 @@ async function authorFailureMessage(
 		);
 	}
 
-	const visibility = EVY_CORE_RESOURCE_VISIBILITY.messages;
-	if (!visibility) {
-		throw new Error("evy.messages has no declared visibility");
-	}
-
 	const failureMessageData: Record<string, unknown> = {
 		fk: authorizationMessage.fk,
 		resource: authorizationMessage.resource,
 		type: authorizationMessage.type,
 		value,
 		data: authorizationMessage.data ?? {},
-		visibility,
+		visibility: EVY_CORE_RESOURCE_VISIBILITY.messages,
 	};
 	if (typeof authorizationMessage.parent_message_id === "string") {
 		failureMessageData.parent_message_id =
@@ -92,113 +166,28 @@ export async function handlePaymentWebhook(
 ): Promise<PaymentWebhookResponse> {
 	const rows = await findRowsByIntentId(db, params.payment_intent_id);
 	const intent = findIntentRow(rows);
-
-	switch (params.type) {
-		case "payment_intent.succeeded": {
-			if (!intent) {
-				throw new Error(
-					`payment intent not found: ${params.payment_intent_id}`,
-				);
-			}
-			break;
-		}
-		case "payment_intent.payment_failed": {
-			if (!intent) {
-				throw new Error(
-					`payment intent not found: ${params.payment_intent_id}`,
-				);
-			}
-			await appendRowIfMissing(db, intent, "charge", "failed", rows);
-			await authorFailureMessage(db, intent, "charge_failed");
-			break;
-		}
-		case "payment_intent.capture_succeeded": {
-			if (!intent) {
-				throw new Error(
-					`payment intent not found: ${params.payment_intent_id}`,
-				);
-			}
-			if (!hasRow(rows, "charge", "initiated")) {
-				throw new Error(
-					`capture not initiated for payment intent: ${params.payment_intent_id}`,
-				);
-			}
-			await appendRowIfMissing(db, intent, "charge", "succeeded", rows);
-			break;
-		}
-		case "payment_intent.capture_failed": {
-			if (!intent) {
-				throw new Error(
-					`payment intent not found: ${params.payment_intent_id}`,
-				);
-			}
-			if (!hasRow(rows, "charge", "initiated")) {
-				throw new Error(
-					`capture not initiated for payment intent: ${params.payment_intent_id}`,
-				);
-			}
-			await appendRowIfMissing(db, intent, "charge", "failed", rows);
-			await authorFailureMessage(db, intent, "charge_failed");
-			break;
-		}
-		case "charge.completed": {
-			if (!intent) {
-				throw new Error(
-					`payment intent not found: ${params.payment_intent_id}`,
-				);
-			}
-			if (!hasRow(rows, "charge", "succeeded")) {
-				throw new Error(
-					`charge not succeeded for payment intent: ${params.payment_intent_id}`,
-				);
-			}
-			await appendRowIfMissing(db, intent, "charge", "completed", rows);
-			break;
-		}
-		case "transfer.succeeded": {
-			if (!intent) {
-				throw new Error(
-					`payment intent not found: ${params.payment_intent_id}`,
-				);
-			}
-			if (!hasRow(rows, "transfer", "initiated")) {
-				throw new Error(
-					`transfer not initiated for payment intent: ${params.payment_intent_id}`,
-				);
-			}
-			await appendRowIfMissing(db, intent, "transfer", "succeeded", rows);
-			break;
-		}
-		case "transfer.failed": {
-			if (!intent) {
-				throw new Error(
-					`payment intent not found: ${params.payment_intent_id}`,
-				);
-			}
-			if (!hasRow(rows, "transfer", "initiated")) {
-				throw new Error(
-					`transfer not initiated for payment intent: ${params.payment_intent_id}`,
-				);
-			}
-			await appendRowIfMissing(db, intent, "transfer", "failed", rows);
-			await authorFailureMessage(db, intent, "transfer_failed");
-			break;
-		}
-		case "transfer.completed": {
-			if (!intent) {
-				throw new Error(
-					`payment intent not found: ${params.payment_intent_id}`,
-				);
-			}
-			if (!hasRow(rows, "transfer", "succeeded")) {
-				throw new Error(
-					`transfer not succeeded for payment intent: ${params.payment_intent_id}`,
-				);
-			}
-			await appendRowIfMissing(db, intent, "transfer", "completed", rows);
-			break;
-		}
+	if (!intent) {
+		throw new Error(
+			`payment intent not found: ${params.payment_intent_id}`,
+		);
 	}
 
-	return validatePaymentWebhookResponse({ received: true });
+	const handler = WEBHOOK_HANDLERS[params.type];
+	if (handler.requires) {
+		handler.requires(rows, params.payment_intent_id);
+	}
+	if (handler.append) {
+		await appendRowIfMissing(
+			db,
+			intent,
+			handler.append.type,
+			handler.append.status,
+			rows,
+		);
+	}
+	if (handler.failure) {
+		await authorFailureMessage(db, intent, handler.failure);
+	}
+
+	return { received: true };
 }

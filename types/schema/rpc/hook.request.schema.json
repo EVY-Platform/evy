@@ -5,14 +5,13 @@
 	"description": "JSON-RPC request the core API sends to the service a resource write addresses. `before_create` fires before the write and may veto it; `after_create` fires after the write with the stored row.",
 	"type": "object",
 	"additionalProperties": false,
-	"required": ["hook", "resource", "operation", "data"],
+	"required": ["hook", "resource", "data"],
 	"properties": {
 		"hook": { "type": "string", "enum": ["before_create", "after_create"] },
 		"resource": {
 			"description": "The core resource being written, e.g. evy.messages.",
 			"$ref": "../common/rpc.schema.json#/$defs/ResourceRef"
 		},
-		"operation": { "type": "string", "enum": ["create"] },
 		"data": {
 			"description": "For before_create: the client-supplied create payload. For after_create: the row as written (ids and timestamps final).",
 			"type": "object",

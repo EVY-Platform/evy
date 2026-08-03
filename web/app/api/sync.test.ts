@@ -10,6 +10,22 @@ const SERVICE_ID = "test_service";
 const DECLARED_RESOURCE = "test_service.records";
 const UNDECLARED_RESOURCE = "test_service.legacy";
 
+function catalogResource(
+	overrides: Partial<
+		ResourcesResponse["services"][number]["resources"][number]
+	> &
+		Pick<
+			ResourcesResponse["services"][number]["resources"][number],
+			"id" | "name"
+		>,
+): ResourcesResponse["services"][number]["resources"][number] {
+	return {
+		visibility: "public",
+		attributes: ["id"],
+		...overrides,
+	};
+}
+
 function catalogWith(
 	resources: ResourcesResponse["services"][number]["resources"],
 ): ResourcesResponse {
@@ -25,12 +41,11 @@ function syncWith(data: SyncResponse["data"]): SyncResponse {
 describe("extractResourceAttributeMetadata", () => {
 	it("uses the attributes the service declared", () => {
 		const catalog = catalogWith([
-			{
+			catalogResource({
 				id: DECLARED_RESOURCE,
 				name: "records",
-				visibility: "public",
 				attributes: ["id", "price.currency", "title"],
-			},
+			}),
 		]);
 
 		expect(extractResourceAttributeMetadata(catalog, syncWith([]))).toEqual(
@@ -45,12 +60,11 @@ describe("extractResourceAttributeMetadata", () => {
 
 	it("offers declared attributes for a resource with no rows yet", () => {
 		const catalog = catalogWith([
-			{
+			catalogResource({
 				id: DECLARED_RESOURCE,
 				name: "records",
-				visibility: "public",
 				attributes: ["id", "title"],
-			},
+			}),
 		]);
 
 		const result = extractResourceAttributeMetadata(catalog, syncWith([]));
@@ -60,12 +74,11 @@ describe("extractResourceAttributeMetadata", () => {
 
 	it("prefers declared attributes over what the rows happen to show", () => {
 		const catalog = catalogWith([
-			{
+			catalogResource({
 				id: DECLARED_RESOURCE,
 				name: "records",
-				visibility: "public",
 				attributes: ["id", "title", "unused_but_valid"],
-			},
+			}),
 		]);
 		const sync = syncWith([
 			{
@@ -81,7 +94,7 @@ describe("extractResourceAttributeMetadata", () => {
 
 	it("falls back to inferring from rows when the service declares nothing", () => {
 		const catalog = catalogWith([
-			{ id: UNDECLARED_RESOURCE, name: "legacy", visibility: "public" },
+			catalogResource({ id: UNDECLARED_RESOURCE, name: "legacy" }),
 		]);
 		const sync = syncWith([
 			{
@@ -97,13 +110,12 @@ describe("extractResourceAttributeMetadata", () => {
 
 	it("mixes declared and inferred resources in one catalog", () => {
 		const catalog = catalogWith([
-			{
+			catalogResource({
 				id: DECLARED_RESOURCE,
 				name: "records",
-				visibility: "public",
 				attributes: ["id", "title"],
-			},
-			{ id: UNDECLARED_RESOURCE, name: "legacy", visibility: "public" },
+			}),
+			catalogResource({ id: UNDECLARED_RESOURCE, name: "legacy" }),
 		]);
 		const sync = syncWith([
 			{
@@ -128,7 +140,7 @@ describe("extractResourceAttributeMetadata", () => {
 
 	it("omits resources with neither declared nor inferable attributes", () => {
 		const catalog = catalogWith([
-			{ id: UNDECLARED_RESOURCE, name: "legacy", visibility: "public" },
+			catalogResource({ id: UNDECLARED_RESOURCE, name: "legacy" }),
 		]);
 
 		expect(extractResourceAttributeMetadata(catalog, syncWith([]))).toEqual(

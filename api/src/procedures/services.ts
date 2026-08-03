@@ -160,10 +160,9 @@ function makeWsAdapter(wsUrl: string): ServiceAdapter {
 			),
 		hook: async (params) => {
 			try {
-				const result = await callMethod("hook", params, (parsed) =>
+				return await callMethod("hook", params, (parsed) =>
 					validateHookResponse(parsed),
 				);
-				return result;
 			} catch (error) {
 				if ((error as { code?: number })?.code === -32601) return null;
 				throw error;

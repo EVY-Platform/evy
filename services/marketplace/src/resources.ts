@@ -3,7 +3,10 @@ import type { ResourceCatalogVisibility } from "evy-types/coreResources";
 import { formatResourceRef } from "evy-types/resourceRef";
 import { validateResourcesResponse } from "evy-types/validators";
 import { attributesFromSchema } from "./attributes";
-import { itemSchema, itemStatusSchema, lookupSchema } from "./validation";
+import itemStatusSchema from "./schema/item_status.schema.json" with {
+	type: "json",
+};
+import { itemSchema, lookupSchema } from "./validation";
 
 const ITEM_ATTRIBUTES = attributesFromSchema(itemSchema);
 const LOOKUP_ATTRIBUTES = attributesFromSchema(lookupSchema);
@@ -12,47 +15,27 @@ const ITEM_STATUS_ATTRIBUTES = attributesFromSchema(itemStatusSchema);
 const MARKETPLACE_SERVICE_SLUG = "marketplace" as const;
 
 const MARKETPLACE_RESOURCE_DEFINITIONS = [
-	{
-		name: "selling_reasons",
-		attributes: LOOKUP_ATTRIBUTES,
-		visibility: "public",
-	},
-	{
-		name: "conditions",
-		attributes: LOOKUP_ATTRIBUTES,
-		visibility: "public",
-	},
-	{
-		name: "durations",
-		attributes: LOOKUP_ATTRIBUTES,
-		visibility: "public",
-	},
-	{
-		name: "areas",
-		attributes: LOOKUP_ATTRIBUTES,
-		visibility: "public",
-	},
-	{
-		name: "items",
-		attributes: ITEM_ATTRIBUTES,
-		visibility: "public",
-	},
+	{ name: "selling_reasons", attributes: LOOKUP_ATTRIBUTES },
+	{ name: "conditions", attributes: LOOKUP_ATTRIBUTES },
+	{ name: "durations", attributes: LOOKUP_ATTRIBUTES },
+	{ name: "areas", attributes: LOOKUP_ATTRIBUTES },
+	{ name: "items", attributes: ITEM_ATTRIBUTES },
 	{
 		name: "item_statuses",
 		attributes: ITEM_STATUS_ATTRIBUTES,
-		visibility: "internal",
+		visibility: "internal" as const,
 	},
 ] as const satisfies ReadonlyArray<{
 	name: string;
 	attributes: readonly string[];
-	visibility: ResourceCatalogVisibility;
+	visibility?: ResourceCatalogVisibility;
 }>;
 
 export const MARKETPLACE_SERVICE_DESCRIPTOR = {
 	id: MARKETPLACE_SERVICE_SLUG,
 	name: MARKETPLACE_SERVICE_SLUG,
 	resources: MARKETPLACE_RESOURCE_DEFINITIONS.map(
-		({ name, attributes, visibility }) => ({
+		({ name, attributes, visibility = "public" }) => ({
 			id: formatResourceRef(MARKETPLACE_SERVICE_SLUG, name),
 			name,
 			attributes,
@@ -75,7 +58,7 @@ export const MARKETPLACE_RESOURCE = {
 	ITEM_STATUSES: formatResourceRef(MARKETPLACE_SERVICE_SLUG, "item_statuses"),
 } as const;
 
-export const MARKETPLACE_RESOURCE_CATALOG_VISIBILITY: Readonly<
+const MARKETPLACE_RESOURCE_CATALOG_VISIBILITY: Readonly<
 	Record<string, ResourceCatalogVisibility>
 > = Object.fromEntries(
 	MARKETPLACE_SERVICE_DESCRIPTOR.resources.map((resource) => [

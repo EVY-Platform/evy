@@ -689,7 +689,7 @@
 				},
 				"type": {
 					"type": "string",
-					"enum": ["charge", "transfer", "withdraw"]
+					"enum": ["charge", "transfer"]
 				},
 				"status": {
 					"type": "string",

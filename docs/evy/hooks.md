@@ -15,11 +15,10 @@ params:
 
 | Schema | Purpose |
 |--------|---------|
-| [`types/schema/rpc/hook.request.schema.json`](../../types/schema/rpc/hook.request.schema.json) | `HookRequest` — `hook`, `resource`, `operation`, `data` |
+| [`types/schema/rpc/hook.request.schema.json`](../../types/schema/rpc/hook.request.schema.json) | `HookRequest` — `hook`, `resource`, `data` |
 | [`types/schema/rpc/hook.response.schema.json`](../../types/schema/rpc/hook.response.schema.json) | `HookResponse` — `ok`, optional `reason` |
 
-`hook` is either `before_create` or `after_create`. `operation` is currently
-`create` only (room for `update`/`delete` later).
+`hook` is either `before_create` or `after_create`.
 
 - **`before_create`** — `data` is the client-supplied create payload. The service
   may veto the write by returning `{ ok: false, reason: "..." }`.
@@ -37,7 +36,7 @@ before_create → database write → after_create → return response
 
 Hooks are skipped (create proceeds as today) when:
 
-- The core resource is not enrolled (only `evy.messages` today).
+- The core resource is not enrolled (only `evy.messages` and `evy.transactions` today).
 - The message's target `resource` ref is missing, invalid, or points at `evy.*`.
 - The target service has no row / adapter in the gateway (unregistered service).
 - The service is registered but does not implement `hook` (JSON-RPC `-32601`).
@@ -65,7 +64,9 @@ and [`services/marketplace/src/rpc.ts`](../../services/marketplace/src/rpc.ts).
 ## Marketplace (first consumer)
 
 Marketplace validates purchase messages in `before_create` against
-`item_status_history` and appends status rows in `after_create`. Implementation:
+`item_status_history` and appends status rows in `after_create`. Transaction
+hooks on `after_create` drive `sold` when a `{charge, succeeded}` row appears.
+Implementation:
 [`services/marketplace/src/purchase.ts`](../../services/marketplace/src/purchase.ts),
 [`services/marketplace/src/status.ts`](../../services/marketplace/src/status.ts).
 Status machine tables and message vocabulary: [marketplace data models](../services/marketplace/data.md#purchase-status-machine).

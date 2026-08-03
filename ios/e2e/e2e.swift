@@ -6,7 +6,7 @@
 import XCTest
 
 private let MARKETPLACE_ITEMS_RESOURCE_ID = MarketplaceE2EFixture.itemsRef
-private let MARKETPLACE_ITEM_STATUSES_RESOURCE_ID = "marketplace.item_statuses"
+private let MARKETPLACE_ITEM_STATUSES_RESOURCE_ID = MarketplaceE2EFixture.statusesRef
 private let MARKETPLACE_SERVICE = MarketplaceE2EFixture.service
 
 // MARK: - Minimal WebSocket Emitter for E2E Tests
@@ -314,6 +314,13 @@ actor WSEmitter {
       )
     }
     return result
+  }
+
+  func callApi(service: String, method: String, data: [String: Any]) async throws -> Any {
+    return try await rpcResult(
+      method: "api",
+      params: ["service": service, "method": method, "data": data]
+    )
   }
 
   func disconnect() {
@@ -1686,22 +1693,18 @@ class E2ETestBase: XCTestCase {
   static let homeInboxScheduledBuyerDeliveryChildRowId =
     "065e4b7a-9584-4763-0425-a190817065e4"
 
-  static func homeInboxTabRow() -> [String: Any] {
-    do {
-      let flowData = try productionHomeFlowData()
-      guard let pages = flowData["pages"] as? [[String: Any]],
-        let page = pages.first,
-        let rows = page["rows"] as? [[String: Any]],
-        let tabRow = rows.first(where: { ($0["type"] as? String) == "tab_container" })
-      else {
-        throw NSError(
-          domain: "E2E", code: 1,
-          userInfo: [NSLocalizedDescriptionKey: "Home fixture missing tab_container row"])
-      }
-      return tabRow
-    } catch {
-      fatalError("homeInboxTabRow: \(error)")
+  static func homeInboxTabRow() throws -> [String: Any] {
+    let flowData = try productionHomeFlowData()
+    guard let pages = flowData["pages"] as? [[String: Any]],
+      let page = pages.first,
+      let rows = page["rows"] as? [[String: Any]],
+      let tabRow = rows.first(where: { ($0["type"] as? String) == "tab_container" })
+    else {
+      throw NSError(
+        domain: "E2E", code: 1,
+        userInfo: [NSLocalizedDescriptionKey: "Home fixture missing tab_container row"])
     }
+    return tabRow
   }
 
   static func senderViewFlowData(flowId: String, pageId: String) -> [String: Any] {
@@ -2162,7 +2165,7 @@ final class WebSocketE2ETests: E2ETestBase {
       [
         (
           flowId: E2EFlowIds.webSocketHomeFlow,
-          flowData: createHomeFlowData(buttonLabel: "View")
+          flowData: try createHomeFlowData(buttonLabel: "View")
         ),
         (
           flowId: E2EFlowIds.webSocketViewFlow,
@@ -2212,7 +2215,7 @@ final class WebSocketE2ETests: E2ETestBase {
       let updatedLabel = "Updated View \(Int(Date().timeIntervalSince1970))"
       try awaitResult("push relabel SDUI") {
         try await emitter.updateSDUI(
-          flowData: self.createHomeFlowData(buttonLabel: updatedLabel),
+          flowData: try self.createHomeFlowData(buttonLabel: updatedLabel),
           flowId: E2EFlowIds.webSocketHomeFlow
         )
       }
@@ -2231,7 +2234,7 @@ final class WebSocketE2ETests: E2ETestBase {
       let conditionalLabel = "Conditional \(Int(Date().timeIntervalSince1970))"
       try awaitResult("push conditional flow") {
         try await emitter.updateSDUI(
-          flowData: self.createConditionalFlowData(buttonLabel: conditionalLabel),
+          flowData: try self.createConditionalFlowData(buttonLabel: conditionalLabel),
           flowId: E2EFlowIds.webSocketHomeFlow
         )
       }
@@ -2844,7 +2847,7 @@ final class WebSocketE2ETests: E2ETestBase {
     }
 
     let viewLabel = "Sender cancel \(Int(Date().timeIntervalSince1970))"
-    let homeFlowData = createHomeFlowData(
+    let homeFlowData = try createHomeFlowData(
       buttonLabel: viewLabel,
       viewItemId: itemId,
       includeHomeInbox: true
@@ -3400,7 +3403,7 @@ final class WebSocketE2ETests: E2ETestBase {
         return false
       }
       guard let valueKey, let value else { return true }
-      if valueKey == "type" || valueKey == "value" {
+      if valueKey == "value" {
         return messageData[valueKey] as? String == value
       }
       let messageDetails = messageData["data"] as? [String: Any]
@@ -3531,7 +3534,7 @@ final class WebSocketE2ETests: E2ETestBase {
   ) async throws -> String {
     let viewLabel = "\(labelPrefix) \(Int(Date().timeIntervalSince1970))"
     try await emitter.updateSDUI(
-      flowData: createHomeFlowData(buttonLabel: viewLabel, viewItemId: itemId),
+      flowData: try createHomeFlowData(buttonLabel: viewLabel, viewItemId: itemId),
       flowId: E2EFlowIds.webSocketHomeFlow
     )
     try await emitter.updateSDUI(
@@ -3565,7 +3568,7 @@ final class WebSocketE2ETests: E2ETestBase {
     buttonLabel: String,
     viewItemId: String? = nil,
     includeHomeInbox: Bool = false
-  ) -> [String: Any] {
+  ) throws -> [String: Any] {
     let viewAction = Self.viewItemNavigateAction(viewItemId: viewItemId)
 
     let children: [[String: Any]] = [
@@ -3604,7 +3607,7 @@ final class WebSocketE2ETests: E2ETestBase {
       ]
     ]
     if includeHomeInbox {
-      homeRows.insert(Self.homeInboxTabRow(), at: 0)
+      homeRows.insert(try Self.homeInboxTabRow(), at: 0)
     }
 
     return [
@@ -3620,8 +3623,8 @@ final class WebSocketE2ETests: E2ETestBase {
     ]
   }
 
-  private func createConditionalFlowData(buttonLabel: String) -> [String: Any] {
-    var flowData = createHomeFlowData(buttonLabel: buttonLabel)
+  private func createConditionalFlowData(buttonLabel: String) throws -> [String: Any] {
+    var flowData = try createHomeFlowData(buttonLabel: buttonLabel)
     guard var pages = flowData["pages"] as? [[String: Any]],
       var homePage = pages.first,
       var rows = homePage["rows"] as? [[String: Any]],
@@ -3721,7 +3724,7 @@ final class E2EHomeInboxTests: E2ETestBase {
   override func setUpWithError() throws {
     continueAfterFailure = false
     try seedFlows([
-      (flowId: E2EFlowIds.defaultHomeFlow, flowData: Self.homeInboxFlowData())
+      (flowId: E2EFlowIds.defaultHomeFlow, flowData: try Self.productionHomeFlowData())
     ])
     try runAsyncOperation("Seed owned marketplace items") { [self] in
       let emitter = WSEmitter()
@@ -3760,14 +3763,6 @@ final class E2EHomeInboxTests: E2ETestBase {
       await emitter.disconnect()
     }
     try launchApp()
-  }
-
-  private static func homeInboxFlowData() -> [String: Any] {
-    do {
-      return try productionHomeFlowData()
-    } catch {
-      fatalError("homeInboxFlowData: \(error)")
-    }
   }
 
   @MainActor
@@ -3913,91 +3908,52 @@ final class E2EHomeInboxTests: E2ETestBase {
       try await emitter.subscribe(event: "data_changed")
     }
 
-    var soldShippingChargeId = ""
-    var deliveryGivenId = ""
     var deliveryPendingId = ""
 
     try XCTContext.runActivity(named: "Seller ships after charge") { _ in
-      let pendingId = try seedPurchaseMessage(
+      let (pendingId, acceptId) = try seedAcceptedRequest(
         emitter: emitter,
         itemId: shippingOwnedItemId,
         type: "shipping",
-        value: "pending",
-        data: Self.settlingMessageData(
-          time: Self.pickupTimeslot,
-          destinationAddress: Self.rothschildDestinationAddress
-        )
+        timeslot: Self.pickupTimeslot,
+        destinationAddress: Self.rothschildDestinationAddress
       )
-      _ = try seedPurchaseMessage(
+      try runPaymentCapture(
         emitter: emitter,
         itemId: shippingOwnedItemId,
-        type: "shipping",
-        value: "accept",
-        parentMessageId: pendingId,
-        data: Self.settlingMessageData(time: Self.pickupTimeslot)
-      )
-      try pollItemStatus(
-        emitter: emitter, itemId: shippingOwnedItemId, expectedStatus: "shipping_pending")
-      soldShippingChargeId = try seedPurchaseMessage(
-        emitter: emitter,
-        itemId: shippingOwnedItemId,
-        type: "shipping",
-        value: "charge_initiated",
-        parentMessageId: pendingId
+        authorizationMessageId: pendingId
       )
       try pollItemStatus(
         emitter: emitter, itemId: shippingOwnedItemId, expectedStatus: "sold")
-
-      app.segmentedControls.buttons["Scheduled"].tap()
-      try swipeInboxRow(
+      _ = try confirmViaSwipe(
+        tab: "Scheduled",
         childRowId: E2ETestBase.homeInboxScheduledSellerShippingChildRowId,
-        messageId: soldShippingChargeId,
-        swipeLabel: "Shipped"
-      )
-      XCTAssertTrue(
-        app.staticTexts["Confirm you shipped the item?"].waitForExistence(timeout: 5),
-        "The item shipped sheet should open")
-      try tapSheetConfirmButton()
-      _ = try assertResponsePersisted(
+        messageId: acceptId,
+        swipeLabel: "Shipped",
+        sheetTitle: "Confirm you shipped the item?",
         emitter: emitter,
-        requestId: soldShippingChargeId,
-        value: "sent",
-        verifyRequestStillPending: false
+        requestId: acceptId,
+        responseValue: "sent"
       )
     }
 
     try XCTContext.runActivity(named: "Buyer receives delivery after given") { _ in
-      let pendingId = try seedPurchaseMessage(
+      let (pendingId, acceptId) = try seedAcceptedRequest(
         emitter: emitter,
         itemId: Self.seededBuyerItemId,
         type: "delivery",
-        value: "pending",
-        data: Self.settlingMessageData(
-          time: Self.deliveryTimeslot,
-          destinationAddress: Self.rothschildDestinationAddress
-        )
+        timeslot: Self.deliveryTimeslot,
+        destinationAddress: Self.rothschildDestinationAddress
       )
       deliveryPendingId = pendingId
-      _ = try seedPurchaseMessage(
+      try runPaymentCapture(
         emitter: emitter,
         itemId: Self.seededBuyerItemId,
-        type: "delivery",
-        value: "accept",
-        parentMessageId: pendingId,
-        data: Self.settlingMessageData(time: Self.deliveryTimeslot)
-      )
-      try pollItemStatus(
-        emitter: emitter, itemId: Self.seededBuyerItemId, expectedStatus: "delivery_pending")
-      _ = try seedPurchaseMessage(
-        emitter: emitter,
-        itemId: Self.seededBuyerItemId,
-        type: "delivery",
-        value: "charge_initiated",
-        parentMessageId: pendingId
+        authorizationMessageId: pendingId
       )
       try pollItemStatus(
         emitter: emitter, itemId: Self.seededBuyerItemId, expectedStatus: "sold")
-      deliveryGivenId = try seedPurchaseMessage(
+      let givenId = try seedPurchaseMessage(
         emitter: emitter,
         itemId: Self.seededBuyerItemId,
         type: "delivery",
@@ -4005,46 +3961,26 @@ final class E2EHomeInboxTests: E2ETestBase {
         parentMessageId: pendingId,
         data: Self.settlingMessageData(time: Self.deliveryTimeslot)
       )
-
-      app.segmentedControls.buttons["Scheduled"].tap()
-      try swipeInboxRow(
+      _ = try confirmViaSwipe(
+        tab: "Scheduled",
         childRowId: E2ETestBase.homeInboxScheduledBuyerDeliveryChildRowId,
-        messageId: deliveryGivenId,
-        swipeLabel: "Received"
-      )
-      XCTAssertTrue(
-        app.staticTexts["Confirm you received the item?"].waitForExistence(timeout: 5),
-        "The item received sheet should open")
-      try tapSheetConfirmButton()
-      _ = try assertResponsePersisted(
+        messageId: givenId,
+        swipeLabel: "Received",
+        sheetTitle: "Confirm you received the item?",
         emitter: emitter,
-        requestId: deliveryGivenId,
-        value: "received",
-        verifyRequestStillPending: false
+        requestId: givenId,
+        responseValue: "received"
       )
     }
 
     try XCTContext.runActivity(named: "Pickup handshake confirms exchange") { _ in
-      let pendingId = try seedPurchaseMessage(
+      let (pendingId, _) = try seedAcceptedRequest(
         emitter: emitter,
         itemId: pickupOwnedItemId,
         type: "pickup",
-        value: "pending",
-        data: Self.settlingMessageData(time: Self.pickupTimeslot)
+        timeslot: Self.pickupTimeslot,
+        pickupAddress: Self.amazingFridgePickupAddressRow
       )
-      _ = try seedPurchaseMessage(
-        emitter: emitter,
-        itemId: pickupOwnedItemId,
-        type: "pickup",
-        value: "accept",
-        parentMessageId: pendingId,
-        data: Self.settlingMessageData(
-          time: Self.pickupTimeslot,
-          pickupAddress: Self.amazingFridgePickupAddressRow
-        )
-      )
-      try pollItemStatus(
-        emitter: emitter, itemId: pickupOwnedItemId, expectedStatus: "pickup_pending")
       let transactionId = try seedPurchaseMessage(
         emitter: emitter,
         itemId: pickupOwnedItemId,
@@ -4053,22 +3989,15 @@ final class E2EHomeInboxTests: E2ETestBase {
         parentMessageId: pendingId,
         data: Self.settlingMessageData(time: Self.pickupTimeslot)
       )
-
-      app.segmentedControls.buttons["For you"].tap()
-      try swipeInboxRow(
+      _ = try confirmViaSwipe(
+        tab: "For you",
         childRowId: E2ETestBase.homeInboxPickupHandshakeChildRowId,
         messageId: transactionId,
-        swipeLabel: "Confirm exchange?"
-      )
-      XCTAssertTrue(
-        app.staticTexts["Confirm the item was given, or reject?"].waitForExistence(timeout: 5),
-        "The pickup handshake sheet should open")
-      try tapSheetConfirmButton()
-      _ = try assertResponsePersisted(
+        swipeLabel: "Confirm exchange?",
+        sheetTitle: "Confirm the item was given, or reject?",
         emitter: emitter,
         requestId: transactionId,
-        value: "transaction_completed",
-        verifyRequestStillPending: false
+        responseValue: "transaction_completed"
       )
     }
 
@@ -4113,7 +4042,7 @@ final class E2EHomeInboxTests: E2ETestBase {
         emitter: emitter,
         itemId: Self.seededBuyerItemId,
         type: "delivery",
-        value: "given_failed",
+        value: "failed",
         parentMessageId: deliveryPendingId,
         data: Self.settlingMessageData(time: Self.deliveryTimeslot)
       )
@@ -4255,6 +4184,115 @@ final class E2EHomeInboxTests: E2ETestBase {
       else { return false }
       return messageData["value"] as? String == value
     }
+  }
+
+  @MainActor
+  private func seedAcceptedRequest(
+    emitter: WSEmitter,
+    itemId: String,
+    type: String,
+    timeslot: String,
+    destinationAddress: [String: Any]? = nil,
+    pickupAddress: [String: Any]? = nil
+  ) throws -> (pendingId: String, acceptId: String) {
+    let pendingId = try seedPurchaseMessage(
+      emitter: emitter,
+      itemId: itemId,
+      type: type,
+      value: "pending",
+      data: Self.settlingMessageData(
+        time: timeslot,
+        destinationAddress: destinationAddress,
+        pickupAddress: pickupAddress
+      )
+    )
+    let acceptId = try seedPurchaseMessage(
+      emitter: emitter,
+      itemId: itemId,
+      type: type,
+      value: "accept",
+      parentMessageId: pendingId,
+      data: Self.settlingMessageData(
+        time: timeslot,
+        destinationAddress: destinationAddress,
+        pickupAddress: pickupAddress
+      )
+    )
+    let expectedPendingStatus =
+      switch type {
+      case "pickup": "pickup_pending"
+      case "delivery": "delivery_pending"
+      case "shipping": "shipping_pending"
+      default: type + "_pending"
+      }
+    try pollItemStatus(
+      emitter: emitter, itemId: itemId, expectedStatus: expectedPendingStatus)
+    return (pendingId, acceptId)
+  }
+
+  @MainActor
+  private func runPaymentCapture(
+    emitter: WSEmitter,
+    itemId: String,
+    authorizationMessageId: String
+  ) throws {
+    try awaitResult("capture payment") {
+      let intent =
+        try await emitter.callApi(
+          service: EVY_CORE_SERVICE,
+          method: "payment_intent",
+          data: [
+            "fk": itemId,
+            "resource": MARKETPLACE_ITEMS_RESOURCE_ID,
+            "amount": 250,
+            "currency": "AUD",
+            "authorization_message_id": authorizationMessageId,
+          ]
+        ) as? [String: Any]
+      guard let paymentIntentId = intent?["payment_provider_transaction_id"] as? String
+      else {
+        throw NSError(
+          domain: "E2E", code: 1,
+          userInfo: [
+            NSLocalizedDescriptionKey: "payment_intent missing payment_provider_transaction_id"
+          ]
+        )
+      }
+      _ = try await emitter.callApi(
+        service: EVY_CORE_SERVICE,
+        method: "payment_capture",
+        data: ["payment_intent_id": paymentIntentId]
+      )
+    }
+  }
+
+  @MainActor
+  private func confirmViaSwipe(
+    tab: String,
+    childRowId: String,
+    messageId: String,
+    swipeLabel: String,
+    sheetTitle: String,
+    emitter: WSEmitter,
+    requestId: String,
+    responseValue: String
+  ) throws -> String {
+    app.segmentedControls.buttons[tab].tap()
+    try swipeInboxRow(
+      childRowId: childRowId,
+      messageId: messageId,
+      swipeLabel: swipeLabel
+    )
+    XCTAssertTrue(
+      app.staticTexts[sheetTitle].waitForExistence(timeout: 5),
+      "The confirmation sheet should open")
+    try tapSheetConfirmButton()
+    return try assertResponsePersisted(
+      emitter: emitter,
+      requestId: requestId,
+      value: responseValue,
+      verifyRequestStillPending: false
+    )
   }
 
   @MainActor

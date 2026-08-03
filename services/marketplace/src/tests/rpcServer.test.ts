@@ -6,13 +6,13 @@ import {
 	expect,
 	it,
 } from "bun:test";
-import type { HookRequest, ResourcesResponse } from "evy-types";
-import { EVY_CORE_RESOURCE_REF } from "evy-types/coreResources";
+import type { ResourcesResponse } from "evy-types";
 import { getFreePort } from "evy-types/wsTestHelpers";
 import { Client } from "rpc-websockets";
 import { db, schema } from "../db";
 import { drainPurchaseQueues } from "../purchase";
 import { MARKETPLACE_RESOURCE } from "../resources";
+import { makeHookRequest } from "./hookTestHelpers";
 import { ensureMarketplaceTestSchema } from "./sharedTestDb";
 
 const { startMarketplaceRpcServer, stopMarketplaceRpcServer } = await import(
@@ -127,19 +127,7 @@ describe("marketplace JSON-RPC server", () => {
 		const client = createClient();
 		await waitForOpen(client);
 
-		const hookRequest: HookRequest = {
-			hook: "before_create",
-			resource: EVY_CORE_RESOURCE_REF.MESSAGES,
-			operation: "create",
-			data: {
-				fk: crypto.randomUUID(),
-				resource: MARKETPLACE_RESOURCE.ITEMS,
-				type: "pickup",
-				value: "pending",
-				data: { time: "2026-06-03T09:00:00" },
-				visibility: "private",
-			},
-		};
+		const hookRequest = makeHookRequest(crypto.randomUUID());
 
 		const response = await client.call("hook", hookRequest);
 		expect(response).toEqual({ ok: true });
@@ -160,19 +148,7 @@ describe("marketplace JSON-RPC server", () => {
 			created_at: new Date().toISOString(),
 		});
 
-		const hookRequest: HookRequest = {
-			hook: "before_create",
-			resource: EVY_CORE_RESOURCE_REF.MESSAGES,
-			operation: "create",
-			data: {
-				fk: itemId,
-				resource: MARKETPLACE_RESOURCE.ITEMS,
-				type: "pickup",
-				value: "pending",
-				data: { time: "2026-06-03T09:00:00" },
-				visibility: "private",
-			},
-		};
+		const hookRequest = makeHookRequest(itemId);
 
 		const response = await client.call("hook", hookRequest);
 		expect(response).toEqual({

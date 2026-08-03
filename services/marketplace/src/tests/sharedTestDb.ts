@@ -16,6 +16,3 @@ export async function ensureMarketplaceTestSchema(): Promise<void> {
 	await migrate(database.testDb, { migrationsFolder: "./drizzle" });
 	migrated = true;
 }
-
-export const marketplaceTestPglite = database.pgliteClient;
-export const marketplaceTestDb = database.testDb;
