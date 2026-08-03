@@ -1,4 +1,4 @@
-import { mock } from "bun:test";
+import { afterAll, mock } from "bun:test";
 import { migrate } from "drizzle-orm/pglite/migrator";
 import { createPgliteTestDatabase as createPgliteTestDatabaseWithSchema } from "evy-types/wsTestHelpers";
 
@@ -33,6 +33,9 @@ export async function ensureMarketplaceTestSchema(): Promise<void> {
 }
 
 // This client is a singleton shared by every test file in the process, so it
-// outlives any one file. An afterAll here closes it for the files that run
-// after the first one ("PGlite is closed"); the in-memory database goes away
-// with the process instead.
+// outlives any one file. Closing it here (once, after everything finishes)
+// prevents PGlite's WASM instance from being left open, which otherwise
+// keeps the process from exiting cleanly.
+afterAll(async () => {
+	await database.pgliteClient.close();
+});
