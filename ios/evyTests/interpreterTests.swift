@@ -1143,6 +1143,30 @@ final class InterpreterTests: XCTestCase {
       try EVY.evaluateFromText("{owns(\(resource), \(UUID().uuidString)) == false}"))
   }
 
+  // A literal ref as `owns`'s first argument is a shipped fixture form, and the
+  // bug it regressed on only appeared once that ref's collection had rows: arg0
+  // resolved to the whole collection instead of staying the ref.
+  func testOwnsAcceptsLiteralResourceRefWhenThatCollectionHasRows() throws {
+    EVYOwnershipLedger.reset()
+    defer { EVYOwnershipLedger.reset() }
+
+    let resource = MarketplaceTestFixture.itemsRef
+    let ownedId = UUID().uuidString
+    let otherId = UUID().uuidString
+    EVY.recordOwnership(resource: resource, id: ownedId)
+
+    try store(
+      .array([
+        .dictionary(["id": .string(ownedId), "title": .string("Owned item")]),
+        .dictionary(["id": .string(otherId), "title": .string("Someone else's")]),
+      ]),
+      at: resource
+    )
+
+    XCTAssertTrue(try EVY.evaluateFromText("{owns(\(resource), \(ownedId)) == true}"))
+    XCTAssertTrue(try EVY.evaluateFromText("{owns(\(resource), \(otherId)) == false}"))
+  }
+
   func testOwnsResolvesDatumArgsInsideFilter() throws {
     EVYOwnershipLedger.reset()
     defer { EVYOwnershipLedger.reset() }

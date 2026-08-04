@@ -304,6 +304,20 @@ func evyFilter(_ args: String, remainingProps: [String] = []) throws -> EVYJson 
   return EVYJson.array(matches).parseProp(props: remainingProps)
 }
 
+/// `owns`'s first argument *names* a resource, so a bare well-formed ref is that
+/// ref - not a binding into its collection. Resolving it as a binding returns the
+/// whole collection as soon as it has rows, which can never match an ownership
+/// key, so `owns(marketplace.items, …)` silently answers false. Bindings
+/// (`$datum.resource`) and deeper paths aren't valid refs, so they still resolve.
+@MainActor
+private func resolveResourceRefOperand(_ operand: String) -> String {
+  let trimmed = operand.trimmingCharacters(in: .whitespacesAndNewlines)
+  if EVYResourceRef.isValid(trimmed) {
+    return trimmed
+  }
+  return resolveLiteralOrBoundOperand(operand)
+}
+
 @MainActor
 func evyOwns(_ args: String) throws -> EVYFunctionOutput {
   let parts = _splitFunctionArguments(args)
@@ -311,7 +325,7 @@ func evyOwns(_ args: String) throws -> EVYFunctionOutput {
     throw EVYError.invalidData(context: "owns expects resource ref, id")
   }
 
-  let resource = resolveLiteralOrBoundOperand(parts[0])
+  let resource = resolveResourceRefOperand(parts[0])
   let id = resolveLiteralOrBoundOperand(parts[1])
 
   let isOwned = EVY.ownsRecord(resource: resource, id: id)
