@@ -207,6 +207,11 @@ describe("payment_capture procedure", () => {
 		expect(hasRow(rows, "charge", "succeeded")).toBe(false);
 		expect(hasRow(rows, "charge", "completed")).toBe(false);
 
+		const failedRow = rows.find(
+			(row) => row.type === "charge" && row.status === "failed",
+		);
+		expect(failedRow?.error).toBe("mock capture failure");
+
 		const messages = await testDb.select().from(schema.message);
 		const chargeFailed = messages.find(
 			(row) => row.value === "charge_failed",
@@ -443,6 +448,11 @@ describe("payment_transfer procedure", () => {
 		expect(hasRow(rows, "transfer", "failed")).toBe(true);
 		expect(hasRow(rows, "transfer", "succeeded")).toBe(false);
 		expect(hasRow(rows, "transfer", "completed")).toBe(false);
+
+		const failedRow = rows.find(
+			(row) => row.type === "transfer" && row.status === "failed",
+		);
+		expect(failedRow?.error).toBe("mock transfer failure");
 
 		const messages = await testDb.select().from(schema.message);
 		expect(messages.some((row) => row.value === "transfer_failed")).toBe(

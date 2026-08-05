@@ -149,7 +149,7 @@ export async function handlePaymentWebhook(
 	if (handler.append) {
 		const { type, status } = handler.append;
 		if (!hasRow(rows, type, status)) {
-			await appendTransactionRow(db, intent, type, status);
+			await appendTransactionRow(db, intent, type, status, params.error);
 		}
 	}
 	if (handler.failure) {

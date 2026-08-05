@@ -24,6 +24,11 @@
 			"type": "string",
 			"minLength": 1,
 			"description": "The payment_provider_transaction_id from the intent row; ties every lifecycle row together."
+		},
+		"error": {
+			"type": "string",
+			"minLength": 1,
+			"description": "Provider-reported failure reason; carried onto the transaction row this event appends (failure events only)."
 		}
 	}
 }

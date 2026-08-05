@@ -742,6 +742,11 @@
 					"format": "uuid",
 					"description": "The buyer's original request (the message stating the price)."
 				},
+				"error": {
+					"type": "string",
+					"minLength": 1,
+					"description": "Provider-reported failure reason; set only on \"failed\" rows."
+				},
 				"visibility": {
 					"$ref": "#/$defs/visibility"
 				},

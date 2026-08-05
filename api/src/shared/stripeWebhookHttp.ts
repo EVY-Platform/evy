@@ -26,6 +26,14 @@ function extractPaymentIntentId(event: Stripe.Event): string | undefined {
 	return "id" in object ? object.id : undefined;
 }
 
+function extractFailureReason(event: Stripe.Event): string | undefined {
+	const object = event.data.object;
+	if (object.object === "payment_intent") {
+		return object.last_payment_error?.message ?? undefined;
+	}
+	return undefined;
+}
+
 function getWebhookSecret(): string | undefined {
 	const secret = process.env.STRIPE_WEBHOOK_SECRET;
 	return secret && secret.length > 0 ? secret : undefined;
@@ -81,11 +89,19 @@ export async function handleStripeWebhookRequest(
 		return new Response("Missing payment intent id", { status: 400 });
 	}
 
+	const request: PaymentWebhookRequest = {
+		type: internalType,
+		payment_intent_id: paymentIntentId,
+	};
+	const failureReason =
+		internalType === "payment_intent.capture_failed"
+			? extractFailureReason(event)
+			: undefined;
+	if (failureReason) {
+		request.error = failureReason;
+	}
 	try {
-		await handlePaymentWebhook(
-			{ type: internalType, payment_intent_id: paymentIntentId },
-			db,
-		);
+		await handlePaymentWebhook(request, db);
 	} catch {
 		return new Response("Webhook handler failed", { status: 500 });
 	}

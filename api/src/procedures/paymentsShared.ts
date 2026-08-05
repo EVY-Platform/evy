@@ -93,24 +93,28 @@ export async function appendTransactionRow(
 	source: TransactionRowSource,
 	type: DATA_EVY_Transaction["type"],
 	status: DATA_EVY_Transaction["status"],
+	error?: string,
 ): Promise<DATA_EVY_Transaction> {
+	const data: Record<string, unknown> = {
+		fk: source.fk,
+		resource: source.resource,
+		type,
+		status,
+		amount: source.amount,
+		currency: source.currency,
+		payment_provider_fee: 0,
+		service_fee: 0,
+		payment_provider: "stripe",
+		payment_provider_transaction_id: source.payment_provider_transaction_id,
+		signature: "signed",
+		authorization_message_id: source.authorization_message_id,
+		visibility: EVY_CORE_RESOURCE_VISIBILITY.transactions,
+	};
+	if (error) {
+		data.error = error;
+	}
 	return (await hookedCreate(db, {
 		resource: EVY_CORE_RESOURCE_REF.TRANSACTIONS,
-		data: {
-			fk: source.fk,
-			resource: source.resource,
-			type,
-			status,
-			amount: source.amount,
-			currency: source.currency,
-			payment_provider_fee: 0,
-			service_fee: 0,
-			payment_provider: "stripe",
-			payment_provider_transaction_id:
-				source.payment_provider_transaction_id,
-			signature: "signed",
-			authorization_message_id: source.authorization_message_id,
-			visibility: EVY_CORE_RESOURCE_VISIBILITY.transactions,
-		},
+		data,
 	})) as DATA_EVY_Transaction;
 }

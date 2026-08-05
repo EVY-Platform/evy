@@ -18,17 +18,22 @@ async function autoCallPaymentWebhook(
 	db: EvyDb,
 	paymentIntentId: string,
 	events: PaymentWebhookRequest["type"][],
+	error?: string,
 ): Promise<void> {
 	for (const type of events) {
+		const request: PaymentWebhookRequest = {
+			type,
+			payment_intent_id: paymentIntentId,
+		};
+		if (error) {
+			request.error = error;
+		}
 		try {
-			await handlePaymentWebhook(
-				{ type, payment_intent_id: paymentIntentId },
-				db,
-			);
-		} catch (error) {
+			await handlePaymentWebhook(request, db);
+		} catch (webhookError) {
 			console.error(
 				`payment webhook auto-call failed for ${type}:`,
-				error,
+				webhookError,
 			);
 		}
 	}
@@ -93,7 +98,12 @@ export async function paymentCapture(
 	const captureEvents: PaymentWebhookRequest["type"][] = outcome.ok
 		? ["payment_intent.capture_succeeded", "charge.completed"]
 		: ["payment_intent.capture_failed"];
-	await autoCallPaymentWebhook(db, params.payment_intent_id, captureEvents);
+	await autoCallPaymentWebhook(
+		db,
+		params.payment_intent_id,
+		captureEvents,
+		outcome.ok ? undefined : outcome.reason,
+	);
 
 	return created;
 }
@@ -161,7 +171,12 @@ export async function paymentTransfer(
 	const transferEvents: PaymentWebhookRequest["type"][] = outcome.ok
 		? ["transfer.succeeded", "transfer.completed"]
 		: ["transfer.failed"];
-	await autoCallPaymentWebhook(db, params.payment_intent_id, transferEvents);
+	await autoCallPaymentWebhook(
+		db,
+		params.payment_intent_id,
+		transferEvents,
+		outcome.ok ? undefined : outcome.reason,
+	);
 
 	return created;
 }
