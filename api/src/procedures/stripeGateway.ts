@@ -3,25 +3,6 @@ import { createMockStripeGateway } from "./stripeGatewayMock";
 
 export const PLACEHOLDER_STRIPE_SECRET_KEY = "stripekey";
 
-const ZERO_DECIMAL_CURRENCIES = new Set([
-	"BIF",
-	"CLP",
-	"DJF",
-	"GNF",
-	"JPY",
-	"KMF",
-	"KRW",
-	"MGA",
-	"PYG",
-	"RWF",
-	"UGX",
-	"VND",
-	"VUV",
-	"XAF",
-	"XOF",
-	"XPF",
-]);
-
 export type StripeIntentParams = {
 	amount: number;
 	currency: string;
@@ -32,7 +13,7 @@ export type StripeIntentParams = {
 	};
 };
 
-export type StripeCaptureOutcome = { ok: true } | { ok: false; reason: string };
+type StripeCaptureOutcome = { ok: true } | { ok: false; reason: string };
 
 export interface StripeGateway {
 	createPaymentIntent(params: StripeIntentParams): Promise<{ id: string }>;
@@ -63,10 +44,9 @@ export function isStripeMockEnabled(): boolean {
 }
 
 export function toStripeAmount(amount: number, currency: string): number {
-	const normalizedCurrency = currency.toUpperCase();
-	if (ZERO_DECIMAL_CURRENCIES.has(normalizedCurrency)) {
+	if (currency.toUpperCase() !== "AUD") {
 		throw new Error(
-			`zero-decimal currency not supported for Stripe amount conversion: ${currency}`,
+			`unsupported currency for Stripe amount conversion: ${currency}`,
 		);
 	}
 	return Math.round(amount * 100);
@@ -77,16 +57,10 @@ function createRealStripeGateway(): StripeGateway {
 	if (!secretKey) {
 		throw new Error("Missing required env: STRIPE_SECRET_KEY");
 	}
-	let stripeClient: Stripe | undefined;
-	const getStripe = (): Stripe => {
-		if (!stripeClient) {
-			stripeClient = new Stripe(secretKey);
-		}
-		return stripeClient;
-	};
+	const stripe = new Stripe(secretKey);
 	return {
 		async createPaymentIntent(params) {
-			const paymentIntent = await getStripe().paymentIntents.create({
+			const paymentIntent = await stripe.paymentIntents.create({
 				amount: toStripeAmount(params.amount, params.currency),
 				currency: params.currency.toLowerCase(),
 				capture_method: "manual",
@@ -99,7 +73,7 @@ function createRealStripeGateway(): StripeGateway {
 		},
 		async capturePaymentIntent(id) {
 			try {
-				await getStripe().paymentIntents.capture(id);
+				await stripe.paymentIntents.capture(id);
 				return { ok: true };
 			} catch (error) {
 				if (error instanceof Stripe.errors.StripeError) {

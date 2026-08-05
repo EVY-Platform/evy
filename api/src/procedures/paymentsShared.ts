@@ -8,11 +8,6 @@ import { transaction } from "evy-types/db/schema.generated";
 import type { EvyDb } from "../database/db";
 import { hookedCreate } from "./hooks";
 
-export {
-	MOCK_CAPTURE_FAILURE_AMOUNT,
-	MOCK_TRANSFER_FAILURE_AMOUNT,
-} from "evy-types/paymentMocks";
-
 type TransactionRowSource = Pick<
 	DATA_EVY_Transaction,
 	| "fk"

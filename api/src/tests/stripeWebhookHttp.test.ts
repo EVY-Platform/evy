@@ -8,6 +8,8 @@ import {
 	it,
 } from "bun:test";
 import { migrate } from "drizzle-orm/pglite/migrator";
+import type { DATA_EVY_Transaction } from "evy-types";
+import { transaction } from "evy-types/db/schema.generated";
 import Stripe from "stripe";
 import { paymentIntent } from "../procedures/payments";
 import { findRowsByIntentId, hasRow } from "../procedures/paymentsShared";
@@ -49,6 +51,20 @@ function webhookRequest(body: string, signature?: string): Request {
 	});
 }
 
+async function insertLedgerRow(
+	intent: DATA_EVY_Transaction,
+	status: DATA_EVY_Transaction["status"],
+): Promise<void> {
+	const now = new Date().toISOString();
+	await testDb.insert(transaction).values({
+		...intent,
+		id: crypto.randomUUID(),
+		status,
+		created_at: now,
+		updated_at: now,
+	});
+}
+
 beforeAll(async () => {
 	await migrate(testDb, { migrationsFolder: "./drizzle" });
 });
@@ -58,11 +74,7 @@ afterAll(async () => {
 });
 
 beforeEach(async () => {
-	restoreEnv = stashEnv({
-		STRIPE_MOCK: "false",
-		STRIPE_WEBHOOK_SECRET: WEBHOOK_SECRET,
-		STRIPE_SECRET_KEY: "stripekey",
-	});
+	restoreEnv = stashEnv({ STRIPE_WEBHOOK_SECRET: WEBHOOK_SECRET });
 	setStripeGatewayForTests(createMockStripeGateway());
 	await clearAllTestTables(testDb);
 });
@@ -78,18 +90,8 @@ describe("handleStripeWebhookRequest", () => {
 		const intent = await paymentIntent(request, dataDb);
 		const paymentIntentId = intent.payment_provider_transaction_id;
 
-		await testDb
-			.insert(
-				// initiated row required by capture_succeeded handler
-				(await import("evy-types/db/schema.generated")).transaction,
-			)
-			.values({
-				...intent,
-				id: crypto.randomUUID(),
-				status: "initiated",
-				created_at: new Date().toISOString(),
-				updated_at: new Date().toISOString(),
-			});
+		// initiated row required by capture_succeeded handler
+		await insertLedgerRow(intent, "initiated");
 
 		const payload = JSON.stringify({
 			id: "evt_test",
@@ -116,23 +118,9 @@ describe("handleStripeWebhookRequest", () => {
 		const request = validPaymentIntentRequest();
 		const intent = await paymentIntent(request, dataDb);
 		const paymentIntentId = intent.payment_provider_transaction_id;
-		const schema = await import("evy-types/db/schema.generated");
-		const now = new Date().toISOString();
 
-		await testDb.insert(schema.transaction).values({
-			...intent,
-			id: crypto.randomUUID(),
-			status: "initiated",
-			created_at: now,
-			updated_at: now,
-		});
-		await testDb.insert(schema.transaction).values({
-			...intent,
-			id: crypto.randomUUID(),
-			status: "succeeded",
-			created_at: now,
-			updated_at: now,
-		});
+		await insertLedgerRow(intent, "initiated");
+		await insertLedgerRow(intent, "succeeded");
 
 		const payload = JSON.stringify({
 			id: "evt_test_charge",

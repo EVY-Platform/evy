@@ -6,35 +6,24 @@ import { isStripeMockEnabled } from "../procedures/stripeGateway";
 
 const STRIPE_WEBHOOK_PATH = "/webhooks/stripe";
 
-type StripeEventMapping = {
-	internalType: PaymentWebhookRequest["type"];
-	getPaymentIntentId: (event: Stripe.Event) => string | undefined;
+const STRIPE_EVENT_TYPE_MAP: Partial<
+	Record<Stripe.Event.Type, PaymentWebhookRequest["type"]>
+> = {
+	"payment_intent.succeeded": "payment_intent.capture_succeeded",
+	"payment_intent.payment_failed": "payment_intent.capture_failed",
+	"charge.captured": "charge.completed",
 };
 
-const STRIPE_EVENT_MAPPINGS: Partial<
-	Record<Stripe.Event.Type, StripeEventMapping>
-> = {
-	"payment_intent.succeeded": {
-		internalType: "payment_intent.capture_succeeded",
-		getPaymentIntentId: (event) =>
-			(event.data.object as Stripe.PaymentIntent).id,
-	},
-	"payment_intent.payment_failed": {
-		internalType: "payment_intent.capture_failed",
-		getPaymentIntentId: (event) =>
-			(event.data.object as Stripe.PaymentIntent).id,
-	},
-	"charge.captured": {
-		internalType: "charge.completed",
-		getPaymentIntentId: (event) => {
-			const charge = event.data.object as Stripe.Charge;
-			const paymentIntent = charge.payment_intent;
-			return typeof paymentIntent === "string"
-				? paymentIntent
-				: paymentIntent?.id;
-		},
-	},
-};
+function extractPaymentIntentId(event: Stripe.Event): string | undefined {
+	const object = event.data.object;
+	if (object.object === "charge") {
+		const paymentIntent = object.payment_intent;
+		return typeof paymentIntent === "string"
+			? paymentIntent
+			: paymentIntent?.id;
+	}
+	return "id" in object ? object.id : undefined;
+}
 
 function getWebhookSecret(): string | undefined {
 	const secret = process.env.STRIPE_WEBHOOK_SECRET;
@@ -81,22 +70,19 @@ export async function handleStripeWebhookRequest(
 		return new Response("Invalid signature", { status: 400 });
 	}
 
-	const mapping = STRIPE_EVENT_MAPPINGS[event.type];
-	if (!mapping) {
+	const internalType = STRIPE_EVENT_TYPE_MAP[event.type];
+	if (!internalType) {
 		return Response.json({ received: true });
 	}
 
-	const paymentIntentId = mapping.getPaymentIntentId(event);
+	const paymentIntentId = extractPaymentIntentId(event);
 	if (!paymentIntentId) {
 		return new Response("Missing payment intent id", { status: 400 });
 	}
 
 	try {
 		await handlePaymentWebhook(
-			{
-				type: mapping.internalType,
-				payment_intent_id: paymentIntentId,
-			},
+			{ type: internalType, payment_intent_id: paymentIntentId },
 			db,
 		);
 	} catch {
@@ -106,14 +92,12 @@ export async function handleStripeWebhookRequest(
 	return Response.json({ received: true });
 }
 
-export function startStripeWebhookServer(
-	db: EvyDb,
-): { stop: () => void } | undefined {
+export function startStripeWebhookServer(db: EvyDb): void {
 	if (isStripeMockEnabled()) {
 		console.info(
 			"Stripe webhook HTTP server skipped (STRIPE_MOCK mode enabled)",
 		);
-		return undefined;
+		return;
 	}
 
 	const webhookSecret = getWebhookSecret();
@@ -121,11 +105,11 @@ export function startStripeWebhookServer(
 		console.info(
 			"Stripe webhook HTTP server skipped (STRIPE_WEBHOOK_SECRET not set)",
 		);
-		return undefined;
+		return;
 	}
 
 	const port = getWebhookPort();
-	const server = Bun.serve({
+	Bun.serve({
 		port,
 		async fetch(req) {
 			const url = new URL(req.url);
@@ -139,10 +123,4 @@ export function startStripeWebhookServer(
 	console.info(
 		`Stripe webhook HTTP server listening on port ${port}${STRIPE_WEBHOOK_PATH}`,
 	);
-
-	return {
-		stop: () => {
-			server.stop();
-		},
-	};
 }

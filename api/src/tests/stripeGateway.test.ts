@@ -58,9 +58,9 @@ describe("toStripeAmount", () => {
 		expect(toStripeAmount(6.66, "AUD")).toBe(666);
 	});
 
-	it("rejects zero-decimal currencies", () => {
+	it("rejects unsupported currencies", () => {
 		expect(() => toStripeAmount(100, "JPY")).toThrow(
-			"zero-decimal currency not supported",
+			"unsupported currency for Stripe amount conversion",
 		);
 	});
 });

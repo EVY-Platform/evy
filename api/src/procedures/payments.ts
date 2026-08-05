@@ -33,25 +33,31 @@ async function autoCallPaymentWebhook(
 	}
 }
 
+async function resolveProviderTransactionId(
+	params: PaymentIntentRequest,
+): Promise<string> {
+	if (params.amount === 0) {
+		// Stripe rejects zero-amount payment intents.
+		return `pi_free_${crypto.randomUUID()}`;
+	}
+	const { id } = await getStripeGateway().createPaymentIntent({
+		amount: params.amount,
+		currency: params.currency,
+		metadata: {
+			fk: params.fk,
+			resource: params.resource,
+			authorization_message_id: params.authorization_message_id,
+		},
+	});
+	return id;
+}
+
 export async function paymentIntent(
 	params: PaymentIntentRequest,
 	db: EvyDb,
 ): Promise<PaymentIntentResponse> {
 	const paymentProviderTransactionId =
-		params.amount === 0
-			? `pi_free_${crypto.randomUUID()}`
-			: (
-					await getStripeGateway().createPaymentIntent({
-						amount: params.amount,
-						currency: params.currency,
-						metadata: {
-							fk: params.fk,
-							resource: params.resource,
-							authorization_message_id:
-								params.authorization_message_id,
-						},
-					})
-				).id;
+		await resolveProviderTransactionId(params);
 
 	return appendTransactionRow(
 		db,

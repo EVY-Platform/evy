@@ -25,6 +25,7 @@ import {
 import { findRowsByIntentId, hasRow } from "../procedures/paymentsShared";
 import {
 	type StripeGateway,
+	type StripeIntentParams,
 	setStripeGatewayForTests,
 } from "../procedures/stripeGateway";
 import { createMockStripeGateway } from "../procedures/stripeGatewayMock";
@@ -369,15 +370,7 @@ describe("payment_transfer procedure", () => {
 
 describe("payments with real-mode gateway", () => {
 	let fakeGateway: StripeGateway & {
-		createCalls: Array<{
-			amount: number;
-			currency: string;
-			metadata: {
-				fk: string;
-				resource: string;
-				authorization_message_id: string;
-			};
-		}>;
+		createCalls: StripeIntentParams[];
 		captureCalls: Array<{ id: string; amount: number }>;
 	};
 

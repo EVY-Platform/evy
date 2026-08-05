@@ -9,7 +9,6 @@ import {
 	validateCreateRequest,
 	validateDeleteRequest,
 	validateGetRequest,
-	validateHookRequest,
 	validateUpdateRequest,
 } from "./validators";
 
