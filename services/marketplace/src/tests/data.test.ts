@@ -294,6 +294,53 @@ describe("marketplace item payload validation", () => {
 		).resolves.toBeDefined();
 	});
 
+	it("rejects a zero numeric price", async () => {
+		await expect(
+			createItem({
+				...fixtureItem,
+				price: { currency: "AUD", value: 0 },
+			}),
+		).rejects.toThrow();
+	});
+
+	it("rejects a zero string price", async () => {
+		await expect(
+			createItem({
+				...fixtureItem,
+				price: { currency: "AUD", value: "0" },
+			}),
+		).rejects.toThrow();
+	});
+
+	it("rejects a zero decimal string price", async () => {
+		await expect(
+			createItem({
+				...fixtureItem,
+				price: { currency: "AUD", value: "0.00" },
+			}),
+		).rejects.toThrow();
+	});
+
+	it("accepts a sub-dollar numeric price", async () => {
+		await expect(
+			createItem({
+				...fixtureItem,
+				price: { currency: "AUD", value: 0.5 },
+			}),
+		).resolves.toBeDefined();
+	});
+
+	it("rejects an update that sets price to zero", async () => {
+		await createItem(fixtureItem);
+		await expect(
+			update({
+				resource: MARKETPLACE_RESOURCE.ITEMS,
+				filter: { id: fixtureItem.id },
+				data: { price: { currency: "AUD", value: 0 } },
+			}),
+		).rejects.toThrow();
+	});
+
 	it("accepts an unset fee persisted as an empty object", async () => {
 		await expect(
 			createItem({

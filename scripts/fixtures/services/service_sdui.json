@@ -1055,7 +1055,7 @@
 								"true": ""
 							},
 							{
-								"condition": "{marketplace.items.price.value >= 1}",
+								"condition": "{marketplace.items.price.value > 0}",
 								"false": "{highlight_required(marketplace.items.price)}",
 								"true": ""
 							},

@@ -92,12 +92,17 @@ describe("payment_intent procedure", () => {
 		});
 	});
 
-	it("accepts a zero amount", async () => {
-		const created = await paymentIntent(
-			{ ...validPaymentIntentRequest(), amount: 0 },
-			dataDb,
-		);
-		expect(created.amount).toBe(0);
+	it("rejects a zero amount", async () => {
+		await expect(
+			api(
+				{
+					service: EVY_CORE_SERVICE,
+					method: "payment_intent",
+					data: { ...validPaymentIntentRequest(), amount: 0 },
+				},
+				dataDb,
+			),
+		).rejects.toThrow("PaymentIntentRequest validation failed");
 	});
 
 	it("is reachable via api{service:evy, method:payment_intent}", async () => {
@@ -409,16 +414,6 @@ describe("payments with real-mode gateway", () => {
 			},
 		});
 		expect(created.payment_provider_transaction_id).toMatch(/^pi_fake_/);
-	});
-
-	it("skips the gateway for zero amount intents", async () => {
-		const created = await paymentIntent(
-			{ ...validPaymentIntentRequest(), amount: 0 },
-			dataDb,
-		);
-
-		expect(fakeGateway.createCalls).toHaveLength(0);
-		expect(created.payment_provider_transaction_id).toMatch(/^pi_free_/);
 	});
 
 	it("calls capture on the gateway and appends failure rows on capture error", async () => {

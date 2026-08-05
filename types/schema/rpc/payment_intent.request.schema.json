@@ -2,7 +2,7 @@
 	"$schema": "https://json-schema.org/draft/2020-12/schema",
 	"$id": "payment-intent-request",
 	"title": "PaymentIntentRequest",
-	"description": "JSON-RPC params for creating a payment intent. V1 records the intent as an evy.transactions row with status \"intent\" and creates a Stripe PaymentIntent in sandbox mode (manual capture, auto-confirmed with pm_card_visa). Set STRIPE_MOCK=true or use the placeholder STRIPE_SECRET_KEY for in-process mock ids (pi_mock_…). Zero amount skips Stripe and uses pi_free_…. Server-side constants (not request params): confirm=true, capture_method=\"manual\", payment_provider=\"stripe\", fees 0, signature=\"signed\".",
+	"description": "JSON-RPC params for creating a payment intent. V1 records the intent as an evy.transactions row with status \"intent\" and creates a Stripe PaymentIntent in sandbox mode (manual capture, auto-confirmed with pm_card_visa). Set STRIPE_MOCK=true or use the placeholder STRIPE_SECRET_KEY for in-process mock ids (pi_mock_…). Server-side constants (not request params): confirm=true, capture_method=\"manual\", payment_provider=\"stripe\", fees 0, signature=\"signed\".",
 	"type": "object",
 	"additionalProperties": false,
 	"required": [
@@ -24,8 +24,8 @@
 		},
 		"amount": {
 			"type": "number",
-			"minimum": 0,
-			"description": "Money to authorize; 0 allowed."
+			"exclusiveMinimum": 0,
+			"description": "Money to authorize; must be greater than zero."
 		},
 		"currency": {
 			"type": "string",

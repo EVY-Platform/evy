@@ -51,6 +51,7 @@ export interface DATA_MARKETPLACE_Item {
 	condition_id?: string;
 	selling_reason_id?: string;
 	photo_ids?: string[];
+	/** Listing price when present; schema rejects value <= 0 (TS Price type is shared with delivery fees). */
 	price?: Price;
 	payment_cash?: DraftFlag;
 	payment_app?: DraftFlag;

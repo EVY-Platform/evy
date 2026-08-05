@@ -33,31 +33,20 @@ async function autoCallPaymentWebhook(
 	}
 }
 
-async function resolveProviderTransactionId(
-	params: PaymentIntentRequest,
-): Promise<string> {
-	if (params.amount === 0) {
-		// Stripe rejects zero-amount payment intents.
-		return `pi_free_${crypto.randomUUID()}`;
-	}
-	const { id } = await getStripeGateway().createPaymentIntent({
-		amount: params.amount,
-		currency: params.currency,
-		metadata: {
-			fk: params.fk,
-			resource: params.resource,
-			authorization_message_id: params.authorization_message_id,
-		},
-	});
-	return id;
-}
-
 export async function paymentIntent(
 	params: PaymentIntentRequest,
 	db: EvyDb,
 ): Promise<PaymentIntentResponse> {
-	const paymentProviderTransactionId =
-		await resolveProviderTransactionId(params);
+	const { id: paymentProviderTransactionId } =
+		await getStripeGateway().createPaymentIntent({
+			amount: params.amount,
+			currency: params.currency,
+			metadata: {
+				fk: params.fk,
+				resource: params.resource,
+				authorization_message_id: params.authorization_message_id,
+			},
+		});
 
 	return appendTransactionRow(
 		db,
@@ -92,13 +81,10 @@ export async function paymentCapture(
 		"initiated",
 	);
 
-	const outcome =
-		intent.amount === 0
-			? { ok: true as const }
-			: await getStripeGateway().capturePaymentIntent(
-					params.payment_intent_id,
-					intent.amount,
-				);
+	const outcome = await getStripeGateway().capturePaymentIntent(
+		params.payment_intent_id,
+		intent.amount,
+	);
 
 	const captureEvents: PaymentWebhookRequest["type"][] = outcome.ok
 		? ["payment_intent.capture_succeeded", "charge.completed"]
