@@ -413,36 +413,6 @@ describe("payment_transfer procedure", () => {
 				},
 			});
 		});
-
-		it("skips createTransfer for zero-amount intents", async () => {
-			const request = validPaymentIntentRequest({ amount: 0 });
-			await seedAuthorizationMessage(testDb, request);
-			const paymentIntentId = `pi_free_${crypto.randomUUID()}`;
-			const source = {
-				fk: request.fk,
-				resource: request.resource,
-				amount: 0,
-				currency: request.currency,
-				payment_provider_transaction_id: paymentIntentId,
-				authorization_message_id: request.authorization_message_id,
-			};
-			const { appendTransactionRow } = await import(
-				"../procedures/paymentsShared"
-			);
-			await appendTransactionRow(dataDb, source, "charge", "intent");
-			await appendTransactionRow(dataDb, source, "charge", "succeeded");
-
-			await paymentTransfer(
-				{ payment_intent_id: paymentIntentId },
-				dataDb,
-			);
-
-			expect(recordingGateway.transferCalls).toHaveLength(0);
-
-			const rows = await findRowsByIntentId(dataDb, paymentIntentId);
-			expect(hasRow(rows, "transfer", "succeeded")).toBe(true);
-			expect(hasRow(rows, "transfer", "completed")).toBe(true);
-		});
 	});
 });
 

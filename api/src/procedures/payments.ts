@@ -116,20 +116,16 @@ export async function paymentTransfer(
 		"initiated",
 	);
 
-	const outcome =
-		intent.amount === 0
-			? { ok: true as const }
-			: await getStripeGateway().createTransfer({
-					paymentIntentId: params.payment_intent_id,
-					amount: intent.amount,
-					currency: intent.currency,
-					metadata: {
-						fk: intent.fk,
-						resource: intent.resource,
-						authorization_message_id:
-							intent.authorization_message_id,
-					},
-				});
+	const outcome = await getStripeGateway().createTransfer({
+		paymentIntentId: params.payment_intent_id,
+		amount: intent.amount,
+		currency: intent.currency,
+		metadata: {
+			fk: intent.fk,
+			resource: intent.resource,
+			authorization_message_id: intent.authorization_message_id,
+		},
+	});
 
 	const transferEvents: PaymentWebhookRequest["type"][] = outcome.ok
 		? ["transfer.succeeded", "transfer.completed"]
