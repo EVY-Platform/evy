@@ -160,7 +160,7 @@
 										"title": "{findFirst(marketplace.items, $datum.fk).title}",
 										"subtitle": "{$datum.value}",
 										"visible": "true",
-										"swipe_label": "Confirm exchange?",
+										"swipe_label": "Done",
 										"swipe_color": "#34C759",
 										"actions": {
 											"swipe_left": [

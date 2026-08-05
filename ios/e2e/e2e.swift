@@ -3984,7 +3984,7 @@ final class E2EHomeInboxTests: E2ETestBase {
         tab: "For you",
         childRowId: E2ETestBase.homeInboxPickupHandshakeChildRowId,
         messageId: transactionId,
-        swipeLabel: "Confirm exchange?",
+        swipeLabel: "Done",
         sheetTitle: "Confirm the item was given, or reject?",
         emitter: emitter,
         responseValue: "transaction_completed"
