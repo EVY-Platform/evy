@@ -9,90 +9,73 @@ function getCoreWsUrl(): string {
 	return `ws://${host}:${port}`;
 }
 
+// Connect-on-demand: every call goes through callCoreApi, which connects
+// first, so a dropped socket just reconnects on the next call. No background
+// reconnect loop is needed — this client holds no event subscriptions.
 let client: Client | null = null;
-let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
-let reconnectDelayMs = 1_000;
-const reconnectMaxDelayMs = 30_000;
-let connected = false;
-let disposed = false;
 let connectPromise: Promise<void> | null = null;
 
-function scheduleReconnect(): void {
-	if (disposed || reconnectTimer) return;
-	reconnectTimer = setTimeout(() => {
-		reconnectTimer = null;
-		reconnectDelayMs = Math.min(reconnectDelayMs * 2, reconnectMaxDelayMs);
-		void connectClient().catch(() => scheduleReconnect());
-	}, reconnectDelayMs);
-}
-
-function getClient(): Client {
-	if (!client) {
-		const wsUrl = getCoreWsUrl();
-		client = new Client(wsUrl, { reconnect: false });
-		client.on("close", () => {
-			connected = false;
-			connectPromise = null;
-			if (!disposed) scheduleReconnect();
-		});
+async function connectClient(): Promise<Client> {
+	if (client && connectPromise) {
+		await connectPromise;
+		return client;
 	}
-	return client;
-}
 
-async function connectClient(): Promise<void> {
-	if (disposed) {
-		throw new Error("Core WebSocket client disposed");
-	}
-	if (connected) return;
-	if (connectPromise) return connectPromise;
-
-	const wsClient = getClient();
 	const wsUrl = getCoreWsUrl();
+	const wsClient = new Client(wsUrl, { reconnect: false });
+	wsClient.on("close", () => {
+		if (client === wsClient) {
+			client = null;
+			connectPromise = null;
+		}
+	});
 
-	connectPromise = (async () => {
-		await new Promise<void>((resolve, reject) => {
-			const timeout = setTimeout(() => {
-				wsClient.removeListener("open", onOpen);
-				wsClient.removeListener("error", onError);
-				reject(
-					new Error(
-						`WebSocket connection timeout to ${wsUrl} after ${CORE_WS_CONNECT_TIMEOUT_MS}ms`,
-					),
-				);
-			}, CORE_WS_CONNECT_TIMEOUT_MS);
+	client = wsClient;
+	connectPromise = new Promise<void>((resolve, reject) => {
+		const timeout = setTimeout(() => {
+			wsClient.removeListener("open", onOpen);
+			wsClient.removeListener("error", onError);
+			reject(
+				new Error(
+					`WebSocket connection timeout to ${wsUrl} after ${CORE_WS_CONNECT_TIMEOUT_MS}ms`,
+				),
+			);
+		}, CORE_WS_CONNECT_TIMEOUT_MS);
 
-			const onOpen = () => {
-				clearTimeout(timeout);
-				wsClient.removeListener("error", onError);
-				resolve();
-			};
-			const onError = (err: Error) => {
-				clearTimeout(timeout);
-				wsClient.removeListener("open", onOpen);
-				reject(err);
-			};
-			wsClient.on("open", onOpen);
-			wsClient.on("error", onError);
-			wsClient.connect();
-		});
-		connected = true;
-		reconnectDelayMs = 1_000;
-	})();
+		const onOpen = () => {
+			clearTimeout(timeout);
+			wsClient.removeListener("error", onError);
+			resolve();
+		};
+		const onError = (err: Error) => {
+			clearTimeout(timeout);
+			wsClient.removeListener("open", onOpen);
+			reject(err);
+		};
+		wsClient.on("open", onOpen);
+		wsClient.on("error", onError);
+		wsClient.connect();
+	});
 
 	try {
 		await connectPromise;
 	} catch (error) {
-		connectPromise = null;
+		if (client === wsClient) {
+			client = null;
+			connectPromise = null;
+		}
+		wsClient.close();
 		throw error;
 	}
+	return wsClient;
 }
 
 export async function callCoreApi(
 	method: string,
 	data: unknown,
 ): Promise<unknown> {
-	await connectClient();
-	return getClient().call("api", {
+	const wsClient = await connectClient();
+	return wsClient.call("api", {
 		service: EVY_CORE_SERVICE,
 		method,
 		data,
@@ -100,12 +83,6 @@ export async function callCoreApi(
 }
 
 export function disposeCoreClient(): void {
-	disposed = true;
-	if (reconnectTimer) {
-		clearTimeout(reconnectTimer);
-		reconnectTimer = null;
-	}
-	connected = false;
 	connectPromise = null;
 	if (client) {
 		client.close();

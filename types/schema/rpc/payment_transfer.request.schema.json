@@ -8,9 +8,7 @@
 	"required": ["payment_intent_id"],
 	"properties": {
 		"payment_intent_id": {
-			"type": "string",
-			"minLength": 1,
-			"description": "The payment_provider_transaction_id shared by the intent and capture rows."
+			"$ref": "../common/rpc.schema.json#/$defs/PaymentIntentId"
 		}
 	}
 }

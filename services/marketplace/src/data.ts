@@ -95,12 +95,7 @@ async function getItemStatuses(params: GetRequest): Promise<GetResponse> {
 	}
 
 	const rows = await db
-		.select({
-			id: item_status_history.id,
-			item_id: item_status_history.item_id,
-			status: item_status_history.status,
-			created_at: item_status_history.created_at,
-		})
+		.select()
 		.from(item_status_history)
 		.where(whereClauses.length > 0 ? and(...whereClauses) : undefined)
 		.orderBy(

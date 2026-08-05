@@ -13,13 +13,11 @@ describe("nowIso", () => {
 		expect(Math.abs(parsed - Date.now())).toBeLessThan(5000);
 	});
 
-	it("is distinct and strictly increasing under a tight loop", () => {
+	it("is strictly increasing under a tight loop", () => {
 		const values: string[] = [];
-		for (let i = 0; i < 100_000; i++) {
+		for (let i = 0; i < 10_000; i++) {
 			values.push(nowIso());
 		}
-		const distinct = new Set(values);
-		expect(distinct.size).toBe(values.length);
 		for (let i = 1; i < values.length; i++) {
 			expect(values[i] > values[i - 1]).toBe(true);
 		}

@@ -390,11 +390,7 @@ async function getServiceAdapter(serviceId: string): Promise<ServiceAdapter> {
 }
 
 function hasServiceAdapter(serviceId: string): boolean {
-	try {
-		return requireAdapters().has(serviceId);
-	} catch {
-		return false;
-	}
+	return serviceAdapters?.has(serviceId) ?? false;
 }
 
 export async function forwardApi(

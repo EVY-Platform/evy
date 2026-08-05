@@ -294,29 +294,15 @@ describe("marketplace item payload validation", () => {
 		).resolves.toBeDefined();
 	});
 
-	it("rejects a zero numeric price", async () => {
+	it.each([
+		[0],
+		["0"],
+		["0.00"],
+	] as const)("rejects a zero price value %p", async (value) => {
 		await expect(
 			createItem({
 				...fixtureItem,
-				price: { currency: "AUD", value: 0 },
-			}),
-		).rejects.toThrow();
-	});
-
-	it("rejects a zero string price", async () => {
-		await expect(
-			createItem({
-				...fixtureItem,
-				price: { currency: "AUD", value: "0" },
-			}),
-		).rejects.toThrow();
-	});
-
-	it("rejects a zero decimal string price", async () => {
-		await expect(
-			createItem({
-				...fixtureItem,
-				price: { currency: "AUD", value: "0.00" },
+				price: { currency: "AUD", value },
 			}),
 		).rejects.toThrow();
 	});

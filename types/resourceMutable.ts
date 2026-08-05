@@ -1,6 +1,6 @@
 export function assertResourceMutable(
 	resource: string,
-	visibility: string,
+	visibility: string | undefined,
 ): void {
 	if (visibility === "internal") {
 		throw new Error(

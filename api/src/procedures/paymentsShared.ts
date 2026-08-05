@@ -1,5 +1,5 @@
 import { and, eq, isNull } from "drizzle-orm";
-import type { DATA_EVY_Message, DATA_EVY_Transaction } from "evy-types";
+import type { DATA_EVY_Transaction, PaymentWebhookRequest } from "evy-types";
 import {
 	EVY_CORE_RESOURCE_REF,
 	EVY_CORE_RESOURCE_VISIBILITY,
@@ -17,6 +17,35 @@ type TransactionRowSource = Pick<
 	| "payment_provider_transaction_id"
 	| "authorization_message_id"
 >;
+
+/** Stripe metadata attached to intents and transfers for reconciliation. */
+export function paymentMetadata(
+	source: Pick<
+		TransactionRowSource,
+		"fk" | "resource" | "authorization_message_id"
+	>,
+): { fk: string; resource: string; authorization_message_id: string } {
+	return {
+		fk: source.fk,
+		resource: source.resource,
+		authorization_message_id: source.authorization_message_id,
+	};
+}
+
+export function paymentWebhookRequest(
+	type: PaymentWebhookRequest["type"],
+	paymentIntentId: string,
+	error?: string,
+): PaymentWebhookRequest {
+	const request: PaymentWebhookRequest = {
+		type,
+		payment_intent_id: paymentIntentId,
+	};
+	if (error) {
+		request.error = error;
+	}
+	return request;
+}
 
 export async function findRowsByIntentId(
 	db: EvyDb,
@@ -61,31 +90,6 @@ export async function requireIntent(
 		throw new Error(`payment intent not found: ${paymentIntentId}`);
 	}
 	return { rows, intent };
-}
-
-export function derivedMessageData(
-	source: Pick<
-		DATA_EVY_Message,
-		"fk" | "resource" | "type" | "data" | "visibility" | "parent_message_id"
-	>,
-	overrides: {
-		value: string;
-		data: Record<string, unknown>;
-		visibility: DATA_EVY_Message["visibility"];
-	},
-): Record<string, unknown> {
-	const messageData: Record<string, unknown> = {
-		fk: source.fk,
-		resource: source.resource,
-		type: source.type,
-		value: overrides.value,
-		data: overrides.data,
-		visibility: overrides.visibility,
-	};
-	if (typeof source.parent_message_id === "string") {
-		messageData.parent_message_id = source.parent_message_id;
-	}
-	return messageData;
 }
 
 export async function appendTransactionRow(

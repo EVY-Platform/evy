@@ -10,7 +10,7 @@ import {
 import { serviceOfRef } from "evy-types/resourceRef";
 import { create as createCore } from "../data/data";
 import type { EvyDb } from "../database/db";
-import { derivedMessageData } from "./paymentsShared";
+import { derivedMessageData } from "./messages";
 import { forwardHook } from "./services";
 
 class HookVetoError extends Error {

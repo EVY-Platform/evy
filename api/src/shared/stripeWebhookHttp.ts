@@ -1,6 +1,7 @@
 import type { PaymentWebhookRequest } from "evy-types";
 import Stripe from "stripe";
 import type { EvyDb } from "../database/db";
+import { paymentWebhookRequest } from "../procedures/paymentsShared";
 import { handlePaymentWebhook } from "../procedures/paymentWebhook";
 import { isStripeMockEnabled } from "../procedures/stripeGateway";
 
@@ -89,19 +90,15 @@ export async function handleStripeWebhookRequest(
 		return new Response("Missing payment intent id", { status: 400 });
 	}
 
-	const request: PaymentWebhookRequest = {
-		type: internalType,
-		payment_intent_id: paymentIntentId,
-	};
 	const failureReason =
 		internalType === "payment_intent.capture_failed"
 			? extractFailureReason(event)
 			: undefined;
-	if (failureReason) {
-		request.error = failureReason;
-	}
 	try {
-		await handlePaymentWebhook(request, db);
+		await handlePaymentWebhook(
+			paymentWebhookRequest(internalType, paymentIntentId, failureReason),
+			db,
+		);
 	} catch {
 		return new Response("Webhook handler failed", { status: 500 });
 	}

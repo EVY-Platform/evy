@@ -3,21 +3,9 @@ import { transaction } from "evy-types/db/schema.generated";
 import { validateDataEvyTransaction } from "evy-types/validators";
 import { makeCoreResource } from "./coreResource";
 
+// type/status transitions are append-only (new rows), not in-place updates,
+// so no toUpdateSet: update and delete stay unregistered in the RPC registry.
 export const transactionsResource = makeCoreResource<DATA_EVY_Transaction>({
 	table: transaction,
 	validate: validateDataEvyTransaction,
-	// type/status transitions are append-only (new rows), not in-place updates
-	toUpdateSet: (v) => ({
-		fk: v.fk,
-		resource: v.resource,
-		amount: v.amount,
-		currency: v.currency,
-		payment_provider_fee: v.payment_provider_fee,
-		service_fee: v.service_fee,
-		payment_provider: v.payment_provider,
-		payment_provider_transaction_id: v.payment_provider_transaction_id,
-		signature: v.signature,
-		authorization_message_id: v.authorization_message_id,
-		visibility: v.visibility,
-	}),
 });

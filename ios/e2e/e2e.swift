@@ -1036,7 +1036,7 @@ class E2ETestBase: XCTestCase {
     let notOwner =
       "owns(\(MARKETPLACE_ITEMS_RESOURCE_ID), \(MARKETPLACE_ITEMS_RESOURCE_ID).id) == false"
     return
-      "{(\(latest).value == \"pending\" && \(notOwner)) || (\(latest).value == \"accept\" && \(notOwner))}"
+      "{(\(latest).value == \"pending\" || \(latest).value == \"accept\") && \(notOwner)}"
   }
 
   static func pendingRequestVisibilityExpression(type: String) -> String {
@@ -4213,7 +4213,7 @@ final class E2EHomeInboxTests: E2ETestBase {
       )
     )
     let expectedPendingStatus = "\(type)_pending"
-    try pollItemStatus(
+    try pollItemReachedStatus(
       emitter: emitter, itemId: itemId, expectedStatus: expectedPendingStatus)
     return (pendingId, acceptId)
   }
@@ -4302,6 +4302,45 @@ final class E2EHomeInboxTests: E2ETestBase {
       "Item \(itemId) should reach status \(expectedStatus)",
       file: file,
       line: line)
+  }
+
+  /// Waits until the item's status HISTORY contains `expectedStatus`. Use for
+  /// transient states: an accept auto-captures the payment, so `sold` can be
+  /// appended milliseconds after `*_pending` and overtake it as the latest
+  /// status before the first poll ever observes it.
+  @MainActor
+  private func pollItemReachedStatus(
+    emitter: WSEmitter,
+    itemId: String,
+    expectedStatus: String,
+    file: StaticString = #filePath,
+    line: UInt = #line
+  ) throws {
+    let found = try awaitResult("poll item reached status \(expectedStatus)") {
+      try await self.waitForResourceUpdate(
+        emitter: emitter,
+        resource: MARKETPLACE_ITEM_STATUSES_RESOURCE_ID
+      ) { payload in
+        Self.itemStatusHistoryContains(
+          payload, itemId: itemId, status: expectedStatus)
+      }
+    }
+    XCTAssertTrue(
+      found,
+      "Item \(itemId) should reach status \(expectedStatus)",
+      file: file,
+      line: line)
+  }
+
+  private static func itemStatusHistoryContains(
+    _ payload: Any,
+    itemId: String,
+    status: String
+  ) -> Bool {
+    guard let rows = responseDataArray(from: payload) else { return false }
+    return rows.compactMap { $0 as? [String: Any] }.contains {
+      ($0["item_id"] as? String) == itemId && ($0["status"] as? String) == status
+    }
   }
 
   private static func latestItemStatus(_ payload: Any, itemId: String) -> String? {

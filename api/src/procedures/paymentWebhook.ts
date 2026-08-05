@@ -1,4 +1,3 @@
-import { and, eq, isNull } from "drizzle-orm";
 import type {
 	DATA_EVY_Message,
 	DATA_EVY_Transaction,
@@ -9,15 +8,11 @@ import {
 	EVY_CORE_RESOURCE_REF,
 	EVY_CORE_RESOURCE_VISIBILITY,
 } from "evy-types/coreResources";
-import { message } from "evy-types/db/schema.generated";
+import { get as getCore } from "../data/data";
 import type { EvyDb } from "../database/db";
 import { hookedCreate } from "./hooks";
-import {
-	appendTransactionRow,
-	derivedMessageData,
-	hasRow,
-	requireIntent,
-} from "./paymentsShared";
+import { derivedMessageData } from "./messages";
+import { appendTransactionRow, hasRow, requireIntent } from "./paymentsShared";
 
 type FailureMessageValue = "charge_failed" | "transfer_failed";
 
@@ -27,7 +22,7 @@ type WebhookHandler = {
 		status: DATA_EVY_Transaction["status"];
 		error: string;
 	};
-	append?: {
+	append: {
 		type: DATA_EVY_Transaction["type"];
 		status: DATA_EVY_Transaction["status"];
 	};
@@ -36,7 +31,6 @@ type WebhookHandler = {
 
 const WEBHOOK_HANDLERS: Record<PaymentWebhookRequest["type"], WebhookHandler> =
 	{
-		"payment_intent.succeeded": {},
 		"payment_intent.capture_succeeded": {
 			requires: {
 				type: "charge",
@@ -96,16 +90,11 @@ async function loadAuthorizationMessage(
 	db: EvyDb,
 	authorizationMessageId: string,
 ): Promise<DATA_EVY_Message | undefined> {
-	const rows = await db
-		.select()
-		.from(message)
-		.where(
-			and(
-				eq(message.id, authorizationMessageId),
-				isNull(message.deleted_at),
-			),
-		);
-	return rows[0] as DATA_EVY_Message | undefined;
+	const rows = (await getCore(db, {
+		resource: EVY_CORE_RESOURCE_REF.MESSAGES,
+		filter: { id: authorizationMessageId },
+	})) as DATA_EVY_Message[];
+	return rows[0];
 }
 
 async function authorFailureMessage(
@@ -146,11 +135,9 @@ export async function handlePaymentWebhook(
 			throw new Error(`${error}: ${params.payment_intent_id}`);
 		}
 	}
-	if (handler.append) {
-		const { type, status } = handler.append;
-		if (!hasRow(rows, type, status)) {
-			await appendTransactionRow(db, intent, type, status, params.error);
-		}
+	const { type, status } = handler.append;
+	if (!hasRow(rows, type, status)) {
+		await appendTransactionRow(db, intent, type, status, params.error);
 	}
 	if (handler.failure) {
 		await authorFailureMessage(db, intent, handler.failure);

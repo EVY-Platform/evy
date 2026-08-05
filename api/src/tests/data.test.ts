@@ -618,7 +618,7 @@ describe("message resources", () => {
 });
 
 describe("transaction rows", () => {
-	it("lists empty then creates, lists, updates, and deletes transactions", async () => {
+	it("lists empty then creates and lists transactions", async () => {
 		const empty = (await get(dataDb, {
 			resource: TRANSACTION_RESOURCE,
 		})) as DATA_EVY_Transaction[];
@@ -639,26 +639,28 @@ describe("transaction rows", () => {
 			resource: TRANSACTION_RESOURCE,
 		})) as DATA_EVY_Transaction[];
 		expect(listed).toHaveLength(1);
+	});
 
-		const updated = (await update(dataDb, {
+	it("rejects update and delete (ledger rows are append-only)", async () => {
+		const created = (await create(dataDb, {
 			resource: TRANSACTION_RESOURCE,
-			filter: { id: created.id },
-			data: { ...created, amount: 300 },
+			data: validTransactionPayload(),
 		})) as DATA_EVY_Transaction;
-		expect(updated.amount).toBe(300);
 
-		const deleted = (await deleteCore(dataDb, {
-			resource: TRANSACTION_RESOURCE,
-			filter: { id: created.id },
-		})) as DATA_EVY_Transaction;
-		expect(deleted.id).toBe(created.id);
-		const [tombstone] = await testDb.select().from(schema.transaction);
-		expect(tombstone?.deleted_at).toBeTruthy();
-		expect(
-			await get(dataDb, {
+		await expect(
+			update(dataDb, {
 				resource: TRANSACTION_RESOURCE,
+				filter: { id: created.id },
+				data: { ...created, amount: 300 },
 			}),
-		).toEqual([]);
+		).rejects.toThrow("Update is not supported for this resource");
+
+		await expect(
+			deleteCore(dataDb, {
+				resource: TRANSACTION_RESOURCE,
+				filter: { id: created.id },
+			}),
+		).rejects.toThrow("Delete is not supported for this resource");
 	});
 
 	it("accepts zero amount", async () => {

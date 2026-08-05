@@ -79,7 +79,11 @@ const CORE_RESOURCE_REGISTRY: Record<string, CoreResourceOps> = {
 	[EVY_CORE_RESOURCE_REF.ADDRESSES]: addressesResource,
 	[EVY_CORE_RESOURCE_REF.FORMATTERS]: formattersResource,
 	[EVY_CORE_RESOURCE_REF.MESSAGES]: messagesResource,
-	[EVY_CORE_RESOURCE_REF.TRANSACTIONS]: transactionsResource,
+	[EVY_CORE_RESOURCE_REF.TRANSACTIONS]: {
+		list: transactionsResource.list,
+		listForSync: transactionsResource.listForSync,
+		create: transactionsResource.create,
+	},
 	[EVY_CORE_RESOURCE_REF.SERVICES]: {
 		list: servicesResource.list,
 		listForSync: servicesResource.listForSync,

@@ -8,13 +8,6 @@
 			"when": 1785732674436,
 			"tag": "0000_baseline",
 			"breakpoints": true
-		},
-		{
-			"idx": 1,
-			"version": "7",
-			"when": 1785930536270,
-			"tag": "0001_dry_silverclaw",
-			"breakpoints": true
 		}
 	]
 }

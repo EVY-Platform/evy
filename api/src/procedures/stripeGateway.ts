@@ -13,11 +13,7 @@ export type StripeIntentParams = {
 	};
 };
 
-type StripeCaptureOutcome = { ok: true } | { ok: false; reason: string };
-
-export type StripeTransferOutcome =
-	| { ok: true }
-	| { ok: false; reason: string };
+type StripeOutcome = { ok: true } | { ok: false; reason: string };
 
 export type StripeTransferParams = {
 	paymentIntentId: string;
@@ -32,14 +28,9 @@ export type StripeTransferParams = {
 
 export interface StripeGateway {
 	createPaymentIntent(params: StripeIntentParams): Promise<{ id: string }>;
-	capturePaymentIntent(
-		id: string,
-		amount: number,
-	): Promise<StripeCaptureOutcome>;
-	cancelPaymentIntent(id: string): Promise<StripeCaptureOutcome>;
-	createTransfer(
-		params: StripeTransferParams,
-	): Promise<StripeTransferOutcome>;
+	capturePaymentIntent(id: string, amount: number): Promise<StripeOutcome>;
+	cancelPaymentIntent(id: string): Promise<StripeOutcome>;
+	createTransfer(params: StripeTransferParams): Promise<StripeOutcome>;
 }
 
 let stripeGateway: StripeGateway | undefined;
@@ -81,12 +72,30 @@ function createRealStripeGateway(): StripeGateway {
 		throw new Error("Missing required env: STRIPE_CONNECT_ACCOUNT_ID");
 	}
 	const stripe = new Stripe(secretKey);
+
+	// Stripe API errors become { ok: false } outcomes; anything else propagates.
+	// The callback may return its own failure outcome before the Stripe call.
+	async function stripeCall(
+		fn: () => Promise<StripeOutcome | undefined>,
+	): Promise<StripeOutcome> {
+		try {
+			return (await fn()) ?? { ok: true };
+		} catch (error) {
+			if (error instanceof Stripe.errors.StripeError) {
+				return { ok: false, reason: error.message };
+			}
+			throw error;
+		}
+	}
+
 	return {
 		async createPaymentIntent(params) {
 			const paymentIntent = await stripe.paymentIntents.create({
 				amount: toStripeAmount(params.amount, params.currency),
 				currency: params.currency.toLowerCase(),
 				capture_method: "manual",
+				// Sandbox-only: auto-confirm with Stripe's test card. Live mode
+				// needs a real payment method collected from the buyer.
 				confirm: true,
 				payment_method: "pm_card_visa",
 				payment_method_types: ["card"],
@@ -94,30 +103,18 @@ function createRealStripeGateway(): StripeGateway {
 			});
 			return { id: paymentIntent.id };
 		},
-		async capturePaymentIntent(id) {
-			try {
+		capturePaymentIntent: (id) =>
+			stripeCall(async () => {
 				await stripe.paymentIntents.capture(id);
-				return { ok: true };
-			} catch (error) {
-				if (error instanceof Stripe.errors.StripeError) {
-					return { ok: false, reason: error.message };
-				}
-				throw error;
-			}
-		},
-		async cancelPaymentIntent(id) {
-			try {
+				return undefined;
+			}),
+		cancelPaymentIntent: (id) =>
+			stripeCall(async () => {
 				await stripe.paymentIntents.cancel(id);
-				return { ok: true };
-			} catch (error) {
-				if (error instanceof Stripe.errors.StripeError) {
-					return { ok: false, reason: error.message };
-				}
-				throw error;
-			}
-		},
-		async createTransfer(params) {
-			try {
+				return undefined;
+			}),
+		createTransfer: (params) =>
+			stripeCall(async () => {
 				const paymentIntent = await stripe.paymentIntents.retrieve(
 					params.paymentIntentId,
 				);
@@ -139,14 +136,8 @@ function createRealStripeGateway(): StripeGateway {
 					source_transaction: chargeId,
 					metadata: params.metadata,
 				});
-				return { ok: true };
-			} catch (error) {
-				if (error instanceof Stripe.errors.StripeError) {
-					return { ok: false, reason: error.message };
-				}
-				throw error;
-			}
-		},
+				return undefined;
+			}),
 	};
 }
 

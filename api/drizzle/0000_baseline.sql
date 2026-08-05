@@ -147,6 +147,7 @@ CREATE TABLE "transaction" (
 	"payment_provider_transaction_id" text NOT NULL,
 	"signature" text NOT NULL,
 	"authorization_message_id" uuid NOT NULL,
+	"error" text,
 	"visibility" "visibility" NOT NULL,
 	"created_at" text NOT NULL,
 	"updated_at" text NOT NULL,

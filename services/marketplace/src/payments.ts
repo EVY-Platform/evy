@@ -7,10 +7,10 @@ import {
 	recordPaymentIntent,
 	resolvePaymentIntentForMessage,
 } from "./paymentIntents";
-import type { MessagePayload } from "./purchase";
+import type { MessagePayload, ValidationResult } from "./purchase";
 import { MARKETPLACE_RESOURCE } from "./resources";
 
-export type PaymentAction =
+type PaymentAction =
 	| "payment_intent"
 	| "payment_capture"
 	| "payment_transfer"
@@ -18,24 +18,12 @@ export type PaymentAction =
 	| "payment_capture_then_transfer"
 	| "none";
 
-type ValidationResult = { ok: true } | { ok: false; reason: string };
-
 type ItemPrice = { amount: number; currency: string };
-
-const NON_PAYMENT_VALUES = new Set([
-	"charge_failed",
-	"transfer_failed",
-	"request_failed",
-]);
 
 export function paymentActionForMessage(
 	type: string,
 	value: string,
 ): PaymentAction {
-	if (NON_PAYMENT_VALUES.has(value)) {
-		return "none";
-	}
-
 	if (value === "pending" && (type === "delivery" || type === "shipping")) {
 		return "payment_intent";
 	}
@@ -90,18 +78,6 @@ async function loadItemPrice(itemId: string): Promise<ItemPrice | undefined> {
 	};
 }
 
-function needsIntentValidation(action: PaymentAction): boolean {
-	return action === "payment_intent";
-}
-
-function needsStoredIntentValidation(action: PaymentAction): boolean {
-	return (
-		action === "payment_capture" ||
-		action === "payment_transfer" ||
-		action === "payment_capture_then_transfer"
-	);
-}
-
 export async function validatePaymentPreconditions(
 	message: MessagePayload,
 ): Promise<ValidationResult> {
@@ -110,7 +86,7 @@ export async function validatePaymentPreconditions(
 		return { ok: true };
 	}
 
-	if (needsIntentValidation(action)) {
+	if (action === "payment_intent") {
 		const price = await loadItemPrice(message.fk);
 		if (!price) {
 			return {
@@ -121,14 +97,13 @@ export async function validatePaymentPreconditions(
 		return { ok: true };
 	}
 
-	if (needsStoredIntentValidation(action)) {
-		const stored = await resolvePaymentIntentForMessage(message);
-		if (!stored) {
-			return {
-				ok: false,
-				reason: "No payment intent found for this purchase",
-			};
-		}
+	// capture, transfer, and capture_then_transfer all act on a stored intent
+	const stored = await resolvePaymentIntentForMessage(message);
+	if (!stored) {
+		return {
+			ok: false,
+			reason: "No payment intent found for this purchase",
+		};
 	}
 
 	return { ok: true };
@@ -143,7 +118,7 @@ async function runPaymentIntent(
 	}
 	const response = (await callCoreApi("payment_intent", {
 		fk: message.fk,
-		resource: message.resource ?? MARKETPLACE_RESOURCE.ITEMS,
+		resource: message.resource,
 		amount: price.amount,
 		currency: price.currency,
 		authorization_message_id: message.id,
@@ -153,24 +128,6 @@ async function runPaymentIntent(
 		itemId: message.fk,
 		authorizationMessageId: message.id,
 		paymentIntentId: response.payment_provider_transaction_id,
-	});
-}
-
-async function runPaymentCapture(paymentIntentId: string): Promise<void> {
-	await callCoreApi("payment_capture", {
-		payment_intent_id: paymentIntentId,
-	});
-}
-
-async function runPaymentTransfer(paymentIntentId: string): Promise<void> {
-	await callCoreApi("payment_transfer", {
-		payment_intent_id: paymentIntentId,
-	});
-}
-
-async function runPaymentCancel(paymentIntentId: string): Promise<void> {
-	await callCoreApi("payment_cancel", {
-		payment_intent_id: paymentIntentId,
 	});
 }
 
@@ -195,36 +152,21 @@ export async function runPaymentReaction(
 			return;
 		}
 
-		if (action === "payment_cancel") {
-			const stored = await resolvePaymentIntentForMessage(message);
-			if (!stored) {
-				return;
-			}
-			await runPaymentCancel(stored.payment_intent_id);
-			return;
-		}
-
 		const stored = await resolvePaymentIntentForMessage(message);
 		if (!stored) {
-			console.error(
-				`[marketplace] ${action} skipped: no payment intent for item ${message.fk}`,
-			);
+			// Canceling a request that never got an intent is normal.
+			if (action !== "payment_cancel") {
+				console.error(
+					`[marketplace] ${action} skipped: no payment intent for item ${message.fk}`,
+				);
+			}
 			return;
 		}
-
-		if (action === "payment_capture") {
-			await runPaymentCapture(stored.payment_intent_id);
-			return;
-		}
-
-		if (action === "payment_transfer") {
-			await runPaymentTransfer(stored.payment_intent_id);
-			return;
-		}
+		const params = { payment_intent_id: stored.payment_intent_id };
 
 		if (action === "payment_capture_then_transfer") {
 			try {
-				await runPaymentCapture(stored.payment_intent_id);
+				await callCoreApi("payment_capture", params);
 			} catch (error) {
 				console.error(
 					`[marketplace] payment_capture failed for item ${message.fk}:`,
@@ -232,15 +174,11 @@ export async function runPaymentReaction(
 				);
 				return;
 			}
-			try {
-				await runPaymentTransfer(stored.payment_intent_id);
-			} catch (error) {
-				console.error(
-					`[marketplace] payment_transfer failed for item ${message.fk}:`,
-					error,
-				);
-			}
+			await callCoreApi("payment_transfer", params);
+			return;
 		}
+
+		await callCoreApi(action, params);
 	} catch (error) {
 		console.error(
 			`[marketplace] payment reaction failed for item ${message.fk} (${action}):`,

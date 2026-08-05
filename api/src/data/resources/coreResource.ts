@@ -146,7 +146,8 @@ export function makeCoreResource<
 >(config: {
 	table: ResourceTable;
 	validate: (raw: unknown) => T;
-	toUpdateSet: (validated: T, nowIso: string) => Record<string, unknown>;
+	// Omit for append-only resources; their update stays unregistered and throws.
+	toUpdateSet?: (validated: T, nowIso: string) => Record<string, unknown>;
 	normalize?: (raw: unknown) => T;
 	extraSyncEntitlements?: (scope: SyncScope) => (SQL | undefined)[];
 }) {
@@ -244,6 +245,7 @@ export function makeCoreResource<
 		nowIso: string,
 		notify: (value: unknown) => void,
 	): Promise<UpdateResponse> {
+		if (!toUpdateSet) throw new Error("Resource does not support update");
 		const existingRows = await db
 			.select()
 			.from(table)

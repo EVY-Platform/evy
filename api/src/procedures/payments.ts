@@ -10,7 +10,13 @@ import type {
 	PaymentWebhookRequest,
 } from "evy-types";
 import type { EvyDb } from "../database/db";
-import { appendTransactionRow, hasRow, requireIntent } from "./paymentsShared";
+import {
+	appendTransactionRow,
+	hasRow,
+	paymentMetadata,
+	paymentWebhookRequest,
+	requireIntent,
+} from "./paymentsShared";
 import { handlePaymentWebhook } from "./paymentWebhook";
 import { getStripeGateway } from "./stripeGateway";
 
@@ -21,18 +27,14 @@ async function autoCallPaymentWebhook(
 	error?: string,
 ): Promise<void> {
 	for (const type of events) {
-		const request: PaymentWebhookRequest = {
-			type,
-			payment_intent_id: paymentIntentId,
-		};
-		if (error) {
-			request.error = error;
-		}
 		try {
-			await handlePaymentWebhook(request, db);
+			await handlePaymentWebhook(
+				paymentWebhookRequest(type, paymentIntentId, error),
+				db,
+			);
 		} catch (webhookError) {
 			console.error(
-				`payment webhook auto-call failed for ${type}:`,
+				`payment webhook auto-call failed for ${type} (intent ${paymentIntentId}):`,
 				webhookError,
 			);
 		}
@@ -47,11 +49,7 @@ export async function paymentIntent(
 		await getStripeGateway().createPaymentIntent({
 			amount: params.amount,
 			currency: params.currency,
-			metadata: {
-				fk: params.fk,
-				resource: params.resource,
-				authorization_message_id: params.authorization_message_id,
-			},
+			metadata: paymentMetadata(params),
 		});
 
 	return appendTransactionRow(
@@ -113,10 +111,11 @@ export async function paymentCancel(
 	db: EvyDb,
 ): Promise<PaymentCancelResponse> {
 	const { rows, intent } = await requireIntent(db, params.payment_intent_id);
-	if (hasRow(rows, "charge", "canceled")) {
-		return rows.find(
-			(row) => row.type === "charge" && row.status === "canceled",
-		) as PaymentCancelResponse;
+	const canceled = rows.find(
+		(row) => row.type === "charge" && row.status === "canceled",
+	);
+	if (canceled) {
+		return canceled;
 	}
 	if (hasRow(rows, "charge", "initiated")) {
 		throw new Error(
@@ -161,11 +160,7 @@ export async function paymentTransfer(
 		paymentIntentId: params.payment_intent_id,
 		amount: intent.amount,
 		currency: intent.currency,
-		metadata: {
-			fk: intent.fk,
-			resource: intent.resource,
-			authorization_message_id: intent.authorization_message_id,
-		},
+		metadata: paymentMetadata(intent),
 	});
 
 	const transferEvents: PaymentWebhookRequest["type"][] = outcome.ok

@@ -7,20 +7,13 @@ import { MARKETPLACE_RESOURCE } from "./resources";
 
 export type ItemStatus = (typeof item_status_history.$inferSelect)["status"];
 
-async function latestStatusRow(itemId: string) {
-	return db
-		.select({
-			status: item_status_history.status,
-			created_at: item_status_history.created_at,
-		})
+export async function currentStatus(itemId: string): Promise<ItemStatus> {
+	const rows = await db
+		.select({ status: item_status_history.status })
 		.from(item_status_history)
 		.where(eq(item_status_history.item_id, itemId))
 		.orderBy(desc(item_status_history.created_at))
 		.limit(1);
-}
-
-export async function currentStatus(itemId: string): Promise<ItemStatus> {
-	const rows = await latestStatusRow(itemId);
 	return rows[0]?.status ?? "available";
 }
 

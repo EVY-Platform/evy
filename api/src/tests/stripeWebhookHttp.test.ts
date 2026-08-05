@@ -1,32 +1,20 @@
-import {
-	afterAll,
-	afterEach,
-	beforeAll,
-	beforeEach,
-	describe,
-	expect,
-	it,
-} from "bun:test";
-import { migrate } from "drizzle-orm/pglite/migrator";
+import { afterEach, beforeEach, describe, expect, it } from "bun:test";
 import type { DATA_EVY_Transaction } from "evy-types";
-import { transaction } from "evy-types/db/schema.generated";
 import Stripe from "stripe";
-import { paymentIntent } from "../procedures/payments";
-import { findRowsByIntentId, hasRow } from "../procedures/paymentsShared";
-import { setStripeGatewayForTests } from "../procedures/stripeGateway";
-import { createMockStripeGateway } from "../procedures/stripeGatewayMock";
+import {
+	appendTransactionRow,
+	findRowsByIntentId,
+	hasRow,
+} from "../procedures/paymentsShared";
 import { handleStripeWebhookRequest } from "../shared/stripeWebhookHttp";
 import {
-	asEvyDb,
-	clearAllTestTables,
-	createPgliteTestDatabase,
+	createSeededIntent,
+	setupPaymentTestDb,
 	stashEnv,
-	validPaymentIntentRequest,
 } from "./wsTestHelpers";
 
 const WEBHOOK_SECRET = "whsec_test_secret_for_unit_tests";
-const { pgliteClient, testDb } = createPgliteTestDatabase();
-const dataDb = asEvyDb(testDb);
+const { testDb, dataDb } = setupPaymentTestDb();
 
 let restoreEnv: (() => void) | undefined;
 
@@ -51,97 +39,75 @@ function webhookRequest(body: string, signature?: string): Request {
 	});
 }
 
-async function insertLedgerRow(
-	intent: DATA_EVY_Transaction,
-	status: DATA_EVY_Transaction["status"],
-): Promise<void> {
-	const now = new Date().toISOString();
-	await testDb.insert(transaction).values({
-		...intent,
-		id: crypto.randomUUID(),
-		status,
-		created_at: now,
-		updated_at: now,
-	});
-}
-
-beforeAll(async () => {
-	await migrate(testDb, { migrationsFolder: "./drizzle" });
-});
-
-afterAll(async () => {
-	await pgliteClient.close();
-});
-
-beforeEach(async () => {
+beforeEach(() => {
 	restoreEnv = stashEnv({ STRIPE_WEBHOOK_SECRET: WEBHOOK_SECRET });
-	setStripeGatewayForTests(createMockStripeGateway());
-	await clearAllTestTables(testDb);
 });
 
 afterEach(() => {
-	setStripeGatewayForTests(undefined);
 	restoreEnv?.();
 });
 
 describe("handleStripeWebhookRequest", () => {
-	it("processes payment_intent.succeeded into charge succeeded row", async () => {
-		const request = validPaymentIntentRequest();
-		const intent = await paymentIntent(request, dataDb);
-		const paymentIntentId = intent.payment_provider_transaction_id;
-
-		// initiated row required by capture_succeeded handler
-		await insertLedgerRow(intent, "initiated");
-
-		const payload = JSON.stringify({
-			id: "evt_test",
-			object: "event",
-			type: "payment_intent.succeeded",
-			data: {
-				object: {
-					id: paymentIntentId,
-					object: "payment_intent",
+	const successEventCases: Array<
+		[
+			string,
+			DATA_EVY_Transaction["status"],
+			DATA_EVY_Transaction["status"][],
+			(paymentIntentId: string) => Record<string, unknown>,
+		]
+	> = [
+		[
+			"payment_intent.succeeded",
+			"succeeded",
+			["initiated"],
+			(paymentIntentId) => ({
+				id: "evt_test",
+				object: "event",
+				type: "payment_intent.succeeded",
+				data: {
+					object: {
+						id: paymentIntentId,
+						object: "payment_intent",
+					},
 				},
-			},
-		});
+			}),
+		],
+		[
+			"charge.captured",
+			"completed",
+			["initiated", "succeeded"],
+			(paymentIntentId) => ({
+				id: "evt_test_charge",
+				object: "event",
+				type: "charge.captured",
+				data: {
+					object: {
+						id: "ch_test",
+						object: "charge",
+						payment_intent: paymentIntentId,
+					},
+				},
+			}),
+		],
+	];
+
+	it.each(
+		successEventCases,
+	)("maps %s to an internal charge %s row", async (_eventType, expectedStatus, priorStatuses, buildEvent) => {
+		const { intent, intentId } = await createSeededIntent(testDb, dataDb);
+		for (const status of priorStatuses) {
+			await appendTransactionRow(dataDb, intent, "charge", status);
+		}
+
+		const payload = JSON.stringify(buildEvent(intentId));
 		const response = await handleStripeWebhookRequest(
 			webhookRequest(payload, await signPayload(payload)),
 			dataDb,
 		);
 
 		expect(response.status).toBe(200);
-		const rows = await findRowsByIntentId(dataDb, paymentIntentId);
-		expect(hasRow(rows, "charge", "succeeded")).toBe(true);
-	});
-
-	it("maps charge.captured to charge.completed via payment_intent", async () => {
-		const request = validPaymentIntentRequest();
-		const intent = await paymentIntent(request, dataDb);
-		const paymentIntentId = intent.payment_provider_transaction_id;
-
-		await insertLedgerRow(intent, "initiated");
-		await insertLedgerRow(intent, "succeeded");
-
-		const payload = JSON.stringify({
-			id: "evt_test_charge",
-			object: "event",
-			type: "charge.captured",
-			data: {
-				object: {
-					id: "ch_test",
-					object: "charge",
-					payment_intent: paymentIntentId,
-				},
-			},
-		});
-		const response = await handleStripeWebhookRequest(
-			webhookRequest(payload, await signPayload(payload)),
-			dataDb,
-		);
-
-		expect(response.status).toBe(200);
-		const rows = await findRowsByIntentId(dataDb, paymentIntentId);
-		expect(hasRow(rows, "charge", "completed")).toBe(true);
+		const rows = await findRowsByIntentId(dataDb, intentId);
+		expect(hasRow(rows, "charge", expectedStatus)).toBe(true);
 	});
 
 	it("returns 400 for missing signature", async () => {
@@ -163,9 +129,7 @@ describe("handleStripeWebhookRequest", () => {
 	});
 
 	it("acknowledges unhandled event types without writing rows", async () => {
-		const request = validPaymentIntentRequest();
-		const intent = await paymentIntent(request, dataDb);
-		const paymentIntentId = intent.payment_provider_transaction_id;
+		const { intentId } = await createSeededIntent(testDb, dataDb);
 
 		const payload = JSON.stringify({
 			id: "evt_unhandled",
@@ -175,7 +139,7 @@ describe("handleStripeWebhookRequest", () => {
 				object: {
 					id: "ch_test",
 					object: "charge",
-					payment_intent: paymentIntentId,
+					payment_intent: intentId,
 				},
 			},
 		});
@@ -185,7 +149,7 @@ describe("handleStripeWebhookRequest", () => {
 		);
 
 		expect(response.status).toBe(200);
-		const rows = await findRowsByIntentId(dataDb, paymentIntentId);
+		const rows = await findRowsByIntentId(dataDb, intentId);
 		expect(rows).toHaveLength(1);
 	});
 

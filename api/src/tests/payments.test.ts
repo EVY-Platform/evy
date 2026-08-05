@@ -1,22 +1,10 @@
-import {
-	afterAll,
-	afterEach,
-	beforeAll,
-	beforeEach,
-	describe,
-	expect,
-	it,
-} from "bun:test";
-import { migrate } from "drizzle-orm/pglite/migrator";
+import { beforeEach, describe, expect, it } from "bun:test";
 import {
 	EVY_CORE_RESOURCE_REF,
 	EVY_CORE_SERVICE,
 } from "evy-types/coreResources";
 import * as schema from "evy-types/db/schema.generated";
-import {
-	MOCK_CAPTURE_FAILURE_AMOUNT,
-	MOCK_TRANSFER_FAILURE_AMOUNT,
-} from "evy-types/paymentMocks";
+import { MOCK_TRANSFER_FAILURE_AMOUNT } from "evy-types/paymentMocks";
 import {
 	paymentCancel,
 	paymentCapture,
@@ -30,33 +18,16 @@ import {
 	type StripeTransferParams,
 	setStripeGatewayForTests,
 } from "../procedures/stripeGateway";
-import { createMockStripeGateway } from "../procedures/stripeGatewayMock";
 import {
-	asEvyDb,
-	clearAllTestTables,
-	createPgliteTestDatabase,
-	seedAuthorizationMessage,
+	createCapturedIntent,
+	createSeededIntent,
+	setupPaymentTestDb,
 	validPaymentIntentRequest,
 } from "./wsTestHelpers";
 
-const { pgliteClient, testDb } = createPgliteTestDatabase();
-const dataDb = asEvyDb(testDb);
+const { testDb, dataDb } = setupPaymentTestDb();
 
 const { api, get } = await import("../procedures/rpc");
-
-beforeAll(async () => {
-	await migrate(testDb, { migrationsFolder: "./drizzle" });
-	setStripeGatewayForTests(createMockStripeGateway());
-});
-
-afterAll(async () => {
-	setStripeGatewayForTests(undefined);
-	await pgliteClient.close();
-});
-
-beforeEach(async () => {
-	await clearAllTestTables(testDb);
-});
 
 describe("payment_intent procedure", () => {
 	it("creates a charge intent transaction and returns it", async () => {
@@ -93,73 +64,21 @@ describe("payment_intent procedure", () => {
 			status: "intent",
 		});
 	});
-
-	it("rejects a zero amount", async () => {
-		await expect(
-			api(
-				{
-					service: EVY_CORE_SERVICE,
-					method: "payment_intent",
-					data: { ...validPaymentIntentRequest(), amount: 0 },
-				},
-				dataDb,
-			),
-		).rejects.toThrow("PaymentIntentRequest validation failed");
-	});
-
-	it("is reachable via api{service:evy, method:payment_intent}", async () => {
-		const request = validPaymentIntentRequest();
-		const created = await api(
-			{
-				service: EVY_CORE_SERVICE,
-				method: "payment_intent",
-				data: request,
-			},
-			dataDb,
-		);
-
-		expect(created).toMatchObject({
-			type: "charge",
-			status: "intent",
-			fk: request.fk,
-			amount: 250,
-		});
-	});
-
-	it("rejects an invalid payment intent request", async () => {
-		await expect(
-			api(
-				{
-					service: EVY_CORE_SERVICE,
-					method: "payment_intent",
-					data: { ...validPaymentIntentRequest(), amount: -1 },
-				},
-				dataDb,
-			),
-		).rejects.toThrow("PaymentIntentRequest validation failed");
-	});
 });
 
 describe("payment_capture procedure", () => {
 	it("returns initiated row and auto-webhook appends succeeded and completed rows", async () => {
-		const request = validPaymentIntentRequest();
-		await seedAuthorizationMessage(testDb, request);
-		const intent = await paymentIntent(request, dataDb);
+		const { intentId } = await createSeededIntent(testDb, dataDb);
 		const captured = await paymentCapture(
-			{ payment_intent_id: intent.payment_provider_transaction_id },
+			{ payment_intent_id: intentId },
 			dataDb,
 		);
 
 		expect(captured.type).toBe("charge");
 		expect(captured.status).toBe("initiated");
-		expect(captured.payment_provider_transaction_id).toBe(
-			intent.payment_provider_transaction_id,
-		);
+		expect(captured.payment_provider_transaction_id).toBe(intentId);
 
-		const rows = await findRowsByIntentId(
-			dataDb,
-			intent.payment_provider_transaction_id,
-		);
+		const rows = await findRowsByIntentId(dataDb, intentId);
 		expect(hasRow(rows, "charge", "initiated")).toBe(true);
 		expect(hasRow(rows, "charge", "succeeded")).toBe(true);
 		expect(hasRow(rows, "charge", "completed")).toBe(true);
@@ -172,134 +91,42 @@ describe("payment_capture procedure", () => {
 	});
 
 	it("rejects a second capture of the same intent", async () => {
-		const request = validPaymentIntentRequest();
-		await seedAuthorizationMessage(testDb, request);
-		const intent = await paymentIntent(request, dataDb);
-		await paymentCapture(
-			{ payment_intent_id: intent.payment_provider_transaction_id },
-			dataDb,
-		);
+		const { intentId } = await createCapturedIntent(testDb, dataDb);
 		await expect(
-			paymentCapture(
-				{ payment_intent_id: intent.payment_provider_transaction_id },
-				dataDb,
-			),
+			paymentCapture({ payment_intent_id: intentId }, dataDb),
 		).rejects.toThrow("payment intent already captured");
-	});
-
-	it("with MOCK_CAPTURE_FAILURE_AMOUNT appends failed row and charge_failed message", async () => {
-		const request = validPaymentIntentRequest({
-			amount: MOCK_CAPTURE_FAILURE_AMOUNT,
-		});
-		await seedAuthorizationMessage(testDb, request);
-		const intent = await paymentIntent(request, dataDb);
-		await paymentCapture(
-			{ payment_intent_id: intent.payment_provider_transaction_id },
-			dataDb,
-		);
-
-		const rows = await findRowsByIntentId(
-			dataDb,
-			intent.payment_provider_transaction_id,
-		);
-		expect(hasRow(rows, "charge", "initiated")).toBe(true);
-		expect(hasRow(rows, "charge", "failed")).toBe(true);
-		expect(hasRow(rows, "charge", "succeeded")).toBe(false);
-		expect(hasRow(rows, "charge", "completed")).toBe(false);
-
-		const failedRow = rows.find(
-			(row) => row.type === "charge" && row.status === "failed",
-		);
-		expect(failedRow?.error).toBe("mock capture failure");
-
-		const messages = await testDb.select().from(schema.message);
-		const chargeFailed = messages.find(
-			(row) => row.value === "charge_failed",
-		);
-		expect(chargeFailed).toBeDefined();
-		expect(chargeFailed?.fk).toBe(request.fk);
-		expect(chargeFailed?.resource).toBe(request.resource);
-		expect(chargeFailed?.type).toBe("pickup");
-	});
-
-	it("is reachable via api{service:evy, method:payment_capture}", async () => {
-		const request = validPaymentIntentRequest();
-		await seedAuthorizationMessage(testDb, request);
-		const intent = await paymentIntent(request, dataDb);
-		const captured = await api(
-			{
-				service: EVY_CORE_SERVICE,
-				method: "payment_capture",
-				data: {
-					payment_intent_id: intent.payment_provider_transaction_id,
-				},
-			},
-			dataDb,
-		);
-
-		expect(captured).toMatchObject({
-			type: "charge",
-			status: "initiated",
-			payment_provider_transaction_id:
-				intent.payment_provider_transaction_id,
-		});
-	});
-
-	it("rejects an invalid payment capture request", async () => {
-		await expect(
-			api(
-				{
-					service: EVY_CORE_SERVICE,
-					method: "payment_capture",
-					data: { payment_intent_id: "" },
-				},
-				dataDb,
-			),
-		).rejects.toThrow("PaymentCaptureRequest validation failed");
 	});
 });
 
 describe("payment_cancel procedure", () => {
 	it("appends charge canceled row and returns it", async () => {
-		const request = validPaymentIntentRequest();
-		await seedAuthorizationMessage(testDb, request);
-		const intent = await paymentIntent(request, dataDb);
+		const { intentId } = await createSeededIntent(testDb, dataDb);
 		const canceled = await paymentCancel(
-			{ payment_intent_id: intent.payment_provider_transaction_id },
+			{ payment_intent_id: intentId },
 			dataDb,
 		);
 
 		expect(canceled.type).toBe("charge");
 		expect(canceled.status).toBe("canceled");
-		expect(canceled.payment_provider_transaction_id).toBe(
-			intent.payment_provider_transaction_id,
-		);
+		expect(canceled.payment_provider_transaction_id).toBe(intentId);
 
-		const rows = await findRowsByIntentId(
-			dataDb,
-			intent.payment_provider_transaction_id,
-		);
+		const rows = await findRowsByIntentId(dataDb, intentId);
 		expect(hasRow(rows, "charge", "canceled")).toBe(true);
 	});
 
 	it("second cancel is idempotent and returns the existing row", async () => {
-		const request = validPaymentIntentRequest();
-		await seedAuthorizationMessage(testDb, request);
-		const intent = await paymentIntent(request, dataDb);
+		const { intentId } = await createSeededIntent(testDb, dataDb);
 		const first = await paymentCancel(
-			{ payment_intent_id: intent.payment_provider_transaction_id },
+			{ payment_intent_id: intentId },
 			dataDb,
 		);
 		const second = await paymentCancel(
-			{ payment_intent_id: intent.payment_provider_transaction_id },
+			{ payment_intent_id: intentId },
 			dataDb,
 		);
 
 		expect(second.id).toBe(first.id);
-		const rows = await findRowsByIntentId(
-			dataDb,
-			intent.payment_provider_transaction_id,
-		);
+		const rows = await findRowsByIntentId(dataDb, intentId);
 		expect(
 			rows.filter(
 				(row) => row.type === "charge" && row.status === "canceled",
@@ -308,34 +135,17 @@ describe("payment_cancel procedure", () => {
 	});
 
 	it("rejects cancel after capture initiated", async () => {
-		const request = validPaymentIntentRequest();
-		await seedAuthorizationMessage(testDb, request);
-		const intent = await paymentIntent(request, dataDb);
-		await paymentCapture(
-			{ payment_intent_id: intent.payment_provider_transaction_id },
-			dataDb,
-		);
+		const { intentId } = await createCapturedIntent(testDb, dataDb);
 		await expect(
-			paymentCancel(
-				{ payment_intent_id: intent.payment_provider_transaction_id },
-				dataDb,
-			),
+			paymentCancel({ payment_intent_id: intentId }, dataDb),
 		).rejects.toThrow("payment intent already captured");
 	});
 
 	it("rejects capture after cancel", async () => {
-		const request = validPaymentIntentRequest();
-		await seedAuthorizationMessage(testDb, request);
-		const intent = await paymentIntent(request, dataDb);
-		await paymentCancel(
-			{ payment_intent_id: intent.payment_provider_transaction_id },
-			dataDb,
-		);
+		const { intentId } = await createSeededIntent(testDb, dataDb);
+		await paymentCancel({ payment_intent_id: intentId }, dataDb);
 		await expect(
-			paymentCapture(
-				{ payment_intent_id: intent.payment_provider_transaction_id },
-				dataDb,
-			),
+			paymentCapture({ payment_intent_id: intentId }, dataDb),
 		).rejects.toThrow("payment intent canceled");
 	});
 
@@ -344,107 +154,47 @@ describe("payment_cancel procedure", () => {
 			paymentCancel({ payment_intent_id: crypto.randomUUID() }, dataDb),
 		).rejects.toThrow("payment intent not found");
 	});
-
-	it("is reachable via api{service:evy, method:payment_cancel}", async () => {
-		const request = validPaymentIntentRequest();
-		await seedAuthorizationMessage(testDb, request);
-		const intent = await paymentIntent(request, dataDb);
-		const canceled = await api(
-			{
-				service: EVY_CORE_SERVICE,
-				method: "payment_cancel",
-				data: {
-					payment_intent_id: intent.payment_provider_transaction_id,
-				},
-			},
-			dataDb,
-		);
-
-		expect(canceled).toMatchObject({
-			type: "charge",
-			status: "canceled",
-			payment_provider_transaction_id:
-				intent.payment_provider_transaction_id,
-		});
-	});
 });
 
 describe("payment_transfer procedure", () => {
-	async function intentAndCapture() {
-		const request = validPaymentIntentRequest();
-		await seedAuthorizationMessage(testDb, request);
-		const intent = await paymentIntent(request, dataDb);
-		const captured = await paymentCapture(
-			{ payment_intent_id: intent.payment_provider_transaction_id },
-			dataDb,
-		);
-		return { intent, captured };
-	}
-
 	it("creates transfer initiated/succeeded/completed rows", async () => {
-		const { intent } = await intentAndCapture();
+		const { intentId } = await createCapturedIntent(testDb, dataDb);
 		const transferred = await paymentTransfer(
-			{ payment_intent_id: intent.payment_provider_transaction_id },
+			{ payment_intent_id: intentId },
 			dataDb,
 		);
 
 		expect(transferred.type).toBe("transfer");
 		expect(transferred.status).toBe("initiated");
 
-		const rows = await findRowsByIntentId(
-			dataDb,
-			intent.payment_provider_transaction_id,
-		);
+		const rows = await findRowsByIntentId(dataDb, intentId);
 		expect(hasRow(rows, "transfer", "initiated")).toBe(true);
 		expect(hasRow(rows, "transfer", "succeeded")).toBe(true);
 		expect(hasRow(rows, "transfer", "completed")).toBe(true);
 	});
 
 	it("rejects when charge has not succeeded", async () => {
-		const request = validPaymentIntentRequest();
-		await seedAuthorizationMessage(testDb, request);
-		const intent = await paymentIntent(request, dataDb);
+		const { intentId } = await createSeededIntent(testDb, dataDb);
 		await expect(
-			paymentTransfer(
-				{ payment_intent_id: intent.payment_provider_transaction_id },
-				dataDb,
-			),
+			paymentTransfer({ payment_intent_id: intentId }, dataDb),
 		).rejects.toThrow("payment charge not succeeded");
 	});
 
 	it("rejects a duplicate transfer", async () => {
-		const { intent } = await intentAndCapture();
-		await paymentTransfer(
-			{ payment_intent_id: intent.payment_provider_transaction_id },
-			dataDb,
-		);
+		const { intentId } = await createCapturedIntent(testDb, dataDb);
+		await paymentTransfer({ payment_intent_id: intentId }, dataDb);
 		await expect(
-			paymentTransfer(
-				{ payment_intent_id: intent.payment_provider_transaction_id },
-				dataDb,
-			),
+			paymentTransfer({ payment_intent_id: intentId }, dataDb),
 		).rejects.toThrow("payment intent already transferred");
 	});
 
 	it("with MOCK_TRANSFER_FAILURE_AMOUNT appends failed row and transfer_failed message", async () => {
-		const request = validPaymentIntentRequest({
+		const { intentId } = await createCapturedIntent(testDb, dataDb, {
 			amount: MOCK_TRANSFER_FAILURE_AMOUNT,
 		});
-		await seedAuthorizationMessage(testDb, request);
-		const intent = await paymentIntent(request, dataDb);
-		await paymentCapture(
-			{ payment_intent_id: intent.payment_provider_transaction_id },
-			dataDb,
-		);
-		await paymentTransfer(
-			{ payment_intent_id: intent.payment_provider_transaction_id },
-			dataDb,
-		);
+		await paymentTransfer({ payment_intent_id: intentId }, dataDb);
 
-		const rows = await findRowsByIntentId(
-			dataDb,
-			intent.payment_provider_transaction_id,
-		);
+		const rows = await findRowsByIntentId(dataDb, intentId);
 		expect(hasRow(rows, "transfer", "failed")).toBe(true);
 		expect(hasRow(rows, "transfer", "succeeded")).toBe(false);
 		expect(hasRow(rows, "transfer", "completed")).toBe(false);
@@ -459,81 +209,128 @@ describe("payment_transfer procedure", () => {
 			true,
 		);
 	});
+});
 
-	it("is reachable via api{service:evy, method:payment_transfer}", async () => {
-		const { intent } = await intentAndCapture();
-		const transferred = await api(
-			{
-				service: EVY_CORE_SERVICE,
-				method: "payment_transfer",
-				data: {
-					payment_intent_id: intent.payment_provider_transaction_id,
-				},
+describe("core api payment dispatch", () => {
+	const dispatchCases: Array<{
+		method: string;
+		setup: () => Promise<{
+			data: Record<string, unknown>;
+			expected: Record<string, unknown>;
+		}>;
+		invalidData: Record<string, unknown>;
+		expectedError: string;
+	}> = [
+		{
+			method: "payment_intent",
+			setup: async () => {
+				const request = validPaymentIntentRequest();
+				return {
+					data: { ...request },
+					expected: {
+						type: "charge",
+						status: "intent",
+						fk: request.fk,
+						amount: 250,
+					},
+				};
 			},
+			invalidData: { ...validPaymentIntentRequest(), amount: 0 },
+			expectedError: "PaymentIntentRequest validation failed",
+		},
+		{
+			method: "payment_capture",
+			setup: async () => {
+				const { intentId } = await createSeededIntent(testDb, dataDb);
+				return {
+					data: { payment_intent_id: intentId },
+					expected: {
+						type: "charge",
+						status: "initiated",
+						payment_provider_transaction_id: intentId,
+					},
+				};
+			},
+			invalidData: { payment_intent_id: "" },
+			expectedError: "PaymentCaptureRequest validation failed",
+		},
+		{
+			method: "payment_cancel",
+			setup: async () => {
+				const { intentId } = await createSeededIntent(testDb, dataDb);
+				return {
+					data: { payment_intent_id: intentId },
+					expected: {
+						type: "charge",
+						status: "canceled",
+						payment_provider_transaction_id: intentId,
+					},
+				};
+			},
+			invalidData: { payment_intent_id: "" },
+			expectedError: "PaymentCancelRequest validation failed",
+		},
+		{
+			method: "payment_transfer",
+			setup: async () => {
+				const { intentId } = await createCapturedIntent(testDb, dataDb);
+				return {
+					data: { payment_intent_id: intentId },
+					expected: {
+						type: "transfer",
+						status: "initiated",
+						payment_provider_transaction_id: intentId,
+					},
+				};
+			},
+			invalidData: { payment_intent_id: "" },
+			expectedError: "PaymentTransferRequest validation failed",
+		},
+		{
+			method: "payment_webhook",
+			setup: async () => {
+				const { intentId } = await createSeededIntent(testDb, dataDb);
+				return {
+					data: {
+						type: "payment_intent.canceled",
+						payment_intent_id: intentId,
+					},
+					expected: { received: true },
+				};
+			},
+			invalidData: {
+				type: "unknown.event",
+				payment_intent_id: crypto.randomUUID(),
+			},
+			expectedError: "PaymentWebhookRequest validation failed",
+		},
+	];
+
+	it.each(dispatchCases)("$method is reachable via api{service:evy}", async ({
+		method,
+		setup,
+	}) => {
+		const { data, expected } = await setup();
+		const response = await api(
+			{ service: EVY_CORE_SERVICE, method, data },
 			dataDb,
 		);
-
-		expect(transferred).toMatchObject({
-			type: "transfer",
-			status: "initiated",
-			payment_provider_transaction_id:
-				intent.payment_provider_transaction_id,
-		});
+		expect(response).toMatchObject(expected);
 	});
 
-	it("rejects an invalid payment transfer request", async () => {
+	it.each(
+		dispatchCases,
+	)("$method rejects an invalid request with validation failed", async ({
+		method,
+		invalidData,
+		expectedError,
+	}) => {
 		await expect(
 			api(
-				{
-					service: EVY_CORE_SERVICE,
-					method: "payment_transfer",
-					data: { payment_intent_id: "" },
-				},
+				{ service: EVY_CORE_SERVICE, method, data: invalidData },
 				dataDb,
 			),
-		).rejects.toThrow("PaymentTransferRequest validation failed");
-	});
-
-	describe("gateway integration", () => {
-		let recordingGateway: StripeGateway & {
-			transferCalls: StripeTransferParams[];
-		};
-
-		beforeEach(() => {
-			recordingGateway = {
-				...createMockStripeGateway(),
-				transferCalls: [],
-				async createTransfer(params) {
-					recordingGateway.transferCalls.push(params);
-					return { ok: true };
-				},
-			};
-			setStripeGatewayForTests(recordingGateway);
-		});
-
-		afterEach(() => {
-			setStripeGatewayForTests(createMockStripeGateway());
-		});
-
-		it("passes intent fields and metadata to createTransfer", async () => {
-			const { intent } = await intentAndCapture();
-			await paymentTransfer(
-				{ payment_intent_id: intent.payment_provider_transaction_id },
-				dataDb,
-			);
-
-			expect(recordingGateway.transferCalls).toHaveLength(1);
-			expect(recordingGateway.transferCalls[0]).toEqual({
-				paymentIntentId: intent.payment_provider_transaction_id,
-				amount: intent.amount,
-				currency: intent.currency,
-				metadata: {
-					fk: intent.fk,
-					resource: intent.resource,
-					authorization_message_id: intent.authorization_message_id,
-				},
-			});
-		});
+		).rejects.toThrow(expectedError);
 	});
 });
 
@@ -568,10 +365,6 @@ describe("payments with real-mode gateway", () => {
 		setStripeGatewayForTests(fakeGateway);
 	});
 
-	afterEach(() => {
-		setStripeGatewayForTests(createMockStripeGateway());
-	});
-
 	it("passes metadata to the gateway and stores the returned intent id", async () => {
 		const request = validPaymentIntentRequest();
 		const created = await paymentIntent(request, dataDb);
@@ -589,37 +382,52 @@ describe("payments with real-mode gateway", () => {
 		expect(created.payment_provider_transaction_id).toMatch(/^pi_fake_/);
 	});
 
+	it("passes intent fields and metadata to createTransfer", async () => {
+		const { intent, intentId } = await createCapturedIntent(testDb, dataDb);
+		await paymentTransfer({ payment_intent_id: intentId }, dataDb);
+
+		expect(fakeGateway.transferCalls).toHaveLength(1);
+		expect(fakeGateway.transferCalls[0]).toEqual({
+			paymentIntentId: intentId,
+			amount: intent.amount,
+			currency: intent.currency,
+			metadata: {
+				fk: intent.fk,
+				resource: intent.resource,
+				authorization_message_id: intent.authorization_message_id,
+			},
+		});
+	});
+
 	it("calls capture on the gateway and appends failure rows on capture error", async () => {
 		fakeGateway.capturePaymentIntent = async (id, amount) => {
 			fakeGateway.captureCalls.push({ id, amount });
 			return { ok: false, reason: "card declined" };
 		};
 
-		const request = validPaymentIntentRequest();
-		await seedAuthorizationMessage(testDb, request);
-		const intent = await paymentIntent(request, dataDb);
-		await paymentCapture(
-			{ payment_intent_id: intent.payment_provider_transaction_id },
-			dataDb,
-		);
+		const { request, intentId } = await createSeededIntent(testDb, dataDb);
+		await paymentCapture({ payment_intent_id: intentId }, dataDb);
 
 		expect(fakeGateway.captureCalls).toEqual([
-			{
-				id: intent.payment_provider_transaction_id,
-				amount: request.amount,
-			},
+			{ id: intentId, amount: request.amount },
 		]);
 
-		const rows = await findRowsByIntentId(
-			dataDb,
-			intent.payment_provider_transaction_id,
-		);
+		const rows = await findRowsByIntentId(dataDb, intentId);
 		expect(hasRow(rows, "charge", "failed")).toBe(true);
 		expect(hasRow(rows, "charge", "succeeded")).toBe(false);
 
-		const messages = await testDb.select().from(schema.message);
-		expect(messages.some((row) => row.value === "charge_failed")).toBe(
-			true,
+		const failedRow = rows.find(
+			(row) => row.type === "charge" && row.status === "failed",
 		);
+		expect(failedRow?.error).toBe("card declined");
+
+		const messages = await testDb.select().from(schema.message);
+		const chargeFailed = messages.find(
+			(row) => row.value === "charge_failed",
+		);
+		expect(chargeFailed).toBeDefined();
+		expect(chargeFailed?.fk).toBe(request.fk);
+		expect(chargeFailed?.resource).toBe(request.resource);
+		expect(chargeFailed?.type).toBe("pickup");
 	});
 });

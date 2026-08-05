@@ -3,17 +3,18 @@ import { EVY_MESSAGE_DATA_VALUES } from "evy-types/coreResources";
 
 import { appendStatus, currentStatus, type ItemStatus } from "./status";
 
+// before_create hook payloads carry no id yet, so it stays optional here.
 export type MessagePayload = Pick<
 	DATA_EVY_Message,
-	"fk" | "type" | "value" | "id" | "parent_message_id" | "resource"
->;
+	"fk" | "type" | "value" | "parent_message_id" | "resource"
+> & { id?: string };
 
 export type TransactionPayload = Pick<
 	DATA_EVY_Transaction,
 	"fk" | "type" | "status"
 >;
 
-type ValidationResult = { ok: true } | { ok: false; reason: string };
+export type ValidationResult = { ok: true } | { ok: false; reason: string };
 
 const PICKUP_HANDSHAKE_VALUES = new Set([
 	"transaction",

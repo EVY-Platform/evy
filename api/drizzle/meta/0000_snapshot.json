@@ -1,5 +1,5 @@
 {
-	"id": "42d36445-70db-48cb-a0df-626de4e6bab7",
+	"id": "49f3b9ee-a330-4e14-a42d-b3bffed75ff1",
 	"prevId": "00000000-0000-0000-0000-000000000000",
 	"version": "7",
 	"dialect": "postgresql",
@@ -954,6 +954,12 @@
 					"type": "uuid",
 					"primaryKey": false,
 					"notNull": true
+				},
+				"error": {
+					"name": "error",
+					"type": "text",
+					"primaryKey": false,
+					"notNull": false
 				},
 				"visibility": {
 					"name": "visibility",

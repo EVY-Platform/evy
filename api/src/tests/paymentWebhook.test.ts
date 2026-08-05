@@ -1,85 +1,24 @@
-import {
-	afterAll,
-	afterEach,
-	beforeAll,
-	beforeEach,
-	describe,
-	expect,
-	it,
-} from "bun:test";
-import { migrate } from "drizzle-orm/pglite/migrator";
-import { EVY_CORE_SERVICE } from "evy-types/coreResources";
+import { describe, expect, it } from "bun:test";
 import * as schema from "evy-types/db/schema.generated";
-import { paymentIntent } from "../procedures/payments";
 import {
 	appendTransactionRow,
 	findRowsByIntentId,
 	hasRow,
 } from "../procedures/paymentsShared";
 import { handlePaymentWebhook } from "../procedures/paymentWebhook";
-import { setStripeGatewayForTests } from "../procedures/stripeGateway";
-import { createMockStripeGateway } from "../procedures/stripeGatewayMock";
-import {
-	asEvyDb,
-	clearAllTestTables,
-	createPgliteTestDatabase,
-	seedAuthorizationMessage,
-	validPaymentIntentRequest,
-} from "./wsTestHelpers";
+import { createSeededIntent, setupPaymentTestDb } from "./wsTestHelpers";
 
-const { pgliteClient, testDb } = createPgliteTestDatabase();
-const dataDb = asEvyDb(testDb);
-
-const { api } = await import("../procedures/rpc");
-
-beforeAll(async () => {
-	await migrate(testDb, { migrationsFolder: "./drizzle" });
-});
-
-afterAll(async () => {
-	await pgliteClient.close();
-});
-
-beforeEach(async () => {
-	setStripeGatewayForTests(createMockStripeGateway());
-	await clearAllTestTables(testDb);
-});
-
-afterEach(() => {
-	setStripeGatewayForTests(undefined);
-});
+const { testDb, dataDb } = setupPaymentTestDb();
 
 async function createIntentWithInitiatedRow() {
-	const request = validPaymentIntentRequest();
-	await seedAuthorizationMessage(testDb, request);
-	const intent = await paymentIntent(request, dataDb);
+	const { intent, intentId } = await createSeededIntent(testDb, dataDb);
 	await appendTransactionRow(dataDb, intent, "charge", "initiated");
-	return { request, intent };
+	return { intent, intentId };
 }
 
 describe("payment_webhook handler", () => {
-	it("acks payment_intent.succeeded without writing a row", async () => {
-		const request = validPaymentIntentRequest();
-		const intent = await paymentIntent(request, dataDb);
-		const before = await testDb.select().from(schema.transaction);
-
-		const response = await handlePaymentWebhook(
-			{
-				type: "payment_intent.succeeded",
-				payment_intent_id: intent.payment_provider_transaction_id,
-			},
-			dataDb,
-		);
-
-		expect(response).toEqual({ received: true });
-		expect(await testDb.select().from(schema.transaction)).toHaveLength(
-			before.length,
-		);
-	});
-
 	it("writes charge succeeded and completed rows for capture events", async () => {
-		const { intent } = await createIntentWithInitiatedRow();
-		const intentId = intent.payment_provider_transaction_id;
+		const { intentId } = await createIntentWithInitiatedRow();
 
 		await handlePaymentWebhook(
 			{
@@ -99,8 +38,7 @@ describe("payment_webhook handler", () => {
 	});
 
 	it("writes transfer succeeded and completed rows", async () => {
-		const { intent } = await createIntentWithInitiatedRow();
-		const intentId = intent.payment_provider_transaction_id;
+		const { intent, intentId } = await createIntentWithInitiatedRow();
 		await handlePaymentWebhook(
 			{
 				type: "payment_intent.capture_succeeded",
@@ -124,8 +62,7 @@ describe("payment_webhook handler", () => {
 	});
 
 	it("is idempotent when the target row already exists", async () => {
-		const { intent } = await createIntentWithInitiatedRow();
-		const intentId = intent.payment_provider_transaction_id;
+		const { intentId } = await createIntentWithInitiatedRow();
 		await handlePaymentWebhook(
 			{
 				type: "payment_intent.capture_succeeded",
@@ -153,7 +90,7 @@ describe("payment_webhook handler", () => {
 		await expect(
 			handlePaymentWebhook(
 				{
-					type: "payment_intent.succeeded",
+					type: "payment_intent.canceled",
 					payment_intent_id: crypto.randomUUID(),
 				},
 				dataDb,
@@ -162,13 +99,12 @@ describe("payment_webhook handler", () => {
 	});
 
 	it("rejects out-of-order capture_succeeded without initiated row", async () => {
-		const request = validPaymentIntentRequest();
-		const intent = await paymentIntent(request, dataDb);
+		const { intentId } = await createSeededIntent(testDb, dataDb);
 		await expect(
 			handlePaymentWebhook(
 				{
 					type: "payment_intent.capture_succeeded",
-					payment_intent_id: intent.payment_provider_transaction_id,
+					payment_intent_id: intentId,
 				},
 				dataDb,
 			),
@@ -176,21 +112,17 @@ describe("payment_webhook handler", () => {
 	});
 
 	it("rejects charge.completed without succeeded row", async () => {
-		const { intent } = await createIntentWithInitiatedRow();
+		const { intentId } = await createIntentWithInitiatedRow();
 		await expect(
 			handlePaymentWebhook(
-				{
-					type: "charge.completed",
-					payment_intent_id: intent.payment_provider_transaction_id,
-				},
+				{ type: "charge.completed", payment_intent_id: intentId },
 				dataDb,
 			),
 		).rejects.toThrow("charge not succeeded");
 	});
 
 	it("rejects transfer events without initiated transfer row", async () => {
-		const { intent } = await createIntentWithInitiatedRow();
-		const intentId = intent.payment_provider_transaction_id;
+		const { intentId } = await createIntentWithInitiatedRow();
 		await handlePaymentWebhook(
 			{
 				type: "payment_intent.capture_succeeded",
@@ -207,9 +139,7 @@ describe("payment_webhook handler", () => {
 	});
 
 	it("appends charge canceled row for payment_intent.canceled", async () => {
-		const request = validPaymentIntentRequest();
-		const intent = await paymentIntent(request, dataDb);
-		const intentId = intent.payment_provider_transaction_id;
+		const { intentId } = await createSeededIntent(testDb, dataDb);
 
 		await handlePaymentWebhook(
 			{ type: "payment_intent.canceled", payment_intent_id: intentId },
@@ -221,9 +151,7 @@ describe("payment_webhook handler", () => {
 	});
 
 	it("is idempotent when canceled row already exists", async () => {
-		const request = validPaymentIntentRequest();
-		const intent = await paymentIntent(request, dataDb);
-		const intentId = intent.payment_provider_transaction_id;
+		const { intentId } = await createSeededIntent(testDb, dataDb);
 		await handlePaymentWebhook(
 			{ type: "payment_intent.canceled", payment_intent_id: intentId },
 			dataDb,
@@ -242,11 +170,11 @@ describe("payment_webhook handler", () => {
 	});
 
 	it("authors charge_failed on capture_failed", async () => {
-		const { intent } = await createIntentWithInitiatedRow();
+		const { intentId } = await createIntentWithInitiatedRow();
 		await handlePaymentWebhook(
 			{
 				type: "payment_intent.capture_failed",
-				payment_intent_id: intent.payment_provider_transaction_id,
+				payment_intent_id: intentId,
 			},
 			dataDb,
 		);
@@ -254,38 +182,5 @@ describe("payment_webhook handler", () => {
 		expect(messages.some((row) => row.value === "charge_failed")).toBe(
 			true,
 		);
-	});
-
-	it("is reachable via api{service:evy, method:payment_webhook}", async () => {
-		const request = validPaymentIntentRequest();
-		const intent = await paymentIntent(request, dataDb);
-		const response = await api(
-			{
-				service: EVY_CORE_SERVICE,
-				method: "payment_webhook",
-				data: {
-					type: "payment_intent.succeeded",
-					payment_intent_id: intent.payment_provider_transaction_id,
-				},
-			},
-			dataDb,
-		);
-		expect(response).toEqual({ received: true });
-	});
-
-	it("rejects unknown event type via request validation", async () => {
-		await expect(
-			api(
-				{
-					service: EVY_CORE_SERVICE,
-					method: "payment_webhook",
-					data: {
-						type: "unknown.event",
-						payment_intent_id: crypto.randomUUID(),
-					},
-				},
-				dataDb,
-			),
-		).rejects.toThrow("PaymentWebhookRequest validation failed");
 	});
 });

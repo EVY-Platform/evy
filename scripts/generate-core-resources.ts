@@ -42,8 +42,19 @@ type RowVisibility = "public" | "private";
 // Core resources whose DATA_EVY_* schema def has no visibility field.
 type DataSchemaDef = { required?: string[] };
 
+// Singulars whose data def name isn't a straight capitalization.
+const DATA_DEF_NAME_OVERRIDES: Record<string, string> = {
+	provider: "DATA_EVY_ServiceProvider",
+};
+
+// Catalog resources with no DATA_EVY_* data def (not row-backed).
+const RESOURCES_WITHOUT_DATA_DEF = new Set(["resources"]);
+
 function dataDefName(singular: string): string {
-	return `DATA_EVY_${singular.charAt(0).toUpperCase() + singular.slice(1)}`;
+	return (
+		DATA_DEF_NAME_OVERRIDES[singular] ??
+		`DATA_EVY_${singular.charAt(0).toUpperCase() + singular.slice(1)}`
+	);
 }
 
 function resourcesWithoutRowVisibility(
@@ -52,8 +63,18 @@ function resourcesWithoutRowVisibility(
 ): Set<string> {
 	const without = new Set<string>();
 	for (const [plural, meta] of Object.entries(resources)) {
-		const def = dataDefs[dataDefName(meta.singular)];
-		if (!def?.required?.includes("visibility")) {
+		if (RESOURCES_WITHOUT_DATA_DEF.has(plural)) {
+			without.add(plural);
+			continue;
+		}
+		const defName = dataDefName(meta.singular);
+		const def = dataDefs[defName];
+		if (!def) {
+			throw new Error(
+				`core.resources.json: resource "${plural}" has no data def "${defName}" — add a DATA_DEF_NAME_OVERRIDES entry or list it in RESOURCES_WITHOUT_DATA_DEF`,
+			);
+		}
+		if (!def.required?.includes("visibility")) {
 			without.add(plural);
 		}
 	}

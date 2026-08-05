@@ -10,7 +10,6 @@
 		"type": {
 			"type": "string",
 			"enum": [
-				"payment_intent.succeeded",
 				"payment_intent.capture_succeeded",
 				"payment_intent.capture_failed",
 				"payment_intent.canceled",
@@ -21,9 +20,7 @@
 			]
 		},
 		"payment_intent_id": {
-			"type": "string",
-			"minLength": 1,
-			"description": "The payment_provider_transaction_id from the intent row; ties every lifecycle row together."
+			"$ref": "../common/rpc.schema.json#/$defs/PaymentIntentId"
 		},
 		"error": {
 			"type": "string",

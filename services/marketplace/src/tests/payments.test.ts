@@ -13,7 +13,6 @@ import { nowIso as clockNowIso } from "evy-types/clock";
 import { db, schema } from "../db";
 import {
 	findIntentByAuthorizationMessageId,
-	findLatestIntentForItem,
 	recordPaymentIntent,
 } from "../paymentIntents";
 import {
@@ -125,27 +124,6 @@ describe("item payment intent storage", () => {
 			await findIntentByAuthorizationMessageId(authMessageId),
 		).toMatchObject({
 			payment_intent_id: "pi_123",
-		});
-	});
-
-	it("finds the latest intent for an item", async () => {
-		const earlier = clockNowIso();
-		const later = clockNowIso();
-		await db.insert(schema.item_payment_intents).values({
-			item_id: itemId,
-			authorization_message_id: "00000000-0000-4000-8000-000000000041",
-			payment_intent_id: "pi_old",
-			created_at: earlier,
-		});
-		await db.insert(schema.item_payment_intents).values({
-			item_id: itemId,
-			authorization_message_id: "00000000-0000-4000-8000-000000000042",
-			payment_intent_id: "pi_new",
-			created_at: later,
-		});
-
-		expect(await findLatestIntentForItem(itemId)).toMatchObject({
-			payment_intent_id: "pi_new",
 		});
 	});
 });

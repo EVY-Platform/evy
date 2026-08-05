@@ -30,6 +30,11 @@
 		},
 		"IdFilter": {
 			"$ref": "#/$defs/DataFilter"
+		},
+		"PaymentIntentId": {
+			"type": "string",
+			"minLength": 1,
+			"description": "The payment_provider_transaction_id from the intent row; ties every lifecycle row of a payment together."
 		}
 	}
 }

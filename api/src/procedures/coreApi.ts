@@ -33,53 +33,51 @@ import * as syncProcedure from "./sync";
  */
 type CoreProcedure = (data: unknown, db: EvyDb) => Promise<unknown>;
 
+function wrap<Req, Res>(
+	validateRequest: (data: unknown) => Req,
+	procedure: (request: Req, db: EvyDb) => Promise<Res>,
+	validateResponse: (response: unknown) => Res,
+): CoreProcedure {
+	return async (data, db) =>
+		validateResponse(await procedure(validateRequest(data), db));
+}
+
 async function runSync(params: unknown, db: EvyDb): Promise<SyncResponse> {
 	const request = validateSyncRequest(params ?? {});
 	return validateSyncResponse(await syncProcedure.sync(request, db));
 }
 
 const coreProcedures: Record<string, CoreProcedure> = {
-	payment_intent: async (data, db) =>
-		validatePaymentIntentResponse(
-			await paymentsProcedure.paymentIntent(
-				validatePaymentIntentRequest(data),
-				db,
-			),
-		),
-	payment_capture: async (data, db) =>
-		validatePaymentCaptureResponse(
-			await paymentsProcedure.paymentCapture(
-				validatePaymentCaptureRequest(data),
-				db,
-			),
-		),
-	payment_cancel: async (data, db) =>
-		validatePaymentCancelResponse(
-			await paymentsProcedure.paymentCancel(
-				validatePaymentCancelRequest(data),
-				db,
-			),
-		),
-	payment_transfer: async (data, db) =>
-		validatePaymentTransferResponse(
-			await paymentsProcedure.paymentTransfer(
-				validatePaymentTransferRequest(data),
-				db,
-			),
-		),
-	payment_webhook: async (data, db) =>
-		validatePaymentWebhookResponse(
-			await paymentWebhookProcedure.handlePaymentWebhook(
-				validatePaymentWebhookRequest(data),
-				db,
-			),
-		),
-	place_search: async (data) =>
-		validatePlaceSearchResponse(
-			await placeSearchProcedure.placeSearch(
-				validatePlaceSearchRequest(data),
-			),
-		),
+	payment_intent: wrap(
+		validatePaymentIntentRequest,
+		paymentsProcedure.paymentIntent,
+		validatePaymentIntentResponse,
+	),
+	payment_capture: wrap(
+		validatePaymentCaptureRequest,
+		paymentsProcedure.paymentCapture,
+		validatePaymentCaptureResponse,
+	),
+	payment_cancel: wrap(
+		validatePaymentCancelRequest,
+		paymentsProcedure.paymentCancel,
+		validatePaymentCancelResponse,
+	),
+	payment_transfer: wrap(
+		validatePaymentTransferRequest,
+		paymentsProcedure.paymentTransfer,
+		validatePaymentTransferResponse,
+	),
+	payment_webhook: wrap(
+		validatePaymentWebhookRequest,
+		paymentWebhookProcedure.handlePaymentWebhook,
+		validatePaymentWebhookResponse,
+	),
+	place_search: wrap(
+		validatePlaceSearchRequest,
+		(request) => placeSearchProcedure.placeSearch(request),
+		validatePlaceSearchResponse,
+	),
 };
 
 /**

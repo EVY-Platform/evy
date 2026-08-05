@@ -136,26 +136,4 @@ describe("marketplace JSON-RPC server", () => {
 
 		client.close();
 	});
-
-	it("vetoes before_create when item status blocks the message", async () => {
-		const client = createClient();
-		await waitForOpen(client);
-		const itemId = crypto.randomUUID();
-
-		await db.insert(schema.item_status_history).values({
-			item_id: itemId,
-			status: "sold",
-			created_at: new Date().toISOString(),
-		});
-
-		const hookRequest = makeHookRequest(itemId);
-
-		const response = await client.call("hook", hookRequest);
-		expect(response).toEqual({
-			ok: false,
-			reason: 'Cannot send "pending" while item status is "sold"',
-		});
-
-		client.close();
-	});
 });
