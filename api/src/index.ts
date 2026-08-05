@@ -6,6 +6,7 @@ import { api, create, deleteResource, get, update } from "./procedures/rpc";
 import { initServiceAdapters } from "./procedures/services";
 import { cancelUpload, handleUploadChunk } from "./procedures/uploads";
 import { runHealthCli } from "./readiness";
+import { startStripeWebhookServer } from "./shared/stripeWebhookHttp";
 import {
 	emitJsonRpc,
 	initServer,
@@ -46,6 +47,7 @@ async function startServer(): Promise<void> {
 		.protected();
 
 	wireBinaryChunkHandler(server, makeAuthChecker(server), handleUploadChunk);
+	startStripeWebhookServer(appDb);
 }
 
 if (import.meta.main) {

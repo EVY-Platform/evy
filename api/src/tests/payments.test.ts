@@ -1,5 +1,6 @@
 import {
 	afterAll,
+	afterEach,
 	beforeAll,
 	beforeEach,
 	describe,
@@ -23,6 +24,11 @@ import {
 } from "../procedures/payments";
 import { findRowsByIntentId, hasRow } from "../procedures/paymentsShared";
 import {
+	type StripeGateway,
+	setStripeGatewayForTests,
+} from "../procedures/stripeGateway";
+import { createMockStripeGateway } from "../procedures/stripeGatewayMock";
+import {
 	asEvyDb,
 	clearAllTestTables,
 	createPgliteTestDatabase,
@@ -37,9 +43,11 @@ const { api, get } = await import("../procedures/rpc");
 
 beforeAll(async () => {
 	await migrate(testDb, { migrationsFolder: "./drizzle" });
+	setStripeGatewayForTests(createMockStripeGateway());
 });
 
 afterAll(async () => {
+	setStripeGatewayForTests(undefined);
 	await pgliteClient.close();
 });
 
@@ -69,9 +77,7 @@ describe("payment_intent procedure", () => {
 		expect(created.service_fee).toBe(0);
 		expect(created.signature).toBe("signed");
 		expect(created.visibility).toBe("public");
-		expect(created.payment_provider_transaction_id).toMatch(
-			/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i,
-		);
+		expect(created.payment_provider_transaction_id).toMatch(/^pi_mock_/);
 
 		const listed = await get(
 			{ resource: EVY_CORE_RESOURCE_REF.TRANSACTIONS },
@@ -358,5 +364,101 @@ describe("payment_transfer procedure", () => {
 				dataDb,
 			),
 		).rejects.toThrow("PaymentTransferRequest validation failed");
+	});
+});
+
+describe("payments with real-mode gateway", () => {
+	let fakeGateway: StripeGateway & {
+		createCalls: Array<{
+			amount: number;
+			currency: string;
+			metadata: {
+				fk: string;
+				resource: string;
+				authorization_message_id: string;
+			};
+		}>;
+		captureCalls: Array<{ id: string; amount: number }>;
+	};
+
+	beforeEach(() => {
+		fakeGateway = {
+			createCalls: [],
+			captureCalls: [],
+			async createPaymentIntent(params) {
+				fakeGateway.createCalls.push(params);
+				return { id: `pi_fake_${crypto.randomUUID()}` };
+			},
+			async capturePaymentIntent(id, amount) {
+				fakeGateway.captureCalls.push({ id, amount });
+				return { ok: true };
+			},
+		};
+		setStripeGatewayForTests(fakeGateway);
+	});
+
+	afterEach(() => {
+		setStripeGatewayForTests(createMockStripeGateway());
+	});
+
+	it("passes metadata to the gateway and stores the returned intent id", async () => {
+		const request = validPaymentIntentRequest();
+		const created = await paymentIntent(request, dataDb);
+
+		expect(fakeGateway.createCalls).toHaveLength(1);
+		expect(fakeGateway.createCalls[0]).toEqual({
+			amount: request.amount,
+			currency: request.currency,
+			metadata: {
+				fk: request.fk,
+				resource: request.resource,
+				authorization_message_id: request.authorization_message_id,
+			},
+		});
+		expect(created.payment_provider_transaction_id).toMatch(/^pi_fake_/);
+	});
+
+	it("skips the gateway for zero amount intents", async () => {
+		const created = await paymentIntent(
+			{ ...validPaymentIntentRequest(), amount: 0 },
+			dataDb,
+		);
+
+		expect(fakeGateway.createCalls).toHaveLength(0);
+		expect(created.payment_provider_transaction_id).toMatch(/^pi_free_/);
+	});
+
+	it("calls capture on the gateway and appends failure rows on capture error", async () => {
+		fakeGateway.capturePaymentIntent = async (id, amount) => {
+			fakeGateway.captureCalls.push({ id, amount });
+			return { ok: false, reason: "card declined" };
+		};
+
+		const request = validPaymentIntentRequest();
+		await seedAuthorizationMessage(testDb, request);
+		const intent = await paymentIntent(request, dataDb);
+		await paymentCapture(
+			{ payment_intent_id: intent.payment_provider_transaction_id },
+			dataDb,
+		);
+
+		expect(fakeGateway.captureCalls).toEqual([
+			{
+				id: intent.payment_provider_transaction_id,
+				amount: request.amount,
+			},
+		]);
+
+		const rows = await findRowsByIntentId(
+			dataDb,
+			intent.payment_provider_transaction_id,
+		);
+		expect(hasRow(rows, "charge", "failed")).toBe(true);
+		expect(hasRow(rows, "charge", "succeeded")).toBe(false);
+
+		const messages = await testDb.select().from(schema.message);
+		expect(messages.some((row) => row.value === "charge_failed")).toBe(
+			true,
+		);
 	});
 });

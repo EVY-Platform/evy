@@ -7,13 +7,11 @@ import type {
 	PaymentTransferResponse,
 	PaymentWebhookRequest,
 } from "evy-types";
-import {
-	MOCK_CAPTURE_FAILURE_AMOUNT,
-	MOCK_TRANSFER_FAILURE_AMOUNT,
-} from "evy-types/paymentMocks";
+import { MOCK_TRANSFER_FAILURE_AMOUNT } from "evy-types/paymentMocks";
 import type { EvyDb } from "../database/db";
 import { appendTransactionRow, hasRow, requireIntent } from "./paymentsShared";
 import { handlePaymentWebhook } from "./paymentWebhook";
+import { getStripeGateway } from "./stripeGateway";
 
 async function autoCallPaymentWebhook(
 	db: EvyDb,
@@ -39,6 +37,22 @@ export async function paymentIntent(
 	params: PaymentIntentRequest,
 	db: EvyDb,
 ): Promise<PaymentIntentResponse> {
+	const paymentProviderTransactionId =
+		params.amount === 0
+			? `pi_free_${crypto.randomUUID()}`
+			: (
+					await getStripeGateway().createPaymentIntent({
+						amount: params.amount,
+						currency: params.currency,
+						metadata: {
+							fk: params.fk,
+							resource: params.resource,
+							authorization_message_id:
+								params.authorization_message_id,
+						},
+					})
+				).id;
+
 	return appendTransactionRow(
 		db,
 		{
@@ -46,7 +60,7 @@ export async function paymentIntent(
 			resource: params.resource,
 			amount: params.amount,
 			currency: params.currency,
-			payment_provider_transaction_id: crypto.randomUUID(),
+			payment_provider_transaction_id: paymentProviderTransactionId,
 			authorization_message_id: params.authorization_message_id,
 		},
 		"charge",
@@ -72,15 +86,23 @@ export async function paymentCapture(
 		"initiated",
 	);
 
-	const captureEvents: PaymentWebhookRequest["type"][] =
-		intent.amount === MOCK_CAPTURE_FAILURE_AMOUNT
-			? ["payment_intent.capture_failed"]
-			: ["payment_intent.capture_succeeded", "charge.completed"];
+	const outcome =
+		intent.amount === 0
+			? { ok: true as const }
+			: await getStripeGateway().capturePaymentIntent(
+					params.payment_intent_id,
+					intent.amount,
+				);
+
+	const captureEvents: PaymentWebhookRequest["type"][] = outcome.ok
+		? ["payment_intent.capture_succeeded", "charge.completed"]
+		: ["payment_intent.capture_failed"];
 	await autoCallPaymentWebhook(db, params.payment_intent_id, captureEvents);
 
 	return created;
 }
 
+// Transfer is intentionally local-only until Stripe Connect / seller onboarding exists.
 export async function paymentTransfer(
 	params: PaymentTransferRequest,
 	db: EvyDb,
