@@ -1106,40 +1106,10 @@ label {
 .evy-id-autocomplete-field {
 	position: relative;
 	width: 100%;
-	min-height: 24px;
-	display: flex;
-	align-items: center;
-	padding: 2px 6px;
-	font-size: var(--text-sm);
-	color: var(--color-black);
-	background-color: var(--color-white);
-	border: 1px solid var(--color-gray-border);
-	border-radius: var(--radius-sm);
-	transition:
-		border-color var(--transition),
-		box-shadow var(--transition);
-}
-.evy-id-autocomplete-field:hover,
-.evy-id-autocomplete-field:focus-within {
-	border-color: var(--color-evy-gray);
-}
-.evy-id-autocomplete-field:focus-within {
-	box-shadow: 0 0 0 3px rgba(60, 60, 100, 0.1);
-}
-.evy-id-autocomplete-field--multiline {
-	min-height: 64px;
-	align-items: flex-start;
 }
 .evy-id-autocomplete-input {
 	width: 100%;
-	padding: 0;
-	border: none;
-	border-radius: 0;
-	box-shadow: none;
-	outline: none;
-	background: transparent;
-	font: inherit;
-	color: inherit;
+	padding: 2px 6px;
 }
 .evy-id-autocomplete-field textarea.evy-id-autocomplete-input {
 	resize: vertical;
