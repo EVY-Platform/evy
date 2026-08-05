@@ -1029,10 +1029,14 @@ class E2ETestBase: XCTestCase {
   }
 
   /// The request container stays up while the request is open and once it has been accepted -
-  /// the confirmation row lives inside it. Exact complement of the picker's gate.
+  /// the confirmation row lives inside it. Exact complement of the picker's gate. Only the
+  /// request's creator sees it: the item owner answers from the home inbox instead.
   static func activeRequestVisibilityExpression(type: String) -> String {
     let latest = latestMessageExpression(type: type)
-    return "{\(latest).value == \"pending\" || \(latest).value == \"accept\"}"
+    let notOwner =
+      "owns(\(MARKETPLACE_ITEMS_RESOURCE_ID), \(MARKETPLACE_ITEMS_RESOURCE_ID).id) == false"
+    return
+      "{(\(latest).value == \"pending\" && \(notOwner)) || (\(latest).value == \"accept\" && \(notOwner))}"
   }
 
   static func pendingRequestVisibilityExpression(type: String) -> String {
