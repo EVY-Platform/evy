@@ -1,4 +1,6 @@
 import type {
+	PaymentCancelRequest,
+	PaymentCancelResponse,
 	PaymentCaptureRequest,
 	PaymentCaptureResponse,
 	PaymentIntentRequest,
@@ -67,6 +69,9 @@ export async function paymentCapture(
 	db: EvyDb,
 ): Promise<PaymentCaptureResponse> {
 	const { rows, intent } = await requireIntent(db, params.payment_intent_id);
+	if (hasRow(rows, "charge", "canceled")) {
+		throw new Error(`payment intent canceled: ${params.payment_intent_id}`);
+	}
 	if (hasRow(rows, "charge", "initiated")) {
 		throw new Error(
 			`payment intent already captured: ${params.payment_intent_id}`,
@@ -91,6 +96,32 @@ export async function paymentCapture(
 	await autoCallPaymentWebhook(db, params.payment_intent_id, captureEvents);
 
 	return created;
+}
+
+export async function paymentCancel(
+	params: PaymentCancelRequest,
+	db: EvyDb,
+): Promise<PaymentCancelResponse> {
+	const { rows, intent } = await requireIntent(db, params.payment_intent_id);
+	if (hasRow(rows, "charge", "canceled")) {
+		return rows.find(
+			(row) => row.type === "charge" && row.status === "canceled",
+		) as PaymentCancelResponse;
+	}
+	if (hasRow(rows, "charge", "initiated")) {
+		throw new Error(
+			`payment intent already captured: ${params.payment_intent_id}`,
+		);
+	}
+
+	const outcome = await getStripeGateway().cancelPaymentIntent(
+		params.payment_intent_id,
+	);
+	if (!outcome.ok) {
+		throw new Error(outcome.reason);
+	}
+
+	return appendTransactionRow(db, intent, "charge", "canceled");
 }
 
 export async function paymentTransfer(

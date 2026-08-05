@@ -3,7 +3,10 @@ import { EVY_MESSAGE_DATA_VALUES } from "evy-types/coreResources";
 
 import { appendStatus, currentStatus, type ItemStatus } from "./status";
 
-export type MessagePayload = Pick<DATA_EVY_Message, "fk" | "type" | "value">;
+export type MessagePayload = Pick<
+	DATA_EVY_Message,
+	"fk" | "type" | "value" | "id" | "parent_message_id" | "resource"
+>;
 
 export type TransactionPayload = Pick<
 	DATA_EVY_Transaction,

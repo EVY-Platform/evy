@@ -698,7 +698,8 @@
 						"initiated",
 						"succeeded",
 						"failed",
-						"completed"
+						"completed",
+						"canceled"
 					],
 					"description": "Append-only lifecycle state for this type. Each transition is a new row; rows sharing payment_provider_transaction_id form one payment's ledger."
 				},

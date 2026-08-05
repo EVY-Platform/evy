@@ -18,6 +18,7 @@ import {
 	MOCK_TRANSFER_FAILURE_AMOUNT,
 } from "evy-types/paymentMocks";
 import {
+	paymentCancel,
 	paymentCapture,
 	paymentIntent,
 	paymentTransfer,
@@ -253,6 +254,116 @@ describe("payment_capture procedure", () => {
 	});
 });
 
+describe("payment_cancel procedure", () => {
+	it("appends charge canceled row and returns it", async () => {
+		const request = validPaymentIntentRequest();
+		await seedAuthorizationMessage(testDb, request);
+		const intent = await paymentIntent(request, dataDb);
+		const canceled = await paymentCancel(
+			{ payment_intent_id: intent.payment_provider_transaction_id },
+			dataDb,
+		);
+
+		expect(canceled.type).toBe("charge");
+		expect(canceled.status).toBe("canceled");
+		expect(canceled.payment_provider_transaction_id).toBe(
+			intent.payment_provider_transaction_id,
+		);
+
+		const rows = await findRowsByIntentId(
+			dataDb,
+			intent.payment_provider_transaction_id,
+		);
+		expect(hasRow(rows, "charge", "canceled")).toBe(true);
+	});
+
+	it("second cancel is idempotent and returns the existing row", async () => {
+		const request = validPaymentIntentRequest();
+		await seedAuthorizationMessage(testDb, request);
+		const intent = await paymentIntent(request, dataDb);
+		const first = await paymentCancel(
+			{ payment_intent_id: intent.payment_provider_transaction_id },
+			dataDb,
+		);
+		const second = await paymentCancel(
+			{ payment_intent_id: intent.payment_provider_transaction_id },
+			dataDb,
+		);
+
+		expect(second.id).toBe(first.id);
+		const rows = await findRowsByIntentId(
+			dataDb,
+			intent.payment_provider_transaction_id,
+		);
+		expect(
+			rows.filter(
+				(row) => row.type === "charge" && row.status === "canceled",
+			),
+		).toHaveLength(1);
+	});
+
+	it("rejects cancel after capture initiated", async () => {
+		const request = validPaymentIntentRequest();
+		await seedAuthorizationMessage(testDb, request);
+		const intent = await paymentIntent(request, dataDb);
+		await paymentCapture(
+			{ payment_intent_id: intent.payment_provider_transaction_id },
+			dataDb,
+		);
+		await expect(
+			paymentCancel(
+				{ payment_intent_id: intent.payment_provider_transaction_id },
+				dataDb,
+			),
+		).rejects.toThrow("payment intent already captured");
+	});
+
+	it("rejects capture after cancel", async () => {
+		const request = validPaymentIntentRequest();
+		await seedAuthorizationMessage(testDb, request);
+		const intent = await paymentIntent(request, dataDb);
+		await paymentCancel(
+			{ payment_intent_id: intent.payment_provider_transaction_id },
+			dataDb,
+		);
+		await expect(
+			paymentCapture(
+				{ payment_intent_id: intent.payment_provider_transaction_id },
+				dataDb,
+			),
+		).rejects.toThrow("payment intent canceled");
+	});
+
+	it("rejects an unknown intent id", async () => {
+		await expect(
+			paymentCancel({ payment_intent_id: crypto.randomUUID() }, dataDb),
+		).rejects.toThrow("payment intent not found");
+	});
+
+	it("is reachable via api{service:evy, method:payment_cancel}", async () => {
+		const request = validPaymentIntentRequest();
+		await seedAuthorizationMessage(testDb, request);
+		const intent = await paymentIntent(request, dataDb);
+		const canceled = await api(
+			{
+				service: EVY_CORE_SERVICE,
+				method: "payment_cancel",
+				data: {
+					payment_intent_id: intent.payment_provider_transaction_id,
+				},
+			},
+			dataDb,
+		);
+
+		expect(canceled).toMatchObject({
+			type: "charge",
+			status: "canceled",
+			payment_provider_transaction_id:
+				intent.payment_provider_transaction_id,
+		});
+	});
+});
+
 describe("payment_transfer procedure", () => {
 	async function intentAndCapture() {
 		const request = validPaymentIntentRequest();
@@ -434,6 +545,9 @@ describe("payments with real-mode gateway", () => {
 			},
 			async capturePaymentIntent(id, amount) {
 				fakeGateway.captureCalls.push({ id, amount });
+				return { ok: true };
+			},
+			async cancelPaymentIntent() {
 				return { ok: true };
 			},
 			async createTransfer(params) {

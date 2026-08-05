@@ -1,9 +1,9 @@
 import { afterAll, beforeAll, describe, expect, it } from "bun:test";
+import { EVY_CORE_RESOURCE_REF } from "evy-types/coreResources";
 import {
-	EVY_CORE_RESOURCE_REF,
-	EVY_CORE_SERVICE,
-} from "evy-types/coreResources";
-import { MOCK_CAPTURE_FAILURE_AMOUNT } from "evy-types/paymentMocks";
+	MOCK_CAPTURE_FAILURE_AMOUNT,
+	MOCK_TRANSFER_FAILURE_AMOUNT,
+} from "evy-types/paymentMocks";
 import { waitForClientOpen } from "evy-types/wsTestHelpers";
 import { Client } from "rpc-websockets";
 import { MARKETPLACE_RESOURCE, MARKETPLACE_SERVICE } from "../src/resources";
@@ -251,11 +251,16 @@ describe("Marketplace E2E (via API WebSocket)", () => {
 	});
 
 	describe("purchase status machine", () => {
-		async function createMarketplaceItem() {
+		async function createMarketplaceItem(
+			priceValue: number | string | null = 250,
+		) {
 			const itemId = crypto.randomUUID();
 			const payload = {
 				id: itemId,
 				title: `e2e-purchase-${itemId.slice(0, 8)}`,
+				...(priceValue !== null
+					? { price: { currency: "AUD", value: priceValue } }
+					: {}),
 			};
 			await client.call("create", {
 				resource: MARKETPLACE_RESOURCE.ITEMS,
@@ -318,42 +323,23 @@ describe("Marketplace E2E (via API WebSocket)", () => {
 			});
 		}
 
-		async function runPaymentCapture(
-			itemId: string,
-			authorizationMessageId: string,
-			amount = 250,
-		) {
-			const intent = await client.call("api", {
-				service: EVY_CORE_SERVICE,
-				method: "payment_intent",
-				data: {
-					fk: itemId,
-					resource: MARKETPLACE_RESOURCE.ITEMS,
-					amount,
-					currency: "AUD",
-					authorization_message_id: authorizationMessageId,
-				},
+		async function getTransactionsForItem(itemId: string) {
+			const rows = await client.call("get", {
+				resource: EVY_CORE_RESOURCE_REF.TRANSACTIONS,
 			});
-			await client.call("api", {
-				service: EVY_CORE_SERVICE,
-				method: "payment_capture",
-				data: {
-					payment_intent_id: intent.payment_provider_transaction_id,
-				},
-			});
-			return intent;
+			return (rows as { fk: string }[]).filter(
+				(row) => row.fk === itemId,
+			);
 		}
 
-		async function runPaymentTransfer(intent: {
-			payment_provider_transaction_id: string;
-		}) {
-			await client.call("api", {
-				service: EVY_CORE_SERVICE,
-				method: "payment_transfer",
-				data: {
-					payment_intent_id: intent.payment_provider_transaction_id,
-				},
-			});
+		function hasTransaction(
+			rows: { type: string; status: string }[],
+			type: string,
+			status: string,
+		): boolean {
+			return rows.some(
+				(row) => row.type === type && row.status === status,
+			);
 		}
 
 		async function driveDeliveryToSold(itemId: string) {
@@ -368,8 +354,6 @@ describe("Marketplace E2E (via API WebSocket)", () => {
 				value: "accept",
 				parent_message_id: pending.id,
 			});
-			await pollItemStatus(itemId, "delivery_pending");
-			await runPaymentCapture(itemId, pending.id);
 			await pollItemStatus(itemId, "sold");
 			return pending;
 		}
@@ -392,7 +376,7 @@ describe("Marketplace E2E (via API WebSocket)", () => {
 			await pollItemStatus(itemId, "pickup_pending");
 		});
 
-		it("pickup flow advances status through simulated payment messages", async () => {
+		it("pickup flow advances status through server-side payment orchestration", async () => {
 			const { id: itemId, payload } = await createMarketplaceItem();
 
 			const pending = await createPurchaseMessage({
@@ -407,6 +391,13 @@ describe("Marketplace E2E (via API WebSocket)", () => {
 				parent_message_id: pending.id,
 			});
 			await pollItemStatus(itemId, "pickup_pending");
+			expect(
+				hasTransaction(
+					await getTransactionsForItem(itemId),
+					"charge",
+					"intent",
+				),
+			).toBe(false);
 
 			const transaction = await createPurchaseMessage({
 				fk: itemId,
@@ -414,15 +405,41 @@ describe("Marketplace E2E (via API WebSocket)", () => {
 				value: "transaction",
 				parent_message_id: pending.id,
 			});
+			expect(
+				hasTransaction(
+					await getTransactionsForItem(itemId),
+					"charge",
+					"intent",
+				),
+			).toBe(true);
+
 			const transactionCompleted = await createPurchaseMessage({
 				fk: itemId,
 				type: "pickup",
 				value: "transaction_completed",
 				parent_message_id: transaction.id,
 			});
-			const paymentIntent = await runPaymentCapture(itemId, pending.id);
 			await pollItemStatus(itemId, "sold");
-			await runPaymentTransfer(paymentIntent);
+
+			const transactions = await getTransactionsForItem(itemId);
+			expect(hasTransaction(transactions, "charge", "initiated")).toBe(
+				true,
+			);
+			expect(hasTransaction(transactions, "charge", "succeeded")).toBe(
+				true,
+			);
+			expect(hasTransaction(transactions, "charge", "completed")).toBe(
+				true,
+			);
+			expect(hasTransaction(transactions, "transfer", "initiated")).toBe(
+				true,
+			);
+			expect(hasTransaction(transactions, "transfer", "succeeded")).toBe(
+				true,
+			);
+			expect(hasTransaction(transactions, "transfer", "completed")).toBe(
+				true,
+			);
 
 			expect(accept.parent_message_id).toBe(pending.id);
 			expect(transaction.parent_message_id).toBe(pending.id);
@@ -432,7 +449,7 @@ describe("Marketplace E2E (via API WebSocket)", () => {
 			expect(itemAfter).toMatchObject(payload);
 		});
 
-		it("delivery flow advances status through simulated payment messages", async () => {
+		it("delivery flow advances status through server-side payment orchestration", async () => {
 			const { id: itemId, payload } = await createMarketplaceItem();
 
 			const pending = await createPurchaseMessage({
@@ -440,15 +457,20 @@ describe("Marketplace E2E (via API WebSocket)", () => {
 				type: "delivery",
 				value: "pending",
 			});
+			expect(
+				hasTransaction(
+					await getTransactionsForItem(itemId),
+					"charge",
+					"intent",
+				),
+			).toBe(true);
+
 			const accept = await createPurchaseMessage({
 				fk: itemId,
 				type: "delivery",
 				value: "accept",
 				parent_message_id: pending.id,
 			});
-			await pollItemStatus(itemId, "delivery_pending");
-
-			const paymentIntent = await runPaymentCapture(itemId, pending.id);
 			await pollItemStatus(itemId, "sold");
 
 			const given = await createPurchaseMessage({
@@ -463,7 +485,20 @@ describe("Marketplace E2E (via API WebSocket)", () => {
 				value: "received",
 				parent_message_id: pending.id,
 			});
-			await runPaymentTransfer(paymentIntent);
+
+			const transactions = await getTransactionsForItem(itemId);
+			expect(hasTransaction(transactions, "charge", "initiated")).toBe(
+				true,
+			);
+			expect(hasTransaction(transactions, "charge", "succeeded")).toBe(
+				true,
+			);
+			expect(hasTransaction(transactions, "transfer", "initiated")).toBe(
+				true,
+			);
+			expect(hasTransaction(transactions, "transfer", "completed")).toBe(
+				true,
+			);
 
 			expect(accept.parent_message_id).toBe(pending.id);
 			expect(given.parent_message_id).toBe(pending.id);
@@ -473,7 +508,7 @@ describe("Marketplace E2E (via API WebSocket)", () => {
 			expect(itemAfter).toMatchObject(payload);
 		});
 
-		it("shipping flow advances status through simulated payment messages", async () => {
+		it("shipping flow advances status through server-side payment orchestration", async () => {
 			const { id: itemId, payload } = await createMarketplaceItem();
 
 			const pending = await createPurchaseMessage({
@@ -481,15 +516,20 @@ describe("Marketplace E2E (via API WebSocket)", () => {
 				type: "shipping",
 				value: "pending",
 			});
+			expect(
+				hasTransaction(
+					await getTransactionsForItem(itemId),
+					"charge",
+					"intent",
+				),
+			).toBe(true);
+
 			const accept = await createPurchaseMessage({
 				fk: itemId,
 				type: "shipping",
 				value: "accept",
 				parent_message_id: pending.id,
 			});
-			await pollItemStatus(itemId, "shipping_pending");
-
-			const paymentIntent = await runPaymentCapture(itemId, pending.id);
 			await pollItemStatus(itemId, "sold");
 
 			const sent = await createPurchaseMessage({
@@ -498,7 +538,6 @@ describe("Marketplace E2E (via API WebSocket)", () => {
 				value: "sent",
 				parent_message_id: pending.id,
 			});
-			await runPaymentTransfer(paymentIntent);
 			const received = await createPurchaseMessage({
 				fk: itemId,
 				type: "shipping",
@@ -506,12 +545,51 @@ describe("Marketplace E2E (via API WebSocket)", () => {
 				parent_message_id: pending.id,
 			});
 
+			const transactions = await getTransactionsForItem(itemId);
+			expect(hasTransaction(transactions, "charge", "completed")).toBe(
+				true,
+			);
+			expect(hasTransaction(transactions, "transfer", "completed")).toBe(
+				true,
+			);
+
 			expect(accept.parent_message_id).toBe(pending.id);
 			expect(sent.parent_message_id).toBe(pending.id);
 			expect(received.parent_message_id).toBe(pending.id);
 
 			const itemAfter = await getMarketplaceItem(itemId);
 			expect(itemAfter).toMatchObject(payload);
+		});
+
+		it("cancels the payment intent when the seller rejects after pending", async () => {
+			const { id: itemId } = await createMarketplaceItem();
+			const pending = await createPurchaseMessage({
+				fk: itemId,
+				type: "delivery",
+				value: "pending",
+			});
+			expect(
+				hasTransaction(
+					await getTransactionsForItem(itemId),
+					"charge",
+					"intent",
+				),
+			).toBe(true);
+
+			await createPurchaseMessage({
+				fk: itemId,
+				type: "delivery",
+				value: "reject",
+				parent_message_id: pending.id,
+			});
+
+			const transactions = await getTransactionsForItem(itemId);
+			expect(hasTransaction(transactions, "charge", "canceled")).toBe(
+				true,
+			);
+			expect(hasTransaction(transactions, "charge", "initiated")).toBe(
+				false,
+			);
 		});
 
 		it("vetoes pending on a sold item with the marketplace reason", async () => {
@@ -559,7 +637,9 @@ describe("Marketplace E2E (via API WebSocket)", () => {
 		});
 
 		it("rolls back to available on capture failure via payment webhook", async () => {
-			const { id: itemId } = await createMarketplaceItem();
+			const { id: itemId } = await createMarketplaceItem(
+				MOCK_CAPTURE_FAILURE_AMOUNT,
+			);
 			const pending = await createPurchaseMessage({
 				fk: itemId,
 				type: "delivery",
@@ -571,13 +651,84 @@ describe("Marketplace E2E (via API WebSocket)", () => {
 				value: "accept",
 				parent_message_id: pending.id,
 			});
-			await pollItemStatus(itemId, "delivery_pending");
-			await runPaymentCapture(
-				itemId,
-				pending.id,
-				MOCK_CAPTURE_FAILURE_AMOUNT,
-			);
 			await pollItemStatus(itemId, "available");
+
+			const messages = await client.call("get", {
+				resource: EVY_CORE_RESOURCE_REF.MESSAGES,
+			});
+			expect(
+				(messages as { value: string }[]).some(
+					(row) => row.value === "charge_failed",
+				),
+			).toBe(true);
+		});
+
+		it("rolls back to available on transfer failure via payment webhook", async () => {
+			const { id: itemId } = await createMarketplaceItem(
+				MOCK_TRANSFER_FAILURE_AMOUNT,
+			);
+			const pending = await createPurchaseMessage({
+				fk: itemId,
+				type: "delivery",
+				value: "pending",
+			});
+			await createPurchaseMessage({
+				fk: itemId,
+				type: "delivery",
+				value: "accept",
+				parent_message_id: pending.id,
+			});
+			await pollItemStatus(itemId, "sold");
+			await createPurchaseMessage({
+				fk: itemId,
+				type: "delivery",
+				value: "received",
+				parent_message_id: pending.id,
+			});
+			await pollItemStatus(itemId, "available");
+		});
+
+		it("vetoes delivery pending on a priceless item", async () => {
+			const { id: itemId } = await createMarketplaceItem(null);
+			const failure = await createPurchaseMessage({
+				fk: itemId,
+				type: "delivery",
+				value: "pending",
+			}).catch((error: unknown) => error);
+
+			expect(failureDetail(failure)).toContain(
+				"Item has no valid price for payment",
+			);
+
+			const messages = await client.call("get", {
+				resource: EVY_CORE_RESOURCE_REF.MESSAGES,
+			});
+			expect(
+				(messages as { value: string; fk: string }[]).some(
+					(row) =>
+						row.value === "request_failed" && row.fk === itemId,
+				),
+			).toBe(true);
+		});
+
+		it("vetoes delivery accept when no payment intent exists", async () => {
+			const { id: itemId } = await createMarketplaceItem();
+			const pending = await createPurchaseMessage({
+				fk: itemId,
+				type: "pickup",
+				value: "pending",
+			});
+
+			const failure = await createPurchaseMessage({
+				fk: itemId,
+				type: "delivery",
+				value: "accept",
+				parent_message_id: pending.id,
+			}).catch((error: unknown) => error);
+
+			expect(failureDetail(failure)).toContain(
+				"No payment intent found for this purchase",
+			);
 		});
 
 		it("fresh sync includes item_statuses rows after accept", async () => {

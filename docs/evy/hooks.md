@@ -71,7 +71,12 @@ and [`services/marketplace/src/rpc.ts`](../../services/marketplace/src/rpc.ts).
 Marketplace validates purchase messages in `before_create` against
 `item_status_history` and appends status rows in `after_create`. Transaction
 hooks on `after_create` drive `sold` when a `{charge, succeeded}` row appears.
+Message `after_create` hooks also orchestrate payments: based on the message
+`(type, value)` pair, marketplace calls core `payment_intent`, `payment_capture`,
+`payment_transfer`, and `payment_cancel` synchronously (after enqueueing status
+reactions). See [marketplace payment orchestration](../services/marketplace/data.md#payment-orchestration).
 Implementation:
 [`services/marketplace/src/purchase.ts`](../../services/marketplace/src/purchase.ts),
+[`services/marketplace/src/payments.ts`](../../services/marketplace/src/payments.ts),
 [`services/marketplace/src/status.ts`](../../services/marketplace/src/status.ts).
 Status machine tables and message vocabulary: [marketplace data models](../services/marketplace/data.md#purchase-status-machine).

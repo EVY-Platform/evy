@@ -15,6 +15,7 @@ function registerMarketplaceTestDb(
 ): void {
 	mock.module("../db", () => ({
 		data: schema.data,
+		item_payment_intents: schema.item_payment_intents,
 		item_status: schema.item_status,
 		item_status_history: schema.item_status_history,
 		db: testDb,

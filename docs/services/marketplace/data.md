@@ -48,9 +48,49 @@ Source of truth for the wire shape: [`services/marketplace/src/schema/item_statu
 
 **Current status** is the latest row for an `item_id`; no rows means `available`. Seeds never insert status rows, so a seeded item that shows an accepted message in fixtures is still `available` in the database and can accept a new `pending`. Marketplace hooks append rows on message creates — see [Purchase status machine](#purchase-status-machine) below. Devices filter sold items out of home search via `marketplace.item_statuses`; `*_pending` items remain visible.
 
+## item_payment_intents
+
+Maps each buyer authorization message to the Stripe payment intent id the marketplace created for it. Written when `payment_intent` runs; read when capture, transfer, or cancel needs the provider id.
+
+```
+id: uuid
+item_id: uuid                    # marketplace `data.id` for resource marketplace.items
+authorization_message_id: uuid    # the message that triggered payment_intent (delivery/shipping pending, pickup transaction)
+payment_intent_id: text           # payment_provider_transaction_id from the intent response
+created_at: date-time
+```
+
+Storage: [`services/marketplace/src/schema.ts`](../../../services/marketplace/src/schema.ts). Lookup for capture/transfer/cancel uses `authorization_message_id = parent_message_id` on the triggering message (the accept/completed/received/reject answers the authorizing message directly).
+
+## Payment orchestration
+
+Payment procedures run **synchronously inside the awaited message `after_create` hook**, after status reactions are enqueued. The create RPC returns only after the sync part (intent created / capture initiated / transfer initiated) completes; webhook-driven rows (`succeeded`/`failed`/`completed`) arrive afterwards as today.
+
+| type | value | payment call |
+| --- | --- | --- |
+| pickup | `pending`, `accept`, `reject` | none |
+| pickup | `cancel` | `payment_cancel` if an intent exists |
+| pickup | `transaction` | `payment_intent` |
+| pickup | `transaction_completed` | `payment_capture`, then `payment_transfer` |
+| pickup | `transaction_rejected` | `payment_cancel` |
+| delivery | `pending` | `payment_intent` |
+| delivery | `accept` | `payment_capture` |
+| delivery | `reject`, `cancel` | `payment_cancel` if an intent exists |
+| delivery | `given`, `failed` | none |
+| delivery | `received` | `payment_transfer` |
+| shipping | `pending` | `payment_intent` |
+| shipping | `accept` | `payment_capture` |
+| shipping | `reject`, `cancel` | `payment_cancel` if an intent exists |
+| shipping | `sent`, `failed` | none |
+| shipping | `received` | `payment_transfer` |
+
+`before_create` vetoes intent-triggering messages when the item has no parseable `price.value > 0`, and capture/transfer-triggering messages when no `item_payment_intents` row resolves. Cancel triggers are lenient: they no-op when no intent exists.
+
+Failure handling (v1): `payment_intent` / `payment_cancel` RPC errors are logged only; capture/transfer failures surface via webhook-authored `charge_failed` / `transfer_failed` messages and existing status rollback logic.
+
 ## Purchase status machine
 
-Marketplace is the first real hook consumer: every `evy.messages` create targeting `marketplace.items` runs `before_create` validation against current status and `after_create` reactions that append status rows. Transaction creates for marketplace items also run hooks: `before_create` is a no-op; `after_create` reacts to `{type: charge, status: succeeded}` by appending `sold`. The marketplace has no core API client — hook payloads and its own DB are its only inputs.
+Marketplace is the first real hook consumer: every `evy.messages` create targeting `marketplace.items` runs `before_create` validation against current status and `after_create` reactions that append status rows. Transaction creates for marketplace items also run hooks: `before_create` is a no-op; `after_create` reacts to `{type: charge, status: succeeded}` by appending `sold`. Message `after_create` hooks also drive payment orchestration (see [Payment orchestration](#payment-orchestration) above).
 
 ### Status values
 
@@ -87,6 +127,6 @@ Veto = RPC create error; nothing stored. Type/value pairs are sanity-checked (`g
 | `cancel` (from any pending status, not from `sold`) | append `available` |
 | everything else | nothing |
 
-Reactions run on an in-process per-`fk` queue; `after_create` acknowledges immediately.
+Reactions run on an in-process per-`fk` queue; payment orchestration runs in the same `after_create` hook after enqueueing status reactions.
 
 Payment lifecycle state lives in `evy.transactions` rows; marketplace learns charge success from the transaction hook and rollbacks from webhook-authored `charge_failed` / `transfer_failed` messages.

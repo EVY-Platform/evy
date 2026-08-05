@@ -206,6 +206,41 @@ describe("payment_webhook handler", () => {
 		).rejects.toThrow("transfer not initiated");
 	});
 
+	it("appends charge canceled row for payment_intent.canceled", async () => {
+		const request = validPaymentIntentRequest();
+		const intent = await paymentIntent(request, dataDb);
+		const intentId = intent.payment_provider_transaction_id;
+
+		await handlePaymentWebhook(
+			{ type: "payment_intent.canceled", payment_intent_id: intentId },
+			dataDb,
+		);
+
+		const rows = await findRowsByIntentId(dataDb, intentId);
+		expect(hasRow(rows, "charge", "canceled")).toBe(true);
+	});
+
+	it("is idempotent when canceled row already exists", async () => {
+		const request = validPaymentIntentRequest();
+		const intent = await paymentIntent(request, dataDb);
+		const intentId = intent.payment_provider_transaction_id;
+		await handlePaymentWebhook(
+			{ type: "payment_intent.canceled", payment_intent_id: intentId },
+			dataDb,
+		);
+		const before = await testDb.select().from(schema.transaction);
+
+		const response = await handlePaymentWebhook(
+			{ type: "payment_intent.canceled", payment_intent_id: intentId },
+			dataDb,
+		);
+
+		expect(response).toEqual({ received: true });
+		expect(await testDb.select().from(schema.transaction)).toHaveLength(
+			before.length,
+		);
+	});
+
 	it("authors charge_failed on capture_failed", async () => {
 		const { intent } = await createIntentWithInitiatedRow();
 		await handlePaymentWebhook(

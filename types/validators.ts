@@ -38,6 +38,8 @@ import type { GetRequest } from "./generated/ts/rpc/get.request";
 import type { GetResponse } from "./generated/ts/rpc/get.response";
 import type { HookRequest } from "./generated/ts/rpc/hook.request";
 import type { HookResponse } from "./generated/ts/rpc/hook.response";
+import type { PaymentCancelRequest } from "./generated/ts/rpc/payment_cancel.request";
+import type { PaymentCancelResponse } from "./generated/ts/rpc/payment_cancel.response";
 import type { PaymentCaptureRequest } from "./generated/ts/rpc/payment_capture.request";
 import type { PaymentCaptureResponse } from "./generated/ts/rpc/payment_capture.response";
 import type { PaymentIntentRequest } from "./generated/ts/rpc/payment_intent.request";
@@ -100,6 +102,12 @@ import hookRequestRaw from "./schema/rpc/hook.request.schema.json" with {
 	type: "json",
 };
 import hookResponseRaw from "./schema/rpc/hook.response.schema.json" with {
+	type: "json",
+};
+import paymentCancelRequestRaw from "./schema/rpc/payment_cancel.request.schema.json" with {
+	type: "json",
+};
+import paymentCancelResponseRaw from "./schema/rpc/payment_cancel.response.schema.json" with {
 	type: "json",
 };
 import paymentCaptureRequestRaw from "./schema/rpc/payment_capture.request.schema.json" with {
@@ -193,6 +201,12 @@ const RAW_SCHEMAS: Record<string, Record<string, unknown>> = {
 		paymentCaptureRequestRaw as Record<string, unknown>,
 	"rpc/payment_capture.response.schema.json":
 		paymentCaptureResponseRaw as Record<string, unknown>,
+	"rpc/payment_cancel.request.schema.json": paymentCancelRequestRaw as Record<
+		string,
+		unknown
+	>,
+	"rpc/payment_cancel.response.schema.json":
+		paymentCancelResponseRaw as Record<string, unknown>,
 	"rpc/payment_transfer.request.schema.json":
 		paymentTransferRequestRaw as Record<string, unknown>,
 	"rpc/payment_transfer.response.schema.json":
@@ -376,6 +390,7 @@ const REQUEST_SCHEMA_FILES = [
 	"rpc/sync.request.schema.json",
 	"rpc/payment_intent.request.schema.json",
 	"rpc/payment_capture.request.schema.json",
+	"rpc/payment_cancel.request.schema.json",
 	"rpc/payment_transfer.request.schema.json",
 	"rpc/payment_webhook.request.schema.json",
 	"rpc/place_search.request.schema.json",
@@ -400,6 +415,7 @@ const ENTITY_SCHEMA_FILES = [
 	"rpc/resources.response.schema.json",
 	"rpc/payment_intent.response.schema.json",
 	"rpc/payment_capture.response.schema.json",
+	"rpc/payment_cancel.response.schema.json",
 	"rpc/payment_transfer.response.schema.json",
 	"rpc/payment_webhook.response.schema.json",
 	"rpc/place_search.response.schema.json",
@@ -794,6 +810,18 @@ export const validatePaymentCaptureResponse =
 		"PaymentCaptureResponse",
 		getEntityAjv,
 		fileId("rpc/payment_capture.response.schema.json"),
+	);
+export const validatePaymentCancelRequest =
+	schemaValidator<PaymentCancelRequest>(
+		"PaymentCancelRequest",
+		getRequestAjv,
+		fileId("rpc/payment_cancel.request.schema.json"),
+	);
+export const validatePaymentCancelResponse =
+	schemaValidator<PaymentCancelResponse>(
+		"PaymentCancelResponse",
+		getEntityAjv,
+		fileId("rpc/payment_cancel.response.schema.json"),
 	);
 export const validatePaymentTransferRequest =
 	schemaValidator<PaymentTransferRequest>(

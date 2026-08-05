@@ -1,9 +1,11 @@
+import { disposeCoreClient } from "./coreClient";
 import { startMarketplaceRpcServer, stopMarketplaceRpcServer } from "./rpc";
 
 async function main() {
 	await startMarketplaceRpcServer();
 
 	const shutdown = () => {
+		disposeCoreClient();
 		stopMarketplaceRpcServer();
 		process.exit(0);
 	};

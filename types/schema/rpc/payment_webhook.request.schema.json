@@ -13,6 +13,7 @@
 				"payment_intent.succeeded",
 				"payment_intent.capture_succeeded",
 				"payment_intent.capture_failed",
+				"payment_intent.canceled",
 				"charge.completed",
 				"transfer.succeeded",
 				"transfer.failed",

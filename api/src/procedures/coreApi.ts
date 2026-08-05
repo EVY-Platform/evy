@@ -2,6 +2,8 @@ import type { ApiRequest, SyncResponse } from "evy-types";
 import { EVY_CORE_SERVICE } from "evy-types/coreResources";
 import { proceduresForService } from "evy-types/procedures";
 import {
+	validatePaymentCancelRequest,
+	validatePaymentCancelResponse,
 	validatePaymentCaptureRequest,
 	validatePaymentCaptureResponse,
 	validatePaymentIntentRequest,
@@ -48,6 +50,13 @@ const coreProcedures: Record<string, CoreProcedure> = {
 		validatePaymentCaptureResponse(
 			await paymentsProcedure.paymentCapture(
 				validatePaymentCaptureRequest(data),
+				db,
+			),
+		),
+	payment_cancel: async (data, db) =>
+		validatePaymentCancelResponse(
+			await paymentsProcedure.paymentCancel(
+				validatePaymentCancelRequest(data),
 				db,
 			),
 		),

@@ -15,6 +15,9 @@ export function createMockStripeGateway(): StripeGateway {
 			}
 			return { ok: true };
 		},
+		async cancelPaymentIntent() {
+			return { ok: true };
+		},
 		async createTransfer(params) {
 			if (params.amount === MOCK_TRANSFER_FAILURE_AMOUNT) {
 				return { ok: false, reason: "mock transfer failure" };

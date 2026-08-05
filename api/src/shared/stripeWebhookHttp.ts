@@ -11,6 +11,7 @@ const STRIPE_EVENT_TYPE_MAP: Partial<
 > = {
 	"payment_intent.succeeded": "payment_intent.capture_succeeded",
 	"payment_intent.payment_failed": "payment_intent.capture_failed",
+	"payment_intent.canceled": "payment_intent.canceled",
 	"charge.captured": "charge.completed",
 };
 

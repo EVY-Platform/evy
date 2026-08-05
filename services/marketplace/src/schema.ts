@@ -34,3 +34,11 @@ export const item_status_history = pgTable("item_status_history", {
 	status: item_status("status").notNull(),
 	created_at: text("created_at").notNull(),
 });
+
+export const item_payment_intents = pgTable("item_payment_intents", {
+	id: uuid("id").primaryKey().defaultRandom(),
+	item_id: uuid("item_id").notNull(),
+	authorization_message_id: uuid("authorization_message_id").notNull(),
+	payment_intent_id: text("payment_intent_id").notNull(),
+	created_at: text("created_at").notNull(),
+});

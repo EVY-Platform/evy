@@ -128,6 +128,7 @@ describe("api JSON-RPC handler", () => {
 describe("core procedure registry", () => {
 	it("declares every procedure the gateway handles", () => {
 		expect(proceduresForService(EVY_CORE_SERVICE).sort()).toEqual([
+			"payment_cancel",
 			"payment_capture",
 			"payment_intent",
 			"payment_transfer",
@@ -159,6 +160,7 @@ describe("core procedure registry", () => {
 	it("marks payment procedures as not bindable list sources", () => {
 		expect(PROCEDURES.payment_intent.resultAttributes).toEqual([]);
 		expect(PROCEDURES.payment_capture.resultAttributes).toEqual([]);
+		expect(PROCEDURES.payment_cancel.resultAttributes).toEqual([]);
 		expect(PROCEDURES.payment_transfer.resultAttributes).toEqual([]);
 	});
 });

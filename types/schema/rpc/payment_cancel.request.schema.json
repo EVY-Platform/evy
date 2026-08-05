@@ -1,0 +1,16 @@
+{
+	"$schema": "https://json-schema.org/draft/2020-12/schema",
+	"$id": "payment-cancel-request",
+	"title": "PaymentCancelRequest",
+	"description": "JSON-RPC params for canceling a payment intent. Releases the buyer's uncaptured Stripe authorization and appends a charge/canceled transaction row.",
+	"type": "object",
+	"additionalProperties": false,
+	"required": ["payment_intent_id"],
+	"properties": {
+		"payment_intent_id": {
+			"type": "string",
+			"minLength": 1,
+			"description": "The payment_provider_transaction_id from the intent row."
+		}
+	}
+}

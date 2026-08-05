@@ -54,6 +54,9 @@ const WEBHOOK_HANDLERS: Record<PaymentWebhookRequest["type"], WebhookHandler> =
 			append: { type: "charge", status: "failed" },
 			failure: "charge_failed",
 		},
+		"payment_intent.canceled": {
+			append: { type: "charge", status: "canceled" },
+		},
 		"charge.completed": {
 			requires: {
 				type: "charge",

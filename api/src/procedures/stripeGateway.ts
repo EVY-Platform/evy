@@ -36,6 +36,7 @@ export interface StripeGateway {
 		id: string,
 		amount: number,
 	): Promise<StripeCaptureOutcome>;
+	cancelPaymentIntent(id: string): Promise<StripeCaptureOutcome>;
 	createTransfer(
 		params: StripeTransferParams,
 	): Promise<StripeTransferOutcome>;
@@ -96,6 +97,17 @@ function createRealStripeGateway(): StripeGateway {
 		async capturePaymentIntent(id) {
 			try {
 				await stripe.paymentIntents.capture(id);
+				return { ok: true };
+			} catch (error) {
+				if (error instanceof Stripe.errors.StripeError) {
+					return { ok: false, reason: error.message };
+				}
+				throw error;
+			}
+		},
+		async cancelPaymentIntent(id) {
+			try {
+				await stripe.paymentIntents.cancel(id);
 				return { ok: true };
 			} catch (error) {
 				if (error instanceof Stripe.errors.StripeError) {

@@ -9,6 +9,10 @@
 			"service": "evy",
 			"response": "rpc/payment_capture.response.schema.json"
 		},
+		"payment_cancel": {
+			"service": "evy",
+			"response": "rpc/payment_cancel.response.schema.json"
+		},
 		"payment_transfer": {
 			"service": "evy",
 			"response": "rpc/payment_transfer.response.schema.json"

@@ -8,6 +8,8 @@ services:
       target: runner
     environment:
       - MARKETPLACE_WS_PORT=${MARKETPLACE_WS_PORT}
+      - API_WS_HOST=host.docker.internal
+      - API_PORT=${API_PORT}
       - DB_MARKETPLACE_DATABASE=${DB_MARKETPLACE_DATABASE}
       - DB_USER=${DB_USER}
       - DB_PASS=${DB_PASS}

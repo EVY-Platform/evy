@@ -3914,17 +3914,12 @@ final class E2EHomeInboxTests: E2ETestBase {
     var deliveryPendingId = ""
 
     try XCTContext.runActivity(named: "Seller ships after charge") { _ in
-      let (pendingId, acceptId) = try seedAcceptedRequest(
+      let (_, acceptId) = try seedAcceptedRequest(
         emitter: emitter,
         itemId: shippingOwnedItemId,
         type: "shipping",
         timeslot: Self.pickupTimeslot,
         destinationAddress: Self.rothschildDestinationAddress
-      )
-      try runPaymentCapture(
-        emitter: emitter,
-        itemId: shippingOwnedItemId,
-        authorizationMessageId: pendingId
       )
       try pollItemStatus(
         emitter: emitter, itemId: shippingOwnedItemId, expectedStatus: "sold")
@@ -3948,11 +3943,6 @@ final class E2EHomeInboxTests: E2ETestBase {
         destinationAddress: Self.rothschildDestinationAddress
       )
       deliveryPendingId = pendingId
-      try runPaymentCapture(
-        emitter: emitter,
-        itemId: Self.seededBuyerItemId,
-        authorizationMessageId: pendingId
-      )
       try pollItemStatus(
         emitter: emitter, itemId: Self.seededBuyerItemId, expectedStatus: "sold")
       let givenId = try seedPurchaseMessage(
@@ -4222,42 +4212,6 @@ final class E2EHomeInboxTests: E2ETestBase {
     try pollItemStatus(
       emitter: emitter, itemId: itemId, expectedStatus: expectedPendingStatus)
     return (pendingId, acceptId)
-  }
-
-  @MainActor
-  private func runPaymentCapture(
-    emitter: WSEmitter,
-    itemId: String,
-    authorizationMessageId: String
-  ) throws {
-    try awaitResult("capture payment") {
-      let intent =
-        try await emitter.callApi(
-          service: EVY_CORE_SERVICE,
-          method: "payment_intent",
-          data: [
-            "fk": itemId,
-            "resource": MARKETPLACE_ITEMS_RESOURCE_ID,
-            "amount": 250,
-            "currency": "AUD",
-            "authorization_message_id": authorizationMessageId,
-          ]
-        ) as? [String: Any]
-      guard let paymentIntentId = intent?["payment_provider_transaction_id"] as? String
-      else {
-        throw NSError(
-          domain: "E2E", code: 1,
-          userInfo: [
-            NSLocalizedDescriptionKey: "payment_intent missing payment_provider_transaction_id"
-          ]
-        )
-      }
-      _ = try await emitter.callApi(
-        service: EVY_CORE_SERVICE,
-        method: "payment_capture",
-        data: ["payment_intent_id": paymentIntentId]
-      )
-    }
   }
 
   @MainActor
