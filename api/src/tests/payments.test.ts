@@ -26,6 +26,7 @@ import { findRowsByIntentId, hasRow } from "../procedures/paymentsShared";
 import {
 	type StripeGateway,
 	type StripeIntentParams,
+	type StripeTransferParams,
 	setStripeGatewayForTests,
 } from "../procedures/stripeGateway";
 import { createMockStripeGateway } from "../procedures/stripeGatewayMock";
@@ -371,24 +372,102 @@ describe("payment_transfer procedure", () => {
 			),
 		).rejects.toThrow("PaymentTransferRequest validation failed");
 	});
+
+	describe("gateway integration", () => {
+		let recordingGateway: StripeGateway & {
+			transferCalls: StripeTransferParams[];
+		};
+
+		beforeEach(() => {
+			recordingGateway = {
+				...createMockStripeGateway(),
+				transferCalls: [],
+				async createTransfer(params) {
+					recordingGateway.transferCalls.push(params);
+					return { ok: true };
+				},
+			};
+			setStripeGatewayForTests(recordingGateway);
+		});
+
+		afterEach(() => {
+			setStripeGatewayForTests(createMockStripeGateway());
+		});
+
+		it("passes intent fields and metadata to createTransfer", async () => {
+			const { intent } = await intentAndCapture();
+			await paymentTransfer(
+				{ payment_intent_id: intent.payment_provider_transaction_id },
+				dataDb,
+			);
+
+			expect(recordingGateway.transferCalls).toHaveLength(1);
+			expect(recordingGateway.transferCalls[0]).toEqual({
+				paymentIntentId: intent.payment_provider_transaction_id,
+				amount: intent.amount,
+				currency: intent.currency,
+				metadata: {
+					fk: intent.fk,
+					resource: intent.resource,
+					authorization_message_id: intent.authorization_message_id,
+				},
+			});
+		});
+
+		it("skips createTransfer for zero-amount intents", async () => {
+			const request = validPaymentIntentRequest({ amount: 0 });
+			await seedAuthorizationMessage(testDb, request);
+			const paymentIntentId = `pi_free_${crypto.randomUUID()}`;
+			const source = {
+				fk: request.fk,
+				resource: request.resource,
+				amount: 0,
+				currency: request.currency,
+				payment_provider_transaction_id: paymentIntentId,
+				authorization_message_id: request.authorization_message_id,
+			};
+			const { appendTransactionRow } = await import(
+				"../procedures/paymentsShared"
+			);
+			await appendTransactionRow(dataDb, source, "charge", "intent");
+			await appendTransactionRow(dataDb, source, "charge", "succeeded");
+
+			await paymentTransfer(
+				{ payment_intent_id: paymentIntentId },
+				dataDb,
+			);
+
+			expect(recordingGateway.transferCalls).toHaveLength(0);
+
+			const rows = await findRowsByIntentId(dataDb, paymentIntentId);
+			expect(hasRow(rows, "transfer", "succeeded")).toBe(true);
+			expect(hasRow(rows, "transfer", "completed")).toBe(true);
+		});
+	});
 });
 
 describe("payments with real-mode gateway", () => {
 	let fakeGateway: StripeGateway & {
 		createCalls: StripeIntentParams[];
 		captureCalls: Array<{ id: string; amount: number }>;
+		transferCalls: StripeTransferParams[];
 	};
 
 	beforeEach(() => {
 		fakeGateway = {
 			createCalls: [],
 			captureCalls: [],
+			transferCalls: [],
 			async createPaymentIntent(params) {
 				fakeGateway.createCalls.push(params);
 				return { id: `pi_fake_${crypto.randomUUID()}` };
 			},
 			async capturePaymentIntent(id, amount) {
 				fakeGateway.captureCalls.push({ id, amount });
+				return { ok: true };
+			},
+			async createTransfer(params) {
+				fakeGateway.transferCalls.push(params);
 				return { ok: true };
 			},
 		};

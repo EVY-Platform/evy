@@ -15,12 +15,30 @@ export type StripeIntentParams = {
 
 type StripeCaptureOutcome = { ok: true } | { ok: false; reason: string };
 
+export type StripeTransferOutcome =
+	| { ok: true }
+	| { ok: false; reason: string };
+
+export type StripeTransferParams = {
+	paymentIntentId: string;
+	amount: number;
+	currency: string;
+	metadata: {
+		fk: string;
+		resource: string;
+		authorization_message_id: string;
+	};
+};
+
 export interface StripeGateway {
 	createPaymentIntent(params: StripeIntentParams): Promise<{ id: string }>;
 	capturePaymentIntent(
 		id: string,
 		amount: number,
 	): Promise<StripeCaptureOutcome>;
+	createTransfer(
+		params: StripeTransferParams,
+	): Promise<StripeTransferOutcome>;
 }
 
 let stripeGateway: StripeGateway | undefined;
@@ -57,6 +75,10 @@ function createRealStripeGateway(): StripeGateway {
 	if (!secretKey) {
 		throw new Error("Missing required env: STRIPE_SECRET_KEY");
 	}
+	const connectAccountId = process.env.STRIPE_CONNECT_ACCOUNT_ID;
+	if (!connectAccountId) {
+		throw new Error("Missing required env: STRIPE_CONNECT_ACCOUNT_ID");
+	}
 	const stripe = new Stripe(secretKey);
 	return {
 		async createPaymentIntent(params) {
@@ -74,6 +96,37 @@ function createRealStripeGateway(): StripeGateway {
 		async capturePaymentIntent(id) {
 			try {
 				await stripe.paymentIntents.capture(id);
+				return { ok: true };
+			} catch (error) {
+				if (error instanceof Stripe.errors.StripeError) {
+					return { ok: false, reason: error.message };
+				}
+				throw error;
+			}
+		},
+		async createTransfer(params) {
+			try {
+				const paymentIntent = await stripe.paymentIntents.retrieve(
+					params.paymentIntentId,
+				);
+				const latestCharge = paymentIntent.latest_charge;
+				const chargeId =
+					typeof latestCharge === "string"
+						? latestCharge
+						: latestCharge?.id;
+				if (!chargeId) {
+					return {
+						ok: false,
+						reason: "payment intent has no charge to transfer from",
+					};
+				}
+				await stripe.transfers.create({
+					amount: toStripeAmount(params.amount, params.currency),
+					currency: params.currency.toLowerCase(),
+					destination: connectAccountId,
+					source_transaction: chargeId,
+					metadata: params.metadata,
+				});
 				return { ok: true };
 			} catch (error) {
 				if (error instanceof Stripe.errors.StripeError) {

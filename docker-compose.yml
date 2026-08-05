@@ -65,6 +65,7 @@ services:
             - STRIPE_WEBHOOK_SECRET=${STRIPE_WEBHOOK_SECRET:-}
             - STRIPE_WEBHOOK_PORT=${STRIPE_WEBHOOK_PORT:-8002}
             - STRIPE_MOCK=${STRIPE_MOCK:-}
+            - STRIPE_CONNECT_ACCOUNT_ID=${STRIPE_CONNECT_ACCOUNT_ID:-}
         depends_on:
             postgres:
                 condition: service_healthy

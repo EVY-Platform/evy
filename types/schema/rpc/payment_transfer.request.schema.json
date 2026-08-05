@@ -2,7 +2,7 @@
 	"$schema": "https://json-schema.org/draft/2020-12/schema",
 	"$id": "payment-transfer-request",
 	"title": "PaymentTransferRequest",
-	"description": "JSON-RPC params for transferring captured funds to the seller. V1 records the transfer as an evy.transactions row with type \"transfer\"; a real Stripe Connect transfer will be created later.",
+	"description": "JSON-RPC params for transferring captured funds to the seller. V1 records the transfer as an evy.transactions row with type \"transfer\". In real mode (STRIPE_MOCK=false with a real sk_test_ key), creates a Stripe Connect transfer to STRIPE_CONNECT_ACCOUNT_ID; per-seller destination accounts will arrive with seller onboarding. Mock mode stays deterministic and local.",
 	"type": "object",
 	"additionalProperties": false,
 	"required": ["payment_intent_id"],

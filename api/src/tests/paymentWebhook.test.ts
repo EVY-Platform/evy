@@ -1,5 +1,6 @@
 import {
 	afterAll,
+	afterEach,
 	beforeAll,
 	beforeEach,
 	describe,
@@ -16,6 +17,8 @@ import {
 	hasRow,
 } from "../procedures/paymentsShared";
 import { handlePaymentWebhook } from "../procedures/paymentWebhook";
+import { setStripeGatewayForTests } from "../procedures/stripeGateway";
+import { createMockStripeGateway } from "../procedures/stripeGatewayMock";
 import {
 	asEvyDb,
 	clearAllTestTables,
@@ -38,7 +41,12 @@ afterAll(async () => {
 });
 
 beforeEach(async () => {
+	setStripeGatewayForTests(createMockStripeGateway());
 	await clearAllTestTables(testDb);
+});
+
+afterEach(() => {
+	setStripeGatewayForTests(undefined);
 });
 
 async function createIntentWithInitiatedRow() {

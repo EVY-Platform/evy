@@ -7,7 +7,6 @@ import type {
 	PaymentTransferResponse,
 	PaymentWebhookRequest,
 } from "evy-types";
-import { MOCK_TRANSFER_FAILURE_AMOUNT } from "evy-types/paymentMocks";
 import type { EvyDb } from "../database/db";
 import { appendTransactionRow, hasRow, requireIntent } from "./paymentsShared";
 import { handlePaymentWebhook } from "./paymentWebhook";
@@ -94,7 +93,6 @@ export async function paymentCapture(
 	return created;
 }
 
-// Transfer is intentionally local-only until Stripe Connect / seller onboarding exists.
 export async function paymentTransfer(
 	params: PaymentTransferRequest,
 	db: EvyDb,
@@ -118,10 +116,24 @@ export async function paymentTransfer(
 		"initiated",
 	);
 
-	const transferEvents: PaymentWebhookRequest["type"][] =
-		intent.amount === MOCK_TRANSFER_FAILURE_AMOUNT
-			? ["transfer.failed"]
-			: ["transfer.succeeded", "transfer.completed"];
+	const outcome =
+		intent.amount === 0
+			? { ok: true as const }
+			: await getStripeGateway().createTransfer({
+					paymentIntentId: params.payment_intent_id,
+					amount: intent.amount,
+					currency: intent.currency,
+					metadata: {
+						fk: intent.fk,
+						resource: intent.resource,
+						authorization_message_id:
+							intent.authorization_message_id,
+					},
+				});
+
+	const transferEvents: PaymentWebhookRequest["type"][] = outcome.ok
+		? ["transfer.succeeded", "transfer.completed"]
+		: ["transfer.failed"];
 	await autoCallPaymentWebhook(db, params.payment_intent_id, transferEvents);
 
 	return created;
