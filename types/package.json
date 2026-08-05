@@ -19,7 +19,7 @@
 		"./dbErrors": "./dbErrors.ts",
 		"./readiness": "./readiness.ts",
 		"./wsTestHelpers": "./wsTestHelpers.ts",
-		"./monotonic": "./monotonic.ts",
+		"./clock": "./clock.ts",
 		"./resourceMutable": "./resourceMutable.ts",
 		"./paymentMocks": "./paymentMocks.ts"
 	},

@@ -10,6 +10,7 @@ import type {
 	UpdateRequest,
 	UpdateResponse,
 } from "evy-types";
+import { nowIso as clockNowIso } from "evy-types/clock";
 import { hasDatabaseErrorCode, PG_UNIQUE_VIOLATION } from "evy-types/dbErrors";
 import { assertResourceMutable } from "evy-types/resourceMutable";
 import {
@@ -142,7 +143,7 @@ export async function create(params: CreateRequest): Promise<CreateResponse> {
 	assertMarketplaceRules(params);
 	assertMarketplaceResourceMutable(params.resource);
 	const { resource, filter, data: dataPayload } = params;
-	const nowIso = new Date().toISOString();
+	const nowIso = clockNowIso();
 
 	const validatedPayload = validateCreateDataPayload(dataPayload);
 	assertIsoDateTimeJsonFields(validatedPayload);
@@ -179,7 +180,7 @@ export async function update(params: UpdateRequest): Promise<UpdateResponse> {
 	assertMarketplaceRules(params);
 	assertMarketplaceResourceMutable(params.resource);
 	const { resource, filter, data: dataPayload } = params;
-	const nowIso = new Date().toISOString();
+	const nowIso = clockNowIso();
 
 	const validatedPayload = validateUpdateDataPayload(dataPayload);
 	assertIsoDateTimeJsonFields(validatedPayload);
@@ -207,7 +208,7 @@ export async function deleteResource(
 	assertMarketplaceRules(params);
 	assertMarketplaceResourceMutable(params.resource);
 	const { resource, filter } = params;
-	const nowIso = new Date().toISOString();
+	const nowIso = clockNowIso();
 
 	// Soft delete, matching the core resources.
 	const result = await db

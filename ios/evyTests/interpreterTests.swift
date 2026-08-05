@@ -677,6 +677,20 @@ final class InterpreterTests: XCTestCase {
     XCTAssertEqual(time.value, "09:30")
   }
 
+  func testFormatDatetimeParsesNanosecondPrecisionTimestamps() throws {
+    let nanosecondKey = uniqueKey("nanosecond")
+    let millisecondKey = uniqueKey("millisecond")
+    try store(.string("2026-08-05T03:41:29.590008084Z"), at: nanosecondKey)
+    try store(.string("2026-08-05T03:41:29.590Z"), at: millisecondKey)
+
+    let nanosecond = try parseTextFromText(
+      "{formatDatetime(\(nanosecondKey), \"HH:mm:ss.SSS\")}")
+    let millisecond = try parseTextFromText(
+      "{formatDatetime(\(millisecondKey), \"HH:mm:ss.SSS\")}")
+
+    XCTAssertEqual(nanosecond.value, millisecond.value)
+  }
+
   func testSortScalarDescendingReversesOrder() throws {
     let key = uniqueKey("times")
     try store(

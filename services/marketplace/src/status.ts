@@ -1,5 +1,5 @@
 import { desc, eq } from "drizzle-orm";
-import { monotonicIso } from "evy-types/monotonic";
+import { nowIso as clockNowIso } from "evy-types/clock";
 
 import { db, item_status_history } from "./db";
 import { emitDataChanged } from "./events";
@@ -28,12 +28,7 @@ export async function appendStatus(
 	itemId: string,
 	status: ItemStatus,
 ): Promise<void> {
-	const latest = await latestStatusRow(itemId);
-
-	const created_at = monotonicIso(
-		new Date().toISOString(),
-		latest[0]?.created_at,
-	);
+	const created_at = clockNowIso();
 
 	const inserted = await db
 		.insert(item_status_history)

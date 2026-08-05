@@ -10,6 +10,7 @@ import type {
 	UpdateRequest,
 	UpdateResponse,
 } from "evy-types";
+import { nowIso as clockNowIso, toNanoIso } from "evy-types/clock";
 import { hasDatabaseErrorCode, PG_UNIQUE_VIOLATION } from "evy-types/dbErrors";
 import { isValidResourceRef } from "evy-types/resourceRef";
 import type { SyncRequest } from "evy-types/rpc/sync.request";
@@ -20,7 +21,7 @@ import {
 	validateUpdateResponse,
 } from "evy-types/validators";
 import type { EvyDb } from "../../database/db";
-import { assertNotModified, monotonicUpdatedAt } from "../conflicts";
+import { assertNotModified } from "../conflicts";
 
 type ResourceTable = AnyPgTable & {
 	id: AnyPgColumn;
@@ -171,7 +172,11 @@ export function makeCoreResource<
 		const payload: Record<string, unknown> = {
 			...record,
 			id: idOverride ?? record.id ?? crypto.randomUUID(),
-			created_at: createdAtOverride ?? record.created_at ?? nowIso,
+			created_at:
+				createdAtOverride ??
+				(typeof record.created_at === "string"
+					? toNanoIso(record.created_at)
+					: nowIso),
 			updated_at: nowIso,
 		};
 		// visibility comes from the client, never the API
@@ -249,10 +254,6 @@ export function makeCoreResource<
 			filter.expected_updated_at,
 			existingRows[0].updated_at,
 		);
-		const nextUpdatedAt = monotonicUpdatedAt(
-			nowIso,
-			existingRows[0].updated_at,
-		);
 		const validated = validatePayload(
 			dataPayload,
 			nowIso,
@@ -264,7 +265,7 @@ export function makeCoreResource<
 			.update(table as any)
 			.set({
 				...toUpdateSet(validated, nowIso),
-				updated_at: nextUpdatedAt,
+				updated_at: nowIso,
 			})
 			.where(eq(table.id, filter.id))
 			.returning();
@@ -277,7 +278,7 @@ export function makeCoreResource<
 		db: EvyDb,
 		filter: DeleteRequest["filter"],
 		notify: (value: unknown) => void,
-		nowIso: string = new Date().toISOString(),
+		nowIso: string = clockNowIso(),
 	): Promise<DeleteResponse> {
 		const existing = await db
 			.select()
@@ -286,11 +287,10 @@ export function makeCoreResource<
 			.limit(1);
 		if (existing.length === 0) throw new Error("Resource not found");
 		assertNotModified(filter.expected_updated_at, existing[0].updated_at);
-		const deletedAtIso = monotonicUpdatedAt(nowIso, existing[0].updated_at);
 		const deleted = await db
 			// biome-ignore lint/suspicious/noExplicitAny: Drizzle generic table requires cast
 			.update(table as any)
-			.set({ deleted_at: deletedAtIso, updated_at: deletedAtIso })
+			.set({ deleted_at: nowIso, updated_at: nowIso })
 			.where(and(eq(table.id, filter.id), isNull(table.deleted_at)))
 			.returning();
 		if (deleted.length === 0) throw new Error("Resource not found");

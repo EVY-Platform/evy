@@ -9,6 +9,7 @@ import type {
 	UpdateRequest,
 	UpdateResponse,
 } from "evy-types";
+import { nowIso as clockNowIso } from "evy-types/clock";
 import {
 	EVY_CORE_RESOURCE_REF,
 	EVY_CORE_SERVICE,
@@ -193,7 +194,7 @@ async function createCoreBody(
 	if (!ops.create) {
 		throw new Error("Create is not supported for this resource");
 	}
-	const nowIso = new Date().toISOString();
+	const nowIso = clockNowIso();
 	const emitNotification = buildEmitNotification(params.resource, "create");
 	return ops.create(db, params.filter, params.data, nowIso, emitNotification);
 }
@@ -206,7 +207,7 @@ async function updateCoreBody(
 	if (!ops.update) {
 		throw new Error("Update is not supported for this resource");
 	}
-	const nowIso = new Date().toISOString();
+	const nowIso = clockNowIso();
 	const emitNotification = buildEmitNotification(params.resource, "update");
 	return ops.update(db, params.filter, params.data, nowIso, emitNotification);
 }
