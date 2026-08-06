@@ -4,6 +4,10 @@ import { EVY_CORE_RESOURCE_REF } from "evy-types/coreResources";
 
 import { db, schema } from "../db";
 import { handleHook } from "../hooks";
+import {
+	findIntentByAuthorizationMessageId,
+	recordPaymentIntent,
+} from "../paymentIntents";
 import { drainPurchaseQueues } from "../purchase";
 import { MARKETPLACE_RESOURCE } from "../resources";
 import { appendStatus, currentStatus } from "../status";
@@ -33,6 +37,7 @@ const baseTransactionRequest: HookRequest = {
 beforeEach(async () => {
 	await drainPurchaseQueues();
 	await db.delete(schema.item_status_history);
+	await db.delete(schema.item_payment_intents);
 });
 
 describe("handleHook", () => {
@@ -77,6 +82,33 @@ describe("handleHook", () => {
 		expect(await handleHook(request)).toEqual({ ok: true });
 		await drainPurchaseQueues();
 		expect(await currentStatus(itemId)).toBe("sold");
+	});
+
+	it("aliases the payment intent onto thread replies on after_create", async () => {
+		const pendingId = "00000000-0000-4000-8000-000000000101";
+		const givenId = "00000000-0000-4000-8000-000000000102";
+		await recordPaymentIntent({
+			itemId,
+			authorizationMessageId: pendingId,
+			paymentIntentId: "pi_alias",
+		});
+
+		const request: HookRequest = {
+			...baseMessageRequest,
+			hook: "after_create",
+			data: {
+				...baseMessageRequest.data,
+				id: givenId,
+				type: "delivery",
+				value: "given",
+				parent_message_id: pendingId,
+			},
+		};
+		expect(await handleHook(request)).toEqual({ ok: true });
+
+		expect(await findIntentByAuthorizationMessageId(givenId)).toMatchObject({
+			payment_intent_id: "pi_alias",
+		});
 	});
 
 	it("ignores hooks for non-marketplace messages", async () => {

@@ -1874,6 +1874,9 @@ class E2ETestBase: XCTestCase {
     var data: [String: Any] = [
       "id": selectedItemId,
       "title": selectedItemTitle,
+      // Shipping/delivery requests are vetoed on items without a valid price
+      // (the payment_intent precondition), so every test item carries one.
+      "price": ["currency": "AUD", "value": 100],
     ]
     if let paymentMethods {
       data["payment_methods"] = paymentMethods

@@ -12,6 +12,7 @@ import { nowIso as clockNowIso } from "evy-types/clock";
 
 import { db, schema } from "../db";
 import {
+	extendIntentToMessage,
 	findIntentByAuthorizationMessageId,
 	recordPaymentIntent,
 } from "../paymentIntents";
@@ -313,6 +314,44 @@ describe("runPaymentReaction", () => {
 
 		expect(coreApiCalls.map((call) => call.method)).toEqual([
 			"payment_capture",
+		]);
+	});
+
+	it("transfers on received answering a mid-thread message via the alias", async () => {
+		const givenId = "00000000-0000-4000-8000-000000000050";
+		await seedItem({ currency: "AUD", value: 250 });
+		await recordPaymentIntent({
+			itemId,
+			authorizationMessageId: parentMessageId,
+			paymentIntentId: "pi_chain",
+		});
+		// The given message answers the pending; received answers the given.
+		await extendIntentToMessage({
+			id: givenId,
+			fk: itemId,
+			parent_message_id: parentMessageId,
+		});
+
+		expect(
+			await validatePaymentPreconditions({
+				fk: itemId,
+				type: "delivery",
+				value: "received",
+				parent_message_id: givenId,
+			}),
+		).toEqual({ ok: true });
+
+		await runPaymentReaction({
+			fk: itemId,
+			type: "delivery",
+			value: "received",
+			parent_message_id: givenId,
+		});
+		expect(coreApiCalls).toEqual([
+			{
+				method: "payment_transfer",
+				data: { payment_intent_id: "pi_chain" },
+			},
 		]);
 	});
 

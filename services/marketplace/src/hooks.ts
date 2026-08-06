@@ -1,5 +1,6 @@
 import type { HookRequest, HookResponse } from "evy-types";
 import { EVY_CORE_RESOURCE_REF } from "evy-types/coreResources";
+import { extendIntentToMessage } from "./paymentIntents";
 import { runPaymentReaction, validatePaymentPreconditions } from "./payments";
 import {
 	enqueuePurchaseReaction,
@@ -45,6 +46,7 @@ export async function handleHook(params: HookRequest): Promise<HookResponse> {
 		}
 		case "after_create":
 			enqueuePurchaseReaction(message);
+			await extendIntentToMessage(message);
 			await runPaymentReaction(message);
 			return { ok: true };
 	}

@@ -50,17 +50,17 @@ Source of truth for the wire shape: [`services/marketplace/src/schema/item_statu
 
 ## item_payment_intents
 
-Maps each buyer authorization message to the Stripe payment intent id the marketplace created for it. Written when `payment_intent` runs; read when capture, transfer, or cancel needs the provider id.
+Maps purchase-thread messages to the Stripe payment intent id the marketplace created for the thread. Written when `payment_intent` runs; read when capture, transfer, or cancel needs the provider id.
 
 ```
 id: uuid
 item_id: uuid                    # marketplace `data.id` for resource marketplace.items
-authorization_message_id: uuid    # the message that triggered payment_intent (delivery/shipping pending, pickup transaction)
+authorization_message_id: uuid    # a message in the purchase thread (see aliasing below)
 payment_intent_id: text           # payment_provider_transaction_id from the intent response
 created_at: date-time
 ```
 
-Storage: [`services/marketplace/src/schema.ts`](../../../services/marketplace/src/schema.ts). Lookup for capture/transfer/cancel uses `authorization_message_id = parent_message_id` on the triggering message (the accept/completed/received/reject answers the authorizing message directly).
+Storage: [`services/marketplace/src/schema.ts`](../../../services/marketplace/src/schema.ts). Lookup for capture/transfer/cancel uses `authorization_message_id = parent_message_id` on the triggering message. Purchase threads reply linearly (pending ← accept ← given ← received), so the mapping is written first for the authorizing message (delivery/shipping `pending`, pickup `transaction`) and then **aliased onto every later message in the thread** during its `after_create` hook — a reply always resolves the intent through its direct parent, no matter how deep the chain.
 
 ## Payment orchestration
 
