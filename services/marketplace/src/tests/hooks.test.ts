@@ -106,9 +106,11 @@ describe("handleHook", () => {
 		};
 		expect(await handleHook(request)).toEqual({ ok: true });
 
-		expect(await findIntentByAuthorizationMessageId(givenId)).toMatchObject({
-			payment_intent_id: "pi_alias",
-		});
+		expect(await findIntentByAuthorizationMessageId(givenId)).toMatchObject(
+			{
+				payment_intent_id: "pi_alias",
+			},
+		);
 	});
 
 	it("ignores hooks for non-marketplace messages", async () => {
