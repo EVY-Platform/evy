@@ -1,0 +1,41 @@
+{
+	"$schema": "https://json-schema.org/draft/2020-12/schema",
+	"$id": "payment-intent-request",
+	"title": "PaymentIntentRequest",
+	"description": "JSON-RPC params for creating a payment intent. V1 records the intent as an evy.transactions row with status \"intent\" and creates a Stripe PaymentIntent in sandbox mode (manual capture, auto-confirmed with pm_card_visa). Set STRIPE_MOCK=true or use the placeholder STRIPE_SECRET_KEY for in-process mock ids (pi_mock_…). Server-side constants (not request params): confirm=true, capture_method=\"manual\", payment_provider=\"stripe\", fees 0, signature=\"signed\".",
+	"type": "object",
+	"additionalProperties": false,
+	"required": [
+		"fk",
+		"resource",
+		"amount",
+		"currency",
+		"authorization_message_id"
+	],
+	"properties": {
+		"fk": {
+			"type": "string",
+			"format": "uuid",
+			"description": "The marketplace item this payment intent covers (→ Stripe metadata later)."
+		},
+		"resource": {
+			"$ref": "../common/rpc.schema.json#/$defs/ResourceRef",
+			"description": "Resource ref of the record `fk` belongs to, e.g. marketplace.items."
+		},
+		"amount": {
+			"type": "number",
+			"exclusiveMinimum": 0,
+			"description": "Money to authorize; must be greater than zero."
+		},
+		"currency": {
+			"type": "string",
+			"minLength": 1,
+			"description": "From the item's price; \"AUD\" in v1."
+		},
+		"authorization_message_id": {
+			"type": "string",
+			"format": "uuid",
+			"description": "The buyer's original request message (the message stating the price)."
+		}
+	}
+}

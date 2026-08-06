@@ -1,35 +1,17 @@
-import {
-	afterAll,
-	beforeAll,
-	beforeEach,
-	describe,
-	expect,
-	it,
-} from "bun:test";
-import { migrate } from "drizzle-orm/pglite/migrator";
-import { schema } from "../db";
+import { beforeAll, beforeEach, describe, expect, it } from "bun:test";
+import { db, schema } from "../db";
 import { MARKETPLACE_RESOURCE } from "../resources";
-import {
-	createPgliteTestDatabase,
-	registerMarketplaceTestDb,
-} from "./dbTestHelpers";
-
-const { pgliteClient, testDb } = createPgliteTestDatabase();
-
-registerMarketplaceTestDb(testDb);
+import { ensureMarketplaceTestSchema } from "./sharedTestDb";
 
 const { create, deleteResource, get, update } = await import("../data");
 
 beforeAll(async () => {
-	await migrate(testDb, { migrationsFolder: "./drizzle" });
-});
-
-afterAll(async () => {
-	await pgliteClient.close();
+	await ensureMarketplaceTestSchema();
 });
 
 beforeEach(async () => {
-	await testDb.delete(schema.data);
+	await db.delete(schema.data);
+	await db.delete(schema.item_status_history);
 });
 
 describe("marketplace get/create/update", () => {
@@ -69,7 +51,7 @@ describe("marketplace get/create/update", () => {
 		const olderRow = { id: crypto.randomUUID(), value: "older" };
 		const newerRow = { id: crypto.randomUUID(), value: "newer" };
 
-		await testDb.insert(schema.data).values([
+		await db.insert(schema.data).values([
 			{
 				id: olderRow.id,
 				resource: MARKETPLACE_RESOURCE.CONDITIONS,
@@ -97,7 +79,7 @@ describe("marketplace get/create/update", () => {
 		const oldRow = { id: crypto.randomUUID(), value: "old" };
 		const newRow = { id: crypto.randomUUID(), value: "new" };
 
-		await testDb.insert(schema.data).values([
+		await db.insert(schema.data).values([
 			{
 				resource: MARKETPLACE_RESOURCE.CONDITIONS,
 				data: oldRow,
@@ -126,7 +108,7 @@ describe("marketplace get/create/update", () => {
 		const secondId = crypto.randomUUID();
 		const firstRow = { id: firstId, title: "First" };
 		const secondRow = { id: secondId, title: "Second" };
-		await testDb.insert(schema.data).values([
+		await db.insert(schema.data).values([
 			{
 				id: firstId,
 				resource: MARKETPLACE_RESOURCE.ITEMS,
@@ -310,6 +292,39 @@ describe("marketplace item payload validation", () => {
 				price: { currency: "AUD", value: "13.50" },
 			}),
 		).resolves.toBeDefined();
+	});
+
+	it.each([
+		[0],
+		["0"],
+		["0.00"],
+	] as const)("rejects a zero price value %p", async (value) => {
+		await expect(
+			createItem({
+				...fixtureItem,
+				price: { currency: "AUD", value },
+			}),
+		).rejects.toThrow();
+	});
+
+	it("accepts a sub-dollar numeric price", async () => {
+		await expect(
+			createItem({
+				...fixtureItem,
+				price: { currency: "AUD", value: 0.5 },
+			}),
+		).resolves.toBeDefined();
+	});
+
+	it("rejects an update that sets price to zero", async () => {
+		await createItem(fixtureItem);
+		await expect(
+			update({
+				resource: MARKETPLACE_RESOURCE.ITEMS,
+				filter: { id: fixtureItem.id },
+				data: { price: { currency: "AUD", value: 0 } },
+			}),
+		).rejects.toThrow();
 	});
 
 	it("accepts an unset fee persisted as an empty object", async () => {
@@ -501,5 +516,75 @@ describe("marketplace tombstones", () => {
 		});
 
 		expect("deleted_at" in (created as object)).toBe(false);
+	});
+});
+
+describe("marketplace item_statuses", () => {
+	const itemId = crypto.randomUUID();
+	const statusRow = {
+		id: crypto.randomUUID(),
+		item_id: itemId,
+		status: "available" as const,
+		created_at: "2024-01-01T00:00:00.000Z",
+	};
+
+	it("returns item_status_history rows via get", async () => {
+		await db.insert(schema.item_status_history).values(statusRow);
+
+		const result = await get({
+			resource: MARKETPLACE_RESOURCE.ITEM_STATUSES,
+		});
+
+		expect(result).toEqual([statusRow]);
+	});
+
+	it("filters item_statuses by updated_after on created_at", async () => {
+		const olderRow = {
+			...statusRow,
+			id: crypto.randomUUID(),
+			created_at: "2024-01-01T00:00:00.000Z",
+		};
+		const newerRow = {
+			...statusRow,
+			id: crypto.randomUUID(),
+			created_at: "2024-01-02T00:00:00.000Z",
+		};
+		await db
+			.insert(schema.item_status_history)
+			.values([olderRow, newerRow]);
+
+		const result = await get({
+			resource: MARKETPLACE_RESOURCE.ITEM_STATUSES,
+			filter: { updated_after: "2024-01-01T12:00:00.000Z" },
+		});
+
+		expect(result).toEqual([newerRow]);
+	});
+
+	it("rejects create, update, and delete on internal item_statuses", async () => {
+		const mutationError =
+			'Resource "marketplace.item_statuses" is internal and cannot be created, updated, or deleted via the data API';
+
+		await expect(
+			create({
+				resource: MARKETPLACE_RESOURCE.ITEM_STATUSES,
+				data: statusRow,
+			}),
+		).rejects.toThrow(mutationError);
+
+		await expect(
+			update({
+				resource: MARKETPLACE_RESOURCE.ITEM_STATUSES,
+				filter: { id: statusRow.id },
+				data: statusRow,
+			}),
+		).rejects.toThrow(mutationError);
+
+		await expect(
+			deleteResource({
+				resource: MARKETPLACE_RESOURCE.ITEM_STATUSES,
+				filter: { id: statusRow.id },
+			}),
+		).rejects.toThrow(mutationError);
 	});
 });

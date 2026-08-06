@@ -1,0 +1,7 @@
+{
+	"$schema": "https://json-schema.org/draft/2020-12/schema",
+	"$id": "payment-cancel-response",
+	"title": "PaymentCancelResponse",
+	"description": "The canceled Transaction row written by the payment_cancel procedure.",
+	"$ref": "../data/data.schema.json#/$defs/DATA_EVY_Transaction"
+}

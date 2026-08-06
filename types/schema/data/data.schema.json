@@ -14,6 +14,9 @@
 			"$ref": "#/$defs/DATA_EVY_Row"
 		},
 		{
+			"$ref": "#/$defs/DATA_EVY_Transaction"
+		},
+		{
 			"$ref": "#/$defs/DATA_EVY_Device"
 		},
 		{
@@ -149,6 +152,8 @@
 				"id",
 				"fk",
 				"resource",
+				"type",
+				"value",
 				"created_at",
 				"updated_at",
 				"data",
@@ -165,6 +170,12 @@
 				},
 				"resource": {
 					"$ref": "../common/rpc.schema.json#/$defs/ResourceRef"
+				},
+				"type": {
+					"type": "string"
+				},
+				"value": {
+					"type": "string"
 				},
 				"created_at": {
 					"type": "string",
@@ -623,6 +634,118 @@
 				},
 				"data": {
 					"$ref": "#/$defs/DATA_EVY_RowData"
+				},
+				"visibility": {
+					"$ref": "#/$defs/visibility"
+				},
+				"created_at": {
+					"type": "string",
+					"format": "date-time"
+				},
+				"updated_at": {
+					"type": "string",
+					"format": "date-time"
+				},
+				"deleted_at": {
+					"description": "Set when the record is deleted. Tombstoned rows are excluded from plain reads but included in incremental ones, so clients learn about deletions.",
+					"type": "string",
+					"format": "date-time"
+				}
+			}
+		},
+		"DATA_EVY_Transaction": {
+			"type": "object",
+			"additionalProperties": false,
+			"required": [
+				"id",
+				"fk",
+				"resource",
+				"type",
+				"status",
+				"amount",
+				"currency",
+				"payment_provider_fee",
+				"service_fee",
+				"payment_provider",
+				"payment_provider_transaction_id",
+				"signature",
+				"authorization_message_id",
+				"visibility",
+				"created_at",
+				"updated_at"
+			],
+			"properties": {
+				"id": {
+					"type": "string",
+					"format": "uuid"
+				},
+				"fk": {
+					"type": "string",
+					"format": "uuid",
+					"description": "The marketplace item this transaction moves money for."
+				},
+				"resource": {
+					"$ref": "../common/rpc.schema.json#/$defs/ResourceRef"
+				},
+				"type": {
+					"type": "string",
+					"enum": ["charge", "transfer"]
+				},
+				"status": {
+					"type": "string",
+					"enum": [
+						"intent",
+						"initiated",
+						"succeeded",
+						"failed",
+						"completed",
+						"canceled"
+					],
+					"description": "Append-only lifecycle state for this type. Each transition is a new row; rows sharing payment_provider_transaction_id form one payment's ledger."
+				},
+				"amount": {
+					"type": "number",
+					"minimum": 0,
+					"description": "Money moved; 0 allowed."
+				},
+				"currency": {
+					"type": "string",
+					"minLength": 1,
+					"description": "From the item's price; \"AUD\" in v1."
+				},
+				"payment_provider_fee": {
+					"type": "number",
+					"minimum": 0,
+					"description": "Provider's cut; always 0 in v1."
+				},
+				"service_fee": {
+					"type": "number",
+					"minimum": 0,
+					"description": "EVY's cut; always 0 in v1."
+				},
+				"payment_provider": {
+					"type": "string",
+					"enum": ["stripe"]
+				},
+				"payment_provider_transaction_id": {
+					"type": "string",
+					"minLength": 1,
+					"description": "Provider's own id; v1 callers generate a uuid."
+				},
+				"signature": {
+					"type": "string",
+					"minLength": 1,
+					"description": "Always \"signed\" in v1; placeholder for real signing."
+				},
+				"authorization_message_id": {
+					"type": "string",
+					"format": "uuid",
+					"description": "The buyer's original request (the message stating the price)."
+				},
+				"error": {
+					"type": "string",
+					"minLength": 1,
+					"description": "Provider-reported failure reason; set only on \"failed\" rows."
 				},
 				"visibility": {
 					"$ref": "#/$defs/visibility"

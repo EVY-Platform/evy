@@ -1,0 +1,31 @@
+{
+	"$schema": "https://json-schema.org/draft/2020-12/schema",
+	"$id": "payment-webhook-request",
+	"title": "PaymentWebhookRequest",
+	"description": "JSON-RPC params for the payment webhook handler. payment_capture and payment_transfer auto-call it in-process after capture/transfer; tests call it explicitly; real Stripe events arrive at POST /webhooks/stripe and are translated into these internal types (e.g. payment_intent.succeeded → payment_intent.capture_succeeded). Event names mirror Stripe stages with unambiguous internal names. Payload uses payment_intent_id as the correlation key for every transaction row of a payment.",
+	"type": "object",
+	"additionalProperties": false,
+	"required": ["type", "payment_intent_id"],
+	"properties": {
+		"type": {
+			"type": "string",
+			"enum": [
+				"payment_intent.capture_succeeded",
+				"payment_intent.capture_failed",
+				"payment_intent.canceled",
+				"charge.completed",
+				"transfer.succeeded",
+				"transfer.failed",
+				"transfer.completed"
+			]
+		},
+		"payment_intent_id": {
+			"$ref": "../common/rpc.schema.json#/$defs/PaymentIntentId"
+		},
+		"error": {
+			"type": "string",
+			"minLength": 1,
+			"description": "Provider-reported failure reason; carried onto the transaction row this event appends (failure events only)."
+		}
+	}
+}

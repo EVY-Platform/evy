@@ -26,6 +26,7 @@ export const EXTERNAL_TEST_SERVICE_DESCRIPTOR: ResourcesResponse["services"][num
 			([, name]) => ({
 				id: formatResourceRef(EXTERNAL_TEST_SERVICE_ID, name),
 				name,
+				visibility: "public" as const,
 			}),
 		),
 	};

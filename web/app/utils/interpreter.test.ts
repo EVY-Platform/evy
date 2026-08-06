@@ -125,9 +125,9 @@ describe("parseText", () => {
 	it("resolves findFirst over a sorted collection with a predicate", () => {
 		expect(
 			parseText(
-				`{findFirst(sort(${TEST_RESOURCE_ID.SELLING_REASONS}, desc, created_at), fk == item.id && data.type == pickup).data.value}`,
+				`{findFirst(sort(${TEST_RESOURCE_ID.SELLING_REASONS}, desc, created_at), fk == item.id && type == pickup).value}`,
 			),
-		).toBe(`${TEST_RESOURCE_ID.SELLING_REASONS}.data.value`);
+		).toBe(`${TEST_RESOURCE_ID.SELLING_REASONS}.value`);
 	});
 
 	it("resolves sort to the collection argument for mock preview", () => {

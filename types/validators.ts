@@ -23,6 +23,7 @@ import type {
 	DATA_EVY_Row,
 	DATA_EVY_Service,
 	DATA_EVY_ServiceProvider,
+	DATA_EVY_Transaction,
 } from "./generated/ts/data/data";
 import type {
 	FileUploadChunkMetadata,
@@ -35,6 +36,18 @@ import type { DeleteRequest } from "./generated/ts/rpc/delete.request";
 import type { DeleteResponse } from "./generated/ts/rpc/delete.response";
 import type { GetRequest } from "./generated/ts/rpc/get.request";
 import type { GetResponse } from "./generated/ts/rpc/get.response";
+import type { HookRequest } from "./generated/ts/rpc/hook.request";
+import type { HookResponse } from "./generated/ts/rpc/hook.response";
+import type { PaymentCancelRequest } from "./generated/ts/rpc/payment_cancel.request";
+import type { PaymentCancelResponse } from "./generated/ts/rpc/payment_cancel.response";
+import type { PaymentCaptureRequest } from "./generated/ts/rpc/payment_capture.request";
+import type { PaymentCaptureResponse } from "./generated/ts/rpc/payment_capture.response";
+import type { PaymentIntentRequest } from "./generated/ts/rpc/payment_intent.request";
+import type { PaymentIntentResponse } from "./generated/ts/rpc/payment_intent.response";
+import type { PaymentTransferRequest } from "./generated/ts/rpc/payment_transfer.request";
+import type { PaymentTransferResponse } from "./generated/ts/rpc/payment_transfer.response";
+import type { PaymentWebhookRequest } from "./generated/ts/rpc/payment_webhook.request";
+import type { PaymentWebhookResponse } from "./generated/ts/rpc/payment_webhook.response";
 import type { PlaceSearchRequest } from "./generated/ts/rpc/place_search.request";
 import type { PlaceSearchResponse } from "./generated/ts/rpc/place_search.response";
 import type { ResourcesResponse } from "./generated/ts/rpc/resources.response";
@@ -83,6 +96,42 @@ import getRequestRaw from "./schema/rpc/get.request.schema.json" with {
 	type: "json",
 };
 import getResponseRaw from "./schema/rpc/get.response.schema.json" with {
+	type: "json",
+};
+import hookRequestRaw from "./schema/rpc/hook.request.schema.json" with {
+	type: "json",
+};
+import hookResponseRaw from "./schema/rpc/hook.response.schema.json" with {
+	type: "json",
+};
+import paymentCancelRequestRaw from "./schema/rpc/payment_cancel.request.schema.json" with {
+	type: "json",
+};
+import paymentCancelResponseRaw from "./schema/rpc/payment_cancel.response.schema.json" with {
+	type: "json",
+};
+import paymentCaptureRequestRaw from "./schema/rpc/payment_capture.request.schema.json" with {
+	type: "json",
+};
+import paymentCaptureResponseRaw from "./schema/rpc/payment_capture.response.schema.json" with {
+	type: "json",
+};
+import paymentIntentRequestRaw from "./schema/rpc/payment_intent.request.schema.json" with {
+	type: "json",
+};
+import paymentIntentResponseRaw from "./schema/rpc/payment_intent.response.schema.json" with {
+	type: "json",
+};
+import paymentTransferRequestRaw from "./schema/rpc/payment_transfer.request.schema.json" with {
+	type: "json",
+};
+import paymentTransferResponseRaw from "./schema/rpc/payment_transfer.response.schema.json" with {
+	type: "json",
+};
+import paymentWebhookRequestRaw from "./schema/rpc/payment_webhook.request.schema.json" with {
+	type: "json",
+};
+import paymentWebhookResponseRaw from "./schema/rpc/payment_webhook.response.schema.json" with {
 	type: "json",
 };
 import placeSearchRequestRaw from "./schema/rpc/place_search.request.schema.json" with {
@@ -142,6 +191,30 @@ const RAW_SCHEMAS: Record<string, Record<string, unknown>> = {
 	...SDUI_DEFINITION_SCHEMAS,
 	"sdui/evy.schema.json": evySduiRaw as Record<string, unknown>,
 	"files/file.schema.json": fileSchemaRaw as Record<string, unknown>,
+	"rpc/payment_intent.request.schema.json": paymentIntentRequestRaw as Record<
+		string,
+		unknown
+	>,
+	"rpc/payment_intent.response.schema.json":
+		paymentIntentResponseRaw as Record<string, unknown>,
+	"rpc/payment_capture.request.schema.json":
+		paymentCaptureRequestRaw as Record<string, unknown>,
+	"rpc/payment_capture.response.schema.json":
+		paymentCaptureResponseRaw as Record<string, unknown>,
+	"rpc/payment_cancel.request.schema.json": paymentCancelRequestRaw as Record<
+		string,
+		unknown
+	>,
+	"rpc/payment_cancel.response.schema.json":
+		paymentCancelResponseRaw as Record<string, unknown>,
+	"rpc/payment_transfer.request.schema.json":
+		paymentTransferRequestRaw as Record<string, unknown>,
+	"rpc/payment_transfer.response.schema.json":
+		paymentTransferResponseRaw as Record<string, unknown>,
+	"rpc/payment_webhook.request.schema.json":
+		paymentWebhookRequestRaw as Record<string, unknown>,
+	"rpc/payment_webhook.response.schema.json":
+		paymentWebhookResponseRaw as Record<string, unknown>,
 	"rpc/place_search.request.schema.json": placeSearchRequestRaw as Record<
 		string,
 		unknown
@@ -152,6 +225,8 @@ const RAW_SCHEMAS: Record<string, Record<string, unknown>> = {
 	>,
 	"rpc/api.request.schema.json": apiRequestRaw as Record<string, unknown>,
 	"rpc/get.request.schema.json": getRequestRaw as Record<string, unknown>,
+	"rpc/hook.request.schema.json": hookRequestRaw as Record<string, unknown>,
+	"rpc/hook.response.schema.json": hookResponseRaw as Record<string, unknown>,
 	"rpc/create.request.schema.json": createRequestRaw as Record<
 		string,
 		unknown
@@ -295,6 +370,14 @@ function lazyValidator<T>(
 	};
 }
 
+function schemaValidator<T>(
+	label: string,
+	ajvGetter: () => InstanceType<typeof Ajv2020>,
+	uri: string,
+): (data: unknown) => T {
+	return makeValidator(label, lazyValidator<T>(ajvGetter, uri));
+}
+
 const REQUEST_SCHEMA_FILES = [
 	"common/json.schema.json",
 	"common/rpc.schema.json",
@@ -305,7 +388,13 @@ const REQUEST_SCHEMA_FILES = [
 	"rpc/update.request.schema.json",
 	"rpc/delete.request.schema.json",
 	"rpc/sync.request.schema.json",
+	"rpc/payment_intent.request.schema.json",
+	"rpc/payment_capture.request.schema.json",
+	"rpc/payment_cancel.request.schema.json",
+	"rpc/payment_transfer.request.schema.json",
+	"rpc/payment_webhook.request.schema.json",
 	"rpc/place_search.request.schema.json",
+	"rpc/hook.request.schema.json",
 ] as const;
 
 /** data.schema references SDUI for DATA_EVY_Flow; register both in one instance */
@@ -324,7 +413,13 @@ const ENTITY_SCHEMA_FILES = [
 	"rpc/delete.response.schema.json",
 	"rpc/sync.response.schema.json",
 	"rpc/resources.response.schema.json",
+	"rpc/payment_intent.response.schema.json",
+	"rpc/payment_capture.response.schema.json",
+	"rpc/payment_cancel.response.schema.json",
+	"rpc/payment_transfer.response.schema.json",
+	"rpc/payment_webhook.response.schema.json",
 	"rpc/place_search.response.schema.json",
+	"rpc/hook.response.schema.json",
 ];
 
 let requestAjv: InstanceType<typeof Ajv2020> | null = null;
@@ -364,124 +459,13 @@ function getEntityAjv(): InstanceType<typeof Ajv2020> {
 	return entityAjv;
 }
 
-const getValidateApiRequest = lazyValidator<ApiRequest>(
-	getRequestAjv,
-	fileId("rpc/api.request.schema.json"),
-);
-const getValidateCreateRequest = lazyValidator<CreateRequest>(
-	getRequestAjv,
-	fileId("rpc/create.request.schema.json"),
-);
-const getValidateUpdateRequest = lazyValidator<UpdateRequest>(
-	getRequestAjv,
-	fileId("rpc/update.request.schema.json"),
-);
-const getValidateDeleteRequest = lazyValidator<DeleteRequest>(
-	getRequestAjv,
-	fileId("rpc/delete.request.schema.json"),
-);
-const getValidateCreateDataPayload = lazyValidator<CreateRequest["data"]>(
-	getRequestAjv,
-	`${fileId("rpc/create.request.schema.json")}#/$defs/CreateDataPayload`,
-);
-const getValidateUpdateDataPayload = lazyValidator<UpdateRequest["data"]>(
-	getRequestAjv,
-	`${fileId("rpc/update.request.schema.json")}#/$defs/UpdateDataPayload`,
-);
-const getValidateGetRequest = lazyValidator<GetRequest>(
-	getRequestAjv,
-	fileId("rpc/get.request.schema.json"),
-);
 const getValidateUiFlow = lazyValidator<UI_Flow>(
 	getEntityAjv,
 	fileId("sdui/evy.schema.json"),
 );
-const getValidateDataEvyAddress = lazyValidator<DATA_EVY_Address>(
-	getEntityAjv,
-	`${fileId("data/data.schema.json")}#/$defs/DATA_EVY_Address`,
-);
-const getValidateDataEvyMessage = lazyValidator<DATA_EVY_Message>(
-	getEntityAjv,
-	`${fileId("data/data.schema.json")}#/$defs/DATA_EVY_Message`,
-);
-const getValidateDataEvyFormatter = lazyValidator<DATA_EVY_Formatter>(
-	getEntityAjv,
-	`${fileId("data/data.schema.json")}#/$defs/DATA_EVY_Formatter`,
-);
-const getValidateDataEvyFlow = lazyValidator<DATA_EVY_Flow>(
-	getEntityAjv,
-	`${fileId("data/data.schema.json")}#/$defs/DATA_EVY_Flow`,
-);
-const getValidateDataEvyPage = lazyValidator<DATA_EVY_Page>(
-	getEntityAjv,
-	`${fileId("data/data.schema.json")}#/$defs/DATA_EVY_Page`,
-);
 const getValidateDataEvyRow = lazyValidator<DATA_EVY_Row>(
 	getEntityAjv,
 	`${fileId("data/data.schema.json")}#/$defs/DATA_EVY_Row`,
-);
-const getValidateDataEvyService = lazyValidator<DATA_EVY_Service>(
-	getEntityAjv,
-	`${fileId("data/data.schema.json")}#/$defs/DATA_EVY_Service`,
-);
-const getValidateDataEvyOrganization = lazyValidator<DATA_EVY_Organization>(
-	getEntityAjv,
-	`${fileId("data/data.schema.json")}#/$defs/DATA_EVY_Organization`,
-);
-const getValidateDataEvyServiceProvider =
-	lazyValidator<DATA_EVY_ServiceProvider>(
-		getEntityAjv,
-		`${fileId("data/data.schema.json")}#/$defs/DATA_EVY_ServiceProvider`,
-	);
-const getValidateDataEvyFile = lazyValidator<DATA_EVY_File>(
-	getEntityAjv,
-	`${fileId("data/data.schema.json")}#/$defs/DATA_EVY_File`,
-);
-const getValidateGetResponse = lazyValidator<GetResponse>(
-	getEntityAjv,
-	fileId("rpc/get.response.schema.json"),
-);
-const getValidateCreateResponse = lazyValidator<CreateResponse>(
-	getEntityAjv,
-	fileId("rpc/create.response.schema.json"),
-);
-const getValidateUpdateResponse = lazyValidator<UpdateResponse>(
-	getEntityAjv,
-	fileId("rpc/update.response.schema.json"),
-);
-const getValidateDeleteResponse = lazyValidator<DeleteResponse>(
-	getEntityAjv,
-	fileId("rpc/delete.response.schema.json"),
-);
-const getValidateSyncRequest = lazyValidator<SyncRequest>(
-	getRequestAjv,
-	fileId("rpc/sync.request.schema.json"),
-);
-const getValidateSyncResponse = lazyValidator<SyncResponse>(
-	getEntityAjv,
-	fileId("rpc/sync.response.schema.json"),
-);
-const getValidateResourcesResponse = lazyValidator<ResourcesResponse>(
-	getEntityAjv,
-	fileId("rpc/resources.response.schema.json"),
-);
-const getValidatePlaceSearchRequest = lazyValidator<PlaceSearchRequest>(
-	getRequestAjv,
-	fileId("rpc/place_search.request.schema.json"),
-);
-const getValidatePlaceSearchResponse = lazyValidator<PlaceSearchResponse>(
-	getEntityAjv,
-	fileId("rpc/place_search.response.schema.json"),
-);
-
-const getValidateFileUploadChunkMetadata =
-	lazyValidator<FileUploadChunkMetadata>(
-		getRequestAjv,
-		`${fileId("files/file.schema.json")}#/$defs/FileUploadChunkMetadata`,
-	);
-const getValidateFileWithBinary = lazyValidator<FileWithBinary>(
-	getEntityAjv,
-	`${fileId("files/file.schema.json")}#/$defs/FileWithBinary`,
 );
 function makeValidator<T>(
 	label: string,
@@ -493,33 +477,50 @@ function makeValidator<T>(
 	};
 }
 
-export const validateApiRequest = makeValidator<ApiRequest>(
+export const validateApiRequest = schemaValidator<ApiRequest>(
 	"ApiRequest",
-	getValidateApiRequest,
+	getRequestAjv,
+	fileId("rpc/api.request.schema.json"),
 );
-export const validateCreateRequest = makeValidator<CreateRequest>(
+export const validateCreateRequest = schemaValidator<CreateRequest>(
 	"CreateRequest",
-	getValidateCreateRequest,
+	getRequestAjv,
+	fileId("rpc/create.request.schema.json"),
 );
-export const validateUpdateRequest = makeValidator<UpdateRequest>(
+export const validateUpdateRequest = schemaValidator<UpdateRequest>(
 	"UpdateRequest",
-	getValidateUpdateRequest,
+	getRequestAjv,
+	fileId("rpc/update.request.schema.json"),
 );
-export const validateDeleteRequest = makeValidator<DeleteRequest>(
+export const validateDeleteRequest = schemaValidator<DeleteRequest>(
 	"DeleteRequest",
-	getValidateDeleteRequest,
+	getRequestAjv,
+	fileId("rpc/delete.request.schema.json"),
 );
-export const validateCreateDataPayload = makeValidator<CreateRequest["data"]>(
+export const validateCreateDataPayload = schemaValidator<CreateRequest["data"]>(
 	"Create data",
-	getValidateCreateDataPayload,
+	getRequestAjv,
+	`${fileId("rpc/create.request.schema.json")}#/$defs/CreateDataPayload`,
 );
-export const validateUpdateDataPayload = makeValidator<UpdateRequest["data"]>(
+export const validateUpdateDataPayload = schemaValidator<UpdateRequest["data"]>(
 	"Update data",
-	getValidateUpdateDataPayload,
+	getRequestAjv,
+	`${fileId("rpc/update.request.schema.json")}#/$defs/UpdateDataPayload`,
 );
-export const validateGetRequest = makeValidator<GetRequest>(
+export const validateGetRequest = schemaValidator<GetRequest>(
 	"GetRequest",
-	getValidateGetRequest,
+	getRequestAjv,
+	fileId("rpc/get.request.schema.json"),
+);
+export const validateHookRequest = schemaValidator<HookRequest>(
+	"HookRequest",
+	getRequestAjv,
+	fileId("rpc/hook.request.schema.json"),
+);
+export const validateHookResponse = schemaValidator<HookResponse>(
+	"HookResponse",
+	getEntityAjv,
+	fileId("rpc/hook.response.schema.json"),
 );
 
 function assertUiFlowRowTriggerConstraints(row: UI_Row, path: string): void {
@@ -690,25 +691,35 @@ export function validateUiFlow(data: unknown): UI_Flow {
 	assertUiFlowSubmitsDeclaration(flow, submitTargets);
 	return flow;
 }
-export const validateDataEvyAddress = makeValidator<DATA_EVY_Address>(
+export const validateDataEvyAddress = schemaValidator<DATA_EVY_Address>(
 	"Address",
-	getValidateDataEvyAddress,
+	getEntityAjv,
+	`${fileId("data/data.schema.json")}#/$defs/DATA_EVY_Address`,
 );
-export const validateDataEvyMessage = makeValidator<DATA_EVY_Message>(
+export const validateDataEvyMessage = schemaValidator<DATA_EVY_Message>(
 	"Message",
-	getValidateDataEvyMessage,
+	getEntityAjv,
+	`${fileId("data/data.schema.json")}#/$defs/DATA_EVY_Message`,
 );
-export const validateDataEvyFormatter = makeValidator<DATA_EVY_Formatter>(
+export const validateDataEvyTransaction = schemaValidator<DATA_EVY_Transaction>(
+	"Transaction",
+	getEntityAjv,
+	`${fileId("data/data.schema.json")}#/$defs/DATA_EVY_Transaction`,
+);
+export const validateDataEvyFormatter = schemaValidator<DATA_EVY_Formatter>(
 	"Formatter",
-	getValidateDataEvyFormatter,
+	getEntityAjv,
+	`${fileId("data/data.schema.json")}#/$defs/DATA_EVY_Formatter`,
 );
-export const validateDataEvyFlow = makeValidator<DATA_EVY_Flow>(
+export const validateDataEvyFlow = schemaValidator<DATA_EVY_Flow>(
 	"Flow",
-	getValidateDataEvyFlow,
+	getEntityAjv,
+	`${fileId("data/data.schema.json")}#/$defs/DATA_EVY_Flow`,
 );
-export const validateDataEvyPage = makeValidator<DATA_EVY_Page>(
+export const validateDataEvyPage = schemaValidator<DATA_EVY_Page>(
 	"Page",
-	getValidateDataEvyPage,
+	getEntityAjv,
+	`${fileId("data/data.schema.json")}#/$defs/DATA_EVY_Page`,
 );
 export function validateDataEvyRow(data: unknown): DATA_EVY_Row {
 	assertValid("Row", getValidateDataEvyRow(), data);
@@ -719,67 +730,143 @@ export function validateDataEvyRow(data: unknown): DATA_EVY_Row {
 	);
 	return row;
 }
-export const validateDataEvyService = makeValidator<DATA_EVY_Service>(
+export const validateDataEvyService = schemaValidator<DATA_EVY_Service>(
 	"Service",
-	getValidateDataEvyService,
+	getEntityAjv,
+	`${fileId("data/data.schema.json")}#/$defs/DATA_EVY_Service`,
 );
-export const validateDataEvyOrganization = makeValidator<DATA_EVY_Organization>(
-	"Organization",
-	getValidateDataEvyOrganization,
-);
-export const validateDataEvyServiceProvider =
-	makeValidator<DATA_EVY_ServiceProvider>(
-		"ServiceProvider",
-		getValidateDataEvyServiceProvider,
+export const validateDataEvyOrganization =
+	schemaValidator<DATA_EVY_Organization>(
+		"Organization",
+		getEntityAjv,
+		`${fileId("data/data.schema.json")}#/$defs/DATA_EVY_Organization`,
 	);
-export const validateDataEvyFile = makeValidator<DATA_EVY_File>(
+export const validateDataEvyServiceProvider =
+	schemaValidator<DATA_EVY_ServiceProvider>(
+		"ServiceProvider",
+		getEntityAjv,
+		`${fileId("data/data.schema.json")}#/$defs/DATA_EVY_ServiceProvider`,
+	);
+export const validateDataEvyFile = schemaValidator<DATA_EVY_File>(
 	"File",
-	getValidateDataEvyFile,
+	getEntityAjv,
+	`${fileId("data/data.schema.json")}#/$defs/DATA_EVY_File`,
 );
-export const validateGetResponse = makeValidator<GetResponse>(
+export const validateGetResponse = schemaValidator<GetResponse>(
 	"GetResponse",
-	getValidateGetResponse,
+	getEntityAjv,
+	fileId("rpc/get.response.schema.json"),
 );
-export const validateCreateResponse = makeValidator<CreateResponse>(
+export const validateCreateResponse = schemaValidator<CreateResponse>(
 	"CreateResponse",
-	getValidateCreateResponse,
+	getEntityAjv,
+	fileId("rpc/create.response.schema.json"),
 );
-export const validateUpdateResponse = makeValidator<UpdateResponse>(
+export const validateUpdateResponse = schemaValidator<UpdateResponse>(
 	"UpdateResponse",
-	getValidateUpdateResponse,
+	getEntityAjv,
+	fileId("rpc/update.response.schema.json"),
 );
-export const validateDeleteResponse = makeValidator<DeleteResponse>(
+export const validateDeleteResponse = schemaValidator<DeleteResponse>(
 	"DeleteResponse",
-	getValidateDeleteResponse,
+	getEntityAjv,
+	fileId("rpc/delete.response.schema.json"),
 );
-export const validateSyncRequest = makeValidator<SyncRequest>(
+export const validateSyncRequest = schemaValidator<SyncRequest>(
 	"SyncRequest",
-	getValidateSyncRequest,
+	getRequestAjv,
+	fileId("rpc/sync.request.schema.json"),
 );
-export const validateSyncResponse = makeValidator<SyncResponse>(
+export const validateSyncResponse = schemaValidator<SyncResponse>(
 	"SyncResponse",
-	getValidateSyncResponse,
+	getEntityAjv,
+	fileId("rpc/sync.response.schema.json"),
 );
-export const validateResourcesResponse = makeValidator<ResourcesResponse>(
+export const validateResourcesResponse = schemaValidator<ResourcesResponse>(
 	"ResourcesResponse",
-	getValidateResourcesResponse,
+	getEntityAjv,
+	fileId("rpc/resources.response.schema.json"),
 );
-export const validatePlaceSearchRequest = makeValidator<PlaceSearchRequest>(
+export const validatePaymentIntentRequest =
+	schemaValidator<PaymentIntentRequest>(
+		"PaymentIntentRequest",
+		getRequestAjv,
+		fileId("rpc/payment_intent.request.schema.json"),
+	);
+export const validatePaymentIntentResponse =
+	schemaValidator<PaymentIntentResponse>(
+		"PaymentIntentResponse",
+		getEntityAjv,
+		fileId("rpc/payment_intent.response.schema.json"),
+	);
+export const validatePaymentCaptureRequest =
+	schemaValidator<PaymentCaptureRequest>(
+		"PaymentCaptureRequest",
+		getRequestAjv,
+		fileId("rpc/payment_capture.request.schema.json"),
+	);
+export const validatePaymentCaptureResponse =
+	schemaValidator<PaymentCaptureResponse>(
+		"PaymentCaptureResponse",
+		getEntityAjv,
+		fileId("rpc/payment_capture.response.schema.json"),
+	);
+export const validatePaymentCancelRequest =
+	schemaValidator<PaymentCancelRequest>(
+		"PaymentCancelRequest",
+		getRequestAjv,
+		fileId("rpc/payment_cancel.request.schema.json"),
+	);
+export const validatePaymentCancelResponse =
+	schemaValidator<PaymentCancelResponse>(
+		"PaymentCancelResponse",
+		getEntityAjv,
+		fileId("rpc/payment_cancel.response.schema.json"),
+	);
+export const validatePaymentTransferRequest =
+	schemaValidator<PaymentTransferRequest>(
+		"PaymentTransferRequest",
+		getRequestAjv,
+		fileId("rpc/payment_transfer.request.schema.json"),
+	);
+export const validatePaymentTransferResponse =
+	schemaValidator<PaymentTransferResponse>(
+		"PaymentTransferResponse",
+		getEntityAjv,
+		fileId("rpc/payment_transfer.response.schema.json"),
+	);
+export const validatePaymentWebhookRequest =
+	schemaValidator<PaymentWebhookRequest>(
+		"PaymentWebhookRequest",
+		getRequestAjv,
+		fileId("rpc/payment_webhook.request.schema.json"),
+	);
+export const validatePaymentWebhookResponse =
+	schemaValidator<PaymentWebhookResponse>(
+		"PaymentWebhookResponse",
+		getEntityAjv,
+		fileId("rpc/payment_webhook.response.schema.json"),
+	);
+export const validatePlaceSearchRequest = schemaValidator<PlaceSearchRequest>(
 	"PlaceSearchRequest",
-	getValidatePlaceSearchRequest,
+	getRequestAjv,
+	fileId("rpc/place_search.request.schema.json"),
 );
-export const validatePlaceSearchResponse = makeValidator<PlaceSearchResponse>(
+export const validatePlaceSearchResponse = schemaValidator<PlaceSearchResponse>(
 	"PlaceSearchResponse",
-	getValidatePlaceSearchResponse,
+	getEntityAjv,
+	fileId("rpc/place_search.response.schema.json"),
 );
 export const validateFileUploadChunkMetadata =
-	makeValidator<FileUploadChunkMetadata>(
+	schemaValidator<FileUploadChunkMetadata>(
 		"FileUploadChunkMetadata",
-		getValidateFileUploadChunkMetadata,
+		getRequestAjv,
+		`${fileId("files/file.schema.json")}#/$defs/FileUploadChunkMetadata`,
 	);
-export const validateFileWithBinary = makeValidator<FileWithBinary>(
+export const validateFileWithBinary = schemaValidator<FileWithBinary>(
 	"FileWithBinary",
-	getValidateFileWithBinary,
+	getEntityAjv,
+	`${fileId("files/file.schema.json")}#/$defs/FileWithBinary`,
 );
 // ISO date-time field validation for data payloads (post-schema).
 

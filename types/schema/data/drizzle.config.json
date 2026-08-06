@@ -75,6 +75,12 @@
 			"defaultRandom": ["id"],
 			"uniqueIndexes": []
 		},
+		"DATA_EVY_Transaction": {
+			"tableName": "transaction",
+			"primaryKey": "id",
+			"defaultRandom": ["id"],
+			"uniqueIndexes": []
+		},
 		"DATA_EVY_File": {
 			"tableName": "file",
 			"primaryKey": "id",

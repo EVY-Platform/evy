@@ -10,7 +10,9 @@ import type {
 	UpdateRequest,
 	UpdateResponse,
 } from "evy-types";
+import { nowIso as clockNowIso } from "evy-types/clock";
 import { hasDatabaseErrorCode, PG_UNIQUE_VIOLATION } from "evy-types/dbErrors";
+import { assertResourceMutable } from "evy-types/resourceMutable";
 import {
 	assertIsoDateTimeJsonFields,
 	validateCreateDataPayload,
@@ -20,7 +22,7 @@ import {
 	validateUpdateDataPayload,
 	validateUpdateResponse,
 } from "evy-types/validators";
-import { data, db } from "./db";
+import { data, db, item_status_history } from "./db";
 import {
 	validateDataMarketplaceItem,
 	validateDataMarketplaceLookup,
@@ -34,7 +36,11 @@ function omitNulls<T extends Record<string, unknown>>(row: T): T {
 }
 
 import { emitDataChanged } from "./events";
-import { MARKETPLACE_RESOURCE, MARKETPLACE_SEED_RESOURCES } from "./resources";
+import {
+	MARKETPLACE_RESOURCE,
+	MARKETPLACE_SEED_RESOURCES,
+	marketplaceResourceCatalogVisibility,
+} from "./resources";
 
 /**
  * Resource-specific payload validation. Every marketplace resource has a
@@ -69,8 +75,43 @@ function assertMarketplaceRules(
 	}
 }
 
+function assertMarketplaceResourceMutable(resource: string): void {
+	assertResourceMutable(
+		resource,
+		marketplaceResourceCatalogVisibility(resource),
+	);
+}
+
+async function getItemStatuses(params: GetRequest): Promise<GetResponse> {
+	const { filter } = params;
+	const whereClauses = [];
+	if (filter?.id) {
+		whereClauses.push(eq(item_status_history.id, filter.id));
+	}
+	if (filter?.updated_after) {
+		whereClauses.push(
+			gt(item_status_history.created_at, filter.updated_after),
+		);
+	}
+
+	const rows = await db
+		.select()
+		.from(item_status_history)
+		.where(whereClauses.length > 0 ? and(...whereClauses) : undefined)
+		.orderBy(
+			asc(item_status_history.created_at),
+			asc(item_status_history.id),
+		);
+
+	return validateGetResponse(rows);
+}
+
 export async function get(params: GetRequest): Promise<GetResponse> {
 	assertMarketplaceRules(params);
+	if (params.resource === MARKETPLACE_RESOURCE.ITEM_STATUSES) {
+		return getItemStatuses(params);
+	}
+
 	const { resource, filter } = params;
 
 	const whereClauses = [eq(data.resource, resource)];
@@ -95,8 +136,9 @@ export async function get(params: GetRequest): Promise<GetResponse> {
 
 export async function create(params: CreateRequest): Promise<CreateResponse> {
 	assertMarketplaceRules(params);
+	assertMarketplaceResourceMutable(params.resource);
 	const { resource, filter, data: dataPayload } = params;
-	const nowIso = new Date().toISOString();
+	const nowIso = clockNowIso();
 
 	const validatedPayload = validateCreateDataPayload(dataPayload);
 	assertIsoDateTimeJsonFields(validatedPayload);
@@ -131,8 +173,9 @@ export async function create(params: CreateRequest): Promise<CreateResponse> {
 
 export async function update(params: UpdateRequest): Promise<UpdateResponse> {
 	assertMarketplaceRules(params);
+	assertMarketplaceResourceMutable(params.resource);
 	const { resource, filter, data: dataPayload } = params;
-	const nowIso = new Date().toISOString();
+	const nowIso = clockNowIso();
 
 	const validatedPayload = validateUpdateDataPayload(dataPayload);
 	assertIsoDateTimeJsonFields(validatedPayload);
@@ -158,8 +201,9 @@ export async function deleteResource(
 	params: DeleteRequest,
 ): Promise<DeleteResponse> {
 	assertMarketplaceRules(params);
+	assertMarketplaceResourceMutable(params.resource);
 	const { resource, filter } = params;
-	const nowIso = new Date().toISOString();
+	const nowIso = clockNowIso();
 
 	// Soft delete, matching the core resources.
 	const result = await db

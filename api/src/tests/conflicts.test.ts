@@ -140,6 +140,15 @@ describe("optimistic locking", () => {
 		}
 	});
 
+	it("accepts a millisecond-precision expected version against a nanosecond stored value", async () => {
+		const created = await createFlow();
+		const millisecondToken = `${created.updated_at.slice(0, 23)}Z`;
+
+		await expect(
+			updateFlow(created.id, "Renamed", millisecondToken),
+		).resolves.toMatchObject({ id: created.id });
+	});
+
 	it("rejects a delete based on a stale version", async () => {
 		const created = await createFlow();
 		await updateFlow(created.id, "Moved on", created.updated_at);

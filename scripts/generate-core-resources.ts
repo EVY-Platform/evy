@@ -31,19 +31,85 @@ const RESOURCES_SCHEMA_PATH = join(
 	"resources",
 	"core.resources.json",
 );
+const DATA_SCHEMA_PATH = join(SCHEMA_DIR, "data", "data.schema.json");
 const OUT_TS_PATH = join(OUT_TS, "coreResources.ts");
 const OUT_SWIFT_PATH = join(OUT_SWIFT, "CoreResources.generated.swift");
 const CORE_RESOURCES_SCHEMA_PATH = "types/schema/resources/core.resources.json";
 
+type ResourceCatalogVisibility = "public" | "private" | "internal";
+type RowVisibility = "public" | "private";
+
+// Core resources whose DATA_EVY_* schema def has no visibility field.
+type DataSchemaDef = { required?: string[] };
+
+// Singulars whose data def name isn't a straight capitalization.
+const DATA_DEF_NAME_OVERRIDES: Record<string, string> = {
+	provider: "DATA_EVY_ServiceProvider",
+};
+
+// Catalog resources with no DATA_EVY_* data def (not row-backed).
+const RESOURCES_WITHOUT_DATA_DEF = new Set(["resources"]);
+
+function dataDefName(singular: string): string {
+	return (
+		DATA_DEF_NAME_OVERRIDES[singular] ??
+		`DATA_EVY_${singular.charAt(0).toUpperCase() + singular.slice(1)}`
+	);
+}
+
+function resourcesWithoutRowVisibility(
+	resources: Record<string, ResourceMeta>,
+	dataDefs: Record<string, DataSchemaDef>,
+): Set<string> {
+	const without = new Set<string>();
+	for (const [plural, meta] of Object.entries(resources)) {
+		if (RESOURCES_WITHOUT_DATA_DEF.has(plural)) {
+			without.add(plural);
+			continue;
+		}
+		const defName = dataDefName(meta.singular);
+		const def = dataDefs[defName];
+		if (!def) {
+			throw new Error(
+				`core.resources.json: resource "${plural}" has no data def "${defName}" — add a DATA_DEF_NAME_OVERRIDES entry or list it in RESOURCES_WITHOUT_DATA_DEF`,
+			);
+		}
+		if (!def.required?.includes("visibility")) {
+			without.add(plural);
+		}
+	}
+	return without;
+}
+
 interface ResourceMeta {
 	singular: string;
-	visibility?: "public" | "private";
+	visibility: ResourceCatalogVisibility;
 	dataValues?: string[];
 }
 
 interface CoreResourcesSchema {
 	service: string;
 	resources: Record<string, ResourceMeta>;
+}
+
+function isResourceCatalogVisibility(
+	value: unknown,
+): value is ResourceCatalogVisibility {
+	return value === "public" || value === "private" || value === "internal";
+}
+
+function rowVisibilityDefault(
+	meta: ResourceMeta,
+	plural: string,
+	withoutRowVisibility: Set<string>,
+): RowVisibility | undefined {
+	if (withoutRowVisibility.has(plural)) {
+		return undefined;
+	}
+	if (meta.visibility === "internal") {
+		return undefined;
+	}
+	return meta.visibility;
 }
 
 function validateSchema(value: unknown): asserts value is CoreResourcesSchema {
@@ -77,13 +143,9 @@ function validateSchema(value: unknown): asserts value is CoreResourcesSchema {
 				`core.resources.json: resources.${name}.singular must be a non-empty string`,
 			);
 		}
-		if (
-			m.visibility !== undefined &&
-			m.visibility !== "public" &&
-			m.visibility !== "private"
-		) {
+		if (!isResourceCatalogVisibility(m.visibility)) {
 			throw new Error(
-				`core.resources.json: resources.${name}.visibility must be "public" or "private" when set`,
+				`core.resources.json: resources.${name}.visibility must be "public", "private", or "internal"`,
 			);
 		}
 		if (m.dataValues !== undefined) {
@@ -103,11 +165,18 @@ function validateSchema(value: unknown): asserts value is CoreResourcesSchema {
 	}
 }
 
-function generateTypeScript(schema: CoreResourcesSchema): string {
+function generateTypeScript(
+	schema: CoreResourcesSchema,
+	withoutRowVisibility: Set<string>,
+): string {
 	const { service, resources } = schema;
 	const lines: string[] = [];
 
 	lines.push(...generatedFileHeader(CORE_RESOURCES_SCHEMA_PATH));
+	lines.push(
+		'export type ResourceCatalogVisibility = "public" | "private" | "internal";',
+	);
+	lines.push("");
 	lines.push(
 		`export const EVY_CORE_SERVICE = ${JSON.stringify(service)} as const;`,
 	);
@@ -126,24 +195,39 @@ function generateTypeScript(schema: CoreResourcesSchema): string {
 	lines.push("export const EVY_CORE_RESOURCES = [");
 	for (const [plural, meta] of Object.entries(resources)) {
 		lines.push(
-			`\t{ id: ${JSON.stringify(formatResourceRef(service, plural))}, name: ${JSON.stringify(meta.singular)} },`,
+			`\t{ id: ${JSON.stringify(formatResourceRef(service, plural))}, name: ${JSON.stringify(meta.singular)}, visibility: ${JSON.stringify(meta.visibility)} },`,
 		);
 	}
 	lines.push("] as const;");
 	lines.push("");
 
-	// Visibility every record of a resource is created with. Resources with no
-	// visibility field of their own are absent.
+	// Row visibility every record of a resource is created with. Catalog
+	// "internal" and resources with no row column are absent.
 	lines.push("export const EVY_CORE_RESOURCE_VISIBILITY: Readonly<");
 	lines.push('\tRecord<string, "public" | "private">');
 	lines.push("> = {");
 	for (const [plural, meta] of Object.entries(resources)) {
-		if (!meta.visibility) continue;
+		const rowDefault = rowVisibilityDefault(
+			meta,
+			plural,
+			withoutRowVisibility,
+		);
+		if (!rowDefault) continue;
 		lines.push(
-			`\t${JSON.stringify(plural)}: ${JSON.stringify(meta.visibility)},`,
+			`\t${JSON.stringify(plural)}: ${JSON.stringify(rowDefault)},`,
 		);
 	}
 	lines.push("};");
+	lines.push("");
+
+	lines.push(
+		"export function coreResourceCatalogVisibility(",
+		"\tresourceRef: string,",
+		"): ResourceCatalogVisibility | undefined {",
+		"\treturn EVY_CORE_RESOURCES.find((entry) => entry.id === resourceRef)",
+		"\t\t?.visibility;",
+		"}",
+	);
 	lines.push("");
 
 	const messageDataValues = resources.messages?.dataValues ?? [];
@@ -156,7 +240,10 @@ function generateTypeScript(schema: CoreResourcesSchema): string {
 	return lines.join("\n");
 }
 
-function generateSwift(schema: CoreResourcesSchema): string {
+function generateSwift(
+	schema: CoreResourcesSchema,
+	withoutRowVisibility: Set<string>,
+): string {
 	const { service, resources } = schema;
 	const resourceNames = Object.keys(resources);
 	const lines: string[] = [];
@@ -188,18 +275,23 @@ function generateSwift(schema: CoreResourcesSchema): string {
 	lines.push("\t}");
 	lines.push("");
 
-	// Visibility lookup
+	// Row visibility lookup
 	lines.push(
-		"\t/// The visibility every record of this resource is created with.",
+		"\t/// The row visibility every record of this resource is created with.",
 	);
 	lines.push(
-		"\t/// Nil for resources with no visibility field of their own.",
+		"\t/// Nil for resources with no row visibility column or catalog internal.",
 	);
 	lines.push("\tpublic var visibility: String? {");
 	lines.push("\t\tswitch self {");
 	for (const [plural, meta] of Object.entries(resources)) {
 		const caseName = snakeToCamel(plural);
-		const value = meta.visibility ? JSON.stringify(meta.visibility) : "nil";
+		const rowDefault = rowVisibilityDefault(
+			meta,
+			plural,
+			withoutRowVisibility,
+		);
+		const value = rowDefault ? JSON.stringify(rowDefault) : "nil";
 		lines.push(`\t\tcase .${caseName}: return ${value}`);
 	}
 	lines.push("\t\t}");
@@ -224,13 +316,20 @@ function generateSwift(schema: CoreResourcesSchema): string {
 
 async function main(): Promise<void> {
 	const schema = await loadJson<CoreResourcesSchema>(RESOURCES_SCHEMA_PATH);
+	const dataSchema = await loadJson<{
+		$defs?: Record<string, DataSchemaDef>;
+	}>(DATA_SCHEMA_PATH);
 	validateSchema(schema);
+	const withoutRowVisibility = resourcesWithoutRowVisibility(
+		schema.resources,
+		dataSchema.$defs ?? {},
+	);
 
 	await writeGeneratedOutputs({
 		tsPath: OUT_TS_PATH,
-		tsContent: generateTypeScript(schema),
+		tsContent: generateTypeScript(schema, withoutRowVisibility),
 		swiftPath: OUT_SWIFT_PATH,
-		swiftContent: generateSwift(schema),
+		swiftContent: generateSwift(schema, withoutRowVisibility),
 	});
 }
 

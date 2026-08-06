@@ -72,11 +72,11 @@ Adding one means: write the request/response schemas, add the manifest entry nam
 
 # Data models
 
-This document covers EVY shared data: schema-backed rows stored in the API database (source of truth: [`types/schema/data/data.schema.json`](../../../types/schema/data/data.schema.json)) and reusable value objects used across clients and services. Domain payloads for workers such as marketplace are documented under that service; they are not `DATA_EVY_*` rows in this schema.
+This document covers EVY shared data: schema-backed rows stored in the API database (source of truth: [`types/schema/data/data.schema.json`](../../types/schema/data/data.schema.json)) and reusable value objects used across clients and services. Domain payloads for workers such as marketplace are documented under that service; they are not `DATA_EVY_*` rows in this schema.
 
 ## Wire contract vs persisted rows
 
-Clients call the API with JSON-RPC `get`, `sync`, `resources`, `api`, `create`, `update`, and `delete` (see [`types/schema/rpc`](../../../types/schema/rpc)). `get`, `create`, `update`, and `delete` carry a single `resource` field holding a dotted reference (`evy.flows`, `marketplace.items`); `api` carries a `service` slug (`evy`, `marketplace`, …) because procedures route by service, not resource. `sync` and `resources` are top-level methods; `sync` is described on its own below. `resources` returns the aggregated service/resource catalog from the core manifest plus each registered external service's live `resources` RPC response. Resources whose ref prefix is `evy` are dispatched by the API into resource modules under [`api/src/data/resources`](../../../api/src/data/resources) and map to the row types below in the API Postgres schema. Any other prefix is forwarded to the owning service's adapter, which the API resolves from the core `services` table at startup. Each external service owns its resource manifest locally and exposes it through its required `resources` JSON-RPC method; the gateway aggregates those manifests and includes the full catalog on every successful sync as a singleton under the core `resources` key so clients can persist it offline.
+Clients call the API with JSON-RPC `get`, `sync`, `resources`, `api`, `create`, `update`, and `delete` (see [`types/schema/rpc`](../../types/schema/rpc)). `get`, `create`, `update`, and `delete` carry a single `resource` field holding a dotted reference (`evy.flows`, `marketplace.items`); `api` carries a `service` slug (`evy`, `marketplace`, …) because procedures route by service, not resource. `sync` and `resources` are top-level methods; `sync` is described on its own below. `resources` returns the aggregated service/resource catalog from the core manifest plus each registered external service's live `resources` RPC response. Resources whose ref prefix is `evy` are dispatched by the API into resource modules under [`api/src/data/resources`](../../../api/src/data/resources) and map to the row types below in the API Postgres schema. Any other prefix is forwarded to the owning service's adapter, which the API resolves from the core `services` table at startup. Each external service owns its resource manifest locally and exposes it through its required `resources` JSON-RPC method; the gateway aggregates those manifests and includes the full catalog on every successful sync as a singleton under the core `resources` key so clients can persist it offline.
 
 Routing in practice: the API reads the service prefix from `resource` (`serviceOfRef`) and routes `evy.*` to core handlers; everything else goes to the matching external adapter.
 
@@ -103,9 +103,9 @@ A device's ownership set is the union of three sources:
 
 ## Who validates what
 
-The API validates the RPC envelope on every call, and the payload of every **core** resource against [`types/schema/data/data.schema.json`](../../../types/schema/data/data.schema.json). It does **not** look inside a service-owned payload: a forwarded `create` or `update` is checked for envelope shape, routed, and the owning service decides whether the body is acceptable. Service payload schemas therefore live in that service's own codebase — none of them belong in `types/`, which carries the shared EVY contract only. A service that skips validation is unvalidated end to end; there is no second line of defence in the gateway.
+The API validates the RPC envelope on every call, and the payload of every **core** resource against [`types/schema/data/data.schema.json`](../../types/schema/data/data.schema.json). It does **not** look inside a service-owned payload: a forwarded `create` or `update` is checked for envelope shape, routed, and the owning service decides whether the body is acceptable. Service payload schemas therefore live in that service's own codebase — none of them belong in `types/`, which carries the shared EVY contract only. A service that skips validation is unvalidated end to end; there is no second line of defence in the gateway.
 
-Resource manifests may declare an `attributes` list per resource: the dotted attribute paths that resource's rows can bind to (see [`types/schema/rpc/resources.response.schema.json`](../../../types/schema/rpc/resources.response.schema.json)). The builder uses these for id interpolation. The gateway passes them through untouched — the owning service is the only authority on what its rows contain, and declaring them from the same schema it validates against keeps the two from drifting. A service that declares nothing still works: the builder falls back to reading keys off whatever rows have synced.
+Resource manifests may declare an `attributes` list per resource: the dotted attribute paths that resource's rows can bind to (see [`types/schema/rpc/resources.response.schema.json`](../../types/schema/rpc/resources.response.schema.json)). The builder uses these for id interpolation. The gateway passes them through untouched — the owning service is the only authority on what its rows contain, and declaring them from the same schema it validates against keeps the two from drifting. A service that declares nothing still works: the builder falls back to reading keys off whatever rows have synced.
 
 ## Common date-time fields
 
@@ -162,23 +162,42 @@ A Search row may persist both `child_row_id` and `sheet_row_id`. Relationship ki
 
 On the wire this is accessed with `resource: "evy.rows"`.
 
-#### Visibility
+### DATA_EVY_Transaction
 
-Every `DATA_EVY_*` row carries a required `visibility` attribute: `"public"` or `"private"`. **Every create states it, and nothing fills one in** — not the resource module, not the schema, not the database column. A payload without a visibility is rejected, because a record whose visibility nobody chose is a bug rather than something to guess at.
+Record of money movement for a marketplace item (`fk` + `resource`). Each payment is an append-only lifecycle ledger: `type` is one of `charge` or `transfer`; `status` is one of `intent`, `initiated`, `succeeded`, `failed`, or `completed`. Every state transition is a new row; rows sharing the same `payment_provider_transaction_id` belong to one payment. Fees, payment provider, and signature are fixed placeholder values in v1. `authorization_message_id` points at the buyer's original request message. Transaction rows are always created with row `visibility: "public"` and sync to every device (amount, currency, item `fk`, and lifecycle state). The ledger is strictly append-only: only `list` and `create` are registered for the resource, and update/delete requests are rejected outright.
 
-Each resource declares the value its records are created with in [`core.resources.json`](../../../types/schema/resources/core.resources.json), which the generator emits for both platforms (`EVY_CORE_RESOURCE_VISIBILITY` in TypeScript, `EVYCoreResource.visibility` in Swift). iOS attaches it on create; web states it where it builds records; seeds and tests state it in their payloads. Resources with no visibility of their own — the `resources` catalog, `formatters`, and every external service resource — declare nothing and get nothing.
+Payment flows use four core procedures that mirror Stripe's PaymentIntent model. In sandbox mode (`STRIPE_MOCK=false` with a real `sk_test_` key), `payment_intent`, `payment_capture`, and `payment_transfer` call the Stripe API. Set `STRIPE_MOCK=true` (or use the placeholder `STRIPE_SECRET_KEY`) for deterministic in-process mocks — e2e forces mock mode. **Intended v1 usage** — no device calls these directly; the marketplace service orchestrates them from message `after_create` hooks (see `docs/evy/hooks.md`), and all three payment create procedures declare empty `resultAttributes` so the builder cannot bind the intent id from the response.
 
-**What the two values mean for sync:** a public row goes to every device; a private row goes only to the device that owns it. Messages add one case — whoever owns the record a message addresses receives it too, even before they hold it. So `private` is an access rule, not just a storage choice, and flipping a resource to private removes its rows from every device but the owner's. That happens with no error anywhere: the app simply renders less. Before making a resource private, ask who reads it — a public record that reads a private one (as the marketplace item once read its pickup address) has to carry what it needs itself.
+1. **`payment_intent`** (`api{service:evy, method:payment_intent}`) — buyer's device will call this before creating a pickup/delivery/shipping request message. Request: `fk`, `resource`, `amount`, `currency`, `authorization_message_id`. `amount` must be greater than zero (enforced by the request schema); marketplace item `price.value` is validated `> 0` when present. Writes a `{type: "charge", status: "intent"}` row. Real mode creates a Stripe PaymentIntent (`capture_method: "manual"`, `confirm: true`, `payment_method: "pm_card_visa"`); mock mode uses `pi_mock_…` ids. v1 placeholders written on every row: `payment_provider: "stripe"`, fees `0`, `signature: "signed"`.
+2. **`payment_capture`** (`api{service:evy, method:payment_capture}`) — seller's device will call this before accepting a request. Request: `{ payment_intent_id }`. Writes `{charge, initiated}`; real mode calls `stripe.paymentIntents.capture`, then appends `{charge, succeeded}` (marketplace appends `sold` via the transaction `after_create` hook) and `{charge, completed}` from the capture outcome. Mock mode skips Stripe. Rejects unknown intents and duplicate capture. Amount `6.66` (`MOCK_CAPTURE_FAILURE_AMOUNT` in `evy-types/paymentMocks`) triggers capture failure in mock mode only, appending `{charge, failed}` and authoring `charge_failed`.
+3. **`payment_transfer`** (`api{service:evy, method:payment_transfer}`) — moves funds to the seller after capture. Request: `{ payment_intent_id }`. Requires a `{charge, succeeded}` row; writes `{transfer, initiated}` then calls `stripe.transfers.create` in real mode (`source_transaction` from the captured charge, destination from `STRIPE_CONNECT_ACCOUNT_ID`) and appends `{transfer, succeeded}` and `{transfer, completed}` from the outcome. Mock mode skips Stripe and derives the same rows from the gateway outcome. Rejects duplicate transfer. Amount `7.77` (`MOCK_TRANSFER_FAILURE_AMOUNT`, handled inside the mock gateway) triggers transfer failure, appending `{transfer, failed}` and authoring `transfer_failed`.
+4. **`payment_webhook`** (`api{service:evy, method:payment_webhook}`) — internal webhook handler for payment lifecycle events. Request: `{ type, payment_intent_id }`. Response: `{ received: true }`. `payment_capture` / `payment_transfer` auto-call it in-process; tests call it explicitly; real Stripe events arrive at `POST /webhooks/stripe` on `STRIPE_WEBHOOK_PORT` (default `8002`) and map: `payment_intent.succeeded` → `payment_intent.capture_succeeded`, `payment_intent.payment_failed` → `payment_intent.capture_failed`, `charge.captured` → `charge.completed`. Handler idempotency (`hasRow` before append) makes duplicate delivery safe. On capture/transfer failure, appends the failed transaction row and authors `charge_failed` / `transfer_failed` messages on the item's chain.
 
-On iOS, public rows sync into `publicStore` and private rows into `privateStore`; web keeps a single data path and treats `visibility` as an ordinary field.
+### Visibility
 
-Two limits worth knowing. `get` is **not** an access boundary — it takes no ownership and returns whatever it is asked for; sync is the only path that populates a device, so that is where the rule lives. And external service resources have no `visibility` of their own and the gateway forwards their payloads without inspecting them, so they are public by construction; a service that needs private rows declares and filters them itself.
+Visibility appears in two places and they are not the same thing.
 
-On iOS the private store is also part of what a device declares as owned on sync, which is how a message that arrives for you stays owned and keeps receiving updates. Note what `visibility` is **not**: it is one global column choosing a store, not an access rule and not ownership. Every device syncs every private row it is sent — every device holds every seeded address privately — so `"private"` means "stored privately on whichever device receives it", never "mine". Ownership of a **public** record therefore cannot be expressed by visibility at all, and is recorded separately when the device creates it (see [`sync`](#wire-contract-vs-persisted-rows)).
+**Resource (catalog) visibility** is declared on every resource of every service in that service's resource manifest (`core.resources.json` for core, `resources.ts` for external services). It is required on each `ResourceDescriptor` returned by the `resources` discovery method. The three values are:
+
+- `"public"` — full data API: get, sync, create, update, delete.
+- `"private"` — same API surface as public; the name reflects the default row visibility for resources whose rows carry a `visibility` column (see below).
+- `"internal"` — get and sync only. Create, update, and delete via the data API are rejected. The owning service may still write rows directly (for example marketplace hooks appending `item_status_history`).
+
+**Row visibility** applies only to `DATA_EVY_*` rows that have a `visibility` column in Postgres. Every such create must state `"public"` or `"private"` — nothing fills one in, not the resource module, not the schema, not the database column. A payload without row visibility is rejected.
+
+Each core resource whose rows carry the column declares the value its records are created with in [`core.resources.json`](../../types/schema/resources/core.resources.json), emitted as `EVY_CORE_RESOURCE_VISIBILITY` in TypeScript and `EVYCoreResource.visibility` in Swift (row default only — catalog `"internal"` and resources without the column are absent). iOS attaches the row default on create; web and seeds state it in their payloads. `formatters` and the virtual `resources` catalog have catalog `"public"` but no row column, so they contribute no row default. External service payloads have no row `visibility` field; catalog visibility still applies to the resource manifest and API mutation policy.
+
+**What row public and private mean for sync:** a public row goes to every device; a private row goes only to the device that owns it. Messages add one case — whoever owns the record a message addresses receives it too, even before they hold it. So `private` is an access rule, not just a storage choice, and flipping a resource to private removes its rows from every device but the owner's. That happens with no error anywhere: the app simply renders less. Before making a resource private, ask who reads it — a public record that reads a private one (as the marketplace item once read its pickup address) has to carry what it needs itself.
+
+On iOS, public rows sync into `publicStore` and private rows into `privateStore`; web keeps a single data path and treats row `visibility` as an ordinary field.
+
+Two limits worth knowing. `get` is **not** an access boundary — it takes no ownership and returns whatever it is asked for; sync is the only path that populates a device, so that is where the row rule lives. External service resources declare catalog visibility like core; the gateway forwards their payloads without inspecting row fields they do not have.
+
+On iOS the private store is also part of what a device declares as owned on sync, which is how a message that arrives for you stays owned and keeps receiving updates. Note what row `visibility` is **not**: it is one global column choosing a store, not an access rule and not ownership. Every device syncs every private row it is sent — every device holds every seeded address privately — so `"private"` means "stored privately on whichever device receives it", never "mine". Ownership of a **public** record therefore cannot be expressed by row visibility at all, and is recorded separately when the device creates it (see [`sync`](#wire-contract-vs-persisted-rows)).
 
 ### DATA_EVY_Message
 
-Core message record in [`data.schema.json`](../../../types/schema/data/data.schema.json) (`$defs.DATA_EVY_Message`, Postgres table `Message`). A message always relates to one record of another resource: `fk` is that record's id, and `resource` is the dotted ref of the resource the `fk` belongs to (e.g. `marketplace.items`). Use-case-specific fields (e.g. `type`, `time`, `postalcode`) live in the free-form `data` object.
+Core message record in [`data.schema.json`](../../types/schema/data/data.schema.json) (`$defs.DATA_EVY_Message`, Postgres table `Message`). A message always relates to one record of another resource: `fk` is that record's id, and `resource` is the dotted ref of the resource the `fk` belongs to (e.g. `marketplace.items`). `type` and `value` are required root attributes; other use-case-specific fields (e.g. `time`, `postalcode`, address objects) live in the free-form `data` object.
 
 On the wire this is accessed with `resource: "evy.messages"`.
 
@@ -186,7 +205,9 @@ On the wire this is accessed with `resource: "evy.messages"`.
 
 **Nothing in the system updates a message.** A request's whole life is the sequence of messages naming it, ordered by `created_at`: asked, then accepted, rejected or withdrawn. There is no `status` column and no `archivedAt` column; each held part of this before the lifecycle became append-only.
 
-`data.value` holds the whole vocabulary — `"pending"` on a request, and `"accept"`, `"reject"` or `"cancel"` on the message that settles one. A request says `"pending"` outright rather than leaving the key absent, so the predicates read as one state machine and a message kind that carries no state is never mistaken for something to answer.
+`value` holds the whole vocabulary — `"pending"` on a request, and `"accept"`, `"reject"` or `"cancel"` on the message that settles one. Purchase flows extend this with handshake values (`transaction`, `given`, `sent`, …), fulfillment failures (`failed` on delivery/shipping chains), and payment failure values (`charge_failed`, `transfer_failed` — webhook-authored only). Evy core authors `request_failed` when a `before_create` hook vetoes a message create. The canonical list lives in [`core.resources.json`](../../types/schema/resources/core.resources.json) under `messages.dataValues`.
+
+**Client rule:** `reject`, `cancel`, `failed`, and every `*_failed` / `*_rejected` value is *negative* — the step named by its `parent_message_id` did not take effect and the chain is back to the state before it. Every SDUI "latest" check must be value-scoped with this rule. Positive gating uses live values such as `sent` on shipping chains, or `accept` combined with `marketplace.item_statuses … == "sold"` when the UI needs to know funds have cleared.
 
 A settling message addresses whatever record the request addressed — same `fk` and `resource` — and **carries the request's whole `data` forward**, overriding `value` and setting `parent_message_id` on the row to name what it answers. That duplication is load-bearing rather than sloppy: `findFirst` cannot nest, so a lookup that finds the settling message cannot reach through it to the request. Anything the settled state displays — the agreed time, the address it is going to or being collected from — has to be on the message that says so, or the confirmation row renders empty.
 
@@ -194,15 +215,15 @@ Accepting, rejecting and cancelling are therefore the same operation with a diff
 
 #### The state of a transfer method is its latest message
 
-The item page reads one thing per transfer method: the **latest** message for that `(fk, data.type)` pair.
+The item page reads one thing per transfer method: the **latest** message for that `(fk, type)` pair.
 
 ```
-findFirst(sort(evy.messages, desc, created_at), fk == <item>.id && data.type == pickup)
+findFirst(sort(evy.messages, desc, created_at), fk == <item>.id && type == pickup)
 ```
 
 `pending` means a request is open (offer to cancel it); `accept` means it is agreed (show the time). `reject`, `cancel` and "no message at all" are the same branch — nothing is in flight, so offer to request again.
 
-Each `(fk, data.type)` pair is **tracked independently** — a rejected pickup says nothing about delivery — but only one arrangement is live at a time in the UI. The tab container holding the three request controls is gated on *nothing* being live, so while one method is pending or agreed the page shows that one arrangement alone. Requesting another means settling the current one first.
+Each `(fk, type)` pair is **tracked independently** — a rejected pickup says nothing about delivery — but only one arrangement is live at a time in the UI. The tab container holding the three request controls is gated on *nothing* being live, so while one method is pending or agreed the page shows that one arrangement alone. Requesting another means settling the current one first.
 
 Two things follow that are easy to trip over:
 
@@ -227,12 +248,12 @@ Two optional keys carry full address objects inside message `data`:
 
 A settling message carries the request's whole `data` forward, so accept/reject/cancel templates
 must forward `destination_address` when present. The seller's pickup lookup on accept must be
-guarded on `data.type == pickup`: the item only carries the public pickup location
+guarded on `type == pickup`: the item only carries the public pickup location
 (`postcode`, `latitude`, `longitude`), and an unguarded `findFirst` over `evy.addresses` would
 disclose the seller's private street on every delivery accept.
 
 **An accepted request shows the full address, not the postcode.** Each active-request container on
-the item page carries its own address row gated on `data.value == "accept"`, so the postcode only
+the item page carries its own address row gated on `value == "accept"`, so the postcode only
 ever stands in for an address that is not known yet:
 
 | method | pending / settled | accepted |

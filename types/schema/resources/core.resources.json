@@ -30,7 +30,8 @@
 			"visibility": "public"
 		},
 		"resources": {
-			"singular": "resource"
+			"singular": "resource",
+			"visibility": "public"
 		},
 		"files": {
 			"singular": "file",
@@ -43,10 +44,30 @@
 		"messages": {
 			"singular": "message",
 			"visibility": "private",
-			"dataValues": ["pending", "accept", "reject", "cancel"]
+			"dataValues": [
+				"pending",
+				"accept",
+				"reject",
+				"cancel",
+				"transaction",
+				"transaction_completed",
+				"transaction_rejected",
+				"given",
+				"sent",
+				"received",
+				"failed",
+				"request_failed",
+				"charge_failed",
+				"transfer_failed"
+			]
+		},
+		"transactions": {
+			"singular": "transaction",
+			"visibility": "public"
 		},
 		"formatters": {
-			"singular": "formatter"
+			"singular": "formatter",
+			"visibility": "public"
 		}
 	}
 }

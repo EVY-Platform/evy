@@ -9,6 +9,8 @@ import serviceData from "./fixtures/services/service_data.json";
 
 type SeedMessage = {
 	id: string;
+	type?: string;
+	value?: string;
 	data?: Record<string, unknown>;
 	parent_message_id?: string;
 };
@@ -27,8 +29,7 @@ describe("seeded messages carry transfer addresses", () => {
 	test("delivery requests include destination_address", () => {
 		const deliveryRequests = messages.filter(
 			(message) =>
-				message.data?.type === "delivery" &&
-				message.data?.value === "pending",
+				message.type === "delivery" && message.value === "pending",
 		);
 		expect(deliveryRequests.length).toBeGreaterThan(0);
 		for (const message of deliveryRequests) {
@@ -41,8 +42,7 @@ describe("seeded messages carry transfer addresses", () => {
 	test("shipping requests include destination_address", () => {
 		const shippingRequests = messages.filter(
 			(message) =>
-				message.data?.type === "shipping" &&
-				message.data?.value === "pending",
+				message.type === "shipping" && message.value === "pending",
 		);
 		expect(shippingRequests.length).toBeGreaterThan(0);
 		for (const message of shippingRequests) {
@@ -55,8 +55,7 @@ describe("seeded messages carry transfer addresses", () => {
 	test("pickup accept messages include pickup_address", () => {
 		const pickupAccepts = messages.filter(
 			(message) =>
-				message.data?.type === "pickup" &&
-				message.data?.value === "accept",
+				message.type === "pickup" && message.value === "accept",
 		);
 		expect(pickupAccepts.length).toBeGreaterThan(0);
 		for (const message of pickupAccepts) {
@@ -70,8 +69,7 @@ describe("seeded messages carry transfer addresses", () => {
 	test("seed data has no bare pickup pending requests", () => {
 		const barePickupPending = messages.filter(
 			(message) =>
-				message.data?.type === "pickup" &&
-				message.data?.value === "pending",
+				message.type === "pickup" && message.value === "pending",
 		);
 		expect(barePickupPending).toEqual([]);
 	});

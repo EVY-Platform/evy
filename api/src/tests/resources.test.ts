@@ -54,6 +54,7 @@ describe("resources", () => {
 						{
 							id: EXTERNAL_TEST_RESOURCE.RECORDS,
 							name: "records",
+							visibility: "public",
 						},
 					],
 				},
@@ -75,10 +76,15 @@ describe("resources", () => {
 					id: EVY_CORE_SERVICE,
 					name: "evy",
 					resources: expect.arrayContaining([
-						{ id: EVY_CORE_RESOURCE_REF.FLOWS, name: "flow" },
+						{
+							id: EVY_CORE_RESOURCE_REF.FLOWS,
+							name: "flow",
+							visibility: "public",
+						},
 						{
 							id: EVY_CORE_RESOURCE_REF.RESOURCES,
 							name: "resource",
+							visibility: "public",
 						},
 					]),
 				}),
@@ -88,6 +94,7 @@ describe("resources", () => {
 						{
 							id: EXTERNAL_TEST_RESOURCE.RECORDS,
 							name: "records",
+							visibility: "public",
 						},
 					],
 				}),
@@ -108,6 +115,7 @@ describe("resources", () => {
 						{
 							id: EXTERNAL_TEST_RESOURCE.RECORDS,
 							name: "records",
+							visibility: "public",
 							attributes,
 						},
 					],

@@ -6,6 +6,7 @@
 import XCTest
 
 private let MARKETPLACE_ITEMS_RESOURCE_ID = MarketplaceE2EFixture.itemsRef
+private let MARKETPLACE_ITEM_STATUSES_RESOURCE_ID = MarketplaceE2EFixture.statusesRef
 private let MARKETPLACE_SERVICE = MarketplaceE2EFixture.service
 
 // MARK: - Minimal WebSocket Emitter for E2E Tests
@@ -315,6 +316,13 @@ actor WSEmitter {
     return result
   }
 
+  func callApi(service: String, method: String, data: [String: Any]) async throws -> Any {
+    return try await rpcResult(
+      method: "api",
+      params: ["service": service, "method": method, "data": data]
+    )
+  }
+
   func disconnect() {
     receiveTask?.cancel()
     receiveTask = nil
@@ -516,8 +524,7 @@ class E2ETestBase: XCTestCase {
     for message in messageRows {
       guard let messageData = message as? [String: Any],
         messageData["parent_message_id"] as? String == messageId,
-        let data = messageData["data"] as? [String: Any],
-        data["value"] as? String == value,
+        messageData["value"] as? String == value,
         let id = messageData["id"] as? String
       else { continue }
       return id
@@ -975,18 +982,18 @@ class E2ETestBase: XCTestCase {
   static func noArrangementLiveVisibilityExpression() -> String {
     let terms = ["pickup", "delivery", "shipping"].flatMap { type -> [String] in
       let latest = latestMessageExpression(type: type)
-      return ["\(latest).data.value != \"pending\"", "\(latest).data.value != \"accept\""]
+      return ["\(latest).value != \"pending\"", "\(latest).value != \"accept\""]
     }
     return "{\(terms.joined(separator: " && "))}"
   }
 
   /// The latest message about one transfer method for the item. Everything the item page
-  /// shows is a read of `data.value` off this - see `docs/evy/data.md`.
+  /// shows is a read of `value` off this - see `docs/evy/data.md`.
   static func latestMessageExpression(type: String) -> String {
     let messagesRef = EVYCoreResource.messages.ref
     let itemRef = MARKETPLACE_ITEMS_RESOURCE_ID
     return
-      "findFirst(sort(\(messagesRef), desc, created_at), fk == \(itemRef).id && data.type == \(type))"
+      "findFirst(sort(\(messagesRef), desc, created_at), fk == \(itemRef).id && type == \(type))"
   }
 
   static let messageCreateEnvelope =
@@ -995,7 +1002,7 @@ class E2ETestBase: XCTestCase {
   static func requestCreateAction(type: String, payload: String) -> String {
     let messagesResourceId = EVYCoreResource.messages.ref
     return
-      "{create(\(messagesResourceId),{\(messageCreateEnvelope), data: {type: \(type), value: pending, \(payload)}})}"
+      "{create(\(messagesResourceId),{\(messageCreateEnvelope), type: \(type), value: pending, data: {\(payload)}})}"
   }
 
   /// Cancel is offered while the request is open, and each transfer method is independent, so
@@ -1004,32 +1011,36 @@ class E2ETestBase: XCTestCase {
     hasActive: String, noActive: String
   ) {
     let latest = latestMessageExpression(type: type)
-    let hasActive = "{\(latest).data.value == \"pending\"}"
+    let hasActive = "{\(latest).value == \"pending\"}"
     // Nothing in flight for this method: `reject`, `cancel` and "nothing yet" all land here.
     let noActive =
-      "{\(latest).data.value != \"pending\" && \(latest).data.value != \"accept\"}"
+      "{\(latest).value != \"pending\" && \(latest).value != \"accept\"}"
     return (hasActive, noActive)
   }
 
   /// A separate message says a request was accepted, and it carries the request's payload
   /// forward - which is what the confirmation row reads the agreed time from.
   static func acceptedRequestVisibilityExpression(type: String) -> String {
-    "{\(latestMessageExpression(type: type)).data.value == \"accept\"}"
+    "{\(latestMessageExpression(type: type)).value == \"accept\"}"
   }
 
   static func hideSegmentInfoWhenAcceptedVisibilityExpression(type: String) -> String {
-    "{\(latestMessageExpression(type: type)).data.value != \"accept\"}"
+    "{\(latestMessageExpression(type: type)).value != \"accept\"}"
   }
 
   /// The request container stays up while the request is open and once it has been accepted -
-  /// the confirmation row lives inside it. Exact complement of the picker's gate.
+  /// the confirmation row lives inside it. Exact complement of the picker's gate. Only the
+  /// request's creator sees it: the item owner answers from the home inbox instead.
   static func activeRequestVisibilityExpression(type: String) -> String {
     let latest = latestMessageExpression(type: type)
-    return "{\(latest).data.value == \"pending\" || \(latest).data.value == \"accept\"}"
+    let notOwner =
+      "owns(\(MARKETPLACE_ITEMS_RESOURCE_ID), \(MARKETPLACE_ITEMS_RESOURCE_ID).id) == false"
+    return
+      "{(\(latest).value == \"pending\" || \(latest).value == \"accept\") && \(notOwner)}"
   }
 
   static func pendingRequestVisibilityExpression(type: String) -> String {
-    "{\(latestMessageExpression(type: type)).data.value == \"pending\"}"
+    "{\(latestMessageExpression(type: type)).value == \"pending\"}"
   }
 
   static func cancelRequestButtonLabel(type: String) -> String {
@@ -1119,7 +1130,7 @@ class E2ETestBase: XCTestCase {
     func cancelAction(type: String) -> String {
       let latest = latestMessageExpression(type: type)
       return "{create(\(messagesResourceId),{\(messageCreateEnvelope),"
-        + " parent_message_id: {\(latest).id}, data: {value: cancel, type: \(type), time: {\(latest).data.time}, postalcode: {\(latest).data.postalcode}, destination_address: {\(latest).data.destination_address}})}"
+        + " parent_message_id: {\(latest).id}, value: cancel, type: \(type), data: {time: {\(latest).data.time}, postalcode: {\(latest).data.postalcode}, destination_address: {\(latest).data.destination_address}}})}"
     }
 
     return [
@@ -1680,178 +1691,31 @@ class E2ETestBase: XCTestCase {
 
   static let homeInboxForYouChildRowId = "95444ce6-d4be-4001-8798-213cce23afd8"
   static let homeInboxFromYouChildRowId = "373ff30f-dc80-425c-a382-fadc8fcdcd81"
-  static let homeInboxScheduledChildRowId = "c52a5527-ee4a-46c8-8f5c-1e18f782bcc0"
+  static let homeInboxPickupHandshakeChildRowId = "e7d6c5b4-a392-4f1e-8c0b-9a8f7e6d5c4b"
+  static let homeInboxScheduledSellerShippingChildRowId =
+    "73625140-3928-4103-1e5f-4e4b7a958473"
+  static let homeInboxScheduledBuyerDeliveryChildRowId =
+    "065e4b7a-9584-4763-0425-a190817065e4"
+  static let homeInboxScheduledBuyerPickupChildRowId =
+    "7065e4b7-a695-4875-1536-b2a190817065"
+  // Seller-side pickup accepts have no swipe action of their own (the pickup
+  // handshake row drives that), so they surface here instead of the
+  // buyer-pickup row above, which only matches `owns(...) == false`.
+  static let homeInboxScheduledInformativeChildRowId =
+    "0bbcb9ae-e148-4e8f-8e5a-a56969a4d4d2"
 
-  private static func homeInboxResponseAction(value: String) -> [String: Any] {
-    let pickupAddress =
-      value == "accept"
-      ? ", pickup_address: findFirst(evy.addresses, $datum.data.type == pickup && id == findFirst(\(MARKETPLACE_ITEMS_RESOURCE_ID), $datum.fk).transfer_options.pickup.address_id)"
-      : ""
-    return [
-      "condition": "",
-      "false": "",
-      "true":
-        "{create(\(EVYCoreResource.messages.ref),{fk: {$datum.fk}, resource: {$datum.resource}, parent_message_id: {$datum.id}, data: {value: \(value), type: {$datum.data.type}, time: {$datum.data.time}, postalcode: {$datum.data.postalcode}, destination_address: {$datum.data.destination_address}\(pickupAddress)}})}",
-    ]
-  }
-
-  static func homeInboxTabRow() -> [String: Any] {
-    let messagesRef = EVYCoreResource.messages.ref
-    var acceptButton = buttonRow(
-      id: "e519e84d-9a7e-4563-bacb-388bba69e9b2",
-      label: "Accept"
-    )
-    acceptButton["name"] = "Accept request"
-    acceptButton["actions"] = actionsObject(
-      tap: [
-        homeInboxResponseAction(value: "accept"),
-        rowAction(true: "{close()}"),
-      ]
-    )
-
-    var rejectButton = buttonRow(
-      id: "d780b1bf-b638-4e99-84fd-36be12bb96fb",
-      label: "Reject",
-      style: "danger"
-    )
-    rejectButton["name"] = "Reject request"
-    rejectButton["actions"] = actionsObject(
-      tap: [
-        homeInboxResponseAction(value: "reject"),
-        rowAction(true: "{close()}"),
-      ]
-    )
-
-    let responseSheet: [String: Any] = [
-      "id": "b70f6354-50cb-47cc-91bc-3387deb7277f",
-      "type": "vertical_container",
-      "name": "Respond to request sheet",
-      "title": "Respond to request",
-      "visible": "true",
-      "actions": [:],
-      "children": [
-        [
-          "id": "daea8a6d-8d13-462f-98fa-5403e4f81463",
-          "type": "text",
-          "name": "Respond confirmation copy",
-          "title": "Accept this request, or reject it?",
-          "subtitle": "",
-          "visible": "true",
-          "actions": [:],
-        ],
-        [
-          "id": "07ce5b44-8f2c-4183-a6e9-2f853a8dd255",
-          "type": "horizontal_container",
-          "name": "Respond buttons",
-          "title": "",
-          "visible": "true",
-          "actions": [:],
-          "children": [acceptButton, rejectButton],
-        ],
-      ],
-    ]
-
-    let forYouSearch: [String: Any] = [
-      "id": "574da230-8f09-43b2-b003-deadf6786bc4",
-      "type": "search",
-      "name": "For you requests",
-      "title": "",
-      "placeholder": "",
-      "source":
-        "{filter(\(messagesRef), $datum.data.value == \"pending\" && owns($datum.resource, $datum.fk) == true && findFirst(sort(\(messagesRef), desc, created_at), fk == $datum.fk && data.type == $datum.data.type).id == $datum.id)}",
-      "no_results": "No requests",
-      "destination": "",
-      "visible": "true",
-      "actions": [:],
-      "child": [
-        "id": homeInboxForYouChildRowId,
-        "type": "list_item",
-        "name": "For you request row",
-        "title":
-          "{findFirst(\(MARKETPLACE_ITEMS_RESOURCE_ID), $datum.fk).title}",
-        "subtitle":
-          "{if(length($datum.data.destination_address.street) > 0, formatAddress($datum.data.destination_address), $datum.data.value)}",
-        "visible": "true",
-        "swipe_label": "Accept",
-        "swipe_color": "#34C759",
-        "actions": actionsObject(
-          tap: [rowAction(true: "{show(b70f6354-50cb-47cc-91bc-3387deb7277f)}")],
-          swipeLeft: [homeInboxResponseAction(value: "accept")]
-        ),
-        "sheet": responseSheet,
-      ],
-    ]
-
-    let fromYouSearch: [String: Any] = [
-      "id": "396da583-4748-40b9-aa88-4f8bb9074fc3",
-      "type": "search",
-      "name": "From you requests",
-      "title": "",
-      "placeholder": "",
-      "source":
-        "{filter(\(messagesRef), $datum.data.value == \"pending\" && owns($datum.resource, $datum.fk) == false && findFirst(sort(\(messagesRef), desc, created_at), fk == $datum.fk && data.type == $datum.data.type).id == $datum.id)}",
-      "no_results": "No requests",
-      "destination": "",
-      "visible": "true",
-      "actions": [:],
-      "child": [
-        "id": homeInboxFromYouChildRowId,
-        "type": "list_item",
-        "name": "From you request row",
-        "title":
-          "{findFirst(\(MARKETPLACE_ITEMS_RESOURCE_ID), $datum.fk).title}",
-        "subtitle": "{$datum.data.value}",
-        "visible": "true",
-        "swipe_label": "Cancel",
-        "swipe_color": "#FF3B30",
-        "actions": actionsObject(
-          swipeLeft: [homeInboxResponseAction(value: "cancel")]
-        ),
-      ],
-    ]
-
-    let scheduledSearch: [String: Any] = [
-      "id": "4e81c7e7-f765-4864-ac63-35e2eff707cd",
-      "type": "search",
-      "name": "Scheduled requests",
-      "title": "",
-      "placeholder": "",
-      "source": "{filter(\(messagesRef), $datum.data.value == \"accept\")}",
-      "no_results": "No requests",
-      "destination": "",
-      "visible": "true",
-      "actions": [:],
-      "child": [
-        "id": homeInboxScheduledChildRowId,
-        "type": "list_item",
-        "name": "Scheduled row",
-        "title":
-          "{findFirst(\(MARKETPLACE_ITEMS_RESOURCE_ID), $datum.fk).title}",
-        "subtitle": "{$datum.data.value}",
-        "visible": "true",
-        "actions": actionsObject(
-          tap: [
-            rowAction(
-              true:
-                "{copy_to_clipboard({if(length($datum.data.pickup_address.street) > 0, formatAddress($datum.data.pickup_address), \"\")})}"
-            )
-          ]
-        ),
-      ],
-    ]
-
-    return [
-      "id": "29646c92-90d0-4a68-8c23-3acf88612d06",
-      "type": "tab_container",
-      "name": "Message tabs",
-      "title": "",
-      "visible": "true",
-      "segments": ["For you", "From you", "Scheduled"],
-      "actions": actionsObject(
-        tap: [rowAction(true: "{select($datum)}")]
-      ),
-      "children": [forYouSearch, fromYouSearch, scheduledSearch],
-    ]
+  static func homeInboxTabRow() throws -> [String: Any] {
+    let flowData = try productionHomeFlowData()
+    guard let pages = flowData["pages"] as? [[String: Any]],
+      let page = pages.first,
+      let rows = page["rows"] as? [[String: Any]],
+      let tabRow = rows.first(where: { ($0["type"] as? String) == "tab_container" })
+    else {
+      throw NSError(
+        domain: "E2E", code: 1,
+        userInfo: [NSLocalizedDescriptionKey: "Home fixture missing tab_container row"])
+    }
+    return tabRow
   }
 
   static func senderViewFlowData(flowId: String, pageId: String) -> [String: Any] {
@@ -2010,6 +1874,9 @@ class E2ETestBase: XCTestCase {
     var data: [String: Any] = [
       "id": selectedItemId,
       "title": selectedItemTitle,
+      // Shipping/delivery requests are vetoed on items without a valid price
+      // (the payment_intent precondition), so every test item carries one.
+      "price": ["currency": "AUD", "value": 100],
     ]
     if let paymentMethods {
       data["payment_methods"] = paymentMethods
@@ -2050,16 +1917,12 @@ class E2ETestBase: XCTestCase {
   ) { _, new in new }
 
   static func settlingMessageData(
-    value: String,
-    type: String,
     time: String,
     destinationAddress: [String: Any]? = nil,
     pickupAddress: [String: Any]? = nil
   ) -> [String: Any] {
     var data: [String: Any] = [
-      "value": value,
-      "type": type,
-      "time": time,
+      "time": time
     ]
     if let destinationAddress {
       data["destination_address"] = destinationAddress
@@ -2123,7 +1986,7 @@ final class E2ECoreUITests: E2ETestBase {
       homePage.waitForExistence(timeout: 20),
       "Core UI home page should load - verify API is running and seeded")
 
-    try XCTContext.runActivity(named: "Navigation and visibility") { _ in
+    XCTContext.runActivity(named: "Navigation and visibility") { _ in
       let loadingIndicator = app.progressIndicators["loadingIndicator"]
       let initialUIAppeared =
         loadingIndicator.waitForExistence(timeout: 5) || homePage.waitForExistence(timeout: 5)
@@ -2162,7 +2025,7 @@ final class E2ECoreUITests: E2ETestBase {
         "Should return to home screen after create flow")
     }
 
-    try XCTContext.runActivity(named: "Swipe-left navigates to destination") { _ in
+    XCTContext.runActivity(named: "Swipe-left navigates to destination") { _ in
       let rowTitle = app.staticTexts["Swipe me"]
       XCTAssertTrue(
         rowTitle.waitForExistence(timeout: 10),
@@ -2188,7 +2051,7 @@ final class E2ECoreUITests: E2ETestBase {
       XCTAssertTrue(homePage.waitForExistence(timeout: 5), "Should return to home screen")
     }
 
-    try XCTContext.runActivity(named: "Segment switching swaps child content") { _ in
+    XCTContext.runActivity(named: "Segment switching swaps child content") { _ in
       let pickupContent = app.staticTexts["Pickup segment content"]
       let deliveryContent = app.staticTexts["Delivery segment content"]
 
@@ -2316,7 +2179,7 @@ final class WebSocketE2ETests: E2ETestBase {
       [
         (
           flowId: E2EFlowIds.webSocketHomeFlow,
-          flowData: createHomeFlowData(buttonLabel: "View")
+          flowData: try createHomeFlowData(buttonLabel: "View")
         ),
         (
           flowId: E2EFlowIds.webSocketViewFlow,
@@ -2366,7 +2229,7 @@ final class WebSocketE2ETests: E2ETestBase {
       let updatedLabel = "Updated View \(Int(Date().timeIntervalSince1970))"
       try awaitResult("push relabel SDUI") {
         try await emitter.updateSDUI(
-          flowData: self.createHomeFlowData(buttonLabel: updatedLabel),
+          flowData: try self.createHomeFlowData(buttonLabel: updatedLabel),
           flowId: E2EFlowIds.webSocketHomeFlow
         )
       }
@@ -2385,7 +2248,7 @@ final class WebSocketE2ETests: E2ETestBase {
       let conditionalLabel = "Conditional \(Int(Date().timeIntervalSince1970))"
       try awaitResult("push conditional flow") {
         try await emitter.updateSDUI(
-          flowData: self.createConditionalFlowData(buttonLabel: conditionalLabel),
+          flowData: try self.createConditionalFlowData(buttonLabel: conditionalLabel),
           flowId: E2EFlowIds.webSocketHomeFlow
         )
       }
@@ -2433,7 +2296,7 @@ final class WebSocketE2ETests: E2ETestBase {
       )
     }
 
-    try XCTContext.runActivity(named: "Cross-page sheet from another page") { _ in
+    XCTContext.runActivity(named: "Cross-page sheet from another page") { _ in
       let openCrossPageSheetButton = app.buttons["Open cross-page sheet"]
       XCTAssertTrue(
         openCrossPageSheetButton.waitForExistence(timeout: 10),
@@ -2446,7 +2309,7 @@ final class WebSocketE2ETests: E2ETestBase {
       app.buttons["Done"].tap()
     }
 
-    try XCTContext.runActivity(named: "Sheet title updates when watched data changes") { _ in
+    XCTContext.runActivity(named: "Sheet title updates when watched data changes") { _ in
       let openSheetButton = app.buttons["Open sheet"]
       XCTAssertTrue(
         openSheetButton.waitForExistence(timeout: 10),
@@ -2558,7 +2421,7 @@ final class WebSocketE2ETests: E2ETestBase {
     let noSurchargeCopy =
       "Shipping should be confirmed within 48 hours by the seller."
 
-    try XCTContext.runActivity(named: "Earlier-timeslot warning on later slot") { _ in
+    XCTContext.runActivity(named: "Earlier-timeslot warning on later slot") { _ in
       let laterTimeslot = app.staticTexts["10:00"].firstMatch
       XCTAssertTrue(
         laterTimeslot.waitForExistence(timeout: 10), "Later pickup timeslot should be visible")
@@ -2828,9 +2691,9 @@ final class WebSocketE2ETests: E2ETestBase {
             "resource": MARKETPLACE_ITEMS_RESOURCE_ID,
             "visibility": "private",
             "parent_message_id": requestId,
+            "type": "pickup",
+            "value": "reject",
             "data": Self.settlingMessageData(
-              value: "reject",
-              type: "pickup",
               time: selectedTimeslot
             ),
           ]
@@ -2896,9 +2759,9 @@ final class WebSocketE2ETests: E2ETestBase {
             "resource": MARKETPLACE_ITEMS_RESOURCE_ID,
             "visibility": "private",
             "parent_message_id": messageId,
+            "type": "pickup",
+            "value": "accept",
             "data": Self.settlingMessageData(
-              value: "accept",
-              type: "pickup",
               time: selectedTimeslot,
               pickupAddress: Self.amazingFridgePickupAddressRow
             ),
@@ -2960,12 +2823,11 @@ final class WebSocketE2ETests: E2ETestBase {
         // Prefer the newest match: lifecycle merges reuse one item across cancel/reject
         // cycles, so older pending rows can still exist alongside a fresh request.
         let matches = rows.compactMap { $0 as? [String: Any] }.filter { row in
-          let data = row["data"] as? [String: Any]
           guard row["fk"] as? String == itemId,
-            data?["type"] as? String == type
+            row["type"] as? String == type
           else { return false }
           if let value {
-            return data?["value"] as? String == value
+            return row["value"] as? String == value
           }
           return true
         }
@@ -2999,7 +2861,7 @@ final class WebSocketE2ETests: E2ETestBase {
     }
 
     let viewLabel = "Sender cancel \(Int(Date().timeIntervalSince1970))"
-    let homeFlowData = createHomeFlowData(
+    let homeFlowData = try createHomeFlowData(
       buttonLabel: viewLabel,
       viewItemId: itemId,
       includeHomeInbox: true
@@ -3089,7 +2951,9 @@ final class WebSocketE2ETests: E2ETestBase {
     )
     swipeButton.tap()
     XCTAssertTrue(
-      row.waitForNonExistence(timeout: 5),
+      // Generous: the row leaves in well under a second when the machine is
+      // idle, but a loaded run (full e2e suite) has been seen to exceed 5s.
+      row.waitForNonExistence(timeout: 15),
       "Cancel should optimistically remove the request from From you"
     )
 
@@ -3545,16 +3409,19 @@ final class WebSocketE2ETests: E2ETestBase {
     guard let messageRows = responseDataArray(from: messages) else { return false }
     return messageRows.contains { message in
       guard let messageData = message as? [String: Any],
-        messageData["fk"] as? String == itemId,
-        let messageDetails = messageData["data"] as? [String: Any]
+        messageData["fk"] as? String == itemId
       else {
         return false
       }
-      if let type, messageDetails["type"] as? String != type {
+      if let type, messageData["type"] as? String != type {
         return false
       }
       guard let valueKey, let value else { return true }
-      return messageDetails[valueKey] as? String == value
+      if valueKey == "value" {
+        return messageData[valueKey] as? String == value
+      }
+      let messageDetails = messageData["data"] as? [String: Any]
+      return messageDetails?[valueKey] as? String == value
     }
   }
 
@@ -3681,7 +3548,7 @@ final class WebSocketE2ETests: E2ETestBase {
   ) async throws -> String {
     let viewLabel = "\(labelPrefix) \(Int(Date().timeIntervalSince1970))"
     try await emitter.updateSDUI(
-      flowData: createHomeFlowData(buttonLabel: viewLabel, viewItemId: itemId),
+      flowData: try createHomeFlowData(buttonLabel: viewLabel, viewItemId: itemId),
       flowId: E2EFlowIds.webSocketHomeFlow
     )
     try await emitter.updateSDUI(
@@ -3715,7 +3582,7 @@ final class WebSocketE2ETests: E2ETestBase {
     buttonLabel: String,
     viewItemId: String? = nil,
     includeHomeInbox: Bool = false
-  ) -> [String: Any] {
+  ) throws -> [String: Any] {
     let viewAction = Self.viewItemNavigateAction(viewItemId: viewItemId)
 
     let children: [[String: Any]] = [
@@ -3754,7 +3621,7 @@ final class WebSocketE2ETests: E2ETestBase {
       ]
     ]
     if includeHomeInbox {
-      homeRows.insert(Self.homeInboxTabRow(), at: 0)
+      homeRows.insert(try Self.homeInboxTabRow(), at: 0)
     }
 
     return [
@@ -3770,8 +3637,8 @@ final class WebSocketE2ETests: E2ETestBase {
     ]
   }
 
-  private func createConditionalFlowData(buttonLabel: String) -> [String: Any] {
-    var flowData = createHomeFlowData(buttonLabel: buttonLabel)
+  private func createConditionalFlowData(buttonLabel: String) throws -> [String: Any] {
+    var flowData = try createHomeFlowData(buttonLabel: buttonLabel)
     guard var pages = flowData["pages"] as? [[String: Any]],
       var homePage = pages.first,
       var rows = homePage["rows"] as? [[String: Any]],
@@ -3837,23 +3704,26 @@ final class E2EErrorStateTests: XCTestCase {
 
 final class E2EHomeInboxTests: E2ETestBase {
   private static let homePageId = E2EFlowIds.webSocketHomePage
-  private static let seededMessageItemId = "12401f50-cf1a-45d7-a112-2e68a2070466"
-
-  private static let seededShippingRequestId = "5f66d7ae-3cb5-44bb-a8f3-337d4e543c72"
-
+  private static let seededBuyerItemId = "760eac03-8783-4916-846e-6c316d0af5a1"
   private static let seededPickupAddressId = "c81e85dd-f7fb-4310-8fc6-7c018aeaf82a"
+
+  // Items whose status this class drives are minted per test case: the suite is
+  // seeded once for the whole run, so a shared id would collide on create and
+  // inherit the previous test's status history.
+  private let shippingOwnedItemId = UUID().uuidString.lowercased()
+  private let pickupOwnedItemId = UUID().uuidString.lowercased()
+  // One per request seeded by `seedOwnRequest` — see that method for why.
+  private let ownedRequestItemIds = (0..<3).map { _ in UUID().uuidString.lowercased() }
+  private static let deliveryTimeslot = "2026-06-03T15:00:00"
+  private static let pickupTimeslot = "2026-06-03T09:00:00"
 
   override var homeFlowId: String? { E2EFlowIds.defaultHomeFlow }
 
-  /// Accepting a pickup request reads the seller's own pickup address out of `evy.addresses`
-  /// to embed it in the accept. Private addresses only sync to the device that owns them, so
-  /// the recipient of these requests owns the item and the address behind it - as the seller
-  /// who created both would.
   override var ownedResources: [OwnedResourceDeclaration] {
     [
       (
         resource: MARKETPLACE_ITEMS_RESOURCE_ID,
-        ids: [Self.seededMessageItemId]
+        ids: [shippingOwnedItemId, pickupOwnedItemId] + ownedRequestItemIds
       ),
       (
         resource: EVYCoreResource.addresses.ref,
@@ -3865,95 +3735,49 @@ final class E2EHomeInboxTests: E2ETestBase {
   override func setUpWithError() throws {
     continueAfterFailure = false
     try seedFlows([
-      (flowId: E2EFlowIds.defaultHomeFlow, flowData: Self.homeInboxFlowData())
+      (flowId: E2EFlowIds.defaultHomeFlow, flowData: try Self.productionHomeFlowData())
     ])
+    try runAsyncOperation("Seed owned marketplace items") { [self] in
+      let emitter = WSEmitter()
+      try await emitter.connect(host: self.apiHost)
+      try await emitter.login(token: "e2e-test", os: "ios")
+      // The request items reuse the seeded item's title and pickup address so
+      // the inbox assertions stay the same as when they shared that fixture.
+      let items =
+        [
+          (self.shippingOwnedItemId, "E2E Shipping Item"),
+          (self.pickupOwnedItemId, "E2E Pickup Item"),
+        ] + self.ownedRequestItemIds.map { ($0, "Amazing Fridge") }
+      for (itemId, title) in items {
+        _ = try await emitter.createResource(
+          resource: MARKETPLACE_ITEMS_RESOURCE_ID,
+          filter: ["id": itemId],
+          data: [
+            "id": itemId,
+            "title": title,
+            "price": ["currency": "AUD", "value": 100],
+            "pickup_selection": [Self.pickupTimeslot],
+            "delivery_selection": [Self.deliveryTimeslot],
+            "payment_methods": ["cash": true, "app": true],
+            "transfer_options": [
+              "pickup": [
+                "selection": [Self.pickupTimeslot],
+                "lead_time_hours": "24",
+                "address_id": Self.seededPickupAddressId,
+              ],
+              "delivery": ["selection": [Self.deliveryTimeslot], "fee": [:]],
+              "ship": ["postal_code": "", "areas": []],
+            ],
+          ]
+        )
+      }
+      await emitter.disconnect()
+    }
     try launchApp()
   }
 
-  private static func homeInboxFlowData() -> [String: Any] {
-    let itemSearchRow: [String: Any] = [
-      "id": "96d3efe4-ea20-4a81-9ccb-64d6b57646e9",
-      "type": "search",
-      "child": [
-        "id": "d5922ca1-fc26-430a-81ed-fd343c13dab1",
-        "type": "list_item",
-        "title": "{$datum.title}",
-        "subtitle": "{formatCurrency($datum.price)}",
-        "image": "{$datum.photo_ids.0}",
-        "actions": Self.actionsObject(
-          tap: [
-            Self.rowAction(
-              true:
-                "{navigate(74a49d4b-2176-4925-857a-e29e2991f1bd,82cae120-c7b1-4c29-bd42-e1521320b109,{id: $datum.id})}"
-            )
-          ]
-        ),
-        "visible": "true",
-        "name": "Item search result",
-      ],
-      "title": "",
-      "placeholder": "Search anything",
-      "source": "{\(MARKETPLACE_ITEMS_RESOURCE_ID)}",
-      "no_results": "Nothing found",
-      "destination": "",
-      "actions": [:],
-      "visible": "true",
-      "name": "Search items",
-    ]
-    return [
-      "id": E2EFlowIds.defaultHomeFlow,
-      "name": "Home",
-      "pages": [
-        [
-          "id": E2EFlowIds.webSocketHomePage,
-          "title": "Home",
-          "rows": [homeInboxTabRow(), itemSearchRow],
-          "footer": buttonRow(
-            id: "cc86c53a-170d-4800-8897-8f99f3697053",
-            label: "Sell something",
-            action:
-              "{navigate(ca47e6c5-da19-4491-8422-adb40d9e8a27,306ed62c-c2af-4652-a873-26c7a388972d)}"
-          ),
-        ]
-      ],
-    ]
-  }
-
   @MainActor
-  func testForYouRowRendersDestinationAddresses() throws {
-    let homePage = app.scrollViews["page_\(Self.homePageId)"]
-    XCTAssertTrue(
-      homePage.waitForExistence(timeout: 20),
-      "Home screen not loaded - verify API is running and database is seeded")
-
-    let seededRow = ownRequestRow(requestId: Self.seededShippingRequestId)
-    XCTAssertTrue(
-      seededRow.waitForExistence(timeout: 15),
-      "The seeded shipping request should appear under For you")
-    XCTAssertTrue(
-      seededRow.staticTexts["C509 28 Rothschild Avenue, 2018 Rosebery NSW"].waitForExistence(
-        timeout: 5),
-      "The seeded shipping row should show the buyer's destination address")
-
-    let emitter = WSEmitter()
-    try awaitResult("connect emitter for delivery request") {
-      try await emitter.connect(host: self.apiHost)
-      try await emitter.login(token: "e2e-test", os: "ios")
-    }
-    let requestId = try seedOwnDeliveryRequest(emitter: emitter)
-    let row = ownRequestRow(requestId: requestId)
-    XCTAssertTrue(
-      row.waitForExistence(timeout: 15),
-      "A delivery request for the owned item should appear under For you")
-    XCTAssertTrue(
-      row.staticTexts["C509 28 Rothschild Avenue, 2018 Rosebery NSW"].waitForExistence(
-        timeout: 5),
-      "The request row should show the buyer's destination address")
-    try awaitResult("disconnect emitter") { await emitter.disconnect() }
-  }
-
-  @MainActor
-  func testRecipientRespondsToRequests() throws {
+  private func connectedInboxEmitter() throws -> WSEmitter {
     let homePage = app.scrollViews["page_\(Self.homePageId)"]
     XCTAssertTrue(
       homePage.waitForExistence(timeout: 20),
@@ -3965,9 +3789,16 @@ final class E2EHomeInboxTests: E2ETestBase {
       try await emitter.login(token: "e2e-test", os: "ios")
       try await emitter.subscribe(event: "data_changed")
     }
+    return emitter
+  }
+
+  @MainActor
+  func testRecipientRespondsToRequests() throws {
+    let emitter = try connectedInboxEmitter()
 
     try XCTContext.runActivity(named: "Reject via tap and sheet") { _ in
-      let (requestId, _) = try seedOwnRequest(emitter: emitter)
+      let (requestId, _) = try seedOwnRequest(
+        emitter: emitter, itemId: ownedRequestItemIds[0])
       let row = ownRequestRow(requestId: requestId)
       XCTAssertTrue(
         row.waitForExistence(timeout: 15),
@@ -4000,7 +3831,8 @@ final class E2EHomeInboxTests: E2ETestBase {
     }
 
     try XCTContext.runActivity(named: "Accept via swipe action") { _ in
-      let (requestId, _) = try seedOwnRequest(emitter: emitter)
+      let (requestId, _) = try seedOwnRequest(
+        emitter: emitter, itemId: ownedRequestItemIds[1])
       let row = ownRequestRow(requestId: requestId)
       XCTAssertTrue(
         row.waitForExistence(timeout: 15),
@@ -4046,22 +3878,26 @@ final class E2EHomeInboxTests: E2ETestBase {
         "An answered request should no longer offer an action")
 
       app.segmentedControls.buttons["Scheduled"].tap()
+      let scheduledRowTexts = scheduledInformativeRowTexts(responseId: responseId)
       XCTAssertTrue(
-        app.staticTexts["Amazing Fridge"].waitForExistence(timeout: 10),
+        scheduledRowTexts.firstMatch.waitForExistence(timeout: 10),
         "The accepted request should appear under Scheduled")
       XCTAssertTrue(
-        app.staticTexts["accept"].exists,
+        scheduledRowTexts.matching(NSPredicate(format: "label == 'accept'")).firstMatch.exists,
         "The Scheduled row should show the accepted state")
     }
 
     try XCTContext.runActivity(named: "Pre-answered request offers nothing in For you") { _ in
-      let (requestId, _) = try seedOwnRequest(emitter: emitter, responseValue: "accept")
+      let (requestId, responseId) = try seedOwnRequest(
+        emitter: emitter, itemId: ownedRequestItemIds[2], responseValue: "accept")
 
       app.segmentedControls.buttons["Scheduled"].tap()
+      let scheduledRowTexts = scheduledInformativeRowTexts(responseId: responseId!)
       XCTAssertTrue(
-        app.staticTexts["Amazing Fridge"].waitForExistence(timeout: 15),
+        scheduledRowTexts.firstMatch.waitForExistence(timeout: 15),
         "The pre-answered request should reach Scheduled")
-      XCTAssertTrue(app.staticTexts["accept"].exists)
+      XCTAssertTrue(
+        scheduledRowTexts.matching(NSPredicate(format: "label == 'accept'")).firstMatch.exists)
 
       app.segmentedControls.buttons["For you"].tap()
       let requestRow = ownRequestRow(requestId: requestId)
@@ -4079,32 +3915,153 @@ final class E2EHomeInboxTests: E2ETestBase {
   }
 
   @MainActor
-  private func seedOwnDeliveryRequest(emitter: WSEmitter) throws -> String {
-    let requestId = UUID().uuidString.lowercased()
-    return try awaitResult("seed owned delivery request") {
-      _ = try await emitter.createResource(
-        resource: EVYCoreResource.messages.ref,
-        filter: ["id": requestId],
-        data: [
-          "id": requestId,
-          "fk": Self.seededMessageItemId,
-          "resource": MARKETPLACE_ITEMS_RESOURCE_ID,
-          "visibility": "private",
-          "data": [
-            "type": "delivery",
-            "value": "pending",
-            "time": "2026-06-04T10:00:00",
-            "destination_address": Self.rothschildDestinationAddress,
-          ],
-        ]
+  func testPurchaseConfirmationFlows() throws {
+    let emitter = try connectedInboxEmitter()
+
+    var deliveryPendingId = ""
+
+    try XCTContext.runActivity(named: "Seller ships after charge") { _ in
+      let (_, acceptId) = try seedAcceptedRequest(
+        emitter: emitter,
+        itemId: shippingOwnedItemId,
+        type: "shipping",
+        timeslot: Self.pickupTimeslot,
+        destinationAddress: Self.rothschildDestinationAddress
       )
-      return requestId
+      try pollItemStatus(
+        emitter: emitter, itemId: shippingOwnedItemId, expectedStatus: "sold")
+      _ = try confirmViaSwipe(
+        tab: "Scheduled",
+        childRowId: E2ETestBase.homeInboxScheduledSellerShippingChildRowId,
+        messageId: acceptId,
+        swipeLabel: "Shipped",
+        sheetTitle: "Confirm you shipped the item?",
+        emitter: emitter,
+        responseValue: "sent"
+      )
     }
+
+    try XCTContext.runActivity(named: "Buyer receives delivery after given") { _ in
+      let (pendingId, _) = try seedAcceptedRequest(
+        emitter: emitter,
+        itemId: Self.seededBuyerItemId,
+        type: "delivery",
+        timeslot: Self.deliveryTimeslot,
+        destinationAddress: Self.rothschildDestinationAddress
+      )
+      deliveryPendingId = pendingId
+      try pollItemStatus(
+        emitter: emitter, itemId: Self.seededBuyerItemId, expectedStatus: "sold")
+      let givenId = try seedPurchaseMessage(
+        emitter: emitter,
+        itemId: Self.seededBuyerItemId,
+        type: "delivery",
+        value: "given",
+        parentMessageId: pendingId,
+        data: Self.settlingMessageData(time: Self.deliveryTimeslot)
+      )
+      try confirmViaSwipe(
+        tab: "Scheduled",
+        childRowId: E2ETestBase.homeInboxScheduledBuyerDeliveryChildRowId,
+        messageId: givenId,
+        swipeLabel: "Received",
+        sheetTitle: "Confirm you received the item?",
+        emitter: emitter,
+        responseValue: "received"
+      )
+    }
+
+    try XCTContext.runActivity(named: "Pickup handshake confirms exchange") { _ in
+      let (pendingId, _) = try seedAcceptedRequest(
+        emitter: emitter,
+        itemId: pickupOwnedItemId,
+        type: "pickup",
+        timeslot: Self.pickupTimeslot,
+        pickupAddress: Self.amazingFridgePickupAddressRow
+      )
+      let transactionId = try seedPurchaseMessage(
+        emitter: emitter,
+        itemId: pickupOwnedItemId,
+        type: "pickup",
+        value: "transaction",
+        parentMessageId: pendingId,
+        data: Self.settlingMessageData(time: Self.pickupTimeslot)
+      )
+      try confirmViaSwipe(
+        tab: "For you",
+        childRowId: E2ETestBase.homeInboxPickupHandshakeChildRowId,
+        messageId: transactionId,
+        swipeLabel: "Done",
+        sheetTitle: "Confirm the item was given, or reject?",
+        emitter: emitter,
+        responseValue: "transaction_completed"
+      )
+    }
+
+    try XCTContext.runActivity(named: "Veto blocks pending on sold item") { _ in
+      let vetoMessageId = UUID().uuidString.lowercased()
+      let vetoFailed = try awaitResult("create pending on sold item") {
+        do {
+          _ = try await emitter.createResource(
+            resource: EVYCoreResource.messages.ref,
+            filter: ["id": vetoMessageId],
+            data: [
+              "id": vetoMessageId,
+              "fk": self.shippingOwnedItemId,
+              "resource": MARKETPLACE_ITEMS_RESOURCE_ID,
+              "visibility": "private",
+              "type": "pickup",
+              "value": "pending",
+              "data": [:],
+            ]
+          )
+          return false
+        } catch {
+          return error.localizedDescription.contains("sold")
+        }
+      }
+      XCTAssertTrue(vetoFailed, "A pending request on a sold item should be vetoed")
+      let rows = try awaitResult("verify veto message absent") {
+        try await emitter.getResource(
+          resource: EVYCoreResource.messages.ref,
+          filter: ["id": vetoMessageId]
+        ) as? [Any] ?? []
+      }
+      XCTAssertTrue(rows.isEmpty, "A vetoed create should leave no message row")
+    }
+
+    try XCTContext.runActivity(named: "Sold exclusion and rollback restore search") { _ in
+      XCTAssertFalse(
+        homeSearchShowsItem(title: "E2E Shipping Item", timeout: 3),
+        "Sold items should be hidden from home search")
+
+      _ = try seedPurchaseMessage(
+        emitter: emitter,
+        itemId: Self.seededBuyerItemId,
+        type: "delivery",
+        value: "failed",
+        parentMessageId: deliveryPendingId,
+        data: Self.settlingMessageData(time: Self.deliveryTimeslot)
+      )
+      try pollItemStatus(
+        emitter: emitter, itemId: Self.seededBuyerItemId, expectedStatus: "available")
+      XCTAssertTrue(
+        homeSearchShowsItem(title: "Amazing Freezer", timeout: 15),
+        "An item rolled back to available should reappear in home search")
+      XCTAssertFalse(
+        homeSearchShowsItem(title: "E2E Shipping Item", timeout: 3),
+        "A still-sold item should remain hidden from home search")
+    }
+
+    try awaitResult("disconnect emitter") { await emitter.disconnect() }
   }
 
   @MainActor
+  /// Each request needs its own item: accepting one moves the item to
+  /// `pickup_pending`, and the marketplace vetoes a later `pending` on it.
   private func seedOwnRequest(
     emitter: WSEmitter,
+    itemId: String,
     responseValue: String? = nil
   ) throws -> (requestId: String, responseId: String?) {
     let requestId = UUID().uuidString.lowercased()
@@ -4115,13 +4072,13 @@ final class E2EHomeInboxTests: E2ETestBase {
         filter: ["id": requestId],
         data: [
           "id": requestId,
-          "fk": Self.seededMessageItemId,
+          "fk": itemId,
           "resource": MARKETPLACE_ITEMS_RESOURCE_ID,
           "visibility": "private",
+          "type": "pickup",
+          "value": "pending",
           "data": [
-            "type": "pickup",
-            "value": "pending",
-            "time": "2026-06-03T09:00:00",
+            "time": Self.pickupTimeslot
           ],
         ]
       )
@@ -4131,14 +4088,14 @@ final class E2EHomeInboxTests: E2ETestBase {
           filter: ["id": responseId],
           data: [
             "id": responseId,
-            "fk": Self.seededMessageItemId,
+            "fk": itemId,
             "resource": MARKETPLACE_ITEMS_RESOURCE_ID,
             "visibility": "private",
             "parent_message_id": requestId,
+            "type": "pickup",
+            "value": responseValue,
             "data": Self.settlingMessageData(
-              value: responseValue,
-              type: "pickup",
-              time: "2026-06-03T09:00:00",
+              time: Self.pickupTimeslot,
               pickupAddress:
                 responseValue == "accept"
                 ? Self.amazingFridgePickupAddressRow : nil
@@ -4220,11 +4177,208 @@ final class E2EHomeInboxTests: E2ETestBase {
     guard let messageRows = responseDataArray(from: messages) else { return false }
     return messageRows.contains { message in
       guard let messageData = message as? [String: Any],
-        messageData["id"] as? String == messageId,
-        let data = messageData["data"] as? [String: Any]
+        messageData["id"] as? String == messageId
       else { return false }
-      return data["value"] as? String == value
+      return messageData["value"] as? String == value
     }
+  }
+
+  @MainActor
+  private func seedAcceptedRequest(
+    emitter: WSEmitter,
+    itemId: String,
+    type: String,
+    timeslot: String,
+    destinationAddress: [String: Any]? = nil,
+    pickupAddress: [String: Any]? = nil
+  ) throws -> (pendingId: String, acceptId: String) {
+    let pendingId = try seedPurchaseMessage(
+      emitter: emitter,
+      itemId: itemId,
+      type: type,
+      value: "pending",
+      data: Self.settlingMessageData(
+        time: timeslot,
+        destinationAddress: destinationAddress,
+        pickupAddress: pickupAddress
+      )
+    )
+    let acceptId = try seedPurchaseMessage(
+      emitter: emitter,
+      itemId: itemId,
+      type: type,
+      value: "accept",
+      parentMessageId: pendingId,
+      data: Self.settlingMessageData(
+        time: timeslot,
+        destinationAddress: destinationAddress,
+        pickupAddress: pickupAddress
+      )
+    )
+    let expectedPendingStatus = "\(type)_pending"
+    try pollItemReachedStatus(
+      emitter: emitter, itemId: itemId, expectedStatus: expectedPendingStatus)
+    return (pendingId, acceptId)
+  }
+
+  @MainActor
+  private func confirmViaSwipe(
+    tab: String,
+    childRowId: String,
+    messageId: String,
+    swipeLabel: String,
+    sheetTitle: String,
+    emitter: WSEmitter,
+    responseValue: String
+  ) throws {
+    app.segmentedControls.buttons[tab].tap()
+    try swipeInboxRow(
+      childRowId: childRowId,
+      messageId: messageId,
+      swipeLabel: swipeLabel
+    )
+    XCTAssertTrue(
+      app.staticTexts[sheetTitle].waitForExistence(timeout: 5),
+      "The confirmation sheet should open")
+    let confirmButton = try XCTUnwrap(
+      waitForHittableButton(labeled: "Confirm"),
+      "Confirmation sheet should offer Confirm")
+    confirmButton.tap()
+    _ = try assertResponsePersisted(
+      emitter: emitter,
+      requestId: messageId,
+      value: responseValue,
+      verifyRequestStillPending: false
+    )
+  }
+
+  @MainActor
+  private func seedPurchaseMessage(
+    emitter: WSEmitter,
+    itemId: String,
+    type: String,
+    value: String,
+    parentMessageId: String? = nil,
+    data: [String: Any]? = nil
+  ) throws -> String {
+    let messageId = UUID().uuidString.lowercased()
+    return try awaitResult("seed \(type)/\(value) message") {
+      var messageData: [String: Any] = [
+        "id": messageId,
+        "fk": itemId,
+        "resource": MARKETPLACE_ITEMS_RESOURCE_ID,
+        "visibility": "private",
+        "type": type,
+        "value": value,
+        "data": data ?? [:],
+      ]
+      if let parentMessageId {
+        messageData["parent_message_id"] = parentMessageId
+      }
+      _ = try await emitter.createResource(
+        resource: EVYCoreResource.messages.ref,
+        filter: ["id": messageId],
+        data: messageData
+      )
+      return messageId
+    }
+  }
+
+  @MainActor
+  private func pollItemStatus(
+    emitter: WSEmitter,
+    itemId: String,
+    expectedStatus: String,
+    file: StaticString = #filePath,
+    line: UInt = #line
+  ) throws {
+    let found = try awaitResult("poll item status \(expectedStatus)") {
+      try await self.waitForResourceUpdate(
+        emitter: emitter,
+        resource: MARKETPLACE_ITEM_STATUSES_RESOURCE_ID
+      ) { payload in
+        Self.latestItemStatus(payload, itemId: itemId) == expectedStatus
+      }
+    }
+    XCTAssertTrue(
+      found,
+      "Item \(itemId) should reach status \(expectedStatus)",
+      file: file,
+      line: line)
+  }
+
+  /// Waits until the item's status HISTORY contains `expectedStatus`. Use for
+  /// transient states: an accept auto-captures the payment, so `sold` can be
+  /// appended milliseconds after `*_pending` and overtake it as the latest
+  /// status before the first poll ever observes it.
+  @MainActor
+  private func pollItemReachedStatus(
+    emitter: WSEmitter,
+    itemId: String,
+    expectedStatus: String,
+    file: StaticString = #filePath,
+    line: UInt = #line
+  ) throws {
+    let found = try awaitResult("poll item reached status \(expectedStatus)") {
+      try await self.waitForResourceUpdate(
+        emitter: emitter,
+        resource: MARKETPLACE_ITEM_STATUSES_RESOURCE_ID
+      ) { payload in
+        Self.itemStatusHistoryContains(
+          payload, itemId: itemId, status: expectedStatus)
+      }
+    }
+    XCTAssertTrue(
+      found,
+      "Item \(itemId) should reach status \(expectedStatus)",
+      file: file,
+      line: line)
+  }
+
+  private static func itemStatusHistoryContains(
+    _ payload: Any,
+    itemId: String,
+    status: String
+  ) -> Bool {
+    guard let rows = responseDataArray(from: payload) else { return false }
+    return rows.compactMap { $0 as? [String: Any] }.contains {
+      ($0["item_id"] as? String) == itemId && ($0["status"] as? String) == status
+    }
+  }
+
+  private static func latestItemStatus(_ payload: Any, itemId: String) -> String? {
+    guard let rows = responseDataArray(from: payload) else { return "available" }
+    let matching = rows.compactMap { $0 as? [String: Any] }.filter {
+      ($0["item_id"] as? String) == itemId
+    }
+    guard !matching.isEmpty else { return "available" }
+    let sorted = matching.sorted {
+      ($0["created_at"] as? String ?? "") < ($1["created_at"] as? String ?? "")
+    }
+    return sorted.last?["status"] as? String
+  }
+
+  @MainActor
+  private func swipeInboxRow(
+    childRowId: String,
+    messageId: String,
+    swipeLabel: String
+  ) throws {
+    let row = app.otherElements["swipeRow_\(childRowId)_\(messageId)"]
+    XCTAssertTrue(
+      row.waitForExistence(timeout: 15),
+      "Inbox row \(childRowId) for message \(messageId) should appear")
+    XCTAssertTrue(scrollUntilHittable(row), "Inbox row should be reachable")
+    row.swipeLeft(velocity: .slow)
+    let swipeButton = app.buttons["swipeLeft_\(childRowId)_\(messageId)"]
+    XCTAssertTrue(swipeButton.waitForExistence(timeout: 3), "Swipe action should appear")
+    XCTAssertEqual(swipeButton.label, swipeLabel)
+    swipeButton.tap()
+  }
+
+  @MainActor
+  private func homeSearchShowsItem(title: String, timeout: TimeInterval) -> Bool {
+    app.staticTexts[title].waitForExistence(timeout: timeout)
   }
 
   @MainActor
@@ -4232,5 +4386,16 @@ final class E2EHomeInboxTests: E2ETestBase {
     app.otherElements[
       "swipeRow_\(E2ETestBase.homeInboxForYouChildRowId)_\(requestId)"
     ]
+  }
+
+  // The informative row has no swipe action, so it isn't wrapped in the
+  // identified `Other` container `EVYSwipeableRow` gives swipeable rows —
+  // its title/subtitle text elements carry the identifier directly instead.
+  @MainActor
+  private func scheduledInformativeRowTexts(responseId: String) -> XCUIElementQuery {
+    app.staticTexts.matching(
+      identifier:
+        "row_\(E2ETestBase.homeInboxScheduledInformativeChildRowId)_\(responseId)"
+    )
   }
 }

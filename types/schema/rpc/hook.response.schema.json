@@ -1,0 +1,13 @@
+{
+	"$schema": "https://json-schema.org/draft/2020-12/schema",
+	"$id": "hook-response",
+	"title": "HookResponse",
+	"description": "Service verdict on a hook. ok=false on a before_create hook vetoes the write; reason is surfaced to the caller.",
+	"type": "object",
+	"additionalProperties": false,
+	"required": ["ok"],
+	"properties": {
+		"ok": { "type": "boolean" },
+		"reason": { "type": "string" }
+	}
+}

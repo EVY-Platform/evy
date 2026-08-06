@@ -1,6 +1,6 @@
 import { eq } from "drizzle-orm";
-
 import type { OS } from "evy-types";
+import { nowIso as clockNowIso } from "evy-types/clock";
 
 import { device, os_enum } from "evy-types/db/schema.generated";
 import type { EvyDb } from "../../database/db";
@@ -31,7 +31,7 @@ export async function validateAuth(
 		await db.insert(device).values({
 			token,
 			os,
-			created_at: new Date().toISOString(),
+			created_at: clockNowIso(),
 			visibility: "private",
 		});
 

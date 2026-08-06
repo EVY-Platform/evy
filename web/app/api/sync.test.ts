@@ -10,6 +10,18 @@ const SERVICE_ID = "test_service";
 const DECLARED_RESOURCE = "test_service.records";
 const UNDECLARED_RESOURCE = "test_service.legacy";
 
+type CatalogResource =
+	ResourcesResponse["services"][number]["resources"][number];
+
+function catalogResource(
+	overrides: Partial<CatalogResource> & Pick<CatalogResource, "id" | "name">,
+): CatalogResource {
+	return {
+		visibility: "public",
+		...overrides,
+	};
+}
+
 function catalogWith(
 	resources: ResourcesResponse["services"][number]["resources"],
 ): ResourcesResponse {
@@ -25,11 +37,11 @@ function syncWith(data: SyncResponse["data"]): SyncResponse {
 describe("extractResourceAttributeMetadata", () => {
 	it("uses the attributes the service declared", () => {
 		const catalog = catalogWith([
-			{
+			catalogResource({
 				id: DECLARED_RESOURCE,
 				name: "records",
 				attributes: ["id", "price.currency", "title"],
-			},
+			}),
 		]);
 
 		expect(extractResourceAttributeMetadata(catalog, syncWith([]))).toEqual(
@@ -44,11 +56,11 @@ describe("extractResourceAttributeMetadata", () => {
 
 	it("offers declared attributes for a resource with no rows yet", () => {
 		const catalog = catalogWith([
-			{
+			catalogResource({
 				id: DECLARED_RESOURCE,
 				name: "records",
 				attributes: ["id", "title"],
-			},
+			}),
 		]);
 
 		const result = extractResourceAttributeMetadata(catalog, syncWith([]));
@@ -58,11 +70,11 @@ describe("extractResourceAttributeMetadata", () => {
 
 	it("prefers declared attributes over what the rows happen to show", () => {
 		const catalog = catalogWith([
-			{
+			catalogResource({
 				id: DECLARED_RESOURCE,
 				name: "records",
 				attributes: ["id", "title", "unused_but_valid"],
-			},
+			}),
 		]);
 		const sync = syncWith([
 			{
@@ -78,7 +90,7 @@ describe("extractResourceAttributeMetadata", () => {
 
 	it("falls back to inferring from rows when the service declares nothing", () => {
 		const catalog = catalogWith([
-			{ id: UNDECLARED_RESOURCE, name: "legacy" },
+			catalogResource({ id: UNDECLARED_RESOURCE, name: "legacy" }),
 		]);
 		const sync = syncWith([
 			{
@@ -94,12 +106,12 @@ describe("extractResourceAttributeMetadata", () => {
 
 	it("mixes declared and inferred resources in one catalog", () => {
 		const catalog = catalogWith([
-			{
+			catalogResource({
 				id: DECLARED_RESOURCE,
 				name: "records",
 				attributes: ["id", "title"],
-			},
-			{ id: UNDECLARED_RESOURCE, name: "legacy" },
+			}),
+			catalogResource({ id: UNDECLARED_RESOURCE, name: "legacy" }),
 		]);
 		const sync = syncWith([
 			{
@@ -124,7 +136,7 @@ describe("extractResourceAttributeMetadata", () => {
 
 	it("omits resources with neither declared nor inferable attributes", () => {
 		const catalog = catalogWith([
-			{ id: UNDECLARED_RESOURCE, name: "legacy" },
+			catalogResource({ id: UNDECLARED_RESOURCE, name: "legacy" }),
 		]);
 
 		expect(extractResourceAttributeMetadata(catalog, syncWith([]))).toEqual(
@@ -139,11 +151,11 @@ describe("extractResourceAttributeMetadata", () => {
 					id: EVY_CORE_SERVICE,
 					name: "evy",
 					resources: [
-						{
+						catalogResource({
 							id: EVY_CORE_RESOURCE_REF.FLOWS,
 							name: "flow",
 							attributes: ["id", "name"],
-						},
+						}),
 					],
 				},
 			],

@@ -334,10 +334,7 @@ export function AutocompleteSearch({
 					{label}
 				</label>
 			)}
-			<div
-				ref={fieldRef}
-				className={`evy-id-autocomplete-field${multiline ? " evy-id-autocomplete-field--multiline" : ""}`}
-			>
+			<div ref={fieldRef} className="evy-id-autocomplete-field">
 				{multiline ? (
 					<textarea {...inputProps} />
 				) : (

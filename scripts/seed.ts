@@ -7,7 +7,10 @@ import { SQL } from "bun";
 import { drizzle } from "drizzle-orm/bun-sql";
 import { migrate as migratePg } from "drizzle-orm/bun-sql/migrator";
 import { MARKETPLACE_SERVICE_DESCRIPTOR } from "../services/marketplace/src/resources";
-import { data as marketplaceDataTable } from "../services/marketplace/src/schema";
+import {
+	data as marketplaceDataTable,
+	item_status_history as marketplaceItemStatusHistoryTable,
+} from "../services/marketplace/src/schema";
 import { getPostgresConnectionUrl, requireEnv } from "../types/env";
 import type {
 	DATA_EVY_Flow,
@@ -89,7 +92,10 @@ const coreSchema = {
 	formatter: formatterTable,
 	message: messageTable,
 };
-const marketplaceSchema = { data: marketplaceDataTable };
+const marketplaceSchema = {
+	data: marketplaceDataTable,
+	item_status_history: marketplaceItemStatusHistoryTable,
+};
 
 const coreSqlClient = new SQL(getPostgresConnectionUrl("DB_EVY_DATABASE"));
 const marketplaceSqlClient = new SQL(
@@ -300,6 +306,8 @@ type SeedMessageRow = {
 	id: string;
 	fk: string;
 	resource: string;
+	type: string;
+	value: string;
 	created_at: string;
 	updated_at: string;
 	data: Record<string, unknown>;
@@ -328,24 +336,29 @@ function buildMessageRows(
 				`Seed message "${item.id}" has invalid resource ref "${item.resource}"`,
 			);
 		}
+		if (typeof item.type !== "string") {
+			throw new Error(
+				`Seed message "${item.id}" must have a string "type" field`,
+			);
+		}
+		if (typeof item.value !== "string") {
+			throw new Error(
+				`Seed message "${item.id}" must have a string "value" field`,
+			);
+		}
 		const data =
 			item.data !== null &&
 			typeof item.data === "object" &&
 			!Array.isArray(item.data)
 				? (item.data as Record<string, unknown>)
 				: {};
-		// A message's state lives in `data.value`: "pending" on a request, "accept" or
-		// "reject" on the response that answers one. Not every message is a request, so
-		// an absent value is fine - a misspelled one is not, and would otherwise only
-		// show up as a row the item page silently never matches.
 		if (
-			data.value !== undefined &&
 			!EVY_MESSAGE_DATA_VALUES.includes(
-				data.value as (typeof EVY_MESSAGE_DATA_VALUES)[number],
+				item.value as (typeof EVY_MESSAGE_DATA_VALUES)[number],
 			)
 		) {
 			throw new Error(
-				`Seed message "${item.id}" has data.value "${String(data.value)}"; expected one of ${EVY_MESSAGE_DATA_VALUES.join(", ")}`,
+				`Seed message "${item.id}" has value "${item.value}"; expected one of ${EVY_MESSAGE_DATA_VALUES.join(", ")}`,
 			);
 		}
 		if (
@@ -369,6 +382,8 @@ function buildMessageRows(
 			id: item.id,
 			fk: item.fk,
 			resource: item.resource,
+			type: item.type,
+			value: item.value,
 			created_at,
 			updated_at,
 			data,
@@ -711,6 +726,7 @@ async function seedDatabase({
 	const marketplaceRows = buildDataRows(marketplaceDataJson, now);
 
 	await marketplaceDb.transaction(async (tx) => {
+		await tx.delete(marketplaceSchema.item_status_history);
 		await tx.delete(marketplaceSchema.data);
 		if (marketplaceRows.length > 0) {
 			await tx.insert(marketplaceSchema.data).values(marketplaceRows);

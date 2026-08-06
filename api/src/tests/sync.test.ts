@@ -129,6 +129,7 @@ describe("sync", () => {
 		expect(evyResourceNames).toContain(EVY_CORE_RESOURCE_REF.ADDRESSES);
 		expect(evyResourceNames).toContain(EVY_CORE_RESOURCE_REF.FORMATTERS);
 		expect(evyResourceNames).toContain(EVY_CORE_RESOURCE_REF.MESSAGES);
+		expect(evyResourceNames).toContain(EVY_CORE_RESOURCE_REF.TRANSACTIONS);
 		expect(evyResourceNames).not.toContain(EVY_CORE_RESOURCE_REF.DEVICES);
 		expect(evyResourceNames).toContain(EVY_CORE_RESOURCE_REF.RESOURCES);
 

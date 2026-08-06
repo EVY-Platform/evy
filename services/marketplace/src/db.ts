@@ -1,12 +1,22 @@
 import { drizzle } from "drizzle-orm/postgres-js";
 import { getPostgresConnectionUrl } from "evy-types/env";
 import postgres from "postgres";
-import { data } from "./schema";
+import {
+	data,
+	item_payment_intents,
+	item_status,
+	item_status_history,
+} from "./schema";
 
-export { data };
+export { data, item_payment_intents, item_status, item_status_history };
 
 // exported for tests
-export const schema = { data };
+export const schema = {
+	data,
+	item_payment_intents,
+	item_status,
+	item_status_history,
+};
 
 export function getMarketplaceConnectionUrl(): string {
 	return getPostgresConnectionUrl("DB_MARKETPLACE_DATABASE");

@@ -1,0 +1,7 @@
+{
+	"$schema": "https://json-schema.org/draft/2020-12/schema",
+	"$id": "payment-intent-response",
+	"title": "PaymentIntentResponse",
+	"description": "The intent Transaction row written by the payment_intent procedure. Clients carry payment_provider_transaction_id as the intent id in message data.",
+	"$ref": "../data/data.schema.json#/$defs/DATA_EVY_Transaction"
+}

@@ -10,6 +10,7 @@ import type {
 	GetRequest,
 	GetResponse,
 } from "evy-types";
+import { nowIso as clockNowIso } from "evy-types/clock";
 import { file } from "evy-types/db/schema.generated";
 import { hasDatabaseErrorCode, PG_UNIQUE_VIOLATION } from "evy-types/dbErrors";
 import {
@@ -161,7 +162,7 @@ async function deleteFileMetadata(
 	filter: DeleteRequest["filter"],
 	notify: (value: unknown) => void,
 ): Promise<DeleteResponse> {
-	const nowIso = new Date().toISOString();
+	const nowIso = clockNowIso();
 	const deleted = await db
 		.update(file)
 		.set({ deleted_at: nowIso, updated_at: nowIso })

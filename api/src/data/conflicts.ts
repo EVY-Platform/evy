@@ -11,6 +11,22 @@
  * track versions (iOS, the seed) are unaffected.
  */
 
+import { toNanoIso } from "evy-types/clock";
+
+function versionTokensMatch(expected: string, actual: string): boolean {
+	const normExpected = toNanoIso(expected);
+	const normActual = toNanoIso(actual);
+	if (normExpected === normActual) return true;
+
+	// Clients that only retain millisecond precision (iOS, pre-migration tokens)
+	// send a three-digit fraction; match on that prefix.
+	const expectedFraction = /\.(\d+)/.exec(expected)?.[1] ?? "";
+	if (expectedFraction.length <= 3) {
+		return normExpected.slice(0, 23) === normActual.slice(0, 23);
+	}
+	return false;
+}
+
 export class ConflictError extends Error {
 	readonly code = "CONFLICT";
 	readonly expectedUpdatedAt: string;
@@ -34,25 +50,9 @@ export function assertNotModified(
 	actualUpdatedAt: string,
 ): void {
 	if (expectedUpdatedAt === undefined) return;
-	if (expectedUpdatedAt !== actualUpdatedAt) {
+	if (!versionTokensMatch(expectedUpdatedAt, actualUpdatedAt)) {
 		throw new ConflictError(expectedUpdatedAt, actualUpdatedAt);
 	}
 }
 
-/**
- * The row's next `updated_at`, guaranteed to be greater than its current one.
- *
- * `updated_at` doubles as the version token, and wall-clock time has
- * millisecond resolution - two writes inside the same millisecond would leave
- * it unchanged, so a second writer's stale token would still match and the
- * lock would pass exactly when it needed to fail. Nudging forward by a
- * millisecond keeps the value a timestamp while making it strictly increase
- * per row, which is what the precondition relies on.
- */
-export function monotonicUpdatedAt(
-	nowIso: string,
-	currentUpdatedAt: string,
-): string {
-	if (nowIso > currentUpdatedAt) return nowIso;
-	return new Date(new Date(currentUpdatedAt).getTime() + 1).toISOString();
-}
+// Version tokens advance on every write via `evy-types/clock` (`nowIso`).

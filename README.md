@@ -27,6 +27,7 @@ flowchart LR
 
 - EVY Platform
   - [Data](./docs/evy/data.md)
+  - [Hooks](./docs/evy/hooks.md)
   - [Methods](./docs/evy/methods.md)
   - [Comparisons](./docs/evy/comparisons.md)
   - [Formatting](./docs/evy/formatting.md)

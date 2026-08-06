@@ -10,8 +10,9 @@ flowchart LR
     api[api<br />JSON-RPC 2.0]
 
     subgraph marketplace [marketplace service]
-        rpc[index.ts<br />get / create / update / delete]
+        rpc[index.ts<br />get / create / update / delete / resources / hook]
         data[data.ts]
+        purchase[purchase.ts / status.ts]
         bus[(EventEmitter<br />notify)]
     end
 
@@ -20,8 +21,11 @@ flowchart LR
     client -- WebSocket --> api
     api -- JSON-RPC WebSocket --> rpc
     rpc --> data
+    rpc --> purchase
+    purchase --> pg
     data --> pg
     data -- writes --> bus
+    purchase -- item_status_history writes --> bus
     bus -- dataChanged notification --> api
     api -- dataChanged JSON-RPC --> client
 ```

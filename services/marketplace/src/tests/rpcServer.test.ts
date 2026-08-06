@@ -6,20 +6,14 @@ import {
 	expect,
 	it,
 } from "bun:test";
-import { migrate } from "drizzle-orm/pglite/migrator";
 import type { ResourcesResponse } from "evy-types";
 import { getFreePort } from "evy-types/wsTestHelpers";
 import { Client } from "rpc-websockets";
-import { schema } from "../db";
+import { db, schema } from "../db";
+import { drainPurchaseQueues } from "../purchase";
 import { MARKETPLACE_RESOURCE } from "../resources";
-import {
-	createPgliteTestDatabase,
-	registerMarketplaceTestDb,
-} from "./dbTestHelpers";
-
-const { pgliteClient, testDb } = createPgliteTestDatabase();
-
-registerMarketplaceTestDb(testDb);
+import { makeHookRequest } from "./hookTestHelpers";
+import { ensureMarketplaceTestSchema } from "./sharedTestDb";
 
 const { startMarketplaceRpcServer, stopMarketplaceRpcServer } = await import(
 	"../rpc"
@@ -28,18 +22,19 @@ const { startMarketplaceRpcServer, stopMarketplaceRpcServer } = await import(
 let wsPort: number;
 
 beforeAll(async () => {
-	await migrate(testDb, { migrationsFolder: "./drizzle" });
+	await ensureMarketplaceTestSchema();
 	wsPort = await getFreePort();
 	await startMarketplaceRpcServer({ host: "127.0.0.1", port: wsPort });
 });
 
 afterAll(async () => {
 	stopMarketplaceRpcServer();
-	await pgliteClient.close();
 });
 
 beforeEach(async () => {
-	await testDb.delete(schema.data);
+	await drainPurchaseQueues();
+	await db.delete(schema.data);
+	await db.delete(schema.item_status_history);
 });
 
 function createClient(): InstanceType<typeof Client> {
@@ -119,6 +114,26 @@ describe("marketplace JSON-RPC server", () => {
 			"transfer_options.pickup.address_id",
 		);
 		expect(conditions?.attributes).toEqual(["id", "value"]);
+		const itemStatuses = resources.find(
+			(entry) => entry.id === MARKETPLACE_RESOURCE.ITEM_STATUSES,
+		);
+		expect(itemStatuses?.visibility).toBe("internal");
+		expect(items?.visibility).toBe("public");
+		expect(conditions?.visibility).toBe("public");
+		client.close();
+	});
+
+	it("accepts a valid hook request and rejects garbage", async () => {
+		const client = createClient();
+		await waitForOpen(client);
+
+		const hookRequest = makeHookRequest(crypto.randomUUID());
+
+		const response = await client.call("hook", hookRequest);
+		expect(response).toEqual({ ok: true });
+
+		await expect(client.call("hook", { hook: "nope" })).rejects.toThrow();
+
 		client.close();
 	});
 });

@@ -26,6 +26,8 @@ services:
             - ${MARKETPLACE_WS_PORT}:${MARKETPLACE_WS_PORT}
         environment:
             - MARKETPLACE_WS_PORT=${MARKETPLACE_WS_PORT}
+            - API_WS_HOST=api
+            - API_PORT=${API_PORT}
             - DB_MARKETPLACE_DATABASE=${DB_MARKETPLACE_DATABASE}
             - DB_USER=${DB_USER}
             - DB_PASS=${DB_PASS}
@@ -48,6 +50,7 @@ services:
             target: runner
         ports:
             - ${API_PORT}:${API_PORT}
+            - ${STRIPE_WEBHOOK_PORT:-8002}:${STRIPE_WEBHOOK_PORT:-8002}
         environment:
             - DB_USER=${DB_USER}
             - DB_PASS=${DB_PASS}
@@ -60,6 +63,11 @@ services:
             - MARKETPLACE_WS_PORT=${MARKETPLACE_WS_PORT}
             - GOOGLE_PLACES_API_KEY=${GOOGLE_PLACES_API_KEY}
             - GOOGLE_PLACES_MOCK=${GOOGLE_PLACES_MOCK:-}
+            - STRIPE_SECRET_KEY=${STRIPE_SECRET_KEY}
+            - STRIPE_WEBHOOK_SECRET=${STRIPE_WEBHOOK_SECRET:-}
+            - STRIPE_WEBHOOK_PORT=${STRIPE_WEBHOOK_PORT:-8002}
+            - STRIPE_MOCK=${STRIPE_MOCK:-}
+            - STRIPE_CONNECT_ACCOUNT_ID=${STRIPE_CONNECT_ACCOUNT_ID:-}
         depends_on:
             postgres:
                 condition: service_healthy

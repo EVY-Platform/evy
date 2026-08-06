@@ -7,7 +7,6 @@ import {
 	it,
 } from "bun:test";
 import { migrate } from "drizzle-orm/pglite/migrator";
-
 import type {
 	CreateRequest,
 	DATA_EVY_Address,
@@ -16,10 +15,12 @@ import type {
 	DATA_EVY_Page,
 	DATA_EVY_Row,
 	DATA_EVY_Service,
+	DATA_EVY_Transaction,
 	DeleteRequest,
 	GetRequest,
 	UpdateRequest,
 } from "evy-types";
+import { toNanoIso } from "evy-types/clock";
 import { EVY_CORE_RESOURCE_REF } from "evy-types/coreResources";
 import * as schema from "evy-types/db/schema.generated";
 import { ROTHCHILD_CANONICAL_ADDRESS } from "../../../scripts/fixtures/canonicalAddresses";
@@ -28,6 +29,7 @@ import {
 	asEvyDb,
 	clearAllTestTables,
 	createPgliteTestDatabase,
+	validTransactionPayload,
 } from "./wsTestHelpers";
 
 const { pgliteClient, testDb } = createPgliteTestDatabase();
@@ -50,6 +52,7 @@ const PAGE_RESOURCE = EVY_CORE_RESOURCE_REF.PAGES;
 const ROW_RESOURCE = EVY_CORE_RESOURCE_REF.ROWS;
 const ADDRESS_RESOURCE = EVY_CORE_RESOURCE_REF.ADDRESSES;
 const MESSAGE_RESOURCE = EVY_CORE_RESOURCE_REF.MESSAGES;
+const TRANSACTION_RESOURCE = EVY_CORE_RESOURCE_REF.TRANSACTIONS;
 const FORMATTER_RESOURCE = EVY_CORE_RESOURCE_REF.FORMATTERS;
 
 function nowIso(): string {
@@ -264,7 +267,7 @@ describe("flat flow resources", () => {
 
 		expect(result.name).toBe("Renamed");
 		expect(result.data.title).toBe("Updated");
-		expect(result.created_at).toBe(payload.created_at);
+		expect(result.created_at).toBe(toNanoIso(payload.created_at));
 		expect(Date.parse(result.updated_at)).not.toBeNaN();
 	});
 
@@ -377,7 +380,7 @@ describe("address resources", () => {
 		expect(updated.unit).toBe("C510");
 		expect(updated.instructions).toBe("Buzz 509");
 		expect(updated.visibility).toBe("private");
-		expect(updated.created_at).toBe(payload.created_at);
+		expect(updated.created_at).toBe(toNanoIso(payload.created_at));
 
 		const deleted = (await deleteCore(dataDb, {
 			resource: ADDRESS_RESOURCE,
@@ -500,9 +503,9 @@ describe("message resources", () => {
 			data: {
 				fk: crypto.randomUUID(),
 				resource: "test_svc.items",
+				type: "delivery",
+				value: "pending",
 				data: {
-					type: "delivery",
-					value: "pending",
 					time: "2026-06-04T10:00:00",
 					destination_address: destinationAddress,
 				},
@@ -520,9 +523,9 @@ describe("message resources", () => {
 				fk: crypto.randomUUID(),
 				resource: "test_svc.items",
 				parent_message_id: deliveryRequest.id,
+				type: "pickup",
+				value: "accept",
 				data: {
-					value: "accept",
-					type: "pickup",
 					time: "2026-06-03T09:00:00",
 					pickup_address: pickupAddress,
 				},
@@ -542,9 +545,9 @@ describe("message resources", () => {
 		const payload = {
 			fk: crypto.randomUUID(),
 			resource: "test_svc.items",
+			type: "pickup",
+			value: "pending",
 			data: {
-				type: "pickup",
-				value: "pending",
 				time: "2026-06-03T09:00:00",
 			},
 			visibility: "private" as const,
@@ -555,7 +558,7 @@ describe("message resources", () => {
 		})) as DATA_EVY_Message;
 		expect(created.id).toBeDefined();
 		expect(created.updated_at).toBeDefined();
-		expect(created.data.value).toBe("pending");
+		expect(created.value).toBe("pending");
 		expect(created.visibility).toBe("private");
 
 		const listed = (await get(dataDb, {
@@ -604,11 +607,99 @@ describe("message resources", () => {
 					fk: crypto.randomUUID(),
 					resource: "test_svc.items",
 					[removed]: removed === "status" ? "pending" : null,
-					data: { type: "pickup", value: "pending" },
+					type: "pickup",
+					value: "pending",
+					data: {},
 					visibility: "private",
 				},
 			}),
 		).rejects.toThrow("Message validation failed");
+	});
+});
+
+describe("transaction rows", () => {
+	it("lists empty then creates and lists transactions", async () => {
+		const empty = (await get(dataDb, {
+			resource: TRANSACTION_RESOURCE,
+		})) as DATA_EVY_Transaction[];
+		expect(empty).toEqual([]);
+
+		const created = (await create(dataDb, {
+			resource: TRANSACTION_RESOURCE,
+			data: validTransactionPayload(),
+		})) as DATA_EVY_Transaction;
+		expect(created.id).toBeDefined();
+		expect(created.created_at).toBeDefined();
+		expect(created.updated_at).toBeDefined();
+		expect(created.amount).toBe(250);
+		expect(created.currency).toBe("AUD");
+		expect(created.visibility).toBe("public");
+
+		const listed = (await get(dataDb, {
+			resource: TRANSACTION_RESOURCE,
+		})) as DATA_EVY_Transaction[];
+		expect(listed).toHaveLength(1);
+	});
+
+	it("rejects update and delete (ledger rows are append-only)", async () => {
+		const created = (await create(dataDb, {
+			resource: TRANSACTION_RESOURCE,
+			data: validTransactionPayload(),
+		})) as DATA_EVY_Transaction;
+
+		await expect(
+			update(dataDb, {
+				resource: TRANSACTION_RESOURCE,
+				filter: { id: created.id },
+				data: { ...created, amount: 300 },
+			}),
+		).rejects.toThrow("Update is not supported for this resource");
+
+		await expect(
+			deleteCore(dataDb, {
+				resource: TRANSACTION_RESOURCE,
+				filter: { id: created.id },
+			}),
+		).rejects.toThrow("Delete is not supported for this resource");
+	});
+
+	it("accepts zero amount", async () => {
+		const created = (await create(dataDb, {
+			resource: TRANSACTION_RESOURCE,
+			data: { ...validTransactionPayload(), amount: 0 },
+		})) as DATA_EVY_Transaction;
+		expect(created.amount).toBe(0);
+	});
+
+	it("rejects a bad type", async () => {
+		await expect(
+			create(dataDb, {
+				resource: TRANSACTION_RESOURCE,
+				data: {
+					...validTransactionPayload(),
+					type: "refund",
+				},
+			}),
+		).rejects.toThrow("Transaction validation failed");
+	});
+
+	it("rejects a missing required field", async () => {
+		const { currency: _currency, ...payload } = validTransactionPayload();
+		await expect(
+			create(dataDb, {
+				resource: TRANSACTION_RESOURCE,
+				data: payload,
+			}),
+		).rejects.toThrow("Transaction validation failed");
+	});
+
+	it("rejects negative amount", async () => {
+		await expect(
+			create(dataDb, {
+				resource: TRANSACTION_RESOURCE,
+				data: { ...validTransactionPayload(), amount: -1 },
+			}),
+		).rejects.toThrow("Transaction validation failed");
 	});
 });
 
@@ -623,7 +714,9 @@ describe("getSyncRows", () => {
 			data: {
 				fk,
 				resource: targetResourceRef,
-				data: { type: "pickup", value: "pending" },
+				type: "pickup",
+				value: "pending",
+				data: {},
 				visibility: "private" as const,
 			},
 		})) as DATA_EVY_Message;
@@ -638,7 +731,9 @@ describe("getSyncRows", () => {
 				fk: otherFk,
 				resource: targetResourceRef,
 				parent_message_id: requestId,
-				data: { value: "accept", type: "pickup" },
+				type: "pickup",
+				value: "accept",
+				data: {},
 				visibility: "private" as const,
 			},
 		})) as DATA_EVY_Message;

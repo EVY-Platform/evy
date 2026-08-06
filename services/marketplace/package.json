@@ -11,7 +11,7 @@
 		"start": "bun run db:migrate && bun --env-file=../../.env src/index.ts",
 		"health": "bun src/readiness.ts",
 		"health:seeded": "bun src/readiness.ts --require-seeded",
-		"test:unit": "bun --env-file=../../.env test src/",
+		"test:unit": "bun --env-file=../../.env test src/ --preload ./src/tests/sharedTestDb.ts --serial",
 		"test:e2e": "bun --env-file=../../.env test e2e/",
 		"lint": "bunx biome check",
 		"format": "bunx biome check --write .",

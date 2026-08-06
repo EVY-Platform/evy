@@ -2,12 +2,24 @@ import type { ApiRequest, SyncResponse } from "evy-types";
 import { EVY_CORE_SERVICE } from "evy-types/coreResources";
 import { proceduresForService } from "evy-types/procedures";
 import {
+	validatePaymentCancelRequest,
+	validatePaymentCancelResponse,
+	validatePaymentCaptureRequest,
+	validatePaymentCaptureResponse,
+	validatePaymentIntentRequest,
+	validatePaymentIntentResponse,
+	validatePaymentTransferRequest,
+	validatePaymentTransferResponse,
+	validatePaymentWebhookRequest,
+	validatePaymentWebhookResponse,
 	validatePlaceSearchRequest,
 	validatePlaceSearchResponse,
 	validateSyncRequest,
 	validateSyncResponse,
 } from "evy-types/validators";
 import type { EvyDb } from "../database/db";
+import * as paymentsProcedure from "./payments";
+import * as paymentWebhookProcedure from "./paymentWebhook";
 import * as placeSearchProcedure from "./placeSearch";
 import * as syncProcedure from "./sync";
 
@@ -21,18 +33,51 @@ import * as syncProcedure from "./sync";
  */
 type CoreProcedure = (data: unknown, db: EvyDb) => Promise<unknown>;
 
+function wrap<Req, Res>(
+	validateRequest: (data: unknown) => Req,
+	procedure: (request: Req, db: EvyDb) => Promise<Res>,
+	validateResponse: (response: unknown) => Res,
+): CoreProcedure {
+	return async (data, db) =>
+		validateResponse(await procedure(validateRequest(data), db));
+}
+
 async function runSync(params: unknown, db: EvyDb): Promise<SyncResponse> {
 	const request = validateSyncRequest(params ?? {});
 	return validateSyncResponse(await syncProcedure.sync(request, db));
 }
 
 const coreProcedures: Record<string, CoreProcedure> = {
-	place_search: async (data) =>
-		validatePlaceSearchResponse(
-			await placeSearchProcedure.placeSearch(
-				validatePlaceSearchRequest(data),
-			),
-		),
+	payment_intent: wrap(
+		validatePaymentIntentRequest,
+		paymentsProcedure.paymentIntent,
+		validatePaymentIntentResponse,
+	),
+	payment_capture: wrap(
+		validatePaymentCaptureRequest,
+		paymentsProcedure.paymentCapture,
+		validatePaymentCaptureResponse,
+	),
+	payment_cancel: wrap(
+		validatePaymentCancelRequest,
+		paymentsProcedure.paymentCancel,
+		validatePaymentCancelResponse,
+	),
+	payment_transfer: wrap(
+		validatePaymentTransferRequest,
+		paymentsProcedure.paymentTransfer,
+		validatePaymentTransferResponse,
+	),
+	payment_webhook: wrap(
+		validatePaymentWebhookRequest,
+		paymentWebhookProcedure.handlePaymentWebhook,
+		validatePaymentWebhookResponse,
+	),
+	place_search: wrap(
+		validatePlaceSearchRequest,
+		(request) => placeSearchProcedure.placeSearch(request),
+		validatePlaceSearchResponse,
+	),
 };
 
 /**

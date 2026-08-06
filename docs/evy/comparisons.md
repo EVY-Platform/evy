@@ -45,7 +45,7 @@ are always literals; wrap a binding in braces to resolve it. See
 Each side of an atomic comparison is resolved in this order, first match wins:
 
 1. **Quoted literal** — `"pending"`; always a string, never resolved as a path.
-2. **Record path** — property on the candidate record, including nested paths (`data.type`).
+2. **Record path** — property on the candidate record, including nested paths (`type`, `data.time`).
 3. **Global data path** — `item.id`, dotted resource refs (`marketplace.items.title`), etc.
 4. **Unquoted literal** — bare words like `pending` / `accepted`.
 

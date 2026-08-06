@@ -411,6 +411,8 @@ private struct EVYResolvedRow: View {
       EVYVerticalContainerRow(view: view, childRefs: childRefs, datum: self.datum)
     case .listItem(let view, _):
       EVYListItemRow(view: view)
+        .accessibilityIdentifier(
+          "row_\(EVYSwipeRowIdentity.make(rowId: contentRow.id, datum: datum))")
     case .map(let view, _):
       EVYMapRow(view: view, scope: evyScope)
     case .search(let view, _):

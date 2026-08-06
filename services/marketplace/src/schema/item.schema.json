@@ -41,7 +41,19 @@
 			}
 		},
 		"price": {
-			"$ref": "#/$defs/Price"
+			"$ref": "#/$defs/Price",
+			"description": "Listing price. Must be greater than zero — a $0 listing cannot produce a Stripe PaymentIntent. The shared Price type stays permissive because delivery fees may legitimately be 0.",
+			"properties": {
+				"value": {
+					"oneOf": [
+						{ "type": "number", "exclusiveMinimum": 0 },
+						{
+							"type": "string",
+							"pattern": "^(?!0+(\\.0+)?$)\\d+(\\.\\d+)?$"
+						}
+					]
+				}
+			}
 		},
 		"payment_cash": {
 			"$ref": "#/$defs/DraftFlag"

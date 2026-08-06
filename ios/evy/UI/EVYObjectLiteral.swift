@@ -13,7 +13,7 @@ public enum EVYObjectArgument: Equatable {
 }
 
 /// Reads the `{key: value, ...}` object literals that appear inside action
-/// values, e.g. the nested object in `data: {type: pickup, time: {selected}}`.
+/// values, e.g. the nested object in `data: {time: {selected}}`.
 @MainActor
 enum EVYObjectLiteral {
   nonisolated static func parseKeyValuePairs(

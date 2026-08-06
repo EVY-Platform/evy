@@ -1,12 +1,12 @@
 # Marketplace data models
 
-Clients talk to marketplace through the EVY api using dotted resource refs: `marketplace.items`, `marketplace.selling_reasons`, `marketplace.conditions`, `marketplace.durations`, and `marketplace.areas`.
+Clients talk to marketplace through the EVY api using dotted resource refs: `marketplace.items`, `marketplace.selling_reasons`, `marketplace.conditions`, `marketplace.durations`, `marketplace.areas`, and `marketplace.item_statuses`.
 
-Marketplace owns its own payload schemas and validates every `create` and `update` against them: the EVY api forwards these payloads without inspecting them, so anything this service does not check is unchecked everywhere. The schemas live in [`services/marketplace/src/schema/`](../../../services/marketplace/src/schema) and are compiled by [`src/validation.ts`](../../../services/marketplace/src/validation.ts); nothing marketplace-shaped belongs in the shared `types/` package. Resource refs are declared in [`services/marketplace/src/resources.ts`](../../../services/marketplace/src/resources.ts) and exposed through the service's `resources` JSON-RPC method, along with each resource's bindable `attributes` — derived from these same schemas, so what the builder offers and what the service accepts cannot drift apart.
+Marketplace owns its own payload schemas and validates every `create` and `update` against them: the EVY api forwards these payloads without inspecting them, so anything this service does not check is unchecked everywhere. The schemas live in [`services/marketplace/src/schema/`](../../../services/marketplace/src/schema) and are compiled by [`src/validation.ts`](../../../services/marketplace/src/validation.ts); nothing marketplace-shaped belongs in the shared `types/` package. Resource refs are declared in [`services/marketplace/src/resources.ts`](../../../services/marketplace/src/resources.ts) and exposed through the service's `resources` JSON-RPC method, along with each resource's bindable `attributes` — derived from these same schemas, so what the builder offers and what the service accepts cannot drift apart. Every resource declares catalog `visibility`: lookups and items are `public`; `item_statuses` is `internal` (get and sync only).
 
 Shared value objects (`location`, `price`, `address`, `area`, `photo`, `timeslot`, `transfer_options`, `duration`) are documented in [EVY data models](../../evy/data.md).
 
-Item requests and seller/buyer messages are core [`DATA_EVY_Message`](../../evy/data.md#data_evy_message) rows (`evy.messages`), not marketplace blobs.
+Item requests and seller/buyer messages are core [`DATA_EVY_Message`](../../evy/data.md#data_evy_message) rows (`evy.messages`), not marketplace blobs — `type` and `value` live on the row root; carried fields such as `time` and addresses live in `data`.
 
 ## Simple lookup resources
 
@@ -32,3 +32,101 @@ Items do **not** embed an address object. A pickup location is referenced by id 
 **Two shapes.** A seeded item nests its options (`payment_methods.cash`, `transfer_options.delivery.fee`), while an item produced by the create flow also carries the flat draft fields that flow merges on submit (`payment_cash`, `payment_app`, `delivery_fee`, `shipping_fee`, `distance`, `shipping_source_postal_code`, `shipping_destination_areas`). The schema accommodates both: only `id` is required, every known field is type-checked but optional, and `additionalProperties` stays open at the top level so the flat draft fields pass. Nested objects are closed, so a misspelled key inside `transfer_options` or `dimensions` is rejected. The flat draft fields are typed from what the create flow actually persists, not from what their names suggest: a `TextSelect` writes the *string* `"true"`/`"false"` (`EVYSelectItem` assigns text, and SDUI's `{x.payment_cash == true}` compares against an unquoted literal, which matches it), an `Input` writes a string even for a fee, and an `InlinePicker` whose tap selects `$datum` stores the chosen rows' ids rather than the rows.
 
 Field-level detail lives in the schema rather than here; a copy of it went stale as soon as a field changed. What the schema does not say: `photo_ids` references `evy.files` rows, `seller_id` references a core user, and `condition_id` / `selling_reason_id` reference `marketplace.conditions` and `marketplace.selling_reasons`.
+
+## item_status_history
+
+Append-only log of listing status changes. Exposed to clients as the read-only resource `marketplace.item_statuses` (catalog visibility `internal` — get and sync only; marketplace internals write the table directly).
+
+```
+id: uuid
+item_id: uuid          # marketplace `data.id` for resource marketplace.items
+status: item_status    # available | pickup_pending | delivery_pending | shipping_pending | sold
+created_at: date-time  # ISO string in a text column
+```
+
+Source of truth for the wire shape: [`services/marketplace/src/schema/item_status.schema.json`](../../../services/marketplace/src/schema/item_status.schema.json). Storage: [`services/marketplace/src/schema.ts`](../../../services/marketplace/src/schema.ts). `item_id` is a soft reference (no Postgres FK), matching how core rows point at marketplace items. Incremental `get` maps `filter.updated_after` to `created_at` because rows are append-only.
+
+**Current status** is the latest row for an `item_id`; no rows means `available`. Seeds never insert status rows, so a seeded item that shows an accepted message in fixtures is still `available` in the database and can accept a new `pending`. Marketplace hooks append rows on message creates — see [Purchase status machine](#purchase-status-machine) below. Devices filter sold items out of home search via `marketplace.item_statuses`; `*_pending` items remain visible.
+
+## item_payment_intents
+
+Maps purchase-thread messages to the Stripe payment intent id the marketplace created for the thread. Written when `payment_intent` runs; read when capture, transfer, or cancel needs the provider id.
+
+```
+id: uuid
+item_id: uuid                    # marketplace `data.id` for resource marketplace.items
+authorization_message_id: uuid    # a message in the purchase thread (see aliasing below)
+payment_intent_id: text           # payment_provider_transaction_id from the intent response
+created_at: date-time
+```
+
+Storage: [`services/marketplace/src/schema.ts`](../../../services/marketplace/src/schema.ts). Lookup for capture/transfer/cancel uses `authorization_message_id = parent_message_id` on the triggering message. Purchase threads reply linearly (pending ← accept ← given ← received), so the mapping is written first for the authorizing message (delivery/shipping `pending`, pickup `transaction`) and then **aliased onto every later message in the thread** during its `after_create` hook — a reply always resolves the intent through its direct parent, no matter how deep the chain.
+
+## Payment orchestration
+
+Payment procedures run **synchronously inside the awaited message `after_create` hook**, after status reactions are enqueued. The create RPC returns only after the sync part (intent created / capture initiated / transfer initiated) completes; webhook-driven rows (`succeeded`/`failed`/`completed`) arrive afterwards as today.
+
+| type | value | payment call |
+| --- | --- | --- |
+| pickup | `pending`, `accept`, `reject` | none |
+| pickup | `cancel` | `payment_cancel` if an intent exists |
+| pickup | `transaction` | `payment_intent` |
+| pickup | `transaction_completed` | `payment_capture`, then `payment_transfer` |
+| pickup | `transaction_rejected` | `payment_cancel` |
+| delivery | `pending` | `payment_intent` |
+| delivery | `accept` | `payment_capture` |
+| delivery | `reject`, `cancel` | `payment_cancel` if an intent exists |
+| delivery | `given`, `failed` | none |
+| delivery | `received` | `payment_transfer` |
+| shipping | `pending` | `payment_intent` |
+| shipping | `accept` | `payment_capture` |
+| shipping | `reject`, `cancel` | `payment_cancel` if an intent exists |
+| shipping | `sent`, `failed` | none |
+| shipping | `received` | `payment_transfer` |
+
+`before_create` vetoes intent-triggering messages when the item has no parseable `price.value > 0`, and capture/transfer-triggering messages when no `item_payment_intents` row resolves. Cancel triggers are lenient: they no-op when no intent exists.
+
+Failure handling (v1): `payment_intent` / `payment_cancel` RPC errors are logged only; capture/transfer failures surface via webhook-authored `charge_failed` / `transfer_failed` messages and existing status rollback logic.
+
+## Purchase status machine
+
+Marketplace is the first real hook consumer: every `evy.messages` create targeting `marketplace.items` runs `before_create` validation against current status and `after_create` reactions that append status rows. Transaction creates for marketplace items also run hooks: `before_create` is a no-op; `after_create` reacts to `{type: charge, status: succeeded}` by appending `sold`. Message `after_create` hooks also drive payment orchestration (see [Payment orchestration](#payment-orchestration) above).
+
+### Status values
+
+| Status | Meaning |
+| --- | --- |
+| `available` | No active flow (implicit when history is empty) |
+| `pickup_pending` | Seller accepted a pickup request |
+| `delivery_pending` | Seller accepted a delivery request |
+| `shipping_pending` | Seller accepted a shipping request |
+| `sold` | Payment charge succeeded (`{charge, succeeded}` transaction row via hook) |
+
+### `before_create` validation
+
+| Incoming `(type, value)` | Valid when current status is |
+| --- | --- |
+| `pending` | `available` |
+| `accept` | `available` or `sold` |
+| `transaction`, `transaction_completed`, `transaction_rejected` | `pickup_pending` or `sold` |
+| `given`, `sent`, `received`, `failed` | `sold` |
+| `reject`, `cancel`, `request_failed` | any |
+| `charge_failed`, `transfer_failed` | not vetoed (webhook-authored) |
+
+Veto = RPC create error; nothing stored. Type/value pairs are sanity-checked (`given` only on `delivery`, `sent` only on `shipping`, etc.).
+
+### `after_create` reactions
+
+| Trigger | Reaction |
+| --- | --- |
+| message `accept` (when status is `available`) | append `<type>_pending` |
+| transaction `{charge, succeeded}` | append `sold` (idempotent when already sold) |
+| `transaction_rejected` (from `pickup_pending` or `sold`) | append `available` |
+| `failed`, `transfer_failed` (from `sold` only) | append `available` |
+| `charge_failed` (from any pending status or `sold`) | append `available` |
+| `cancel` (from any pending status, not from `sold`) | append `available` |
+| everything else | nothing |
+
+Reactions run on an in-process per-`fk` queue; payment orchestration runs in the same `after_create` hook after enqueueing status reactions.
+
+Payment lifecycle state lives in `evy.transactions` rows; marketplace learns charge success from the transaction hook and rollbacks from webhook-authored `charge_failed` / `transfer_failed` messages.

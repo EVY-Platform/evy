@@ -47,6 +47,7 @@ set -a
 source .env
 set +a
 export GOOGLE_PLACES_MOCK=true
+export STRIPE_MOCK=true
 if [ -n "${_PRESET_WEB_PORT}" ]; then
 	export WEB_PORT="${_PRESET_WEB_PORT}"
 fi

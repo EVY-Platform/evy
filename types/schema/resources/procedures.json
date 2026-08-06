@@ -1,6 +1,26 @@
 {
 	"$comment": "Registry of RPC procedures reachable via api{method}. The owning service decides whether the gateway handles a call itself or forwards it; the response schema is the wire contract clients bind to. Adding a procedure here is what makes it callable - api/src/procedures/coreApi.ts asserts its handlers match this file exactly.",
 	"procedures": {
+		"payment_intent": {
+			"service": "evy",
+			"response": "rpc/payment_intent.response.schema.json"
+		},
+		"payment_capture": {
+			"service": "evy",
+			"response": "rpc/payment_capture.response.schema.json"
+		},
+		"payment_cancel": {
+			"service": "evy",
+			"response": "rpc/payment_cancel.response.schema.json"
+		},
+		"payment_transfer": {
+			"service": "evy",
+			"response": "rpc/payment_transfer.response.schema.json"
+		},
+		"payment_webhook": {
+			"service": "evy",
+			"response": "rpc/payment_webhook.response.schema.json"
+		},
 		"place_search": {
 			"service": "evy",
 			"response": "rpc/place_search.response.schema.json"

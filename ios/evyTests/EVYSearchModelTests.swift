@@ -245,12 +245,12 @@ final class EVYSearchModelTests: XCTestCase {
     XCTAssertEqual(state.value.first?.displayRow.subtitle, "pending")
 
     // An update filter matches flat record keys, so the request is named by id; the
-    // change reaches into `data` through a dotted path, which `applyChanges` does support.
+    // change reaches into `value` at the message root.
     try EVY.update(
       namespace: EVYNamespace.evy,
       resource: resource,
       matching: ["id": .string(pendingId)],
-      changes: ["data.value": .string("accept")]
+      changes: ["value": .string("accept")]
     )
 
     XCTAssertEqual(state.value.first?.displayRow.subtitle, "accept")
@@ -359,8 +359,8 @@ final class EVYSearchModelTests: XCTestCase {
         "id": "message-destination-template",
         "type": "text",
         "actions": {},
-        "title": "{$datum.data.type} request",
-        "subtitle": "{if(length($datum.data.destination_address.street) > 0, formatAddress($datum.data.destination_address), $datum.data.value)}",
+        "title": "{$datum.type} request",
+        "subtitle": "{if(length($datum.data.destination_address.street) > 0, formatAddress($datum.data.destination_address), $datum.value)}",
         "visible": "true",
         "name": "Message"
       }
@@ -377,8 +377,8 @@ final class EVYSearchModelTests: XCTestCase {
         "id": "message-status-template",
         "type": "text",
         "actions": {},
-        "title": "{$datum.data.type} request",
-        "subtitle": "{$datum.data.value}",
+        "title": "{$datum.type} request",
+        "subtitle": "{$datum.value}",
         "visible": "true",
         "name": "Message"
       }
