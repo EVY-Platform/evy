@@ -27,7 +27,7 @@ struct EVYSearch: View {
   init(
     source: String, destination: String, title: String? = nil, placeholder: String?,
     noResults: String? = nil,
-    resultTemplate: UI_Row?,
+    resultTemplates: [UI_Row],
     scope: EVYScope = .empty,
     onSelect: ((EVYJson) -> Void)? = nil
   ) {
@@ -48,7 +48,7 @@ struct EVYSearch: View {
           setter: {
             EVYSearchResult.loadLocalResults(
               source: source,
-              resultTemplate: resultTemplate,
+              resultTemplates: resultTemplates,
               scopeId: scope.cacheScopeId
             )
           }
@@ -59,7 +59,7 @@ struct EVYSearch: View {
       _apiSearchModel = State(
         initialValue: EVYSearchModel(
           method: method,
-          resultTemplate: resultTemplate,
+          resultTemplates: resultTemplates,
           scopeId: scope.cacheScopeId
         )
       )
@@ -250,7 +250,7 @@ private struct EVYSearchPreview: View {
       source: "{items}",
       destination: "{selected_item}",
       placeholder: "Search items...",
-      resultTemplate: resultTemplate
+      resultTemplates: [resultTemplate].compactMap { $0 },
     )
   }
 

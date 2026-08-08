@@ -287,10 +287,12 @@ final class SduiRowAttributeContractTests: XCTestCase {
         destination: "{query}",
         placeholder: nil,
         no_results: nil,
-        child: nil
+        child: nil,
+        children: nil
       )
     )
     XCTAssertNotNil(searchAttributes["child"])
+    XCTAssertNotNil(searchAttributes["children"])
 
     let buttonAttributes = reflectAttributes(ButtonRowViewData(title: nil, label: "Go", style: nil))
     XCTAssertNil(buttonAttributes["child"])
@@ -304,6 +306,7 @@ final class SduiRowAttributeContractTests: XCTestCase {
       let attributes = Self.extractExpectedAttributes(from: schemaDefDict, rowType: rowType)
       if rowType == "search" {
         XCTAssertNotNil(attributes["child"])
+        XCTAssertNotNil(attributes["children"])
       } else {
         XCTAssertNil(attributes["child"], "\(rowType) must not declare child in schema")
       }

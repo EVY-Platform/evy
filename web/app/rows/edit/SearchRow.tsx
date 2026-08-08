@@ -1,3 +1,4 @@
+import { ContainerChildren } from "../../components/ContainerChildren";
 import { SearchChildSample } from "../../components/SearchChildSample";
 import type { RowConfig } from "../../types/row";
 import { defineRow } from "../defineRow";
@@ -25,10 +26,20 @@ export default defineRow("SearchRow", {
 					placeholder={row.config.placeholder}
 				/>
 			</div>
-			<SearchChildSample
-				searchRowId={row.id}
-				childRowId={row.config.child_row_id}
-			/>
+			{(row.config.children_row_ids?.length ?? 0) > 0 ? (
+				<ContainerChildren
+					childIds={row.config.children_row_ids ?? []}
+					orientation="vertical"
+					showIndicators
+					containerRowId={row.id}
+					containerType="children"
+				/>
+			) : (
+				<SearchChildSample
+					searchRowId={row.id}
+					childRowId={row.config.child_row_id}
+				/>
+			)}
 		</RowLayout>
 	),
 });

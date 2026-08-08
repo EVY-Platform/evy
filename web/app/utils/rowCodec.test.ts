@@ -74,4 +74,22 @@ describe("rowCodec", () => {
 		expect(rebuilt.child_row_id).toBe("child-nested");
 		expect(rebuilt.sheet_row_id).toBe("sheet-nested");
 	});
+
+	it("round-trips Search template variants via children_row_ids", () => {
+		const search = makeUiRow("search-variants", {
+			type: "search",
+			children_row_ids: ["variant-a", "variant-b"],
+		});
+		const records = rowToFlatRecords(search, NOW);
+		const searchRecord = records.find((r) => r.id === "search-variants");
+		expect(searchRecord?.data.children_row_ids).toEqual([
+			"variant-a",
+			"variant-b",
+		]);
+
+		const rebuilt = buildRowConfigFromRecord(
+			searchRecord as NonNullable<typeof searchRecord>,
+		);
+		expect(rebuilt.children_row_ids).toEqual(["variant-a", "variant-b"]);
+	});
 });

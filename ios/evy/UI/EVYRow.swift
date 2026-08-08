@@ -416,7 +416,8 @@ private struct EVYResolvedRow: View {
     case .map(let view, _):
       EVYMapRow(view: view, scope: evyScope)
     case .search(let view, _):
-      EVYSearchRow(view: view, childRef: childRef) { selectedDatum in
+      let variantRefs = childRefs.isEmpty ? [childRef].compactMap { $0 } : childRefs
+      EVYSearchRow(view: view, variantRefs: variantRefs) { selectedDatum in
         runActions(contentRow: contentRow, datum: selectedDatum)
       }
     case .photoGallery(let view, _):

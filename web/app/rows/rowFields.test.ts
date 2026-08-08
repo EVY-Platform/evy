@@ -111,6 +111,28 @@ describe("rowFields", () => {
 		}
 	});
 
+	test("exposes children only on Search and container rows", () => {
+		for (const type of ALL_ROW_TYPES) {
+			const childrenField = getRowContentFields(type).find(
+				(f) => f.kind === "children",
+			);
+			if (
+				type === "search" ||
+				type === "vertical_container" ||
+				type === "horizontal_container" ||
+				type === "tab_container"
+			) {
+				expect(childrenField).toEqual({
+					name: "children_row_ids",
+					kind: "children",
+					required: type !== "search",
+				});
+			} else {
+				expect(childrenField).toBeUndefined();
+			}
+		}
+	});
+
 	test("orders panel fields by configured rank before fallback ordering", () => {
 		function field(
 			name: string,

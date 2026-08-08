@@ -1792,7 +1792,7 @@ final class EVYActionRunnerTests: XCTestCase {
     )
     let results = EVYSearchResult.makeResults(
       from: .array([record]),
-      resultTemplate: template,
+      resultTemplates: [template],
       scopeId: nil
     )
     let result = try XCTUnwrap(results.first)

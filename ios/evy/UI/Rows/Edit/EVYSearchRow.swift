@@ -10,36 +10,51 @@ import SwiftUI
 struct EVYSearchRow: View {
 
   private let view: SearchRowViewData
-  private let childRef: EVYRowRef?
+  private let variantRefs: [EVYRowRef]
   private let onSelect: ((EVYJson) -> Void)?
 
   @Environment(\.evyScope) private var evyScope
 
   // EVYSearch captures its source and result template in State(initialValue:)
   // closures, which SwiftUI never re-runs for the same view identity. Editing
-  // the child template row (its own evy.rows record - nothing else observes
+  // a variant template row (its own evy.rows record - nothing else observes
   // it) bumps the version, and the version keys EVYSearch's identity so a
   // fresh init picks up the changed template.
-  @State private var childTemplate: EVYStoredRow?
-  @State private var childTemplateVersion = 0
+  @State private var variantTemplates: [EVYStoredRow?]
+  @State private var templateVersion = 0
 
-  // Inline children are runtime-generated, never edited as records; nil skips
-  // the record watch (an empty id matches no record change).
-  private let childId: String?
+  // Inline children are runtime-generated, never edited as records; an empty
+  // set skips the record watch (no id matches).
+  private let storedVariantIds: [String]
+  private let storedVariantIdSet: Set<String>
 
   init(
     view: SearchRowViewData,
-    childRef: EVYRowRef?,
+    variantRefs: [EVYRowRef],
     onSelect: ((EVYJson) -> Void)? = nil
   ) {
     self.view = view
-    self.childRef = childRef
+    self.variantRefs = variantRefs
     self.onSelect = onSelect
-    if case .id(let childId)? = childRef {
-      self.childId = childId
-      _childTemplate = State(initialValue: EVYRowStore.row(id: childId))
-    } else {
-      childId = nil
+    let storedIds = variantRefs.compactMap { ref -> String? in
+      if case .id(let id) = ref { return id }
+      return nil
+    }
+    storedVariantIds = storedIds
+    storedVariantIdSet = Set(storedIds)
+    _variantTemplates = State(
+      initialValue: storedIds.map { EVYRowStore.row(id: $0) }
+    )
+  }
+
+  private var resultTemplates: [UI_Row] {
+    variantRefs.compactMap { ref in
+      if case .id(let id) = ref,
+        let index = storedVariantIds.firstIndex(of: id)
+      {
+        return variantTemplates[index]?.uiRow() ?? ref.templateRow()
+      }
+      return ref.templateRow()
     }
   }
 
@@ -52,23 +67,23 @@ struct EVYSearchRow: View {
       title: view.title,
       placeholder: view.placeholder,
       noResults: view.no_results,
-      resultTemplate: childTemplate?.uiRow() ?? childRef?.templateRow(),
+      resultTemplates: resultTemplates,
       scope: evyScope,
       onSelect: onSelect
     )
     // The source participates so a parent-row source edit also resets identity.
-    .id("\(view.source)|\(childTemplateVersion)")
+    .id("\(view.source)|\(templateVersion)")
     .onEVYRecordChange(
       namespace: EVYNamespace.evy,
       resource: EVYCoreResource.rows.ref,
-      id: childId ?? ""
+      ids: storedVariantIdSet
     ) {
-      guard let childId else { return }
+      guard !storedVariantIdSet.isEmpty else { return }
       // Full syncs re-upsert every row; the equality guard makes those a no-op.
-      let latest = EVYRowStore.row(id: childId)
-      if childTemplate != latest {
-        childTemplate = latest
-        childTemplateVersion += 1
+      let latest = storedVariantIds.map { EVYRowStore.row(id: $0) }
+      if variantTemplates != latest {
+        variantTemplates = latest
+        templateVersion += 1
       }
     }
   }
