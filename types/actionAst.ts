@@ -355,7 +355,9 @@ export function parseActionExpression(branch: string): ActionParseResult {
 			// `update` requires a resource ref; `clear` requires the opposite
 			// so it can never blank a synced record.
 			if (isValidResourceRef(binding)) {
-				return fail("clear targets a draft binding, not a resource ref");
+				return fail(
+					"clear targets a draft binding, not a resource ref",
+				);
 			}
 			return { ok: true, ast: { fn: "clear", binding } };
 		}

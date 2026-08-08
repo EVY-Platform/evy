@@ -68,8 +68,9 @@ struct EVYTextView: View {
     self.style = style
   }
 
-  init(_ text: String, placeholder: String = "", style: EVYTextStyle = .body, scope: EVYScope? = nil)
-  {
+  init(
+    _ text: String, placeholder: String = "", style: EVYTextStyle = .body, scope: EVYScope? = nil
+  ) {
     self.init(
       state: Self.makeState(template: text, placeholder: placeholder, scope: scope), style: style)
   }

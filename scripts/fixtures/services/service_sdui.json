@@ -34,25 +34,6 @@
 						"actions": {}
 					},
 					{
-						"id": "9ee5693d-e3e5-4862-b714-eb81a86be83e",
-						"type": "input",
-						"destination": "{marketplace.items.title}",
-						"title": "",
-						"placeholder": "",
-						"visible": "true",
-						"name": "Item title",
-						"source": "{marketplace.items.title}",
-						"actions": {
-							"submit": [
-								{
-									"condition": "",
-									"true": "{update(marketplace.items,{id: {marketplace.items.id}},{title: {marketplace.items.title}})}",
-									"false": ""
-								}
-							]
-						}
-					},
-					{
 						"id": "61d8b13a-6e19-4251-84bf-94771af07e6c",
 						"type": "text",
 						"visible": "true",

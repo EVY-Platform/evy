@@ -295,7 +295,9 @@ describe("shipped fixtures satisfy the row schema", () => {
 	test("cancel confirmations clear their selected timeslot", () => {
 		const clears = fixtureBranches
 			.filter(({ ast }) => ast?.fn === "clear")
-			.map(({ ast }) => (ast as { fn: "clear"; binding: string }).binding);
+			.map(
+				({ ast }) => (ast as { fn: "clear"; binding: string }).binding,
+			);
 
 		expect(clears).toContain("selected_pickup_timeslot");
 		expect(clears).toContain("selected_delivery_timeslot");
