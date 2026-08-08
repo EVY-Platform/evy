@@ -250,11 +250,11 @@ private struct EVYSearchPreview: View {
       source: "{items}",
       destination: "{selected_item}",
       placeholder: "Search items...",
-      resultTemplates: [resultTemplate].compactMap { $0 },
+      resultTemplates: [resultTemplate],
     )
   }
 
-  private static func makeResultTemplate() -> UI_Row? {
+  private static func makeResultTemplate() -> UI_Row {
     let resultTemplateJSON = """
       {
         "id": "preview-search-result-template",
@@ -266,10 +266,7 @@ private struct EVYSearchPreview: View {
       }
       """
 
-    guard let resultTemplateData = resultTemplateJSON.data(using: .utf8) else {
-      return nil
-    }
-
-    return try? JSONDecoder().decode(UI_Row.self, from: resultTemplateData)
+    let resultTemplateData = resultTemplateJSON.data(using: .utf8)!
+    return try! JSONDecoder().decode(UI_Row.self, from: resultTemplateData)
   }
 }

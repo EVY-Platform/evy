@@ -20,13 +20,10 @@ struct EVYSearchRow: View {
   // a variant template row (its own evy.rows record - nothing else observes
   // it) bumps the version, and the version keys EVYSearch's identity so a
   // fresh init picks up the changed template.
-  @State private var variantTemplates: [EVYStoredRow?]
+  @State private var storedTemplates: [String: EVYStoredRow?]
   @State private var templateVersion = 0
 
-  // Inline children are runtime-generated, never edited as records; an empty
-  // set skips the record watch (no id matches).
-  private let storedVariantIds: [String]
-  private let storedVariantIdSet: Set<String>
+  private let watchedVariantIds: Set<String>
 
   init(
     view: SearchRowViewData,
@@ -40,21 +37,23 @@ struct EVYSearchRow: View {
       if case .id(let id) = ref { return id }
       return nil
     }
-    storedVariantIds = storedIds
-    storedVariantIdSet = Set(storedIds)
-    _variantTemplates = State(
-      initialValue: storedIds.map { EVYRowStore.row(id: $0) }
-    )
+    watchedVariantIds = Set(storedIds)
+    var initialTemplates: [String: EVYStoredRow?] = [:]
+    for id in storedIds {
+      initialTemplates[id] = EVYRowStore.row(id: id)
+    }
+    _storedTemplates = State(initialValue: initialTemplates)
   }
 
   private var resultTemplates: [UI_Row] {
     variantRefs.compactMap { ref in
-      if case .id(let id) = ref,
-        let index = storedVariantIds.firstIndex(of: id)
-      {
-        return variantTemplates[index]?.uiRow() ?? ref.templateRow()
+      switch ref {
+      case .id(let id):
+        guard let stored = storedTemplates[id] else { return nil }
+        return stored?.uiRow()
+      case .inline(let row):
+        return row
       }
-      return ref.templateRow()
     }
   }
 
@@ -76,13 +75,14 @@ struct EVYSearchRow: View {
     .onEVYRecordChange(
       namespace: EVYNamespace.evy,
       resource: EVYCoreResource.rows.ref,
-      ids: storedVariantIdSet
+      ids: watchedVariantIds
     ) {
-      guard !storedVariantIdSet.isEmpty else { return }
-      // Full syncs re-upsert every row; the equality guard makes those a no-op.
-      let latest = storedVariantIds.map { EVYRowStore.row(id: $0) }
-      if variantTemplates != latest {
-        variantTemplates = latest
+      var latest = storedTemplates
+      for id in watchedVariantIds {
+        latest[id] = EVYRowStore.row(id: id)
+      }
+      if latest != storedTemplates {
+        storedTemplates = latest
         templateVersion += 1
       }
     }

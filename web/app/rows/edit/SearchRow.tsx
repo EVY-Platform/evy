@@ -26,20 +26,19 @@ export default defineRow("SearchRow", {
 					placeholder={row.config.placeholder}
 				/>
 			</div>
-			{(row.config.children_row_ids?.length ?? 0) > 0 ? (
-				<ContainerChildren
-					childIds={row.config.children_row_ids ?? []}
-					orientation="vertical"
-					showIndicators
-					containerRowId={row.id}
-					containerType="children"
-				/>
-			) : (
+			<ContainerChildren
+				childIds={row.config.children_row_ids ?? []}
+				orientation="vertical"
+				showIndicators
+				containerRowId={row.id}
+				containerType="children"
+			/>
+			{row.config.child_row_id ? (
 				<SearchChildSample
 					searchRowId={row.id}
 					childRowId={row.config.child_row_id}
 				/>
-			)}
+			) : null}
 		</RowLayout>
 	),
 });

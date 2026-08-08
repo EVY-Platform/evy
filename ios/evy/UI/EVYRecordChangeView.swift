@@ -12,13 +12,7 @@ extension View {
     id: String,
     perform action: @escaping () -> Void
   ) -> some View {
-    onReceive(NotificationCenter.default.publisher(for: .evyRecordChanged)) { notification in
-      guard
-        let change = EVYRecordChange.from(notification),
-        change.matches(namespace: namespace, resource: resource, id: id)
-      else { return }
-      action()
-    }
+    onEVYRecordChange(namespace: namespace, resource: resource, ids: Set([id]), perform: action)
   }
 
   func onEVYRecordChange(

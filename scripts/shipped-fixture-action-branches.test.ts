@@ -358,4 +358,48 @@ describe("shipped fixtures satisfy the row schema", () => {
 
 		expect(missing).toEqual([]);
 	});
+
+	test("search template variants end with a catch-all visible", async () => {
+		const violations: string[] = [];
+		for (const relative of FIXTURES) {
+			const url = new URL(`./fixtures/${relative}`, import.meta.url);
+			walkSearchVariants(
+				await Bun.file(url).json(),
+				relative,
+				violations,
+			);
+		}
+		expect(violations).toEqual([]);
+	});
 });
+
+function walkSearchVariants(
+	node: unknown,
+	source: string,
+	violations: string[],
+): void {
+	if (Array.isArray(node)) {
+		for (const item of node) walkSearchVariants(item, source, violations);
+		return;
+	}
+	if (!node || typeof node !== "object") return;
+
+	const record = node as Record<string, unknown>;
+	if (record.type === "search" && Array.isArray(record.children)) {
+		const children = record.children as Array<Record<string, unknown>>;
+		if (children.length > 0) {
+			const last = children[children.length - 1];
+			const visible =
+				typeof last.visible === "string" ? last.visible.trim() : "";
+			if (visible !== "" && visible !== "true") {
+				violations.push(
+					`${source}: search ${record.id} last variant visible must be blank or "true"`,
+				);
+			}
+		}
+	}
+
+	for (const value of Object.values(record)) {
+		walkSearchVariants(value, source, violations);
+	}
+}

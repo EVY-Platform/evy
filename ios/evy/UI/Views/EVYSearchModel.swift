@@ -32,17 +32,24 @@ struct EVYSearchResult: Equatable, Identifiable {
       }) ?? false
   }
 
+  private struct PreparedVariant {
+    let visible: String
+    let formatter: EVYDatumRowFormatter
+  }
+
   @MainActor
-  private static func templateForFormatting(_ template: UI_Row) -> UI_Row? {
-    guard
-      let data = try? JSONEncoder().encode(template),
-      var root = try? JSONSerialization.jsonObject(with: data) as? [String: Any]
-    else {
-      return nil
+  private static func prepareVariants(_ templates: [UI_Row]) -> [PreparedVariant] {
+    templates.compactMap { template in
+      guard
+        let formatter = try? EVYDatumRowFormatter(
+          template: template,
+          neutralizingVisible: true
+        )
+      else {
+        return nil
+      }
+      return PreparedVariant(visible: template.visible, formatter: formatter)
     }
-    root["visible"] = "true"
-    guard let out = try? JSONSerialization.data(withJSONObject: root) else { return nil }
-    return try? JSONDecoder().decode(UI_Row.self, from: out)
   }
 
   @MainActor
@@ -62,18 +69,23 @@ struct EVYSearchResult: Equatable, Identifiable {
       dataRows = [sourceData]
     }
 
+    let preparedVariants = prepareVariants(resultTemplates)
+    guard !preparedVariants.isEmpty else {
+      return []
+    }
+
     do {
       // The formatter resolves each row's templates internally and takes no
       // scope of its own, so the scope has to be installed around the call.
       return try EVY.withScope(.cache(scopeId)) {
         return dataRows.compactMap { datum in
           guard
-            let template = resultTemplates.first(where: {
+            let match = preparedVariants.first(where: {
               variantMatches(visible: $0.visible, datum: datum)
             }),
-            let formattingTemplate = templateForFormatting(template),
-            let formatter = try? EVYDatumRowFormatter(template: formattingTemplate),
-            let (displayRow, searchableValues) = try? formatter.formattedResult(datum: datum)
+            let (displayRow, searchableValues) = try? match.formatter.formattedResult(
+              datum: datum
+            )
           else {
             return nil
           }

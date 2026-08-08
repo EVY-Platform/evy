@@ -523,6 +523,39 @@ export const validateHookResponse = schemaValidator<HookResponse>(
 	fileId("rpc/hook.response.schema.json"),
 );
 
+function isSearchCatchAllVisible(visible: unknown): boolean {
+	if (typeof visible !== "string") {
+		return true;
+	}
+	const trimmed = visible.trim();
+	return trimmed === "" || trimmed === "true";
+}
+
+function assertSearchVariantConstraints(row: UI_Row, path: string): void {
+	if (row.type !== "search") {
+		return;
+	}
+	const record = row as Record<string, unknown>;
+	const child = record.child;
+	const children = record.children;
+	const hasChild = child != null && typeof child === "object";
+	const hasChildren = Array.isArray(children) && children.length > 0;
+	if (hasChild && hasChildren) {
+		throw new Error(
+			`Flow validation failed: ${path}: search row cannot set both child and children`,
+		);
+	}
+	if (!hasChildren) {
+		return;
+	}
+	const lastChild = children[children.length - 1] as UI_Row;
+	if (!isSearchCatchAllVisible(lastChild.visible)) {
+		throw new Error(
+			`Flow validation failed: ${path}.children[${children.length - 1}]: last search template variant must have visible blank or "true" (catch-all)`,
+		);
+	}
+}
+
 function assertUiFlowRowTriggerConstraints(row: UI_Row, path: string): void {
 	const triggerSpecs = SDUI_ROW_TRIGGERS[row.type];
 	if (!triggerSpecs) {
@@ -682,6 +715,7 @@ export function validateUiFlow(data: unknown): UI_Flow {
 	const submitTargets = new Set<string>();
 	forEachFlowRow(flow, (row, path) => {
 		assertUiFlowRowTriggerConstraints(row, path);
+		assertSearchVariantConstraints(row, path);
 		assertActionBranchesInActions(
 			row.actions,
 			`${path}/actions`,
