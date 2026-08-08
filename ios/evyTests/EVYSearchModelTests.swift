@@ -256,6 +256,60 @@ final class EVYSearchModelTests: XCTestCase {
     XCTAssertEqual(state.value.first?.displayRow.subtitle, "accept")
   }
 
+  /// The result template is a pure input: passing an edited template must
+  /// produce differently-formatted results. (The view layer re-inits EVYSearch
+  /// via an identity reset when the child template record changes.)
+  func testLoadLocalResultsReflectsAnEditedResultTemplate() throws {
+    let resource = EVYCoreResource.messages.ref
+    try? EVY.publicStore.deleteAll(namespace: EVYNamespace.evy, resource: resource)
+    try? EVY.privateStore.deleteAll(namespace: EVYNamespace.evy, resource: resource)
+    let message = EVYTestMessageFixtures.message(
+      id: UUID().uuidString,
+      type: "pickup",
+      value: "pending"
+    )
+    try EVY.applySyncedValue(
+      namespace: EVYNamespace.evy,
+      resource: resource,
+      value: .array([message])
+    )
+    defer {
+      try? EVY.publicStore.deleteAll(namespace: EVYNamespace.evy, resource: resource)
+      try? EVY.privateStore.deleteAll(namespace: EVYNamespace.evy, resource: resource)
+    }
+
+    func template(titled title: String) -> UI_Row? {
+      let json = """
+        {
+          "id": "message-status-template",
+          "type": "text",
+          "actions": {},
+          "title": "\(title)",
+          "subtitle": "{$datum.value}",
+          "visible": "true",
+          "name": "Message"
+        }
+        """
+      guard let data = json.data(using: .utf8) else { return nil }
+      return try? JSONDecoder().decode(UI_Row.self, from: data)
+    }
+
+    let source = "{\(resource)}"
+    let before = EVYSearchResult.loadLocalResults(
+      source: source,
+      resultTemplate: template(titled: "{$datum.type} request"),
+      scopeId: nil
+    )
+    let after = EVYSearchResult.loadLocalResults(
+      source: source,
+      resultTemplate: template(titled: "{$datum.type} — {$datum.value}"),
+      scopeId: nil
+    )
+
+    XCTAssertEqual(before.first?.displayRow.title, "pickup request")
+    XCTAssertEqual(after.first?.displayRow.title, "pickup — pending")
+  }
+
   /// Filtering open requests belongs in the Search `source` expression (`filter`/`owns`),
   /// not in the loader — so a raw `{messages}` source still returns every stored message.
   func testLoadLocalResultsReturnsSourceUnfiltered() throws {

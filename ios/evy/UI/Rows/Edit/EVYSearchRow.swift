@@ -15,6 +15,18 @@ struct EVYSearchRow: View {
 
   @Environment(\.evyScope) private var evyScope
 
+  // EVYSearch captures its source and result template in State(initialValue:)
+  // closures, which SwiftUI never re-runs for the same view identity. Editing
+  // the child template row (its own evy.rows record - nothing else observes
+  // it) bumps the version, and the version keys EVYSearch's identity so a
+  // fresh init picks up the changed template.
+  @State private var childTemplate: EVYStoredRow?
+  @State private var childTemplateVersion = 0
+
+  // Inline children are runtime-generated, never edited as records; nil skips
+  // the record watch (an empty id matches no record change).
+  private let childId: String?
+
   init(
     view: SearchRowViewData,
     childRef: EVYRowRef?,
@@ -23,19 +35,42 @@ struct EVYSearchRow: View {
     self.view = view
     self.childRef = childRef
     self.onSelect = onSelect
+    if case .id(let childId)? = childRef {
+      self.childId = childId
+      _childTemplate = State(initialValue: EVYRowStore.row(id: childId))
+    } else {
+      childId = nil
+    }
   }
 
   var body: some View {
+    // The title header lives inside EVYSearch so a collapsed search resolves
+    // to EmptyView with no intermediate stack absorbing the parent's padding.
     EVYSearch(
       source: view.source,
       destination: view.destination,
+      title: view.title,
       placeholder: view.placeholder,
       noResults: view.no_results,
-      resultTemplate: childRef?.templateRow(),
+      resultTemplate: childTemplate?.uiRow() ?? childRef?.templateRow(),
       scope: evyScope,
       onSelect: onSelect
     )
-    .titledRow(view.title, spacing: 0)
+    // The source participates so a parent-row source edit also resets identity.
+    .id("\(view.source)|\(childTemplateVersion)")
+    .onEVYRecordChange(
+      namespace: EVYNamespace.evy,
+      resource: EVYCoreResource.rows.ref,
+      id: childId ?? ""
+    ) {
+      guard let childId else { return }
+      // Full syncs re-upsert every row; the equality guard makes those a no-op.
+      let latest = EVYRowStore.row(id: childId)
+      if childTemplate != latest {
+        childTemplate = latest
+        childTemplateVersion += 1
+      }
+    }
   }
 }
 

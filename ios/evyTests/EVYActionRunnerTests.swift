@@ -1324,6 +1324,31 @@ final class EVYActionRunnerTests: XCTestCase {
     XCTAssertEqual(values["id"]?.toString(), createdRows.first?.id)
   }
 
+  func testClearActionResetsDraftBinding() throws {
+    let scopeId = "__test__:clear-binding"
+    let selectedTimeslot = "2026-06-03T09:00:00"
+    EVY.draftStore.deleteDrafts()
+    EVY.draftStore.activeScopeId = scopeId
+    defer {
+      EVY.draftStore.deleteDrafts()
+      EVY.draftStore.activeScopeId = nil
+    }
+
+    EVY.ensureDraftExists(variableName: "selected_pickup_timeslot", scopeId: scopeId)
+    try EVY.updateValue(
+      selectedTimeslot,
+      destination: "{selected_pickup_timeslot}",
+      scopeId: scopeId
+    )
+    XCTAssertEqual(EVYDatetime.readTimeslot("{selected_pickup_timeslot}"), selectedTimeslot)
+
+    let invocation = try EVYActionParser.parse("{clear(selected_pickup_timeslot)}")
+    EVYActionRunner.run(actions: [rowAction(true: invocation)]) { _ in }
+
+    XCTAssertNil(EVYDatetime.readTimeslot("{selected_pickup_timeslot}"))
+    XCTAssertEqual(try EVY.getDataFromText("{selected_pickup_timeslot}"), .string(""))
+  }
+
   func testShowActionInvokesShowWithParsedRowId() {
     var shownRowId: String?
     let action = rowAction(true: .show(rowId: "child-row"))

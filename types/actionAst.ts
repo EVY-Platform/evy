@@ -12,6 +12,7 @@
 
 import { splitFunctionArguments } from "./functionArgs";
 import { isValidResourceRef } from "./resourceRef";
+import { unwrapOptionalBraces } from "./unwrapBraces";
 
 type ActionExpressionMap = Record<string, string>;
 
@@ -23,6 +24,7 @@ export const ACTION_FUNCTION_NAMES = [
 	"show",
 	"expand_text",
 	"highlight_required",
+	"clear",
 	"select",
 	"copy_to_clipboard",
 	"navigate",
@@ -36,6 +38,7 @@ export type ActionExpressionAst =
 	| { fn: "close" | "select_photo" | "expand_photo" | "delete_photo" }
 	| { fn: "show" | "expand_text"; row_id: string }
 	| { fn: "highlight_required"; field: string }
+	| { fn: "clear"; binding: string }
 	| { fn: "select"; value: string }
 	| { fn: "copy_to_clipboard"; value: string }
 	| {
@@ -342,6 +345,19 @@ export function parseActionExpression(branch: string): ActionParseResult {
 				ok: true,
 				ast: { fn: "highlight_required", field },
 			};
+		}
+		case "clear": {
+			if (args.length !== 1) return fail("clear takes one binding");
+			const binding = stripOptionalSurroundingQuotes(
+				unwrapOptionalBraces(args[0]),
+			);
+			if (!binding) return fail("clear binding must not be empty");
+			// `update` requires a resource ref; `clear` requires the opposite
+			// so it can never blank a synced record.
+			if (isValidResourceRef(binding)) {
+				return fail("clear targets a draft binding, not a resource ref");
+			}
+			return { ok: true, ast: { fn: "clear", binding } };
 		}
 		case "select": {
 			if (args.length !== 1) return fail("select takes one value");

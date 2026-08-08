@@ -523,6 +523,32 @@ final class EVYStoreRoutingTests: XCTestCase {
       .string("active"))
   }
 
+  /// A write that lands on a cache-scope row must persist the cache store's
+  /// own ModelContext - saving another store's context leaves the mutation
+  /// unsaved and the cache context permanently dirty.
+  func testCacheScopeUpdatePersistsTheCacheStore() throws {
+    let scopeId = "scope-\(UUID().uuidString)"
+    let key = "scoped_value"
+
+    try EVY.cacheStore.create(
+      namespace: EVYNamespace.cache, resource: scopeId, id: key,
+      value: #"{"label":"before"}"#.data(using: .utf8)!)
+    defer {
+      try? EVY.cacheStore.deleteAll(namespace: EVYNamespace.cache, resource: scopeId)
+      EVY.activeCacheScopeId = nil
+    }
+    EVY.activeCacheScopeId = scopeId
+
+    try EVY.updateData(
+      #""written""#.data(using: .utf8)!,
+      destination: "{\(key).label}")
+
+    XCTAssertFalse(EVY.cacheStore.hasPendingChanges)
+    XCTAssertEqual(
+      try EVY.getDataFromText("{\(key).label}", scope: .cache(scopeId)),
+      .string("written"))
+  }
+
   // MARK: - Ownership ledger
 
   func testOwnedResourcesIsEmptyOnACleanStore() throws {

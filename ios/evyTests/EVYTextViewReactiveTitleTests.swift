@@ -78,6 +78,34 @@ final class EVYTextViewReactiveTitleTests: XCTestCase {
     )
   }
 
+  /// A state built for a specific page must resolve that page's cache even
+  /// when another page owns the globals at construction time.
+  func testMakeStatePinsThePassedScopeOverTheActiveGlobal() throws {
+    let ownScopeId = "own-\(UUID().uuidString)"
+    let activeScopeId = "active-\(UUID().uuidString)"
+    let key = "scoped_title"
+
+    for (scopeId, label) in [(ownScopeId, "own-page"), (activeScopeId, "active-page")] {
+      try EVY.cacheStore.create(
+        namespace: EVYNamespace.cache, resource: scopeId, id: key,
+        value: #"{"label":"\#(label)"}"#.data(using: .utf8)!)
+    }
+    defer {
+      try? EVY.cacheStore.deleteAll(namespace: EVYNamespace.cache, resource: ownScopeId)
+      try? EVY.cacheStore.deleteAll(namespace: EVYNamespace.cache, resource: activeScopeId)
+      EVY.activeCacheScopeId = nil
+    }
+
+    EVY.activeCacheScopeId = activeScopeId
+    let state = EVYTextView.makeState(
+      template: "{\(key).label}",
+      scope: EVYScope(cacheScopeId: ownScopeId, draftScopeId: nil)
+    )
+
+    XCTAssertEqual(state.value.toString(), "own-page")
+    XCTAssertEqual(EVY.activeCacheScopeId, activeScopeId)
+  }
+
   func testButtonLabelParsesQuotedFormatDatetimeExpression() throws {
     let scopeId = EVYDraft.ephemeralScopeId(forPageId: UUID().uuidString)
     EVY.draftStore.activeScopeId = scopeId

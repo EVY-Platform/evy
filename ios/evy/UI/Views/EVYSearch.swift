@@ -9,6 +9,7 @@ import SwiftUI
 
 struct EVYSearch: View {
   let destination: String
+  let title: String?
   let placeholder: String?
   let noResults: String?
   let scope: EVYScope
@@ -24,12 +25,14 @@ struct EVYSearch: View {
   private static let debounceMilliseconds = 300
 
   init(
-    source: String, destination: String, placeholder: String?, noResults: String? = nil,
+    source: String, destination: String, title: String? = nil, placeholder: String?,
+    noResults: String? = nil,
     resultTemplate: UI_Row?,
     scope: EVYScope = .empty,
     onSelect: ((EVYJson) -> Void)? = nil
   ) {
     self.destination = destination
+    self.title = title
     self.placeholder = placeholder
     self.noResults = noResults
     self.scope = scope
@@ -89,9 +92,12 @@ struct EVYSearch: View {
     return apiSearchModel?.isSearching == true
   }
 
-  private var shouldShowNoResults: Bool {
-    let trimmedNoResults = (noResults ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
-    guard !trimmedNoResults.isEmpty, !isSearching, displayedResults.isEmpty else {
+  private static func isBlank(_ text: String?) -> Bool {
+    (text ?? "").trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+  }
+
+  private func shouldShowNoResults(results: [EVYSearchResult]) -> Bool {
+    guard !Self.isBlank(noResults), !isSearching, results.isEmpty else {
       return false
     }
 
@@ -108,10 +114,34 @@ struct EVYSearch: View {
 
   /// Blank/absent placeholder means the Search is a filtered list, not a query box.
   private var isListOnly: Bool {
-    (placeholder ?? "").trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+    Self.isBlank(placeholder)
+  }
+
+  /// A list-only search with nothing to show and no empty-state copy collapses
+  /// entirely so container per-child padding does not leave a blank band.
+  static func shouldCollapse(
+    placeholder: String?, noResults: String?, hasResults: Bool, isSearching: Bool
+  ) -> Bool {
+    isBlank(placeholder) && isBlank(noResults) && !hasResults && !isSearching
   }
 
   var body: some View {
+    // Read displayedResults unconditionally: it reads the observable results
+    // state, which is what re-evaluates this body (and re-expands a collapsed
+    // row) when data lands. Collapsed rows never see onAppear, so nothing
+    // load-bearing may live there.
+    let results = displayedResults
+    if Self.shouldCollapse(
+      placeholder: placeholder, noResults: noResults,
+      hasResults: !results.isEmpty, isSearching: isSearching)
+    {
+      EmptyView()
+    } else {
+      content(results: results).titledRow(title, spacing: 0)
+    }
+  }
+
+  private func content(results: [EVYSearchResult]) -> some View {
     VStack(spacing: 0) {
       if !isListOnly {
         EVYTextInput(
@@ -127,12 +157,12 @@ struct EVYSearch: View {
           .progressViewStyle(.circular)
           .padding(.vertical, Constants.majorPadding)
           .accessibilityIdentifier("searchLoadingIndicator")
-      } else if shouldShowNoResults {
+      } else if shouldShowNoResults(results: results) {
         EVYTextView(noResults ?? "", style: .info)
           .padding(.vertical, Constants.majorPadding)
           .accessibilityIdentifier("searchNoResults")
       } else {
-        ForEach(displayedResults) { result in
+        ForEach(results) { result in
           EVYRow(row: result.displayRow, datum: result.datum)
             .padding(.vertical, Constants.majorPadding)
             .contentShape(Rectangle())

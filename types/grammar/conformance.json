@@ -1003,6 +1003,59 @@
 			"notes": "JSON-shaped strings are not action expressions."
 		},
 		{
+			"id": "action-parse-clear",
+			"category": "action-parse",
+			"platforms": ["ios", "web"],
+			"input": "{clear(selected_pickup_timeslot)}",
+			"expect": {
+				"ast": {
+					"fn": "clear",
+					"binding": "selected_pickup_timeslot"
+				}
+			}
+		},
+		{
+			"id": "action-parse-clear-braced-binding",
+			"category": "action-parse",
+			"platforms": ["ios", "web"],
+			"input": "{clear({selected_pickup_timeslot})}",
+			"expect": {
+				"ast": {
+					"fn": "clear",
+					"binding": "selected_pickup_timeslot"
+				}
+			},
+			"notes": "The binding may be brace-wrapped like other binding arguments."
+		},
+		{
+			"id": "action-parse-rejects-empty-clear",
+			"category": "action-parse",
+			"platforms": ["ios", "web"],
+			"input": "{clear()}",
+			"expect": {
+				"error": "clear takes one binding"
+			}
+		},
+		{
+			"id": "action-parse-rejects-clear-resource-ref",
+			"category": "action-parse",
+			"platforms": ["ios", "web"],
+			"input": "{clear(evy.messages)}",
+			"expect": {
+				"error": "clear targets a draft binding, not a resource ref"
+			},
+			"notes": "clear writes \"\" to a draft binding; synced records must go through update."
+		},
+		{
+			"id": "action-parse-rejects-clear-two-args",
+			"category": "action-parse",
+			"platforms": ["ios", "web"],
+			"input": "{clear(selected_pickup_timeslot, selected_delivery_timeslot)}",
+			"expect": {
+				"error": "clear takes one binding"
+			}
+		},
+		{
 			"id": "value-resolution-bare-literal",
 			"category": "value-resolution",
 			"platforms": ["ios"],

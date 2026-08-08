@@ -18,6 +18,7 @@ export const FUNCTION_LABELS: Record<ActionFunction, string> = {
 	navigate: "Navigate",
 	show: "Show row",
 	highlight_required: "Highlight required",
+	clear: "Clear",
 	select: "Select",
 	copy_to_clipboard: "Copy to clipboard",
 	select_photo: "Select photo",

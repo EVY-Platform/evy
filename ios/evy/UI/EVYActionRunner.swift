@@ -115,6 +115,11 @@ enum EVYActionRunner {
     case .highlightRequired(let field):
       action(.highlightRequired(readableFieldName(from: field)))
 
+    case .clear(let binding):
+      // "" is the canonical unset for draft aliases: submit-merging skips
+      // empty-string drafts, and destination watchers recompute on the write.
+      try EVY.writeRawStringValue("", to: "{\(binding)}")
+
     case .select(let value):
       try rowOperation(.select(EVYPlainTextResolution.resolveValue(value, datum: datum)))
 

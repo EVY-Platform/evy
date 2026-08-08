@@ -1,8 +1,6 @@
-/** If wrapped in `{...}`, returns inner trimmed text; otherwise returns trimmed `s`. */
-export function unwrapOptionalBraces(s: string): string {
-	const t = s.trim();
-	if (t.startsWith("{") && t.endsWith("}")) {
-		return t.slice(1, -1).trim();
-	}
-	return t;
-}
+/**
+ * Re-exported from evy-types so the action-expression parser and the builder
+ * unwrap braces identically. See types/grammar/conformance.json, which pins
+ * this behaviour against the Swift implementation.
+ */
+export { unwrapOptionalBraces } from "evy-types/unwrapBraces";

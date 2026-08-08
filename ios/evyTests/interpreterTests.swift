@@ -389,6 +389,35 @@ final class InterpreterTests: XCTestCase {
     XCTAssertEqual(pickupAddress.value, secondAddress)
   }
 
+  /// cacheQueryParams runs during body evaluation, so re-resolving the same
+  /// query must not rewrite the cache row or post change notifications.
+  func testCacheQueryParamsIsSilentWhenValueUnchanged() throws {
+    let itemsRef = "\(MarketplaceTestFixture.service).\(uniqueKey("silent_items"))"
+    let id = UUID().uuidString
+
+    try store(
+      .array([
+        .dictionary([
+          "id": .string(id),
+          "title": .string("Original"),
+        ])
+      ]),
+      at: itemsRef
+    )
+
+    EVY.cacheQueryParams([EVY.entityIdQueryKey: [id]], forPageId: testPageId)
+
+    var notificationCount = 0
+    let observer = NotificationCenter.default.addObserver(
+      forName: .evyValueChanged, object: nil, queue: nil
+    ) { _ in notificationCount += 1 }
+    defer { NotificationCenter.default.removeObserver(observer) }
+
+    EVY.cacheQueryParams([EVY.entityIdQueryKey: [id]], forPageId: testPageId)
+
+    XCTAssertEqual(notificationCount, 0)
+  }
+
   func testResolveQueryParamsDoesNotCacheSingularAlias() throws {
     let randomId = UUID().uuidString.replacingOccurrences(of: "-", with: "_").lowercased()
     let resourceKey = "evy_interpreter_tests_\(randomId)_items"
@@ -1553,6 +1582,20 @@ final class InterpreterTests: XCTestCase {
       let key = try storeAddress(overrides: testCase.overrides, removing: testCase.removing)
       let out = try parseTextFromText("{formatAddress(\(key))}")
       XCTAssertEqual(out.value, testCase.expected, testCase.name)
+    }
+  }
+
+  func testFormatAddressNonDictionaryInput() throws {
+    let cases: [(name: String, value: EVYJson)] = [
+      ("empty string draft alias", .string("")),
+      ("null value", .null),
+    ]
+
+    for testCase in cases {
+      let key = uniqueKey("address")
+      try store(testCase.value, at: key)
+      let out = try parseTextFromText("{formatAddress(\(key))}")
+      XCTAssertEqual(out.value, "", testCase.name)
     }
   }
 

@@ -286,9 +286,47 @@ describe("shipped fixtures satisfy the row schema", () => {
 			"navigate",
 			"show",
 			"select",
+			"clear",
 		]) {
 			expect([...functions]).toContain(expected);
 		}
+	});
+
+	test("cancel confirmations clear their selected timeslot", () => {
+		const clears = fixtureBranches
+			.filter(({ ast }) => ast?.fn === "clear")
+			.map(({ ast }) => (ast as { fn: "clear"; binding: string }).binding);
+
+		expect(clears).toContain("selected_pickup_timeslot");
+		expect(clears).toContain("selected_delivery_timeslot");
+	});
+
+	test("view-item transfer options are ownership-gated", async () => {
+		const url = new URL(
+			"./fixtures/services/service_sdui.json",
+			import.meta.url,
+		);
+		const flows = (await Bun.file(url).json()) as Array<{
+			pages: Array<{ rows: Array<Record<string, unknown>> }>;
+		}>;
+		const rows = flows.flatMap((flow) =>
+			flow.pages.flatMap((page) => page.rows),
+		);
+		const buyerTabs = rows.find(
+			(row) => row.id === "ec3bef23-6d74-43eb-adde-8d498d9ed70e",
+		);
+		const ownerTabs = rows.find(
+			(row) => row.id === "44444444-4444-4444-8444-444444444401",
+		);
+
+		expect(buyerTabs).toBeDefined();
+		expect(ownerTabs).toBeDefined();
+		expect(buyerTabs?.visible).toContain(
+			"owns(marketplace.items, marketplace.items.id) == false",
+		);
+		expect(ownerTabs?.visible).toContain(
+			"owns(marketplace.items, marketplace.items.id) == true",
+		);
 	});
 
 	test("purchase confirmation creates cover the new message values", () => {
