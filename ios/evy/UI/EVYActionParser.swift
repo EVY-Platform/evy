@@ -57,6 +57,21 @@ enum EVYActionParser {
       }
       return .highlightRequired(field: field)
 
+    case "clear":
+      guard args.count == 1 else {
+        throw EVYActionParseError.reason("clear takes one binding")
+      }
+      let binding = EVY.stripOptionalSurroundingQuotes(EVY.unwrapOptionalBraces(args[0]))
+      guard !binding.isEmpty else {
+        throw EVYActionParseError.reason("clear binding must not be empty")
+      }
+      // `update` requires a resource ref; `clear` requires the opposite so it
+      // can never blank a synced record.
+      guard !EVYResourceRef.isValid(binding) else {
+        throw EVYActionParseError.reason("clear targets a draft binding, not a resource ref")
+      }
+      return .clear(binding: binding)
+
     case "select":
       guard args.count == 1 else {
         throw EVYActionParseError.reason("select takes one value")
@@ -100,6 +115,7 @@ enum EVYActionParser {
     case .show(let rowId): return call("show", [rowId])
     case .expandText(let rowId): return call("expand_text", [rowId])
     case .highlightRequired(let field): return call("highlight_required", [field])
+    case .clear(let binding): return call("clear", [binding])
     case .select(let value): return call("select", [value])
     case .copyToClipboard(let value): return call("copy_to_clipboard", [value])
     case .navigate(let flowId, let pageId, let query):

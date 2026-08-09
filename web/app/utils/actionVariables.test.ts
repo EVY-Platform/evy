@@ -28,9 +28,8 @@ describe("extractDraftVariables", () => {
 		});
 		const root = makeRow("root", {
 			destination: "{rootDraft}",
-			child_row_id: "child-leaf",
 			sheet_row_id: "sheet-leaf",
-			children_row_ids: ["list-child"],
+			children_row_ids: ["child-leaf", "list-child"],
 		});
 
 		const flow: DATA_EVY_Flow = {

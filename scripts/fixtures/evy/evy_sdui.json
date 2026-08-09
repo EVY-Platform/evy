@@ -23,228 +23,208 @@
 					},
 					"children": [
 						{
-							"id": "1aad3a15-2b32-4e00-8d07-eb0e01928f90",
-							"type": "vertical_container",
+							"id": "574da230-8f09-43b2-b003-deadf6786bc4",
+							"type": "search",
 							"name": "For you",
 							"title": "",
+							"placeholder": "",
+							"source": "{sort(filter(evy.messages, owns($datum.resource, $datum.fk) == true && findFirst(sort(evy.messages, desc, created_at), fk == $datum.fk && type == $datum.type).id == $datum.id && (($datum.value == \"pending\") || ($datum.value == \"transaction\" && $datum.type == pickup))), desc, created_at)}",
+							"no_results": "No requests",
+							"destination": "",
 							"visible": "true",
 							"actions": {},
 							"children": [
 								{
-									"id": "574da230-8f09-43b2-b003-deadf6786bc4",
-									"type": "search",
-									"name": "For you requests",
-									"title": "",
-									"placeholder": "",
-									"source": "{filter(evy.messages, $datum.value == \"pending\" && owns($datum.resource, $datum.fk) == true && findFirst(sort(evy.messages, desc, created_at), fk == $datum.fk && type == $datum.type).id == $datum.id)}",
-									"no_results": "No requests",
-									"destination": "",
-									"visible": "true",
-									"actions": {},
-									"child": {
-										"id": "95444ce6-d4be-4001-8798-213cce23afd8",
-										"type": "list_item",
-										"name": "For you request row",
-										"title": "{findFirst(marketplace.items, $datum.fk).title}",
-										"subtitle": "{if(length($datum.data.destination_address.street) > 0, formatAddress($datum.data.destination_address), $datum.value)}",
+									"id": "95444ce6-d4be-4001-8798-213cce23afd8",
+									"type": "list_item",
+									"name": "For you request row",
+									"title": "{findFirst(marketplace.items, $datum.fk).title}",
+									"subtitle": "{if(length($datum.data.destination_address.street) > 0, formatAddress($datum.data.destination_address), $datum.value)}",
+									"visible": "{$datum.value == \"pending\"}",
+									"swipe_label": "Accept",
+									"swipe_color": "#34C759",
+									"actions": {
+										"swipe_left": [
+											{
+												"condition": "",
+												"false": "",
+												"true": "{create(evy.messages,{fk: {$datum.fk}, resource: {$datum.resource}, parent_message_id: {$datum.id}, type: {$datum.type}, value: accept, data: { time: {$datum.data.time}, postalcode: {$datum.data.postalcode}, destination_address: {$datum.data.destination_address}, pickup_address: findFirst(evy.addresses, $datum.type == pickup && id == findFirst(marketplace.items, $datum.fk).transfer_options.pickup.address_id)}})}"
+											}
+										],
+										"tap": [
+											{
+												"condition": "",
+												"false": "",
+												"true": "{show(b70f6354-50cb-47cc-91bc-3387deb7277f)}"
+											}
+										]
+									},
+									"sheet": {
+										"id": "b70f6354-50cb-47cc-91bc-3387deb7277f",
+										"type": "vertical_container",
+										"name": "Respond to request sheet",
+										"title": "Respond to request",
 										"visible": "true",
-										"swipe_label": "Accept",
-										"swipe_color": "#34C759",
-										"actions": {
-											"swipe_left": [
-												{
-													"condition": "",
-													"false": "",
-													"true": "{create(evy.messages,{fk: {$datum.fk}, resource: {$datum.resource}, parent_message_id: {$datum.id}, type: {$datum.type}, value: accept, data: { time: {$datum.data.time}, postalcode: {$datum.data.postalcode}, destination_address: {$datum.data.destination_address}, pickup_address: findFirst(evy.addresses, $datum.type == pickup && id == findFirst(marketplace.items, $datum.fk).transfer_options.pickup.address_id)}})}"
-												}
-											],
-											"tap": [
-												{
-													"condition": "",
-													"false": "",
-													"true": "{show(b70f6354-50cb-47cc-91bc-3387deb7277f)}"
-												}
-											]
-										},
-										"sheet": {
-											"id": "b70f6354-50cb-47cc-91bc-3387deb7277f",
-											"type": "vertical_container",
-											"name": "Respond to request sheet",
-											"title": "Respond to request",
-											"visible": "true",
-											"actions": {},
-											"children": [
-												{
-													"id": "daea8a6d-8d13-462f-98fa-5403e4f81463",
-													"type": "text",
-													"name": "Respond confirmation copy",
-													"title": "Accept this request, or reject it?",
-													"subtitle": "",
-													"visible": "true",
-													"actions": {}
-												},
-												{
-													"id": "07ce5b44-8f2c-4183-a6e9-2f853a8dd255",
-													"type": "horizontal_container",
-													"name": "Respond buttons",
-													"title": "",
-													"visible": "true",
-													"actions": {},
-													"children": [
-														{
-															"id": "e519e84d-9a7e-4563-bacb-388bba69e9b2",
-															"type": "button",
-															"name": "Accept request",
-															"label": "Accept",
-															"title": "",
-															"visible": "true",
-															"actions": {
-																"tap": [
-																	{
-																		"condition": "",
-																		"false": "",
-																		"true": "{create(evy.messages,{fk: {$datum.fk}, resource: {$datum.resource}, parent_message_id: {$datum.id}, type: {$datum.type}, value: accept, data: { time: {$datum.data.time}, postalcode: {$datum.data.postalcode}, destination_address: {$datum.data.destination_address}, pickup_address: findFirst(evy.addresses, $datum.type == pickup && id == findFirst(marketplace.items, $datum.fk).transfer_options.pickup.address_id)}})}"
-																	},
-																	{
-																		"condition": "",
-																		"false": "",
-																		"true": "{close()}"
-																	}
-																]
-															}
-														},
-														{
-															"id": "d780b1bf-b638-4e99-84fd-36be12bb96fb",
-															"type": "button",
-															"name": "Reject request",
-															"label": "Reject",
-															"style": "danger",
-															"title": "",
-															"visible": "true",
-															"actions": {
-																"tap": [
-																	{
-																		"condition": "",
-																		"false": "",
-																		"true": "{create(evy.messages,{fk: {$datum.fk}, resource: {$datum.resource}, parent_message_id: {$datum.id}, type: {$datum.type}, value: reject, data: { time: {$datum.data.time}, postalcode: {$datum.data.postalcode}, destination_address: {$datum.data.destination_address}}})}"
-																	},
-																	{
-																		"condition": "",
-																		"false": "",
-																		"true": "{close()}"
-																	}
-																]
-															}
+										"actions": {},
+										"children": [
+											{
+												"id": "daea8a6d-8d13-462f-98fa-5403e4f81463",
+												"type": "text",
+												"name": "Respond confirmation copy",
+												"title": "Accept this request, or reject it?",
+												"subtitle": "",
+												"visible": "true",
+												"actions": {}
+											},
+											{
+												"id": "07ce5b44-8f2c-4183-a6e9-2f853a8dd255",
+												"type": "horizontal_container",
+												"name": "Respond buttons",
+												"title": "",
+												"visible": "true",
+												"actions": {},
+												"children": [
+													{
+														"id": "e519e84d-9a7e-4563-bacb-388bba69e9b2",
+														"type": "button",
+														"name": "Accept request",
+														"label": "Accept",
+														"title": "",
+														"visible": "true",
+														"actions": {
+															"tap": [
+																{
+																	"condition": "",
+																	"false": "",
+																	"true": "{create(evy.messages,{fk: {$datum.fk}, resource: {$datum.resource}, parent_message_id: {$datum.id}, type: {$datum.type}, value: accept, data: { time: {$datum.data.time}, postalcode: {$datum.data.postalcode}, destination_address: {$datum.data.destination_address}, pickup_address: findFirst(evy.addresses, $datum.type == pickup && id == findFirst(marketplace.items, $datum.fk).transfer_options.pickup.address_id)}})}"
+																},
+																{
+																	"condition": "",
+																	"false": "",
+																	"true": "{close()}"
+																}
+															]
 														}
-													]
-												}
-											]
-										}
+													},
+													{
+														"id": "d780b1bf-b638-4e99-84fd-36be12bb96fb",
+														"type": "button",
+														"name": "Reject request",
+														"label": "Reject",
+														"style": "danger",
+														"title": "",
+														"visible": "true",
+														"actions": {
+															"tap": [
+																{
+																	"condition": "",
+																	"false": "",
+																	"true": "{create(evy.messages,{fk: {$datum.fk}, resource: {$datum.resource}, parent_message_id: {$datum.id}, type: {$datum.type}, value: reject, data: { time: {$datum.data.time}, postalcode: {$datum.data.postalcode}, destination_address: {$datum.data.destination_address}}})}"
+																},
+																{
+																	"condition": "",
+																	"false": "",
+																	"true": "{close()}"
+																}
+															]
+														}
+													}
+												]
+											}
+										]
 									}
 								},
 								{
-									"id": "f8e7d6c5-b4a3-4f2e-9d1c-8b7a6f5e4d3c",
-									"type": "search",
-									"name": "For you pickup handshake",
-									"title": "",
-									"placeholder": "",
-									"source": "{filter(evy.messages, $datum.value == \"transaction\" && owns($datum.resource, $datum.fk) == true && $datum.type == pickup && findFirst(sort(evy.messages, desc, created_at), fk == $datum.fk && type == $datum.type).id == $datum.id)}",
-									"no_results": "No exchanges",
-									"destination": "",
+									"id": "e7d6c5b4-a392-4f1e-8c0b-9a8f7e6d5c4b",
+									"type": "list_item",
+									"name": "For you pickup handshake row",
+									"title": "{findFirst(marketplace.items, $datum.fk).title}",
+									"subtitle": "{$datum.value}",
 									"visible": "true",
-									"actions": {},
-									"child": {
-										"id": "e7d6c5b4-a392-4f1e-8c0b-9a8f7e6d5c4b",
-										"type": "list_item",
-										"name": "For you pickup handshake row",
-										"title": "{findFirst(marketplace.items, $datum.fk).title}",
-										"subtitle": "{$datum.value}",
+									"swipe_label": "Done",
+									"swipe_color": "#34C759",
+									"actions": {
+										"swipe_left": [
+											{
+												"condition": "",
+												"false": "",
+												"true": "{show(d6c5b4a3-9281-4e0d-7b9a-8f7e6d5c4b3a)}"
+											}
+										]
+									},
+									"sheet": {
+										"id": "d6c5b4a3-9281-4e0d-7b9a-8f7e6d5c4b3a",
+										"type": "vertical_container",
+										"name": "Confirm exchange sheet",
+										"title": "Item given",
 										"visible": "true",
-										"swipe_label": "Done",
-										"swipe_color": "#34C759",
-										"actions": {
-											"swipe_left": [
-												{
-													"condition": "",
-													"false": "",
-													"true": "{show(d6c5b4a3-9281-4e0d-7b9a-8f7e6d5c4b3a)}"
-												}
-											]
-										},
-										"sheet": {
-											"id": "d6c5b4a3-9281-4e0d-7b9a-8f7e6d5c4b3a",
-											"type": "vertical_container",
-											"name": "Confirm exchange sheet",
-											"title": "Item given",
-											"visible": "true",
-											"actions": {},
-											"children": [
-												{
-													"id": "c5b4a392-8170-4d9c-6a8b-7f6e5d4c3b2a",
-													"type": "text",
-													"name": "Confirm exchange copy",
-													"title": "Confirm the item was given, or reject?",
-													"subtitle": "",
-													"visible": "true",
-													"actions": {}
-												},
-												{
-													"id": "b4a39281-706f-4c8b-597a-6e5d4c3b2a19",
-													"type": "horizontal_container",
-													"name": "Confirm exchange buttons",
-													"title": "",
-													"visible": "true",
-													"actions": {},
-													"children": [
-														{
-															"id": "a3928170-65e4-4b7a-4869-5d4c3b2a1908",
-															"type": "button",
-															"name": "Confirm item given",
-															"label": "Confirm",
-															"title": "",
-															"visible": "true",
-															"actions": {
-																"tap": [
-																	{
-																		"condition": "",
-																		"false": "",
-																		"true": "{create(evy.messages,{fk: {$datum.fk}, resource: marketplace.items, parent_message_id: {$datum.id}, type: {$datum.type}, value: transaction_completed, data: {time: {$datum.data.time}, postalcode: {$datum.data.postalcode}, destination_address: {$datum.data.destination_address}}})}"
-																	},
-																	{
-																		"condition": "",
-																		"false": "",
-																		"true": "{close()}"
-																	}
-																]
-															}
-														},
-														{
-															"id": "91817065-e4b7-4a69-3758-4c3b2a190817",
-															"type": "button",
-															"name": "Reject exchange",
-															"label": "Reject",
-															"style": "danger",
-															"title": "",
-															"visible": "true",
-															"actions": {
-																"tap": [
-																	{
-																		"condition": "",
-																		"false": "",
-																		"true": "{create(evy.messages,{fk: {$datum.fk}, resource: marketplace.items, parent_message_id: {$datum.id}, type: {$datum.type}, value: transaction_rejected, data: {time: {$datum.data.time}, postalcode: {$datum.data.postalcode}, destination_address: {$datum.data.destination_address}}})}"
-																	},
-																	{
-																		"condition": "",
-																		"false": "",
-																		"true": "{close()}"
-																	}
-																]
-															}
+										"actions": {},
+										"children": [
+											{
+												"id": "c5b4a392-8170-4d9c-6a8b-7f6e5d4c3b2a",
+												"type": "text",
+												"name": "Confirm exchange copy",
+												"title": "Confirm the item was given, or reject?",
+												"subtitle": "",
+												"visible": "true",
+												"actions": {}
+											},
+											{
+												"id": "b4a39281-706f-4c8b-597a-6e5d4c3b2a19",
+												"type": "horizontal_container",
+												"name": "Confirm exchange buttons",
+												"title": "",
+												"visible": "true",
+												"actions": {},
+												"children": [
+													{
+														"id": "a3928170-65e4-4b7a-4869-5d4c3b2a1908",
+														"type": "button",
+														"name": "Confirm item given",
+														"label": "Confirm",
+														"title": "",
+														"visible": "true",
+														"actions": {
+															"tap": [
+																{
+																	"condition": "",
+																	"false": "",
+																	"true": "{create(evy.messages,{fk: {$datum.fk}, resource: marketplace.items, parent_message_id: {$datum.id}, type: {$datum.type}, value: transaction_completed, data: {time: {$datum.data.time}, postalcode: {$datum.data.postalcode}, destination_address: {$datum.data.destination_address}}})}"
+																},
+																{
+																	"condition": "",
+																	"false": "",
+																	"true": "{close()}"
+																}
+															]
 														}
-													]
-												}
-											]
-										}
+													},
+													{
+														"id": "91817065-e4b7-4a69-3758-4c3b2a190817",
+														"type": "button",
+														"name": "Reject exchange",
+														"label": "Reject",
+														"style": "danger",
+														"title": "",
+														"visible": "true",
+														"actions": {
+															"tap": [
+																{
+																	"condition": "",
+																	"false": "",
+																	"true": "{create(evy.messages,{fk: {$datum.fk}, resource: marketplace.items, parent_message_id: {$datum.id}, type: {$datum.type}, value: transaction_rejected, data: {time: {$datum.data.time}, postalcode: {$datum.data.postalcode}, destination_address: {$datum.data.destination_address}}})}"
+																},
+																{
+																	"condition": "",
+																	"false": "",
+																	"true": "{close()}"
+																}
+															]
+														}
+													}
+												]
+											}
+										]
 									}
 								}
 							]
@@ -260,458 +240,404 @@
 							"destination": "",
 							"visible": "true",
 							"actions": {},
-							"child": {
-								"id": "373ff30f-dc80-425c-a382-fadc8fcdcd81",
-								"type": "list_item",
-								"name": "From you request row",
-								"title": "{findFirst(marketplace.items, $datum.fk).title}",
-								"subtitle": "{$datum.value}",
-								"visible": "true",
-								"swipe_label": "Cancel",
-								"swipe_color": "#FF3B30",
-								"actions": {
-									"swipe_left": [
-										{
-											"condition": "",
-											"false": "",
-											"true": "{create(evy.messages,{fk: {$datum.fk}, resource: {$datum.resource}, parent_message_id: {$datum.id}, type: {$datum.type}, value: cancel, data: { time: {$datum.data.time}, postalcode: {$datum.data.postalcode}, destination_address: {$datum.data.destination_address}}})}"
-										}
-									]
+							"children": [
+								{
+									"id": "373ff30f-dc80-425c-a382-fadc8fcdcd81",
+									"type": "list_item",
+									"name": "From you request row",
+									"title": "{findFirst(marketplace.items, $datum.fk).title}",
+									"subtitle": "{$datum.value}",
+									"visible": "true",
+									"swipe_label": "Cancel",
+									"swipe_color": "#FF3B30",
+									"actions": {
+										"swipe_left": [
+											{
+												"condition": "",
+												"false": "",
+												"true": "{create(evy.messages,{fk: {$datum.fk}, resource: {$datum.resource}, parent_message_id: {$datum.id}, type: {$datum.type}, value: cancel, data: { time: {$datum.data.time}, postalcode: {$datum.data.postalcode}, destination_address: {$datum.data.destination_address}}})}"
+											}
+										]
+									}
 								}
-							}
+							]
 						},
 						{
 							"id": "4e81c7e7-f765-4864-ac63-35e2eff707cd",
-							"type": "vertical_container",
+							"type": "search",
 							"name": "Scheduled",
 							"title": "",
+							"placeholder": "",
+							"source": "{sort(filter(evy.messages, findFirst(sort(evy.messages, desc, created_at), fk == $datum.fk && type == $datum.type).id == $datum.id && ($datum.value == \"accept\" || (owns($datum.resource, $datum.fk) == false && (($datum.type == delivery && $datum.value == \"given\") || ($datum.type == shipping && $datum.value == \"sent\"))))), desc, created_at)}",
+							"no_results": "No requests",
+							"destination": "",
 							"visible": "true",
 							"actions": {},
 							"children": [
 								{
-									"id": "817065e4-b7a6-4968-2647-c3b2a1908170",
-									"type": "search",
-									"name": "Scheduled buyer pickup",
-									"title": "",
-									"placeholder": "",
-									"source": "{filter(evy.messages, $datum.value == \"accept\" && owns($datum.resource, $datum.fk) == false && $datum.type == pickup && findFirst(sort(evy.messages, desc, created_at), fk == $datum.fk && type == $datum.type).id == $datum.id)}",
-									"no_results": "",
-									"destination": "",
-									"visible": "true",
-									"actions": {},
-									"child": {
-										"id": "7065e4b7-a695-4875-1536-b2a190817065",
-										"type": "list_item",
-										"name": "Scheduled buyer pickup row",
-										"title": "{findFirst(marketplace.items, $datum.fk).title}",
-										"subtitle": "{$datum.value}",
+									"id": "7065e4b7-a695-4875-1536-b2a190817065",
+									"type": "list_item",
+									"name": "Scheduled buyer pickup row",
+									"title": "{findFirst(marketplace.items, $datum.fk).title}",
+									"subtitle": "{$datum.value}",
+									"visible": "{$datum.value == \"accept\" && owns($datum.resource, $datum.fk) == false && $datum.type == pickup}",
+									"swipe_label": "Received",
+									"swipe_color": "#34C759",
+									"actions": {
+										"swipe_left": [
+											{
+												"condition": "",
+												"false": "",
+												"true": "{show(62514039-2817-4092-0d4e-b7a958473625)}"
+											}
+										]
+									},
+									"sheet": {
+										"id": "62514039-2817-4092-0d4e-b7a958473625",
+										"type": "vertical_container",
+										"name": "Item received sheet",
+										"title": "Item received",
 										"visible": "true",
-										"swipe_label": "Received",
-										"swipe_color": "#34C759",
-										"actions": {
-											"swipe_left": [
-												{
-													"condition": "",
-													"false": "",
-													"true": "{show(62514039-2817-4092-0d4e-b7a958473625)}"
-												}
-											]
-										},
-										"sheet": {
-											"id": "62514039-2817-4092-0d4e-b7a958473625",
-											"type": "vertical_container",
-											"name": "Item received sheet",
-											"title": "Item received",
-											"visible": "true",
-											"actions": {},
-											"children": [
-												{
-													"id": "51403928-1706-4081-fc3d-a95847362514",
-													"type": "text",
-													"name": "Item received confirmation copy",
-													"title": "Confirm you received the item?",
-													"subtitle": "",
-													"visible": "true",
-													"actions": {}
-												},
-												{
-													"id": "40392817-0605-4070-eb2c-958473625140",
-													"type": "horizontal_container",
-													"name": "Item received buttons",
-													"title": "",
-													"visible": "true",
-													"actions": {},
-													"children": [
-														{
-															"id": "1666f694-b695-42fb-8b75-cf4f4825af30",
-															"type": "button",
-															"name": "Confirm item received",
-															"label": "Confirm",
-															"title": "",
-															"visible": "true",
-															"actions": {
-																"tap": [
-																	{
-																		"condition": "",
-																		"true": "{create(evy.messages,{fk: {$datum.fk}, resource: marketplace.items, parent_message_id: {$datum.id}, type: {$datum.type}, value: transaction, data: {time: {$datum.data.time}, postalcode: {$datum.data.postalcode}, destination_address: {$datum.data.destination_address}}})}",
-																		"false": ""
-																	},
-																	{
-																		"condition": "",
-																		"true": "{close()}",
-																		"false": ""
-																	}
-																]
-															}
+										"actions": {},
+										"children": [
+											{
+												"id": "51403928-1706-4081-fc3d-a95847362514",
+												"type": "text",
+												"name": "Item received confirmation copy",
+												"title": "Confirm you received the item?",
+												"subtitle": "",
+												"visible": "true",
+												"actions": {}
+											},
+											{
+												"id": "40392817-0605-4070-eb2c-958473625140",
+												"type": "horizontal_container",
+												"name": "Item received buttons",
+												"title": "",
+												"visible": "true",
+												"actions": {},
+												"children": [
+													{
+														"id": "1666f694-b695-42fb-8b75-cf4f4825af30",
+														"type": "button",
+														"name": "Confirm item received",
+														"label": "Confirm",
+														"title": "",
+														"visible": "true",
+														"actions": {
+															"tap": [
+																{
+																	"condition": "",
+																	"true": "{create(evy.messages,{fk: {$datum.fk}, resource: marketplace.items, parent_message_id: {$datum.id}, type: {$datum.type}, value: transaction, data: {time: {$datum.data.time}, postalcode: {$datum.data.postalcode}, destination_address: {$datum.data.destination_address}}})}",
+																	"false": ""
+																},
+																{
+																	"condition": "",
+																	"true": "{close()}",
+																	"false": ""
+																}
+															]
 														}
-													]
-												}
-											]
-										}
+													}
+												]
+											}
+										]
 									}
 								},
 								{
-									"id": "17065e4b-7a95-8473-6251-403928170605",
-									"type": "search",
-									"name": "Scheduled buyer received",
-									"title": "",
-									"placeholder": "",
-									"source": "{filter(evy.messages, owns($datum.resource, $datum.fk) == false && (($datum.type == delivery && $datum.value == \"given\") || ($datum.type == shipping && $datum.value == \"sent\")) && findFirst(sort(evy.messages, desc, created_at), fk == $datum.fk && type == $datum.type).id == $datum.id)}",
-									"no_results": "",
-									"destination": "",
-									"visible": "true",
-									"actions": {},
-									"child": {
-										"id": "065e4b7a-9584-4763-0425-a190817065e4",
-										"type": "list_item",
-										"name": "Scheduled buyer received row",
-										"title": "{findFirst(marketplace.items, $datum.fk).title}",
-										"subtitle": "{$datum.value}",
+									"id": "065e4b7a-9584-4763-0425-a190817065e4",
+									"type": "list_item",
+									"name": "Scheduled buyer received row",
+									"title": "{findFirst(marketplace.items, $datum.fk).title}",
+									"subtitle": "{$datum.value}",
+									"visible": "{owns($datum.resource, $datum.fk) == false && (($datum.type == delivery && $datum.value == \"given\") || ($datum.type == shipping && $datum.value == \"sent\"))}",
+									"swipe_label": "Received",
+									"swipe_color": "#34C759",
+									"actions": {
+										"swipe_left": [
+											{
+												"condition": "",
+												"false": "",
+												"true": "{show(a817065e-4b7a-9584-7362-514039281706)}"
+											}
+										]
+									},
+									"sheet": {
+										"id": "a817065e-4b7a-9584-7362-514039281706",
+										"type": "vertical_container",
+										"name": "Item received sheet",
+										"title": "Item received",
 										"visible": "true",
-										"swipe_label": "Received",
-										"swipe_color": "#34C759",
-										"actions": {
-											"swipe_left": [
-												{
-													"condition": "",
-													"false": "",
-													"true": "{show(a817065e-4b7a-9584-7362-514039281706)}"
-												}
-											]
-										},
-										"sheet": {
-											"id": "a817065e-4b7a-9584-7362-514039281706",
-											"type": "vertical_container",
-											"name": "Item received sheet",
-											"title": "Item received",
-											"visible": "true",
-											"actions": {},
-											"children": [
-												{
-													"id": "9817065e-4b7a-9584-7362-514039281706",
-													"type": "text",
-													"name": "Item received confirmation copy",
-													"title": "Confirm you received the item?",
-													"subtitle": "",
-													"visible": "true",
-													"actions": {}
-												},
-												{
-													"id": "8817065e-4b7a-9584-7362-514039281706",
-													"type": "horizontal_container",
-													"name": "Item received buttons",
-													"title": "",
-													"visible": "true",
-													"actions": {},
-													"children": [
-														{
-															"id": "7817065e-4b7a-9584-7362-514039281706",
-															"type": "button",
-															"name": "Confirm item received",
-															"label": "Confirm",
-															"title": "",
-															"visible": "true",
-															"actions": {
-																"tap": [
-																	{
-																		"condition": "",
-																		"true": "{create(evy.messages,{fk: {$datum.fk}, resource: marketplace.items, parent_message_id: {$datum.id}, type: {$datum.type}, value: received, data: {time: {$datum.data.time}, postalcode: {$datum.data.postalcode}, destination_address: {$datum.data.destination_address}}})}",
-																		"false": ""
-																	},
-																	{
-																		"condition": "",
-																		"true": "{close()}",
-																		"false": ""
-																	}
-																]
-															}
-														},
-														{
-															"id": "6817065e-4b7a-9584-7362-514039281706",
-															"type": "button",
-															"name": "Not received",
-															"label": "Not received",
-															"style": "danger",
-															"title": "",
-															"visible": "true",
-															"actions": {
-																"tap": [
-																	{
-																		"condition": "",
-																		"true": "{create(evy.messages,{fk: {$datum.fk}, resource: marketplace.items, parent_message_id: {$datum.id}, type: {$datum.type}, value: failed, data: {time: {$datum.data.time}, postalcode: {$datum.data.postalcode}, destination_address: {$datum.data.destination_address}}})}",
-																		"false": ""
-																	},
-																	{
-																		"condition": "",
-																		"true": "{close()}",
-																		"false": ""
-																	}
-																]
-															}
+										"actions": {},
+										"children": [
+											{
+												"id": "9817065e-4b7a-9584-7362-514039281706",
+												"type": "text",
+												"name": "Item received confirmation copy",
+												"title": "Confirm you received the item?",
+												"subtitle": "",
+												"visible": "true",
+												"actions": {}
+											},
+											{
+												"id": "8817065e-4b7a-9584-7362-514039281706",
+												"type": "horizontal_container",
+												"name": "Item received buttons",
+												"title": "",
+												"visible": "true",
+												"actions": {},
+												"children": [
+													{
+														"id": "7817065e-4b7a-9584-7362-514039281706",
+														"type": "button",
+														"name": "Confirm item received",
+														"label": "Confirm",
+														"title": "",
+														"visible": "true",
+														"actions": {
+															"tap": [
+																{
+																	"condition": "",
+																	"true": "{create(evy.messages,{fk: {$datum.fk}, resource: marketplace.items, parent_message_id: {$datum.id}, type: {$datum.type}, value: received, data: {time: {$datum.data.time}, postalcode: {$datum.data.postalcode}, destination_address: {$datum.data.destination_address}}})}",
+																	"false": ""
+																},
+																{
+																	"condition": "",
+																	"true": "{close()}",
+																	"false": ""
+																}
+															]
 														}
-													]
-												}
-											]
-										}
+													},
+													{
+														"id": "6817065e-4b7a-9584-7362-514039281706",
+														"type": "button",
+														"name": "Not received",
+														"label": "Not received",
+														"style": "danger",
+														"title": "",
+														"visible": "true",
+														"actions": {
+															"tap": [
+																{
+																	"condition": "",
+																	"true": "{create(evy.messages,{fk: {$datum.fk}, resource: marketplace.items, parent_message_id: {$datum.id}, type: {$datum.type}, value: failed, data: {time: {$datum.data.time}, postalcode: {$datum.data.postalcode}, destination_address: {$datum.data.destination_address}}})}",
+																	"false": ""
+																},
+																{
+																	"condition": "",
+																	"true": "{close()}",
+																	"false": ""
+																}
+															]
+														}
+													}
+												]
+											}
+										]
 									}
 								},
 								{
-									"id": "7a958473-6251-4436-5192-817065e4b7a9",
-									"type": "search",
-									"name": "Scheduled seller delivery",
-									"title": "",
-									"placeholder": "",
-									"source": "{filter(evy.messages, $datum.value == \"accept\" && owns($datum.resource, $datum.fk) == true && $datum.type == delivery && findFirst(sort(evy.messages, desc, created_at), fk == $datum.fk && type == $datum.type).id == $datum.id && findFirst(sort(marketplace.item_statuses, desc, created_at), item_id == $datum.fk).status == \"sold\")}",
-									"no_results": "",
-									"destination": "",
-									"visible": "true",
-									"actions": {},
-									"child": {
-										"id": "95847362-5140-4325-4081-7065e4b7a958",
-										"type": "list_item",
-										"name": "Scheduled seller delivery row",
-										"title": "{findFirst(marketplace.items, $datum.fk).title}",
-										"subtitle": "{$datum.value}",
+									"id": "95847362-5140-4325-4081-7065e4b7a958",
+									"type": "list_item",
+									"name": "Scheduled seller delivery row",
+									"title": "{findFirst(marketplace.items, $datum.fk).title}",
+									"subtitle": "{$datum.value}",
+									"visible": "{$datum.value == \"accept\" && owns($datum.resource, $datum.fk) == true && $datum.type == delivery && findFirst(sort(marketplace.item_statuses, desc, created_at), item_id == $datum.fk).status == \"sold\"}",
+									"swipe_label": "Delivered",
+									"swipe_color": "#34C759",
+									"actions": {
+										"swipe_left": [
+											{
+												"condition": "",
+												"false": "",
+												"true": "{show(f78ebec6-116a-47d0-8686-583937aabe0a)}"
+											}
+										]
+									},
+									"sheet": {
+										"id": "f78ebec6-116a-47d0-8686-583937aabe0a",
+										"type": "vertical_container",
+										"name": "Item delivered sheet",
+										"title": "Item delivered",
 										"visible": "true",
-										"swipe_label": "Delivered",
-										"swipe_color": "#34C759",
-										"actions": {
-											"swipe_left": [
-												{
-													"condition": "",
-													"false": "",
-													"true": "{show(f78ebec6-116a-47d0-8686-583937aabe0a)}"
-												}
-											]
-										},
-										"sheet": {
-											"id": "f78ebec6-116a-47d0-8686-583937aabe0a",
-											"type": "vertical_container",
-											"name": "Item delivered sheet",
-											"title": "Item delivered",
-											"visible": "true",
-											"actions": {},
-											"children": [
-												{
-													"id": "7df1cee5-afdd-44b9-83c5-b0ef2716b5c9",
-													"type": "text",
-													"name": "Item delivered confirmation copy",
-													"title": "Confirm you delivered the item?",
-													"subtitle": "",
-													"visible": "true",
-													"actions": {}
-												},
-												{
-													"id": "1a03dad2-8a5c-4467-99fd-e8c76f56f3b3",
-													"type": "horizontal_container",
-													"name": "Item delivered buttons",
-													"title": "",
-													"visible": "true",
-													"actions": {},
-													"children": [
-														{
-															"id": "393d93b9-c540-4a52-ae6c-b2c646817ee3",
-															"type": "button",
-															"name": "Confirm item delivered",
-															"label": "Confirm",
-															"title": "",
-															"visible": "true",
-															"actions": {
-																"tap": [
-																	{
-																		"condition": "",
-																		"true": "{create(evy.messages,{fk: {$datum.fk}, resource: marketplace.items, parent_message_id: {$datum.id}, type: {$datum.type}, value: given, data: {time: {$datum.data.time}, postalcode: {$datum.data.postalcode}, destination_address: {$datum.data.destination_address}}})}",
-																		"false": ""
-																	},
-																	{
-																		"condition": "",
-																		"true": "{close()}",
-																		"false": ""
-																	}
-																]
-															}
-														},
-														{
-															"id": "0f119835-7929-448e-930a-89b49ad05e99",
-															"type": "button",
-															"name": "Could not deliver",
-															"label": "Could not deliver",
-															"style": "danger",
-															"title": "",
-															"visible": "true",
-															"actions": {
-																"tap": [
-																	{
-																		"condition": "",
-																		"true": "{create(evy.messages,{fk: {$datum.fk}, resource: marketplace.items, parent_message_id: {$datum.id}, type: {$datum.type}, value: failed, data: {time: {$datum.data.time}, postalcode: {$datum.data.postalcode}, destination_address: {$datum.data.destination_address}}})}",
-																		"false": ""
-																	},
-																	{
-																		"condition": "",
-																		"true": "{close()}",
-																		"false": ""
-																	}
-																]
-															}
+										"actions": {},
+										"children": [
+											{
+												"id": "7df1cee5-afdd-44b9-83c5-b0ef2716b5c9",
+												"type": "text",
+												"name": "Item delivered confirmation copy",
+												"title": "Confirm you delivered the item?",
+												"subtitle": "",
+												"visible": "true",
+												"actions": {}
+											},
+											{
+												"id": "1a03dad2-8a5c-4467-99fd-e8c76f56f3b3",
+												"type": "horizontal_container",
+												"name": "Item delivered buttons",
+												"title": "",
+												"visible": "true",
+												"actions": {},
+												"children": [
+													{
+														"id": "393d93b9-c540-4a52-ae6c-b2c646817ee3",
+														"type": "button",
+														"name": "Confirm item delivered",
+														"label": "Confirm",
+														"title": "",
+														"visible": "true",
+														"actions": {
+															"tap": [
+																{
+																	"condition": "",
+																	"true": "{create(evy.messages,{fk: {$datum.fk}, resource: marketplace.items, parent_message_id: {$datum.id}, type: {$datum.type}, value: given, data: {time: {$datum.data.time}, postalcode: {$datum.data.postalcode}, destination_address: {$datum.data.destination_address}}})}",
+																	"false": ""
+																},
+																{
+																	"condition": "",
+																	"true": "{close()}",
+																	"false": ""
+																}
+															]
 														}
-													]
-												}
-											]
-										}
+													},
+													{
+														"id": "0f119835-7929-448e-930a-89b49ad05e99",
+														"type": "button",
+														"name": "Could not deliver",
+														"label": "Could not deliver",
+														"style": "danger",
+														"title": "",
+														"visible": "true",
+														"actions": {
+															"tap": [
+																{
+																	"condition": "",
+																	"true": "{create(evy.messages,{fk: {$datum.fk}, resource: marketplace.items, parent_message_id: {$datum.id}, type: {$datum.type}, value: failed, data: {time: {$datum.data.time}, postalcode: {$datum.data.postalcode}, destination_address: {$datum.data.destination_address}}})}",
+																	"false": ""
+																},
+																{
+																	"condition": "",
+																	"true": "{close()}",
+																	"false": ""
+																}
+															]
+														}
+													}
+												]
+											}
+										]
 									}
 								},
 								{
-									"id": "84736251-4039-4214-2f70-65e4b7a95847",
-									"type": "search",
-									"name": "Scheduled seller shipping",
-									"title": "",
-									"placeholder": "",
-									"source": "{filter(evy.messages, $datum.value == \"accept\" && owns($datum.resource, $datum.fk) == true && $datum.type == shipping && findFirst(sort(evy.messages, desc, created_at), fk == $datum.fk && type == $datum.type).id == $datum.id && findFirst(sort(marketplace.item_statuses, desc, created_at), item_id == $datum.fk).status == \"sold\")}",
-									"no_results": "",
-									"destination": "",
-									"visible": "true",
-									"actions": {},
-									"child": {
-										"id": "73625140-3928-4103-1e5f-4e4b7a958473",
-										"type": "list_item",
-										"name": "Scheduled seller shipping row",
-										"title": "{findFirst(marketplace.items, $datum.fk).title}",
-										"subtitle": "{$datum.value}",
+									"id": "73625140-3928-4103-1e5f-4e4b7a958473",
+									"type": "list_item",
+									"name": "Scheduled seller shipping row",
+									"title": "{findFirst(marketplace.items, $datum.fk).title}",
+									"subtitle": "{$datum.value}",
+									"visible": "{$datum.value == \"accept\" && owns($datum.resource, $datum.fk) == true && $datum.type == shipping && findFirst(sort(marketplace.item_statuses, desc, created_at), item_id == $datum.fk).status == \"sold\"}",
+									"swipe_label": "Shipped",
+									"swipe_color": "#34C759",
+									"actions": {
+										"swipe_left": [
+											{
+												"condition": "",
+												"false": "",
+												"true": "{show(7e69358b-9623-421a-90d8-7cdfce561fe1)}"
+											}
+										]
+									},
+									"sheet": {
+										"id": "7e69358b-9623-421a-90d8-7cdfce561fe1",
+										"type": "vertical_container",
+										"name": "Item shipped sheet",
+										"title": "Item shipped",
 										"visible": "true",
-										"swipe_label": "Shipped",
-										"swipe_color": "#34C759",
-										"actions": {
-											"swipe_left": [
-												{
-													"condition": "",
-													"false": "",
-													"true": "{show(7e69358b-9623-421a-90d8-7cdfce561fe1)}"
-												}
-											]
-										},
-										"sheet": {
-											"id": "7e69358b-9623-421a-90d8-7cdfce561fe1",
-											"type": "vertical_container",
-											"name": "Item shipped sheet",
-											"title": "Item shipped",
-											"visible": "true",
-											"actions": {},
-											"children": [
-												{
-													"id": "85d11db4-cea7-46f2-83cd-eeb3868067f3",
-													"type": "text",
-													"name": "Item shipped confirmation copy",
-													"title": "Confirm you shipped the item?",
-													"subtitle": "",
-													"visible": "true",
-													"actions": {}
-												},
-												{
-													"id": "de9a6f9f-fea7-44ca-8c7b-825289925fee",
-													"type": "horizontal_container",
-													"name": "Item shipped buttons",
-													"title": "",
-													"visible": "true",
-													"actions": {},
-													"children": [
-														{
-															"id": "db973539-19c6-48eb-abfb-d3f7af724e51",
-															"type": "button",
-															"name": "Confirm item shipped",
-															"label": "Confirm",
-															"title": "",
-															"visible": "true",
-															"actions": {
-																"tap": [
-																	{
-																		"condition": "",
-																		"true": "{create(evy.messages,{fk: {$datum.fk}, resource: marketplace.items, parent_message_id: {$datum.id}, type: {$datum.type}, value: sent, data: {time: {$datum.data.time}, postalcode: {$datum.data.postalcode}, destination_address: {$datum.data.destination_address}}})}",
-																		"false": ""
-																	},
-																	{
-																		"condition": "",
-																		"true": "{close()}",
-																		"false": ""
-																	}
-																]
-															}
-														},
-														{
-															"id": "3e3a522d-9b0a-4b53-960d-88c7734362f4",
-															"type": "button",
-															"name": "Could not ship",
-															"label": "Could not ship",
-															"style": "danger",
-															"title": "",
-															"visible": "true",
-															"actions": {
-																"tap": [
-																	{
-																		"condition": "",
-																		"true": "{create(evy.messages,{fk: {$datum.fk}, resource: marketplace.items, parent_message_id: {$datum.id}, type: {$datum.type}, value: failed, data: {time: {$datum.data.time}, postalcode: {$datum.data.postalcode}, destination_address: {$datum.data.destination_address}}})}",
-																		"false": ""
-																	},
-																	{
-																		"condition": "",
-																		"true": "{close()}",
-																		"false": ""
-																	}
-																]
-															}
+										"actions": {},
+										"children": [
+											{
+												"id": "85d11db4-cea7-46f2-83cd-eeb3868067f3",
+												"type": "text",
+												"name": "Item shipped confirmation copy",
+												"title": "Confirm you shipped the item?",
+												"subtitle": "",
+												"visible": "true",
+												"actions": {}
+											},
+											{
+												"id": "de9a6f9f-fea7-44ca-8c7b-825289925fee",
+												"type": "horizontal_container",
+												"name": "Item shipped buttons",
+												"title": "",
+												"visible": "true",
+												"actions": {},
+												"children": [
+													{
+														"id": "db973539-19c6-48eb-abfb-d3f7af724e51",
+														"type": "button",
+														"name": "Confirm item shipped",
+														"label": "Confirm",
+														"title": "",
+														"visible": "true",
+														"actions": {
+															"tap": [
+																{
+																	"condition": "",
+																	"true": "{create(evy.messages,{fk: {$datum.fk}, resource: marketplace.items, parent_message_id: {$datum.id}, type: {$datum.type}, value: sent, data: {time: {$datum.data.time}, postalcode: {$datum.data.postalcode}, destination_address: {$datum.data.destination_address}}})}",
+																	"false": ""
+																},
+																{
+																	"condition": "",
+																	"true": "{close()}",
+																	"false": ""
+																}
+															]
 														}
-													]
-												}
-											]
-										}
+													},
+													{
+														"id": "3e3a522d-9b0a-4b53-960d-88c7734362f4",
+														"type": "button",
+														"name": "Could not ship",
+														"label": "Could not ship",
+														"style": "danger",
+														"title": "",
+														"visible": "true",
+														"actions": {
+															"tap": [
+																{
+																	"condition": "",
+																	"true": "{create(evy.messages,{fk: {$datum.fk}, resource: marketplace.items, parent_message_id: {$datum.id}, type: {$datum.type}, value: failed, data: {time: {$datum.data.time}, postalcode: {$datum.data.postalcode}, destination_address: {$datum.data.destination_address}}})}",
+																	"false": ""
+																},
+																{
+																	"condition": "",
+																	"true": "{close()}",
+																	"false": ""
+																}
+															]
+														}
+													}
+												]
+											}
+										]
 									}
 								},
 								{
-									"id": "ce0cb8f6-e10f-4abf-917d-55282b4662c2",
-									"type": "search",
-									"name": "Scheduled informative accepts",
-									"title": "",
-									"placeholder": "",
-									"source": "{filter(evy.messages, $datum.value == \"accept\" && findFirst(sort(evy.messages, desc, created_at), fk == $datum.fk && type == $datum.type).id == $datum.id && ($datum.type != pickup || owns($datum.resource, $datum.fk) == true) && ($datum.type == pickup || owns($datum.resource, $datum.fk) == false || findFirst(sort(marketplace.item_statuses, desc, created_at), item_id == $datum.fk).status != \"sold\"))}",
-									"no_results": "No requests",
-									"destination": "",
+									"id": "0bbcb9ae-e148-4e8f-8e5a-a56969a4d4d2",
+									"type": "list_item",
+									"name": "Scheduled informative row",
+									"title": "{findFirst(marketplace.items, $datum.fk).title}",
+									"subtitle": "{$datum.value}",
 									"visible": "true",
-									"actions": {},
-									"child": {
-										"id": "0bbcb9ae-e148-4e8f-8e5a-a56969a4d4d2",
-										"type": "list_item",
-										"name": "Scheduled informative row",
-										"title": "{findFirst(marketplace.items, $datum.fk).title}",
-										"subtitle": "{$datum.value}",
-										"visible": "true",
-										"actions": {
-											"tap": [
-												{
-													"condition": "",
-													"true": "{copy_to_clipboard({if(length($datum.data.pickup_address.street) > 0, formatAddress($datum.data.pickup_address), \"\")})}",
-													"false": ""
-												}
-											]
-										}
+									"actions": {
+										"tap": [
+											{
+												"condition": "",
+												"true": "{copy_to_clipboard({if(length($datum.data.pickup_address.street) > 0, formatAddress($datum.data.pickup_address), \"\")})}",
+												"false": ""
+											}
+										]
 									}
 								}
 							]
@@ -721,24 +647,26 @@
 				{
 					"id": "96d3efe4-ea20-4a81-9ccb-64d6b57646e9",
 					"type": "search",
-					"child": {
-						"id": "d5922ca1-fc26-430a-81ed-fd343c13dab1",
-						"type": "list_item",
-						"title": "{$datum.title}",
-						"subtitle": "{formatCurrency($datum.price)}",
-						"image": "{$datum.photo_ids.0}",
-						"actions": {
-							"tap": [
-								{
-									"true": "{navigate(74a49d4b-2176-4925-857a-e29e2991f1bd,82cae120-c7b1-4c29-bd42-e1521320b109,{id: {$datum.id}})}",
-									"false": "",
-									"condition": ""
-								}
-							]
-						},
-						"visible": "true",
-						"name": "Item search result"
-					},
+					"children": [
+						{
+							"id": "d5922ca1-fc26-430a-81ed-fd343c13dab1",
+							"type": "list_item",
+							"title": "{$datum.title}",
+							"subtitle": "{formatCurrency($datum.price)}",
+							"image": "{$datum.photo_ids.0}",
+							"actions": {
+								"tap": [
+									{
+										"true": "{navigate(74a49d4b-2176-4925-857a-e29e2991f1bd,82cae120-c7b1-4c29-bd42-e1521320b109,{id: {$datum.id}})}",
+										"false": "",
+										"condition": ""
+									}
+								]
+							},
+							"visible": "true",
+							"name": "Item search result"
+						}
+					],
 					"title": "",
 					"placeholder": "Search anything",
 					"source": "{filter(marketplace.items, findFirst(sort(marketplace.item_statuses, desc, created_at), item_id == $datum.id).status != \"sold\")}",

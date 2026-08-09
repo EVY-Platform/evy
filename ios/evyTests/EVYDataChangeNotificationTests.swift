@@ -65,6 +65,58 @@ final class EVYDataChangeNotificationTests: XCTestCase {
     XCTAssertEqual(receivedKeys, [resource])
   }
 
+  /// Incoming synced records must refresh page-scope cache snapshots of the
+  /// same entity and notify their watchers; redelivery of an identical record
+  /// must stay silent.
+  func testApplySyncedValueRefreshesCacheSnapshots() throws {
+    let namespace = MarketplaceTestFixture.service
+    let resource = "\(namespace).snapshot_items"
+    let scopeId = "scope-\(UUID().uuidString)"
+    let itemId = UUID().uuidString
+
+    func item(titled title: String) -> EVYJson {
+      .dictionary(["id": .string(itemId), "title": .string(title)])
+    }
+
+    try EVY.cacheStore.create(
+      namespace: EVYNamespace.cache, resource: scopeId, id: resource,
+      value: try JSONEncoder().encode(item(titled: "Stale")), sortIndex: 3)
+    defer {
+      try? EVY.cacheStore.deleteAll(namespace: EVYNamespace.cache, resource: scopeId)
+      try? EVY.publicStore.deleteAll(namespace: namespace, resource: resource)
+    }
+
+    var receivedKeys: [String] = []
+    let token = NotificationCenter.default.addObserver(
+      forName: .evyValueChanged, object: nil, queue: nil
+    ) { notification in
+      MainActor.assumeIsolated {
+        if let key = notification.object as? String {
+          receivedKeys.append(key)
+        }
+      }
+    }
+    defer { NotificationCenter.default.removeObserver(token) }
+
+    try EVY.applySyncedValue(namespace: namespace, resource: resource, value: item(titled: "Fresh"))
+
+    let cachedRow = try EVY.cacheStore.get(
+      namespace: EVYNamespace.cache, resource: scopeId, id: resource)
+    XCTAssertEqual(try cachedRow.decoded(), item(titled: "Fresh"))
+    XCTAssertEqual(cachedRow.sortIndex, 3, "The snapshot's sortIndex must be preserved")
+    // The synced upsert posts the resource key once; the snapshot refresh must
+    // post it a second time so page bindings recompute.
+    XCTAssertEqual(
+      receivedKeys.filter { $0 == resource }.count, 2,
+      "Watchers key off the cache row id (the resource ref), got: \(receivedKeys)")
+
+    receivedKeys = []
+    try EVY.applySyncedValue(namespace: namespace, resource: resource, value: item(titled: "Fresh"))
+    XCTAssertEqual(
+      receivedKeys.filter { $0 == resource }.count, 1,
+      "Redelivering an identical record must not rewrite the snapshot, got: \(receivedKeys)")
+  }
+
   func testFromExtractsPayloadOrReturnsNil() {
     let change = EVYRecordChange(
       namespace: EVYNamespace.evy,

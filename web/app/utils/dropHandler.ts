@@ -206,7 +206,6 @@ export function handleDrop(
 	};
 	if (pageDestinationContainerRowId) {
 		const containerType =
-			pageDestinationContainerType === "child" ||
 			pageDestinationContainerType === "children" ||
 			pageDestinationContainerType === "sheet"
 				? pageDestinationContainerType
@@ -273,8 +272,7 @@ export function handleDrop(
 		if (
 			isPlaceholderDrop &&
 			typeof placeholderContainerRowId === "string" &&
-			(placeholderContainerType === "child" ||
-				placeholderContainerType === "children" ||
+			(placeholderContainerType === "children" ||
 				placeholderContainerType === "sheet")
 		) {
 			// Drop into an empty container placeholder - use explicit metadata.
@@ -316,10 +314,7 @@ export function handleDrop(
 					destinationContainer.containerRowId,
 					destinationRow.data.rowId as string,
 				);
-			} else if (
-				destinationContainer?.type === "child" ||
-				destinationContainer?.type === "sheet"
-			) {
+			} else if (destinationContainer?.type === "sheet") {
 				dispatchOptions.destinationIndex = 0;
 			} else if (closestEdgeOfTarget && !destinationContainer) {
 				const destinationRowIndex = destinationPage.row_ids.indexOf(

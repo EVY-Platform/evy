@@ -22,6 +22,8 @@ extension EVYActionParser {
       return .dictionary(["fn": .string("expand_text"), "row_id": .string(rowId)])
     case .highlightRequired(let field):
       return .dictionary(["fn": .string("highlight_required"), "field": .string(field)])
+    case .clear(let binding):
+      return .dictionary(["fn": .string("clear"), "binding": .string(binding)])
     case .select(let value):
       return .dictionary(["fn": .string("select"), "value": .string(value)])
     case .copyToClipboard(let value):

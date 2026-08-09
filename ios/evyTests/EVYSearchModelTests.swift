@@ -52,10 +52,9 @@ final class EVYSearchModelTests: XCTestCase {
 
   func testSearchCallsRequesterOnceAndPopulatesResults() async {
     let spy = SearchRequestingSpy()
-    let resultTemplate = Self.makeResultTemplate()
     let model = EVYSearchModel(
       method: "place_search",
-      resultTemplate: resultTemplate,
+      resultTemplates: [Self.makeResultTemplate()],
       scopeId: nil,
       requester: spy
     )
@@ -77,10 +76,9 @@ final class EVYSearchModelTests: XCTestCase {
 
   func testClearResultsEmptiesResults() async {
     let spy = SearchRequestingSpy()
-    let resultTemplate = Self.makeResultTemplate()
     let model = EVYSearchModel(
       method: "place_search",
-      resultTemplate: resultTemplate,
+      resultTemplates: [Self.makeResultTemplate()],
       scopeId: nil,
       requester: spy
     )
@@ -102,10 +100,9 @@ final class EVYSearchModelTests: XCTestCase {
   func testIsSearchingIsTrueWhileRequestIsInFlight() async {
     let spy = SearchRequestingSpy()
     spy.gatesRequests = true
-    let resultTemplate = Self.makeResultTemplate()
     let model = EVYSearchModel(
       method: "place_search",
-      resultTemplate: resultTemplate,
+      resultTemplates: [Self.makeResultTemplate()],
       scopeId: nil,
       requester: spy
     )
@@ -128,10 +125,9 @@ final class EVYSearchModelTests: XCTestCase {
   func testHasSearchedBecomesTrueAfterAnEmptyResponse() async {
     let spy = SearchRequestingSpy()
     spy.gatesRequests = true
-    let resultTemplate = Self.makeResultTemplate()
     let model = EVYSearchModel(
       method: "place_search",
-      resultTemplate: resultTemplate,
+      resultTemplates: [Self.makeResultTemplate()],
       scopeId: nil,
       requester: spy
     )
@@ -154,10 +150,9 @@ final class EVYSearchModelTests: XCTestCase {
     let spy = SearchRequestingSpy()
     spy.shouldThrow = true
     spy.gatesRequests = true
-    let resultTemplate = Self.makeResultTemplate()
     let model = EVYSearchModel(
       method: "place_search",
-      resultTemplate: resultTemplate,
+      resultTemplates: [Self.makeResultTemplate()],
       scopeId: nil,
       requester: spy
     )
@@ -177,10 +172,9 @@ final class EVYSearchModelTests: XCTestCase {
   func testClearResultsResetsSearchState() async {
     let spy = SearchRequestingSpy()
     spy.gatesRequests = true
-    let resultTemplate = Self.makeResultTemplate()
     let model = EVYSearchModel(
       method: "place_search",
-      resultTemplate: resultTemplate,
+      resultTemplates: [Self.makeResultTemplate()],
       scopeId: nil,
       requester: spy
     )
@@ -236,7 +230,7 @@ final class EVYSearchModelTests: XCTestCase {
       setter: {
         EVYSearchResult.loadLocalResults(
           source: source,
-          resultTemplate: template,
+          resultTemplates: [template],
           scopeId: nil
         )
       }
@@ -254,6 +248,60 @@ final class EVYSearchModelTests: XCTestCase {
     )
 
     XCTAssertEqual(state.value.first?.displayRow.subtitle, "accept")
+  }
+
+  /// The result template is a pure input: passing an edited template must
+  /// produce differently-formatted results. (The view layer re-inits EVYSearch
+  /// via an identity reset when the child template record changes.)
+  func testLoadLocalResultsReflectsAnEditedResultTemplate() throws {
+    let resource = EVYCoreResource.messages.ref
+    try? EVY.publicStore.deleteAll(namespace: EVYNamespace.evy, resource: resource)
+    try? EVY.privateStore.deleteAll(namespace: EVYNamespace.evy, resource: resource)
+    let message = EVYTestMessageFixtures.message(
+      id: UUID().uuidString,
+      type: "pickup",
+      value: "pending"
+    )
+    try EVY.applySyncedValue(
+      namespace: EVYNamespace.evy,
+      resource: resource,
+      value: .array([message])
+    )
+    defer {
+      try? EVY.publicStore.deleteAll(namespace: EVYNamespace.evy, resource: resource)
+      try? EVY.privateStore.deleteAll(namespace: EVYNamespace.evy, resource: resource)
+    }
+
+    func template(titled title: String) -> UI_Row {
+      Self.row(
+        """
+        {
+          "id": "message-status-template",
+          "type": "text",
+          "actions": {},
+          "title": "\(title)",
+          "subtitle": "{$datum.value}",
+          "visible": "true",
+          "name": "Message"
+        }
+        """
+      )
+    }
+
+    let source = "{\(resource)}"
+    let before = EVYSearchResult.loadLocalResults(
+      source: source,
+      resultTemplates: [template(titled: "{$datum.type} request")],
+      scopeId: nil
+    )
+    let after = EVYSearchResult.loadLocalResults(
+      source: source,
+      resultTemplates: [template(titled: "{$datum.type} — {$datum.value}")],
+      scopeId: nil
+    )
+
+    XCTAssertEqual(before.first?.displayRow.title, "pickup request")
+    XCTAssertEqual(after.first?.displayRow.title, "pickup — pending")
   }
 
   /// Filtering open requests belongs in the Search `source` expression (`filter`/`owns`),
@@ -295,7 +343,7 @@ final class EVYSearchModelTests: XCTestCase {
 
     let results = EVYSearchResult.loadLocalResults(
       source: "{\(resource)}",
-      resultTemplate: Self.makeMessageValueTemplate(),
+      resultTemplates: [Self.makeMessageValueTemplate()],
       scopeId: nil
     )
 
@@ -342,7 +390,7 @@ final class EVYSearchModelTests: XCTestCase {
       setter: {
         EVYSearchResult.loadLocalResults(
           source: source,
-          resultTemplate: template,
+          resultTemplates: [template],
           scopeId: nil
         )
       }
@@ -353,8 +401,107 @@ final class EVYSearchModelTests: XCTestCase {
       "C509 28 Rothschild Avenue, 2018 Rosebery NSW")
   }
 
-  private static func makeDestinationSubtitleTemplate() -> UI_Row? {
-    let resultTemplateJSON = """
+  func testVariantSelectionPicksFirstMatchingTemplate() throws {
+    let pendingId = UUID().uuidString
+    let acceptId = UUID().uuidString
+    let sourceData = EVYJson.array([
+      EVYTestMessageFixtures.message(id: pendingId, type: "pickup", value: "pending"),
+      EVYTestMessageFixtures.message(id: acceptId, type: "pickup", value: "accept"),
+    ])
+    let pendingTemplate = Self.makeVariantTemplate(
+      id: "pending-variant",
+      swipeLabel: "Accept",
+      visible: "{$datum.value == \"pending\"}"
+    )
+    let catchAllTemplate = Self.makeVariantTemplate(
+      id: "catch-all-variant",
+      swipeLabel: "Done",
+      visible: "true"
+    )
+
+    let results = EVYSearchResult.makeResults(
+      from: sourceData,
+      resultTemplates: [pendingTemplate, catchAllTemplate],
+      scopeId: nil
+    )
+
+    XCTAssertEqual(results.count, 2)
+    let pendingResult = try XCTUnwrap(results.first { $0.id == pendingId })
+    let acceptResult = try XCTUnwrap(results.first { $0.id == acceptId })
+    XCTAssertEqual(pendingResult.displayRow.swipe_label, "Accept")
+    XCTAssertEqual(acceptResult.displayRow.swipe_label, "Done")
+  }
+
+  func testVariantSelectionSkipsDatumWithNoMatch() throws {
+    let message = EVYTestMessageFixtures.message(
+      id: UUID().uuidString,
+      type: "pickup",
+      value: "pending"
+    )
+    let template = Self.makeVariantTemplate(
+      id: "non-matching-variant",
+      swipeLabel: "Accept",
+      visible: "{$datum.value == \"accept\"}"
+    )
+
+    let results = EVYSearchResult.makeResults(
+      from: .array([message]),
+      resultTemplates: [template],
+      scopeId: nil
+    )
+
+    XCTAssertTrue(results.isEmpty)
+  }
+
+  func testVariantWhenDoesNotLeakIntoRenderedVisible() throws {
+    let message = EVYTestMessageFixtures.message(
+      id: UUID().uuidString,
+      type: "pickup",
+      value: "pending"
+    )
+    let template = Self.makeVariantTemplate(
+      id: "pending-variant",
+      swipeLabel: "Accept",
+      visible: "{$datum.value == \"pending\"}"
+    )
+
+    let results = EVYSearchResult.makeResults(
+      from: .array([message]),
+      resultTemplates: [template],
+      scopeId: nil
+    )
+    let displayRow = try XCTUnwrap(results.first?.displayRow)
+
+    XCTAssertEqual(displayRow.visible.trimmingCharacters(in: .whitespacesAndNewlines), "true")
+  }
+
+  private static func row(_ json: String) -> UI_Row {
+    let data = Data(json.utf8)
+    return try! JSONDecoder().decode(UI_Row.self, from: data)
+  }
+
+  private static func makeVariantTemplate(
+    id: String,
+    swipeLabel: String,
+    visible: String
+  ) -> UI_Row {
+    let rowJson: [String: Any] = [
+      "id": id,
+      "type": "list_item",
+      "actions": [:] as [String: Any],
+      "title": "{$datum.type} request",
+      "subtitle": "{$datum.value}",
+      "visible": visible,
+      "swipe_label": swipeLabel,
+      "name": "Variant",
+    ]
+    let data = try! JSONSerialization.data(withJSONObject: rowJson)
+    return try! JSONDecoder().decode(UI_Row.self, from: data)
+  }
+
+  private static func makeDestinationSubtitleTemplate() -> UI_Row {
+    row(
+      """
       {
         "id": "message-destination-template",
         "type": "text",
@@ -365,14 +512,12 @@ final class EVYSearchModelTests: XCTestCase {
         "name": "Message"
       }
       """
-    guard let resultTemplateData = resultTemplateJSON.data(using: .utf8) else {
-      return nil
-    }
-    return try? JSONDecoder().decode(UI_Row.self, from: resultTemplateData)
+    )
   }
 
-  private static func makeMessageValueTemplate() -> UI_Row? {
-    let resultTemplateJSON = """
+  private static func makeMessageValueTemplate() -> UI_Row {
+    row(
+      """
       {
         "id": "message-status-template",
         "type": "text",
@@ -383,14 +528,12 @@ final class EVYSearchModelTests: XCTestCase {
         "name": "Message"
       }
       """
-    guard let resultTemplateData = resultTemplateJSON.data(using: .utf8) else {
-      return nil
-    }
-    return try? JSONDecoder().decode(UI_Row.self, from: resultTemplateData)
+    )
   }
 
-  private static func makeListItemTemplate() -> UI_Row? {
-    let resultTemplateJSON = """
+  private static func makeListItemTemplate() -> UI_Row {
+    row(
+      """
       {
         "id": "search-list-item-template",
         "type": "list_item",
@@ -400,14 +543,12 @@ final class EVYSearchModelTests: XCTestCase {
         "image": ""
       }
       """
-    guard let resultTemplateData = resultTemplateJSON.data(using: .utf8) else {
-      return nil
-    }
-    return try? JSONDecoder().decode(UI_Row.self, from: resultTemplateData)
+    )
   }
 
-  private static func makeResultTemplate() -> UI_Row? {
-    let resultTemplateJSON = """
+  private static func makeResultTemplate() -> UI_Row {
+    row(
+      """
       {
         "id": "search-result-template",
         "type": "text",
@@ -417,11 +558,6 @@ final class EVYSearchModelTests: XCTestCase {
         "icon": ""
       }
       """
-
-    guard let resultTemplateData = resultTemplateJSON.data(using: .utf8) else {
-      return nil
-    }
-
-    return try? JSONDecoder().decode(UI_Row.self, from: resultTemplateData)
+    )
   }
 }

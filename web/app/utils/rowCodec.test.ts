@@ -34,19 +34,19 @@ describe("rowCodec", () => {
 		expect(rebuilt.actions).toEqual({});
 	});
 
-	it("round-trips Search child and sheet independently", () => {
+	it("round-trips Search children variants and sheet independently", () => {
 		const search = makeUiRow("search-1", {
 			type: "search",
-			child_row_id: "child-1",
+			children_row_ids: ["child-1"],
 			sheet_row_id: "sheet-1",
 		});
 		const records = rowToFlatRecords(search, NOW);
 		const searchRecord = records.find((r) => r.id === "search-1");
-		expect(searchRecord?.data.child_row_id).toBe("child-1");
+		expect(searchRecord?.data.children_row_ids).toEqual(["child-1"]);
 		expect(searchRecord?.data.sheet_row_id).toBe("sheet-1");
 	});
 
-	it("decomposes nested child and sheet rows into separate records", () => {
+	it("decomposes nested children and sheet rows into separate records", () => {
 		const child = makeUiRow("child-nested", {
 			type: "text",
 			title: "Child",
@@ -59,7 +59,7 @@ describe("rowCodec", () => {
 		});
 		const search = makeUiRow("search-2", {
 			type: "search",
-			child,
+			children: [child],
 			sheet,
 		});
 		const records = rowToFlatRecords(search, NOW);
@@ -71,7 +71,25 @@ describe("rowCodec", () => {
 		const rebuilt = buildRowConfigFromRecord(
 			searchRecord as NonNullable<typeof searchRecord>,
 		);
-		expect(rebuilt.child_row_id).toBe("child-nested");
+		expect(rebuilt.children_row_ids).toEqual(["child-nested"]);
 		expect(rebuilt.sheet_row_id).toBe("sheet-nested");
+	});
+
+	it("round-trips Search template variants via children_row_ids", () => {
+		const search = makeUiRow("search-variants", {
+			type: "search",
+			children_row_ids: ["variant-a", "variant-b"],
+		});
+		const records = rowToFlatRecords(search, NOW);
+		const searchRecord = records.find((r) => r.id === "search-variants");
+		expect(searchRecord?.data.children_row_ids).toEqual([
+			"variant-a",
+			"variant-b",
+		]);
+
+		const rebuilt = buildRowConfigFromRecord(
+			searchRecord as NonNullable<typeof searchRecord>,
+		);
+		expect(rebuilt.children_row_ids).toEqual(["variant-a", "variant-b"]);
 	});
 });

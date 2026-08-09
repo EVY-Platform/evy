@@ -14,6 +14,10 @@ struct EVYTitleSubtitleRow<Trailing: View>: View {
   let centerSubtitleWhenTitleEmpty: Bool
   @ViewBuilder let trailing: () -> Trailing
 
+  // Text states must resolve under this row's page scope, not whatever page
+  // happens to own the globals when the state is (re)built.
+  @Environment(\.evyScope) private var evyScope
+
   init(
     title: String?,
     subtitle: String? = nil,
@@ -40,7 +44,7 @@ struct EVYTitleSubtitleRow<Trailing: View>: View {
           titleView(title)
         }
         if let subtitle, !subtitle.isEmpty {
-          EVYTextView(subtitle, style: .info)
+          EVYTextView(subtitle, style: .info, scope: evyScope)
             .frame(
               maxWidth: .infinity,
               alignment: centerSubtitleWhenTitleEmpty && !showsTitle
@@ -58,12 +62,12 @@ struct EVYTitleSubtitleRow<Trailing: View>: View {
   @ViewBuilder
   private func titleView(_ title: String) -> some View {
     if titleBold {
-      EVYTextView(title, style: .bodyBold)
+      EVYTextView(title, style: .bodyBold, scope: evyScope)
         .frame(maxWidth: .infinity, alignment: .leading)
         .lineLimit(1)
         .truncationMode(.tail)
     } else {
-      EVYTextView(title)
+      EVYTextView(title, scope: evyScope)
         .frame(maxWidth: .infinity, alignment: .leading)
         .lineLimit(1)
         .truncationMode(.tail)

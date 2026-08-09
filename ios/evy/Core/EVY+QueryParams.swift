@@ -75,15 +75,27 @@ extension EVY {
   }
 
   private static func cacheValue(scopeId: String, cacheKey: String, value: Data) {
-    if (try? cacheStore.get(namespace: EVYNamespace.cache, resource: scopeId, id: cacheKey)) != nil
+    // This runs during view body evaluation (navigationDestination), so it must
+    // stay silent when nothing changed: rewriting and posting on every body pass
+    // both churns notifications and reverts cache-local edits to synced data.
+    // Byte equality is a fast path only - JSONEncoder dictionary key order is
+    // not deterministic across encodes, so the decoded comparison decides.
+    if let existingRow = try? cacheStore.get(
+      namespace: EVYNamespace.cache, resource: scopeId, id: cacheKey)
     {
+      if existingRow.data == value { return }
+      if let existingValue = try? existingRow.decoded(),
+        let newValue = try? JSONDecoder().decode(EVYJson.self, from: value),
+        existingValue == newValue
+      {
+        return
+      }
       try? cacheStore.update(
         namespace: EVYNamespace.cache, resource: scopeId, id: cacheKey, value: value)
     } else {
       try? cacheStore.create(
         namespace: EVYNamespace.cache, resource: scopeId, id: cacheKey, value: value)
     }
-    EVYValueChange.post(key: cacheKey)
   }
 
   private static func syncedResourceRefs() -> [String] {

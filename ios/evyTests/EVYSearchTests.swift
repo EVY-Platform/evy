@@ -37,6 +37,35 @@ final class EVYSearchTests: XCTestCase {
     XCTAssertEqual(json, ["input": "28 Rothschild"])
   }
 
+  func testShouldCollapseOnlyForEmptyListOnlySearches() {
+    let cases:
+      [(
+        name: String, placeholder: String?, noResults: String?,
+        hasResults: Bool, isSearching: Bool, expected: Bool
+      )] = [
+        ("empty list-only search collapses", "", "", false, false, true),
+        ("nil placeholder and no_results collapses", nil, nil, false, false, true),
+        ("whitespace-only strings collapse", "  ", " \n", false, false, true),
+        ("no_results copy keeps the empty state", "", "No requests", false, false, false),
+        ("results keep it expanded", "", "", true, false, false),
+        ("query box keeps it expanded", "Search items...", "", false, false, false),
+        ("in-flight search keeps it expanded", "", "", false, true, false),
+      ]
+
+    for testCase in cases {
+      XCTAssertEqual(
+        EVYSearch.shouldCollapse(
+          placeholder: testCase.placeholder,
+          noResults: testCase.noResults,
+          hasResults: testCase.hasResults,
+          isSearching: testCase.isSearching
+        ),
+        testCase.expected,
+        testCase.name
+      )
+    }
+  }
+
   func testSearchDestinationValueStripsIdAndPreservesInstructions() throws {
     let scopeId = EVYDraft.ephemeralScopeId(forPageId: UUID().uuidString)
     EVY.draftStore.activeScopeId = scopeId

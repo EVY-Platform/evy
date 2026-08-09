@@ -374,11 +374,6 @@ describe("rowFieldsFromDefinitions", () => {
 					required: false,
 				},
 				{
-					name: "child_row_id",
-					kind: "child",
-					required: true,
-				},
-				{
 					name: "children_row_ids",
 					kind: "children",
 					required: true,
@@ -416,7 +411,7 @@ describe("inherited structural sheet fields", () => {
 		]);
 	});
 
-	test("every live row type inherits optional sheet and only Search exposes child", async () => {
+	test("every live row type inherits optional sheet and only Search exposes children variants", async () => {
 		const definitions = await loadSduiRowDefinitions();
 		const rowFields = rowFieldsFromDefinitions(definitions);
 		const rowSpec = rowSpecFromDefinitions(definitions);
@@ -432,8 +427,8 @@ describe("inherited structural sheet fields", () => {
 
 		const searchFields = rowFields.search ?? [];
 		expect(searchFields).toContainEqual({
-			name: "child_row_id",
-			kind: "child",
+			name: "children_row_ids",
+			kind: "children",
 			required: false,
 		});
 

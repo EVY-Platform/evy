@@ -1,4 +1,5 @@
 import type { DATA_EVY_Flow, DATA_EVY_Page, DATA_EVY_Row } from "evy-types";
+import { isValidResourceRef } from "evy-types/resourceRef";
 import { useCallback, useMemo } from "react";
 import type { ServiceResource } from "../../types/resources";
 import {
@@ -88,6 +89,21 @@ function buildArgDropdowns(
 			{
 				slotId: `${functionName}-resource`,
 				options: toResourceOptions(serviceResources),
+			},
+		];
+	}
+
+	if (functionName === "clear") {
+		// clear targets draft bindings only; the parser rejects resource refs.
+		return [
+			{
+				slotId: "clear-binding",
+				options: toVariableOptions(
+					draftVariables.filter(
+						(variable) => !isValidResourceRef(variable),
+					),
+					serviceResources,
+				),
 			},
 		];
 	}

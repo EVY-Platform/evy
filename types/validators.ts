@@ -523,6 +523,32 @@ export const validateHookResponse = schemaValidator<HookResponse>(
 	fileId("rpc/hook.response.schema.json"),
 );
 
+function isSearchCatchAllVisible(visible: unknown): boolean {
+	if (typeof visible !== "string") {
+		return true;
+	}
+	const trimmed = visible.trim();
+	return trimmed === "" || trimmed === "true";
+}
+
+function assertSearchVariantConstraints(row: UI_Row, path: string): void {
+	if (row.type !== "search") {
+		return;
+	}
+	const record = row as Record<string, unknown>;
+	const children = record.children;
+	const hasChildren = Array.isArray(children) && children.length > 0;
+	if (!hasChildren) {
+		return;
+	}
+	const lastChild = children[children.length - 1] as UI_Row;
+	if (!isSearchCatchAllVisible(lastChild.visible)) {
+		throw new Error(
+			`Flow validation failed: ${path}.children[${children.length - 1}]: last search template variant must have visible blank or "true" (catch-all)`,
+		);
+	}
+}
+
 function assertUiFlowRowTriggerConstraints(row: UI_Row, path: string): void {
 	const triggerSpecs = SDUI_ROW_TRIGGERS[row.type];
 	if (!triggerSpecs) {
@@ -553,7 +579,7 @@ function assertUiFlowRowTriggerConstraints(row: UI_Row, path: string): void {
 }
 
 /**
- * Visits every row in a flow, including nested sheet/child/children rows.
+ * Visits every row in a flow, including nested sheet/children rows.
  *
  * The one place that knows how a flow's row tree is shaped and how to name a
  * position in it, so the checks below stay flat.
@@ -567,9 +593,6 @@ function forEachFlowRow(
 		const record = row as Record<string, unknown>;
 		if (record.sheet && typeof record.sheet === "object") {
 			walk(record.sheet as UI_Row, `${path}.sheet`);
-		}
-		if (record.child && typeof record.child === "object") {
-			walk(record.child as UI_Row, `${path}.child`);
 		}
 		if (Array.isArray(record.children)) {
 			for (let index = 0; index < record.children.length; index++) {
@@ -682,6 +705,7 @@ export function validateUiFlow(data: unknown): UI_Flow {
 	const submitTargets = new Set<string>();
 	forEachFlowRow(flow, (row, path) => {
 		assertUiFlowRowTriggerConstraints(row, path);
+		assertSearchVariantConstraints(row, path);
 		assertActionBranchesInActions(
 			row.actions,
 			`${path}/actions`,

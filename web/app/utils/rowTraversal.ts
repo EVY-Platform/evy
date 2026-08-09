@@ -1,23 +1,13 @@
 /**
  * Low-level traversal over the flat row graph.
  *
- * Structural row links live in DATA_EVY_Row.data: child_row_id /
- * sheet_row_id / children_row_ids. This module has no dependencies on the
- * higher-level editing helpers so it can be imported from anywhere without
- * creating cycles.
+ * Structural row links live in DATA_EVY_Row.data: sheet_row_id /
+ * children_row_ids. This module has no dependencies on the higher-level
+ * editing helpers so it can be imported from anywhere without creating cycles.
  */
 
 import type { DATA_EVY_Flow, DATA_EVY_Page, DATA_EVY_Row } from "evy-types";
-import {
-	ROW_CHILD_FIELD,
-	ROW_CHILDREN_FIELD,
-	ROW_SHEET_FIELD,
-} from "./rowConstants";
-
-export function getChildRowId(row: DATA_EVY_Row): string | undefined {
-	const v = row.data[ROW_CHILD_FIELD];
-	return typeof v === "string" ? v : undefined;
-}
+import { ROW_CHILDREN_FIELD, ROW_SHEET_FIELD } from "./rowConstants";
 
 export function getSheetRowId(row: DATA_EVY_Row): string | undefined {
 	const v = row.data[ROW_SHEET_FIELD];
@@ -51,7 +41,6 @@ export function walkRows<T>(
 	visit: (
 		id: string,
 		row: DATA_EVY_Row,
-		childId: string | undefined,
 		sheetId: string | undefined,
 		childrenIds: string[],
 	) => T | null | undefined,
@@ -65,13 +54,11 @@ export function walkRows<T>(
 		const row = rowsById[id];
 		if (!row) continue;
 
-		const childId = getChildRowId(row);
 		const sheetId = getSheetRowId(row);
 		const childrenIds = getChildrenRowIds(row);
-		const result = visit(id, row, childId, sheetId, childrenIds);
+		const result = visit(id, row, sheetId, childrenIds);
 		if (result != null) return result;
 
-		if (childId) stack.push(childId);
 		if (sheetId) stack.push(sheetId);
 		stack.push(...childrenIds);
 	}

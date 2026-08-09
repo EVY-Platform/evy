@@ -188,7 +188,6 @@ export function useDraggable({
 				getIsSticky: () =>
 					!!(
 						currentRow?.config.children_row_ids?.length ||
-						currentRow?.config.child_row_id ||
 						currentRow?.config.sheet_row_id
 					),
 				getData: ({ input, element: targetElement }) =>
@@ -216,7 +215,6 @@ export function useDraggable({
 	}, [
 		allowedEdges,
 		currentRow?.config.children_row_ids?.length,
-		currentRow?.config.child_row_id,
 		currentRow?.config.sheet_row_id,
 		dispatchDropIndicator,
 		isDraggable,

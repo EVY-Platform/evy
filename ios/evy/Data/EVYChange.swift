@@ -20,10 +20,6 @@ struct EVYRecordChange: Equatable {
 
   var recordKey: String { "\(namespace):\(resource):\(id)" }
 
-  func matches(namespace: String, resource: String, id: String) -> Bool {
-    self.namespace == namespace && self.resource == resource && self.id == id
-  }
-
   static func from(_ notification: Notification) -> EVYRecordChange? {
     notification.userInfo?[userInfoKey] as? EVYRecordChange
   }

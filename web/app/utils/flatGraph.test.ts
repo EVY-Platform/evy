@@ -99,14 +99,13 @@ describe("collectSubtreeRowIds", () => {
 		expect([...ids]).toEqual(["r1"]);
 	});
 
-	it("collects child_row_id, sheet_row_id and children_row_ids recursively", () => {
+	it("collects sheet_row_id and children_row_ids recursively", () => {
 		const child = makeRow("child");
 		const sheet = makeRow("sheet");
 		const grandchild = makeRow("grandchild");
 		const container = makeRow("container", {
-			child_row_id: "child",
 			sheet_row_id: "sheet",
-			children_row_ids: ["grandchild"],
+			children_row_ids: ["child", "grandchild"],
 		});
 		const maps = makeMaps([], [], [container, child, sheet, grandchild]);
 		const ids = collectSubtreeRowIds("container", maps.rowsById);
@@ -115,23 +114,8 @@ describe("collectSubtreeRowIds", () => {
 		);
 	});
 
-	it("collects child_row_id and children_row_ids recursively", () => {
-		const child = makeRow("child");
-		const grandchild = makeRow("grandchild");
-		const container = makeRow("container", {
-			child_row_id: "child",
-			children_row_ids: ["grandchild"],
-		});
-		const maps = makeMaps([], [], [container, child, grandchild]);
-		const ids = collectSubtreeRowIds("container", maps.rowsById);
-		expect([...ids].sort()).toEqual(
-			["child", "container", "grandchild"].sort(),
-		);
-	});
-
 	it("is cycle-safe", () => {
-		// Pathological: row points to itself
-		const row = makeRow("r", { child_row_id: "r" });
+		const row = makeRow("r", { children_row_ids: ["r"] });
 		const maps = makeMaps([], [], [row]);
 		const ids = collectSubtreeRowIds("r", maps.rowsById);
 		expect([...ids]).toEqual(["r"]);
@@ -158,15 +142,7 @@ describe("findRowIdPath", () => {
 		expect(path).toEqual(["root", "leaf"]);
 	});
 
-	it("finds path through child_row_id", () => {
-		const leaf = makeRow("leaf");
-		const root = makeRow("root", { child_row_id: "leaf" });
-		const maps = makeMaps([], [], [root, leaf]);
-		const path = findRowIdPath(maps.rowsById, ["root"], "leaf");
-		expect(path).toEqual(["root", "leaf"]);
-	});
-
-	it("finds path through children_row_ids", () => {
+	it("finds path through children_row_ids array", () => {
 		const child = makeRow("child");
 		const root = makeRow("root", { children_row_ids: ["child"] });
 		const maps = makeMaps([], [], [root, child]);
@@ -206,7 +182,7 @@ describe("findPageIdContainingRow", () => {
 	it("finds the page for a nested child", () => {
 		const flow = makeFlow("f1", ["p1"]);
 		const child = makeRow("child");
-		const parent = makeRow("parent", { child_row_id: "child" });
+		const parent = makeRow("parent", { children_row_ids: ["child"] });
 		const p1 = makePage("p1", ["parent"]);
 		const maps = makeMaps([flow], [p1], [parent, child]);
 		expect(findPageIdContainingRow(maps, "f1", "child")).toBe("p1");
@@ -239,15 +215,17 @@ describe("findContainerOfRowInPage", () => {
 		});
 	});
 
-	it("finds a child container in footer subtree", () => {
+	it("finds a children container in footer subtree", () => {
 		const leaf = makeRow("leaf");
-		const footerRoot = makeRow("footer-root", { child_row_id: "leaf" });
+		const footerRoot = makeRow("footer-root", {
+			children_row_ids: ["leaf"],
+		});
 		const page = makePage("p1", [], "footer-root");
 		const maps = makeMaps([], [page], [footerRoot, leaf]);
 		const result = findContainerOfRowInPage(maps, page, "leaf");
 		expect(result).toEqual({
 			containerRowId: "footer-root",
-			type: "child",
+			type: "children",
 		});
 	});
 
@@ -272,13 +250,13 @@ describe("findContainerByIdInPage", () => {
 		expect(result?.type).toBe("children");
 	});
 
-	it("identifies a child container by its own id", () => {
-		const container = makeRow("container", { child_row_id: "leaf" });
+	it("identifies a children container with one child by its own id", () => {
+		const container = makeRow("container", { children_row_ids: ["leaf"] });
 		const leaf = makeRow("leaf");
 		const page = makePage("p1", ["container"]);
 		const maps = makeMaps([], [page], [container, leaf]);
 		const result = findContainerByIdInPage(maps, page, "container");
-		expect(result?.type).toBe("child");
+		expect(result?.type).toBe("children");
 	});
 });
 
@@ -313,17 +291,17 @@ describe("insertIntoLocation", () => {
 		).toEqual(["new", "child"]);
 	});
 
-	it("sets child_row_id on a child container", () => {
-		const container = makeRow("container");
+	it("inserts into an empty children container", () => {
+		const container = makeRow("container", { children_row_ids: [] });
 		const newRow = makeRow("new");
 		const page = makePage("p1", ["container"]);
 		const maps = makeMaps([], [page], [container, newRow]);
 
 		const next = insertIntoLocation(maps, "p1", "new", 0, {
 			rowId: "container",
-			type: "child",
+			type: "children",
 		});
-		expect(next.rowsById.container?.data.child_row_id).toBe("new");
+		expect(next.rowsById.container?.data.children_row_ids).toEqual(["new"]);
 	});
 });
 
@@ -380,7 +358,7 @@ describe("removeRowFromPage", () => {
 
 	it("removes descendants along with the target row", () => {
 		const grandchild = makeRow("grandchild");
-		const child = makeRow("child", { child_row_id: "grandchild" });
+		const child = makeRow("child", { children_row_ids: ["grandchild"] });
 		const page = makePage("p1", ["child"]);
 		const maps = makeMaps(
 			[makeFlow("f1", ["p1"])],

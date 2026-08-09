@@ -116,6 +116,12 @@ final class EVYDataStore {
     evyDataStoreGeneration += 1
   }
 
+  /// True while the context holds unsaved mutations - mutation paths are
+  /// expected to leave every store clean, which tests assert through this.
+  var hasPendingChanges: Bool {
+    context.hasChanges
+  }
+
   func create(namespace: String, resource: String, id: String, value: Data, sortIndex: Int = 0)
     throws
   {
@@ -283,5 +289,11 @@ final class EVYDataStore {
       userInfo: [EVYRecordChange.userInfoKey: change]
     )
     postValueChanged(key: resource)
+    // Cache rows are keyed (scopeId, cacheKey): `resource` is the scope id,
+    // which no binding watches - the row id is the resource ref that watchers
+    // actually match on.
+    if namespace == EVYNamespace.cache {
+      postValueChanged(key: id)
+    }
   }
 }

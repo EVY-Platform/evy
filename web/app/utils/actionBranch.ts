@@ -4,9 +4,9 @@ import {
 	type ActionFunctionName,
 	parseActionExpression,
 } from "evy-types/actionAst";
+import { unwrapOptionalBraces } from "evy-types/unwrapBraces";
 import { splitFunctionArguments } from "./functionArgs";
 import { forEachRowInFlows, rowLocationLabel } from "./rowTraversal";
-import { unwrapOptionalBraces } from "./unwrapBraces";
 
 export const ACTION_FUNCTIONS = ACTION_FUNCTION_NAMES;
 export type ActionFunction = ActionFunctionName;
@@ -18,6 +18,7 @@ export const FUNCTION_LABELS: Record<ActionFunction, string> = {
 	navigate: "Navigate",
 	show: "Show row",
 	highlight_required: "Highlight required",
+	clear: "Clear",
 	select: "Select",
 	copy_to_clipboard: "Copy to clipboard",
 	select_photo: "Select photo",

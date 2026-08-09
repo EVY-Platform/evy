@@ -94,19 +94,24 @@ describe("rowFields", () => {
 		}
 	});
 
-	test("exposes child only on Search", () => {
+	test("exposes children only on Search and container rows", () => {
 		for (const type of ALL_ROW_TYPES) {
-			const childField = getRowContentFields(type).find(
-				(f) => f.kind === "child",
+			const childrenField = getRowContentFields(type).find(
+				(f) => f.kind === "children",
 			);
-			if (type === "search") {
-				expect(childField).toEqual({
-					name: "child_row_id",
-					kind: "child",
-					required: false,
+			if (
+				type === "search" ||
+				type === "vertical_container" ||
+				type === "horizontal_container" ||
+				type === "tab_container"
+			) {
+				expect(childrenField).toEqual({
+					name: "children_row_ids",
+					kind: "children",
+					required: type !== "search",
 				});
 			} else {
-				expect(childField).toBeUndefined();
+				expect(childrenField).toBeUndefined();
 			}
 		}
 	});
@@ -124,12 +129,6 @@ describe("rowFields", () => {
 		).toBeLessThan(0);
 		expect(
 			compareRowFieldsForPanel(field("placeholder"), field("value")),
-		).toBeLessThan(0);
-		expect(
-			compareRowFieldsForPanel(
-				field("child_row_id", "child"),
-				field("children_row_ids", "children"),
-			),
 		).toBeLessThan(0);
 		expect(
 			compareRowFieldsForPanel(field("alpha"), field("beta")),

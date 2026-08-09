@@ -171,7 +171,7 @@ enum EVYPreviewMockData {
   }
 
   private static func decomposeAndSeedRow(_ rowObject: [String: Any]) {
-    let metadataKeys: Set<String> = ["id", "name", "type", "visible", "child", "children", "sheet"]
+    let metadataKeys: Set<String> = ["id", "name", "type", "visible", "children", "sheet"]
     var dataFields: [String: Any] = [:]
 
     for (key, value) in rowObject {
@@ -182,11 +182,6 @@ enum EVYPreviewMockData {
     if let sheet = rowObject["sheet"] as? [String: Any], let sheetId = sheet["id"] as? String {
       dataFields["sheet_row_id"] = sheetId
       decomposeAndSeedRow(sheet)
-    }
-
-    if let child = rowObject["child"] as? [String: Any], let childId = child["id"] as? String {
-      dataFields["child_row_id"] = childId
-      decomposeAndSeedRow(child)
     }
 
     if let children = rowObject["children"] as? [[String: Any]] {

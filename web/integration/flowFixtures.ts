@@ -27,7 +27,6 @@ interface ServerRowInput {
 	name?: string;
 	title: string;
 	children?: ServerRowInput[];
-	child?: ServerRowInput;
 	sheet?: ServerRowInput;
 	value?: string;
 	placeholder?: string;
@@ -49,7 +48,7 @@ interface ServerPageInput {
 }
 
 function ensureRowId(row: ServerRowInput): ServerRow {
-	const { children, child, sheet, ...rowRest } = row;
+	const { children, sheet, ...rowRest } = row;
 	const base: Record<string, unknown> = {
 		...rowRest,
 		id: row.id ?? crypto.randomUUID(),
@@ -66,7 +65,6 @@ function ensureRowId(row: ServerRowInput): ServerRow {
 	return {
 		...base,
 		...(children !== undefined ? { children: ensureRowIds(children) } : {}),
-		...(child !== undefined ? { child: ensureRowId(child) } : {}),
 		...(sheet !== undefined ? { sheet: ensureRowId(sheet) } : {}),
 	} as ServerRow;
 }
@@ -77,7 +75,6 @@ function ensureRowIds(rows: ServerRowInput[]): ServerRow[] {
 
 function fillServerRowName(row: ServerRow): ServerRow {
 	const children = (row as { children?: ServerRow[] }).children;
-	const child = (row as { child?: ServerRow }).child;
 	const sheet = (row as { sheet?: ServerRow }).sheet;
 	return {
 		...row,
@@ -85,7 +82,6 @@ function fillServerRowName(row: ServerRow): ServerRow {
 		...(children !== undefined
 			? { children: children.map(fillServerRowName) }
 			: {}),
-		...(child !== undefined ? { child: fillServerRowName(child) } : {}),
 		...(sheet !== undefined ? { sheet: fillServerRowName(sheet) } : {}),
 	} as ServerRow;
 }

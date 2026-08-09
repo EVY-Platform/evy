@@ -66,14 +66,13 @@ describe("normalizeServerRow", () => {
 				type: "vertical_container",
 				source: `{items}`,
 				title: "List",
-				child: makeServerRow({
-					id: ROW_B,
-					type: "text",
-					title: "{$datum.title}",
-				}),
 				children: [
 					makeServerRow({
 						id: ROW_B,
+						type: "text",
+						title: "{$datum.title}",
+					}),
+					makeServerRow({
 						type: "button",
 						label: "Go",
 					}),
@@ -81,19 +80,18 @@ describe("normalizeServerRow", () => {
 			}),
 		);
 
-		const nestedChild = n.child as ServerRow | undefined;
-		expect(nestedChild?.type).toBe("text");
-		expect(nestedChild?.destination).toBeUndefined();
-		expect(rowAttributes(nestedChild)).toEqual({
+		const children = Array.isArray(n.children) ? n.children : [];
+		const nestedText = children[0] as ServerRow | undefined;
+		expect(nestedText?.type).toBe("text");
+		expect(nestedText?.destination).toBeUndefined();
+		expect(rowAttributes(nestedText)).toEqual({
 			title: "{$datum.title}",
 		});
 
-		const firstChild = Array.isArray(n.children)
-			? (n.children[0] as ServerRow | undefined)
-			: undefined;
-		expect(firstChild?.type).toBe("button");
-		expect(firstChild?.destination).toBeUndefined();
-		expect(firstChild).toMatchObject({
+		const nestedButton = children[1] as ServerRow | undefined;
+		expect(nestedButton?.type).toBe("button");
+		expect(nestedButton?.destination).toBeUndefined();
+		expect(nestedButton).toMatchObject({
 			title: "",
 			label: "Go",
 		});
@@ -101,16 +99,18 @@ describe("normalizeServerRow", () => {
 });
 
 describe("normalizeServerRow sheet relationships", () => {
-	it("normalizes nested sheet separately from Search child", () => {
+	it("normalizes nested sheet separately from Search children", () => {
 		const n = normalizeServerRow(
 			makeServerRow({
 				type: "search",
 				title: "search",
-				child: makeServerRow({
-					id: ROW_B,
-					type: "text",
-					title: "Result",
-				}),
+				children: [
+					makeServerRow({
+						id: ROW_B,
+						type: "text",
+						title: "Result",
+					}),
+				],
 				sheet: makeServerRow({
 					id: ROW_A,
 					type: "text",
@@ -119,13 +119,16 @@ describe("normalizeServerRow sheet relationships", () => {
 			}),
 		);
 
-		expect((n.child as ServerRow | undefined)?.id).toBe(ROW_B);
+		const firstChild = Array.isArray(n.children)
+			? (n.children[0] as ServerRow | undefined)
+			: undefined;
+		expect(firstChild?.id).toBe(ROW_B);
 		expect((n.sheet as ServerRow | undefined)?.id).toBe(ROW_A);
 	});
 });
 
 describe("buildRowForNewPageFromBase", () => {
-	it("does not create a default child for a new Search row", () => {
+	it("does not create a default variant for a new Search row", () => {
 		const newId = "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee";
 		const row = buildRowForNewPageFromBase(SearchRow, newId);
 		expect(row.id).toBe(newId);
@@ -134,8 +137,7 @@ describe("buildRowForNewPageFromBase", () => {
 		expect(row.config.placeholder).toBe("");
 		expect(row.config.source).toBe("");
 		expect(row.config.destination).toBe("");
-		expect(row.config.child).toBeUndefined();
-		expect(row.config.child_row_id).toBeUndefined();
+		expect(row.config.children_row_ids).toBeUndefined();
 	});
 
 	it("stamps expand_text with the new row id for TextExpand rows", () => {
@@ -191,7 +193,7 @@ describe("buildRowForNewPageFromBase", () => {
 });
 
 describe("decomposeServerFlow", () => {
-	it("decomposes nested sheet and Search child into distinct keys", () => {
+	it("decomposes nested sheet and Search children into distinct keys", () => {
 		const flow: ServerFlow = {
 			id: "flow-1",
 			name: "Flow",
@@ -210,14 +212,16 @@ describe("decomposeServerFlow", () => {
 							source: "",
 							destination: "",
 							actions: {},
-							child: {
-								id: "child-1",
-								name: "Result",
-								type: "text",
-								visible: "true",
-								title: "Result",
-								actions: {},
-							},
+							children: [
+								{
+									id: "child-1",
+									name: "Result",
+									type: "text",
+									visible: "true",
+									title: "Result",
+									actions: {},
+								},
+							],
 							sheet: {
 								id: "sheet-1",
 								name: "Sheet",
@@ -234,7 +238,7 @@ describe("decomposeServerFlow", () => {
 
 		const graph = decomposeServerFlow(flow, NOW);
 		const searchRecord = graph.rowRows.find((r) => r.id === "search-1");
-		expect(searchRecord?.data.child_row_id).toBe("child-1");
+		expect(searchRecord?.data.children_row_ids).toEqual(["child-1"]);
 		expect(searchRecord?.data.sheet_row_id).toBe("sheet-1");
 		expect(graph.rowRows.map((r) => r.id).sort()).toEqual(
 			["child-1", "search-1", "sheet-1"].sort(),

@@ -164,10 +164,8 @@ function assembleRow(
 
 	const nextVisitedRowIds = new Set(visitedRowIds).add(rowId);
 	const data = { ...row.data } as Record<string, unknown>;
-	const childRowId = data.child_row_id;
 	const sheetRowId = data.sheet_row_id;
 	const children_row_ids = data.children_row_ids;
-	delete data.child_row_id;
 	delete data.sheet_row_id;
 	delete data.children_row_ids;
 
@@ -178,13 +176,6 @@ function assembleRow(
 		type: row.type,
 		visible: row.visible,
 	};
-	if (typeof childRowId === "string") {
-		assembledRow.child = assembleRow(
-			childRowId,
-			rowById,
-			nextVisitedRowIds,
-		);
-	}
 	if (typeof sheetRowId === "string") {
 		assembledRow.sheet = assembleRow(
 			sheetRowId,
@@ -229,7 +220,6 @@ function withRowNameFallbacks(row: UI_Row): UI_Row {
 	return {
 		...row,
 		name: (row.name ?? row.title) || row.type,
-		child: row.child ? withRowNameFallbacks(row.child) : row.child,
 		sheet: row.sheet ? withRowNameFallbacks(row.sheet) : row.sheet,
 		children: Array.isArray(row.children)
 			? row.children.map(withRowNameFallbacks)
@@ -239,10 +229,6 @@ function withRowNameFallbacks(row: UI_Row): UI_Row {
 
 function rowContainsTitle(row: UI_Row, title: string): boolean {
 	if (row.title === title) {
-		return true;
-	}
-
-	if (row.child && rowContainsTitle(row.child, title)) {
 		return true;
 	}
 

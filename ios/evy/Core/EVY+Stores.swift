@@ -95,6 +95,37 @@ extension EVY {
     if (try? counterpartStore.get(namespace: namespace, resource: resource, id: recordId)) != nil {
       try counterpartStore.delete(namespace: namespace, resource: resource, id: recordId)
     }
+
+    refreshCacheSnapshots(recordId: recordId, value: value, encoded: encoded)
+  }
+
+  /// Page-scope cache rows snapshot one entity at navigation time; without
+  /// this, a record updated by sync (websocket delta or full sync) stays stale
+  /// on any page currently holding a snapshot of it. Last write wins: an
+  /// uncommitted cache-local edit is overwritten by the synced record.
+  private static func refreshCacheSnapshots(recordId: String, value: EVYJson, encoded: Data) {
+    guard let cacheRows = try? cacheStore.getAll(namespace: EVYNamespace.cache),
+      !cacheRows.isEmpty
+    else { return }
+    // This runs once per synced record, so a full sync would otherwise decode
+    // every cache row for every record. A snapshot of this entity necessarily
+    // contains its id, so a byte scan cheaply rules out the non-matches.
+    let recordIdBytes = Data(recordId.utf8)
+    for row in cacheRows {
+      guard row.data.range(of: recordIdBytes) != nil,
+        case .dictionary(let snapshot)? = try? row.decoded(),
+        case .string(let snapshotId)? = snapshot["id"],
+        snapshotId == recordId,
+        EVYJson.dictionary(snapshot) != value
+      else { continue }
+      try? cacheStore.update(
+        namespace: EVYNamespace.cache,
+        resource: row.resource,
+        id: row.id,
+        value: encoded,
+        sortIndex: row.sortIndex
+      )
+    }
   }
 
   /// Removes records the server reported as deleted. Without this a `delete`

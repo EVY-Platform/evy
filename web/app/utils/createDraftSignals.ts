@@ -1,4 +1,5 @@
 import type { DATA_EVY_Flow, DATA_EVY_Page, DATA_EVY_Row } from "evy-types";
+import { unwrapOptionalBraces } from "evy-types/unwrapBraces";
 import {
 	finalizeCreateBranchForSave,
 	parseBranchText,
@@ -6,7 +7,6 @@ import {
 } from "./actionBranch";
 import { allRowActions, normalizeStoredRowActions } from "./rowActions";
 import { forEachRowInFlow } from "./rowTraversal";
-import { unwrapOptionalBraces } from "./unwrapBraces";
 
 function extractVariableFromDestination(destination: string): string | null {
 	const trimmed = destination.trim();

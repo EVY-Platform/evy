@@ -22,6 +22,7 @@ mocks.
 | `close()`, `select_photo()`, `expand_photo()`, `delete_photo()` | zero args |
 | `show(rowId)`, `expand_text(rowId)` | one row id |
 | `highlight_required(field)` | one field path (label derivation only) |
+| `clear(binding)` | one draft binding, optionally brace-wrapped; resource refs rejected |
 | `select(value)` | one value-position arg; `$datum` allowed bare |
 | `copy_to_clipboard(value)` | one display-text template; formatters allowed |
 | `navigate(flowId, pageId, {k: v, …}?)` | ids verbatim; query map values are value-position; `[a, b]` array values kept |
@@ -45,6 +46,7 @@ Object-literal arguments nest braces. A message-create call might look like:
 | `expand_text` | Expand the `TextExpand` row with that id, wherever it is on screen. Requires exactly one non-empty row id. |
 | `show` | Present that row in a sheet overlay. The target may be on any synced page. Requires exactly one non-empty id; unresolved ids are errors. |
 | `highlight_required` | Mark a field as required / show validation. |
+| `clear` | Write `""` (the canonical unset) to a page-scoped draft binding, e.g. `{clear(selected_pickup_timeslot)}` after cancelling a request. Rejects service-prefixed resource refs — synced records must go through `update`. |
 | `select` | Ask the triggering row to select `value`, usually `$datum`. Each row type defines what select means (toggle, write scalar, switch segment); unsupported on rows without a select handler. When the resolved value is an **array**, Calendar treats it as a batch toggle-all (see below). |
 | `copy_to_clipboard` | Copy resolved text to the device clipboard. |
 | `navigate` | Go to a page within a flow. Optional third argument is a query map whose values are value-position expressions. |
@@ -186,11 +188,14 @@ again on re-pick.
 			}
 		]
 	},
-	"child": {
-		"id": "387ebe5b-b5b5-4be9-b5db-918bb9db706f",
-		"type": "text",
-		"title": "{$datum.unit} {$datum.street}",
-		"subtitle": "{$datum.postcode} {$datum.city}, {$datum.state}"
-	}
+	"children": [
+		{
+			"id": "387ebe5b-b5b5-4be9-b5db-918bb9db706f",
+			"type": "text",
+			"visible": "true",
+			"title": "{$datum.unit} {$datum.street}",
+			"subtitle": "{$datum.postcode} {$datum.city}, {$datum.state}"
+		}
+	]
 }
 ```

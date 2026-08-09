@@ -241,11 +241,13 @@ test.describe("Sheet Page Rendering", () => {
 											title: "Search Sheet Row",
 											placeholder: "Search...",
 											value: "",
-											child: {
-												type: "text" as const,
-												title: "Search Text Child",
-												subtitle: "Text child",
-											},
+											children: [
+												{
+													type: "text" as const,
+													title: "Search Text Child",
+													subtitle: "Text child",
+												},
+											],
 										},
 										actions: {
 											tap: [
@@ -286,9 +288,6 @@ test.describe("Sheet Page Rendering", () => {
 		await expect(sheetPages).toHaveCount(1);
 		await expect(
 			sheetPages.nth(0).getByText("Search Sheet Row", { exact: true }),
-		).toBeVisible();
-		await expect(
-			sheetPages.nth(0).getByTestId("search-child-sample"),
 		).toBeVisible();
 		await expect(
 			sheetPages.nth(0).getByText("Search Text Child", { exact: true }),
@@ -443,7 +442,7 @@ test.describe("Sheet Page Rendering", () => {
 		await expect(configPanel.getByText("show")).toBeVisible();
 	});
 
-	test("Search with child renders one inline sample under the input", async ({
+	test("Search with children renders template variants under the input", async ({
 		page,
 	}) => {
 		await openAppWithTestFlows(page, [
@@ -456,11 +455,13 @@ test.describe("Sheet Page Rendering", () => {
 						title: "Search Row Title",
 						placeholder: "Search...",
 						value: "",
-						child: {
-							type: "text" as const,
-							title: "Result Template",
-							text: "Template body",
-						},
+						children: [
+							{
+								type: "text" as const,
+								title: "Result Template",
+								text: "Template body",
+							},
+						],
 					},
 				],
 			},
@@ -472,16 +473,13 @@ test.describe("Sheet Page Rendering", () => {
 		await searchRow.click();
 
 		const activePage = getFirstPage(page);
-		await expect(
-			activePage.getByTestId("search-child-sample"),
-		).toBeVisible();
 		await expect(
 			activePage.getByText("Result Template", { exact: true }),
 		).toBeVisible();
 		await expect(page.getByTestId("sheet-page")).not.toBeVisible();
 	});
 
-	test("Search without child shows inline drop target and optional blank sheet page", async ({
+	test("Search without children shows inline drop target and optional blank sheet page", async ({
 		page,
 	}) => {
 		await openAppWithTestFlows(page, [
@@ -505,9 +503,7 @@ test.describe("Sheet Page Rendering", () => {
 		await searchRow.click();
 
 		const activePage = getFirstPage(page);
-		await expect(
-			activePage.getByTestId("search-child-drop-target"),
-		).toBeVisible();
+		await expect(activePage.getByText("Drop row here")).toBeVisible();
 		await expect(page.getByTestId("blank-sheet-page")).toBeVisible();
 		await expect(page.getByTestId("sheet-page")).not.toBeVisible();
 	});

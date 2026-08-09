@@ -21,12 +21,44 @@ struct EVYSearchResult: Equatable, Identifiable {
   }
 
   @MainActor
+  private static func variantMatches(visible: String, datum: EVYJson) -> Bool {
+    let trimmed = visible.trimmingCharacters(in: .whitespacesAndNewlines)
+    if trimmed.isEmpty || trimmed == "true" {
+      return true
+    }
+    return
+      (try? evyEvaluate(trimmed, boundTo: datum) {
+        try _evaluateFromText(wrappedExpression($0))
+      }) ?? false
+  }
+
+  private struct PreparedVariant {
+    let visible: String
+    let formatter: EVYDatumRowFormatter
+  }
+
+  @MainActor
+  private static func prepareVariants(_ templates: [UI_Row]) -> [PreparedVariant] {
+    templates.compactMap { template in
+      guard
+        let formatter = try? EVYDatumRowFormatter(
+          template: template,
+          neutralizingVisible: true
+        )
+      else {
+        return nil
+      }
+      return PreparedVariant(visible: template.visible, formatter: formatter)
+    }
+  }
+
+  @MainActor
   static func makeResults(
     from sourceData: EVYJson?,
-    resultTemplate: UI_Row?,
+    resultTemplates: [UI_Row],
     scopeId: String?
   ) -> [EVYSearchResult] {
-    guard let sourceData, let resultTemplate else {
+    guard let sourceData, !resultTemplates.isEmpty else {
       return []
     }
 
@@ -37,13 +69,23 @@ struct EVYSearchResult: Equatable, Identifiable {
       dataRows = [sourceData]
     }
 
+    let preparedVariants = prepareVariants(resultTemplates)
+    guard !preparedVariants.isEmpty else {
+      return []
+    }
+
     do {
       // The formatter resolves each row's templates internally and takes no
       // scope of its own, so the scope has to be installed around the call.
       return try EVY.withScope(.cache(scopeId)) {
-        let formatter = try EVYDatumRowFormatter(template: resultTemplate)
         return dataRows.compactMap { datum in
-          guard let (displayRow, searchableValues) = try? formatter.formattedResult(datum: datum)
+          guard
+            let match = preparedVariants.first(where: {
+              variantMatches(visible: $0.visible, datum: datum)
+            }),
+            let (displayRow, searchableValues) = try? match.formatter.formattedResult(
+              datum: datum
+            )
           else {
             return nil
           }
@@ -65,12 +107,12 @@ struct EVYSearchResult: Equatable, Identifiable {
   @MainActor
   static func loadLocalResults(
     source: String,
-    resultTemplate: UI_Row?,
+    resultTemplates: [UI_Row],
     scopeId: String?
   ) -> [EVYSearchResult] {
     return makeResults(
       from: try? EVY.getDataFromText(source, scope: .cache(scopeId)),
-      resultTemplate: resultTemplate,
+      resultTemplates: resultTemplates,
       scopeId: scopeId
     )
   }
@@ -85,17 +127,17 @@ final class EVYSearchModel {
   /// True once a search has completed (success or failure) since the last `clearResults()`.
   private(set) var hasSearched = false
 
-  private let resultTemplate: UI_Row?
+  private let resultTemplates: [UI_Row]
   private let scopeId: String?
   private let requester: any EVYSearchRequesting
 
   init(
     method: String,
-    resultTemplate: UI_Row?,
+    resultTemplates: [UI_Row],
     scopeId: String?,
     requester: (any EVYSearchRequesting)? = nil
   ) {
-    self.resultTemplate = resultTemplate
+    self.resultTemplates = resultTemplates
     self.scopeId = scopeId
     self.requester = requester ?? EVYAPISearchRequester(method: method)
   }
@@ -117,7 +159,7 @@ final class EVYSearchModel {
 
       results = EVYSearchResult.makeResults(
         from: response,
-        resultTemplate: resultTemplate,
+        resultTemplates: resultTemplates,
         scopeId: scopeId
       )
       hasSearched = true

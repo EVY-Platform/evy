@@ -31,8 +31,11 @@
 				"no_results": {
 					"type": "string"
 				},
-				"child": {
-					"$ref": "../evy.schema.json#/$defs/UI_Row"
+				"children": {
+					"type": "array",
+					"items": {
+						"$ref": "../evy.schema.json#/$defs/UI_Row"
+					}
 				}
 			}
 		}

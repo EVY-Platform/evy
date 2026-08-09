@@ -323,7 +323,6 @@ extension EVY {
             id: cacheRow.id,
             value: encodedData
           )
-          cacheStore.postValueChanged(key: cacheRow.id)
         }
       }
 
@@ -500,7 +499,7 @@ extension EVY {
         if let cachedRow = try? cacheStore.get(
           namespace: EVYNamespace.cache, resource: scopeId, id: cacheKey)
         {
-          return (cachedRow, publicStore, remaining)
+          return (cachedRow, cacheStore, remaining)
         }
       }
     }

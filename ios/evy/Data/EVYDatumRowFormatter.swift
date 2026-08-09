@@ -73,10 +73,13 @@ final class EVYDatumRowFormatter {
     }
   }
 
-  init(template: UI_Row) throws {
+  init(template: UI_Row, neutralizingVisible: Bool = false) throws {
     let data = try JSONEncoder().encode(template)
-    guard let root = try JSONSerialization.jsonObject(with: data) as? [String: Any] else {
+    guard var root = try JSONSerialization.jsonObject(with: data) as? [String: Any] else {
       throw EVYDatumRowFormattingError.invalidTemplate
+    }
+    if neutralizingVisible {
+      root["visible"] = "true"
     }
     rootPrototype = root
   }

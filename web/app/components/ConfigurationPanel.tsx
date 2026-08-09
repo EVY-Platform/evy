@@ -66,6 +66,7 @@ function ConfigTextField({
 				placeholder={placeholder}
 				ariaLabel={ariaLabel}
 				labelClassName={labelClassName}
+				multiline
 				getAttributeCandidatesForQualifier={
 					getAttributeCandidatesForQualifier
 				}
@@ -277,12 +278,7 @@ export function ConfigurationPanel() {
 				.filter((f) => isPanelScalarField(f.kind))
 				.sort(compareRowFieldsForPanel);
 			const childFields = fields
-				.filter(
-					(f) =>
-						f.kind === "child" ||
-						f.kind === "children" ||
-						f.kind === "sheet",
-				)
+				.filter((f) => f.kind === "children" || f.kind === "sheet")
 				.sort(compareRowFieldsForPanel);
 
 			const getAttributeCandidatesForQualifier =
@@ -328,7 +324,7 @@ export function ConfigurationPanel() {
 			const containerElements = childFields.flatMap((field) => {
 				const uniqueId = `${configRow.id}-${field.name}`;
 				let childInfos: ChildInfo[] = [];
-				if (field.kind === "child" || field.kind === "sheet") {
+				if (field.kind === "sheet") {
 					const relationshipId = merged[field.name];
 					if (typeof relationshipId === "string") {
 						const record = rowsById[relationshipId];
@@ -357,12 +353,7 @@ export function ConfigurationPanel() {
 				}
 
 				if (childInfos.length === 0) return [];
-				const label =
-					field.kind === "child"
-						? "Search result"
-						: field.kind === "sheet"
-							? "Sheet"
-							: "Children";
+				const label = field.kind === "sheet" ? "Sheet" : "Children";
 
 				return [
 					<div key={uniqueId}>

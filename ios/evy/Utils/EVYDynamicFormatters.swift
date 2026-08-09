@@ -18,8 +18,12 @@ private func evyResolveInputInterpolations(
   _ template: String,
   input: EVYJson
 ) -> String {
-  guard case .dictionary(let dict) = input else {
-    return template
+  // Non-dictionary input (e.g. an unset draft alias resolving to "") formats as
+  // an empty record, matching web's evaluateDynamicFormatter - every {input.x}
+  // resolves to "" so the separator tidy can reduce the template to "".
+  var dict: [String: EVYJson] = [:]
+  if case .dictionary(let dictValue) = input {
+    dict = dictValue
   }
 
   let nsTemplate = template as NSString

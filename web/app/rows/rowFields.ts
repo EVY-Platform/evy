@@ -23,13 +23,7 @@ export const BINDING_FIELD_COPY: Record<
 	},
 };
 
-type RowFieldKind =
-	| "text"
-	| "textList"
-	| "child"
-	| "children"
-	| "sheet"
-	| "enum";
+type RowFieldKind = "text" | "textList" | "children" | "sheet" | "enum";
 
 // exported for tests
 export type RowField = {
@@ -127,7 +121,5 @@ export function compareRowFieldsForPanel(a: RowField, b: RowField): number {
 			panelTextFieldRank(a.name) - panelTextFieldRank(b.name);
 		return rankDiff !== 0 ? rankDiff : a.name.localeCompare(b.name);
 	}
-	if (a.kind === "child" && b.kind === "children") return -1;
-	if (a.kind === "children" && b.kind === "child") return 1;
 	return a.name.localeCompare(b.name);
 }

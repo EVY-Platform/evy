@@ -1,5 +1,6 @@
 import { baseRows } from "../../rows/baseRows";
 import type { AppState, RowAction } from "../../types/actions";
+import type { ContainerType } from "../../types/row";
 import { buildRowForNewPageFromBase } from "../../utils/decodeFlow";
 import {
 	addFlowRecords,
@@ -64,17 +65,13 @@ type ContainerDropSelection = {
 	configStack: string[];
 };
 
-function resolveContainerDropSelection(
+function resolveSheetDropSelection(
 	state: AppState,
 	pageId: string,
-	destinationContainer: { type: string; rowId: string } | undefined,
+	destinationContainer: { type: ContainerType; rowId: string } | undefined,
 	targetRowId: string,
 ): ContainerDropSelection | null {
-	if (
-		!destinationContainer ||
-		(destinationContainer.type !== "child" &&
-			destinationContainer.type !== "sheet")
-	) {
+	if (destinationContainer?.type !== "sheet") {
 		return null;
 	}
 	const page = state.pagesById[pageId];
@@ -96,10 +93,10 @@ function applyStructuralContainerDrop(
 	state: AppState,
 	nextMaps: FlowEntityMaps,
 	destinationPageId: string,
-	destinationContainer: { type: string; rowId: string } | undefined,
+	destinationContainer: { type: ContainerType; rowId: string } | undefined,
 	selectedRowId: string,
 ): AppState {
-	const containerSelection = resolveContainerDropSelection(
+	const containerSelection = resolveSheetDropSelection(
 		{ ...state, ...nextMaps },
 		destinationPageId,
 		destinationContainer,

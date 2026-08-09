@@ -235,14 +235,11 @@ actor WSEmitter {
   ) -> String {
     let rowId = (rowData["id"] as? String) ?? UUID().uuidString
     var data = rowData
-    for key in ["id", "name", "type", "visible", "child", "children", "sheet"] {
+    for key in ["id", "name", "type", "visible", "children", "sheet"] {
       data.removeValue(forKey: key)
     }
     if let sheet = rowData["sheet"] as? [String: Any] {
       data["sheet_row_id"] = decomposeRow(rowData: sheet, rows: &rows, now: now)
-    }
-    if let child = rowData["child"] as? [String: Any] {
-      data["child_row_id"] = decomposeRow(rowData: child, rows: &rows, now: now)
     }
     if let children = rowData["children"] as? [[String: Any]], !children.isEmpty {
       data["children_row_ids"] = children.map { child in
@@ -1539,6 +1536,24 @@ class E2ETestBase: XCTestCase {
     message: String
   ) -> [String: Any] {
     let rowSuffix = cancelRequestSheetSuffixes[type]?.row ?? "a"
+    var confirmButton = Self.confirmSheetButton(
+      id: "f3a4b5c6-d7e8-4f9a-0b1c-2d3e4f5a6b7\(rowSuffix)",
+      label: "Cancel request",
+      action: cancelAction,
+      name: "Confirm cancel \(type) request",
+      style: "danger"
+    )
+    // Mirrors the production fixture: cancelling clears the timeslot the
+    // buyer had selected so the picker does not re-render it highlighted.
+    if type == "pickup" || type == "delivery" {
+      var confirmActions =
+        (confirmButton["actions"] as? [String: Any])?["tap"] as? [[String: Any]] ?? []
+      confirmActions.insert(
+        Self.rowAction(true: "{clear(selected_\(type)_timeslot)}"),
+        at: 1
+      )
+      confirmButton["actions"] = Self.actionsObject(tap: confirmActions)
+    }
     return Self.confirmationSheetChild(
       id: cancelRequestSheetId(type: type),
       name: "Cancel \(type) confirmation sheet",
@@ -1550,13 +1565,7 @@ class E2ETestBase: XCTestCase {
           name: "Cancel \(type) confirmation message"
         )
       ],
-      confirmButton: Self.confirmSheetButton(
-        id: "f3a4b5c6-d7e8-4f9a-0b1c-2d3e4f5a6b7\(rowSuffix)",
-        label: "Cancel request",
-        action: cancelAction,
-        name: "Confirm cancel \(type) request",
-        style: "danger"
-      )
+      confirmButton: confirmButton
     )
   }
 

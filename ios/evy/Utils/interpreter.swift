@@ -742,7 +742,9 @@ private func interpolations(in input: String) -> [(fullMatch: String, inner: Str
 private func parseComparisonFromText(_ input: String) -> (fullMatch: String, content: String)? {
   for block in interpolations(in: input) {
     let comparison = block.inner.trimmingCharacters(in: .whitespacesAndNewlines)
-    if firstTopLevelComparison(in: comparison) != nil {
+    if firstTopLevelComparison(in: comparison) != nil
+      || _containsTopLevelBooleanSyntax(comparison)
+    {
       return (block.fullMatch, comparison)
     }
   }

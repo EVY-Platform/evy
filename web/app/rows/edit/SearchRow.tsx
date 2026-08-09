@@ -1,4 +1,4 @@
-import { SearchChildSample } from "../../components/SearchChildSample";
+import { ContainerChildren } from "../../components/ContainerChildren";
 import type { RowConfig } from "../../types/row";
 import { defineRow } from "../defineRow";
 import InlineIcon from "../design-system/InlineIcon";
@@ -25,9 +25,12 @@ export default defineRow("SearchRow", {
 					placeholder={row.config.placeholder}
 				/>
 			</div>
-			<SearchChildSample
-				searchRowId={row.id}
-				childRowId={row.config.child_row_id}
+			<ContainerChildren
+				childIds={row.config.children_row_ids ?? []}
+				orientation="vertical"
+				showIndicators
+				containerRowId={row.id}
+				containerType="children"
 			/>
 		</RowLayout>
 	),

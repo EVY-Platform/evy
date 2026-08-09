@@ -31,6 +31,8 @@ final class InterpreterTests: XCTestCase {
     XCTAssertFalse(try EVY.evaluateFromText("{0 > 1 || 0 > 2}"))
     XCTAssertTrue(try EVY.evaluateFromText("{1 > 0 && 2 > 1}"))
     XCTAssertFalse(try EVY.evaluateFromText("{1 > 0 && 0 > 1}"))
+    XCTAssertTrue(try EVY.evaluateFromText("{(0 > 1) || (1 > 0)}"))
+    XCTAssertFalse(try EVY.evaluateFromText("{(0 > 1) || (0 > 2)}"))
   }
 
   func testEvaluatesFunctionOperands() throws {
@@ -387,6 +389,35 @@ final class InterpreterTests: XCTestCase {
     XCTAssertEqual(pickupSelections.value, ["2026-07-20T07:00:00"])
     XCTAssertEqual(deliverySelections.value, ["2026-07-22T07:00:00"])
     XCTAssertEqual(pickupAddress.value, secondAddress)
+  }
+
+  /// cacheQueryParams runs during body evaluation, so re-resolving the same
+  /// query must not rewrite the cache row or post change notifications.
+  func testCacheQueryParamsIsSilentWhenValueUnchanged() throws {
+    let itemsRef = "\(MarketplaceTestFixture.service).\(uniqueKey("silent_items"))"
+    let id = UUID().uuidString
+
+    try store(
+      .array([
+        .dictionary([
+          "id": .string(id),
+          "title": .string("Original"),
+        ])
+      ]),
+      at: itemsRef
+    )
+
+    EVY.cacheQueryParams([EVY.entityIdQueryKey: [id]], forPageId: testPageId)
+
+    var notificationCount = 0
+    let observer = NotificationCenter.default.addObserver(
+      forName: .evyValueChanged, object: nil, queue: nil
+    ) { _ in notificationCount += 1 }
+    defer { NotificationCenter.default.removeObserver(observer) }
+
+    EVY.cacheQueryParams([EVY.entityIdQueryKey: [id]], forPageId: testPageId)
+
+    XCTAssertEqual(notificationCount, 0)
   }
 
   func testResolveQueryParamsDoesNotCacheSingularAlias() throws {
@@ -1258,6 +1289,130 @@ final class InterpreterTests: XCTestCase {
     XCTAssertEqual(items.map { $0.identifierValue() }, [openRequestId])
   }
 
+  func testSortFilteredForYouSourceReturnsPendingOwnedRequest() throws {
+    EVYOwnershipLedger.reset()
+    defer { EVYOwnershipLedger.reset() }
+
+    let messagesRef = EVYCoreResource.messages.ref
+    let itemId = UUID().uuidString
+    let requestId = UUID().uuidString
+    let resource = MarketplaceTestFixture.itemsRef
+
+    EVY.recordOwnership(resource: resource, id: itemId)
+
+    try store(
+      .array([
+        EVYTestMessageFixtures.message(
+          id: requestId,
+          fk: itemId,
+          resource: resource,
+          created_at: "2026-06-01T00:00:00.000Z",
+          type: "pickup",
+          value: "pending",
+          time: "2026-06-03T09:00:00"
+        )
+      ]),
+      at: messagesRef
+    )
+
+    let forYouPredicate = """
+      owns($datum.resource, $datum.fk) == true && findFirst(sort(\(messagesRef), desc, created_at), fk == $datum.fk && type == $datum.type).id == $datum.id && (($datum.value == "pending") || ($datum.value == "transaction" && $datum.type == pickup))
+      """
+
+    let viaProps = try EVY.getDataFromProps(
+      "sort(filter(\(messagesRef), \(forYouPredicate)), desc, created_at)"
+    )
+    guard case .array(let propItems) = viaProps else {
+      return XCTFail("getDataFromProps(sort(filter(...))) should return an array, got \(viaProps)")
+    }
+    XCTAssertEqual(propItems.map { $0.identifierValue() }, [requestId])
+
+    let source = """
+      {sort(filter(\(messagesRef), \(forYouPredicate)), desc, created_at)}
+      """
+
+    let result = try EVY.getDataFromText(source)
+    guard case .array(let items) = result else {
+      return XCTFail("sort(filter(...)) should return an array")
+    }
+    XCTAssertEqual(items.map { $0.identifierValue() }, [requestId])
+  }
+
+  func testFactoredHomeTabSourcePredicatesMatchLegacyForms() throws {
+    EVYOwnershipLedger.reset()
+    defer { EVYOwnershipLedger.reset() }
+
+    let messagesRef = EVYCoreResource.messages.ref
+    let ownedItemId = UUID().uuidString
+    let buyerItemId = UUID().uuidString
+    let resource = MarketplaceTestFixture.itemsRef
+    EVY.recordOwnership(resource: resource, id: ownedItemId)
+
+    let pendingOwned = UUID().uuidString
+    let handshakeOwned = UUID().uuidString
+    let buyerPickup = UUID().uuidString
+    let buyerGiven = UUID().uuidString
+    let stalePending = UUID().uuidString
+
+    try store(
+      .array([
+        EVYTestMessageFixtures.message(
+          id: pendingOwned, fk: ownedItemId, resource: resource,
+          created_at: "2026-06-01T00:00:00.000Z", type: "pickup", value: "pending"),
+        EVYTestMessageFixtures.message(
+          id: handshakeOwned, fk: ownedItemId, resource: resource,
+          created_at: "2026-06-01T00:01:00.000Z", type: "pickup", value: "transaction"),
+        EVYTestMessageFixtures.message(
+          id: buyerPickup, fk: buyerItemId, resource: resource,
+          created_at: "2026-06-01T00:02:00.000Z", type: "pickup", value: "accept"),
+        EVYTestMessageFixtures.message(
+          id: buyerGiven, fk: buyerItemId, resource: resource,
+          created_at: "2026-06-01T00:03:00.000Z", type: "delivery", value: "given"),
+        EVYTestMessageFixtures.message(
+          id: stalePending, fk: ownedItemId, resource: resource,
+          created_at: "2026-06-01T00:00:00.000Z", type: "pickup", value: "pending"),
+        EVYTestMessageFixtures.message(
+          id: UUID().uuidString, fk: ownedItemId, resource: resource,
+          created_at: "2026-06-01T00:04:00.000Z", type: "pickup", value: "accept",
+          parent_message_id: stalePending, time: "2026-06-03T09:00:00"),
+      ]),
+      at: messagesRef
+    )
+
+    let latest =
+      "findFirst(sort(\(messagesRef), desc, created_at), fk == $datum.fk && type == $datum.type).id == $datum.id"
+    let legacyForYou = """
+      ($datum.value == "pending" && owns($datum.resource, $datum.fk) == true && \(latest)) || ($datum.value == "transaction" && owns($datum.resource, $datum.fk) == true && $datum.type == pickup && \(latest))
+      """
+    let factoredForYou = """
+      owns($datum.resource, $datum.fk) == true && \(latest) && (($datum.value == "pending") || ($datum.value == "transaction" && $datum.type == pickup))
+      """
+    XCTAssertEqual(
+      try sortedFilterIds(messagesRef: messagesRef, predicate: legacyForYou),
+      try sortedFilterIds(messagesRef: messagesRef, predicate: factoredForYou)
+    )
+
+    let legacyScheduled = """
+      ($datum.value == "accept" && owns($datum.resource, $datum.fk) == false && $datum.type == pickup && \(latest)) || (owns($datum.resource, $datum.fk) == false && (($datum.type == delivery && $datum.value == "given") || ($datum.type == shipping && $datum.value == "sent")) && \(latest)) || ($datum.value == "accept" && owns($datum.resource, $datum.fk) == true && $datum.type == delivery && \(latest) && findFirst(sort(marketplace.item_statuses, desc, created_at), item_id == $datum.fk).status == "sold") || ($datum.value == "accept" && owns($datum.resource, $datum.fk) == true && $datum.type == shipping && \(latest) && findFirst(sort(marketplace.item_statuses, desc, created_at), item_id == $datum.fk).status == "sold") || ($datum.value == "accept" && \(latest) && ($datum.type != pickup || owns($datum.resource, $datum.fk) == true) && ($datum.type == pickup || owns($datum.resource, $datum.fk) == false || findFirst(sort(marketplace.item_statuses, desc, created_at), item_id == $datum.fk).status != "sold"))
+      """
+    let factoredScheduled = """
+      \(latest) && ($datum.value == "accept" || (owns($datum.resource, $datum.fk) == false && (($datum.type == delivery && $datum.value == "given") || ($datum.type == shipping && $datum.value == "sent"))))
+      """
+    XCTAssertEqual(
+      try sortedFilterIds(messagesRef: messagesRef, predicate: legacyScheduled),
+      try sortedFilterIds(messagesRef: messagesRef, predicate: factoredScheduled)
+    )
+  }
+
+  private func sortedFilterIds(messagesRef: String, predicate: String) throws -> [String] {
+    let source = "{sort(filter(\(messagesRef), \(predicate)), desc, created_at)}"
+    let result = try EVY.getDataFromText(source)
+    guard case .array(let items) = result else {
+      return []
+    }
+    return items.map { $0.identifierValue() }
+  }
+
   func testNowFunctionReturnsPinnedClockISO8601() throws {
     let pinnedDate = Date(timeIntervalSince1970: 1_780_000_000)
     EVY.nowProvider = { pinnedDate }
@@ -1553,6 +1708,20 @@ final class InterpreterTests: XCTestCase {
       let key = try storeAddress(overrides: testCase.overrides, removing: testCase.removing)
       let out = try parseTextFromText("{formatAddress(\(key))}")
       XCTAssertEqual(out.value, testCase.expected, testCase.name)
+    }
+  }
+
+  func testFormatAddressNonDictionaryInput() throws {
+    let cases: [(name: String, value: EVYJson)] = [
+      ("empty string draft alias", .string("")),
+      ("null value", .null),
+    ]
+
+    for testCase in cases {
+      let key = uniqueKey("address")
+      try store(testCase.value, at: key)
+      let out = try parseTextFromText("{formatAddress(\(key))}")
+      XCTAssertEqual(out.value, "", testCase.name)
     }
   }
 

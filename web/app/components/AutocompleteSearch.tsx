@@ -171,6 +171,44 @@ export function AutocompleteSearch({
 		element.setSelectionRange(pendingFocus, pendingFocus);
 	}, [value]);
 
+	const syncMultilineHeight = useCallback(() => {
+		const element = fieldElementRef.current;
+		if (!(element instanceof HTMLTextAreaElement)) return;
+		element.style.height = "auto";
+		element.style.height = `${element.scrollHeight}px`;
+		if (isOpen) updateDropdownPosition();
+	}, [isOpen, updateDropdownPosition]);
+
+	// biome-ignore lint/correctness/useExhaustiveDependencies: resize after value changes; height comes from DOM scrollHeight
+	useLayoutEffect(() => {
+		if (!multiline) return;
+		syncMultilineHeight();
+	}, [value, multiline, syncMultilineHeight]);
+
+	useLayoutEffect(() => {
+		if (!multiline) return;
+		const element = fieldElementRef.current;
+		if (!(element instanceof HTMLTextAreaElement)) return;
+
+		let frameId = 0;
+		let lastWidth = element.offsetWidth;
+		const observer = new ResizeObserver((entries) => {
+			const entry = entries[entries.length - 1];
+			if (!entry) return;
+			const nextWidth =
+				entry.borderBoxSize?.[0]?.inlineSize ?? entry.contentRect.width;
+			if (nextWidth === lastWidth) return;
+			lastWidth = nextWidth;
+			cancelAnimationFrame(frameId);
+			frameId = requestAnimationFrame(syncMultilineHeight);
+		});
+		observer.observe(element);
+		return () => {
+			cancelAnimationFrame(frameId);
+			observer.disconnect();
+		};
+	}, [multiline, syncMultilineHeight]);
+
 	const handleListNavigationKey = useCallback(
 		(event: React.KeyboardEvent): boolean => {
 			if (event.key === "ArrowDown") {
@@ -336,7 +374,7 @@ export function AutocompleteSearch({
 			)}
 			<div ref={fieldRef} className="evy-id-autocomplete-field">
 				{multiline ? (
-					<textarea {...inputProps} />
+					<textarea rows={1} {...inputProps} />
 				) : (
 					<input type="text" {...inputProps} />
 				)}
