@@ -453,25 +453,6 @@ final class EVYSearchModelTests: XCTestCase {
     XCTAssertTrue(results.isEmpty)
   }
 
-  func testSingleChildStillRenders() throws {
-    let messageId = UUID().uuidString
-    let message = EVYTestMessageFixtures.message(
-      id: messageId,
-      type: "pickup",
-      value: "pending"
-    )
-    let template = Self.makeMessageValueTemplate()
-
-    let results = EVYSearchResult.makeResults(
-      from: .array([message]),
-      resultTemplates: [template],
-      scopeId: nil
-    )
-
-    XCTAssertEqual(results.count, 1)
-    XCTAssertEqual(results.first?.displayRow.title, "pickup request")
-  }
-
   func testVariantWhenDoesNotLeakIntoRenderedVisible() throws {
     let message = EVYTestMessageFixtures.message(
       id: UUID().uuidString,

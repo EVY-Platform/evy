@@ -1,5 +1,6 @@
 import { procedureResultAttributes } from "evy-types/procedures";
 import { serviceOfRef, splitRefFromPath } from "evy-types/resourceRef";
+import { unwrapOptionalBraces } from "evy-types/unwrapBraces";
 import {
 	getAllRowBindingFieldNames,
 	getAllRowContentFieldNames,
@@ -11,7 +12,6 @@ import type {
 import { ACTION_FUNCTIONS } from "./actionBranch";
 import { ROW_ATTRIBUTE_STATIC_NAMES } from "./rowConstants";
 import { parseApiSourceMethod } from "./sourceBinding";
-import { unwrapOptionalBraces } from "./unwrapBraces";
 
 type IdCandidateCategory =
 	| "Resource"

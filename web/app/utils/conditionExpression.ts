@@ -1,10 +1,10 @@
+import { unwrapOptionalBraces } from "evy-types/unwrapBraces";
 import type { ServiceResource } from "../types/resources";
 import { parseOperand } from "./actionOperands";
 import {
 	formatResourcePathForDisplay,
 	resourceDisplayNames,
 } from "./resourcePathDisplay";
-import { unwrapOptionalBraces } from "./unwrapBraces";
 
 export const COMPARISON_OPERATORS = ["==", "!=", ">", "<", ">=", "<="] as const;
 type ComparisonOperator = (typeof COMPARISON_OPERATORS)[number];

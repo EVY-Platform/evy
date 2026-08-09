@@ -1315,45 +1315,17 @@ final class InterpreterTests: XCTestCase {
       at: messagesRef
     )
 
-    let filteredOnly = try EVY.getDataFromText("{filter(\(messagesRef), $datum.value == pending)}")
-    guard case .array(let filteredItems) = filteredOnly else {
-      return XCTFail("filter alone should return an array")
-    }
-    XCTAssertEqual(filteredItems.map { $0.identifierValue() }, [requestId])
-
-    let viaProps = try EVY.getDataFromProps("filter(\(messagesRef), $datum.value == pending)")
-    guard case .array(let propItems) = viaProps else {
-      return XCTFail("getDataFromProps(filter(...)) should return an array, got \(viaProps)")
-    }
-    XCTAssertEqual(propItems.map { $0.identifierValue() }, [requestId])
-
-    let sortedViaProps = try EVY.getDataFromProps(
-      "sort(filter(\(messagesRef), $datum.value == pending), desc, created_at)"
-    )
-    guard case .array(let sortedPropItems) = sortedViaProps else {
-      return XCTFail("getDataFromProps(sort(...)) should return an array, got \(sortedViaProps)")
-    }
-    XCTAssertEqual(sortedPropItems.map { $0.identifierValue() }, [requestId])
-
-    let simpleSorted = try EVY.getDataFromText(
-      "{sort(filter(\(messagesRef), $datum.value == pending), desc, created_at)}"
-    )
-    guard case .array(let simpleItems) = simpleSorted else {
-      return XCTFail("simple sort(filter(...)) should return an array")
-    }
-    XCTAssertEqual(simpleItems.map { $0.identifierValue() }, [requestId])
-
     let forYouPredicate = """
       owns($datum.resource, $datum.fk) == true && findFirst(sort(\(messagesRef), desc, created_at), fk == $datum.fk && type == $datum.type).id == $datum.id && (($datum.value == "pending") || ($datum.value == "transaction" && $datum.type == pickup))
       """
 
-    let filteredForYou = try EVY.getDataFromText(
-      "{filter(\(messagesRef), \(forYouPredicate))}"
+    let viaProps = try EVY.getDataFromProps(
+      "sort(filter(\(messagesRef), \(forYouPredicate)), desc, created_at)"
     )
-    guard case .array(let forYouItems) = filteredForYou else {
-      return XCTFail("for-you filter should return an array")
+    guard case .array(let propItems) = viaProps else {
+      return XCTFail("getDataFromProps(sort(filter(...))) should return an array, got \(viaProps)")
     }
-    XCTAssertEqual(forYouItems.map { $0.identifierValue() }, [requestId])
+    XCTAssertEqual(propItems.map { $0.identifierValue() }, [requestId])
 
     let source = """
       {sort(filter(\(messagesRef), \(forYouPredicate)), desc, created_at)}

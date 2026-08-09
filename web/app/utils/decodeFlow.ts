@@ -12,7 +12,7 @@ import {
 	normalizeStoredRowActions,
 	rowAction,
 } from "./rowActions";
-import { ROW_METADATA_KEYS } from "./rowConstants";
+import { nestedRows, ROW_METADATA_KEYS } from "./rowConstants";
 
 function rowConfigAttributes(config: RowConfig): Record<string, unknown> {
 	const attributes: Record<string, unknown> = {};
@@ -193,23 +193,6 @@ function decodeRowConfig(row: ServerRow, name?: string): RowConfig {
 			: row.type);
 
 	return config as RowConfig;
-}
-
-/**
- * `children` exist only on some row variants, so on the UI_Row
- * union they resolve through the index signature rather than as rows. Read
- * them through a shape check, the same way row payload fields are read.
- */
-function nestedRow(value: unknown): ServerRow | undefined {
-	return value !== null && typeof value === "object"
-		? (value as ServerRow)
-		: undefined;
-}
-
-function nestedRows(value: unknown): ServerRow[] {
-	return Array.isArray(value)
-		? value.flatMap((entry) => nestedRow(entry) ?? [])
-		: [];
 }
 
 function assignFreshIdsInPlace(row: ServerRow, rootId: string): void {

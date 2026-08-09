@@ -13,6 +13,7 @@ import type {
 	UI_Row as ServerRow,
 } from "evy-types";
 import {
+	nestedRows,
 	ROW_CHILDREN_FIELD,
 	ROW_DECOMPOSE_SKIP_KEYS,
 	ROW_SHEET_FIELD,
@@ -71,16 +72,6 @@ function decomposeServerPage(
 		created_at: nowIso,
 		updated_at: nowIso,
 	};
-}
-
-function nestedRows(value: unknown): ServerRow[] {
-	return Array.isArray(value)
-		? value.flatMap((entry) =>
-				entry !== null && typeof entry === "object"
-					? [entry as ServerRow]
-					: [],
-			)
-		: [];
 }
 
 function decomposeServerRow(

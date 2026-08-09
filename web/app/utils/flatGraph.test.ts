@@ -142,14 +142,6 @@ describe("findRowIdPath", () => {
 		expect(path).toEqual(["root", "leaf"]);
 	});
 
-	it("finds path through children_row_ids", () => {
-		const leaf = makeRow("leaf");
-		const root = makeRow("root", { children_row_ids: ["leaf"] });
-		const maps = makeMaps([], [], [root, leaf]);
-		const path = findRowIdPath(maps.rowsById, ["root"], "leaf");
-		expect(path).toEqual(["root", "leaf"]);
-	});
-
 	it("finds path through children_row_ids array", () => {
 		const child = makeRow("child");
 		const root = makeRow("root", { children_row_ids: ["child"] });

@@ -20,7 +20,7 @@ struct EVYSearchRow: View {
   // a variant template row (its own evy.rows record - nothing else observes
   // it) bumps the version, and the version keys EVYSearch's identity so a
   // fresh init picks up the changed template.
-  @State private var storedTemplates: [String: EVYStoredRow?]
+  @State private var storedTemplates: [String: EVYStoredRow]
   @State private var templateVersion = 0
 
   private let watchedVariantIds: Set<String>
@@ -38,9 +38,11 @@ struct EVYSearchRow: View {
       return nil
     }
     watchedVariantIds = Set(storedIds)
-    var initialTemplates: [String: EVYStoredRow?] = [:]
+    var initialTemplates: [String: EVYStoredRow] = [:]
     for id in storedIds {
-      initialTemplates[id] = EVYRowStore.row(id: id)
+      if let row = EVYRowStore.row(id: id) {
+        initialTemplates[id] = row
+      }
     }
     _storedTemplates = State(initialValue: initialTemplates)
   }
@@ -49,8 +51,7 @@ struct EVYSearchRow: View {
     variantRefs.compactMap { ref in
       switch ref {
       case .id(let id):
-        guard let stored = storedTemplates[id] else { return nil }
-        return stored?.uiRow()
+        return storedTemplates[id]?.uiRow()
       case .inline(let row):
         return row
       }
