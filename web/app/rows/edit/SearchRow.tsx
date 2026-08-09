@@ -1,5 +1,4 @@
 import { ContainerChildren } from "../../components/ContainerChildren";
-import { SearchChildSample } from "../../components/SearchChildSample";
 import type { RowConfig } from "../../types/row";
 import { defineRow } from "../defineRow";
 import InlineIcon from "../design-system/InlineIcon";
@@ -33,12 +32,6 @@ export default defineRow("SearchRow", {
 				containerRowId={row.id}
 				containerType="children"
 			/>
-			{row.config.child_row_id ? (
-				<SearchChildSample
-					searchRowId={row.id}
-					childRowId={row.config.child_row_id}
-				/>
-			) : null}
 		</RowLayout>
 	),
 });

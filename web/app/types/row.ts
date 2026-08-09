@@ -35,11 +35,10 @@ type RowBaseAttributes = {
 type RowAttributes = RowBaseAttributes &
 	RowSpecificAttributes & {
 		children_row_ids?: string[];
-		child_row_id?: string;
 		sheet_row_id?: string;
 		sheet?: Row;
 	};
 
 export type RowConfig = RowAttributes;
 
-export type ContainerType = "child" | "children" | "sheet";
+export type ContainerType = "children" | "sheet";

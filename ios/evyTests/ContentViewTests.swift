@@ -223,7 +223,7 @@ final class ContentViewTests: XCTestCase {
     )
   }
 
-  func testRowStoreExposesChildRowIdForSearch() throws {
+  func testRowStoreExposesChildrenRowIdsForSearch() throws {
     let store = makeStore()
     let parentId = "parent-row"
     let childId = "child-row"
@@ -232,18 +232,18 @@ final class ContentViewTests: XCTestCase {
       store: store, id: parentId, type: "search",
       data: [
         "source": "{items}", "destination": "{query}", "title": "", "actions": [:],
-        "child_row_id": childId,
+        "children_row_ids": [childId],
       ])
     try seedRow(
       store: store, id: childId, type: "text",
       data: ["source": "", "title": "Child title", "text": "Body", "actions": [:]])
 
     let storedParent = try XCTUnwrap(EVYRowStore.row(id: parentId, from: store))
-    XCTAssertEqual(storedParent.child_row_id, childId)
+    XCTAssertEqual(storedParent.children_row_ids, [childId])
 
     let storedChild = try XCTUnwrap(EVYRowStore.row(id: childId, from: store))
     XCTAssertEqual(storedChild.id, childId)
-    XCTAssertNil(storedChild.child_row_id)
+    XCTAssertTrue(storedChild.children_row_ids.isEmpty)
   }
 
   func testRowStoreExposesSheetRowId() throws {
@@ -263,10 +263,9 @@ final class ContentViewTests: XCTestCase {
 
     let storedParent = try XCTUnwrap(EVYRowStore.row(id: parentId, from: store))
     XCTAssertEqual(storedParent.sheet_row_id, sheetId)
-    XCTAssertNil(storedParent.child_row_id)
   }
 
-  func testSearchRowStoresChildAndSheetIndependently() throws {
+  func testSearchRowStoresChildrenAndSheetIndependently() throws {
     let store = makeStore()
     let searchId = "search-row"
     let childId = "search-child"
@@ -276,12 +275,12 @@ final class ContentViewTests: XCTestCase {
       store: store, id: searchId, type: "search",
       data: [
         "source": "{items}", "destination": "{query}", "title": "", "actions": [:],
-        "child_row_id": childId,
+        "children_row_ids": [childId],
         "sheet_row_id": sheetId,
       ])
 
     let storedSearch = try XCTUnwrap(EVYRowStore.row(id: searchId, from: store))
-    XCTAssertEqual(storedSearch.child_row_id, childId)
+    XCTAssertEqual(storedSearch.children_row_ids, [childId])
     XCTAssertEqual(storedSearch.sheet_row_id, sheetId)
   }
 
@@ -321,7 +320,7 @@ final class ContentViewTests: XCTestCase {
     XCTAssertEqual(visitedIds, [rowOneId, rowTwoId])
   }
 
-  func testWalkerDescendsIntoChildRowId() throws {
+  func testWalkerDescendsIntoChildrenRowIdsOnSearch() throws {
     let store = makeStore()
     let pageId = "child-walk-page"
     let parentId = "child-walk-parent"
@@ -332,7 +331,7 @@ final class ContentViewTests: XCTestCase {
       store: store, id: parentId, type: "search",
       data: [
         "source": "{items}", "destination": "{query}", "title": "", "actions": [:],
-        "child_row_id": childId,
+        "children_row_ids": [childId],
       ])
     try seedRow(
       store: store, id: childId, type: "text",
@@ -365,7 +364,7 @@ final class ContentViewTests: XCTestCase {
     XCTAssertEqual(visitedIds, [parentId, sheetId])
   }
 
-  func testWalkerVisitsChildBeforeSheetOnMixedRelationships() throws {
+  func testWalkerVisitsChildrenBeforeSheetOnMixedRelationships() throws {
     let store = makeStore()
     let pageId = "mixed-walk-page"
     let searchId = "mixed-search"
@@ -377,7 +376,7 @@ final class ContentViewTests: XCTestCase {
       store: store, id: searchId, type: "search",
       data: [
         "source": "{items}", "destination": "{query}", "title": "", "actions": [:],
-        "child_row_id": childId,
+        "children_row_ids": [childId],
         "sheet_row_id": sheetId,
       ])
     try seedRow(
@@ -452,13 +451,13 @@ final class ContentViewTests: XCTestCase {
       store: store, id: rowOneId, type: "search",
       data: [
         "source": "{items}", "destination": "{query}", "title": "", "actions": [:],
-        "child_row_id": rowTwoId,
+        "children_row_ids": [rowTwoId],
       ])
     try seedRow(
       store: store, id: rowTwoId, type: "search",
       data: [
         "source": "{items}", "destination": "{query}", "title": "", "actions": [:],
-        "child_row_id": rowOneId,
+        "children_row_ids": [rowOneId],
       ])
 
     var visitedIds: [String] = []
@@ -495,7 +494,7 @@ final class ContentViewTests: XCTestCase {
       store: store, id: parentId, type: "search",
       data: [
         "source": "{items}", "destination": "{query}", "title": "",
-        "actions": [:], "child_row_id": childId, "sheet_row_id": sheetId,
+        "actions": [:], "children_row_ids": [childId], "sheet_row_id": sheetId,
       ])
 
     let storedRow = try XCTUnwrap(EVYRowStore.row(id: parentId, from: store))
@@ -503,10 +502,9 @@ final class ContentViewTests: XCTestCase {
 
     XCTAssertEqual(uiRow.id, parentId)
     XCTAssertEqual(uiRow.type, .search)
-    XCTAssertNil(uiRow.child)
     XCTAssertNil(uiRow.sheet)
     XCTAssertTrue(uiRow.children.isEmpty)
-    XCTAssertEqual(storedRow.child_row_id, childId)
+    XCTAssertEqual(storedRow.children_row_ids, [childId])
     XCTAssertEqual(storedRow.sheet_row_id, sheetId)
   }
 
@@ -713,12 +711,15 @@ final class ContentViewTests: XCTestCase {
       "title": "Item title",
       "source": "{items}",
       "destination": "{query}",
-      "child": [
-        "id": "search-result-child",
-        "type": "button",
-        "actions": [:],
-        "title": "",
-        "label": "Inner label",
+      "children": [
+        [
+          "id": "search-result-child",
+          "type": "button",
+          "actions": [:],
+          "title": "",
+          "label": "Inner label",
+          "visible": "true",
+        ]
       ],
     ])
     let nestedSearchableValues = try EVYDatumRowFormatter(template: nestedRow)

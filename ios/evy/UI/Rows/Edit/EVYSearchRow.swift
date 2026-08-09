@@ -101,14 +101,17 @@ struct EVYSearchRow: View {
         "title": "Search preview",
         "placeholder": "Search items...",
         "no_results": "No items match your search",
-        "child": {
-          "id": "preview-search-result-template",
-          "type": "text",
-          "actions": {},
-          "title": "{$datum.title}",
-          "subtitle": "{$datum.category}",
-          "icon": "::search::"
-        }
+        "children": [
+          {
+            "id": "preview-search-result-template",
+            "type": "text",
+            "actions": {},
+            "title": "{$datum.title}",
+            "subtitle": "{$datum.category}",
+            "icon": "::search::",
+            "visible": "true"
+          }
+        ]
       }
       """,
     failureMessage: "Unable to build search row preview"

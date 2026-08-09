@@ -6,7 +6,7 @@
 import Foundation
 
 /// Visits every stored row reachable from a page (rows + footer, recursing into
-/// `children_row_ids`, then `child_row_id`, then `sheet_row_id`). Cycle-safe via visited-id tracking.
+/// `children_row_ids`, then `sheet_row_id`). Cycle-safe via visited-id tracking.
 @MainActor
 func forEachStoredRow(
   inPageId pageId: String,
@@ -36,9 +36,6 @@ private func visitStoredRow(
   visitedRowIds.insert(id)
   visitor(storedRow)
   for childId in storedRow.children_row_ids {
-    visitStoredRow(id: childId, from: store, visitedRowIds: &visitedRowIds, visitor: visitor)
-  }
-  if let childId = storedRow.child_row_id {
     visitStoredRow(id: childId, from: store, visitedRowIds: &visitedRowIds, visitor: visitor)
   }
   if let sheetId = storedRow.sheet_row_id {

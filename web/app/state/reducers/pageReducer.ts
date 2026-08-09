@@ -70,11 +70,7 @@ function resolveContainerDropSelection(
 	destinationContainer: { type: string; rowId: string } | undefined,
 	targetRowId: string,
 ): ContainerDropSelection | null {
-	if (
-		!destinationContainer ||
-		(destinationContainer.type !== "child" &&
-			destinationContainer.type !== "sheet")
-	) {
+	if (destinationContainer?.type !== "sheet") {
 		return null;
 	}
 	const page = state.pagesById[pageId];

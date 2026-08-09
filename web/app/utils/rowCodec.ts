@@ -15,10 +15,8 @@ function decomposeRow(row: Row, records: DATA_EVY_Row[], now: string): string {
 	for (const [key, value] of Object.entries(row.config)) {
 		if (
 			ROW_METADATA_KEYS.has(key) ||
-			key === "child" ||
 			key === "children" ||
 			key === "sheet" ||
-			key === "child_row_id" ||
 			key === "children_row_ids" ||
 			key === "sheet_row_id" ||
 			value === undefined
@@ -26,10 +24,6 @@ function decomposeRow(row: Row, records: DATA_EVY_Row[], now: string): string {
 			continue;
 		}
 		data[key] = value;
-	}
-
-	if (row.config.child) {
-		data.child_row_id = decomposeRow(row.config.child, records, now);
 	}
 
 	if (row.config.sheet) {
@@ -40,10 +34,6 @@ function decomposeRow(row: Row, records: DATA_EVY_Row[], now: string): string {
 		data.children_row_ids = row.config.children.map((child) =>
 			decomposeRow(child, records, now),
 		);
-	}
-
-	if (typeof row.config.child_row_id === "string") {
-		data.child_row_id = row.config.child_row_id;
 	}
 
 	if (typeof row.config.sheet_row_id === "string") {

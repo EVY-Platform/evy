@@ -2,7 +2,7 @@
  * Immutable flat-map helpers for editing DATA_EVY_* records.
  *
  * All mutations return new maps without modifying the originals.
- * Structural row links live in DATA_EVY_Row.data: child_row_id / children_row_ids.
+ * Structural row links live in DATA_EVY_Row.data: children_row_ids.
  * Page structure lives in DATA_EVY_Page: row_ids[], footer_row_id?.
  * Flow structure lives in DATA_EVY_Flow: page_ids[].
  */
@@ -18,13 +18,8 @@ import { EVY_CORE_RESOURCE_REF } from "evy-types/coreResources";
 import { branchForStorage, parseBranchText } from "./actionBranch";
 import { collectSubtreeRowIds, type FlowEntityMaps } from "./flowEntities";
 import { compactRowActions, normalizeStoredRowActions } from "./rowActions";
+import { ROW_CHILDREN_FIELD, ROW_SHEET_FIELD } from "./rowConstants";
 import {
-	ROW_CHILD_FIELD,
-	ROW_CHILDREN_FIELD,
-	ROW_SHEET_FIELD,
-} from "./rowConstants";
-import {
-	getChildRowId,
 	getChildrenRowIds,
 	getSheetRowId,
 	pageRootIds,
@@ -73,35 +68,25 @@ function findRowContainer(
 	rowsById: FlowEntityMaps["rowsById"],
 	rootRowIds: string[],
 	targetRowId: string,
-): { containerRowId: string; type: "child" | "children" | "sheet" } | null {
-	return walkRows(
-		rowsById,
-		rootRowIds,
-		(id, _row, childId, sheetId, childrenIds) => {
-			if (childId === targetRowId) {
-				return { containerRowId: id, type: "child" as const };
-			}
-			if (sheetId === targetRowId) {
-				return { containerRowId: id, type: "sheet" as const };
-			}
-			if (childrenIds.includes(targetRowId)) {
-				return { containerRowId: id, type: "children" as const };
-			}
-			return null;
-		},
-	);
+): { containerRowId: string; type: "children" | "sheet" } | null {
+	return walkRows(rowsById, rootRowIds, (id, _row, sheetId, childrenIds) => {
+		if (sheetId === targetRowId) {
+			return { containerRowId: id, type: "sheet" as const };
+		}
+		if (childrenIds.includes(targetRowId)) {
+			return { containerRowId: id, type: "children" as const };
+		}
+		return null;
+	});
 }
 
 function findContainerById(
 	rowsById: FlowEntityMaps["rowsById"],
 	rootRowIds: string[],
 	containerId: string,
-): { containerRowId: string; type: "child" | "children" | "sheet" } | null {
-	return walkRows(rowsById, rootRowIds, (id, row, childId, sheetId) => {
+): { containerRowId: string; type: "children" | "sheet" } | null {
+	return walkRows(rowsById, rootRowIds, (id, row, sheetId) => {
 		if (id !== containerId) return null;
-		if (childId !== undefined) {
-			return { containerRowId: id, type: "child" as const };
-		}
 		if (sheetId !== undefined) {
 			return { containerRowId: id, type: "sheet" as const };
 		}
@@ -125,12 +110,6 @@ export function findRowIdPath(
 		if (id === leafRowId) return [...path, id];
 		const row = rowsById[id];
 		if (!row) return null;
-
-		const childId = getChildRowId(row);
-		if (childId) {
-			const result = dfs(childId, [...path, id]);
-			if (result) return result;
-		}
 
 		const sheetId = getSheetRowId(row);
 		if (sheetId) {
@@ -192,7 +171,7 @@ export function insertIntoLocation(
 	destinationIndex: number,
 	destinationContainer?: {
 		rowId: string;
-		type: "child" | "children" | "sheet";
+		type: "children" | "sheet";
 	},
 	ts = now(),
 ): FlowEntityMaps {
@@ -222,9 +201,7 @@ export function insertIntoLocation(
 	if (!container) return maps;
 
 	let updatedData: DATA_EVY_RowData;
-	if (destinationContainer.type === "child") {
-		updatedData = { ...container.data, [ROW_CHILD_FIELD]: newRowId };
-	} else if (destinationContainer.type === "sheet") {
+	if (destinationContainer.type === "sheet") {
 		updatedData = { ...container.data, [ROW_SHEET_FIELD]: newRowId };
 	} else {
 		const current = getChildrenRowIds(container);
@@ -252,7 +229,7 @@ export function insertIntoLocation(
 
 /**
  * Remove rowId from wherever it lives in the page (row_ids, footer_row_id,
- * or a container's child_row_id / children_row_ids).
+ * or a container's children_row_ids).
  * Does NOT remove the row record from rowsById — call cleanupOrphanedRows for that.
  */
 function removeFromLocation(
@@ -290,7 +267,7 @@ function removeFromLocation(
 		};
 	}
 
-	// Search through container rows for child_row_id / children_row_ids
+	// Search through container rows for children_row_ids
 	const roots = pageRootIds(page);
 	const container = findRowContainer(maps.rowsById, roots, rowId);
 	if (!container) return maps;
@@ -299,11 +276,7 @@ function removeFromLocation(
 	if (!containerRow) return maps;
 
 	let updatedData: DATA_EVY_RowData;
-	if (container.type === "child") {
-		const { [ROW_CHILD_FIELD]: _c, ...dataWithoutChild } =
-			containerRow.data;
-		updatedData = dataWithoutChild as DATA_EVY_RowData;
-	} else if (container.type === "sheet") {
+	if (container.type === "sheet") {
 		const { [ROW_SHEET_FIELD]: _s, ...dataWithoutSheet } =
 			containerRow.data;
 		updatedData = dataWithoutSheet as DATA_EVY_RowData;
@@ -417,7 +390,7 @@ export function moveRow(
 	originPageId: string,
 	destPageId: string,
 	destIndex: number,
-	destContainer?: { rowId: string; type: "child" | "children" | "sheet" },
+	destContainer?: { rowId: string; type: "children" | "sheet" },
 ): FlowEntityMaps {
 	const ts = now();
 	const afterRemove = removeFromLocation(maps, originPageId, rowId, ts);
@@ -690,7 +663,7 @@ export function findContainerOfRowInPage(
 	maps: FlowEntityMaps,
 	page: DATA_EVY_Page,
 	rowId: string,
-): { containerRowId: string; type: "child" | "children" | "sheet" } | null {
+): { containerRowId: string; type: "children" | "sheet" } | null {
 	// Search body rows
 	const bodyResult = findRowContainer(maps.rowsById, page.row_ids, rowId);
 	if (bodyResult) return bodyResult;
@@ -715,7 +688,7 @@ export function findContainerByIdInPage(
 	maps: FlowEntityMaps,
 	page: DATA_EVY_Page,
 	containerId: string,
-): { containerRowId: string; type: "child" | "children" | "sheet" } | null {
+): { containerRowId: string; type: "children" | "sheet" } | null {
 	return findContainerById(maps.rowsById, pageRootIds(page), containerId);
 }
 

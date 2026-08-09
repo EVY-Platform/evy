@@ -279,7 +279,7 @@ final class SduiRowAttributeContractTests: XCTestCase {
     }
   }
 
-  func testSearchRowViewDataExposesChildOnlyAmongRowPayloads() {
+  func testSearchRowViewDataExposesChildrenAmongRowPayloads() {
     let searchAttributes = reflectAttributes(
       SearchRowViewData(
         title: nil,
@@ -287,26 +287,24 @@ final class SduiRowAttributeContractTests: XCTestCase {
         destination: "{query}",
         placeholder: nil,
         no_results: nil,
-        child: nil,
         children: nil
       )
     )
-    XCTAssertNotNil(searchAttributes["child"])
     XCTAssertNotNil(searchAttributes["children"])
 
     let buttonAttributes = reflectAttributes(ButtonRowViewData(title: nil, label: "Go", style: nil))
-    XCTAssertNil(buttonAttributes["child"])
+    XCTAssertNil(buttonAttributes["children"])
   }
 
-  func testOnlySearchSchemaDeclaresChildRelationship() throws {
+  func testOnlySearchSchemaDeclaresChildrenTemplateVariants() throws {
     let catalog = try loadCatalog()
 
     for (rowType, schemaDef) in catalog {
       let schemaDefDict = try XCTUnwrap(schemaDef as? [String: Any])
       let attributes = Self.extractExpectedAttributes(from: schemaDefDict, rowType: rowType)
       if rowType == "search" {
-        XCTAssertNotNil(attributes["child"])
         XCTAssertNotNil(attributes["children"])
+        XCTAssertNil(attributes["child"])
       } else {
         XCTAssertNil(attributes["child"], "\(rowType) must not declare child in schema")
       }

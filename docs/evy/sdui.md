@@ -70,12 +70,10 @@ Rows are what are put into pages. They are the building block of the EVY server-
 
     // Structural relationships (persisted as IDs in row data — see data.md):
     // sheet — optional on every row; overlay content presented via a `show` action
-    // child — Search only; one result-row template (not a sheet)
-    // children — static nested rows on container types
+    // children — Search template variants, or static nested rows on container types
     // segments — TabContainer tab labels, paired with static children entries
     "sheet": ROW,
     "children": [ROW],
-    "child": ROW,
 
     // Binding fields (only on row types that declare them — see table below):
     // source — where the row reads data (display text, options, collections, or location objects)
@@ -106,15 +104,13 @@ Rows are what are put into pages. They are the building block of the EVY server-
 
 Every row may declare an optional nested `sheet` row. At runtime, a `show` action presents that stored row (or any other row ID loaded in the client) in a sheet overlay. The sheet root row's `title` is the sheet header and is live-interpolated when it contains expressions; put confirmation headings on the sheet root, not on nested rows inside it.
 
-`Search` is the only row type that may declare `child`. That `child` is a **result template**: the iOS app renders one instantiated copy per search result. It is not opened with `show`. A Search row may own both `child` and `sheet` independently.
-
-Search may also declare `children` as **template variants**: each child row is an alternate result template. For every datum in the search `source`, the runtime picks the **first** variant whose `visible` expression evaluates true with that datum bound (same predicate grammar as `filter()`). A variant with `visible: "true"` is a catch-all and must be listed last. When `children` is non-empty it takes precedence over `child`; a search row must not set both. A datum that matches no variant is skipped (the source filter is expected to align with the variants).
+`Search` declares `children` as **template variants**: each child row is an alternate result template. For every datum in the search `source`, the runtime picks the **first** variant whose `visible` expression evaluates true with that datum bound (same predicate grammar as `filter()`). A variant with `visible: "true"` is a catch-all and must be listed last. A single-template search is a one-variant search whose only variant is that catch-all. A datum that matches no variant is skipped (the source filter is expected to align with the variants).
 
 Only the variant **root** row's `visible` is the when-clause for template selection; the runtime neutralizes it to `"true"` on the rendered copy so the predicate does not re-evaluate at display time. Nested rows inside a variant keep their own `visible`, which is evaluated at render time after `$datum` interpolation — bare-field predicates like `type == pickup` (the style used in sources) resolve false there. Keep nested template `visible` at `"true"` unless you intend render-time gating with fully datum-bound expressions.
 
 `VerticalContainer`, `HorizontalContainer`, and `TabContainer` support static `children` (and `TabContainer` uses `segments` paired with those children). Dynamic `source` + per-item `child` templates are not supported; collection-driven layouts must use static structure or row types that bind their own `source`.
 
-**Web builder:** Secondary builder pages edit a row's optional `sheet` only. For Search, the configured `child` template renders **once** inline directly under the search input as a layout sample—it is not a live search and does not mirror API results. The loading spinner and `no_results` empty-state text described below are runtime-only behavior and are not previewed in the builder. When you add or edit a Show action, the row argument defaults to the currently configured row's `sheet` row ID when one exists; you can pick any row from any loaded flow/page instead. Show requires an explicit row ID—a `show` with no row id is not a valid invocation.
+**Web builder:** Secondary builder pages edit a row's optional `sheet` only. For Search, configured template variants render inline under the search input via `ContainerChildren`—not a live search and not API-backed results. The loading spinner and `no_results` empty-state text described below are runtime-only behavior and are not previewed in the builder. When you add or edit a Show action, the row argument defaults to the currently configured row's `sheet` row ID when one exists; you can pick any row from any loaded flow/page instead. Show requires an explicit row ID—a `show` with no row id is not a valid invocation.
 
 #### Row binding fields
 
@@ -124,7 +120,7 @@ Only the variant **root** row's `visible` is the when-clause for template select
 | --- | --- | --- | --- | --- | --- |
 | `Input`, `TextArea` | yes | yes | no | no | Display reads `source`; writes pass raw text to `destination`. Optional `initial` seeds literal text into the draft on activation. |
 | `Dropdown`, `InlinePicker` | yes | yes | no | yes | `source` = options; `value` = `$datum` display template; selection writes raw datum to `destination`. Optional `initial` seeds the default selection — a single option identifier for `Dropdown`, and a one-element identifier array for `InlinePicker`. |
-| `Search` | yes | yes | no | no | `destination` stores the selected raw datum, stripping external `id` and merging over any existing draft so omitted keys (e.g. instructions) are preserved. Optional `child` is a single search **result template** (not a sheet). Optional `children` are **template variants** — per-datum first-match selection by each variant's `visible` (see above). When `children` is non-empty it takes precedence over `child`. Optional `sheet` uses the universal overlay relationship. Optional `no_results` text renders under the search input in place of the result list once a search completes with zero results (iOS shows a spinner while an API-backed search is in flight). A blank/absent `placeholder` is **list-only mode**: no text input is shown, and `no_results` appears for an empty local source even with no query. |
+| `Search` | yes | yes | no | no | `destination` stores the selected raw datum, stripping external `id` and merging over any existing draft so omitted keys (e.g. instructions) are preserved. Optional `children` are **template variants** — per-datum first-match selection by each variant's `visible` (see above). A single-template list is a one-variant search with a `visible: "true"` catch-all. Optional `sheet` uses the universal overlay relationship. Optional `no_results` text renders under the search input in place of the result list once a search completes with zero results (iOS shows a spinner while an API-backed search is in flight). A blank/absent `placeholder` is **list-only mode**: no text input is shown, and `no_results` appears for an empty local source even with no query. |
 | `Calendar` | yes | yes | yes | no | `source` = main timeslots to display (same binding as `destination`); `destination` = edited selection; `secondary` = greyed background slots. |
 | `TimeslotPicker` | yes | yes | no | no | Single selected timeslot string in `destination`. Optional `sheet` for confirmation overlays via a `show` action. |
 | `SelectPhoto` | yes | yes | no | no | `source` = shown images; `destination` = written image IDs. |
@@ -305,7 +301,7 @@ Open a confirmation sheet after selecting a timeslot (`select` must run first so
 }
 ```
 
-Search result template (`child` only on Search; separate from `sheet`).
+Search result template variants (`children` on Search; separate from `sheet`).
 
 For the multi-step "create or update address, then link the item" pattern, see the **Address
 save pattern** in [actions.md](./actions.md#address-save-pattern-create-and-edit-flows).
@@ -330,7 +326,6 @@ flowchart TD
     P -- "row_ids[]" --> R
     P -- "footer_row_id?" --> R
     R -- "data.sheet_row_id?" --> R
-    R -- "data.child_row_id? (Search)" --> R
     R -- "data.children_row_ids[]?" --> R
 ```
 
@@ -366,7 +361,7 @@ flowchart TD
 Both clients connect to the same JSON-RPC WebSocket gateway. The API returns flows, pages, and rows as independent flat collections. Each client builds its own in-memory representation:
 
 - **Web builder** converts records to ID-keyed maps and uses `flatGraph.ts` for all edits. Changes are written back to the API as individual record updates.
-- **iOS app** stores records in `EVYDataStore` and resolves them on demand through typed store accessors (`EVYFlowStore`, `EVYPageStore`, `EVYRowStore`). Rows follow `sheet_row_id`, Search-only `child_row_id`, and container `children_row_ids` links at render time; a `show` action resolves its target through `EVYRowStore` across pages.
+- **iOS app** stores records in `EVYDataStore` and resolves them on demand through typed store accessors (`EVYFlowStore`, `EVYPageStore`, `EVYRowStore`). Rows follow `sheet_row_id` and `children_row_ids` links at render time; a `show` action resolves its target through `EVYRowStore` across pages.
 
 ```mermaid
 flowchart TD

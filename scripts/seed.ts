@@ -465,15 +465,7 @@ function decomposeRow(
 	const data: DATA_EVY_RowData = {};
 	for (const [key, value] of Object.entries(uiRow)) {
 		if (
-			[
-				"id",
-				"name",
-				"type",
-				"visible",
-				"child",
-				"children",
-				"sheet",
-			].includes(key)
+			["id", "name", "type", "visible", "children", "sheet"].includes(key)
 		) {
 			continue;
 		}
@@ -487,14 +479,6 @@ function decomposeRow(
 			throw new Error(`Row ${uiRow.id} has an invalid sheet row`);
 		}
 		data.sheet_row_id = decomposeRow(sheetRow, rowRows, now);
-	}
-
-	const childRow = uiRow.child;
-	if (childRow !== undefined) {
-		if (!isUiRow(childRow)) {
-			throw new Error(`Row ${uiRow.id} has an invalid child row`);
-		}
-		data.child_row_id = decomposeRow(childRow, rowRows, now);
 	}
 
 	const childRows = uiRow.children;

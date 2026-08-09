@@ -2,7 +2,6 @@
 // These are the fixed fields on every row that are not row-type content.
 export const ROW_METADATA_KEYS = new Set(["id", "name", "type", "visible"]);
 
-export const ROW_CHILD_FIELD = "child_row_id" as const;
 export const ROW_CHILDREN_FIELD = "children_row_ids" as const;
 export const ROW_SHEET_FIELD = "sheet_row_id" as const;
 
@@ -11,7 +10,6 @@ export const ROW_DECOMPOSE_SKIP_KEYS = new Set([
 	"name",
 	"type",
 	"visible",
-	"child",
 	"children",
 	"sheet",
 ]);

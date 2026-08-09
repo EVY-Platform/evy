@@ -240,25 +240,27 @@
 							"destination": "",
 							"visible": "true",
 							"actions": {},
-							"child": {
-								"id": "373ff30f-dc80-425c-a382-fadc8fcdcd81",
-								"type": "list_item",
-								"name": "From you request row",
-								"title": "{findFirst(marketplace.items, $datum.fk).title}",
-								"subtitle": "{$datum.value}",
-								"visible": "true",
-								"swipe_label": "Cancel",
-								"swipe_color": "#FF3B30",
-								"actions": {
-									"swipe_left": [
-										{
-											"condition": "",
-											"false": "",
-											"true": "{create(evy.messages,{fk: {$datum.fk}, resource: {$datum.resource}, parent_message_id: {$datum.id}, type: {$datum.type}, value: cancel, data: { time: {$datum.data.time}, postalcode: {$datum.data.postalcode}, destination_address: {$datum.data.destination_address}}})}"
-										}
-									]
+							"children": [
+								{
+									"id": "373ff30f-dc80-425c-a382-fadc8fcdcd81",
+									"type": "list_item",
+									"name": "From you request row",
+									"title": "{findFirst(marketplace.items, $datum.fk).title}",
+									"subtitle": "{$datum.value}",
+									"visible": "true",
+									"swipe_label": "Cancel",
+									"swipe_color": "#FF3B30",
+									"actions": {
+										"swipe_left": [
+											{
+												"condition": "",
+												"false": "",
+												"true": "{create(evy.messages,{fk: {$datum.fk}, resource: {$datum.resource}, parent_message_id: {$datum.id}, type: {$datum.type}, value: cancel, data: { time: {$datum.data.time}, postalcode: {$datum.data.postalcode}, destination_address: {$datum.data.destination_address}}})}"
+											}
+										]
+									}
 								}
-							}
+							]
 						},
 						{
 							"id": "4e81c7e7-f765-4864-ac63-35e2eff707cd",
@@ -645,24 +647,26 @@
 				{
 					"id": "96d3efe4-ea20-4a81-9ccb-64d6b57646e9",
 					"type": "search",
-					"child": {
-						"id": "d5922ca1-fc26-430a-81ed-fd343c13dab1",
-						"type": "list_item",
-						"title": "{$datum.title}",
-						"subtitle": "{formatCurrency($datum.price)}",
-						"image": "{$datum.photo_ids.0}",
-						"actions": {
-							"tap": [
-								{
-									"true": "{navigate(74a49d4b-2176-4925-857a-e29e2991f1bd,82cae120-c7b1-4c29-bd42-e1521320b109,{id: {$datum.id}})}",
-									"false": "",
-									"condition": ""
-								}
-							]
-						},
-						"visible": "true",
-						"name": "Item search result"
-					},
+					"children": [
+						{
+							"id": "d5922ca1-fc26-430a-81ed-fd343c13dab1",
+							"type": "list_item",
+							"title": "{$datum.title}",
+							"subtitle": "{formatCurrency($datum.price)}",
+							"image": "{$datum.photo_ids.0}",
+							"actions": {
+								"tap": [
+									{
+										"true": "{navigate(74a49d4b-2176-4925-857a-e29e2991f1bd,82cae120-c7b1-4c29-bd42-e1521320b109,{id: {$datum.id}})}",
+										"false": "",
+										"condition": ""
+									}
+								]
+							},
+							"visible": "true",
+							"name": "Item search result"
+						}
+					],
 					"title": "",
 					"placeholder": "Search anything",
 					"source": "{filter(marketplace.items, findFirst(sort(marketplace.item_statuses, desc, created_at), item_id == $datum.id).status != \"sold\")}",

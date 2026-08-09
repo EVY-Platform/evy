@@ -235,14 +235,11 @@ actor WSEmitter {
   ) -> String {
     let rowId = (rowData["id"] as? String) ?? UUID().uuidString
     var data = rowData
-    for key in ["id", "name", "type", "visible", "child", "children", "sheet"] {
+    for key in ["id", "name", "type", "visible", "children", "sheet"] {
       data.removeValue(forKey: key)
     }
     if let sheet = rowData["sheet"] as? [String: Any] {
       data["sheet_row_id"] = decomposeRow(rowData: sheet, rows: &rows, now: now)
-    }
-    if let child = rowData["child"] as? [String: Any] {
-      data["child_row_id"] = decomposeRow(rowData: child, rows: &rows, now: now)
     }
     if let children = rowData["children"] as? [[String: Any]], !children.isEmpty {
       data["children_row_ids"] = children.map { child in

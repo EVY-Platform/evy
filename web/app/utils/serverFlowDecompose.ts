@@ -13,7 +13,6 @@ import type {
 	UI_Row as ServerRow,
 } from "evy-types";
 import {
-	ROW_CHILD_FIELD,
 	ROW_CHILDREN_FIELD,
 	ROW_DECOMPOSE_SKIP_KEYS,
 	ROW_SHEET_FIELD,
@@ -74,19 +73,13 @@ function decomposeServerPage(
 	};
 }
 
-/**
- * `child` and `children` exist only on some row variants, so on the UI_Row
- * union they resolve through the index signature rather than as rows.
- */
-function nestedRow(value: unknown): ServerRow | undefined {
-	return value !== null && typeof value === "object"
-		? (value as ServerRow)
-		: undefined;
-}
-
 function nestedRows(value: unknown): ServerRow[] {
 	return Array.isArray(value)
-		? value.flatMap((entry) => nestedRow(entry) ?? [])
+		? value.flatMap((entry) =>
+				entry !== null && typeof entry === "object"
+					? [entry as ServerRow]
+					: [],
+			)
 		: [];
 }
 
@@ -103,10 +96,6 @@ function decomposeServerRow(
 		if (value !== undefined) {
 			data[key] = value;
 		}
-	}
-	const child = nestedRow(row.child);
-	if (child) {
-		data[ROW_CHILD_FIELD] = decomposeServerRow(child, rowRows, nowIso);
 	}
 	if (row.sheet) {
 		data[ROW_SHEET_FIELD] = decomposeServerRow(row.sheet, rowRows, nowIso);

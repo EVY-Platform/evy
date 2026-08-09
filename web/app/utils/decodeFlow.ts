@@ -77,12 +77,6 @@ function normalizeRowAttributes(
 				: [];
 			continue;
 		}
-		if (key === "child") {
-			if (value !== undefined && value !== null) {
-				out.child = transformRow(value as ServerRow);
-			}
-			continue;
-		}
 		if (key === "sheet") {
 			if (value !== undefined && value !== null) {
 				out.sheet = transformRow(value as ServerRow);
@@ -136,12 +130,6 @@ function rowToServerRow(row: Row): ServerRow {
 				: [];
 			continue;
 		}
-		if (key === "child") {
-			if (value) {
-				serverRow.child = rowToServerRow(value as Row);
-			}
-			continue;
-		}
 		if (key === "sheet") {
 			if (value) {
 				serverRow.sheet = rowToServerRow(value as Row);
@@ -185,12 +173,6 @@ function decodeRowConfig(row: ServerRow, name?: string): RowConfig {
 				: [];
 			continue;
 		}
-		if (key === "child") {
-			if (value) {
-				config.child = decodeRow(value as ServerRow);
-			}
-			continue;
-		}
 		if (key === "sheet") {
 			if (value) {
 				config.sheet = decodeRow(value as ServerRow);
@@ -214,7 +196,7 @@ function decodeRowConfig(row: ServerRow, name?: string): RowConfig {
 }
 
 /**
- * `child` and `children` exist only on some row variants, so on the UI_Row
+ * `children` exist only on some row variants, so on the UI_Row
  * union they resolve through the index signature rather than as rows. Read
  * them through a shape check, the same way row payload fields are read.
  */
@@ -232,10 +214,6 @@ function nestedRows(value: unknown): ServerRow[] {
 
 function assignFreshIdsInPlace(row: ServerRow, rootId: string): void {
 	row.id = rootId;
-	const child = nestedRow(row.child);
-	if (child) {
-		assignFreshIdsInPlace(child, crypto.randomUUID());
-	}
 	if (row.sheet) {
 		assignFreshIdsInPlace(row.sheet, crypto.randomUUID());
 	}
@@ -266,12 +244,6 @@ function resetRowAttributesForNewPage(row: ServerRow): ServerRow {
 		}
 		if (key === "children" || key === "segments") {
 			resetRow[key] = [];
-			continue;
-		}
-		if (key === "child") {
-			if (value !== undefined && value !== null) {
-				resetRow.child = value;
-			}
 			continue;
 		}
 		if (key === "sheet") {

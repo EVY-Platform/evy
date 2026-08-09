@@ -33,11 +33,6 @@ struct EVYStoredRow: Decodable, Equatable {
   let visible: String
   let data: [String: EVYJson]
 
-  var child_row_id: String? {
-    guard case .string(let value) = data["child_row_id"] else { return nil }
-    return value
-  }
-
   var sheet_row_id: String? {
     guard case .string(let value) = data["sheet_row_id"] else { return nil }
     return value
@@ -53,11 +48,10 @@ struct EVYStoredRow: Decodable, Equatable {
 
   /// Builds a single-row `UI_Row` from this record's content.
   /// Relationship ids are intentionally NOT resolved — callers use
-  /// `sheet_row_id`, `child_row_id` (Search only), and `children_row_ids` to render nested rows by id.
+  /// `sheet_row_id` and `children_row_ids` to render nested rows by id.
   func uiRow() -> UI_Row? {
     var object = data.mapValues(evyJsonToAny)
     object.removeValue(forKey: "sheet_row_id")
-    object.removeValue(forKey: "child_row_id")
     object.removeValue(forKey: "children_row_ids")
     object["id"] = id
     if let name { object["name"] = name }

@@ -144,13 +144,13 @@ describe("validateRowPathSegmentsForPage", () => {
 		});
 	});
 
-	it("accepts a valid child chain", () => {
+	it("accepts a valid children chain", () => {
 		const leafRow = makeDataRow("leaf-child");
 		const middleRow = makeDataRow("middle-child", {
-			child_row_id: "leaf-child",
+			children_row_ids: ["leaf-child"],
 		});
 		const rootRow = makeDataRow("root-parent", {
-			child_row_id: "middle-child",
+			children_row_ids: ["middle-child"],
 		});
 		const page = makePage("p1", ["root-parent"]);
 		const pagesById = { p1: page };

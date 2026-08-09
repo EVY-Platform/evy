@@ -191,17 +191,6 @@ private struct EVYResolvedRow: View {
     return row
   }
 
-  private var childRef: EVYRowRef? {
-    switch ref {
-    case .id:
-      guard storedRow?.type == .search else { return nil }
-      return storedRow?.child_row_id.map(EVYRowRef.id)
-    case .inline(let row):
-      guard row.type == .search else { return nil }
-      return row.child.map(EVYRowRef.inline)
-    }
-  }
-
   private var childRefs: [EVYRowRef] {
     switch ref {
     case .id:
@@ -416,8 +405,7 @@ private struct EVYResolvedRow: View {
     case .map(let view, _):
       EVYMapRow(view: view, scope: evyScope)
     case .search(let view, _):
-      let variantRefs = childRefs.isEmpty ? [childRef].compactMap { $0 } : childRefs
-      EVYSearchRow(view: view, variantRefs: variantRefs) { selectedDatum in
+      EVYSearchRow(view: view, variantRefs: childRefs) { selectedDatum in
         runActions(contentRow: contentRow, datum: selectedDatum)
       }
     case .photoGallery(let view, _):

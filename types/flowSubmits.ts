@@ -5,16 +5,10 @@ import type {
 	DATA_EVY_Row,
 } from "./generated/ts/data/data";
 
-const ROW_CHILD_FIELD = "child_row_id";
 const ROW_CHILDREN_FIELD = "children_row_ids";
 const ROW_SHEET_FIELD = "sheet_row_id";
 
 type EntityMap<T extends { id: string }> = Record<string, T>;
-
-function getChildRowId(row: DATA_EVY_Row): string | undefined {
-	const value = row.data[ROW_CHILD_FIELD];
-	return typeof value === "string" ? value : undefined;
-}
 
 function getSheetRowId(row: DATA_EVY_Row): string | undefined {
 	const value = row.data[ROW_SHEET_FIELD];
@@ -50,8 +44,6 @@ function walkRows(
 
 		visit(id, row);
 
-		const childId = getChildRowId(row);
-		if (childId) stack.push(childId);
 		const sheetId = getSheetRowId(row);
 		if (sheetId) stack.push(sheetId);
 		stack.push(...getChildrenRowIds(row));

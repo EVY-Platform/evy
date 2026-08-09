@@ -254,15 +254,17 @@
 											"visible": "true",
 											"name": "Find delivery address",
 											"actions": {},
-											"child": {
-												"id": "c3e4a5b6-2d3f-4a4b-8c5d-6e7f80910213",
-												"type": "text",
-												"title": "{formatAddressLine1($datum)}",
-												"subtitle": "{formatAddressLine2($datum)}",
-												"visible": "true",
-												"name": "Delivery address result",
-												"actions": {}
-											}
+											"children": [
+												{
+													"id": "c3e4a5b6-2d3f-4a4b-8c5d-6e7f80910213",
+													"type": "text",
+													"title": "{formatAddressLine1($datum)}",
+													"subtitle": "{formatAddressLine2($datum)}",
+													"visible": "true",
+													"name": "Delivery address result",
+													"actions": {}
+												}
+											]
 										}
 									},
 									{
@@ -383,15 +385,17 @@
 											"visible": "true",
 											"name": "Find shipping address",
 											"actions": {},
-											"child": {
-												"id": "f6b7d8e9-5a6c-4d7e-8f80-910213243546",
-												"type": "text",
-												"title": "{formatAddressLine1($datum)}",
-												"subtitle": "{formatAddressLine2($datum)}",
-												"visible": "true",
-												"name": "Shipping address result",
-												"actions": {}
-											}
+											"children": [
+												{
+													"id": "f6b7d8e9-5a6c-4d7e-8f80-910213243546",
+													"type": "text",
+													"title": "{formatAddressLine1($datum)}",
+													"subtitle": "{formatAddressLine2($datum)}",
+													"visible": "true",
+													"name": "Shipping address result",
+													"actions": {}
+												}
+											]
 										}
 									},
 									{
@@ -1374,15 +1378,17 @@
 										"sheet": {
 											"id": "3bb1bad9-a193-4eef-825e-da6f63a1a38e",
 											"type": "search",
-											"child": {
-												"id": "e27d87b7-aa2c-4672-aaac-9e1222928f45",
-												"type": "text",
-												"title": "{formatAddressLine1($datum)}",
-												"subtitle": "{formatAddressLine2($datum)}",
-												"visible": "true",
-												"name": "Pickup address result",
-												"actions": {}
-											},
+											"children": [
+												{
+													"id": "e27d87b7-aa2c-4672-aaac-9e1222928f45",
+													"type": "text",
+													"title": "{formatAddressLine1($datum)}",
+													"subtitle": "{formatAddressLine2($datum)}",
+													"visible": "true",
+													"name": "Pickup address result",
+													"actions": {}
+												}
+											],
 											"title": "",
 											"placeholder": "Search address",
 											"no_results": "No addresses found",

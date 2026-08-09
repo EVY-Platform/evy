@@ -68,11 +68,6 @@ export function collectSubtreeRowIds(
 	if (!row) return visited;
 	visited.add(rowId);
 
-	const childRowId = row.data.child_row_id;
-	if (typeof childRowId === "string") {
-		collectSubtreeRowIds(childRowId, rowsById, visited);
-	}
-
 	const sheetRowId = row.data.sheet_row_id;
 	if (typeof sheetRowId === "string") {
 		collectSubtreeRowIds(sheetRowId, rowsById, visited);

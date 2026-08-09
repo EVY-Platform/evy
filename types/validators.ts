@@ -536,15 +536,8 @@ function assertSearchVariantConstraints(row: UI_Row, path: string): void {
 		return;
 	}
 	const record = row as Record<string, unknown>;
-	const child = record.child;
 	const children = record.children;
-	const hasChild = child != null && typeof child === "object";
 	const hasChildren = Array.isArray(children) && children.length > 0;
-	if (hasChild && hasChildren) {
-		throw new Error(
-			`Flow validation failed: ${path}: search row cannot set both child and children`,
-		);
-	}
 	if (!hasChildren) {
 		return;
 	}
@@ -586,7 +579,7 @@ function assertUiFlowRowTriggerConstraints(row: UI_Row, path: string): void {
 }
 
 /**
- * Visits every row in a flow, including nested sheet/child/children rows.
+ * Visits every row in a flow, including nested sheet/children rows.
  *
  * The one place that knows how a flow's row tree is shaped and how to name a
  * position in it, so the checks below stay flat.
@@ -600,9 +593,6 @@ function forEachFlowRow(
 		const record = row as Record<string, unknown>;
 		if (record.sheet && typeof record.sheet === "object") {
 			walk(record.sheet as UI_Row, `${path}.sheet`);
-		}
-		if (record.child && typeof record.child === "object") {
-			walk(record.child as UI_Row, `${path}.child`);
 		}
 		if (Array.isArray(record.children)) {
 			for (let index = 0; index < record.children.length; index++) {

@@ -795,9 +795,9 @@ describe("pageReducer", () => {
 			oldRowId: "TextRow",
 			destinationPageId: "page-1",
 			destinationIndex: 0,
-			destinationContainer: { rowId: "search", type: "child" },
+			destinationContainer: { rowId: "search", type: "children" },
 		});
-		expect(next.rowsById.search?.data.child_row_id).toBe(childId);
+		expect(next.rowsById.search?.data.children_row_ids).toEqual([childId]);
 		expect(next.rowsById.search?.data.sheet_row_id).toBe("existing-sheet");
 		expect(next.rowsById.search?.data.actions).toEqual({
 			tap: [
