@@ -66,14 +66,13 @@ describe("normalizeServerRow", () => {
 				type: "vertical_container",
 				source: `{items}`,
 				title: "List",
-				child: makeServerRow({
-					id: ROW_B,
-					type: "text",
-					title: "{$datum.title}",
-				}),
 				children: [
 					makeServerRow({
 						id: ROW_B,
+						type: "text",
+						title: "{$datum.title}",
+					}),
+					makeServerRow({
 						type: "button",
 						label: "Go",
 					}),
@@ -81,19 +80,18 @@ describe("normalizeServerRow", () => {
 			}),
 		);
 
-		const nestedChild = n.child as ServerRow | undefined;
-		expect(nestedChild?.type).toBe("text");
-		expect(nestedChild?.destination).toBeUndefined();
-		expect(rowAttributes(nestedChild)).toEqual({
+		const children = Array.isArray(n.children) ? n.children : [];
+		const nestedText = children[0] as ServerRow | undefined;
+		expect(nestedText?.type).toBe("text");
+		expect(nestedText?.destination).toBeUndefined();
+		expect(rowAttributes(nestedText)).toEqual({
 			title: "{$datum.title}",
 		});
 
-		const firstChild = Array.isArray(n.children)
-			? (n.children[0] as ServerRow | undefined)
-			: undefined;
-		expect(firstChild?.type).toBe("button");
-		expect(firstChild?.destination).toBeUndefined();
-		expect(firstChild).toMatchObject({
+		const nestedButton = children[1] as ServerRow | undefined;
+		expect(nestedButton?.type).toBe("button");
+		expect(nestedButton?.destination).toBeUndefined();
+		expect(nestedButton).toMatchObject({
 			title: "",
 			label: "Go",
 		});
@@ -101,16 +99,18 @@ describe("normalizeServerRow", () => {
 });
 
 describe("normalizeServerRow sheet relationships", () => {
-	it("normalizes nested sheet separately from Search child", () => {
+	it("normalizes nested sheet separately from Search children", () => {
 		const n = normalizeServerRow(
 			makeServerRow({
 				type: "search",
 				title: "search",
-				child: makeServerRow({
-					id: ROW_B,
-					type: "text",
-					title: "Result",
-				}),
+				children: [
+					makeServerRow({
+						id: ROW_B,
+						type: "text",
+						title: "Result",
+					}),
+				],
 				sheet: makeServerRow({
 					id: ROW_A,
 					type: "text",
@@ -119,7 +119,10 @@ describe("normalizeServerRow sheet relationships", () => {
 			}),
 		);
 
-		expect((n.child as ServerRow | undefined)?.id).toBe(ROW_B);
+		const firstChild = Array.isArray(n.children)
+			? (n.children[0] as ServerRow | undefined)
+			: undefined;
+		expect(firstChild?.id).toBe(ROW_B);
 		expect((n.sheet as ServerRow | undefined)?.id).toBe(ROW_A);
 	});
 });

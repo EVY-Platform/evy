@@ -374,11 +374,6 @@ describe("rowFieldsFromDefinitions", () => {
 					required: false,
 				},
 				{
-					name: "child_row_id",
-					kind: "child",
-					required: true,
-				},
-				{
 					name: "children_row_ids",
 					kind: "children",
 					required: true,

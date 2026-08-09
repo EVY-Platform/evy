@@ -347,7 +347,6 @@ const ROW_BINDING_FIELD_NAMES = new Set(["source", "destination", "secondary"]);
 export const INHERITED_STRUCTURAL_ROW_FIELDS = ["sheet"] as const;
 
 const SCHEMA_TO_UI_FIELD_NAME: Record<string, string> = {
-	child: "child_row_id",
 	children: "children_row_ids",
 	sheet: "sheet_row_id",
 };
@@ -355,7 +354,6 @@ const SCHEMA_TO_UI_FIELD_NAME: Record<string, string> = {
 const ROW_FIELD_SPEC_KINDS = [
 	"text",
 	"textList",
-	"child",
 	"children",
 	"sheet",
 	"binding",
@@ -422,11 +420,15 @@ function rowFieldSpecFromAttribute(
 			kind = "textList";
 			break;
 		case "Row":
-			kind = schemaName === "sheet" ? "sheet" : "child";
+			kind = schemaName === "sheet" ? "sheet" : null;
 			break;
 		case "Row[]":
 			kind = "children";
 			break;
+	}
+
+	if (kind === null) {
+		return null;
 	}
 
 	return {

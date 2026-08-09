@@ -188,11 +188,14 @@ again on re-pick.
 			}
 		]
 	},
-	"child": {
-		"id": "387ebe5b-b5b5-4be9-b5db-918bb9db706f",
-		"type": "text",
-		"title": "{$datum.unit} {$datum.street}",
-		"subtitle": "{$datum.postcode} {$datum.city}, {$datum.state}"
-	}
+	"children": [
+		{
+			"id": "387ebe5b-b5b5-4be9-b5db-918bb9db706f",
+			"type": "text",
+			"visible": "true",
+			"title": "{$datum.unit} {$datum.street}",
+			"subtitle": "{$datum.postcode} {$datum.city}, {$datum.state}"
+		}
+	]
 }
 ```
