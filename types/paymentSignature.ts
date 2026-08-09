@@ -16,13 +16,11 @@ export type SignatureVerifyResult =
 
 const SIGNATURE_VERSION_PREFIX = "evy-txn-sig-v1";
 
-export function formatSignatureAmount(amount: number): string {
+function formatSignatureAmount(amount: number): string {
 	return amount.toFixed(2);
 }
 
-export function canonicalSignatureString(
-	data: TransactionSignatureData,
-): string {
+function canonicalSignatureString(data: TransactionSignatureData): string {
 	return [
 		SIGNATURE_VERSION_PREFIX,
 		formatSignatureAmount(data.amount),
