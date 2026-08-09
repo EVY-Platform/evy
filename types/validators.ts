@@ -388,7 +388,6 @@ const REQUEST_SCHEMA_FILES = [
 	"rpc/update.request.schema.json",
 	"rpc/delete.request.schema.json",
 	"rpc/sync.request.schema.json",
-	"rpc/payment_intent.request.schema.json",
 	"rpc/payment_capture.request.schema.json",
 	"rpc/payment_cancel.request.schema.json",
 	"rpc/payment_transfer.request.schema.json",
@@ -413,6 +412,7 @@ const ENTITY_SCHEMA_FILES = [
 	"rpc/delete.response.schema.json",
 	"rpc/sync.response.schema.json",
 	"rpc/resources.response.schema.json",
+	"rpc/payment_intent.request.schema.json",
 	"rpc/payment_intent.response.schema.json",
 	"rpc/payment_capture.response.schema.json",
 	"rpc/payment_cancel.response.schema.json",
@@ -814,7 +814,7 @@ export const validateResourcesResponse = schemaValidator<ResourcesResponse>(
 export const validatePaymentIntentRequest =
 	schemaValidator<PaymentIntentRequest>(
 		"PaymentIntentRequest",
-		getRequestAjv,
+		getEntityAjv,
 		fileId("rpc/payment_intent.request.schema.json"),
 	);
 export const validatePaymentIntentResponse =

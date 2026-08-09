@@ -9,6 +9,7 @@ import type {
 	PaymentTransferResponse,
 	PaymentWebhookRequest,
 } from "evy-types";
+import { verifyTransactionSignature } from "evy-types/paymentSignature";
 import type { EvyDb } from "../database/db";
 import {
 	appendTransactionRow,
@@ -45,8 +46,23 @@ export async function paymentIntent(
 	params: PaymentIntentRequest,
 	db: EvyDb,
 ): Promise<PaymentIntentResponse> {
+	const gateway = getStripeGateway();
+	const last4 = await gateway.getPaymentMethodLast4();
+	const verification = verifyTransactionSignature(
+		params.signature,
+		{
+			amount: params.amount,
+			currency: params.currency,
+			authorization_message_id: params.authorization_message_id,
+		},
+		last4,
+	);
+	if (!verification.ok) {
+		throw new Error(`invalid payment signature: ${verification.reason}`);
+	}
+
 	const { id: paymentProviderTransactionId } =
-		await getStripeGateway().createPaymentIntent({
+		await gateway.createPaymentIntent({
 			amount: params.amount,
 			currency: params.currency,
 			metadata: paymentMetadata(params),
@@ -61,6 +77,7 @@ export async function paymentIntent(
 			currency: params.currency,
 			payment_provider_transaction_id: paymentProviderTransactionId,
 			authorization_message_id: params.authorization_message_id,
+			signature: params.signature,
 		},
 		"charge",
 		"intent",

@@ -24,5 +24,8 @@ export function createMockStripeGateway(): StripeGateway {
 			}
 			return { ok: true };
 		},
+		async getPaymentMethodLast4() {
+			return "4242";
+		},
 	};
 }

@@ -31,7 +31,10 @@ export interface StripeGateway {
 	capturePaymentIntent(id: string, amount: number): Promise<StripeOutcome>;
 	cancelPaymentIntent(id: string): Promise<StripeOutcome>;
 	createTransfer(params: StripeTransferParams): Promise<StripeOutcome>;
+	getPaymentMethodLast4(): Promise<string>;
 }
+
+export const STRIPE_PAYMENT_METHOD = "pm_card_visa";
 
 let stripeGateway: StripeGateway | undefined;
 
@@ -97,7 +100,7 @@ function createRealStripeGateway(): StripeGateway {
 				// Sandbox-only: auto-confirm with Stripe's test card. Live mode
 				// needs a real payment method collected from the buyer.
 				confirm: true,
-				payment_method: "pm_card_visa",
+				payment_method: STRIPE_PAYMENT_METHOD,
 				payment_method_types: ["card"],
 				metadata: params.metadata,
 			});
@@ -138,6 +141,18 @@ function createRealStripeGateway(): StripeGateway {
 				});
 				return undefined;
 			}),
+		async getPaymentMethodLast4() {
+			const paymentMethod = await stripe.paymentMethods.retrieve(
+				STRIPE_PAYMENT_METHOD,
+			);
+			const last4 = paymentMethod.card?.last4;
+			if (!last4) {
+				throw new Error(
+					`Stripe payment method ${STRIPE_PAYMENT_METHOD} has no card.last4`,
+				);
+			}
+			return last4;
+		},
 	};
 }
 
