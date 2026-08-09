@@ -1112,8 +1112,9 @@ label {
 	padding: 2px 6px;
 }
 .evy-id-autocomplete-field textarea.evy-id-autocomplete-input {
-	resize: vertical;
-	min-height: 48px;
+	resize: none;
+	overflow: hidden;
+	min-height: calc(1lh + 4px);
 	word-break: break-word;
 	white-space: pre-wrap;
 }

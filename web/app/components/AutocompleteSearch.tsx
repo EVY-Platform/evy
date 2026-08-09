@@ -171,6 +171,16 @@ export function AutocompleteSearch({
 		element.setSelectionRange(pendingFocus, pendingFocus);
 	}, [value]);
 
+	// biome-ignore lint/correctness/useExhaustiveDependencies: resize after value changes; height comes from DOM scrollHeight
+	useLayoutEffect(() => {
+		if (!multiline) return;
+		const element = fieldElementRef.current;
+		if (!(element instanceof HTMLTextAreaElement)) return;
+		element.style.height = "0px";
+		element.style.height = `${element.scrollHeight}px`;
+		if (isOpen) updateDropdownPosition();
+	}, [value, multiline, isOpen, updateDropdownPosition]);
+
 	const handleListNavigationKey = useCallback(
 		(event: React.KeyboardEvent): boolean => {
 			if (event.key === "ArrowDown") {
@@ -336,7 +346,7 @@ export function AutocompleteSearch({
 			)}
 			<div ref={fieldRef} className="evy-id-autocomplete-field">
 				{multiline ? (
-					<textarea {...inputProps} />
+					<textarea rows={1} {...inputProps} />
 				) : (
 					<input type="text" {...inputProps} />
 				)}

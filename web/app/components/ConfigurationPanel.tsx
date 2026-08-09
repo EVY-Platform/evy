@@ -66,6 +66,7 @@ function ConfigTextField({
 				placeholder={placeholder}
 				ariaLabel={ariaLabel}
 				labelClassName={labelClassName}
+				multiline
 				getAttributeCandidatesForQualifier={
 					getAttributeCandidatesForQualifier
 				}
