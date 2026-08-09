@@ -154,6 +154,8 @@
 		SP001003UK00000100000001 /* EVYTestMessageFixtures.swift in Sources */ = {isa = PBXBuildFile; fileRef = SP001004UK00000100000001 /* EVYTestMessageFixtures.swift */; };
 		RC0000012FAB000100000001 /* EVYAPIManagerReconnectTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = RC0000022FAB000100000001 /* EVYAPIManagerReconnectTests.swift */; };
 		GC0000012FAB000100000001 /* GrammarConformanceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = GC0000022FAB000100000001 /* GrammarConformanceTests.swift */; };
+		PS0000012FAC000100000001 /* EVYPaymentSignature.swift in Sources */ = {isa = PBXBuildFile; fileRef = PS0000022FAC000100000001 /* EVYPaymentSignature.swift */; };
+		PS0000032FAC000100000001 /* EVYPaymentSignatureTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = PS0000042FAC000100000001 /* EVYPaymentSignatureTests.swift */; };
 		CA0000012FAB000300000001 /* EVYActionParser+ConformanceAst.swift in Sources */ = {isa = PBXBuildFile; fileRef = CA0000022FAB000300000001 /* EVYActionParser+ConformanceAst.swift */; };
 		ST0000032FAA2D1C006BEA92 /* EVYStoreRoutingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = ST0000042FAA2D1C006BEA92 /* EVYStoreRoutingTests.swift */; };
 /* End PBXBuildFile section */
@@ -320,6 +322,8 @@
 		SP001004UK00000100000001 /* EVYTestMessageFixtures.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EVYTestMessageFixtures.swift; sourceTree = "<group>"; };
 		RC0000022FAB000100000001 /* EVYAPIManagerReconnectTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EVYAPIManagerReconnectTests.swift; sourceTree = "<group>"; };
 		GC0000022FAB000100000001 /* GrammarConformanceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GrammarConformanceTests.swift; sourceTree = "<group>"; };
+		PS0000022FAC000100000001 /* EVYPaymentSignature.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EVYPaymentSignature.swift; sourceTree = "<group>"; };
+		PS0000042FAC000100000001 /* EVYPaymentSignatureTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EVYPaymentSignatureTests.swift; sourceTree = "<group>"; };
 		CA0000022FAB000300000001 /* EVYActionParser+ConformanceAst.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "EVYActionParser+ConformanceAst.swift"; sourceTree = "<group>"; };
 		ST0000042FAA2D1C006BEA92 /* EVYStoreRoutingTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EVYStoreRoutingTests.swift; sourceTree = "<group>"; };
 		FA002002MP00001000000001 /* EVYMap.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EVYMap.swift; sourceTree = "<group>"; };
@@ -378,6 +382,7 @@
 				73D878E72B2ECD6900A1F9C2 /* chunked.swift */,
 				73A6BE002B85F75900C8F882 /* EVYDatetime.swift */,
 				73A6BDF82B85F75800C8F882 /* functions.swift */,
+				PS0000022FAC000100000001 /* EVYPaymentSignature.swift */,
 				DFM001022F90000100000001 /* EVYDynamicFormatters.swift */,
 				735795D22C21AF6100ADB49D /* interpreter.swift */,
 				73F5D2002F50000200000001 /* forEachRow.swift */,
@@ -663,6 +668,7 @@
 				SP001004UK00000100000001 /* EVYTestMessageFixtures.swift */,
 				RC0000022FAB000100000001 /* EVYAPIManagerReconnectTests.swift */,
 				GC0000022FAB000100000001 /* GrammarConformanceTests.swift */,
+				PS0000042FAC000100000001 /* EVYPaymentSignatureTests.swift */,
 				CA0000022FAB000300000001 /* EVYActionParser+ConformanceAst.swift */,
 				ST0000042FAA2D1C006BEA92 /* EVYStoreRoutingTests.swift */,
 				FA002006MP00001000000001 /* EVYMapTests.swift */,
@@ -909,6 +915,7 @@
 				734F5A2400IMGRPC00C0FD0A /* EVYFileRPC.swift in Sources */,
 				73A6BE012B85F75900C8F882 /* EVYDatetime.swift in Sources */,
 				73A6BDFB2B85F75800C8F882 /* functions.swift in Sources */,
+				PS0000012FAC000100000001 /* EVYPaymentSignature.swift in Sources */,
 				DFM001012F90000100000001 /* EVYDynamicFormatters.swift in Sources */,
 				73B3CF862C68AD2200FD333A /* EVYHorizontalContainerRow.swift in Sources */,
 				73F2A0012F30B00200000001 /* UIEnums.swift in Sources */,
@@ -960,6 +967,7 @@
 				SP001003UK00000100000001 /* EVYTestMessageFixtures.swift in Sources */,
 				RC0000012FAB000100000001 /* EVYAPIManagerReconnectTests.swift in Sources */,
 				GC0000012FAB000100000001 /* GrammarConformanceTests.swift in Sources */,
+				PS0000032FAC000100000001 /* EVYPaymentSignatureTests.swift in Sources */,
 				CA0000012FAB000300000001 /* EVYActionParser+ConformanceAst.swift in Sources */,
 				ST0000032FAA2D1C006BEA92 /* EVYStoreRoutingTests.swift in Sources */,
 				FA002005MP00001000000001 /* EVYMapTests.swift in Sources */,

@@ -192,6 +192,19 @@ extension EVY {
     {
       payloadWithId["visibility"] = .string(declared)
     }
+    if resource == EVYCoreResource.messages.ref,
+      case .dictionary(var dataMap) = payloadWithId["data"],
+      let signature = dataMap["signature"],
+      case .string(let createdAt) = payloadWithId["created_at"],
+      let finalized = EVYPaymentSignature.finalize(
+        marker: signature,
+        messageId: newId,
+        createdAt: createdAt
+      )
+    {
+      dataMap["signature"] = finalized
+      payloadWithId["data"] = .dictionary(dataMap)
+    }
     let dataWithId = EVYJson.dictionary(payloadWithId)
     let params = MutationParams(
       resource: resource,
