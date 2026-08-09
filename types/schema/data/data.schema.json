@@ -648,6 +648,55 @@
 				}
 			}
 		},
+		"DATA_EVY_TransactionSignature": {
+			"type": "object",
+			"additionalProperties": false,
+			"required": ["data", "hash"],
+			"properties": {
+				"data": {
+					"type": "object",
+					"additionalProperties": false,
+					"required": [
+						"amount",
+						"currency",
+						"authorization_message_id",
+						"created_at",
+						"payment_provider",
+						"payment_method_last_4_characters"
+					],
+					"properties": {
+						"amount": {
+							"type": "number",
+							"minimum": 0
+						},
+						"currency": {
+							"type": "string",
+							"minLength": 1
+						},
+						"authorization_message_id": {
+							"type": "string",
+							"format": "uuid"
+						},
+						"created_at": {
+							"type": "string"
+						},
+						"payment_provider": {
+							"type": "string",
+							"enum": ["stripe"]
+						},
+						"payment_method_last_4_characters": {
+							"type": "string",
+							"pattern": "^[0-9]{4}$"
+						}
+					}
+				},
+				"hash": {
+					"type": "string",
+					"pattern": "^[0-9a-f]{64}$",
+					"description": "Lowercase hex SHA-256 of the canonical signature string (evy-txn-sig-v1)."
+				}
+			}
+		},
 		"DATA_EVY_Transaction": {
 			"type": "object",
 			"additionalProperties": false,
@@ -728,9 +777,8 @@
 					"description": "Provider's own id; v1 callers generate a uuid."
 				},
 				"signature": {
-					"type": "string",
-					"minLength": 1,
-					"description": "Always \"signed\" in v1; placeholder for real signing."
+					"$ref": "#/$defs/DATA_EVY_TransactionSignature",
+					"description": "Buyer-generated proof of payment origin; verified against the payment method's last-4 before the Stripe intent is created. Copied to every row of the payment's ledger."
 				},
 				"authorization_message_id": {
 					"type": "string",

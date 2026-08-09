@@ -1,18 +1,8 @@
 import { createHash } from "node:crypto";
+import type { DATA_EVY_TransactionSignature } from "./generated/ts/data/data";
 
-export type TransactionSignatureData = {
-	amount: number;
-	currency: string;
-	authorization_message_id: string;
-	created_at: string;
-	payment_provider: "stripe";
-	payment_method_last_4_characters: string;
-};
-
-export type TransactionSignature = {
-	data: TransactionSignatureData;
-	hash: string;
-};
+export type TransactionSignatureData = DATA_EVY_TransactionSignature["data"];
+export type TransactionSignature = DATA_EVY_TransactionSignature;
 
 export type SignatureVerifyParams = {
 	amount: number;

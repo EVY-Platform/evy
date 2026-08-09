@@ -2,7 +2,7 @@
 	"$schema": "https://json-schema.org/draft/2020-12/schema",
 	"$id": "payment-intent-request",
 	"title": "PaymentIntentRequest",
-	"description": "JSON-RPC params for creating a payment intent. V1 records the intent as an evy.transactions row with status \"intent\" and creates a Stripe PaymentIntent in sandbox mode (manual capture, auto-confirmed with pm_card_visa). Set STRIPE_MOCK=true or use the placeholder STRIPE_SECRET_KEY for in-process mock ids (pi_mock_…). Server-side constants (not request params): confirm=true, capture_method=\"manual\", payment_provider=\"stripe\", fees 0, signature=\"signed\".",
+	"description": "JSON-RPC params for creating a payment intent. V1 records the intent as an evy.transactions row with status \"intent\" and creates a Stripe PaymentIntent in sandbox mode (manual capture, auto-confirmed with pm_card_visa). Set STRIPE_MOCK=true or use the placeholder STRIPE_SECRET_KEY for in-process mock ids (pi_mock_…). Server-side constants (not request params): confirm=true, capture_method=\"manual\", payment_provider=\"stripe\", fees 0. The buyer-generated `signature` is verified against request params and the payment method's last-4 before any Stripe call or ledger write; verification failure rejects the RPC.",
 	"type": "object",
 	"additionalProperties": false,
 	"required": [
@@ -10,7 +10,8 @@
 		"resource",
 		"amount",
 		"currency",
-		"authorization_message_id"
+		"authorization_message_id",
+		"signature"
 	],
 	"properties": {
 		"fk": {
@@ -36,6 +37,10 @@
 			"type": "string",
 			"format": "uuid",
 			"description": "The buyer's original request message (the message stating the price)."
+		},
+		"signature": {
+			"$ref": "../data/data.schema.json#/$defs/DATA_EVY_TransactionSignature",
+			"description": "Buyer-generated proof of payment origin. Verified before the Stripe PaymentIntent is created."
 		}
 	}
 }
