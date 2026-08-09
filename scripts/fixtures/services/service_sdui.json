@@ -318,7 +318,7 @@
 														"tap": [
 															{
 																"condition": "",
-																"true": "{create(evy.messages,{fk: {marketplace.items.id}, resource: marketplace.items, type: delivery, value: pending, data: {time: {selected_delivery_timeslot}, destination_address: delivery_address}})}",
+																"true": "{create(evy.messages,{fk: {marketplace.items.id}, resource: marketplace.items, type: delivery, value: pending, data: {time: {selected_delivery_timeslot}, destination_address: delivery_address, signature: {payment_signature(marketplace.items.price.value, marketplace.items.price.currency)}}})}",
 																"false": ""
 															},
 															{
@@ -454,7 +454,7 @@
 														"tap": [
 															{
 																"condition": "",
-																"true": "{create(evy.messages,{fk: {marketplace.items.id}, resource: marketplace.items, type: shipping, value: pending, data: {postalcode: {shipping_address.postcode}, destination_address: shipping_address}})}",
+																"true": "{create(evy.messages,{fk: {marketplace.items.id}, resource: marketplace.items, type: shipping, value: pending, data: {postalcode: {shipping_address.postcode}, destination_address: shipping_address, signature: {payment_signature(marketplace.items.price.value, marketplace.items.price.currency)}}})}",
 																"false": ""
 															},
 															{
@@ -1020,7 +1020,7 @@
 												"tap": [
 													{
 														"condition": "{findFirst(sort(evy.messages, desc, created_at), fk == marketplace.items.id && type == pickup).value == \"accept\"}",
-														"true": "{create(evy.messages,{fk: {marketplace.items.id}, resource: marketplace.items, parent_message_id: {findFirst(sort(evy.messages, desc, created_at), fk == marketplace.items.id && type == pickup).id}, type: pickup, value: transaction, data: {time: {findFirst(sort(evy.messages, desc, created_at), fk == marketplace.items.id && type == pickup).data.time}, postalcode: {findFirst(sort(evy.messages, desc, created_at), fk == marketplace.items.id && type == pickup).data.postalcode}, destination_address: {findFirst(sort(evy.messages, desc, created_at), fk == marketplace.items.id && type == pickup).data.destination_address}}})}",
+														"true": "{create(evy.messages,{fk: {marketplace.items.id}, resource: marketplace.items, parent_message_id: {findFirst(sort(evy.messages, desc, created_at), fk == marketplace.items.id && type == pickup).id}, type: pickup, value: transaction, data: {time: {findFirst(sort(evy.messages, desc, created_at), fk == marketplace.items.id && type == pickup).data.time}, postalcode: {findFirst(sort(evy.messages, desc, created_at), fk == marketplace.items.id && type == pickup).data.postalcode}, destination_address: {findFirst(sort(evy.messages, desc, created_at), fk == marketplace.items.id && type == pickup).data.destination_address}, signature: {payment_signature(marketplace.items.price.value, marketplace.items.price.currency)}}})}",
 														"false": ""
 													},
 													{
