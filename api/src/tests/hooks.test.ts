@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it } from "bun:test";
 import type { HookRequest, HookResponse } from "evy-types";
 import { EVY_CORE_RESOURCE_REF } from "evy-types/coreResources";
 import * as schema from "evy-types/db/schema.generated";
+import { buildTransactionSignature } from "evy-types/paymentSignature";
 import { EXTERNAL_TEST_RESOURCE } from "./externalServiceFixture";
 import {
 	clearAllTestTables,
@@ -167,6 +168,7 @@ describe("message create hooks", () => {
 	});
 
 	it("forwards transaction create hooks to the owning service", async () => {
+		const authorization_message_id = crypto.randomUUID();
 		const payload = {
 			fk: crypto.randomUUID(),
 			resource: EXTERNAL_TEST_RESOURCE.CONDITIONS,
@@ -178,8 +180,15 @@ describe("message create hooks", () => {
 			service_fee: 0,
 			payment_provider: "stripe" as const,
 			payment_provider_transaction_id: crypto.randomUUID(),
-			signature: "signed",
-			authorization_message_id: crypto.randomUUID(),
+			signature: buildTransactionSignature({
+				amount: 100,
+				currency: "AUD",
+				authorization_message_id,
+				created_at: new Date().toISOString(),
+				payment_provider: "stripe",
+				payment_method_last_4_characters: "4242",
+			}),
+			authorization_message_id,
 			visibility: "public" as const,
 		};
 

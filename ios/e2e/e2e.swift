@@ -3,6 +3,7 @@
 //  evyUITests
 //
 
+import CryptoKit
 import XCTest
 
 private let MARKETPLACE_ITEMS_RESOURCE_ID = MarketplaceE2EFixture.itemsRef
@@ -998,8 +999,56 @@ class E2ETestBase: XCTestCase {
 
   static func requestCreateAction(type: String, payload: String) -> String {
     let messagesResourceId = EVYCoreResource.messages.ref
+    let needsSignature = Self.needsPaymentSignature(type: type, value: "pending")
+    let signatureField =
+      needsSignature
+      ? ", signature: {payment_signature(\(MARKETPLACE_ITEMS_RESOURCE_ID).price.value, \(MARKETPLACE_ITEMS_RESOURCE_ID).price.currency)}"
+      : ""
     return
-      "{create(\(messagesResourceId),{\(messageCreateEnvelope), type: \(type), value: pending, data: {\(payload)}})}"
+      "{create(\(messagesResourceId),{\(messageCreateEnvelope), type: \(type), value: pending, data: {\(payload)\(signatureField)}})}"
+  }
+
+  static func needsPaymentSignature(type: String, value: String) -> Bool {
+    (value == "pending" && (type == "delivery" || type == "shipping"))
+      || (value == "transaction" && type == "pickup")
+  }
+
+  static func iso8601Now() -> String {
+    let formatter = ISO8601DateFormatter()
+    formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+    return formatter.string(from: Date())
+  }
+
+  static func buildPaymentSignature(
+    amount: Double,
+    currency: String,
+    authorizationMessageId: String,
+    createdAt: String
+  ) -> [String: Any] {
+    let last4 = "4242"
+    let amountFormatted = String(format: "%.2f", amount)
+    let canonical = [
+      "evy-txn-sig-v1",
+      amountFormatted,
+      currency,
+      authorizationMessageId,
+      createdAt,
+      "stripe",
+      last4,
+    ].joined(separator: "\n")
+    let digest = SHA256.hash(data: Data(canonical.utf8))
+    let hash = digest.map { String(format: "%02x", $0) }.joined()
+    return [
+      "data": [
+        "amount": amount,
+        "currency": currency,
+        "authorization_message_id": authorizationMessageId,
+        "created_at": createdAt,
+        "payment_provider": "stripe",
+        "payment_method_last_4_characters": last4,
+      ],
+      "hash": hash,
+    ]
   }
 
   /// Cancel is offered while the request is open, and each transfer method is independent, so
@@ -4271,7 +4320,19 @@ final class E2EHomeInboxTests: E2ETestBase {
     data: [String: Any]? = nil
   ) throws -> String {
     let messageId = UUID().uuidString.lowercased()
+    let createdAt = Self.iso8601Now()
     return try awaitResult("seed \(type)/\(value) message") {
+      var messagePayload = data ?? [:]
+      if Self.needsPaymentSignature(type: type, value: value) {
+        let (amount, currency) = try await self.itemPrice(
+          emitter: emitter, itemId: itemId)
+        messagePayload["signature"] = Self.buildPaymentSignature(
+          amount: amount,
+          currency: currency,
+          authorizationMessageId: messageId,
+          createdAt: createdAt
+        )
+      }
       var messageData: [String: Any] = [
         "id": messageId,
         "fk": itemId,
@@ -4279,7 +4340,8 @@ final class E2EHomeInboxTests: E2ETestBase {
         "visibility": "private",
         "type": type,
         "value": value,
-        "data": data ?? [:],
+        "created_at": createdAt,
+        "data": messagePayload,
       ]
       if let parentMessageId {
         messageData["parent_message_id"] = parentMessageId
@@ -4291,6 +4353,30 @@ final class E2EHomeInboxTests: E2ETestBase {
       )
       return messageId
     }
+  }
+
+  @MainActor
+  private func itemPrice(
+    emitter: WSEmitter,
+    itemId: String
+  ) async throws -> (amount: Double, currency: String) {
+    let rows =
+      try await emitter.getResource(
+        resource: MARKETPLACE_ITEMS_RESOURCE_ID,
+        filter: ["id": itemId]
+      ) as? [[String: Any]] ?? []
+    guard let item = rows.first,
+      let price = item["price"] as? [String: Any],
+      let amount = (price["value"] as? NSNumber)?.doubleValue,
+      let currency = price["currency"] as? String,
+      !currency.isEmpty
+    else {
+      throw NSError(
+        domain: "E2E",
+        code: 1,
+        userInfo: [NSLocalizedDescriptionKey: "Item \(itemId) is missing a valid price"])
+    }
+    return (amount, currency)
   }
 
   @MainActor

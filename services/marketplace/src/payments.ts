@@ -20,6 +20,11 @@ type PaymentAction =
 
 type ItemPrice = { amount: number; currency: string };
 
+type MessageSignature = {
+	data: unknown;
+	hash: unknown;
+};
+
 export function paymentActionForMessage(
 	type: string,
 	value: string,
@@ -78,6 +83,24 @@ async function loadItemPrice(itemId: string): Promise<ItemPrice | undefined> {
 	};
 }
 
+function signatureFromMessage(
+	message: MessagePayload,
+): MessageSignature | undefined {
+	const signature = message.data.signature;
+	if (
+		signature === null ||
+		typeof signature !== "object" ||
+		Array.isArray(signature)
+	) {
+		return undefined;
+	}
+	const record = signature as Record<string, unknown>;
+	if (!("data" in record) || !("hash" in record)) {
+		return undefined;
+	}
+	return { data: record.data, hash: record.hash };
+}
+
 export async function validatePaymentPreconditions(
 	message: MessagePayload,
 ): Promise<ValidationResult> {
@@ -92,6 +115,12 @@ export async function validatePaymentPreconditions(
 			return {
 				ok: false,
 				reason: "Item has no valid price for payment",
+			};
+		}
+		if (!signatureFromMessage(message)) {
+			return {
+				ok: false,
+				reason: "Missing payment signature",
 			};
 		}
 		return { ok: true };
@@ -116,12 +145,17 @@ async function runPaymentIntent(
 	if (!message.id) {
 		throw new Error("payment_intent requires message id");
 	}
+	const signature = signatureFromMessage(message);
+	if (!signature) {
+		throw new Error("payment_intent requires message data.signature");
+	}
 	const response = (await callCoreApi("payment_intent", {
 		fk: message.fk,
 		resource: message.resource,
 		amount: price.amount,
 		currency: price.currency,
 		authorization_message_id: message.id,
+		signature,
 	})) as DATA_EVY_Transaction;
 
 	await recordPaymentIntent({

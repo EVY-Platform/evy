@@ -1446,6 +1446,40 @@
 				"text": "50cm (w) x 30cm (h) x 20cm (l)"
 			},
 			"notes": "Substituted unit suffixes must not be parsed as function names when mixed text continues with more calls."
+		},
+		{
+			"id": "expression-payment-signature-literal-args",
+			"category": "expression",
+			"platforms": ["ios"],
+			"input": "{payment_signature(250, \"AUD\")}",
+			"expect": {
+				"text": "{\"evy_pending_payment_signature\":{\"amount\":250,\"currency\":\"AUD\"}}"
+			},
+			"notes": "Returns a JSON marker string; createWithGeneratedId finalizes it with message id/created_at/hash."
+		},
+		{
+			"id": "expression-payment-signature-binding-args",
+			"category": "expression",
+			"platforms": ["ios"],
+			"input": "{payment_signature(price_holder.value, price_holder.currency)}",
+			"data": {
+				"price_holder": {
+					"value": 250,
+					"currency": "AUD"
+				}
+			},
+			"expect": {
+				"text": "{\"evy_pending_payment_signature\":{\"amount\":250,\"currency\":\"AUD\"}}"
+			}
+		},
+		{
+			"id": "split-args-payment-signature",
+			"category": "split-args",
+			"platforms": ["ios", "web"],
+			"input": "250, \"AUD\"",
+			"expect": {
+				"args": ["250", "\"AUD\""]
+			}
 		}
 	]
 }

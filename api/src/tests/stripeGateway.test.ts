@@ -1,8 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it } from "bun:test";
-import {
-	MOCK_CAPTURE_FAILURE_AMOUNT,
-	MOCK_TRANSFER_FAILURE_AMOUNT,
-} from "evy-types/paymentMocks";
+import { MOCK_CAPTURE_FAILURE_AMOUNT } from "evy-types/paymentMocks";
 import {
 	getStripeGateway,
 	isStripeMockEnabled,
@@ -121,18 +118,8 @@ describe("mock StripeGateway", () => {
 		expect(result).toEqual({ ok: true });
 	});
 
-	it("fails transfer for MOCK_TRANSFER_FAILURE_AMOUNT", async () => {
+	it("returns 4242 for the test payment method last-4", async () => {
 		const gateway = getStripeGateway();
-		const result = await gateway.createTransfer({
-			paymentIntentId: "pi_mock_test",
-			amount: MOCK_TRANSFER_FAILURE_AMOUNT,
-			currency: "AUD",
-			metadata: {
-				fk: crypto.randomUUID(),
-				resource: "marketplace.items",
-				authorization_message_id: crypto.randomUUID(),
-			},
-		});
-		expect(result).toEqual({ ok: false, reason: "mock transfer failure" });
+		expect(await gateway.getPaymentMethodLast4()).toBe("4242");
 	});
 });

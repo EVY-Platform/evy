@@ -6,7 +6,7 @@ import { appendStatus, currentStatus, type ItemStatus } from "./status";
 // before_create hook payloads carry no id yet, so it stays optional here.
 export type MessagePayload = Pick<
 	DATA_EVY_Message,
-	"fk" | "type" | "value" | "parent_message_id" | "resource"
+	"fk" | "type" | "value" | "parent_message_id" | "resource" | "data"
 > & { id?: string };
 
 export type TransactionPayload = Pick<

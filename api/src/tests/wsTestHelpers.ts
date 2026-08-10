@@ -9,6 +9,7 @@ import type {
 	PaymentIntentResponse,
 } from "evy-types";
 import * as schema from "evy-types/db/schema.generated";
+import { buildTransactionSignature } from "evy-types/paymentSignature";
 import {
 	createPgliteTestDatabase as createPgliteTestDatabaseWithSchema,
 	getFreePort,
@@ -118,19 +119,30 @@ export function validTransactionPayload(
 	DATA_EVY_Transaction,
 	"id" | "created_at" | "updated_at" | "deleted_at"
 > {
+	const authorization_message_id =
+		overrides.authorization_message_id ?? crypto.randomUUID();
+	const amount = overrides.amount ?? 250;
+	const currency = overrides.currency ?? "AUD";
 	return {
 		fk: crypto.randomUUID(),
 		resource: "test_svc.items",
 		type: "charge",
 		status: "intent",
-		amount: 250,
-		currency: "AUD",
+		amount,
+		currency,
 		payment_provider_fee: 0,
 		service_fee: 0,
 		payment_provider: "stripe",
 		payment_provider_transaction_id: crypto.randomUUID(),
-		signature: "signed",
-		authorization_message_id: crypto.randomUUID(),
+		signature: buildTransactionSignature({
+			amount,
+			currency,
+			authorization_message_id,
+			created_at: new Date().toISOString(),
+			payment_provider: "stripe",
+			payment_method_last_4_characters: "4242",
+		}),
+		authorization_message_id,
 		visibility: "public",
 		...overrides,
 	};
@@ -139,13 +151,26 @@ export function validTransactionPayload(
 export function validPaymentIntentRequest(
 	overrides: Partial<PaymentIntentRequest> = {},
 ): PaymentIntentRequest {
+	const authorization_message_id =
+		overrides.authorization_message_id ?? crypto.randomUUID();
+	const amount = overrides.amount ?? 250;
+	const currency = overrides.currency ?? "AUD";
 	return {
-		fk: crypto.randomUUID(),
-		resource: "marketplace.items",
-		amount: 250,
-		currency: "AUD",
-		authorization_message_id: crypto.randomUUID(),
-		...overrides,
+		fk: overrides.fk ?? crypto.randomUUID(),
+		resource: overrides.resource ?? "marketplace.items",
+		amount,
+		currency,
+		authorization_message_id,
+		signature:
+			overrides.signature ??
+			buildTransactionSignature({
+				amount,
+				currency,
+				authorization_message_id,
+				created_at: new Date().toISOString(),
+				payment_provider: "stripe",
+				payment_method_last_4_characters: "4242",
+			}),
 	};
 }
 

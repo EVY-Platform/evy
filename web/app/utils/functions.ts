@@ -1,3 +1,4 @@
+import { unwrapOptionalBraces } from "evy-types/unwrapBraces";
 import { evaluateConditionForPreview } from "./conditionExpression";
 import type { EVYFunctionOutput } from "./datetime";
 import {
@@ -307,6 +308,25 @@ function evyOwnsPlaceholder(_args: string): EVYFunctionOutput {
 	return { value: "false" };
 }
 
+function evyPaymentSignature(args: string): EVYFunctionOutput {
+	const parts = splitFunctionArguments(args);
+	if (parts.length !== 2) {
+		return { value: "" };
+	}
+	const amountRaw = unwrapOptionalBraces(parts[0] ?? "");
+	const currencyRaw = unwrapOptionalBraces(parts[1] ?? "");
+	const amount = Number(stripOptionalSurroundingQuotes(amountRaw));
+	const currency = stripOptionalSurroundingQuotes(currencyRaw);
+	if (!Number.isFinite(amount) || currency === "") {
+		return { value: "" };
+	}
+	return {
+		value: JSON.stringify({
+			evy_pending_payment_signature: { amount, currency },
+		}),
+	};
+}
+
 const functionHandlers: Record<string, EVYFunctionHandler> = {
 	count: evyCount,
 	length: evyLength,
@@ -326,6 +346,7 @@ const functionHandlers: Record<string, EVYFunctionHandler> = {
 	formatDuration: evyFormatDurationStub,
 	formatDatetime: evyFormatDatetime,
 	if: evyIfStub,
+	payment_signature: evyPaymentSignature,
 };
 
 export function callFunction(

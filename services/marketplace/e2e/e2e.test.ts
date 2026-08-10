@@ -4,6 +4,7 @@ import {
 	MOCK_CAPTURE_FAILURE_AMOUNT,
 	MOCK_TRANSFER_FAILURE_AMOUNT,
 } from "evy-types/paymentMocks";
+import { buildTransactionSignature } from "evy-types/paymentSignature";
 import { waitForClientOpen } from "evy-types/wsTestHelpers";
 import { Client } from "rpc-websockets";
 import { MARKETPLACE_RESOURCE, MARKETPLACE_SERVICE } from "../src/resources";
@@ -23,6 +24,8 @@ type PurchaseMessage = {
 	value: string;
 	parent_message_id?: string;
 	data?: Record<string, unknown>;
+	amount?: number;
+	currency?: string;
 };
 
 const API_URL = process.env.API_URL;
@@ -267,17 +270,41 @@ describe("Marketplace E2E (via API WebSocket)", () => {
 			);
 		}
 
+		function needsPaymentSignature(type: string, value: string): boolean {
+			return (
+				(value === "pending" &&
+					(type === "delivery" || type === "shipping")) ||
+				(value === "transaction" && type === "pickup")
+			);
+		}
+
 		async function createPurchaseMessage(message: PurchaseMessage) {
+			const messageId = crypto.randomUUID();
+			const createdAt = new Date().toISOString();
+			const data: Record<string, unknown> = { ...(message.data ?? {}) };
+			if (needsPaymentSignature(message.type, message.value)) {
+				data.signature = buildTransactionSignature({
+					amount: message.amount ?? 250,
+					currency: message.currency ?? "AUD",
+					authorization_message_id: messageId,
+					created_at: createdAt,
+					payment_provider: "stripe",
+					payment_method_last_4_characters: "4242",
+				});
+			}
 			return client.call("create", {
 				resource: EVY_CORE_RESOURCE_REF.MESSAGES,
+				filter: { id: messageId },
 				data: {
+					id: messageId,
 					fk: message.fk,
 					resource: MARKETPLACE_RESOURCE.ITEMS,
 					type: message.type,
 					value: message.value,
 					parent_message_id: message.parent_message_id,
 					visibility: "private",
-					data: message.data ?? {},
+					created_at: createdAt,
+					data,
 				},
 			});
 		}
@@ -567,6 +594,7 @@ describe("Marketplace E2E (via API WebSocket)", () => {
 				fk: itemId,
 				type: "delivery",
 				value: "pending",
+				amount: MOCK_CAPTURE_FAILURE_AMOUNT,
 			});
 			await createPurchaseMessage({
 				fk: itemId,
@@ -594,6 +622,7 @@ describe("Marketplace E2E (via API WebSocket)", () => {
 				fk: itemId,
 				type: "delivery",
 				value: "pending",
+				amount: MOCK_TRANSFER_FAILURE_AMOUNT,
 			});
 			await createPurchaseMessage({
 				fk: itemId,

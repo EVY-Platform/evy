@@ -303,6 +303,10 @@ private func _resolveBindingRoot(
     if funcName == "now" {
       return (.string(EVY.nowISO8601()), [])
     }
+    if funcName == "payment_signature" {
+      let output = try evyPaymentSignature(funcArgs)
+      return (.string(output.value), [])
+    }
   }
 
   if let ephemeralDatum = ephemeralDatumRegistry[firstProp] {
@@ -567,11 +571,23 @@ private func parseText(
       value = try evyFormatDuration(funcArgs, editing)
     case "formatDatetime":
       value = try evyFormatDatetime(funcArgs, editing)
+    case "payment_signature":
+      value = try evyPaymentSignature(funcArgs)
     default:
       value = nil
     }
 
     if let value = value {
+      // Whole-input function results (e.g. payment_signature's JSON marker) must
+      // not be fed back through parseText — braces in the result would be treated
+      // as nested expressions.
+      if returnPrefix && returnSuffix {
+        return EVYValue(
+          value.value,
+          value.prefix ?? input.prefix,
+          value.suffix ?? input.suffix)
+      }
+
       let returnValuesToJoin = [
         returnPrefix ? "" : value.prefix ?? "",
         value.value,

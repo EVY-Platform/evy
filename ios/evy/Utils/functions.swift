@@ -914,3 +914,41 @@ func evyComparisonOperandString(_ value: EVYJson) -> String {
   }
   return id
 }
+
+@MainActor
+func evyPaymentSignature(_ args: String) throws -> EVYFunctionOutput {
+  let parts = _splitFunctionArguments(args)
+  guard parts.count == 2 else {
+    throw EVYError.invalidData(context: "payment_signature requires amount and currency")
+  }
+  let amountArg = EVY.unwrapOptionalBraces(parts[0])
+  let currencyArg = EVY.unwrapOptionalBraces(parts[1])
+
+  let amountJson: EVYJson
+  if let bound = try? EVY.getDataFromProps(amountArg) {
+    amountJson = bound
+  } else if let intValue = Int(amountArg) {
+    amountJson = .int(intValue)
+  } else if let decimalValue = Decimal(string: amountArg) {
+    amountJson = .decimal(decimalValue)
+  } else {
+    throw EVYError.invalidData(context: "payment_signature amount is not a number")
+  }
+  let amount = try evyDoubleValue(from: amountJson, type: "payment_signature")
+
+  let currency: String
+  if let bound = try? EVY.getDataFromProps(currencyArg) {
+    currency = bound.toString()
+  } else {
+    currency = _stripOptionalSurroundingQuotes(currencyArg)
+  }
+  guard !currency.isEmpty else {
+    throw EVYError.invalidData(context: "payment_signature currency is empty")
+  }
+
+  return EVYFunctionOutput(
+    value: EVYPaymentSignature.markerJSON(amount: amount, currency: currency),
+    prefix: nil,
+    suffix: nil
+  )
+}

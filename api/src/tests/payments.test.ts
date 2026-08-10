@@ -5,6 +5,7 @@ import {
 } from "evy-types/coreResources";
 import * as schema from "evy-types/db/schema.generated";
 import { MOCK_TRANSFER_FAILURE_AMOUNT } from "evy-types/paymentMocks";
+import { buildTransactionSignature } from "evy-types/paymentSignature";
 import {
 	paymentCancel,
 	paymentCapture,
@@ -49,7 +50,7 @@ describe("payment_intent procedure", () => {
 		expect(created.payment_provider).toBe("stripe");
 		expect(created.payment_provider_fee).toBe(0);
 		expect(created.service_fee).toBe(0);
-		expect(created.signature).toBe("signed");
+		expect(created.signature).toEqual(request.signature);
 		expect(created.visibility).toBe("public");
 		expect(created.payment_provider_transaction_id).toMatch(/^pi_mock_/);
 
@@ -63,6 +64,143 @@ describe("payment_intent procedure", () => {
 			type: "charge",
 			status: "intent",
 		});
+	});
+
+	it("stores the request signature on the intent row", async () => {
+		const request = validPaymentIntentRequest();
+		const created = await paymentIntent(request, dataDb);
+		expect(created.signature).toEqual(request.signature);
+	});
+
+	it("copies the intent signature onto capture and transfer ledger rows", async () => {
+		const { intent, intentId } = await createSeededIntent(testDb, dataDb);
+		await paymentCapture({ payment_intent_id: intentId }, dataDb);
+		await paymentTransfer({ payment_intent_id: intentId }, dataDb);
+
+		const rows = await findRowsByIntentId(dataDb, intentId);
+		expect(rows.length).toBeGreaterThanOrEqual(5);
+		for (const row of rows) {
+			expect(row.signature).toEqual(intent.signature);
+		}
+	});
+
+	it("rejects a tampered hash before creating a Stripe intent", async () => {
+		const base = validPaymentIntentRequest();
+		const request = validPaymentIntentRequest({
+			...base,
+			signature: { ...base.signature, hash: "0".repeat(64) },
+		});
+		const fakeGateway = {
+			createCalls: 0,
+			async createPaymentIntent() {
+				fakeGateway.createCalls += 1;
+				return { id: `pi_fake_${crypto.randomUUID()}` };
+			},
+			async capturePaymentIntent() {
+				return { ok: true as const };
+			},
+			async cancelPaymentIntent() {
+				return { ok: true as const };
+			},
+			async createTransfer() {
+				return { ok: true as const };
+			},
+			async getPaymentMethodLast4() {
+				return "4242";
+			},
+		};
+		setStripeGatewayForTests(fakeGateway);
+
+		await expect(paymentIntent(request, dataDb)).rejects.toThrow(
+			"invalid payment signature: hash mismatch",
+		);
+		expect(fakeGateway.createCalls).toBe(0);
+		const listed = await get(
+			{ resource: EVY_CORE_RESOURCE_REF.TRANSACTIONS },
+			dataDb,
+		);
+		expect(listed).toHaveLength(0);
+	});
+
+	it("rejects a last-4 mismatch before creating a Stripe intent", async () => {
+		const authorization_message_id = crypto.randomUUID();
+		const request = validPaymentIntentRequest({
+			authorization_message_id,
+			signature: buildTransactionSignature({
+				amount: 250,
+				currency: "AUD",
+				authorization_message_id,
+				created_at: new Date().toISOString(),
+				payment_provider: "stripe",
+				payment_method_last_4_characters: "1234",
+			}),
+		});
+		const fakeGateway = {
+			createCalls: 0,
+			async createPaymentIntent() {
+				fakeGateway.createCalls += 1;
+				return { id: `pi_fake_${crypto.randomUUID()}` };
+			},
+			async capturePaymentIntent() {
+				return { ok: true as const };
+			},
+			async cancelPaymentIntent() {
+				return { ok: true as const };
+			},
+			async createTransfer() {
+				return { ok: true as const };
+			},
+			async getPaymentMethodLast4() {
+				return "4242";
+			},
+		};
+		setStripeGatewayForTests(fakeGateway);
+
+		await expect(paymentIntent(request, dataDb)).rejects.toThrow(
+			"invalid payment signature: payment_method_last_4_characters mismatch",
+		);
+		expect(fakeGateway.createCalls).toBe(0);
+	});
+
+	it("rejects an amount mismatch before creating a Stripe intent", async () => {
+		const authorization_message_id = crypto.randomUUID();
+		const request = validPaymentIntentRequest({
+			amount: 250,
+			authorization_message_id,
+			signature: buildTransactionSignature({
+				amount: 251,
+				currency: "AUD",
+				authorization_message_id,
+				created_at: new Date().toISOString(),
+				payment_provider: "stripe",
+				payment_method_last_4_characters: "4242",
+			}),
+		});
+		const fakeGateway = {
+			createCalls: 0,
+			async createPaymentIntent() {
+				fakeGateway.createCalls += 1;
+				return { id: `pi_fake_${crypto.randomUUID()}` };
+			},
+			async capturePaymentIntent() {
+				return { ok: true as const };
+			},
+			async cancelPaymentIntent() {
+				return { ok: true as const };
+			},
+			async createTransfer() {
+				return { ok: true as const };
+			},
+			async getPaymentMethodLast4() {
+				return "4242";
+			},
+		};
+		setStripeGatewayForTests(fakeGateway);
+
+		await expect(paymentIntent(request, dataDb)).rejects.toThrow(
+			"invalid payment signature: amount mismatch",
+		);
+		expect(fakeGateway.createCalls).toBe(0);
 	});
 });
 
@@ -360,6 +498,9 @@ describe("payments with real-mode gateway", () => {
 			async createTransfer(params) {
 				fakeGateway.transferCalls.push(params);
 				return { ok: true };
+			},
+			async getPaymentMethodLast4() {
+				return "4242";
 			},
 		};
 		setStripeGatewayForTests(fakeGateway);

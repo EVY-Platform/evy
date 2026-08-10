@@ -2,7 +2,7 @@
 	"$schema": "https://json-schema.org/draft/2020-12/schema",
 	"$id": "payment-capture-request",
 	"title": "PaymentCaptureRequest",
-	"description": "JSON-RPC params for capturing a payment intent. V1 records the capture as an evy.transactions row with status \"initiated\"; a real Stripe PaymentIntent capture will be called later. Server-side constants: full-amount capture (no amount_to_capture), payment_provider=\"stripe\", fees 0, signature=\"signed\".",
+	"description": "JSON-RPC params for capturing a payment intent. V1 records the capture as an evy.transactions row with status \"initiated\"; a real Stripe PaymentIntent capture will be called later. Server-side constants: full-amount capture (no amount_to_capture), payment_provider=\"stripe\", fees 0. The buyer signature from the intent row is copied onto the new ledger row.",
 	"type": "object",
 	"additionalProperties": false,
 	"required": ["payment_intent_id"],

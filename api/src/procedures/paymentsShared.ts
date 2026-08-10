@@ -16,6 +16,7 @@ type TransactionRowSource = Pick<
 	| "currency"
 	| "payment_provider_transaction_id"
 	| "authorization_message_id"
+	| "signature"
 >;
 
 /** Stripe metadata attached to intents and transfers for reconciliation. */
@@ -110,7 +111,7 @@ export async function appendTransactionRow(
 		service_fee: 0,
 		payment_provider: "stripe",
 		payment_provider_transaction_id: source.payment_provider_transaction_id,
-		signature: "signed",
+		signature: source.signature,
 		authorization_message_id: source.authorization_message_id,
 		visibility: EVY_CORE_RESOURCE_VISIBILITY.transactions,
 	};

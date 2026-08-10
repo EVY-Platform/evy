@@ -7,7 +7,11 @@
 			"name": "visibility"
 		}
 	},
-	"nonTableDefs": ["DATA_EVY_RowData", "DATA_EVY_FlowSubmits"],
+	"nonTableDefs": [
+		"DATA_EVY_RowData",
+		"DATA_EVY_FlowSubmits",
+		"DATA_EVY_TransactionSignature"
+	],
 	"tables": {
 		"DATA_EVY_Device": {
 			"tableName": "device",

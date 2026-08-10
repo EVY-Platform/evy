@@ -64,6 +64,18 @@ const itemId = "00000000-0000-4000-8000-000000000010";
 const authMessageId = "00000000-0000-4000-8000-000000000020";
 const parentMessageId = "00000000-0000-4000-8000-000000000030";
 
+const testPaymentSignature = {
+	data: {
+		amount: 250,
+		currency: "AUD",
+		authorization_message_id: authMessageId,
+		created_at: "2026-08-02T00:03:30",
+		payment_provider: "stripe",
+		payment_method_last_4_characters: "4242",
+	},
+	hash: "890787ccab9ec8eee374a6fa0ac834b3284663b47704662edd3a7e64cdf57d94",
+};
+
 async function seedItem(price?: {
 	currency?: string;
 	value?: number | string;
@@ -136,6 +148,8 @@ describe("validatePaymentPreconditions", () => {
 			fk: itemId,
 			type: "delivery",
 			value: "pending",
+			resource: MARKETPLACE_RESOURCE.ITEMS,
+			data: { signature: testPaymentSignature },
 		});
 		expect(verdict).toEqual({
 			ok: false,
@@ -153,6 +167,8 @@ describe("validatePaymentPreconditions", () => {
 			fk: itemId,
 			type: "delivery",
 			value: "pending",
+			resource: MARKETPLACE_RESOURCE.ITEMS,
+			data: { signature: testPaymentSignature },
 		});
 		expect(verdict.ok).toBe(false);
 	});
@@ -164,6 +180,8 @@ describe("validatePaymentPreconditions", () => {
 				fk: itemId,
 				type: "delivery",
 				value: "pending",
+				resource: MARKETPLACE_RESOURCE.ITEMS,
+				data: { signature: testPaymentSignature },
 			}),
 		).toEqual({ ok: true });
 
@@ -174,8 +192,40 @@ describe("validatePaymentPreconditions", () => {
 				fk: itemId,
 				type: "delivery",
 				value: "pending",
+				resource: MARKETPLACE_RESOURCE.ITEMS,
+				data: { signature: testPaymentSignature },
 			}),
 		).toEqual({ ok: true });
+	});
+
+	it("vetoes payment_intent messages without a signature", async () => {
+		await seedItem({ currency: "AUD", value: 250 });
+		const verdict = await validatePaymentPreconditions({
+			fk: itemId,
+			type: "delivery",
+			value: "pending",
+			resource: MARKETPLACE_RESOURCE.ITEMS,
+			data: {},
+		});
+		expect(verdict).toEqual({
+			ok: false,
+			reason: "Missing payment signature",
+		});
+	});
+
+	it("vetoes payment_intent messages whose signature lacks hash", async () => {
+		await seedItem({ currency: "AUD", value: 250 });
+		const verdict = await validatePaymentPreconditions({
+			fk: itemId,
+			type: "delivery",
+			value: "pending",
+			resource: MARKETPLACE_RESOURCE.ITEMS,
+			data: { signature: { data: testPaymentSignature.data } },
+		});
+		expect(verdict).toEqual({
+			ok: false,
+			reason: "Missing payment signature",
+		});
 	});
 
 	it("vetoes capture when no stored intent exists", async () => {
@@ -184,7 +234,9 @@ describe("validatePaymentPreconditions", () => {
 			fk: itemId,
 			type: "delivery",
 			value: "accept",
+			resource: MARKETPLACE_RESOURCE.ITEMS,
 			parent_message_id: parentMessageId,
+			data: {},
 		});
 		expect(verdict).toEqual({
 			ok: false,
@@ -204,7 +256,9 @@ describe("validatePaymentPreconditions", () => {
 				fk: itemId,
 				type: "delivery",
 				value: "accept",
+				resource: MARKETPLACE_RESOURCE.ITEMS,
 				parent_message_id: parentMessageId,
+				data: {},
 			}),
 		).toEqual({ ok: true });
 	});
@@ -215,6 +269,8 @@ describe("validatePaymentPreconditions", () => {
 				fk: itemId,
 				type: "delivery",
 				value: "reject",
+				resource: MARKETPLACE_RESOURCE.ITEMS,
+				data: {},
 			}),
 		).toEqual({ ok: true });
 		expect(
@@ -222,6 +278,8 @@ describe("validatePaymentPreconditions", () => {
 				fk: itemId,
 				type: "pickup",
 				value: "pending",
+				resource: MARKETPLACE_RESOURCE.ITEMS,
+				data: {},
 			}),
 		).toEqual({ ok: true });
 	});
@@ -236,6 +294,7 @@ describe("runPaymentReaction", () => {
 			resource: MARKETPLACE_RESOURCE.ITEMS,
 			type: "delivery",
 			value: "pending",
+			data: { signature: testPaymentSignature },
 		});
 
 		expect(coreApiCalls).toEqual([
@@ -247,11 +306,28 @@ describe("runPaymentReaction", () => {
 					amount: 250,
 					currency: "AUD",
 					authorization_message_id: authMessageId,
+					signature: testPaymentSignature,
 				},
 			},
 		]);
 		const stored = await findIntentByAuthorizationMessageId(authMessageId);
 		expect(stored?.payment_intent_id).toMatch(/^pi_test_/);
+	});
+
+	it("forwards the message signature verbatim on payment_intent", async () => {
+		await seedItem({ currency: "AUD", value: 250 });
+		await runPaymentReaction({
+			id: authMessageId,
+			fk: itemId,
+			resource: MARKETPLACE_RESOURCE.ITEMS,
+			type: "delivery",
+			value: "pending",
+			data: { signature: testPaymentSignature },
+		});
+
+		expect(coreApiCalls[0]?.data).toMatchObject({
+			signature: testPaymentSignature,
+		});
 	});
 
 	it("captures on delivery accept using the parent authorization message", async () => {
@@ -263,9 +339,11 @@ describe("runPaymentReaction", () => {
 		});
 		await runPaymentReaction({
 			fk: itemId,
+			resource: MARKETPLACE_RESOURCE.ITEMS,
 			type: "delivery",
 			value: "accept",
 			parent_message_id: parentMessageId,
+			data: {},
 		});
 
 		expect(coreApiCalls).toEqual([
@@ -285,9 +363,11 @@ describe("runPaymentReaction", () => {
 		});
 		await runPaymentReaction({
 			fk: itemId,
+			resource: MARKETPLACE_RESOURCE.ITEMS,
 			type: "pickup",
 			value: "transaction_completed",
 			parent_message_id: parentMessageId,
+			data: {},
 		});
 
 		expect(coreApiCalls.map((call) => call.method)).toEqual([
@@ -307,9 +387,11 @@ describe("runPaymentReaction", () => {
 		});
 		await runPaymentReaction({
 			fk: itemId,
+			resource: MARKETPLACE_RESOURCE.ITEMS,
 			type: "pickup",
 			value: "transaction_completed",
 			parent_message_id: parentMessageId,
+			data: {},
 		});
 
 		expect(coreApiCalls.map((call) => call.method)).toEqual([
@@ -337,15 +419,19 @@ describe("runPaymentReaction", () => {
 				fk: itemId,
 				type: "delivery",
 				value: "received",
+				resource: MARKETPLACE_RESOURCE.ITEMS,
 				parent_message_id: givenId,
+				data: {},
 			}),
 		).toEqual({ ok: true });
 
 		await runPaymentReaction({
 			fk: itemId,
+			resource: MARKETPLACE_RESOURCE.ITEMS,
 			type: "delivery",
 			value: "received",
 			parent_message_id: givenId,
+			data: {},
 		});
 		expect(coreApiCalls).toEqual([
 			{
@@ -364,9 +450,11 @@ describe("runPaymentReaction", () => {
 		});
 		await runPaymentReaction({
 			fk: itemId,
+			resource: MARKETPLACE_RESOURCE.ITEMS,
 			type: "delivery",
 			value: "received",
 			parent_message_id: parentMessageId,
+			data: {},
 		});
 
 		expect(coreApiCalls).toEqual([
@@ -385,9 +473,11 @@ describe("runPaymentReaction", () => {
 		});
 		await runPaymentReaction({
 			fk: itemId,
+			resource: MARKETPLACE_RESOURCE.ITEMS,
 			type: "delivery",
 			value: "reject",
 			parent_message_id: parentMessageId,
+			data: {},
 		});
 		expect(coreApiCalls).toEqual([
 			{
@@ -399,9 +489,11 @@ describe("runPaymentReaction", () => {
 		coreApiCalls.length = 0;
 		await runPaymentReaction({
 			fk: itemId,
+			resource: MARKETPLACE_RESOURCE.ITEMS,
 			type: "delivery",
 			value: "reject",
 			parent_message_id: "00000000-0000-4000-8000-000000000099",
+			data: {},
 		});
 		expect(coreApiCalls).toEqual([]);
 	});
@@ -409,8 +501,10 @@ describe("runPaymentReaction", () => {
 	it("does nothing for non-payment values", async () => {
 		await runPaymentReaction({
 			fk: itemId,
+			resource: MARKETPLACE_RESOURCE.ITEMS,
 			type: "pickup",
 			value: "accept",
+			data: {},
 		});
 		expect(coreApiCalls).toEqual([]);
 	});
