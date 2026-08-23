@@ -1,8 +1,14 @@
 # EVY
 
-If smartphones and the internet were built by the people for the people. Create services on the EVY platform and get paid every time your contribution is used.
+If smartphones and the internet were built by the people for the people. The purpose of EVY is to enable everyone to connect consumers to services, avoid gatekeepers, grift & profiteering, and compensate contributors fairly.
 
-The EVY app is privacy-focused and local-first: the iOS client keeps a persistent on-device store, reads from it offline, and writes optimistically before syncing. Today all clients sync through a central JSON-RPC WebSocket gateway backed by Postgres — peer-to-peer transport and enforced per-user data scoping are roadmap goals, not the current architecture.
+Imagine drivers delivering food to people without a middleman taking 30%, or selling your used skateboard without your data then being used for ads targeting innecessantly. Imagine never having to download apps again, signup, or enter your payment details over and over. Imagine trusting that your data truly remains on your device. Imagine being able to see exactly what the app does, what algorithms exist, and being able to change them if you want.
+
+EVY doesn’t promise to do this, it does it, and you can verify yourself as all the code is public, even the data is public (except your private data of course).
+
+The way it works is it provides an open-source, community-built, private and local-first super-app. Where contributors get paid whenever their functionality is used (when financial transactions happen in-platform). Functionality can be added in realtime through a server-driven-UI system, so users immediately get new functionality as it is released. At the same time, the SDUI system ensures a coherent beautiful design system and good UX throughout the app.
+
+The initial launch product is a Marketplace (facebook/craigslist style) because we believe we can build a 10x better product than what is out there.
 
 ## Architecture
 
