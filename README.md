@@ -6,7 +6,7 @@ Imagine drivers delivering food to people without a middleman taking 30%, or sel
 
 You don't even have to take our word for it, you can verify yourself as everything is public (code and data).
 
-EVY does this through a simple idea: a super app on your mobile device as your identity, your key, your vault. The app is community-built, private and local-first. Contributors get paid whenever their functionality is used (when transactions happen in-app), incentivising useful and quality features. Functionality can be added in realtime through a server-driven-UI system, so users immediately get new functionality as it is released, and contributors can easily develop and test their changes. At the same time, the SDUI system ensures a coherent beautiful design system and good UX throughout the app.
+EVY does this through a simple idea: a super app on your mobile device which acts as your identity and your key. The app is community-built and contributors get paid whenever their functionality is used (when transactions happen in-app), incentivising useful and quality features. Functionality can be added in realtime through a server-driven-UI system, so users immediately get new functionality as it is released, and contributors can easily develop and test their changes. At the same time, the SDUI system ensures a coherent beautiful design system and good UX throughout the app.
 
 The initial launch product is a Marketplace (facebook/craigslist style) because we believe we can build a 10x better product than what is out there.
 
