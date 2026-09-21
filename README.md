@@ -1,12 +1,14 @@
 # EVY
 
-Imagine if smartphones and the internet were built by the people for the people. We want to enable everyone to connect consumers to services, avoid gatekeepers grift & profiteering, and compensate contributors fairly.
+Imagine smartphones and the internet built by the people, for the people. We want to enable anyone to connect consumers to services, free from gatekeepers taking a cut, and compensate contributors fairly.
 
-Drivers could be delivering food to people without a middleman taking 30%, or you could be selling your skateboard without your data then being used for ads targeting incessantly. Having all this in a central open platform also means you never have to download apps, signup, or enter your payment details again and again.
+A driver could deliver food without a middleman taking 30%. You could sell your skateboard without your data being used to target you with ads. Bringing these services together in one open platform means you can use the same identity and payment setup, instead of downloading another app, signing up and entering your details each time.
 
-That is the vision for EVY, and you don't even have to take our word for it, you can verify yourself as everything is public (code and data).
+That is the vision for EVY. Its code and data are open for anyone to inspect, so people can verify how it works. Private data stays protected and is shared only with the parties who need it, such as an address sent directly to the driver making a delivery, not to the cloud.
 
-EVY does this through a simple idea: a super app on your mobile device which acts as your identity and your key. The app is community-built and contributors get paid whenever their functionality is used (when transactions happen in-app), incentivising useful and quality features. Functionality can be added in realtime through a server-driven-UI system, so users immediately get new functionality as it is released, and contributors can easily develop and test their changes. At the same time, the SDUI system ensures a coherent beautiful design system and good UX throughout the app.
+EVY starts with a simple idea: a super app on your phone that acts as your identity and your key. The app is community built, and those contributors get paid when an in-app transaction uses their functionality, giving them a reason to build useful features.
+
+A server-driven UI system lets contributors develop, test and release functionality that people can use as it becomes available. Shared components and themes give the app a consistent design and familiar controls across services.
 
 ## Architecture
 
